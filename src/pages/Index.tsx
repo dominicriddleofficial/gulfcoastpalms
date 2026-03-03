@@ -74,7 +74,7 @@ const Index = () => {
             transition={{ duration: 0.7, delay: 0.2 }}
             className="font-body text-lg md:text-xl text-palm-sand/80 max-w-2xl mx-auto mb-10"
           >
-            Specializing in palm tree trimming, diamond cutting, trunk skinning, installations, and safe removals for homes, rental properties, HOAs, and waterfront estates in Pensacola, Gulf Breeze, Navarre, Fort Walton Beach, Destin, and surrounding Emerald Coast communities.
+            The Emerald Coast's trusted specialists in palm tree trimming, diamond cutting, and professional palm care — serving Pensacola, Gulf Breeze, Navarre, Fort Walton Beach, Destin, and surrounding coastal communities.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
