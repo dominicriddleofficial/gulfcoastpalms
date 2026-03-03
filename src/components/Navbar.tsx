@@ -18,7 +18,7 @@ const Navbar = () => {
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border">
       <div className="container mx-auto flex items-center justify-between h-20 px-4 lg:px-8">
         <Link to="/" className="flex items-center gap-2">
-          <img src={logo} alt="Gulf Coast Palms logo" className="h-16 w-auto object-contain" />
+          <img src={logo} alt="Gulf Coast Palms logo" className="h-16 w-auto object-contain mix-blend-multiply" />
         </Link>
 
         {/* Desktop Nav */}

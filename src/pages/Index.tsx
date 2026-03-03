@@ -66,14 +66,14 @@ const Index = () => {
         </div>
 
         <div className="relative z-10 container mx-auto px-4 text-center">
-          <motion.img
-            src={logo}
-            alt="Gulf Coast Palms logo"
+          <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.7 }}
-            className="h-40 md:h-56 w-auto mx-auto mb-6 drop-shadow-2xl"
-          />
+            className="mx-auto mb-6 w-48 md:w-64 lg:w-72 bg-white/90 rounded-2xl p-4 backdrop-blur-sm shadow-2xl"
+          >
+            <img src={logo} alt="Gulf Coast Palms logo" className="w-full h-auto" />
+          </motion.div>
           <motion.p
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
