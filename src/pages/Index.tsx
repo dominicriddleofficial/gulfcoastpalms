@@ -84,10 +84,13 @@ const Index = () => {
           >
             <a
               href="tel:8509101290"
-              className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-body font-bold text-lg hover:bg-palm-light transition-all shadow-lg shadow-primary/30"
+              className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-body font-bold text-lg hover:bg-palm-light transition-all shadow-lg shadow-primary/30 whitespace-nowrap"
             >
-              <Phone className="w-5 h-5" />
-              Call for a Free Quote (850) 910-1290
+              <Phone className="w-5 h-5 shrink-0" />
+              <span className="flex flex-col sm:flex-row sm:gap-2 items-center leading-tight">
+                <span>Call for a Free Quote</span>
+                <span>(850) 910-1290</span>
+              </span>
             </a>
             <Link
               to="/services"
