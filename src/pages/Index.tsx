@@ -7,6 +7,7 @@ import palmTrimming from "@/assets/palm-trimming.jpg";
 import diamondCutting from "@/assets/diamond-cutting.jpg";
 import trunkSkinning from "@/assets/trunk-skinning.jpg";
 import palmInstall from "@/assets/palm-install.jpg";
+import logo from "@/assets/logo.png";
 
 const services = [
   { title: "Palm Trimming", image: palmTrimming, desc: "Expert trimming to keep your palms healthy and beautiful year-round." },
@@ -65,10 +66,18 @@ const Index = () => {
         </div>
 
         <div className="relative z-10 container mx-auto px-4 text-center">
+          <motion.img
+            src={logo}
+            alt="Gulf Coast Palms logo"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.7 }}
+            className="h-40 md:h-56 w-auto mx-auto mb-6 drop-shadow-2xl"
+          />
           <motion.p
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
             className="font-body text-palm-gold font-semibold uppercase tracking-[0.2em] text-sm mb-4"
           >
             Florida's Gulf Coast Premier Palm Service
