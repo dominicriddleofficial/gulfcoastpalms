@@ -52,19 +52,14 @@ const Index = () => {
         </div>
 
         <div className="relative z-10 container mx-auto px-4 text-center">
-          <motion.div
+          <motion.p
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="flex flex-col items-center gap-3 mb-4"
+            className="font-body text-palm-gold font-semibold uppercase tracking-[0.2em] text-sm mb-4"
           >
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-palm-gold/40 bg-palm-gold/10 font-body text-palm-gold text-xs font-bold uppercase tracking-[0.15em]">
-              ★ Locally Owned & Operated ★
-            </span>
-            <p className="font-body text-palm-gold font-semibold uppercase tracking-[0.2em] text-sm">
-              Palm Tree Trimming & Professional Palm Services from Pensacola to Destin
-            </p>
-          </motion.div>
+            Palm Tree Trimming & Professional Palm Services from Pensacola to Destin
+          </motion.p>
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -118,10 +113,13 @@ const Index = () => {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <motion.p variants={fadeUp} custom={0} className="font-body text-sm uppercase tracking-[0.2em] text-palm-gold font-semibold mb-3">
+            <motion.span variants={fadeUp} custom={0} className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-palm-gold/40 bg-palm-gold/10 font-body text-palm-gold text-xs font-bold uppercase tracking-[0.15em] mb-4">
+              ★ Locally Owned & Operated ★
+            </motion.span>
+            <motion.p variants={fadeUp} custom={1} className="font-body text-sm uppercase tracking-[0.2em] text-palm-gold font-semibold mb-3">
               Why Choose Us
             </motion.p>
-            <motion.h2 variants={fadeUp} custom={1} className="font-display text-4xl md:text-5xl font-bold text-primary-foreground">
+            <motion.h2 variants={fadeUp} custom={2} className="font-display text-4xl md:text-5xl font-bold text-primary-foreground">
               Why Homeowners & Property Managers Choose Gulf Coast Palms
             </motion.h2>
           </motion.div>
