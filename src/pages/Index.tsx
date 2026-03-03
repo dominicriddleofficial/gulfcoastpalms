@@ -6,6 +6,7 @@ import heroImage from "@/assets/hero-palms.jpg";
 import ServicesPreview from "@/components/home/ServicesPreview";
 import Testimonials from "@/components/home/Testimonials";
 import FAQ from "@/components/home/FAQ";
+import GalleryPreview from "@/components/home/GalleryPreview";
 
 const areas = ["Pensacola", "Gulf Breeze", "Navarre", "Fort Walton Beach", "Destin"];
 
@@ -186,6 +187,8 @@ const Index = () => {
           </motion.div>
         </div>
       </section>
+
+      <GalleryPreview />
 
       <Testimonials />
 
