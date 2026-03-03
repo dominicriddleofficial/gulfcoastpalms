@@ -3,17 +3,9 @@ import { Phone, Star, Shield, Clock, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import heroImage from "@/assets/hero-palms.jpg";
-import palmTrimming from "@/assets/palm-trimming.jpg";
-import diamondCutting from "@/assets/diamond-cutting.jpg";
-import trunkSkinning from "@/assets/trunk-skinning.jpg";
-import palmInstall from "@/assets/palm-install.jpg";
-
-const services = [
-  { title: "Palm Trimming", image: palmTrimming, desc: "Expert trimming to keep your palms healthy and beautiful year-round." },
-  { title: "Diamond Cutting", image: diamondCutting, desc: "Precision diamond cut patterns that showcase your palm's natural beauty." },
-  { title: "Trunk Skinning", image: trunkSkinning, desc: "Clean, smooth trunk skinning for a polished, resort-quality look." },
-  { title: "Installs & Removals", image: palmInstall, desc: "Professional palm tree installation and safe removal services." },
-];
+import ServicesPreview from "@/components/home/ServicesPreview";
+import Testimonials from "@/components/home/Testimonials";
+import FAQ from "@/components/home/FAQ";
 
 const stats = [
   { number: "500+", label: "Jobs Completed — Summer 2025 Alone" },
@@ -132,64 +124,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Services Preview */}
-      <section className="section-padding bg-background">
-        <div className="container mx-auto">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            className="text-center mb-16"
-          >
-            <motion.p variants={fadeUp} custom={0} className="font-body text-sm uppercase tracking-[0.2em] text-palm-gold font-semibold mb-3">
-              What We Do
-            </motion.p>
-            <motion.h2 variants={fadeUp} custom={1} className="font-display text-4xl md:text-5xl font-bold text-foreground">
-              Our Services
-            </motion.h2>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {services.map((service, i) => (
-              <motion.div
-                key={service.title}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "-50px" }}
-                variants={fadeUp}
-                custom={i}
-                className="group rounded-2xl overflow-hidden bg-card shadow-lg hover:shadow-xl transition-shadow"
-              >
-                <div className="relative h-56 overflow-hidden">
-                  <img
-                    src={service.image}
-                    alt={`${service.title} service by Gulf Coast Palms`}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    loading="lazy"
-                  />
-                </div>
-                <div className="p-6">
-                  <h3 className="font-display text-xl font-bold text-foreground mb-2">
-                    {service.title}
-                  </h3>
-                  <p className="font-body text-muted-foreground text-sm leading-relaxed">
-                    {service.desc}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <Link
-              to="/services"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-body font-semibold hover:bg-palm-light transition-colors"
-            >
-              View All Services <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
+      <ServicesPreview />
 
       {/* Why Choose Us */}
       <section className="section-padding bg-palm-dark">
@@ -252,6 +187,10 @@ const Index = () => {
           </motion.div>
         </div>
       </section>
+
+      <Testimonials />
+
+      <FAQ />
 
       {/* CTA Section */}
       <section className="section-padding bg-primary">
