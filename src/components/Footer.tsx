@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Phone, MessageSquare, MapPin } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 const Footer = () => {
   return (
@@ -7,9 +8,7 @@ const Footer = () => {
       <div className="container mx-auto section-padding">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
           <div>
-            <h3 className="text-2xl font-display font-bold text-palm-light mb-4">
-              Gulf Coast Palms
-            </h3>
+            <img src={logo} alt="Gulf Coast Palms logo" className="h-16 w-auto mb-4" />
             <p className="font-body text-palm-sand/70 leading-relaxed">
               Professional palm tree services for Florida's Gulf Coast.
               Over 500 jobs completed in the summer of 2025 alone — with 5-star quality.
