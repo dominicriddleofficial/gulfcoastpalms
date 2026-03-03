@@ -69,7 +69,7 @@ const Services = () => {
             transition={{ delay: 0.2 }}
             className="font-body text-lg text-palm-sand/70 max-w-2xl mx-auto"
           >
-            Serving Navarre, Fort Walton Beach, Destin, Pensacola & Gulf Breeze with expert palm care.
+            Serving Navarre, Fort Walton Beach, Destin, Pensacola, Gulf Breeze, Milton, Niceville, Crestview, 30A & Perdido Key.
           </motion.p>
         </div>
       </section>
