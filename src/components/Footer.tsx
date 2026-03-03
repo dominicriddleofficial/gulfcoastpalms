@@ -12,7 +12,7 @@ const Footer = () => {
             </h3>
             <p className="font-body text-palm-sand/70 leading-relaxed">
               Professional palm tree services for Florida's Gulf Coast.
-              Over 500 jobs completed with 5-star quality.
+              Over 500 jobs completed in the summer of 2025 alone — with 5-star quality.
             </p>
           </div>
 
@@ -36,7 +36,7 @@ const Footer = () => {
               </a>
               <p className="inline-flex items-start gap-2 font-body text-palm-sand/70">
                 <MapPin className="w-4 h-4 mt-1 shrink-0" />
-                Serving Navarre, Fort Walton Beach, Destin, Pensacola & Gulf Breeze
+                Serving Navarre, Fort Walton Beach, Destin, Pensacola, Gulf Breeze, Milton, Niceville, Crestview, 30A & Perdido Key
               </p>
             </div>
           </div>

@@ -12,7 +12,7 @@ const fadeUp = {
   }),
 };
 
-const areas = ["Navarre", "Fort Walton Beach", "Destin", "Pensacola", "Gulf Breeze"];
+const areas = ["Navarre", "Fort Walton Beach", "Destin", "Pensacola", "Gulf Breeze", "Milton", "Niceville", "Crestview", "30A", "Perdido Key"];
 
 const About = () => {
   return (
@@ -58,7 +58,7 @@ const About = () => {
               Our Story
             </motion.h2>
             <motion.p variants={fadeUp} custom={1} className="font-body text-muted-foreground leading-relaxed mb-6">
-              Gulf Coast Palms was founded with a simple mission: to provide the highest quality palm tree care on Florida's Gulf Coast. With over 500 palm jobs completed, we've earned the trust of homeowners, property managers, and businesses across the panhandle.
+              Gulf Coast Palms was founded with a simple mission: to provide the highest quality palm tree care on Florida's Gulf Coast. With over 500 palm jobs completed in the summer of 2025 alone, we've earned the trust of homeowners, property managers, and businesses across the panhandle.
             </motion.p>
             <motion.p variants={fadeUp} custom={2} className="font-body text-muted-foreground leading-relaxed mb-6">
               Our team brings years of hands-on experience in palm trimming, diamond cutting, trunk skinning, and professional palm installations and removals. We treat every property like it's our own — with care, precision, and respect.
@@ -87,7 +87,7 @@ const About = () => {
             {[
               { icon: TreePalm, title: "Expert Knowledge", desc: "Deep understanding of palm species native to the Florida panhandle and the best care techniques for our coastal climate." },
               { icon: Heart, title: "Passion for Palms", desc: "We genuinely love what we do. Every cut, every trim, and every install is done with pride and craftsmanship." },
-              { icon: Users, title: "Community Focused", desc: "Proud to serve our neighbors in Navarre, Fort Walton Beach, Destin, Pensacola, and Gulf Breeze." },
+              { icon: Users, title: "Community Focused", desc: "Proud to serve our neighbors across Northwest Florida — from Navarre to Perdido Key and everywhere in between." },
             ].map((item, i) => (
               <motion.div
                 key={item.title}

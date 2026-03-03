@@ -16,12 +16,12 @@ const services = [
 ];
 
 const stats = [
-  { number: "500+", label: "Palm Jobs Completed" },
+  { number: "500+", label: "Jobs Completed — Summer 2025 Alone" },
   { number: "5★", label: "Average Rating" },
   { number: "100%", label: "Satisfaction Guarantee" },
 ];
 
-const areas = ["Navarre", "Fort Walton Beach", "Destin", "Pensacola", "Gulf Breeze"];
+const areas = ["Navarre", "Fort Walton Beach", "Destin", "Pensacola", "Gulf Breeze", "Milton", "Niceville", "Crestview", "30A", "Perdido Key"];
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -43,7 +43,7 @@ const Index = () => {
             "@context": "https://schema.org",
             "@type": "LocalBusiness",
             name: "Gulf Coast Palms",
-            description: "Professional palm tree trimming, diamond cutting, trunk skinning, installations and removals serving Navarre, Fort Walton Beach, Destin, Pensacola, and Gulf Breeze, Florida.",
+            description: "Professional palm tree trimming, diamond cutting, trunk skinning, installations and removals serving Navarre, Fort Walton Beach, Destin, Pensacola, Gulf Breeze, Milton, Niceville, Crestview, 30A, and Perdido Key, Florida.",
             telephone: "(850) 910-1290",
             url: "https://gulfcoastpalmcleaning.com",
             areaServed: areas.map((a) => ({ "@type": "City", name: a + ", FL" })),
@@ -89,7 +89,7 @@ const Index = () => {
             className="font-body text-lg md:text-xl text-palm-sand/80 max-w-2xl mx-auto mb-10"
           >
             Professional palm trimming, diamond cutting, trunk skinning, and installations. 
-            Serving Navarre, Fort Walton Beach, Destin, Pensacola & Gulf Breeze.
+            Serving Navarre, Fort Walton Beach, Destin, Pensacola, Gulf Breeze & beyond.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
