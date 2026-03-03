@@ -7,14 +7,15 @@ import job3 from "@/assets/gallery/job-3.jpeg";
 import job4 from "@/assets/gallery/job-4.jpeg";
 import job5 from "@/assets/gallery/job-5.jpeg";
 import job6 from "@/assets/gallery/job-6.jpeg";
+import job11 from "@/assets/gallery/job-11.jpeg";
 
 const previewImages = [
+  { src: job11, alt: "Luxury condo with trimmed palms lit up at night in Destin FL" },
+  { src: job6, alt: "Beachfront condo palm care at sunset" },
   { src: job1, alt: "Palm trees at coastal home in Navarre Florida" },
   { src: job2, alt: "Aerial view of waterfront property with manicured palms" },
   { src: job3, alt: "Commercial property palm maintenance in Destin" },
   { src: job4, alt: "Residential palm care in Gulf Breeze" },
-  { src: job5, alt: "Palm trimming at parking structure" },
-  { src: job6, alt: "Palms at beachfront condo in Fort Walton Beach" },
 ];
 
 const fadeUp = {
