@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Phone, Star, Shield, Clock, ArrowRight } from "lucide-react";
+import { Phone, Star, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import heroImage from "@/assets/hero-palms.jpg";
@@ -7,13 +7,7 @@ import ServicesPreview from "@/components/home/ServicesPreview";
 import Testimonials from "@/components/home/Testimonials";
 import FAQ from "@/components/home/FAQ";
 
-const stats = [
-  { number: "500+", label: "Jobs Completed — Summer 2025 Alone" },
-  { number: "5★", label: "Average Rating" },
-  { number: "100%", label: "Satisfaction Guarantee" },
-];
-
-const areas = ["Navarre", "Fort Walton Beach", "Destin", "Pensacola", "Gulf Breeze", "Milton", "Niceville", "Crestview", "30A", "Perdido Key"];
+const areas = ["Pensacola", "Gulf Breeze", "Navarre", "Fort Walton Beach", "Destin"];
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -63,7 +57,7 @@ const Index = () => {
             transition={{ duration: 0.5 }}
             className="font-body text-palm-gold font-semibold uppercase tracking-[0.2em] text-sm mb-4"
           >
-            Palm Tree Trimming & Professional Services in Navarre, Destin, Gulf Breeze & Neighboring Areas
+            Palm Tree Trimming & Professional Palm Services from Pensacola to Destin
           </motion.p>
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -71,8 +65,8 @@ const Index = () => {
             transition={{ duration: 0.7, delay: 0.1 }}
             className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-primary-foreground leading-tight mb-6"
           >
-            Your Palms,{" "}
-            <span className="text-gradient-primary">Perfected</span>
+            Resort-Quality Palm Care{" "}
+            <span className="text-gradient-primary">for Florida's Emerald Coast</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -80,7 +74,7 @@ const Index = () => {
             transition={{ duration: 0.7, delay: 0.2 }}
             className="font-body text-lg md:text-xl text-palm-sand/80 max-w-2xl mx-auto mb-10"
           >
-            Your go-to experts for palm trimming, diamond cutting, trunk skinning, and installations.
+            Specializing in palm tree trimming, diamond cutting, trunk skinning, installations, and safe removals for homes, rental properties, HOAs, and waterfront estates in Pensacola, Gulf Breeze, Navarre, Fort Walton Beach, and Destin.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -93,38 +87,18 @@ const Index = () => {
               className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-body font-bold text-lg hover:bg-palm-light transition-all shadow-lg shadow-primary/30"
             >
               <Phone className="w-5 h-5" />
-              (850) 910-1290
+              Call for a Free Quote (850) 910-1290
             </a>
             <Link
               to="/services"
               className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl border-2 border-primary-foreground/30 text-primary-foreground font-body font-semibold text-lg hover:bg-primary-foreground/10 transition-all"
             >
-              View Services
+              View Our Services
               <ArrowRight className="w-5 h-5" />
             </Link>
           </motion.div>
         </div>
       </section>
-
-      {/* Stats Bar */}
-      <section className="bg-primary">
-        <div className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-3 gap-4 text-center">
-            {stats.map((stat) => (
-              <div key={stat.label}>
-                <p className="font-display text-3xl md:text-4xl font-bold text-primary-foreground">
-                  {stat.number}
-                </p>
-                <p className="font-body text-sm text-primary-foreground/70 mt-1">
-                  {stat.label}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <ServicesPreview />
 
       {/* Why Choose Us */}
       <section className="section-padding bg-palm-dark">
@@ -133,39 +107,55 @@ const Index = () => {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-12"
           >
             <motion.p variants={fadeUp} custom={0} className="font-body text-sm uppercase tracking-[0.2em] text-palm-gold font-semibold mb-3">
-              Why Gulf Coast Palms
+              Why Choose Us
             </motion.p>
             <motion.h2 variants={fadeUp} custom={1} className="font-display text-4xl md:text-5xl font-bold text-primary-foreground">
-              Trusted by Homeowners Across the Gulf Coast
+              Why Homeowners & Property Managers Choose Gulf Coast Palms
             </motion.h2>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
             {[
-              { icon: Star, title: "5-Star Quality", desc: "Hundreds of satisfied customers across the Florida panhandle." },
-              { icon: Shield, title: "Fully Insured", desc: "Licensed and insured for your peace of mind on every job." },
-              { icon: Clock, title: "Fast & Reliable", desc: "Quick turnaround with flexible scheduling to fit your needs." },
-            ].map((item, i) => (
+              "500+ Palm Jobs Completed in 2025 Alone",
+              "5-Star Rated Across the Emerald Coast",
+              "Licensed & Insured Professionals",
+              "Specialists in Diamond Cutting & Coastal Palm Care",
+              "Experienced with Large Properties Featuring 100+ Palm Trees",
+              "Trusted by HOAs, Property Managers & Waterfront Estates",
+            ].map((point, i) => (
               <motion.div
-                key={item.title}
+                key={point}
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true }}
                 variants={fadeUp}
                 custom={i}
-                className="text-center p-8 rounded-2xl border border-palm-green/20 bg-palm-dark"
+                className="flex items-start gap-3 p-5 rounded-xl border border-palm-green/20 bg-palm-dark"
               >
-                <item.icon className="w-12 h-12 mx-auto text-palm-gold mb-4" />
-                <h3 className="font-display text-xl font-bold text-primary-foreground mb-3">{item.title}</h3>
-                <p className="font-body text-palm-sand/70">{item.desc}</p>
+                <Star className="w-5 h-5 text-palm-gold shrink-0 mt-0.5" />
+                <p className="font-body text-primary-foreground font-medium">{point}</p>
               </motion.div>
             ))}
           </div>
+
+          <motion.p
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeUp}
+            custom={0}
+            className="font-body text-palm-sand/80 max-w-3xl mx-auto text-center leading-relaxed"
+          >
+            We don't just trim palms — we specialize in them. Our team maintains large-scale properties with 100+ palms and understands proper cutting techniques that protect long-term palm health. We frequently correct damage caused by improper trimming from other companies, ensuring cleaner cuts, stronger crowns, and healthier trees built to withstand Florida storms.
+          </motion.p>
         </div>
       </section>
+
+      <ServicesPreview />
+
 
       {/* Service Areas SEO Section */}
       <section className="section-padding bg-background">
@@ -174,16 +164,22 @@ const Index = () => {
             <motion.p variants={fadeUp} custom={0} className="font-body text-sm uppercase tracking-[0.2em] text-palm-gold font-semibold mb-3">
               Service Areas
             </motion.p>
-            <motion.h2 variants={fadeUp} custom={1} className="font-display text-4xl md:text-5xl font-bold text-foreground mb-8">
-              Serving Florida's Emerald Coast
+            <motion.h2 variants={fadeUp} custom={1} className="font-display text-4xl md:text-5xl font-bold text-foreground mb-4">
+              Service Areas
             </motion.h2>
-            <motion.div variants={fadeUp} custom={2} className="flex flex-wrap justify-center gap-3">
+            <motion.p variants={fadeUp} custom={2} className="font-body text-muted-foreground max-w-2xl mx-auto mb-8">
+              We proudly provide palm tree trimming and professional palm services throughout:
+            </motion.p>
+            <motion.div variants={fadeUp} custom={3} className="flex flex-wrap justify-center gap-3 mb-6">
               {areas.map((area) => (
                 <span key={area} className="px-6 py-3 rounded-full bg-secondary text-secondary-foreground font-body font-medium">
                   {area}, FL
                 </span>
               ))}
             </motion.div>
+            <motion.p variants={fadeUp} custom={4} className="font-body text-muted-foreground">
+              And surrounding Emerald Coast communities.
+            </motion.p>
           </motion.div>
         </div>
       </section>
