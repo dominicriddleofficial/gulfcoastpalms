@@ -11,9 +11,9 @@ import job11 from "@/assets/gallery/job-11.jpeg";
 
 const previewImages = [
   { src: job11, alt: "Luxury condo with trimmed palms lit up at night in Destin FL" },
-  { src: job6, alt: "Beachfront condo palm care at sunset" },
-  { src: job1, alt: "Palm trees at coastal home in Navarre Florida" },
   { src: job2, alt: "Aerial view of waterfront property with manicured palms" },
+  { src: job1, alt: "Palm trees at coastal home in Navarre Florida" },
+  { src: job6, alt: "Beachfront condo palm care at sunset" },
   { src: job3, alt: "Commercial property palm maintenance in Destin" },
   { src: job4, alt: "Residential palm care in Gulf Breeze" },
 ];
