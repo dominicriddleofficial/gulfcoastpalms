@@ -55,10 +55,10 @@ const ServicesPreview = () => (
           What We Do
         </motion.p>
         <motion.h2 variants={fadeUp} custom={1} className="font-display text-4xl md:text-5xl font-bold text-foreground mb-6">
-          Our Services
+          Professional Palm Tree Services
         </motion.h2>
         <motion.p variants={fadeUp} custom={2} className="font-body text-muted-foreground max-w-3xl mx-auto text-base md:text-lg leading-relaxed">
-          From routine maintenance to full-scale installations, Gulf Coast Palms delivers professional palm tree care trusted by homeowners and businesses across Navarre, Fort Walton Beach, Destin, Gulf Breeze, and the entire Emerald Coast. Every job is handled with precision, care, and a commitment to making your property look its absolute best.
+          From routine trimming to precision diamond cutting and full palm installations, we deliver expert palm care tailored to Florida's coastal climate. Every job is handled with precision, safety, and attention to detail — because your landscape deserves more than average work.
         </motion.p>
       </motion.div>
 
