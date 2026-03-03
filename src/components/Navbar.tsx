@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Phone, MessageSquare, Menu, X } from "lucide-react";
+import { Phone, MessageSquare, Menu, X, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { locations } from "@/data/locations";
 
 const navLinks = [
   { label: "Home", to: "/" },
@@ -12,6 +13,7 @@ const navLinks = [
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [areasOpen, setAreasOpen] = useState(false);
   const location = useLocation();
 
   return (
@@ -38,6 +40,38 @@ const Navbar = () => {
               {link.label}
             </Link>
           ))}
+
+          {/* Service Areas Dropdown */}
+          <div className="relative group">
+            <Link
+              to="/service-areas"
+              className={`font-body font-medium text-sm uppercase tracking-wider transition-colors hover:text-primary inline-flex items-center gap-1 ${
+                location.pathname.includes("palm-tree-trimming") || location.pathname === "/service-areas"
+                  ? "text-primary"
+                  : "text-muted-foreground"
+              }`}
+            >
+              Service Areas
+              <ChevronDown className="w-3.5 h-3.5" />
+            </Link>
+            <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+              <div className="bg-card border border-border rounded-xl shadow-xl py-2 min-w-[220px]">
+                {locations.map((loc) => (
+                  <Link
+                    key={loc.slug}
+                    to={`/${loc.slug}`}
+                    className={`block px-4 py-2.5 font-body text-sm hover:bg-secondary transition-colors ${
+                      location.pathname === `/${loc.slug}`
+                        ? "text-primary font-semibold"
+                        : "text-foreground"
+                    }`}
+                  >
+                    {loc.city}, {loc.state}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
         </nav>
 
         {/* CTA buttons */}
@@ -92,6 +126,41 @@ const Navbar = () => {
                   {link.label}
                 </Link>
               ))}
+
+              {/* Mobile Service Areas Accordion */}
+              <button
+                onClick={() => setAreasOpen(!areasOpen)}
+                className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${
+                  location.pathname.includes("palm-tree-trimming") ? "text-primary" : "text-muted-foreground"
+                }`}
+              >
+                Service Areas
+                <ChevronDown className={`w-4 h-4 transition-transform ${areasOpen ? "rotate-180" : ""}`} />
+              </button>
+              <AnimatePresence>
+                {areasOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden flex flex-col items-center gap-2"
+                  >
+                    {locations.map((loc) => (
+                      <Link
+                        key={loc.slug}
+                        to={`/${loc.slug}`}
+                        onClick={() => { setIsOpen(false); setAreasOpen(false); }}
+                        className={`font-body text-sm transition-colors hover:text-primary ${
+                          location.pathname === `/${loc.slug}` ? "text-primary" : "text-muted-foreground"
+                        }`}
+                      >
+                        {loc.city}, {loc.state}
+                      </Link>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <div className="flex gap-3 mt-4">
                 <a
                   href="tel:8509101290"

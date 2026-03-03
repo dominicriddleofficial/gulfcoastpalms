@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
 import { Phone, MessageSquare, MapPin } from "lucide-react";
+import { locations } from "@/data/locations";
 
 const Footer = () => {
   return (
     <footer className="bg-palm-dark text-primary-foreground">
       <div className="container mx-auto section-padding">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           <div>
             <h3 className="text-2xl font-display font-bold text-palm-light mb-4">
               Gulf Coast Palms
@@ -21,7 +22,23 @@ const Footer = () => {
             <nav className="flex flex-col gap-2">
               <Link to="/" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors">Home</Link>
               <Link to="/services" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors">Services</Link>
+              <Link to="/jobs" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors">Jobs Completed</Link>
               <Link to="/about" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors">About Us</Link>
+            </nav>
+          </div>
+
+          <div>
+            <h4 className="font-display font-bold text-lg mb-4">Service Areas</h4>
+            <nav className="flex flex-col gap-2">
+              {locations.map((loc) => (
+                <Link
+                  key={loc.slug}
+                  to={`/${loc.slug}`}
+                  className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm"
+                >
+                  {loc.city}, {loc.state}
+                </Link>
+              ))}
             </nav>
           </div>
 
@@ -36,7 +53,7 @@ const Footer = () => {
               </a>
               <p className="inline-flex items-start gap-2 font-body text-palm-sand/70">
                 <MapPin className="w-4 h-4 mt-1 shrink-0" />
-                Serving Navarre, Fort Walton Beach, Destin, Pensacola, Gulf Breeze, Milton, Niceville, Crestview, 30A & Perdido Key
+                Serving the entire Emerald Coast
               </p>
             </div>
           </div>
