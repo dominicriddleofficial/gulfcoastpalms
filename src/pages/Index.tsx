@@ -71,7 +71,7 @@ const Index = () => {
             transition={{ duration: 0.5 }}
             className="font-body text-palm-gold font-semibold uppercase tracking-[0.2em] text-sm mb-4"
           >
-            Florida's Gulf Coast Premier Palm Service
+            Palm Tree Trimming & Professional Services in Navarre, Destin, Gulf Breeze & Neighboring Areas
           </motion.p>
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -88,8 +88,7 @@ const Index = () => {
             transition={{ duration: 0.7, delay: 0.2 }}
             className="font-body text-lg md:text-xl text-palm-sand/80 max-w-2xl mx-auto mb-10"
           >
-            Professional palm trimming, diamond cutting, trunk skinning, and installations. 
-            Serving Navarre, Fort Walton Beach, Destin, Pensacola, Gulf Breeze & beyond.
+            Your go-to experts for palm trimming, diamond cutting, trunk skinning, and installations.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
