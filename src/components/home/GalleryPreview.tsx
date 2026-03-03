@@ -47,8 +47,9 @@ const GalleryPreview = () => (
         </motion.p>
       </motion.div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-        {previewImages.map((img, i) => (
+      {/* Featured portrait pair */}
+      <div className="grid grid-cols-2 gap-3 md:gap-4 mb-3 md:mb-4">
+        {previewImages.slice(0, 2).map((img, i) => (
           <motion.div
             key={i}
             initial="hidden"
@@ -56,9 +57,30 @@ const GalleryPreview = () => (
             viewport={{ once: true, margin: "-50px" }}
             variants={fadeUp}
             custom={i}
-            className={`group relative overflow-hidden rounded-xl ${
-              i === 1 ? "row-span-2" : ""
-            }`}
+            className="group relative overflow-hidden rounded-xl"
+          >
+            <img
+              src={img.src}
+              alt={img.alt}
+              className="w-full h-full object-cover aspect-[3/4] group-hover:scale-105 transition-transform duration-700"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-palm-dark/0 group-hover:bg-palm-dark/30 transition-colors duration-300" />
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Remaining grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+        {previewImages.slice(2).map((img, i) => (
+          <motion.div
+            key={i + 2}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            variants={fadeUp}
+            custom={i + 2}
+            className="group relative overflow-hidden rounded-xl"
           >
             <img
               src={img.src}
