@@ -65,18 +65,10 @@ const Index = () => {
         </div>
 
         <div className="relative z-10 container mx-auto px-4 text-center">
-          <motion.h2
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7 }}
-            className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-primary-foreground mb-4 drop-shadow-2xl"
-          >
-            Gulf Coast <span className="text-palm-light">Palms</span>
-          </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
+            transition={{ duration: 0.5 }}
             className="font-body text-palm-gold font-semibold uppercase tracking-[0.2em] text-sm mb-4"
           >
             Florida's Gulf Coast Premier Palm Service
