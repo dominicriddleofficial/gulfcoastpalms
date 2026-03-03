@@ -52,14 +52,19 @@ const Index = () => {
         </div>
 
         <div className="relative z-10 container mx-auto px-4 text-center">
-          <motion.p
+          <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="font-body text-palm-gold font-semibold uppercase tracking-[0.2em] text-sm mb-4"
+            className="flex flex-col items-center gap-3 mb-4"
           >
-            Palm Tree Trimming & Professional Palm Services from Pensacola to Destin
-          </motion.p>
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-palm-gold/40 bg-palm-gold/10 font-body text-palm-gold text-xs font-bold uppercase tracking-[0.15em]">
+              ★ Locally Owned & Operated ★
+            </span>
+            <p className="font-body text-palm-gold font-semibold uppercase tracking-[0.2em] text-sm">
+              Palm Tree Trimming & Professional Palm Services from Pensacola to Destin
+            </p>
+          </motion.div>
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
