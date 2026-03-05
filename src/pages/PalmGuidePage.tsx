@@ -77,8 +77,27 @@ const PalmGuidePage = () => {
             ))}
           </motion.article>
 
+          {/* Internal Links */}
+          <div className="mt-12 p-6 rounded-2xl bg-secondary/50 border border-border">
+            <h3 className="font-display text-lg font-bold text-foreground mb-4">Explore More</h3>
+            <div className="flex flex-wrap gap-3">
+              <Link to="/services/palm-tree-trimming" className="inline-flex items-center gap-1 px-4 py-2 rounded-lg bg-card border border-border font-body text-sm text-foreground hover:text-primary hover:border-primary transition-colors">
+                Palm Tree Trimming →
+              </Link>
+              <Link to="/services/palm-tree-installation" className="inline-flex items-center gap-1 px-4 py-2 rounded-lg bg-card border border-border font-body text-sm text-foreground hover:text-primary hover:border-primary transition-colors">
+                Palm Tree Installation →
+              </Link>
+              <Link to="/palm-trees/types" className="inline-flex items-center gap-1 px-4 py-2 rounded-lg bg-card border border-border font-body text-sm text-foreground hover:text-primary hover:border-primary transition-colors">
+                Palm Tree Types →
+              </Link>
+              <Link to="/palm-trees/buy" className="inline-flex items-center gap-1 px-4 py-2 rounded-lg bg-card border border-border font-body text-sm text-foreground hover:text-primary hover:border-primary transition-colors">
+                Buy Palm Trees →
+              </Link>
+            </div>
+          </div>
+
           {/* CTA Box */}
-          <div className="mt-12 p-8 rounded-2xl bg-secondary border border-border text-center">
+          <div className="mt-8 p-8 rounded-2xl bg-secondary border border-border text-center">
             <h3 className="font-display text-2xl font-bold text-foreground mb-3">
               Contact Gulf Coast Palms
             </h3>
@@ -86,11 +105,11 @@ const PalmGuidePage = () => {
               For professional palm trimming or installation throughout the Emerald Coast.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <a href="tel:8509101290" className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-body font-bold hover:bg-palm-light transition-colors">
-                <Phone className="w-5 h-5" /> (850) 910-1290
+              <a href="sms:8509101290" className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-body font-bold hover:bg-palm-light transition-colors">
+                <MessageSquare className="w-5 h-5" /> Text Us a Photo for Instant Quote
               </a>
-              <a href="sms:8509101290" className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border-2 border-primary text-primary font-body font-bold hover:bg-primary hover:text-primary-foreground transition-colors">
-                <MessageSquare className="w-5 h-5" /> Text Us
+              <a href="tel:8509101290" className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border-2 border-primary text-primary font-body font-bold hover:bg-primary hover:text-primary-foreground transition-colors">
+                <Phone className="w-5 h-5" /> (850) 910-1290
               </a>
             </div>
           </div>

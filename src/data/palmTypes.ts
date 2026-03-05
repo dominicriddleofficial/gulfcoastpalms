@@ -206,5 +206,44 @@ export const palmTypes: PalmType[] = [
     ],
     priceRange: "$250 – $1,500 installed (varies by height and trunk caliper)",
     shortDescription: "Graceful feather palm with lush arching fronds. Fast-growing tropical favorite for pools, entrances, and streetscapes."
+  },
+  {
+    slug: "mule-palm",
+    name: "Mule Palm",
+    scientificName: "× Butyagrus nabonnandii",
+    heroDescription: "A stunning hybrid combining the best traits of Pindo and Queen Palms — cold-hardy, fast-growing, and elegant.",
+    description: [
+      "The Mule Palm is a naturally occurring hybrid between the Pindo Palm (Butia odorata) and the Queen Palm (Syagrus romanzoffiana). This rare cross produces a palm that combines the cold hardiness and resilience of the Pindo with the graceful, tropical appearance of the Queen — making it one of the most desirable palms for the Emerald Coast.",
+      "Like a mule (the horse-donkey hybrid), this palm is sterile and does not produce viable seed, which means it must be intentionally crossed and grown from seed each time. This makes Mule Palms rarer and more valuable than either parent species. The result is a robust, fast-growing palm with elegant arching fronds and a clean trunk.",
+      "Mule Palms are increasingly popular among Emerald Coast property owners who want the lush tropical look of a Queen Palm but need better cold tolerance for Northwest Florida's occasional freezes. They're an excellent investment for waterfront estates, HOA communities, and residential properties looking for a distinctive, premium palm."
+    ],
+    height: "25–40 feet tall with a crown spread of 15–20 feet",
+    growthRate: "Moderate — approximately 1.5–3 feet per year",
+    bestRegions: "Excellent throughout the Florida Panhandle including Pensacola, Gulf Breeze, Navarre, Fort Walton Beach, Destin, 30A, and Perdido Key. Performs well in both coastal and slightly inland locations. More cold-tolerant than Queen Palms.",
+    coldHardiness: "Hardy to approximately 15°F (USDA Zone 8b–11) — significantly more cold-hardy than Queen Palms",
+    maintenance: [
+      "Trim annually to remove dead fronds and maintain a clean crown",
+      "Does not produce viable fruit, reducing cleanup compared to parent species",
+      "Fertilize twice annually with a palm-specific slow-release fertilizer",
+      "Generally resistant to most common palm pests and diseases",
+      "Well-drained soil preferred — avoid low, wet planting areas",
+      "Benefits from diamond cutting on mature specimens"
+    ],
+    trimmingRecommendations: [
+      "Remove only dead and dying fronds — never cut green, healthy fronds",
+      "Maintain a full, rounded crown for best appearance and health",
+      "Professional trimming ensures proper technique on this premium species",
+      "Annual trimming is typically sufficient for well-maintained specimens",
+      "Pairs well with trunk skinning for a clean, polished look"
+    ],
+    installationOverview: [
+      "Mule Palms are typically installed as mature specimens due to their rarity",
+      "Proper root ball handling is critical for successful transplanting",
+      "Bracing is recommended for 6–12 months after installation",
+      "Consistent watering during the first growing season ensures strong establishment",
+      "Gulf Coast Palms sources premium Mule Palms and handles complete installation with warranty"
+    ],
+    priceRange: "$500 – $3,500+ installed (varies by height and availability)",
+    shortDescription: "Rare Pindo × Queen hybrid with exceptional cold hardiness and tropical elegance. A premium choice for the Emerald Coast."
   }
 ];

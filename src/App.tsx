@@ -20,18 +20,14 @@ import PalmTypePage from "./pages/PalmTypePage";
 import BuyPalmTrees from "./pages/BuyPalmTrees";
 import PalmCareGuides from "./pages/PalmCareGuides";
 import PalmGuidePage from "./pages/PalmGuidePage";
+import PalmTreeCost from "./pages/PalmTreeCost";
 import NotFound from "./pages/NotFound";
 // Service pages
 import PalmTreeTrimming from "./pages/services/PalmTreeTrimming";
 import PalmTreeInstallation from "./pages/services/PalmTreeInstallation";
 import PalmTreeRemoval from "./pages/services/PalmTreeRemoval";
-import DiamondCutting from "./pages/services/DiamondCutting";
-import TrunkSkinning from "./pages/services/TrunkSkinning";
-import StormCleanup from "./pages/services/StormCleanup";
-import HedgeTrimming from "./pages/services/HedgeTrimming";
-import MulchLandscape from "./pages/services/MulchLandscape";
-import JunkRemoval from "./pages/services/JunkRemoval";
-import PressureWashing from "./pages/services/PressureWashing";
+import PalmDiamondCutting from "./pages/services/PalmDiamondCutting";
+import PalmTreeTrunkSkinning from "./pages/services/PalmTreeTrunkSkinning";
 
 const queryClient = new QueryClient();
 
@@ -47,16 +43,12 @@ const App = () => (
           <Route path="/services/palm-tree-trimming" element={<PalmTreeTrimming />} />
           <Route path="/services/palm-tree-installation" element={<PalmTreeInstallation />} />
           <Route path="/services/palm-tree-removal" element={<PalmTreeRemoval />} />
-          <Route path="/services/diamond-cutting" element={<DiamondCutting />} />
-          <Route path="/services/trunk-skinning" element={<TrunkSkinning />} />
-          <Route path="/services/storm-cleanup" element={<StormCleanup />} />
-          <Route path="/services/hedge-trimming" element={<HedgeTrimming />} />
-          <Route path="/services/mulch-landscape-installation" element={<MulchLandscape />} />
-          <Route path="/services/junk-removal" element={<JunkRemoval />} />
-          <Route path="/services/pressure-washing" element={<PressureWashing />} />
+          <Route path="/services/palm-diamond-cutting" element={<PalmDiamondCutting />} />
+          <Route path="/services/palm-tree-trunk-skinning" element={<PalmTreeTrunkSkinning />} />
           <Route path="/about" element={<About />} />
           <Route path="/jobs" element={<Jobs />} />
           <Route path="/service-areas" element={<ServiceAreas />} />
+          <Route path="/palm-tree-cost" element={<PalmTreeCost />} />
           <Route path="/palm-tree-trimming-pensacola-fl" element={<Pensacola />} />
           <Route path="/palm-tree-trimming-gulf-breeze-fl" element={<GulfBreeze />} />
           <Route path="/palm-tree-trimming-navarre-fl" element={<Navarre />} />

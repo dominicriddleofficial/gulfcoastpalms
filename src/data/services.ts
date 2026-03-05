@@ -11,7 +11,6 @@ export interface ServiceData {
   ctaHeading: string;
   ctaText: string;
   relatedLinks: { label: string; to: string }[];
-  // Optional special sections
   procesSteps?: { step: string; description: string }[];
   bundleSection?: { heading: string; content: string[] };
   warrantySection?: { heading: string; content: string[] };
@@ -44,12 +43,13 @@ export const servicesData: ServiceData[] = [
       "We're trusted by property managers, HOA boards, and homeowners across the Emerald Coast — with over 500 palm jobs completed in 2025 alone."
     ],
     ctaHeading: "Need Professional Palm Trimming?",
-    ctaText: "Call or text today for a free quote. We serve the entire Emerald Coast from Pensacola to 30A.",
+    ctaText: "Text us a photo of your palms for an instant quote. We serve the entire Emerald Coast from Pensacola to 30A.",
     relatedLinks: [
       { label: "Palm Tree Installation", to: "/services/palm-tree-installation" },
       { label: "Buy Palm Trees", to: "/palm-trees/buy" },
-      { label: "Diamond Cutting", to: "/services/diamond-cutting" },
+      { label: "Palm Diamond Cutting", to: "/services/palm-diamond-cutting" },
       { label: "Palm Care Guides", to: "/palm-trees/guides" },
+      { label: "Palm Tree Cost", to: "/palm-tree-cost" },
     ],
   },
   {
@@ -60,7 +60,7 @@ export const servicesData: ServiceData[] = [
     heroSubheading: "Premium Palm Installation with Expert Planting & a 1-Year Warranty",
     introParagraphs: [
       "Transform your property with professionally installed palm trees from Gulf Coast Palms. Whether you're adding a single statement palm or landscaping an entire waterfront estate, we handle every step — from species selection and sourcing to delivery, planting, and aftercare.",
-      "We install Canary Island Date Palms, Sabal Palms, Pindo Palms, Washingtonia Palms, Queen Palms, and more. Each palm is hand-selected for quality and matched to your property's soil conditions, sun exposure, and aesthetic goals.",
+      "We install Canary Island Date Palms, Sabal Palms, Mule Palms, Pindo Palms, Washingtonia Palms, and more. Each palm is hand-selected for quality and matched to your property's soil conditions, sun exposure, and aesthetic goals.",
       "Every palm installed by Gulf Coast Palms includes a 1-year establishment warranty, because we stand behind our work and your investment."
     ],
     benefits: [
@@ -78,19 +78,19 @@ export const servicesData: ServiceData[] = [
       "When you choose Gulf Coast Palms, you're not just getting a tree in the ground — you're getting expert horticultural knowledge and ongoing support to ensure your palms thrive for decades."
     ],
     ctaHeading: "Ready to Add Palms to Your Property?",
-    ctaText: "Call or text today for a free installation quote. We'll help you choose the perfect palms for your landscape.",
+    ctaText: "Text us a photo of your property for an instant installation quote.",
     relatedLinks: [
       { label: "Buy Palm Trees", to: "/palm-trees/buy" },
       { label: "Palm Tree Types", to: "/palm-trees/types" },
       { label: "Palm Tree Trimming", to: "/services/palm-tree-trimming" },
-      { label: "Palm Care Guides", to: "/palm-trees/guides" },
+      { label: "Palm Tree Cost", to: "/palm-tree-cost" },
     ],
     procesSteps: [
       { step: "Choose the Right Palm", description: "We help you select the perfect palm species based on your property's conditions, aesthetic goals, and budget." },
-      { step: "Source High-Quality Palms", description: "We source premium palms from trusted nurseries, hand-selecting each tree for health, form, and size." },
-      { step: "Deliver & Stage Trees", description: "Our crew delivers palms to your property and stages them in optimal positions before planting." },
-      { step: "Hand Plant & Secure Root Ball", description: "Each palm is hand-planted at the correct depth with proper root ball handling to ensure healthy establishment." },
-      { step: "Watering & Soil Conditioning", description: "We complete initial watering, apply appropriate soil amendments, and provide care instructions for the first 90 days." },
+      { step: "Source Healthy, High-Quality Palms", description: "We source premium palms from trusted nurseries, hand-selecting each tree for health, form, and size." },
+      { step: "Deliver Palms to Your Property", description: "Our crew delivers palms to your property and stages them in optimal positions before planting." },
+      { step: "Professionally Plant & Secure Root Ball", description: "Each palm is hand-planted at the correct depth with proper root ball handling to ensure healthy establishment." },
+      { step: "Initial Watering & Soil Conditioning", description: "We complete initial watering, apply appropriate soil amendments, and provide care instructions for the first 90 days." },
     ],
     bundleSection: {
       heading: "Installation + Maintenance Bundle",
@@ -135,23 +135,23 @@ export const servicesData: ServiceData[] = [
       "In many cases, we can transplant a healthy palm rather than remove it, saving the tree while solving the space or placement issue."
     ],
     ctaHeading: "Need a Palm Removed Safely?",
-    ctaText: "Call or text for a free removal estimate. We'll assess the situation and handle it safely.",
+    ctaText: "Text us a photo for an instant removal estimate. We'll assess the situation and handle it safely.",
     relatedLinks: [
       { label: "Palm Tree Installation", to: "/services/palm-tree-installation" },
-      { label: "Storm Cleanup", to: "/services/storm-cleanup" },
       { label: "Palm Tree Trimming", to: "/services/palm-tree-trimming" },
+      { label: "Palm Tree Cost", to: "/palm-tree-cost" },
     ],
   },
   {
-    slug: "diamond-cutting",
-    title: "Diamond Cutting",
-    metaTitle: "Diamond Cutting – Gulf Coast Palms | Emerald Coast FL",
+    slug: "palm-diamond-cutting",
+    title: "Palm Diamond Cutting",
+    metaTitle: "Palm Diamond Cutting – Gulf Coast Palms | Emerald Coast FL",
     metaDescription: "Precision diamond cutting for palm trees. Resort-quality trunk patterns for homes, HOAs & commercial properties on the Emerald Coast.",
     heroSubheading: "Resort-Quality Diamond Cut Patterns That Transform Your Palms",
     introParagraphs: [
       "Diamond cutting is a specialized palm trimming technique that creates a distinctive cross-hatch pattern on palm trunks by carefully sculpting the leaf base stubs. This resort-style finish transforms ordinary palms into stunning landscape focal points that turn heads and elevate your property's curb appeal.",
       "Gulf Coast Palms is one of the few companies on the Emerald Coast that specializes in precision diamond cutting. Our crew creates clean, consistent patterns that last and enhance the palm's natural beauty — the kind of finish you see at luxury resorts, beachfront hotels, and high-end properties.",
-      "Diamond cutting is popular for Canary Island Date Palms, Sabal Palms, and other species with prominent trunk boots. It's a dramatic upgrade that sets your property apart from the rest of the neighborhood."
+      "Diamond cutting is popular for Canary Island Date Palms, Sabal Palms, and other species with prominent trunk boots. It's a dramatic upgrade that sets your property apart from the rest of the neighborhood. Diamond cutting is priced per foot of trunk height being cleaned."
     ],
     benefits: [
       "Resort-quality trunk appearance",
@@ -168,23 +168,24 @@ export const servicesData: ServiceData[] = [
       "Pair diamond cutting with trunk skinning and crown trimming for a complete palm makeover that gives your property a five-star resort feel."
     ],
     ctaHeading: "Want Resort-Quality Diamond Cuts?",
-    ctaText: "Call or text today for a free diamond cutting quote.",
+    ctaText: "Text us a photo for an instant diamond cutting quote.",
     relatedLinks: [
       { label: "Palm Tree Trimming", to: "/services/palm-tree-trimming" },
-      { label: "Trunk Skinning", to: "/services/trunk-skinning" },
+      { label: "Palm Tree Trunk Skinning", to: "/services/palm-tree-trunk-skinning" },
       { label: "Palm Tree Types", to: "/palm-trees/types" },
+      { label: "Palm Tree Cost", to: "/palm-tree-cost" },
     ],
   },
   {
-    slug: "trunk-skinning",
-    title: "Trunk Skinning",
-    metaTitle: "Trunk Skinning – Gulf Coast Palms | Emerald Coast FL",
+    slug: "palm-tree-trunk-skinning",
+    title: "Palm Tree Trunk Skinning",
+    metaTitle: "Palm Tree Trunk Skinning – Gulf Coast Palms | Emerald Coast FL",
     metaDescription: "Professional trunk skinning for a smooth, polished palm appearance. Eliminate pest habitats and enhance curb appeal across the Emerald Coast.",
     heroSubheading: "Smooth, Clean Trunks for a Polished, Resort-Quality Appearance",
     introParagraphs: [
       "Trunk skinning removes the old leaf bases — known as \"boots\" — from the palm trunk, revealing the smooth inner bark beneath. This gives your palms a sleek, manicured appearance that's commonly seen at luxury resorts and coastal properties across the Emerald Coast.",
       "Beyond aesthetics, trunk skinning serves a practical purpose: those old boot stubs create crevices where rodents, insects, and other pests love to nest. Removing them discourages pest activity and makes your palms easier to inspect for health issues.",
-      "Gulf Coast Palms uses proper skinning techniques that avoid damaging the trunk's living tissue. Improper skinning can scar the trunk permanently, so it's essential to hire experienced professionals who understand palm anatomy."
+      "Gulf Coast Palms uses proper skinning techniques that avoid damaging the trunk's living tissue. Trunk skinning is priced per foot of trunk height being cleaned. Improper skinning can scar the trunk permanently, so it's essential to hire experienced professionals who understand palm anatomy."
     ],
     benefits: [
       "Smooth, clean trunk finish",
@@ -201,175 +202,12 @@ export const servicesData: ServiceData[] = [
       "Trunk skinning is often paired with diamond cutting and crown trimming for a complete palm transformation. Ask about our full-service palm makeover packages."
     ],
     ctaHeading: "Ready for a Palm Makeover?",
-    ctaText: "Call or text today for a trunk skinning quote.",
+    ctaText: "Text us a photo for an instant trunk skinning quote.",
     relatedLinks: [
-      { label: "Diamond Cutting", to: "/services/diamond-cutting" },
+      { label: "Palm Diamond Cutting", to: "/services/palm-diamond-cutting" },
       { label: "Palm Tree Trimming", to: "/services/palm-tree-trimming" },
       { label: "Palm Tree Types", to: "/palm-trees/types" },
-    ],
-  },
-  {
-    slug: "storm-cleanup",
-    title: "Storm Cleanup",
-    metaTitle: "Storm Cleanup – Gulf Coast Palms | Emerald Coast FL",
-    metaDescription: "Fast storm damage cleanup for palm trees and landscapes across the Emerald Coast. Emergency response for homes, HOAs & commercial properties.",
-    heroSubheading: "Fast, Professional Storm Damage Cleanup Across the Emerald Coast",
-    introParagraphs: [
-      "Florida's Gulf Coast is no stranger to severe weather. When hurricanes, tropical storms, or heavy winds damage your palms and landscape, Gulf Coast Palms is ready to respond with fast, professional storm cleanup services.",
-      "We handle everything from fallen fronds and broken palms to complete tree removals and large-scale debris clearing. Our crew is experienced with post-storm work on residential properties, HOA communities, commercial complexes, and waterfront estates throughout the Emerald Coast.",
-      "Storm damage demands quick action — fallen palms and hanging fronds pose serious safety risks. We prioritize emergency calls and work efficiently to restore your property to a safe, clean condition as quickly as possible."
-    ],
-    benefits: [
-      "Emergency response for storm damage",
-      "Fallen palm & debris removal",
-      "Hanging frond & hazard elimination",
-      "Large-scale property cleanup",
-      "Complete haul-away & site restoration",
-      "Licensed & insured for safety"
-    ],
-    secondaryHeading: "Storm Preparedness Starts Before the Storm",
-    secondaryContent: [
-      "The best storm cleanup is prevention. Properly trimmed palms with healthy crowns are significantly more resistant to wind damage than neglected or over-trimmed trees. Regular maintenance removes dead fronds that can become projectiles in high winds.",
-      "Gulf Coast Palms offers pre-storm trimming services to help prepare your palms for hurricane season. We evaluate your palms' health, remove hazardous material, and ensure your trees are as storm-ready as possible.",
-      "After a storm, we also assess surviving palms for hidden damage that may not be immediately visible — like root ball displacement, trunk fractures, or crown damage that could lead to future failure."
-    ],
-    ctaHeading: "Need Storm Cleanup?",
-    ctaText: "Call or text us for emergency storm damage response.",
-    relatedLinks: [
-      { label: "Palm Tree Removal", to: "/services/palm-tree-removal" },
-      { label: "Palm Tree Trimming", to: "/services/palm-tree-trimming" },
-      { label: "Junk Removal", to: "/services/junk-removal" },
-    ],
-  },
-  {
-    slug: "hedge-trimming",
-    title: "Hedge Trimming",
-    metaTitle: "Hedge Trimming – Gulf Coast Palms | Emerald Coast FL",
-    metaDescription: "Professional hedge trimming and shaping for residential and commercial properties across the Florida Emerald Coast.",
-    heroSubheading: "Clean, Professional Hedge Trimming for a Polished Landscape",
-    introParagraphs: [
-      "In addition to our palm tree services, Gulf Coast Palms provides professional hedge trimming for residential and commercial properties across the Emerald Coast. Well-maintained hedges complement your palms and create a cohesive, polished landscape that enhances curb appeal.",
-      "Our crew handles hedges of all sizes and species — from ornamental boxwoods and jasmine to large privacy hedges and property-line plantings. We deliver clean lines, uniform shapes, and proper cutting technique that promotes healthy, dense growth.",
-      "Whether you need a one-time cleanup or regular maintenance, we work with homeowners, property managers, and HOA boards to keep landscapes looking their best year-round."
-    ],
-    benefits: [
-      "Clean, uniform hedge shaping",
-      "Promotes healthy, dense growth",
-      "All hedge species and sizes",
-      "Residential & commercial properties",
-      "HOA & property management programs",
-      "Pairs well with palm trimming services"
-    ],
-    secondaryHeading: "Complete Landscape Maintenance",
-    secondaryContent: [
-      "Most of our clients already trust us with their palm trees — so adding hedge trimming to the same service visit is a natural fit. Bundling services saves time, reduces scheduling hassle, and ensures your entire landscape gets professional attention.",
-      "We understand the aesthetic standards expected by Gulf Breeze, Destin, and 30A property owners. Our hedge work is precise, thorough, and always includes complete cleanup.",
-      "Ask about combining hedge trimming with palm care for a comprehensive landscape maintenance package."
-    ],
-    ctaHeading: "Need Hedge Trimming?",
-    ctaText: "Call or text today for a free hedge trimming estimate.",
-    relatedLinks: [
-      { label: "Palm Tree Trimming", to: "/services/palm-tree-trimming" },
-      { label: "Mulch & Landscape Installation", to: "/services/mulch-landscape-installation" },
-    ],
-  },
-  {
-    slug: "mulch-landscape-installation",
-    title: "Mulch & Landscape Installation",
-    metaTitle: "Mulch & Landscape Installation – Gulf Coast Palms | Emerald Coast FL",
-    metaDescription: "Professional mulch delivery and landscape installation across the Emerald Coast. Enhance your property with expert ground cover and planting services.",
-    heroSubheading: "Fresh Mulch & Landscape Enhancements to Complete Your Property",
-    introParagraphs: [
-      "A great landscape starts from the ground up. Gulf Coast Palms provides professional mulch installation and landscape enhancement services throughout the Emerald Coast — from Pensacola and Gulf Breeze to Navarre, Fort Walton Beach, Destin, and 30A.",
-      "Fresh mulch suppresses weeds, retains soil moisture, regulates root temperature, and gives your landscape beds a clean, finished appearance. We offer a variety of mulch types and colors to match your property's aesthetic and can handle everything from small residential beds to large commercial and HOA installations.",
-      "Pair mulch installation with palm tree planting, hedge trimming, or a full landscape refresh for a complete property transformation."
-    ],
-    benefits: [
-      "Weed suppression & moisture retention",
-      "Clean, finished landscape appearance",
-      "Multiple mulch types & colors available",
-      "Residential, commercial & HOA properties",
-      "Delivery, spreading & cleanup included",
-      "Pairs with palm installation & trimming"
-    ],
-    secondaryHeading: "More Than Just Mulch",
-    secondaryContent: [
-      "We also assist with basic landscape installations — adding ground cover, decorative plants, and accent features around your palms and throughout your property. Our goal is to create a cohesive, low-maintenance landscape that looks great and protects your investment.",
-      "Many of our clients combine mulch installation with palm tree services for a complete landscape package. When we're already on-site trimming or installing palms, adding mulch is efficient and cost-effective.",
-      "Contact us to discuss your landscape goals — we'll recommend the right combination of services for your property."
-    ],
-    ctaHeading: "Need Mulch or Landscape Work?",
-    ctaText: "Call or text for a free landscape estimate.",
-    relatedLinks: [
-      { label: "Palm Tree Installation", to: "/services/palm-tree-installation" },
-      { label: "Hedge Trimming", to: "/services/hedge-trimming" },
-      { label: "Buy Palm Trees", to: "/palm-trees/buy" },
-    ],
-  },
-  {
-    slug: "junk-removal",
-    title: "Junk Removal",
-    metaTitle: "Junk Removal – Gulf Coast Palms | Emerald Coast FL",
-    metaDescription: "Professional junk removal and property cleanup across the Emerald Coast. Fast, affordable debris hauling for homes and commercial properties.",
-    heroSubheading: "Fast, Affordable Junk Removal & Property Cleanup",
-    introParagraphs: [
-      "Gulf Coast Palms offers junk removal and property cleanup services across the Emerald Coast. Whether you have yard debris, old landscaping material, construction waste, or general junk that needs to go, our crew handles the heavy lifting and hauling so you don't have to.",
-      "We frequently handle junk removal in conjunction with our palm tree and landscape services — clearing old stumps, removing dead plant material, hauling away storm debris, and cleaning up after large-scale property maintenance projects.",
-      "Our junk removal service is available for residential homes, commercial properties, HOA communities, and vacation rental properties throughout Pensacola, Gulf Breeze, Navarre, Fort Walton Beach, Destin, 30A, and Perdido Key."
-    ],
-    benefits: [
-      "Yard debris & green waste removal",
-      "Old landscaping material hauling",
-      "Storm damage debris cleanup",
-      "Construction waste removal",
-      "Fast turnaround & fair pricing",
-      "Full property cleanup available"
-    ],
-    secondaryHeading: "Clean Properties, Happy Owners",
-    secondaryContent: [
-      "A clean property is a safe property. Accumulated junk, debris, and yard waste can attract pests, create fire hazards, and violate HOA regulations. Our team removes it quickly and responsibly.",
-      "We're especially popular with property managers and vacation rental owners who need fast turnaround between tenants or after storm events.",
-      "Combine junk removal with palm trimming, hedge work, or mulch installation for a comprehensive property cleanup."
-    ],
-    ctaHeading: "Need Junk Removed?",
-    ctaText: "Call or text for a fast, free junk removal quote.",
-    relatedLinks: [
-      { label: "Storm Cleanup", to: "/services/storm-cleanup" },
-      { label: "Palm Tree Removal", to: "/services/palm-tree-removal" },
-      { label: "Mulch & Landscape Installation", to: "/services/mulch-landscape-installation" },
-    ],
-  },
-  {
-    slug: "pressure-washing",
-    title: "Pressure Washing",
-    metaTitle: "Pressure Washing – Gulf Coast Palms | Emerald Coast FL",
-    metaDescription: "Professional pressure washing for driveways, patios, decks & more across the Emerald Coast. Restore your property's appearance today.",
-    heroSubheading: "Restore Your Property's Appearance with Professional Pressure Washing",
-    introParagraphs: [
-      "Florida's humid coastal climate means mold, mildew, algae, and grime build up fast on driveways, patios, sidewalks, decks, fences, and building exteriors. Gulf Coast Palms provides professional pressure washing services to restore your property's appearance and protect your surfaces.",
-      "We offer pressure washing as a complement to our palm tree and landscape services — because a freshly trimmed property with diamond-cut palms deserves clean hardscapes to match. Our team uses professional-grade equipment with adjustable pressure settings to safely clean any surface without damage.",
-      "Pressure washing is especially popular with our HOA and vacation rental clients who need properties looking their best for residents, guests, and curb appeal."
-    ],
-    benefits: [
-      "Driveways, patios & sidewalks",
-      "Decks, fences & pool enclosures",
-      "Building exteriors & entryways",
-      "Mold, mildew & algae removal",
-      "Professional-grade equipment",
-      "Safe for all surface types"
-    ],
-    secondaryHeading: "Protect Your Investment",
-    secondaryContent: [
-      "Regular pressure washing doesn't just improve appearance — it protects your property. Mold, mildew, and algae can deteriorate concrete, wood, and painted surfaces over time. Removing buildup extends the life of your hardscapes and exterior finishes.",
-      "Our crew handles residential driveways, commercial walkways, pool decks, docks, and more. We adjust pressure and technique based on the surface material to ensure thorough cleaning without damage.",
-      "Add pressure washing to your next palm trimming or landscape service for a complete property refresh."
-    ],
-    ctaHeading: "Need Pressure Washing?",
-    ctaText: "Call or text for a free pressure washing estimate.",
-    relatedLinks: [
-      { label: "Palm Tree Trimming", to: "/services/palm-tree-trimming" },
-      { label: "Hedge Trimming", to: "/services/hedge-trimming" },
-      { label: "Junk Removal", to: "/services/junk-removal" },
+      { label: "Palm Tree Cost", to: "/palm-tree-cost" },
     ],
   },
 ];
