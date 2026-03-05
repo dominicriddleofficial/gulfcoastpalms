@@ -26,7 +26,7 @@ export const palmTypes: PalmType[] = [
       "Native to the Canary Islands off the northwest coast of Africa, this species thrives in Florida's subtropical climate. It produces a dense, symmetrical canopy that can span 20–25 feet across, making it an excellent centerpiece tree or grand entrance statement. When properly maintained with diamond cutting and trunk skinning, it becomes a true showpiece.",
       "These palms are drought-tolerant once established and handle Florida's sandy, well-drained soils with ease. They're also moderately wind-resistant when trimmed correctly, making them a solid choice for storm-prone coastal areas — provided they receive professional care."
     ],
-    height: "40–60 feet tall with a crown spread of 20–25 feet",
+    height: "Installed at 8–15 ft | Max height: 30–35 ft",
     growthRate: "Slow to moderate — approximately 1–2 feet per year",
     bestRegions: "Thrives throughout Northwest Florida including Pensacola, Gulf Breeze, Navarre, Fort Walton Beach, Destin, 30A, and Perdido Key. Prefers full sun and well-drained soil. Performs exceptionally well in coastal and waterfront settings.",
     coldHardiness: "Hardy to approximately 20°F (USDA Zone 9a–11)",
@@ -52,8 +52,8 @@ export const palmTypes: PalmType[] = [
       "Irrigation must be consistent during the first growing season",
       "Gulf Coast Palms handles the full installation process including delivery, planting, bracing, and follow-up care"
     ],
-    priceRange: "$800 – $5,000+ installed (varies by height and trunk caliper)",
-    shortDescription: "Iconic luxury palm with a thick textured trunk and massive arching crown. A showpiece for high-end coastal properties."
+    priceRange: "$1,200 – $1,500 installed",
+    shortDescription: "Luxury statement palm with thick trunk and full canopy, common on high-end coastal properties. Final price depends on palm height, delivery distance, and access to the installation area."
   },
   {
     slug: "sabal-palm",
@@ -65,7 +65,7 @@ export const palmTypes: PalmType[] = [
       "As a native species, the Sabal Palm is supremely well-adapted to Florida's soils, climate, and storm conditions. It's one of the most hurricane-resistant palms available, with a flexible trunk that bends rather than breaks in high winds. This makes it an excellent choice for homeowners and property managers concerned about storm preparedness.",
       "Sabal Palms require minimal maintenance compared to many other species, making them a cost-effective long-term investment. They're drought-tolerant, salt-tolerant, and can grow in a wide range of soil types — from sandy coastal lots to inland clay soils."
     ],
-    height: "30–50 feet tall with a crown spread of 10–15 feet",
+    height: "Installed at 8–16 ft | Max height: 30–40 ft",
     growthRate: "Slow — approximately 6–12 inches per year",
     bestRegions: "Native throughout Florida. Performs exceptionally well in Pensacola, Gulf Breeze, Navarre, Fort Walton Beach, Destin, and all Emerald Coast communities. Extremely salt and wind tolerant — ideal for beachfront and waterfront properties.",
     coldHardiness: "Hardy to approximately 15°F (USDA Zone 8a–11)",
@@ -90,8 +90,8 @@ export const palmTypes: PalmType[] = [
       "Established Sabals require very little supplemental irrigation",
       "Gulf Coast Palms sources healthy, well-rooted specimens for all installations"
     ],
-    priceRange: "$250 – $1,200 installed (varies by height)",
-    shortDescription: "Florida's native state tree. Hurricane-resistant, low-maintenance, and perfectly suited to coastal landscapes."
+    priceRange: "$600 – $800 installed",
+    shortDescription: "Florida's native state palm. Extremely hurricane-resistant and ideal for coastal landscapes. Final price depends on palm height, delivery distance, and access to the installation area."
   },
   {
     slug: "pindo-palm",
@@ -103,7 +103,7 @@ export const palmTypes: PalmType[] = [
       "Native to South America, the Pindo Palm has become extremely popular throughout Northwest Florida and the Emerald Coast. It produces clusters of small, orange-yellow fruit that are edible and often used to make jelly — giving it its common nickname. The fruit adds seasonal interest but should be managed to prevent mess on walkways and driveways.",
       "With a mature height of only 15–25 feet, the Pindo Palm is an excellent choice for residential properties where a full-sized palm might be too large. It works beautifully as an accent tree, poolside planting, or grouped in clusters for a tropical grove effect."
     ],
-    height: "15–25 feet tall with a crown spread of 10–15 feet",
+    height: "Installed at 3–6 ft | Max height: 12–15 ft",
     growthRate: "Slow — approximately 6–12 inches per year",
     bestRegions: "Excellent throughout the Florida Panhandle including Pensacola, Gulf Breeze, Navarre, Fort Walton Beach, Destin, 30A, and Perdido Key. One of the best choices for areas that experience occasional cold snaps.",
     coldHardiness: "Hardy to approximately 10°F (USDA Zone 8a–11) — one of the most cold-tolerant palms",
@@ -128,8 +128,8 @@ export const palmTypes: PalmType[] = [
       "Regular watering during the first growing season ensures strong root development",
       "Gulf Coast Palms handles complete installation including site preparation and aftercare guidance"
     ],
-    priceRange: "$200 – $900 installed (varies by height and trunk development)",
-    shortDescription: "Cold-hardy feather palm with striking blue-green fronds. Compact size perfect for residential landscapes."
+    priceRange: "$500 – $700 installed",
+    shortDescription: "Compact cold-hardy palm with blue-green fronds perfect for residential landscapes. Final price depends on palm height, delivery distance, and access to the installation area."
   },
   {
     slug: "washingtonia-palm",
@@ -141,7 +141,7 @@ export const palmTypes: PalmType[] = [
       "Washingtonia Palms are one of the fastest-growing palm species, capable of adding 3–5 feet of height per year under ideal conditions. This makes them a popular choice for property owners who want immediate vertical impact in their landscape. They're commonly planted in rows along driveways, entrance ways, and property borders.",
       "While beautiful, Washingtonia Palms require regular maintenance to remain safe and attractive. Their rapid growth means they produce a large volume of dead fronds that must be removed regularly — both for aesthetics and to prevent fire and pest hazards. At mature heights of 60–80+ feet, professional trimming is essential."
     ],
-    height: "60–80+ feet tall with a crown spread of 10–15 feet",
+    height: "Installed at 8–16 ft | Max height: 40–50 ft",
     growthRate: "Fast — approximately 3–5 feet per year",
     bestRegions: "Grows well throughout the Emerald Coast including Pensacola, Gulf Breeze, Navarre, Fort Walton Beach, Destin, and 30A. Prefers full sun. Commonly found lining streets, commercial properties, and resort entrances.",
     coldHardiness: "Hardy to approximately 20°F (USDA Zone 9a–11)",
@@ -166,8 +166,8 @@ export const palmTypes: PalmType[] = [
       "They establish quickly with consistent watering during the first season",
       "Gulf Coast Palms can source and install Washingtonias at various heights to match your vision"
     ],
-    priceRange: "$300 – $2,000+ installed (varies significantly by height)",
-    shortDescription: "Fast-growing fan palm reaching 80+ feet. Creates dramatic vertical impact for commercial and residential landscapes."
+    priceRange: "$700 – $900 installed",
+    shortDescription: "Fast-growing fan palm that adds dramatic vertical height to landscapes. Final price depends on palm height, delivery distance, and access to the installation area."
   },
   {
     slug: "queen-palm",
@@ -217,7 +217,7 @@ export const palmTypes: PalmType[] = [
       "Like a mule (the horse-donkey hybrid), this palm is sterile and does not produce viable seed, which means it must be intentionally crossed and grown from seed each time. This makes Mule Palms rarer and more valuable than either parent species. The result is a robust, fast-growing palm with elegant arching fronds and a clean trunk.",
       "Mule Palms are increasingly popular among Emerald Coast property owners who want the lush tropical look of a Queen Palm but need better cold tolerance for Northwest Florida's occasional freezes. They're an excellent investment for waterfront estates, HOA communities, and residential properties looking for a distinctive, premium palm."
     ],
-    height: "25–40 feet tall with a crown spread of 15–20 feet",
+    height: "Installed at 3–6 ft | Max height: 12–15 ft",
     growthRate: "Moderate — approximately 1.5–3 feet per year",
     bestRegions: "Excellent throughout the Florida Panhandle including Pensacola, Gulf Breeze, Navarre, Fort Walton Beach, Destin, 30A, and Perdido Key. Performs well in both coastal and slightly inland locations. More cold-tolerant than Queen Palms.",
     coldHardiness: "Hardy to approximately 15°F (USDA Zone 8b–11) — significantly more cold-hardy than Queen Palms",
@@ -243,7 +243,7 @@ export const palmTypes: PalmType[] = [
       "Consistent watering during the first growing season ensures strong establishment",
       "Gulf Coast Palms sources premium Mule Palms and handles complete installation with warranty"
     ],
-    priceRange: "$500 – $3,500+ installed (varies by height and availability)",
-    shortDescription: "Rare Pindo × Queen hybrid with exceptional cold hardiness and tropical elegance. A premium choice for the Emerald Coast."
+    priceRange: "$900 – $1,100 installed",
+    shortDescription: "Cold-hardy hybrid palm combining the beauty of queen palms with the durability of pindo palms. Final price depends on palm height, delivery distance, and access to the installation area."
   }
 ];
