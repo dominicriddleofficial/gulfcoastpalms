@@ -136,19 +136,17 @@ const Navbar = () => {
 
               {/* Mobile Services Accordion */}
               <button onClick={() => setServicesOpen(!servicesOpen)} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.startsWith("/services") ? "text-primary" : "text-muted-foreground"}`}>
-                Services <ChevronDown className={`w-4 h-4 transition-transform ${servicesOpen ? "rotate-180" : ""}`} />
+                Services <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${servicesOpen ? "rotate-180" : ""}`} />
               </button>
-              <AnimatePresence>
-                {servicesOpen && (
-                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden flex flex-col items-center gap-2 max-h-[40vh] overflow-y-auto">
-                    {serviceNavLinks.map((link) => (
-                      <Link key={link.to} to={link.to} onClick={closeAll} className={`font-body text-sm transition-colors hover:text-primary ${location.pathname === link.to ? "text-primary" : "text-muted-foreground"}`}>
-                        {link.label}
-                      </Link>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {servicesOpen && (
+                <div className="flex flex-col items-center gap-2 max-h-[40vh] overflow-y-auto">
+                  {serviceNavLinks.map((link) => (
+                    <Link key={link.to} to={link.to} onClick={closeAll} className={`font-body text-sm transition-colors hover:text-primary ${location.pathname === link.to ? "text-primary" : "text-muted-foreground"}`}>
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
 
               <Link to="/jobs" onClick={closeAll} className={`font-body font-medium text-lg transition-colors hover:text-primary ${location.pathname === "/jobs" ? "text-primary" : "text-muted-foreground"}`}>
                 Jobs Completed
@@ -156,19 +154,17 @@ const Navbar = () => {
 
               {/* Mobile Palm Trees Accordion */}
               <button onClick={() => setPalmsOpen(!palmsOpen)} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.includes("/palm-trees") && location.pathname !== "/palm-trees/buy" ? "text-primary" : "text-muted-foreground"}`}>
-                Palm Trees <ChevronDown className={`w-4 h-4 transition-transform ${palmsOpen ? "rotate-180" : ""}`} />
+                Palm Trees <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${palmsOpen ? "rotate-180" : ""}`} />
               </button>
-              <AnimatePresence>
-                {palmsOpen && (
-                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden flex flex-col items-center gap-2">
-                    {palmTreeLinks.map((link) => (
-                      <Link key={link.to} to={link.to} onClick={closeAll} className={`font-body text-sm transition-colors hover:text-primary ${location.pathname === link.to ? "text-primary" : "text-muted-foreground"}`}>
-                        {link.label}
-                      </Link>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {palmsOpen && (
+                <div className="flex flex-col items-center gap-2">
+                  {palmTreeLinks.map((link) => (
+                    <Link key={link.to} to={link.to} onClick={closeAll} className={`font-body text-sm transition-colors hover:text-primary ${location.pathname === link.to ? "text-primary" : "text-muted-foreground"}`}>
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
 
               <Link to="/palm-trees/buy" onClick={closeAll} className={`font-body font-medium text-lg transition-colors hover:text-primary ${location.pathname === "/palm-trees/buy" ? "text-primary" : "text-muted-foreground"}`}>
                 Buy Palm Trees
@@ -180,19 +176,17 @@ const Navbar = () => {
 
               {/* Mobile Service Areas Accordion */}
               <button onClick={() => setAreasOpen(!areasOpen)} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.includes("palm-tree-trimming") ? "text-primary" : "text-muted-foreground"}`}>
-                Service Areas <ChevronDown className={`w-4 h-4 transition-transform ${areasOpen ? "rotate-180" : ""}`} />
+                Service Areas <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${areasOpen ? "rotate-180" : ""}`} />
               </button>
-              <AnimatePresence>
-                {areasOpen && (
-                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden flex flex-col items-center gap-2 max-h-[40vh] overflow-y-auto">
-                    {locations.map((loc) => (
-                      <Link key={loc.slug} to={`/${loc.slug}`} onClick={closeAll} className={`font-body text-sm transition-colors hover:text-primary ${location.pathname === `/${loc.slug}` ? "text-primary" : "text-muted-foreground"}`}>
-                        {loc.city}, {loc.state}
-                      </Link>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {areasOpen && (
+                <div className="flex flex-col items-center gap-2 max-h-[40vh] overflow-y-auto">
+                  {locations.map((loc) => (
+                    <Link key={loc.slug} to={`/${loc.slug}`} onClick={closeAll} className={`font-body text-sm transition-colors hover:text-primary ${location.pathname === `/${loc.slug}` ? "text-primary" : "text-muted-foreground"}`}>
+                      {loc.city}, {loc.state}
+                    </Link>
+                  ))}
+                </div>
+              )}
 
               <Link to="/about" onClick={closeAll} className={`font-body font-medium text-lg transition-colors hover:text-primary ${location.pathname === "/about" ? "text-primary" : "text-muted-foreground"}`}>
                 About
