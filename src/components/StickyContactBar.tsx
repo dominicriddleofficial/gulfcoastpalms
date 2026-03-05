@@ -15,7 +15,7 @@ const StickyContactBar = () => {
         className="flex-1 flex items-center justify-center gap-2 py-4 text-primary-foreground font-body font-semibold text-sm"
       >
         <MessageSquare className="w-5 h-5" />
-        Text Now
+        Text Us a Photo
       </a>
     </div>
   );

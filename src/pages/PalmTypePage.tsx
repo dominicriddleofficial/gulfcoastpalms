@@ -136,6 +136,25 @@ const PalmTypePage = () => {
               ))}
             </ul>
           </motion.div>
+
+          {/* Internal Links */}
+          <div className="mt-12 p-6 rounded-2xl bg-secondary border border-border">
+            <h3 className="font-display text-lg font-bold text-foreground mb-4">Related Services</h3>
+            <div className="flex flex-wrap gap-3">
+              <Link to="/services/palm-tree-installation" className="inline-flex items-center gap-1 px-4 py-2 rounded-lg bg-card border border-border font-body text-sm text-foreground hover:text-primary hover:border-primary transition-colors">
+                Palm Tree Installation →
+              </Link>
+              <Link to="/services/palm-tree-trimming" className="inline-flex items-center gap-1 px-4 py-2 rounded-lg bg-card border border-border font-body text-sm text-foreground hover:text-primary hover:border-primary transition-colors">
+                Palm Tree Trimming →
+              </Link>
+              <Link to="/palm-trees/buy" className="inline-flex items-center gap-1 px-4 py-2 rounded-lg bg-card border border-border font-body text-sm text-foreground hover:text-primary hover:border-primary transition-colors">
+                Buy Palm Trees →
+              </Link>
+              <Link to="/palm-tree-cost" className="inline-flex items-center gap-1 px-4 py-2 rounded-lg bg-card border border-border font-body text-sm text-foreground hover:text-primary hover:border-primary transition-colors">
+                Palm Tree Cost →
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 

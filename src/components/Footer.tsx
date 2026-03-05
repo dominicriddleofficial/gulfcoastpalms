@@ -38,6 +38,7 @@ const Footer = () => {
               <Link to="/palm-trees/types" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Palm Tree Types</Link>
               <Link to="/palm-trees/buy" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Buy Palm Trees</Link>
               <Link to="/palm-trees/guides" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Palm Care Guides</Link>
+              <Link to="/palm-tree-cost" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Palm Tree Cost</Link>
             </nav>
           </div>
 
@@ -45,11 +46,7 @@ const Footer = () => {
             <h4 className="font-display font-bold text-lg mb-4">Service Areas</h4>
             <nav className="flex flex-col gap-2">
               {locations.map((loc) => (
-                <Link
-                  key={loc.slug}
-                  to={`/${loc.slug}`}
-                  className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm"
-                >
+                <Link key={loc.slug} to={`/${loc.slug}`} className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">
                   {loc.city}, {loc.state}
                 </Link>
               ))}
@@ -63,7 +60,7 @@ const Footer = () => {
                 <Phone className="w-4 h-4" /> (850) 910-1290
               </a>
               <a href="sms:8509101290" className="inline-flex items-center gap-2 font-body text-palm-sand/70 hover:text-palm-light transition-colors">
-                <MessageSquare className="w-4 h-4" /> Text Us
+                <MessageSquare className="w-4 h-4" /> Text Us a Photo
               </a>
               <p className="inline-flex items-start gap-2 font-body text-palm-sand/70">
                 <MapPin className="w-4 h-4 mt-1 shrink-0" />
