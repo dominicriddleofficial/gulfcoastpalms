@@ -11,9 +11,16 @@ const navLinks = [
   { label: "About", to: "/about" },
 ];
 
+const palmTreeLinks = [
+  { label: "Palm Tree Types", to: "/palm-trees/types" },
+  { label: "Buy Palm Trees", to: "/palm-trees/buy" },
+  { label: "Palm Care Guides", to: "/palm-trees/guides" },
+];
+
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [areasOpen, setAreasOpen] = useState(false);
+  const [palmsOpen, setPalmsOpen] = useState(false);
   const location = useLocation();
 
   return (
@@ -40,6 +47,38 @@ const Navbar = () => {
               {link.label}
             </Link>
           ))}
+
+          {/* Palm Trees Dropdown */}
+          <div className="relative group">
+            <Link
+              to="/palm-trees/types"
+              className={`font-body font-medium text-sm uppercase tracking-wider transition-colors hover:text-primary inline-flex items-center gap-1 ${
+                location.pathname.includes("/palm-trees")
+                  ? "text-primary"
+                  : "text-muted-foreground"
+              }`}
+            >
+              Palm Trees
+              <ChevronDown className="w-3.5 h-3.5" />
+            </Link>
+            <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+              <div className="bg-card border border-border rounded-xl shadow-xl py-2 min-w-[220px]">
+                {palmTreeLinks.map((link) => (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    className={`block px-4 py-2.5 font-body text-sm hover:bg-secondary transition-colors ${
+                      location.pathname === link.to
+                        ? "text-primary font-semibold"
+                        : "text-foreground"
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
 
           {/* Service Areas Dropdown */}
           <div className="relative group">
@@ -126,6 +165,40 @@ const Navbar = () => {
                   {link.label}
                 </Link>
               ))}
+
+              {/* Mobile Palm Trees Accordion */}
+              <button
+                onClick={() => setPalmsOpen(!palmsOpen)}
+                className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${
+                  location.pathname.includes("/palm-trees") ? "text-primary" : "text-muted-foreground"
+                }`}
+              >
+                Palm Trees
+                <ChevronDown className={`w-4 h-4 transition-transform ${palmsOpen ? "rotate-180" : ""}`} />
+              </button>
+              <AnimatePresence>
+                {palmsOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden flex flex-col items-center gap-2"
+                  >
+                    {palmTreeLinks.map((link) => (
+                      <Link
+                        key={link.to}
+                        to={link.to}
+                        onClick={() => { setIsOpen(false); setPalmsOpen(false); }}
+                        className={`font-body text-sm transition-colors hover:text-primary ${
+                          location.pathname === link.to ? "text-primary" : "text-muted-foreground"
+                        }`}
+                      >
+                        {link.label}
+                      </Link>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Mobile Service Areas Accordion */}
               <button
