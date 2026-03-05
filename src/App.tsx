@@ -21,6 +21,8 @@ import BuyPalmTrees from "./pages/BuyPalmTrees";
 import PalmCareGuides from "./pages/PalmCareGuides";
 import PalmGuidePage from "./pages/PalmGuidePage";
 import PalmTreeCost from "./pages/PalmTreeCost";
+import HoaCommercialMaintenance from "./pages/HoaCommercialMaintenance";
+import HurricanePalmPreparation from "./pages/HurricanePalmPreparation";
 import NotFound from "./pages/NotFound";
 // Service pages
 import PalmTreeTrimming from "./pages/services/PalmTreeTrimming";
@@ -49,6 +51,8 @@ const App = () => (
           <Route path="/jobs" element={<Jobs />} />
           <Route path="/service-areas" element={<ServiceAreas />} />
           <Route path="/palm-tree-cost" element={<PalmTreeCost />} />
+          <Route path="/hoa-commercial-palm-maintenance" element={<HoaCommercialMaintenance />} />
+          <Route path="/hurricane-palm-preparation" element={<HurricanePalmPreparation />} />
           <Route path="/palm-tree-trimming-pensacola-fl" element={<Pensacola />} />
           <Route path="/palm-tree-trimming-gulf-breeze-fl" element={<GulfBreeze />} />
           <Route path="/palm-tree-trimming-navarre-fl" element={<Navarre />} />

@@ -212,7 +212,11 @@ export const servicesData: ServiceData[] = [
   },
 ];
 
-export const serviceNavLinks = servicesData.map((s) => ({
-  label: s.title,
-  to: `/services/${s.slug}`,
-}));
+export const serviceNavLinks = [
+  ...servicesData.map((s) => ({
+    label: s.title,
+    to: `/services/${s.slug}`,
+  })),
+  { label: "HOA & Commercial Maintenance", to: "/hoa-commercial-palm-maintenance" },
+  { label: "Hurricane Palm Preparation", to: "/hurricane-palm-preparation" },
+];
