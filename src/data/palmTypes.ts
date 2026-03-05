@@ -170,44 +170,6 @@ export const palmTypes: PalmType[] = [
     shortDescription: "Fast-growing fan palm that adds dramatic vertical height to landscapes. Final price depends on palm height, delivery distance, and access to the installation area."
   },
   {
-    slug: "queen-palm",
-    name: "Queen Palm",
-    scientificName: "Syagrus romanzoffiana",
-    heroDescription: "Graceful, fast-growing, and lush — a tropical favorite for Florida landscapes.",
-    description: [
-      "The Queen Palm is one of the most popular landscape palms in Florida, prized for its graceful, arching fronds and smooth, ringed trunk. It creates a lush, tropical canopy that provides filtered shade and elegant movement in coastal breezes — making it a favorite for poolside plantings, entranceways, and residential streetscapes.",
-      "Originally from South America, the Queen Palm has adapted well to Florida's climate and is widely planted throughout the Emerald Coast. It grows relatively quickly and produces large clusters of orange fruit that add seasonal color but require management to prevent mess beneath the tree.",
-      "While beautiful, Queen Palms do have specific care requirements. They're susceptible to nutrient deficiencies — particularly manganese and potassium — which can cause frond discoloration and decline if not addressed. Proper fertilization and professional trimming are key to keeping Queen Palms healthy and attractive long-term."
-    ],
-    height: "30–50 feet tall with a crown spread of 15–25 feet",
-    growthRate: "Moderate to fast — approximately 2–3 feet per year",
-    bestRegions: "Performs well throughout the Florida Panhandle in protected locations. Best in Destin, Fort Walton Beach, 30A, and coastal areas with milder winter temperatures. Benefits from windbreak protection in exposed locations.",
-    coldHardiness: "Hardy to approximately 25°F (USDA Zone 9b–11) — less cold-tolerant than some alternatives",
-    maintenance: [
-      "Requires regular fertilization with a palm-specific formula to prevent nutrient deficiencies",
-      "Trim annually or biannually to remove dead fronds and fruit clusters",
-      "Monitor for manganese and potassium deficiency (yellowing or browning fronds)",
-      "Fruit management is important near walkways, driveways, and pool areas",
-      "Inspect regularly for common pests including palm weevils"
-    ],
-    trimmingRecommendations: [
-      "Remove only fully dead fronds — yellowing fronds are still providing nutrients to the tree",
-      "Cut fruit clusters before they mature to reduce mess and pest attraction",
-      "Never 'hurricane cut' a Queen Palm — this severely weakens the tree",
-      "Professional trimming ensures proper technique that preserves crown health",
-      "Annual trimming is typically sufficient for well-maintained specimens"
-    ],
-    installationOverview: [
-      "Queen Palms transplant well and establish relatively quickly",
-      "Choose a site with full sun and some wind protection for best results",
-      "Proper planting depth is critical — too deep can cause trunk rot",
-      "Consistent irrigation during establishment and ongoing fertilization are essential",
-      "Gulf Coast Palms provides complete installation with aftercare recommendations tailored to your property"
-    ],
-    priceRange: "$250 – $1,500 installed (varies by height and trunk caliper)",
-    shortDescription: "Graceful feather palm with lush arching fronds. Fast-growing tropical favorite for pools, entrances, and streetscapes."
-  },
-  {
     slug: "mule-palm",
     name: "Mule Palm",
     scientificName: "× Butyagrus nabonnandii",
