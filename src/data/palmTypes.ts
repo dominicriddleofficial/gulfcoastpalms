@@ -1,7 +1,15 @@
+import canaryIslandDatePalmImg from "@/assets/palms/canary-island-date-palm-florida-emerald-coast.jpeg";
+import sabalPalmImg from "@/assets/palms/sabal-palm-florida-emerald-coast.jpeg";
+import pindoPalmImg from "@/assets/palms/pindo-palm-florida-emerald-coast.jpeg";
+import washingtoniaPalmImg from "@/assets/palms/washingtonia-palm-florida-emerald-coast.jpeg";
+import mulePalmImg from "@/assets/palms/mule-palm-florida-emerald-coast.webp";
+
 export interface PalmType {
   slug: string;
   name: string;
   scientificName: string;
+  image: string;
+  imageAlt: string;
   heroDescription: string;
   description: string[];
   height: string;
@@ -20,6 +28,8 @@ export const palmTypes: PalmType[] = [
     slug: "canary-island-date-palm",
     name: "Canary Island Date Palm",
     scientificName: "Phoenix canariensis",
+    image: canaryIslandDatePalmImg,
+    imageAlt: "Canary Island Date Palm with diamond-cut trunk installed on Florida Emerald Coast property",
     heroDescription: "The crown jewel of luxury coastal landscaping — massive, majestic, and iconic.",
     description: [
       "The Canary Island Date Palm is one of the most recognizable and sought-after palms for high-end Florida properties. Known for its thick, textured trunk and massive, arching crown of deep green fronds, this palm commands attention in any landscape. It's a favorite among waterfront estates, resort properties, and luxury HOA communities throughout the Emerald Coast.",
@@ -59,6 +69,8 @@ export const palmTypes: PalmType[] = [
     slug: "sabal-palm",
     name: "Sabal Palm",
     scientificName: "Sabal palmetto",
+    image: sabalPalmImg,
+    imageAlt: "Sabal Palm trees growing tall at a Florida Emerald Coast commercial property",
     heroDescription: "Florida's official state tree — hardy, native, and perfectly adapted to coastal life.",
     description: [
       "The Sabal Palm, also known as the Cabbage Palm, is Florida's official state tree and one of the most reliable palms for Gulf Coast landscapes. Its fan-shaped fronds, compact crown, and rugged trunk make it a versatile choice for residential, commercial, and municipal properties across the Emerald Coast.",
@@ -97,6 +109,8 @@ export const palmTypes: PalmType[] = [
     slug: "pindo-palm",
     name: "Pindo Palm",
     scientificName: "Butia odorata",
+    image: pindoPalmImg,
+    imageAlt: "Pindo Palm with blue-green fronds in a Florida landscape garden",
     heroDescription: "A cold-hardy beauty with graceful blue-green fronds and sweet edible fruit.",
     description: [
       "The Pindo Palm, also known as the Jelly Palm, is one of the most cold-hardy feather palms available for Florida landscapes. Its distinctive blue-green to silver-green fronds arch elegantly from a stout trunk, creating a lush, tropical look even in areas that experience occasional freezes.",
@@ -135,6 +149,8 @@ export const palmTypes: PalmType[] = [
     slug: "washingtonia-palm",
     name: "Washingtonia Palm",
     scientificName: "Washingtonia robusta",
+    image: washingtoniaPalmImg,
+    imageAlt: "Washingtonia Palm trees adding vertical height to a modern outdoor patio landscape",
     heroDescription: "Tall, fast-growing, and iconic — the classic silhouette of coastal Florida.",
     description: [
       "The Washingtonia Palm, commonly known as the Mexican Fan Palm, is one of the most recognizable palms in the world. Its tall, slender trunk and compact crown of fan-shaped fronds create the quintessential tropical skyline silhouette that defines coastal communities throughout Florida.",
@@ -173,6 +189,8 @@ export const palmTypes: PalmType[] = [
     slug: "mule-palm",
     name: "Mule Palm",
     scientificName: "× Butyagrus nabonnandii",
+    image: mulePalmImg,
+    imageAlt: "Mule Palm hybrid installed in front of a Florida residential property",
     heroDescription: "A stunning hybrid combining the best traits of Pindo and Queen Palms — cold-hardy, fast-growing, and elegant.",
     description: [
       "The Mule Palm is a naturally occurring hybrid between the Pindo Palm (Butia odorata) and the Queen Palm (Syagrus romanzoffiana). This rare cross produces a palm that combines the cold hardiness and resilience of the Pindo with the graceful, tropical appearance of the Queen — making it one of the most desirable palms for the Emerald Coast.",
