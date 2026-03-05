@@ -164,8 +164,11 @@ const PalmTypePage = () => {
           <h2 className="font-display text-2xl font-bold text-foreground mb-6 text-center">Explore Other Palm Types</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {otherPalms.map((p) => (
-              <Link key={p.slug} to={`/palm-trees/${p.slug}`} className="block p-4 rounded-xl border border-border bg-card hover:shadow-lg transition-all text-center group">
-                <TreePine className="w-8 h-8 text-primary/40 mx-auto mb-2" />
+              <Link key={p.slug} to={`/palm-trees/${p.slug}`} className="block p-4 rounded-xl border border-border bg-card hover:shadow-lg transition-all text-center group overflow-hidden">
+                <div className="w-full aspect-square rounded-lg overflow-hidden bg-secondary mb-2">
+                  <img src={p.image} alt={p.imageAlt} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                </div>
+                <p className="font-display text-sm font-bold text-foreground group-hover:text-primary transition-colors">{p.name}</p>
                 <p className="font-display text-sm font-bold text-foreground group-hover:text-primary transition-colors">{p.name}</p>
               </Link>
             ))}

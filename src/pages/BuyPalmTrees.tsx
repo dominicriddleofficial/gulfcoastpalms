@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Phone, MessageSquare, TreePine, Ruler, DollarSign } from "lucide-react";
+import { Phone, MessageSquare, Ruler, DollarSign } from "lucide-react";
 import Layout from "@/components/Layout";
 import { palmTypes } from "@/data/palmTypes";
 import { Link } from "react-router-dom";
@@ -54,8 +54,8 @@ const BuyPalmTrees = () => {
                 className="rounded-2xl border border-border bg-card overflow-hidden flex flex-col"
               >
                 <div className="p-4">
-                  <div className="w-full aspect-[4/3] rounded-xl bg-secondary flex items-center justify-center">
-                    <TreePine className="w-16 h-16 text-primary/40" />
+                  <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-secondary">
+                    <img src={palm.image} alt={palm.imageAlt} className="w-full h-full object-cover" loading="lazy" />
                   </div>
                 </div>
                 <div className="px-6 pb-6 flex flex-col flex-1">

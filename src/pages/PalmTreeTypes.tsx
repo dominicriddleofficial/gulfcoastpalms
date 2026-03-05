@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Phone, MessageSquare, ArrowRight, TreePine } from "lucide-react";
+import { Phone, MessageSquare, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { palmTypes } from "@/data/palmTypes";
@@ -56,8 +56,8 @@ const PalmTreeTypes = () => {
                   className="block rounded-2xl border border-border bg-card hover:shadow-xl transition-all duration-300 overflow-hidden group h-full"
                 >
                   <div className="p-4">
-                    <div className="w-full aspect-[4/3] rounded-xl bg-secondary flex items-center justify-center mb-4">
-                      <TreePine className="w-16 h-16 text-primary/40" />
+                    <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-secondary">
+                      <img src={palm.image} alt={palm.imageAlt} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
                     </div>
                   </div>
                   <div className="px-6 pb-6">
