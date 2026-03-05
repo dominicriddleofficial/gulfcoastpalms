@@ -23,6 +23,39 @@ const Navbar = () => {
     setPalmsOpen(false);
   };
 
+  const toggleServices = () => {
+    setServicesOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        setPalmsOpen(false);
+        setAreasOpen(false);
+      }
+      return next;
+    });
+  };
+
+  const togglePalms = () => {
+    setPalmsOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        setServicesOpen(false);
+        setAreasOpen(false);
+      }
+      return next;
+    });
+  };
+
+  const toggleAreas = () => {
+    setAreasOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        setServicesOpen(false);
+        setPalmsOpen(false);
+      }
+      return next;
+    });
+  };
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border">
       <div className="container mx-auto flex items-center justify-between h-20 px-4 lg:px-8">
@@ -128,11 +161,11 @@ const Navbar = () => {
             </Link>
 
             {/* Mobile Services Accordion */}
-            <button onClick={() => setServicesOpen(!servicesOpen)} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.startsWith("/services") ? "text-primary" : "text-muted-foreground"}`}>
+            <button onClick={toggleServices} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.startsWith("/services") ? "text-primary" : "text-muted-foreground"}`}>
               Services <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${servicesOpen ? "rotate-180" : ""}`} />
             </button>
             {servicesOpen && (
-              <div className="flex flex-col items-center gap-2 max-h-[40vh] overflow-y-auto">
+              <div className="flex flex-col items-center gap-2 w-full px-4">
                 {serviceNavLinks.map((link) => (
                   <Link key={link.to} to={link.to} onClick={closeAll} className={`font-body text-sm transition-colors hover:text-primary ${location.pathname === link.to ? "text-primary" : "text-muted-foreground"}`}>
                     {link.label}
@@ -146,11 +179,11 @@ const Navbar = () => {
             </Link>
 
             {/* Mobile Palm Trees Accordion */}
-            <button onClick={() => setPalmsOpen(!palmsOpen)} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.includes("/palm-trees") && location.pathname !== "/palm-trees/buy" ? "text-primary" : "text-muted-foreground"}`}>
+            <button onClick={togglePalms} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.includes("/palm-trees") && location.pathname !== "/palm-trees/buy" ? "text-primary" : "text-muted-foreground"}`}>
               Palm Trees <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${palmsOpen ? "rotate-180" : ""}`} />
             </button>
             {palmsOpen && (
-              <div className="flex flex-col items-center gap-2 max-h-[30vh] overflow-y-auto">
+              <div className="flex flex-col items-center gap-2 w-full px-4">
                 {palmTreeLinks.map((link) => (
                   <Link key={link.to} to={link.to} onClick={closeAll} className={`font-body text-sm transition-colors hover:text-primary ${location.pathname === link.to ? "text-primary" : "text-muted-foreground"}`}>
                     {link.label}
@@ -168,11 +201,11 @@ const Navbar = () => {
             </Link>
 
             {/* Mobile Service Areas Accordion */}
-            <button onClick={() => setAreasOpen(!areasOpen)} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.includes("palm-tree-trimming") ? "text-primary" : "text-muted-foreground"}`}>
+            <button onClick={toggleAreas} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.includes("palm-tree-trimming") ? "text-primary" : "text-muted-foreground"}`}>
               Service Areas <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${areasOpen ? "rotate-180" : ""}`} />
             </button>
             {areasOpen && (
-              <div className="flex flex-col items-center gap-2 max-h-[40vh] overflow-y-auto">
+              <div className="flex flex-col items-center gap-2 w-full px-4">
                 {locations.map((loc) => (
                   <Link key={loc.slug} to={`/${loc.slug}`} onClick={closeAll} className={`font-body text-sm transition-colors hover:text-primary ${location.pathname === `/${loc.slug}` ? "text-primary" : "text-muted-foreground"}`}>
                     {loc.city}, {loc.state}
