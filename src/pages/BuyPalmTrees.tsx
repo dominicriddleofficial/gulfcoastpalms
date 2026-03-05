@@ -54,8 +54,8 @@ const BuyPalmTrees = () => {
                 className="rounded-2xl border border-border bg-card overflow-hidden flex flex-col"
               >
                 <div className="p-4">
-                  <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-secondary">
-                    <img src={palm.image} alt={palm.imageAlt} className="w-full h-full object-cover" loading="lazy" />
+                  <div className="w-full aspect-[3/4] rounded-xl overflow-hidden bg-secondary">
+                    <img src={palm.image} alt={palm.imageAlt} className="w-full h-full object-cover object-top" loading="lazy" />
                   </div>
                 </div>
                 <div className="px-6 pb-6 flex flex-col flex-1">
