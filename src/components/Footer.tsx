@@ -1,12 +1,13 @@
 import { Link } from "react-router-dom";
 import { Phone, MessageSquare, MapPin } from "lucide-react";
 import { locations } from "@/data/locations";
+import { serviceNavLinks } from "@/data/services";
 
 const Footer = () => {
   return (
     <footer className="bg-palm-dark text-primary-foreground">
       <div className="container mx-auto section-padding">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12">
           <div>
             <h3 className="text-2xl font-display font-bold text-palm-light mb-4">
               Gulf Coast Palms
@@ -18,15 +19,25 @@ const Footer = () => {
           </div>
 
           <div>
+            <h4 className="font-display font-bold text-lg mb-4">Services</h4>
+            <nav className="flex flex-col gap-2">
+              {serviceNavLinks.map((link) => (
+                <Link key={link.to} to={link.to} className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+
+          <div>
             <h4 className="font-display font-bold text-lg mb-4">Quick Links</h4>
             <nav className="flex flex-col gap-2">
-              <Link to="/" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors">Home</Link>
-              <Link to="/services" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors">Services</Link>
-              <Link to="/jobs" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors">Jobs Completed</Link>
-              <Link to="/about" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors">About Us</Link>
-              <Link to="/palm-trees/types" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors">Palm Tree Types</Link>
-              <Link to="/palm-trees/buy" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors">Buy Palm Trees</Link>
-              <Link to="/palm-trees/guides" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors">Palm Care Guides</Link>
+              <Link to="/" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Home</Link>
+              <Link to="/jobs" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Jobs Completed</Link>
+              <Link to="/about" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">About Us</Link>
+              <Link to="/palm-trees/types" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Palm Tree Types</Link>
+              <Link to="/palm-trees/buy" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Buy Palm Trees</Link>
+              <Link to="/palm-trees/guides" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Palm Care Guides</Link>
             </nav>
           </div>
 

@@ -21,6 +21,17 @@ import BuyPalmTrees from "./pages/BuyPalmTrees";
 import PalmCareGuides from "./pages/PalmCareGuides";
 import PalmGuidePage from "./pages/PalmGuidePage";
 import NotFound from "./pages/NotFound";
+// Service pages
+import PalmTreeTrimming from "./pages/services/PalmTreeTrimming";
+import PalmTreeInstallation from "./pages/services/PalmTreeInstallation";
+import PalmTreeRemoval from "./pages/services/PalmTreeRemoval";
+import DiamondCutting from "./pages/services/DiamondCutting";
+import TrunkSkinning from "./pages/services/TrunkSkinning";
+import StormCleanup from "./pages/services/StormCleanup";
+import HedgeTrimming from "./pages/services/HedgeTrimming";
+import MulchLandscape from "./pages/services/MulchLandscape";
+import JunkRemoval from "./pages/services/JunkRemoval";
+import PressureWashing from "./pages/services/PressureWashing";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +44,16 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/services" element={<Services />} />
+          <Route path="/services/palm-tree-trimming" element={<PalmTreeTrimming />} />
+          <Route path="/services/palm-tree-installation" element={<PalmTreeInstallation />} />
+          <Route path="/services/palm-tree-removal" element={<PalmTreeRemoval />} />
+          <Route path="/services/diamond-cutting" element={<DiamondCutting />} />
+          <Route path="/services/trunk-skinning" element={<TrunkSkinning />} />
+          <Route path="/services/storm-cleanup" element={<StormCleanup />} />
+          <Route path="/services/hedge-trimming" element={<HedgeTrimming />} />
+          <Route path="/services/mulch-landscape-installation" element={<MulchLandscape />} />
+          <Route path="/services/junk-removal" element={<JunkRemoval />} />
+          <Route path="/services/pressure-washing" element={<PressureWashing />} />
           <Route path="/about" element={<About />} />
           <Route path="/jobs" element={<Jobs />} />
           <Route path="/service-areas" element={<ServiceAreas />} />
@@ -43,7 +64,6 @@ const App = () => (
           <Route path="/palm-tree-trimming-destin-fl" element={<Destin />} />
           <Route path="/palm-tree-trimming-30a-fl" element={<ThirtyA />} />
           <Route path="/palm-tree-trimming-perdido-key-fl" element={<PerdidoKey />} />
-          {/* Palm Trees section */}
           <Route path="/palm-trees/types" element={<PalmTreeTypes />} />
           <Route path="/palm-trees/buy" element={<BuyPalmTrees />} />
           <Route path="/palm-trees/guides" element={<PalmCareGuides />} />

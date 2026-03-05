@@ -104,6 +104,17 @@ const ServicesPreview = () => (
           View All Services <ArrowRight className="w-4 h-4" />
         </Link>
       </div>
+
+      {/* Internal links for SEO */}
+      <div className="mt-8 flex flex-wrap justify-center gap-3">
+        <Link to="/services/palm-tree-trimming" className="font-body text-sm text-primary hover:underline">Palm Tree Trimming</Link>
+        <span className="text-muted-foreground">·</span>
+        <Link to="/services/palm-tree-installation" className="font-body text-sm text-primary hover:underline">Palm Tree Installation</Link>
+        <span className="text-muted-foreground">·</span>
+        <Link to="/services/diamond-cutting" className="font-body text-sm text-primary hover:underline">Diamond Cutting</Link>
+        <span className="text-muted-foreground">·</span>
+        <Link to="/palm-trees/buy" className="font-body text-sm text-primary hover:underline">Buy Palm Trees</Link>
+      </div>
     </div>
   </section>
 );
