@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Phone, MessageSquare, Menu, X, ChevronDown } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { locations } from "@/data/locations";
 import { serviceNavLinks } from "@/data/services";
 
@@ -121,89 +120,82 @@ const Navbar = () => {
       </div>
 
       {/* Mobile Nav */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="lg:hidden overflow-hidden bg-background border-b border-border"
-          >
-            <nav className="flex flex-col items-center gap-4 py-6 max-h-[75vh] overflow-y-auto">
-              <Link to="/" onClick={closeAll} className={`font-body font-medium text-lg transition-colors hover:text-primary ${location.pathname === "/" ? "text-primary" : "text-muted-foreground"}`}>
-                Home
-              </Link>
+      {isOpen && (
+        <div className="lg:hidden bg-background border-b border-border animate-fade-in">
+          <nav className="flex flex-col items-center gap-4 py-6 max-h-[75vh] overflow-y-auto">
+            <Link to="/" onClick={closeAll} className={`font-body font-medium text-lg transition-colors hover:text-primary ${location.pathname === "/" ? "text-primary" : "text-muted-foreground"}`}>
+              Home
+            </Link>
 
-              {/* Mobile Services Accordion */}
-              <button onClick={() => setServicesOpen(!servicesOpen)} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.startsWith("/services") ? "text-primary" : "text-muted-foreground"}`}>
-                Services <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${servicesOpen ? "rotate-180" : ""}`} />
-              </button>
-              {servicesOpen && (
-                <div className="flex flex-col items-center gap-2 max-h-[40vh] overflow-y-auto">
-                  {serviceNavLinks.map((link) => (
-                    <Link key={link.to} to={link.to} onClick={closeAll} className={`font-body text-sm transition-colors hover:text-primary ${location.pathname === link.to ? "text-primary" : "text-muted-foreground"}`}>
-                      {link.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
-
-              <Link to="/jobs" onClick={closeAll} className={`font-body font-medium text-lg transition-colors hover:text-primary ${location.pathname === "/jobs" ? "text-primary" : "text-muted-foreground"}`}>
-                Jobs Completed
-              </Link>
-
-              {/* Mobile Palm Trees Accordion */}
-              <button onClick={() => setPalmsOpen(!palmsOpen)} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.includes("/palm-trees") && location.pathname !== "/palm-trees/buy" ? "text-primary" : "text-muted-foreground"}`}>
-                Palm Trees <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${palmsOpen ? "rotate-180" : ""}`} />
-              </button>
-              {palmsOpen && (
-                <div className="flex flex-col items-center gap-2">
-                  {palmTreeLinks.map((link) => (
-                    <Link key={link.to} to={link.to} onClick={closeAll} className={`font-body text-sm transition-colors hover:text-primary ${location.pathname === link.to ? "text-primary" : "text-muted-foreground"}`}>
-                      {link.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
-
-              <Link to="/palm-trees/buy" onClick={closeAll} className={`font-body font-medium text-lg transition-colors hover:text-primary ${location.pathname === "/palm-trees/buy" ? "text-primary" : "text-muted-foreground"}`}>
-                Buy Palm Trees
-              </Link>
-
-              <Link to="/palm-tree-cost" onClick={closeAll} className={`font-body font-medium text-lg transition-colors hover:text-primary ${location.pathname === "/palm-tree-cost" ? "text-primary" : "text-muted-foreground"}`}>
-                Palm Tree Cost
-              </Link>
-
-              {/* Mobile Service Areas Accordion */}
-              <button onClick={() => setAreasOpen(!areasOpen)} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.includes("palm-tree-trimming") ? "text-primary" : "text-muted-foreground"}`}>
-                Service Areas <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${areasOpen ? "rotate-180" : ""}`} />
-              </button>
-              {areasOpen && (
-                <div className="flex flex-col items-center gap-2 max-h-[40vh] overflow-y-auto">
-                  {locations.map((loc) => (
-                    <Link key={loc.slug} to={`/${loc.slug}`} onClick={closeAll} className={`font-body text-sm transition-colors hover:text-primary ${location.pathname === `/${loc.slug}` ? "text-primary" : "text-muted-foreground"}`}>
-                      {loc.city}, {loc.state}
-                    </Link>
-                  ))}
-                </div>
-              )}
-
-              <Link to="/about" onClick={closeAll} className={`font-body font-medium text-lg transition-colors hover:text-primary ${location.pathname === "/about" ? "text-primary" : "text-muted-foreground"}`}>
-                About
-              </Link>
-
-              <div className="flex flex-col gap-3 mt-4 w-full max-w-xs">
-                <a href="sms:8509101290" className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-primary text-primary-foreground font-body font-semibold">
-                  <MessageSquare className="w-4 h-4" /> Text Us a Photo for Instant Quote
-                </a>
-                <a href="tel:8509101290" className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg border-2 border-primary text-primary font-body font-semibold">
-                  <Phone className="w-4 h-4" /> Call (850) 910-1290
-                </a>
+            {/* Mobile Services Accordion */}
+            <button onClick={() => setServicesOpen(!servicesOpen)} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.startsWith("/services") ? "text-primary" : "text-muted-foreground"}`}>
+              Services <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${servicesOpen ? "rotate-180" : ""}`} />
+            </button>
+            {servicesOpen && (
+              <div className="flex flex-col items-center gap-2 max-h-[40vh] overflow-y-auto">
+                {serviceNavLinks.map((link) => (
+                  <Link key={link.to} to={link.to} onClick={closeAll} className={`font-body text-sm transition-colors hover:text-primary ${location.pathname === link.to ? "text-primary" : "text-muted-foreground"}`}>
+                    {link.label}
+                  </Link>
+                ))}
               </div>
-            </nav>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            )}
+
+            <Link to="/jobs" onClick={closeAll} className={`font-body font-medium text-lg transition-colors hover:text-primary ${location.pathname === "/jobs" ? "text-primary" : "text-muted-foreground"}`}>
+              Jobs Completed
+            </Link>
+
+            {/* Mobile Palm Trees Accordion */}
+            <button onClick={() => setPalmsOpen(!palmsOpen)} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.includes("/palm-trees") && location.pathname !== "/palm-trees/buy" ? "text-primary" : "text-muted-foreground"}`}>
+              Palm Trees <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${palmsOpen ? "rotate-180" : ""}`} />
+            </button>
+            {palmsOpen && (
+              <div className="flex flex-col items-center gap-2 max-h-[30vh] overflow-y-auto">
+                {palmTreeLinks.map((link) => (
+                  <Link key={link.to} to={link.to} onClick={closeAll} className={`font-body text-sm transition-colors hover:text-primary ${location.pathname === link.to ? "text-primary" : "text-muted-foreground"}`}>
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            <Link to="/palm-trees/buy" onClick={closeAll} className={`font-body font-medium text-lg transition-colors hover:text-primary ${location.pathname === "/palm-trees/buy" ? "text-primary" : "text-muted-foreground"}`}>
+              Buy Palm Trees
+            </Link>
+
+            <Link to="/palm-tree-cost" onClick={closeAll} className={`font-body font-medium text-lg transition-colors hover:text-primary ${location.pathname === "/palm-tree-cost" ? "text-primary" : "text-muted-foreground"}`}>
+              Palm Tree Cost
+            </Link>
+
+            {/* Mobile Service Areas Accordion */}
+            <button onClick={() => setAreasOpen(!areasOpen)} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.includes("palm-tree-trimming") ? "text-primary" : "text-muted-foreground"}`}>
+              Service Areas <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${areasOpen ? "rotate-180" : ""}`} />
+            </button>
+            {areasOpen && (
+              <div className="flex flex-col items-center gap-2 max-h-[40vh] overflow-y-auto">
+                {locations.map((loc) => (
+                  <Link key={loc.slug} to={`/${loc.slug}`} onClick={closeAll} className={`font-body text-sm transition-colors hover:text-primary ${location.pathname === `/${loc.slug}` ? "text-primary" : "text-muted-foreground"}`}>
+                    {loc.city}, {loc.state}
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            <Link to="/about" onClick={closeAll} className={`font-body font-medium text-lg transition-colors hover:text-primary ${location.pathname === "/about" ? "text-primary" : "text-muted-foreground"}`}>
+              About
+            </Link>
+
+            <div className="flex flex-col gap-3 mt-4 w-full max-w-xs">
+              <a href="sms:8509101290" className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-primary text-primary-foreground font-body font-semibold">
+                <MessageSquare className="w-4 h-4" /> Text Us a Photo for Instant Quote
+              </a>
+              <a href="tel:8509101290" className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg border-2 border-primary text-primary font-body font-semibold">
+                <Phone className="w-4 h-4" /> Call (850) 910-1290
+              </a>
+            </div>
+          </nav>
+        </div>
+      )}
     </header>
   );
 };
