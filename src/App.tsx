@@ -30,6 +30,8 @@ import PalmTreeInstallation from "./pages/services/PalmTreeInstallation";
 import PalmTreeRemoval from "./pages/services/PalmTreeRemoval";
 import PalmDiamondCutting from "./pages/services/PalmDiamondCutting";
 import PalmTreeTrunkSkinning from "./pages/services/PalmTreeTrunkSkinning";
+import TreeTrimmingRemoval from "./pages/services/TreeTrimmingRemoval";
+import LandscapingServices from "./pages/services/LandscapingServices";
 
 const queryClient = new QueryClient();
 
