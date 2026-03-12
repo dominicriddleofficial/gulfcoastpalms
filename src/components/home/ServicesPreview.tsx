@@ -134,6 +134,10 @@ const ServicesPreview = () => (
         <Link to="/palm-trees/buy" className="font-body text-sm text-primary hover:underline">Buy Palm Trees</Link>
         <span className="text-muted-foreground">·</span>
         <Link to="/palm-tree-cost" className="font-body text-sm text-primary hover:underline">Palm Tree Cost</Link>
+        <span className="text-muted-foreground">·</span>
+        <Link to="/services/tree-trimming-removal" className="font-body text-sm text-primary hover:underline">Tree Trimming & Removal</Link>
+        <span className="text-muted-foreground">·</span>
+        <Link to="/services/landscaping-services" className="font-body text-sm text-primary hover:underline">Landscaping Services</Link>
       </div>
     </div>
   </section>
