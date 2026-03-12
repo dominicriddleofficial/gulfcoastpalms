@@ -217,6 +217,8 @@ export const serviceNavLinks = [
     label: s.title,
     to: `/services/${s.slug}`,
   })),
+  { label: "Tree Trimming & Removal", to: "/services/tree-trimming-removal" },
+  { label: "Landscaping Services", to: "/services/landscaping-services" },
   { label: "HOA & Commercial Maintenance", to: "/hoa-commercial-palm-maintenance" },
   { label: "Hurricane Palm Preparation", to: "/hurricane-palm-preparation" },
 ];

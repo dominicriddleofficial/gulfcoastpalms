@@ -30,6 +30,8 @@ import PalmTreeInstallation from "./pages/services/PalmTreeInstallation";
 import PalmTreeRemoval from "./pages/services/PalmTreeRemoval";
 import PalmDiamondCutting from "./pages/services/PalmDiamondCutting";
 import PalmTreeTrunkSkinning from "./pages/services/PalmTreeTrunkSkinning";
+import TreeTrimmingRemoval from "./pages/services/TreeTrimmingRemoval";
+import LandscapingServices from "./pages/services/LandscapingServices";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +49,8 @@ const App = () => (
           <Route path="/services/palm-tree-removal" element={<PalmTreeRemoval />} />
           <Route path="/services/palm-diamond-cutting" element={<PalmDiamondCutting />} />
           <Route path="/services/palm-tree-trunk-skinning" element={<PalmTreeTrunkSkinning />} />
+          <Route path="/services/tree-trimming-removal" element={<TreeTrimmingRemoval />} />
+          <Route path="/services/landscaping-services" element={<LandscapingServices />} />
           <Route path="/about" element={<About />} />
           <Route path="/jobs" element={<Jobs />} />
           <Route path="/service-areas" element={<ServiceAreas />} />

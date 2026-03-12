@@ -35,6 +35,20 @@ const services = [
     desc: "Professional palm tree installation and safe removal services.",
     seo: "Whether you're adding tropical character to your landscape or need a dead or dangerous palm removed, we handle the job safely and efficiently. We source high-quality palms suited for the Gulf Coast climate and ensure proper planting for long-term health.",
   },
+  {
+    title: "Tree Trimming & Removal",
+    image: palmTrimming,
+    link: "/services/tree-trimming-removal",
+    desc: "Expert trimming and safe removal for oaks, pines, crape myrtles, and more.",
+    seo: "Professional tree trimming and removal for all common tree species across the Emerald Coast. Crown thinning, hazard branch removal, storm damage cleanup, and complete debris haul-away for residential and commercial properties.",
+  },
+  {
+    title: "Landscaping Services",
+    image: palmInstall,
+    link: "/services/landscaping-services",
+    desc: "Hedge trimming, mulch, pine straw, sod installation, and bed cleanups.",
+    seo: "Full-service landscaping support including professional hedge trimming, mulch and pine straw installation, sod, and seasonal bed cleanups. Keep your entire property looking its best alongside expert palm care.",
+  },
 ];
 
 const fadeUp = {
@@ -120,6 +134,10 @@ const ServicesPreview = () => (
         <Link to="/palm-trees/buy" className="font-body text-sm text-primary hover:underline">Buy Palm Trees</Link>
         <span className="text-muted-foreground">·</span>
         <Link to="/palm-tree-cost" className="font-body text-sm text-primary hover:underline">Palm Tree Cost</Link>
+        <span className="text-muted-foreground">·</span>
+        <Link to="/services/tree-trimming-removal" className="font-body text-sm text-primary hover:underline">Tree Trimming & Removal</Link>
+        <span className="text-muted-foreground">·</span>
+        <Link to="/services/landscaping-services" className="font-body text-sm text-primary hover:underline">Landscaping Services</Link>
       </div>
     </div>
   </section>
