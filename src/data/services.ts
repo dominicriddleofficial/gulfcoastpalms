@@ -32,7 +32,7 @@ export const servicesData: ServiceData[] = [
       "Prevents storm damage from loose or dead fronds",
       "Promotes healthier, stronger palm growth",
       "Improves property curb appeal and value",
-      "Safe removal of coconuts, seed pods & flower stalks",
+      "Safe removal of seed pods & flower stalks",
       "Proper technique preserves the palm's natural canopy",
       "Experienced with large-scale HOA & commercial properties"
     ],
