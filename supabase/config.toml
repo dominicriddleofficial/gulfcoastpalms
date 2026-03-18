@@ -2,3 +2,9 @@ project_id = "qczcwyqpnxknqbmwpvna"
 
 [functions.notify-lead]
 verify_jwt = false
+
+[functions.chat-assistant]
+verify_jwt = false
+
+[functions.process-email-drip]
+verify_jwt = false
