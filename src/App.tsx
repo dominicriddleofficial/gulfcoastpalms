@@ -72,6 +72,9 @@ const App = () => (
           <Route path="/palm-trees/guides" element={<PalmCareGuides />} />
           <Route path="/palm-trees/guides/:slug" element={<PalmGuidePage />} />
           <Route path="/palm-trees/:slug" element={<PalmTypePage />} />
+          <Route path="/thank-you" element={<ThankYou />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={<AdminDashboard />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
