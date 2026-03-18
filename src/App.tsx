@@ -23,6 +23,9 @@ import PalmGuidePage from "./pages/PalmGuidePage";
 import PalmTreeCost from "./pages/PalmTreeCost";
 import HoaCommercialMaintenance from "./pages/HoaCommercialMaintenance";
 import HurricanePalmPreparation from "./pages/HurricanePalmPreparation";
+import ThankYou from "./pages/ThankYou";
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 import NotFound from "./pages/NotFound";
 // Service pages
 import PalmTreeTrimming from "./pages/services/PalmTreeTrimming";
