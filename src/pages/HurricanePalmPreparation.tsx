@@ -15,7 +15,7 @@ const fadeUp = {
 const hazards = [
   "Flying debris from loose or dead fronds",
   "Broken fronds damaging roofs, vehicles, and structures",
-  "Falling seed pods and coconuts becoming projectiles",
+  "Falling seed pods becoming projectiles",
   "Safety hazards for residents, guests, and pedestrians",
 ];
 
