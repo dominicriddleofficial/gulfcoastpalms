@@ -24,6 +24,9 @@ import PalmTreeCost from "./pages/PalmTreeCost";
 import HoaCommercialMaintenance from "./pages/HoaCommercialMaintenance";
 import HurricanePalmPreparation from "./pages/HurricanePalmPreparation";
 import ThankYou from "./pages/ThankYou";
+import Referral from "./pages/Referral";
+import Payments from "./pages/Payments";
+import TextConsent from "./pages/TextConsent";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import NotFound from "./pages/NotFound";
@@ -73,6 +76,9 @@ const App = () => (
           <Route path="/palm-trees/guides/:slug" element={<PalmGuidePage />} />
           <Route path="/palm-trees/:slug" element={<PalmTypePage />} />
           <Route path="/thank-you" element={<ThankYou />} />
+          <Route path="/referral" element={<Referral />} />
+          <Route path="/payments" element={<Payments />} />
+          <Route path="/text-consent" element={<TextConsent />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="*" element={<NotFound />} />
