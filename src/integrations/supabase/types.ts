@@ -14,16 +14,298 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chat_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          updated_at: string
+          visitor_email: string | null
+          visitor_id: string
+          visitor_name: string | null
+          visitor_phone: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          updated_at?: string
+          visitor_email?: string | null
+          visitor_id: string
+          visitor_name?: string | null
+          visitor_phone?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          updated_at?: string
+          visitor_email?: string | null
+          visitor_id?: string
+          visitor_name?: string | null
+          visitor_phone?: string | null
+        }
+        Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          role: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          role: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_drip_enrollments: {
+        Row: {
+          created_at: string
+          current_step: number
+          id: string
+          lead_id: string
+          next_send_at: string | null
+          sequence_type: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          current_step?: number
+          id?: string
+          lead_id: string
+          next_send_at?: string | null
+          sequence_type?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          current_step?: number
+          id?: string
+          lead_id?: string
+          next_send_at?: string | null
+          sequence_type?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_drip_enrollments_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          amount: number
+          created_at: string
+          customer_name: string
+          description: string | null
+          email: string | null
+          id: string
+          payment_link: string | null
+          phone: string | null
+          status: string
+          type: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          customer_name: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          payment_link?: string | null
+          phone?: string | null
+          status?: string
+          type?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          customer_name?: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          payment_link?: string | null
+          phone?: string | null
+          status?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      leads: {
+        Row: {
+          created_at: string
+          email: string | null
+          follow_up_date: string | null
+          id: string
+          last_contacted: string | null
+          location: string | null
+          message: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          service: string | null
+          source: string | null
+          sqft: number | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          follow_up_date?: string | null
+          id?: string
+          last_contacted?: string | null
+          location?: string | null
+          message?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          service?: string | null
+          source?: string | null
+          sqft?: number | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          follow_up_date?: string | null
+          id?: string
+          last_contacted?: string | null
+          location?: string | null
+          message?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          service?: string | null
+          source?: string | null
+          sqft?: number | null
+          status?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          referred_email: string | null
+          referred_name: string
+          referred_phone: string | null
+          referred_service: string | null
+          referrer_email: string | null
+          referrer_name: string
+          referrer_phone: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          referred_email?: string | null
+          referred_name: string
+          referred_phone?: string | null
+          referred_service?: string | null
+          referrer_email?: string | null
+          referrer_name: string
+          referrer_phone?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          referred_email?: string | null
+          referred_name?: string
+          referred_phone?: string | null
+          referred_service?: string | null
+          referrer_email?: string | null
+          referrer_name?: string
+          referrer_phone?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      text_consents: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: string | null
+          name: string
+          phone: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          name: string
+          phone: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          name?: string
+          phone?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +432,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const

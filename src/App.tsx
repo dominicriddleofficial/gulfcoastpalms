@@ -23,6 +23,9 @@ import PalmGuidePage from "./pages/PalmGuidePage";
 import PalmTreeCost from "./pages/PalmTreeCost";
 import HoaCommercialMaintenance from "./pages/HoaCommercialMaintenance";
 import HurricanePalmPreparation from "./pages/HurricanePalmPreparation";
+import ThankYou from "./pages/ThankYou";
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 import NotFound from "./pages/NotFound";
 // Service pages
 import PalmTreeTrimming from "./pages/services/PalmTreeTrimming";
@@ -69,6 +72,9 @@ const App = () => (
           <Route path="/palm-trees/guides" element={<PalmCareGuides />} />
           <Route path="/palm-trees/guides/:slug" element={<PalmGuidePage />} />
           <Route path="/palm-trees/:slug" element={<PalmTypePage />} />
+          <Route path="/thank-you" element={<ThankYou />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={<AdminDashboard />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
