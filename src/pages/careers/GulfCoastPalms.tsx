@@ -238,7 +238,10 @@ const GulfCoastPalmsCareers = () => {
           </div>
           <div className="bg-card border border-border rounded-xl p-6 space-y-4">
             <p className="font-body text-muted-foreground">
-              <span className="font-semibold text-foreground">Experience is preferred</span> and will go a long way — especially in tree work, landscaping, labor, cleanup, trailer work, equipment handling, or service businesses.
+              <span className="font-semibold text-foreground">For field roles:</span> Experience in tree work, landscaping, trailers, ladders, saws, cleanup, or outdoor labor goes a long way.
+            </p>
+            <p className="font-body text-muted-foreground">
+              <span className="font-semibold text-foreground">For Sales & Operations:</span> Experience in customer service, scheduling, dispatch, sales, office/admin, or service business operations is a strong plus.
             </p>
             <p className="font-body text-muted-foreground">
               That said, we're still open to the right person if they have the <span className="font-semibold text-foreground">attitude, discipline, and work ethic</span> to learn.
