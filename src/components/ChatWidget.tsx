@@ -49,6 +49,9 @@ const ChatWidget = () => {
     const phoneMatch = text.match(/\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/);
     const emailMatch = text.match(/[\w.-]+@[\w.-]+\.\w+/);
     if (phoneMatch || emailMatch) {
+      trackEvent("chat_lead_captured", {
+        source: "ai_chat",
+      });
       submitLead({
         name: "Chat Visitor",
         phone: phoneMatch?.[0],

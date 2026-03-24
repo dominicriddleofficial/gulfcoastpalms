@@ -1,10 +1,12 @@
 import { Phone, MessageSquare } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
 
 const StickyContactBar = () => {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-primary flex">
       <a
         href="tel:8509101290"
+        onClick={() => trackEvent("call_now_click", { source: "sticky_bar" })}
         className="flex-1 flex items-center justify-center gap-2 py-4 text-primary-foreground font-body font-semibold text-sm border-r border-primary-foreground/20"
       >
         <Phone className="w-5 h-5" />
@@ -12,6 +14,7 @@ const StickyContactBar = () => {
       </a>
       <a
         href="sms:8509101290"
+        onClick={() => trackEvent("text_us_click", { source: "sticky_bar" })}
         className="flex-1 flex items-center justify-center gap-2 py-4 text-primary-foreground font-body font-semibold text-sm"
       >
         <MessageSquare className="w-5 h-5" />

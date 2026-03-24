@@ -54,6 +54,13 @@ export async function submitLead(data: LeadData): Promise<{ success: boolean; er
       },
     }).catch(console.error);
 
+    // Track conversion in GA4
+    trackEvent("lead_form_submit", {
+      source: data.source || "website",
+      service: data.service,
+      location: data.location,
+    });
+
     return { success: true };
   } catch (err: unknown) {
     console.error("Lead submission error:", err);
