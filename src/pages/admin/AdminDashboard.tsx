@@ -129,6 +129,9 @@ const AdminDashboard = () => {
         <div className="container mx-auto flex items-center justify-between">
           <h1 className="font-display text-2xl font-bold text-foreground">Lead Dashboard</h1>
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate("/admin/applicants")} className="font-body">
+              <Users className="w-4 h-4 mr-1" /> Applicants
+            </Button>
             <Button variant="outline" size="sm" onClick={exportCSV} className="font-body">
               <Download className="w-4 h-4 mr-1" /> Export CSV
             </Button>
