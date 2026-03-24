@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import {
   ChevronDown, Truck, Users, Shield, Wrench, Clock, TrendingUp,
-  CheckCircle, MapPin, Upload, Mic, Star
+  CheckCircle, MapPin, Upload, Mic, Star, Headphones
 } from "lucide-react";
 
 const POSITIONS = ["Team Leader", "Groundsman", "Open to Either"] as const;
