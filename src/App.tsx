@@ -32,6 +32,9 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminApplicants from "./pages/admin/AdminApplicants";
 import GulfCoastPalmsCareers from "./pages/careers/GulfCoastPalms";
 import CareersThankYou from "./pages/careers/CareersThankYou";
+import SOPTeamLeader from "./pages/employee/SOPTeamLeader";
+import SOPGroundsman from "./pages/employee/SOPGroundsman";
+import AdminSOPAcknowledgments from "./pages/admin/AdminSOPAcknowledgments";
 import NotFound from "./pages/NotFound";
 // Service pages
 import PalmTreeTrimming from "./pages/services/PalmTreeTrimming";
@@ -87,6 +90,9 @@ const App = () => (
           <Route path="/admin/applicants" element={<AdminApplicants />} />
           <Route path="/careers/gulf-coast-palms" element={<GulfCoastPalmsCareers />} />
           <Route path="/careers/thank-you" element={<CareersThankYou />} />
+          <Route path="/employee/gulf-coast-palms/sop/team-leader" element={<SOPTeamLeader />} />
+          <Route path="/employee/gulf-coast-palms/sop/groundsman" element={<SOPGroundsman />} />
+          <Route path="/admin/sop-acknowledgments" element={<AdminSOPAcknowledgments />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
