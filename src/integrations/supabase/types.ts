@@ -153,6 +153,72 @@ export type Database = {
         }
         Relationships: []
       }
+      job_applications: {
+        Row: {
+          acknowledged: boolean | null
+          age: number | null
+          best_contact_time: string | null
+          city: string | null
+          comfortable_outdoors: boolean | null
+          created_at: string
+          email: string | null
+          full_name: string
+          has_experience: string | null
+          has_transportation: boolean | null
+          id: string
+          notes: string | null
+          phone: string
+          position: string
+          resume_url: string | null
+          status: string
+          voice_note_url: string | null
+          why_good_fit: string | null
+          work_experience: string | null
+        }
+        Insert: {
+          acknowledged?: boolean | null
+          age?: number | null
+          best_contact_time?: string | null
+          city?: string | null
+          comfortable_outdoors?: boolean | null
+          created_at?: string
+          email?: string | null
+          full_name: string
+          has_experience?: string | null
+          has_transportation?: boolean | null
+          id?: string
+          notes?: string | null
+          phone: string
+          position?: string
+          resume_url?: string | null
+          status?: string
+          voice_note_url?: string | null
+          why_good_fit?: string | null
+          work_experience?: string | null
+        }
+        Update: {
+          acknowledged?: boolean | null
+          age?: number | null
+          best_contact_time?: string | null
+          city?: string | null
+          comfortable_outdoors?: boolean | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          has_experience?: string | null
+          has_transportation?: boolean | null
+          id?: string
+          notes?: string | null
+          phone?: string
+          position?: string
+          resume_url?: string | null
+          status?: string
+          voice_note_url?: string | null
+          why_good_fit?: string | null
+          work_experience?: string | null
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           created_at: string
