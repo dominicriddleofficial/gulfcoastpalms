@@ -10,10 +10,10 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import {
   ChevronDown, Truck, Users, Shield, Wrench, Clock, TrendingUp,
-  CheckCircle, MapPin, Upload, Mic, Star
+  CheckCircle, MapPin, Upload, Mic, Star, Headphones
 } from "lucide-react";
 
-const POSITIONS = ["Team Leader", "Groundsman", "Open to Either"] as const;
+const POSITIONS = ["Team Leader", "Groundsman", "Sales & Operations Coordinator", "Open to Best Fit"] as const;
 
 const GulfCoastPalmsCareers = () => {
   const formRef = useRef<HTMLDivElement>(null);
@@ -134,10 +134,10 @@ const GulfCoastPalmsCareers = () => {
           </h2>
           <div className="grid md:grid-cols-2 gap-6">
             {[
-              { icon: TrendingUp, title: "Competitive Pay", desc: "Hourly pay based on position and experience. Groundsman positions typically start around $20/hr in the first month and can move up to $25/hr." },
-              { icon: Star, title: "Room to Grow", desc: "Strong opportunity to grow into a bigger leadership role over time for the right person." },
+              { icon: TrendingUp, title: "Competitive Pay", desc: "Hourly pay based on position and experience. Groundsman positions typically start around $20/hr in the first month and can move up to $25/hr. Operations roles offer performance-based upside." },
+              { icon: Star, title: "Room to Grow", desc: "Strong opportunity to grow into a bigger leadership role over time — in the field or on the operations side." },
               { icon: Shield, title: "Performance Matters", desc: "Efficiency, reliability, and work ethic are what get you ahead here — not just showing up." },
-              { icon: Clock, title: "Real Opportunity", desc: "This isn't a dead-end gig. If you want to build something real, this is the place to do it." },
+              { icon: Clock, title: "Real Opportunity", desc: "This isn't a dead-end gig. If you want to build something real and become a key part of a serious company, this is the place." },
             ].map(({ icon: Icon, title, desc }) => (
               <div key={title} className="bg-card border border-border rounded-xl p-6 flex gap-4">
                 <div className="shrink-0 w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -238,7 +238,10 @@ const GulfCoastPalmsCareers = () => {
           </div>
           <div className="bg-card border border-border rounded-xl p-6 space-y-4">
             <p className="font-body text-muted-foreground">
-              <span className="font-semibold text-foreground">Experience is preferred</span> and will go a long way — especially in tree work, landscaping, labor, cleanup, trailer work, equipment handling, or service businesses.
+              <span className="font-semibold text-foreground">For field roles:</span> Experience in tree work, landscaping, trailers, ladders, saws, cleanup, or outdoor labor goes a long way.
+            </p>
+            <p className="font-body text-muted-foreground">
+              <span className="font-semibold text-foreground">For Sales & Operations:</span> Experience in customer service, scheduling, dispatch, sales, office/admin, or service business operations is a strong plus.
             </p>
             <p className="font-body text-muted-foreground">
               That said, we're still open to the right person if they have the <span className="font-semibold text-foreground">attitude, discipline, and work ethic</span> to learn.
@@ -247,15 +250,15 @@ const GulfCoastPalmsCareers = () => {
         </div>
       </section>
 
-      {/* Why This Role Matters */}
+      {/* Why These Roles Matter */}
       <section className="section-padding bg-foreground text-white">
         <div className="container mx-auto max-w-3xl text-center">
-          <h2 className="font-display text-3xl md:text-4xl font-bold mb-6">Why This Role Matters</h2>
+          <h2 className="font-display text-3xl md:text-4xl font-bold mb-6">Why These Roles Matter</h2>
           <p className="font-body text-lg text-white/70 mb-4">
-            This is not just random labor. The person in this role helps keep jobs efficient, protects customer property, keeps the trailer and equipment handled properly, and helps the company run at a high level.
+            Whether you're in the field or running operations, every role here directly impacts how well we serve customers and how fast we grow. Field crews keep jobs efficient and protect customer property. Operations keeps the front end organized, leads flowing, and customers happy.
           </p>
           <p className="font-body text-lg text-white/70">
-            The right person can become a <span className="text-primary font-semibold">major asset</span> in the company over time.
+            The right person in any of these roles can become a <span className="text-primary font-semibold">major asset</span> in the company over time.
           </p>
         </div>
       </section>
@@ -344,7 +347,7 @@ const GulfCoastPalmsCareers = () => {
             {/* Position */}
             <div className="space-y-2">
               <Label className="font-body font-semibold">Which position are you applying for? *</Label>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 {POSITIONS.map((pos) => (
                   <button
                     key={pos}
@@ -386,7 +389,7 @@ const GulfCoastPalmsCareers = () => {
             {/* Experience */}
             <div className="space-y-2">
               <Label className="font-body font-semibold">
-                Do you have experience with trailers, trucks, ladders, saws, cleanup, landscaping, tree work, or outdoor labor?
+                Do you have relevant experience? (e.g. tree work, landscaping, trailers, outdoor labor, customer service, scheduling, dispatch, sales, or office/admin)
               </Label>
               <Textarea
                 value={form.has_experience}
@@ -498,7 +501,7 @@ const GulfCoastPalmsCareers = () => {
                 className="mt-0.5"
               />
               <Label htmlFor="acknowledged" className="font-body text-sm text-muted-foreground leading-relaxed cursor-pointer">
-                I understand this role requires physical work, reliability, safety awareness, and strong work ethic.
+                I understand this role requires reliability, strong work ethic, and a commitment to professionalism — whether in the field or in operations.
               </Label>
             </div>
 

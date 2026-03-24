@@ -188,7 +188,8 @@ const AdminApplicants = () => {
               <option value="all">All Positions</option>
               <option value="Team Leader">Team Leader</option>
               <option value="Groundsman">Groundsman</option>
-              <option value="Open to Either">Open to Either</option>
+              <option value="Sales & Operations Coordinator">Sales & Ops</option>
+              <option value="Open to Best Fit">Open to Best Fit</option>
             </select>
           </div>
         </div>
