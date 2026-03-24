@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-
+import { trackEvent } from "@/lib/analytics";
 export interface LeadData {
   name: string;
   phone?: string;
