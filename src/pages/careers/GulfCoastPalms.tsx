@@ -13,7 +13,7 @@ import {
   CheckCircle, MapPin, Upload, Mic, Star, Headphones
 } from "lucide-react";
 
-const POSITIONS = ["Team Leader", "Groundsman", "Open to Either"] as const;
+const POSITIONS = ["Team Leader", "Groundsman", "Sales & Operations Coordinator", "Open to Best Fit"] as const;
 
 const GulfCoastPalmsCareers = () => {
   const formRef = useRef<HTMLDivElement>(null);
