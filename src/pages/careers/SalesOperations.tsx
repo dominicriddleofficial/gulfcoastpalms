@@ -72,6 +72,7 @@ const SalesOperationsCareers = () => {
         acknowledged: form.acknowledged,
       });
       if (error) throw error;
+      trackEvent("job_application_submit", { position: "Sales & Operations Coordinator" });
       navigate("/careers/thank-you");
     } catch (err) {
       console.error(err);

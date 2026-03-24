@@ -72,6 +72,7 @@ const GroundsmanCareers = () => {
         acknowledged: form.acknowledged,
       });
       if (error) throw error;
+      trackEvent("job_application_submit", { position: "Groundsman" });
       navigate("/careers/thank-you");
     } catch (err) {
       console.error(err);
