@@ -39,6 +39,9 @@ import AdminUploads from "./pages/admin/AdminUploads";
 import AdminApplicants from "./pages/admin/AdminApplicants";
 import AdminSOPAcknowledgments from "./pages/admin/AdminSOPAcknowledgments";
 import GulfCoastPalmsCareers from "./pages/careers/GulfCoastPalms";
+import TeamLeaderCareers from "./pages/careers/TeamLeader";
+import GroundsmanCareers from "./pages/careers/Groundsman";
+import SalesOperationsCareers from "./pages/careers/SalesOperations";
 import CareersThankYou from "./pages/careers/CareersThankYou";
 import SOPTeamLeader from "./pages/employee/SOPTeamLeader";
 import SOPGroundsman from "./pages/employee/SOPGroundsman";
@@ -106,6 +109,9 @@ const App = () => (
           <Route path="/admin/sop-acknowledgments" element={<AdminSOPAcknowledgments />} />
           {/* Hidden pages */}
           <Route path="/careers/gulf-coast-palms" element={<GulfCoastPalmsCareers />} />
+          <Route path="/careers/gulf-coast-palms/team-leader" element={<TeamLeaderCareers />} />
+          <Route path="/careers/gulf-coast-palms/groundsman" element={<GroundsmanCareers />} />
+          <Route path="/careers/gulf-coast-palms/sales-operations" element={<SalesOperationsCareers />} />
           <Route path="/careers/thank-you" element={<CareersThankYou />} />
           <Route path="/employee/gulf-coast-palms/sop/team-leader" element={<SOPTeamLeader />} />
           <Route path="/employee/gulf-coast-palms/sop/groundsman" element={<SOPGroundsman />} />
