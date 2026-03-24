@@ -347,7 +347,7 @@ const GulfCoastPalmsCareers = () => {
             {/* Position */}
             <div className="space-y-2">
               <Label className="font-body font-semibold">Which position are you applying for? *</Label>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 {POSITIONS.map((pos) => (
                   <button
                     key={pos}
