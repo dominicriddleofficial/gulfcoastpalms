@@ -62,6 +62,14 @@ import PalmTreeTrunkSkinning from "./pages/services/PalmTreeTrunkSkinning";
 import TreeTrimmingRemoval from "./pages/services/TreeTrimmingRemoval";
 import LandscapingServices from "./pages/services/LandscapingServices";
 
+const RouteTracker = () => {
+  const location = useLocation();
+  useEffect(() => {
+    trackPageView(location.pathname);
+  }, [location.pathname]);
+  return null;
+};
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -70,6 +78,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <RouteTracker />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/services" element={<Services />} />
