@@ -29,6 +29,9 @@ import Payments from "./pages/Payments";
 import TextConsent from "./pages/TextConsent";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminApplicants from "./pages/admin/AdminApplicants";
+import GulfCoastPalmsCareers from "./pages/careers/GulfCoastPalms";
+import CareersThankYou from "./pages/careers/CareersThankYou";
 import NotFound from "./pages/NotFound";
 // Service pages
 import PalmTreeTrimming from "./pages/services/PalmTreeTrimming";

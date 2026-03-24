@@ -87,8 +87,8 @@ const AdminApplicants = () => {
     toast({ title: "Updated" });
   };
 
-  const getFileUrl = (path: string) => {
-    const { data } = supabase.storage.from("applications").createSignedUrl(path, 3600);
+  const getFileUrl = async (path: string) => {
+    const { data } = await supabase.storage.from("applications").createSignedUrl(path, 3600);
     return data?.signedUrl || "#";
   };
 
