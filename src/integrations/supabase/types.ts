@@ -76,6 +76,72 @@ export type Database = {
           },
         ]
       }
+      clients: {
+        Row: {
+          company_name: string | null
+          created_at: string
+          display_name: string
+          email: string | null
+          first_name: string | null
+          id: string
+          jobber_id: string | null
+          last_job_date: string | null
+          last_name: string | null
+          lead_source: string | null
+          notes: string | null
+          phone: string | null
+          service_city: string | null
+          service_state: string | null
+          service_street: string | null
+          service_zip: string | null
+          tags: string | null
+          total_jobs: number | null
+          total_revenue: number | null
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string
+          display_name: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          jobber_id?: string | null
+          last_job_date?: string | null
+          last_name?: string | null
+          lead_source?: string | null
+          notes?: string | null
+          phone?: string | null
+          service_city?: string | null
+          service_state?: string | null
+          service_street?: string | null
+          service_zip?: string | null
+          tags?: string | null
+          total_jobs?: number | null
+          total_revenue?: number | null
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string
+          display_name?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          jobber_id?: string | null
+          last_job_date?: string | null
+          last_name?: string | null
+          lead_source?: string | null
+          notes?: string | null
+          phone?: string | null
+          service_city?: string | null
+          service_state?: string | null
+          service_street?: string | null
+          service_zip?: string | null
+          tags?: string | null
+          total_jobs?: number | null
+          total_revenue?: number | null
+        }
+        Relationships: []
+      }
       email_drip_enrollments: {
         Row: {
           created_at: string
@@ -113,6 +179,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      employees: {
+        Row: {
+          created_at: string
+          email: string | null
+          hire_date: string | null
+          id: string
+          jobs_completed: number | null
+          leaderboard_points: number | null
+          name: string
+          notes: string | null
+          phone: string | null
+          quotes_run: number | null
+          reviews_collected: number | null
+          role: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          hire_date?: string | null
+          id?: string
+          jobs_completed?: number | null
+          leaderboard_points?: number | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          quotes_run?: number | null
+          reviews_collected?: number | null
+          role?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          hire_date?: string | null
+          id?: string
+          jobs_completed?: number | null
+          leaderboard_points?: number | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          quotes_run?: number | null
+          reviews_collected?: number | null
+          role?: string
+          status?: string
+        }
+        Relationships: []
       }
       invoices: {
         Row: {
@@ -219,6 +333,122 @@ export type Database = {
         }
         Relationships: []
       }
+      jobs: {
+        Row: {
+          assigned_employee: string | null
+          city: string | null
+          client_id: string | null
+          created_at: string
+          customer_name: string
+          employee_id: string | null
+          id: string
+          job_date: string | null
+          jobber_id: string | null
+          notes: string | null
+          revenue: number | null
+          review_received: boolean | null
+          review_requested: boolean | null
+          service_line: string | null
+          service_type: string | null
+          status: string
+        }
+        Insert: {
+          assigned_employee?: string | null
+          city?: string | null
+          client_id?: string | null
+          created_at?: string
+          customer_name: string
+          employee_id?: string | null
+          id?: string
+          job_date?: string | null
+          jobber_id?: string | null
+          notes?: string | null
+          revenue?: number | null
+          review_received?: boolean | null
+          review_requested?: boolean | null
+          service_line?: string | null
+          service_type?: string | null
+          status?: string
+        }
+        Update: {
+          assigned_employee?: string | null
+          city?: string | null
+          client_id?: string | null
+          created_at?: string
+          customer_name?: string
+          employee_id?: string | null
+          id?: string
+          job_date?: string | null
+          jobber_id?: string | null
+          notes?: string | null
+          revenue?: number | null
+          review_received?: boolean | null
+          review_requested?: boolean | null
+          service_line?: string | null
+          service_type?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leaderboard_rewards: {
+        Row: {
+          amount: number | null
+          created_at: string
+          employee_id: string | null
+          employee_name: string
+          id: string
+          month: string
+          notes: string | null
+          reward_type: string
+          status: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          employee_id?: string | null
+          employee_name: string
+          id?: string
+          month: string
+          notes?: string | null
+          reward_type?: string
+          status?: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          employee_id?: string | null
+          employee_name?: string
+          id?: string
+          month?: string
+          notes?: string | null
+          reward_type?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leaderboard_rewards_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           created_at: string
@@ -311,6 +541,69 @@ export type Database = {
           status?: string
         }
         Relationships: []
+      }
+      reviews: {
+        Row: {
+          created_at: string
+          customer_name: string
+          employee_id: string | null
+          employee_name: string | null
+          id: string
+          job_id: string | null
+          month_bucket: string | null
+          notes: string | null
+          rating: number | null
+          review_date: string | null
+          review_source: string | null
+          review_text: string | null
+          week_bucket: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_name: string
+          employee_id?: string | null
+          employee_name?: string | null
+          id?: string
+          job_id?: string | null
+          month_bucket?: string | null
+          notes?: string | null
+          rating?: number | null
+          review_date?: string | null
+          review_source?: string | null
+          review_text?: string | null
+          week_bucket?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_name?: string
+          employee_id?: string | null
+          employee_name?: string | null
+          id?: string
+          job_id?: string | null
+          month_bucket?: string | null
+          notes?: string | null
+          rating?: number | null
+          review_date?: string | null
+          review_source?: string | null
+          review_text?: string | null
+          week_bucket?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sop_acknowledgments: {
         Row: {
