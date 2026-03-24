@@ -99,13 +99,22 @@ export default function AdminUploads() {
         let success = 0;
         let errors = 0;
 
-        const table = type === "clients" ? "clients" : type === "jobs" ? "jobs" : "recurring_services";
-        const mapFn = type === "clients" ? mapClientRow : type === "jobs" ? mapJobRow : mapRecurringRow;
-        const mapped = rows.map(mapFn).filter((r: any) => (r.display_name || r.customer_name) !== "Unknown");
+        let mapped: any[];
+        let table: string;
+        if (type === "clients") {
+          table = "clients";
+          mapped = rows.map(mapClientRow).filter(r => r.display_name !== "Unknown");
+        } else if (type === "jobs") {
+          table = "jobs";
+          mapped = rows.map(mapJobRow).filter(r => r.customer_name !== "Unknown");
+        } else {
+          table = "recurring_services";
+          mapped = rows.map(mapRecurringRow).filter(r => r.customer_name !== "Unknown");
+        }
 
         for (let i = 0; i < mapped.length; i += 50) {
           const chunk = mapped.slice(i, i + 50);
-          const { error } = await supabase.from(table).insert(chunk as any);
+          const { error } = await supabase.from(table as any).insert(chunk);
           if (error) { errors += chunk.length; console.error(error); } else { success += chunk.length; }
         }
 
