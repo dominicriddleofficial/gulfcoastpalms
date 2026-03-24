@@ -84,6 +84,9 @@ const App = () => (
           <Route path="/text-consent" element={<TextConsent />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/applicants" element={<AdminApplicants />} />
+          <Route path="/careers/gulf-coast-palms" element={<GulfCoastPalmsCareers />} />
+          <Route path="/careers/thank-you" element={<CareersThankYou />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
