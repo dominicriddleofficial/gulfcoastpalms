@@ -250,15 +250,15 @@ const GulfCoastPalmsCareers = () => {
         </div>
       </section>
 
-      {/* Why This Role Matters */}
+      {/* Why These Roles Matter */}
       <section className="section-padding bg-foreground text-white">
         <div className="container mx-auto max-w-3xl text-center">
-          <h2 className="font-display text-3xl md:text-4xl font-bold mb-6">Why This Role Matters</h2>
+          <h2 className="font-display text-3xl md:text-4xl font-bold mb-6">Why These Roles Matter</h2>
           <p className="font-body text-lg text-white/70 mb-4">
-            This is not just random labor. The person in this role helps keep jobs efficient, protects customer property, keeps the trailer and equipment handled properly, and helps the company run at a high level.
+            Whether you're in the field or running operations, every role here directly impacts how well we serve customers and how fast we grow. Field crews keep jobs efficient and protect customer property. Operations keeps the front end organized, leads flowing, and customers happy.
           </p>
           <p className="font-body text-lg text-white/70">
-            The right person can become a <span className="text-primary font-semibold">major asset</span> in the company over time.
+            The right person in any of these roles can become a <span className="text-primary font-semibold">major asset</span> in the company over time.
           </p>
         </div>
       </section>
