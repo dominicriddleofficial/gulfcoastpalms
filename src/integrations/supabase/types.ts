@@ -312,6 +312,39 @@ export type Database = {
         }
         Relationships: []
       }
+      sop_acknowledgments: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          phone: string
+          sign_date: string
+          signature_data: string
+          sop_type: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          phone: string
+          sign_date: string
+          signature_data: string
+          sop_type: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          phone?: string
+          sign_date?: string
+          signature_data?: string
+          sop_type?: string
+        }
+        Relationships: []
+      }
       text_consents: {
         Row: {
           created_at: string
