@@ -90,6 +90,9 @@ const App = () => (
           <Route path="/admin/applicants" element={<AdminApplicants />} />
           <Route path="/careers/gulf-coast-palms" element={<GulfCoastPalmsCareers />} />
           <Route path="/careers/thank-you" element={<CareersThankYou />} />
+          <Route path="/employee/gulf-coast-palms/sop/team-leader" element={<SOPTeamLeader />} />
+          <Route path="/employee/gulf-coast-palms/sop/groundsman" element={<SOPGroundsman />} />
+          <Route path="/admin/sop-acknowledgments" element={<AdminSOPAcknowledgments />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
