@@ -3,22 +3,22 @@ import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, CheckCircle, AlertCircle, FileSpreadsheet } from "lucide-react";
 
-type ImportType = "clients" | "jobs";
+type ImportType = "clients" | "jobs" | "recurring";
 
 const FIELD_MAPS: Record<ImportType, { label: string; description: string }> = {
-  clients: { label: "Jobber Clients CSV", description: "Maps: Display Name, First Name, Last Name, Main Phone, E-mails, Service Street/City/State/Zip, Lead Source" },
+  clients: { label: "Jobber Clients CSV", description: "Maps: Display Name, First Name, Last Name, Main Phone, E-mails, Service Street/City/State/Zip, Lead Source, Tags" },
   jobs: { label: "Jobber Jobs CSV", description: "Maps: Job ID, Customer, Date, Service, City, Revenue, Employee, Status" },
+  recurring: { label: "Recurring Services CSV", description: "Maps: Customer Name, Last Service Date, Next Service Date, Service Type, Interval, Repeat, Reminder" },
 };
 
 function parseCSV(text: string): Record<string, string>[] {
-  const lines = text.split("\n").filter((l) => l.trim());
+  const lines = text.split("\n").filter(l => l.trim());
   if (lines.length < 2) return [];
-  const headers = lines[0].split(",").map((h) => h.replace(/^"|"$/g, "").trim());
-  return lines.slice(1).map((line) => {
+  const headers = lines[0].split(",").map(h => h.replace(/^"|"$/g, "").trim());
+  return lines.slice(1).map(line => {
     const values: string[] = [];
     let current = "";
     let inQuotes = false;
@@ -66,6 +66,18 @@ function mapJobRow(row: Record<string, string>) {
   };
 }
 
+function mapRecurringRow(row: Record<string, string>) {
+  return {
+    customer_name: row["Customer"] || row["Customer Name"] || row["Display Name"] || "Unknown",
+    last_service_date: row["Last Service Date"] || row["Last Date"] || null,
+    next_service_date: row["Next Service Date"] || row["Next Date"] || null,
+    service_type: row["Service Type"] || row["Service"] || null,
+    service_interval: row["Interval"] || row["Frequency"] || "6 months",
+    is_repeat_customer: (row["Repeat"] || "").toLowerCase() === "yes",
+    reminder_needed: (row["Reminder"] || "").toLowerCase() === "yes",
+  };
+}
+
 export default function AdminUploads() {
   const [importing, setImporting] = useState(false);
   const [results, setResults] = useState<{ type: string; success: number; errors: number; total: number } | null>(null);
@@ -87,21 +99,14 @@ export default function AdminUploads() {
         let success = 0;
         let errors = 0;
 
-        if (type === "clients") {
-          const mapped = rows.map(mapClientRow).filter((r) => r.display_name !== "Unknown");
-          // Batch insert in chunks of 50
-          for (let i = 0; i < mapped.length; i += 50) {
-            const chunk = mapped.slice(i, i + 50);
-            const { error } = await supabase.from("clients").insert(chunk);
-            if (error) { errors += chunk.length; } else { success += chunk.length; }
-          }
-        } else if (type === "jobs") {
-          const mapped = rows.map(mapJobRow).filter((r) => r.customer_name !== "Unknown");
-          for (let i = 0; i < mapped.length; i += 50) {
-            const chunk = mapped.slice(i, i + 50);
-            const { error } = await supabase.from("jobs").insert(chunk);
-            if (error) { errors += chunk.length; } else { success += chunk.length; }
-          }
+        const table = type === "clients" ? "clients" : type === "jobs" ? "jobs" : "recurring_services";
+        const mapFn = type === "clients" ? mapClientRow : type === "jobs" ? mapJobRow : mapRecurringRow;
+        const mapped = rows.map(mapFn).filter((r: any) => (r.display_name || r.customer_name) !== "Unknown");
+
+        for (let i = 0; i < mapped.length; i += 50) {
+          const chunk = mapped.slice(i, i + 50);
+          const { error } = await supabase.from(table).insert(chunk as any);
+          if (error) { errors += chunk.length; console.error(error); } else { success += chunk.length; }
         }
 
         setResults({ type, success, errors, total: rows.length });
@@ -122,18 +127,18 @@ export default function AdminUploads() {
           <p className="font-body text-sm text-muted-foreground">Import Jobber CSV exports into your dashboard</p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="grid md:grid-cols-3 gap-4">
           {(Object.entries(FIELD_MAPS) as [ImportType, { label: string; description: string }][]).map(([type, { label, description }]) => (
             <Card key={type}>
               <CardHeader>
-                <CardTitle className="font-body text-lg flex items-center gap-2">
+                <CardTitle className="font-body text-base flex items-center gap-2">
                   <FileSpreadsheet className="w-5 h-5 text-muted-foreground" /> {label}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <p className="font-body text-sm text-muted-foreground">{description}</p>
-                <Button onClick={() => handleUpload(type)} disabled={importing} className="w-full font-body">
-                  <Upload className="w-4 h-4 mr-2" /> {importing ? "Importing..." : `Upload ${label}`}
+                <p className="font-body text-xs text-muted-foreground">{description}</p>
+                <Button onClick={() => handleUpload(type)} disabled={importing} className="w-full font-body text-sm">
+                  <Upload className="w-4 h-4 mr-2" /> {importing ? "Importing..." : `Upload`}
                 </Button>
               </CardContent>
             </Card>
@@ -144,11 +149,7 @@ export default function AdminUploads() {
           <Card>
             <CardContent className="p-5">
               <div className="flex items-center gap-3 mb-3">
-                {results.errors === 0 ? (
-                  <CheckCircle className="w-6 h-6 text-green-500" />
-                ) : (
-                  <AlertCircle className="w-6 h-6 text-yellow-500" />
-                )}
+                {results.errors === 0 ? <CheckCircle className="w-6 h-6 text-green-500" /> : <AlertCircle className="w-6 h-6 text-yellow-500" />}
                 <h3 className="font-display text-lg font-bold">Import Results</h3>
               </div>
               <div className="grid grid-cols-3 gap-3">
@@ -172,9 +173,11 @@ export default function AdminUploads() {
         <Card>
           <CardHeader><CardTitle className="font-body text-sm">Import Notes</CardTitle></CardHeader>
           <CardContent className="space-y-2 font-body text-sm text-muted-foreground">
+            <p>• <strong>Jobber is the system of record.</strong> This dashboard is a read-heavy analytics layer on top.</p>
             <p>• Export your data from Jobber as CSV and upload it here.</p>
-            <p>• Client CSVs are automatically mapped using Jobber's field names.</p>
-            <p>• Duplicate prevention: records with the same Jobber ID will create new entries. Deduplicate before uploading.</p>
+            <p>• <strong>Recommended import order:</strong> Clients → Jobs → Recurring</p>
+            <p>• Client CSVs are automatically mapped using Jobber's standard field names.</p>
+            <p>• Deduplicate before uploading — records with the same Jobber ID will create new entries.</p>
             <p>• For jobs CSV, ensure columns include: Customer/Client Name, Date, Service, City, Total/Revenue.</p>
           </CardContent>
         </Card>
