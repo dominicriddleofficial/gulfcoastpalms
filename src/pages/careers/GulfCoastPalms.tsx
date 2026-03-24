@@ -501,7 +501,7 @@ const GulfCoastPalmsCareers = () => {
                 className="mt-0.5"
               />
               <Label htmlFor="acknowledged" className="font-body text-sm text-muted-foreground leading-relaxed cursor-pointer">
-                I understand this role requires physical work, reliability, safety awareness, and strong work ethic.
+                I understand this role requires reliability, strong work ethic, and a commitment to professionalism — whether in the field or in operations.
               </Label>
             </div>
 
