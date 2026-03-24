@@ -112,6 +112,11 @@ const App = () => (
           <Route path="/admin/uploads" element={<AdminUploads />} />
           <Route path="/admin/applicants" element={<AdminApplicants />} />
           <Route path="/admin/sop-acknowledgments" element={<AdminSOPAcknowledgments />} />
+          <Route path="/admin/performance" element={<AdminPerformance />} />
+          <Route path="/admin/crews" element={<AdminCrews />} />
+          <Route path="/admin/recurring" element={<AdminRecurring />} />
+          <Route path="/admin/job-issues" element={<AdminJobIssues />} />
+          <Route path="/admin/settings" element={<AdminSettings />} />
           {/* Hidden pages */}
           <Route path="/careers/gulf-coast-palms" element={<GulfCoastPalmsCareers />} />
           <Route path="/careers/gulf-coast-palms/team-leader" element={<TeamLeaderCareers />} />
