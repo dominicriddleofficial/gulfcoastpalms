@@ -28,13 +28,20 @@ import Referral from "./pages/Referral";
 import Payments from "./pages/Payments";
 import TextConsent from "./pages/TextConsent";
 import AdminLogin from "./pages/admin/AdminLogin";
-import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminHome from "./pages/admin/AdminHome";
+import AdminLeads from "./pages/admin/AdminLeads";
+import AdminClients from "./pages/admin/AdminClients";
+import AdminJobs from "./pages/admin/AdminJobs";
+import AdminEmployees from "./pages/admin/AdminEmployees";
+import AdminReviews from "./pages/admin/AdminReviews";
+import AdminLeaderboards from "./pages/admin/AdminLeaderboards";
+import AdminUploads from "./pages/admin/AdminUploads";
 import AdminApplicants from "./pages/admin/AdminApplicants";
+import AdminSOPAcknowledgments from "./pages/admin/AdminSOPAcknowledgments";
 import GulfCoastPalmsCareers from "./pages/careers/GulfCoastPalms";
 import CareersThankYou from "./pages/careers/CareersThankYou";
 import SOPTeamLeader from "./pages/employee/SOPTeamLeader";
 import SOPGroundsman from "./pages/employee/SOPGroundsman";
-import AdminSOPAcknowledgments from "./pages/admin/AdminSOPAcknowledgments";
 import NotFound from "./pages/NotFound";
 // Service pages
 import PalmTreeTrimming from "./pages/services/PalmTreeTrimming";
@@ -85,14 +92,23 @@ const App = () => (
           <Route path="/referral" element={<Referral />} />
           <Route path="/payments" element={<Payments />} />
           <Route path="/text-consent" element={<TextConsent />} />
+          {/* Admin */}
           <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin" element={<AdminHome />} />
+          <Route path="/admin/leads" element={<AdminLeads />} />
+          <Route path="/admin/clients" element={<AdminClients />} />
+          <Route path="/admin/jobs" element={<AdminJobs />} />
+          <Route path="/admin/employees" element={<AdminEmployees />} />
+          <Route path="/admin/reviews" element={<AdminReviews />} />
+          <Route path="/admin/leaderboards" element={<AdminLeaderboards />} />
+          <Route path="/admin/uploads" element={<AdminUploads />} />
           <Route path="/admin/applicants" element={<AdminApplicants />} />
+          <Route path="/admin/sop-acknowledgments" element={<AdminSOPAcknowledgments />} />
+          {/* Hidden pages */}
           <Route path="/careers/gulf-coast-palms" element={<GulfCoastPalmsCareers />} />
           <Route path="/careers/thank-you" element={<CareersThankYou />} />
           <Route path="/employee/gulf-coast-palms/sop/team-leader" element={<SOPTeamLeader />} />
           <Route path="/employee/gulf-coast-palms/sop/groundsman" element={<SOPGroundsman />} />
-          <Route path="/admin/sop-acknowledgments" element={<AdminSOPAcknowledgments />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
