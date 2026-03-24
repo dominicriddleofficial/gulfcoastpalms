@@ -72,6 +72,7 @@ const TeamLeaderCareers = () => {
         acknowledged: form.acknowledged,
       });
       if (error) throw error;
+      trackEvent("job_application_submit", { position: "Team Leader" });
       navigate("/careers/thank-you");
     } catch (err) {
       console.error(err);

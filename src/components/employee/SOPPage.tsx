@@ -68,6 +68,7 @@ const SOPPage = ({ title, sopType, pdfFileName, roleDescription }: SOPPageProps)
       return;
     }
 
+    trackEvent("sop_signed", { sop_type: sopType });
     setSubmitted(true);
   };
 
