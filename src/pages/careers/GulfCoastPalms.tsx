@@ -134,10 +134,10 @@ const GulfCoastPalmsCareers = () => {
           </h2>
           <div className="grid md:grid-cols-2 gap-6">
             {[
-              { icon: TrendingUp, title: "Competitive Pay", desc: "Hourly pay based on position and experience. Groundsman positions typically start around $20/hr in the first month and can move up to $25/hr." },
-              { icon: Star, title: "Room to Grow", desc: "Strong opportunity to grow into a bigger leadership role over time for the right person." },
+              { icon: TrendingUp, title: "Competitive Pay", desc: "Hourly pay based on position and experience. Groundsman positions typically start around $20/hr in the first month and can move up to $25/hr. Operations roles offer performance-based upside." },
+              { icon: Star, title: "Room to Grow", desc: "Strong opportunity to grow into a bigger leadership role over time — in the field or on the operations side." },
               { icon: Shield, title: "Performance Matters", desc: "Efficiency, reliability, and work ethic are what get you ahead here — not just showing up." },
-              { icon: Clock, title: "Real Opportunity", desc: "This isn't a dead-end gig. If you want to build something real, this is the place to do it." },
+              { icon: Clock, title: "Real Opportunity", desc: "This isn't a dead-end gig. If you want to build something real and become a key part of a serious company, this is the place." },
             ].map(({ icon: Icon, title, desc }) => (
               <div key={title} className="bg-card border border-border rounded-xl p-6 flex gap-4">
                 <div className="shrink-0 w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
