@@ -38,6 +38,11 @@ import AdminLeaderboards from "./pages/admin/AdminLeaderboards";
 import AdminUploads from "./pages/admin/AdminUploads";
 import AdminApplicants from "./pages/admin/AdminApplicants";
 import AdminSOPAcknowledgments from "./pages/admin/AdminSOPAcknowledgments";
+import AdminPerformance from "./pages/admin/AdminPerformance";
+import AdminCrews from "./pages/admin/AdminCrews";
+import AdminRecurring from "./pages/admin/AdminRecurring";
+import AdminJobIssues from "./pages/admin/AdminJobIssues";
+import AdminSettings from "./pages/admin/AdminSettings";
 import GulfCoastPalmsCareers from "./pages/careers/GulfCoastPalms";
 import TeamLeaderCareers from "./pages/careers/TeamLeader";
 import GroundsmanCareers from "./pages/careers/Groundsman";
@@ -107,6 +112,11 @@ const App = () => (
           <Route path="/admin/uploads" element={<AdminUploads />} />
           <Route path="/admin/applicants" element={<AdminApplicants />} />
           <Route path="/admin/sop-acknowledgments" element={<AdminSOPAcknowledgments />} />
+          <Route path="/admin/performance" element={<AdminPerformance />} />
+          <Route path="/admin/crews" element={<AdminCrews />} />
+          <Route path="/admin/recurring" element={<AdminRecurring />} />
+          <Route path="/admin/job-issues" element={<AdminJobIssues />} />
+          <Route path="/admin/settings" element={<AdminSettings />} />
           {/* Hidden pages */}
           <Route path="/careers/gulf-coast-palms" element={<GulfCoastPalmsCareers />} />
           <Route path="/careers/gulf-coast-palms/team-leader" element={<TeamLeaderCareers />} />

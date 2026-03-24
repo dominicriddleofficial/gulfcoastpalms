@@ -333,6 +333,63 @@ export type Database = {
         }
         Relationships: []
       }
+      job_issues: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          crew_involved: string | null
+          customer_name: string
+          date_reported: string | null
+          id: string
+          issue_type: string | null
+          job_date: string | null
+          job_id: string | null
+          notes: string | null
+          resolved: boolean | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          crew_involved?: string | null
+          customer_name: string
+          date_reported?: string | null
+          id?: string
+          issue_type?: string | null
+          job_date?: string | null
+          job_id?: string | null
+          notes?: string | null
+          resolved?: boolean | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          crew_involved?: string | null
+          customer_name?: string
+          date_reported?: string | null
+          id?: string
+          issue_type?: string | null
+          job_date?: string | null
+          job_id?: string | null
+          notes?: string | null
+          resolved?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_issues_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_issues_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       jobs: {
         Row: {
           assigned_employee: string | null
@@ -499,6 +556,56 @@ export type Database = {
           status?: string
         }
         Relationships: []
+      }
+      recurring_services: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          customer_name: string
+          id: string
+          is_repeat_customer: boolean | null
+          last_service_date: string | null
+          next_service_date: string | null
+          notes: string | null
+          reminder_needed: boolean | null
+          service_interval: string | null
+          service_type: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          customer_name: string
+          id?: string
+          is_repeat_customer?: boolean | null
+          last_service_date?: string | null
+          next_service_date?: string | null
+          notes?: string | null
+          reminder_needed?: boolean | null
+          service_interval?: string | null
+          service_type?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          customer_name?: string
+          id?: string
+          is_repeat_customer?: boolean | null
+          last_service_date?: string | null
+          next_service_date?: string | null
+          notes?: string | null
+          reminder_needed?: boolean | null
+          service_interval?: string | null
+          service_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_services_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       referrals: {
         Row: {
