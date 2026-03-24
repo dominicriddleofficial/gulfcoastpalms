@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import { supabase } from "@/integrations/supabase/client";
+import { trackEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -67,6 +68,7 @@ const SOPPage = ({ title, sopType, pdfFileName, roleDescription }: SOPPageProps)
       return;
     }
 
+    trackEvent("sop_signed", { sop_type: sopType });
     setSubmitted(true);
   };
 

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { MessageSquare, X, Send, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { submitLead } from "@/lib/submit-lead";
+import { trackEvent } from "@/lib/analytics";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -48,6 +49,9 @@ const ChatWidget = () => {
     const phoneMatch = text.match(/\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/);
     const emailMatch = text.match(/[\w.-]+@[\w.-]+\.\w+/);
     if (phoneMatch || emailMatch) {
+      trackEvent("chat_lead_captured", {
+        source: "ai_chat",
+      });
       submitLead({
         name: "Chat Visitor",
         phone: phoneMatch?.[0],
