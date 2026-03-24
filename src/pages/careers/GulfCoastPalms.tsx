@@ -389,7 +389,7 @@ const GulfCoastPalmsCareers = () => {
             {/* Experience */}
             <div className="space-y-2">
               <Label className="font-body font-semibold">
-                Do you have experience with trailers, trucks, ladders, saws, cleanup, landscaping, tree work, or outdoor labor?
+                Do you have relevant experience? (e.g. tree work, landscaping, trailers, outdoor labor, customer service, scheduling, dispatch, sales, or office/admin)
               </Label>
               <Textarea
                 value={form.has_experience}
