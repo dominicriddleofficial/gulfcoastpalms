@@ -32,6 +32,9 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminApplicants from "./pages/admin/AdminApplicants";
 import GulfCoastPalmsCareers from "./pages/careers/GulfCoastPalms";
 import CareersThankYou from "./pages/careers/CareersThankYou";
+import SOPTeamLeader from "./pages/employee/SOPTeamLeader";
+import SOPGroundsman from "./pages/employee/SOPGroundsman";
+import AdminSOPAcknowledgments from "./pages/admin/AdminSOPAcknowledgments";
 import NotFound from "./pages/NotFound";
 // Service pages
 import PalmTreeTrimming from "./pages/services/PalmTreeTrimming";
