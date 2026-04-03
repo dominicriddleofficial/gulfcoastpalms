@@ -137,6 +137,7 @@ const App = () => (
           <Route path="/careers/thank-you" element={<CareersThankYou />} />
           <Route path="/employee/gulf-coast-palms/sop/team-leader" element={<SOPTeamLeader />} />
           <Route path="/employee/gulf-coast-palms/sop/groundsman" element={<SOPGroundsman />} />
+          <Route path="/employee/gulf-coast-palms/sop/sales-operations" element={<SOPSalesOperations />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
