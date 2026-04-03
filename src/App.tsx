@@ -52,6 +52,7 @@ import SalesOperationsCareers from "./pages/careers/SalesOperations";
 import CareersThankYou from "./pages/careers/CareersThankYou";
 import SOPTeamLeader from "./pages/employee/SOPTeamLeader";
 import SOPGroundsman from "./pages/employee/SOPGroundsman";
+import SOPSalesOperations from "./pages/employee/SOPSalesOperations";
 import NotFound from "./pages/NotFound";
 // Service pages
 import PalmTreeTrimming from "./pages/services/PalmTreeTrimming";
