@@ -64,6 +64,7 @@ import OpsWeek from "./pages/ops/OpsWeek";
 import OpsJobDetail from "./pages/ops/OpsJobDetail";
 import OpsCrew from "./pages/ops/OpsCrew";
 import OpsSettings from "./pages/ops/OpsSettings";
+import OpsSchedule from "./pages/ops/OpsSchedule";
 // Service pages
 import PalmTreeTrimming from "./pages/services/PalmTreeTrimming";
 import PalmTreeInstallation from "./pages/services/PalmTreeInstallation";
