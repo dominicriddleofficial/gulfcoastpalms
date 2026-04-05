@@ -398,9 +398,9 @@ const CLIENTS_QUERY = `
         lastName
         companyName
         name
-        emails { address primary }
-        phones { number primary }
-        tags { nodes { label } }
+        emails(first: 1) { nodes { address } }
+        phones(first: 1) { nodes { number } }
+        tags(first: 5) { nodes { label } }
       }
       pageInfo { hasNextPage endCursor }
     }
