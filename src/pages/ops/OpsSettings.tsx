@@ -6,7 +6,6 @@ import { useOpsAuth } from "@/hooks/useOpsAuth";
 import { RefreshCw, CheckCircle2, XCircle, Clock, Shield, ExternalLink } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 type ConnectionStatus = {
   connected: boolean;
@@ -16,7 +15,7 @@ type ConnectionStatus = {
 };
 
 export default function OpsSettings() {
-  const { isAdmin, userRole } = useOpsAuth();
+  const { isAdmin } = useOpsAuth();
   const { toast } = useToast();
   const [syncing, setSyncing] = useState(false);
   const [connecting, setConnecting] = useState(false);
