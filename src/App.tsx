@@ -146,6 +146,14 @@ const App = () => (
           <Route path="/employee/gulf-coast-palms/sop/team-leader" element={<SOPTeamLeader />} />
           <Route path="/employee/gulf-coast-palms/sop/groundsman" element={<SOPGroundsman />} />
           <Route path="/employee/gulf-coast-palms/sop/sales-operations" element={<SOPSalesOperations />} />
+          {/* Ops Dashboard */}
+          <Route path="/ops/login" element={<OpsLogin />} />
+          <Route path="/ops" element={<OpsDashboard />} />
+          <Route path="/ops/today" element={<OpsToday />} />
+          <Route path="/ops/week" element={<OpsWeek />} />
+          <Route path="/ops/job/:jobId" element={<OpsJobDetail />} />
+          <Route path="/ops/crew" element={<OpsCrew />} />
+          <Route path="/ops/settings" element={<OpsSettings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
