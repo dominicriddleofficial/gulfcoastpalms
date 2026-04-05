@@ -54,6 +54,14 @@ import SOPTeamLeader from "./pages/employee/SOPTeamLeader";
 import SOPGroundsman from "./pages/employee/SOPGroundsman";
 import SOPSalesOperations from "./pages/employee/SOPSalesOperations";
 import NotFound from "./pages/NotFound";
+// Ops dashboard
+import OpsLogin from "./pages/ops/OpsLogin";
+import OpsDashboard from "./pages/ops/OpsDashboard";
+import OpsToday from "./pages/ops/OpsToday";
+import OpsWeek from "./pages/ops/OpsWeek";
+import OpsJobDetail from "./pages/ops/OpsJobDetail";
+import OpsCrew from "./pages/ops/OpsCrew";
+import OpsSettings from "./pages/ops/OpsSettings";
 // Service pages
 import PalmTreeTrimming from "./pages/services/PalmTreeTrimming";
 import PalmTreeInstallation from "./pages/services/PalmTreeInstallation";
@@ -138,6 +146,14 @@ const App = () => (
           <Route path="/employee/gulf-coast-palms/sop/team-leader" element={<SOPTeamLeader />} />
           <Route path="/employee/gulf-coast-palms/sop/groundsman" element={<SOPGroundsman />} />
           <Route path="/employee/gulf-coast-palms/sop/sales-operations" element={<SOPSalesOperations />} />
+          {/* Ops Dashboard */}
+          <Route path="/ops/login" element={<OpsLogin />} />
+          <Route path="/ops" element={<OpsDashboard />} />
+          <Route path="/ops/today" element={<OpsToday />} />
+          <Route path="/ops/week" element={<OpsWeek />} />
+          <Route path="/ops/job/:jobId" element={<OpsJobDetail />} />
+          <Route path="/ops/crew" element={<OpsCrew />} />
+          <Route path="/ops/settings" element={<OpsSettings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

@@ -142,6 +142,41 @@ export type Database = {
         }
         Relationships: []
       }
+      crews: {
+        Row: {
+          created_at: string
+          id: string
+          lead_employee_id: string | null
+          name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lead_employee_id?: string | null
+          name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lead_employee_id?: string | null
+          name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crews_lead_employee_id_fkey"
+            columns: ["lead_employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_drip_enrollments: {
         Row: {
           created_at: string
@@ -389,6 +424,237 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      jobber_clients: {
+        Row: {
+          company_name: string | null
+          created_at: string
+          display_name: string
+          email: string | null
+          first_name: string | null
+          id: string
+          jobber_id: string
+          last_name: string | null
+          phone: string | null
+          secondary_phone: string | null
+          synced_at: string
+          tags: string[] | null
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string
+          display_name: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          jobber_id: string
+          last_name?: string | null
+          phone?: string | null
+          secondary_phone?: string | null
+          synced_at?: string
+          tags?: string[] | null
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string
+          display_name?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          jobber_id?: string
+          last_name?: string | null
+          phone?: string | null
+          secondary_phone?: string | null
+          synced_at?: string
+          tags?: string[] | null
+        }
+        Relationships: []
+      }
+      jobber_jobs: {
+        Row: {
+          assigned_employee_ids: string[] | null
+          assigned_employee_names: string[] | null
+          client_id: string | null
+          client_name: string | null
+          client_phone: string | null
+          created_at: string
+          crew_id: string | null
+          id: string
+          internal_notes: string | null
+          invoice_status: string | null
+          job_number: string | null
+          jobber_id: string
+          property_address: string | null
+          property_id: string | null
+          scheduled_end: string | null
+          scheduled_start: string | null
+          service_items: Json | null
+          status: string
+          synced_at: string
+          title: string | null
+          total_amount: number | null
+          updated_at: string
+          visit_status: string | null
+        }
+        Insert: {
+          assigned_employee_ids?: string[] | null
+          assigned_employee_names?: string[] | null
+          client_id?: string | null
+          client_name?: string | null
+          client_phone?: string | null
+          created_at?: string
+          crew_id?: string | null
+          id?: string
+          internal_notes?: string | null
+          invoice_status?: string | null
+          job_number?: string | null
+          jobber_id: string
+          property_address?: string | null
+          property_id?: string | null
+          scheduled_end?: string | null
+          scheduled_start?: string | null
+          service_items?: Json | null
+          status?: string
+          synced_at?: string
+          title?: string | null
+          total_amount?: number | null
+          updated_at?: string
+          visit_status?: string | null
+        }
+        Update: {
+          assigned_employee_ids?: string[] | null
+          assigned_employee_names?: string[] | null
+          client_id?: string | null
+          client_name?: string | null
+          client_phone?: string | null
+          created_at?: string
+          crew_id?: string | null
+          id?: string
+          internal_notes?: string | null
+          invoice_status?: string | null
+          job_number?: string | null
+          jobber_id?: string
+          property_address?: string | null
+          property_id?: string | null
+          scheduled_end?: string | null
+          scheduled_start?: string | null
+          service_items?: Json | null
+          status?: string
+          synced_at?: string
+          title?: string | null
+          total_amount?: number | null
+          updated_at?: string
+          visit_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobber_jobs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "jobber_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobber_jobs_crew_id_fkey"
+            columns: ["crew_id"]
+            isOneToOne: false
+            referencedRelation: "crews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobber_jobs_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "jobber_properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jobber_properties: {
+        Row: {
+          city: string | null
+          client_id: string | null
+          country: string | null
+          created_at: string
+          id: string
+          jobber_id: string
+          lat: number | null
+          lng: number | null
+          state: string | null
+          street1: string | null
+          street2: string | null
+          synced_at: string
+          zip: string | null
+        }
+        Insert: {
+          city?: string | null
+          client_id?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          jobber_id: string
+          lat?: number | null
+          lng?: number | null
+          state?: string | null
+          street1?: string | null
+          street2?: string | null
+          synced_at?: string
+          zip?: string | null
+        }
+        Update: {
+          city?: string | null
+          client_id?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          jobber_id?: string
+          lat?: number | null
+          lng?: number | null
+          state?: string | null
+          street1?: string | null
+          street2?: string | null
+          synced_at?: string
+          zip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobber_properties_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "jobber_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jobber_tokens: {
+        Row: {
+          access_token: string
+          created_at: string
+          expires_at: string
+          id: string
+          refresh_token: string
+          scope: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          refresh_token: string
+          scope?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          refresh_token?: string
+          scope?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       jobs: {
         Row: {
@@ -745,6 +1011,39 @@ export type Database = {
         }
         Relationships: []
       }
+      sync_logs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          records_synced: number | null
+          started_at: string
+          status: string
+          sync_type: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          records_synced?: number | null
+          started_at?: string
+          status?: string
+          sync_type?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          records_synced?: number | null
+          started_at?: string
+          status?: string
+          sync_type?: string
+        }
+        Relationships: []
+      }
       text_consents: {
         Row: {
           created_at: string
@@ -810,6 +1109,7 @@ export type Database = {
         | "operations"
         | "team_leader"
         | "limited_staff"
+        | "manager"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -937,7 +1237,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user", "operations", "team_leader", "limited_staff"],
+      app_role: [
+        "admin",
+        "user",
+        "operations",
+        "team_leader",
+        "limited_staff",
+        "manager",
+      ],
     },
   },
 } as const
