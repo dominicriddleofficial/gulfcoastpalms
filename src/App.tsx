@@ -123,6 +123,7 @@ const App = () => (
           <Route path="/payments" element={<Payments />} />
           <Route path="/text-consent" element={<TextConsent />} />
           <Route path="/terms-of-service" element={<TermsOfService />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           {/* Admin */}
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminHome />} />

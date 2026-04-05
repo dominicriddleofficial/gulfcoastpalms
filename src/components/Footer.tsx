@@ -41,6 +41,7 @@ const Footer = () => {
               <Link to="/referral" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Referral Program</Link>
               <Link to="/payments" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Payments</Link>
               <Link to="/terms-of-service" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Terms of Service</Link>
+              <Link to="/privacy-policy" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Privacy Policy</Link>
             </nav>
           </div>
 
