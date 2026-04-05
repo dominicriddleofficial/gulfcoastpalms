@@ -521,7 +521,7 @@ async function fetchChangedClientIds(accessToken: string, lastSuccessAt: string 
     "clients",
     { filter },
     context,
-    { limit: 100, pageDelayMs: DEFAULT_PAGE_DELAY_MS, expectedCost: 8 }
+    { limit: 25, pageDelayMs: DEFAULT_PAGE_DELAY_MS, expectedCost: 8 }
   );
 
   return nodes.map((node) => node.id);
