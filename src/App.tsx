@@ -64,6 +64,7 @@ import OpsWeek from "./pages/ops/OpsWeek";
 import OpsJobDetail from "./pages/ops/OpsJobDetail";
 import OpsCrew from "./pages/ops/OpsCrew";
 import OpsSettings from "./pages/ops/OpsSettings";
+import OpsSchedule from "./pages/ops/OpsSchedule";
 // Service pages
 import PalmTreeTrimming from "./pages/services/PalmTreeTrimming";
 import PalmTreeInstallation from "./pages/services/PalmTreeInstallation";
@@ -157,6 +158,7 @@ const App = () => (
           <Route path="/ops/week" element={<OpsWeek />} />
           <Route path="/ops/job/:jobId" element={<OpsJobDetail />} />
           <Route path="/ops/crew" element={<OpsCrew />} />
+          <Route path="/ops/schedule" element={<OpsSchedule />} />
           <Route path="/ops/settings" element={<OpsSettings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

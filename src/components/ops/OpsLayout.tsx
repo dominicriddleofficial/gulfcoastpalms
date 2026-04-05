@@ -4,7 +4,7 @@ import { useOpsAuth, OpsRole } from "@/hooks/useOpsAuth";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard, Calendar, CalendarDays, Users, Settings,
-  LogOut, Menu, X, Search,
+  LogOut, Menu, X, Search, Map,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -12,16 +12,17 @@ const NAV_ITEMS = [
   { label: "Dashboard", path: "/ops", icon: LayoutDashboard },
   { label: "Today", path: "/ops/today", icon: Calendar },
   { label: "Week", path: "/ops/week", icon: CalendarDays },
+  { label: "Schedule", path: "/ops/schedule", icon: Map },
   { label: "Crew", path: "/ops/crew", icon: Users },
   { label: "Settings", path: "/ops/settings", icon: Settings },
 ];
 
 const ROLE_ACCESS: Record<OpsRole, string[]> = {
   admin: NAV_ITEMS.map(i => i.path),
-  manager: ["/ops", "/ops/today", "/ops/week", "/ops/crew"],
-  operations: ["/ops", "/ops/today", "/ops/week", "/ops/crew"],
-  team_leader: ["/ops", "/ops/today", "/ops/week", "/ops/crew"],
-  limited_staff: ["/ops/today"],
+  manager: ["/ops", "/ops/today", "/ops/week", "/ops/schedule", "/ops/crew"],
+  operations: ["/ops", "/ops/today", "/ops/week", "/ops/schedule", "/ops/crew"],
+  team_leader: ["/ops", "/ops/today", "/ops/week", "/ops/schedule", "/ops/crew"],
+  limited_staff: ["/ops/today", "/ops/schedule"],
   user: [],
 };
 
