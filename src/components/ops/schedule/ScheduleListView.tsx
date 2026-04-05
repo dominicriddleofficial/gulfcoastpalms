@@ -3,17 +3,12 @@ import JobCard from "@/components/ops/JobCard";
 
 interface ScheduleListViewProps {
   jobs: ScheduleJob[];
-  selectedCrew: string | null;
 }
 
-export default function ScheduleListView({ jobs, selectedCrew }: ScheduleListViewProps) {
-  const filtered = selectedCrew
-    ? jobs.filter(j => (j.assigned_employee_names?.join(", ") || "Unassigned") === selectedCrew)
-    : jobs;
-
+export default function ScheduleListView({ jobs }: ScheduleListViewProps) {
   // Group by crew
   const grouped: Record<string, ScheduleJob[]> = {};
-  filtered.forEach(j => {
+  jobs.forEach(j => {
     const crew = j.assigned_employee_names?.join(", ") || "Unassigned";
     if (!grouped[crew]) grouped[crew] = [];
     grouped[crew].push(j);
@@ -23,10 +18,10 @@ export default function ScheduleListView({ jobs, selectedCrew }: ScheduleListVie
     arr.sort((a, b) => (a.routeOrder || 0) - (b.routeOrder || 0))
   );
 
-  if (filtered.length === 0) {
+  if (jobs.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="font-body text-muted-foreground">No jobs found</p>
+        <p className="font-body text-muted-foreground">No jobs scheduled for this day</p>
       </div>
     );
   }
