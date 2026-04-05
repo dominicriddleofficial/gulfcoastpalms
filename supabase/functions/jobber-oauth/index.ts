@@ -9,6 +9,41 @@ const corsHeaders = {
 const JOBBER_AUTH_URL = "https://api.getjobber.com/api/oauth/authorize";
 const JOBBER_TOKEN_URL = "https://api.getjobber.com/api/oauth/token";
 
+const jsonHeaders = { ...corsHeaders, "Content-Type": "application/json" };
+
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), { status, headers: jsonHeaders });
+}
+
+function getTokenExpiryIso(tokenData: { access_token?: string; expires_in?: number | string }) {
+  const expiresInSeconds = Number(tokenData.expires_in);
+
+  if (Number.isFinite(expiresInSeconds) && expiresInSeconds > 0) {
+    return new Date(Date.now() + expiresInSeconds * 1000).toISOString();
+  }
+
+  if (tokenData.access_token) {
+    try {
+      const [, payload = ""] = tokenData.access_token.split(".");
+      const padded = payload.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(payload.length / 4) * 4, "=");
+      const decoded = JSON.parse(atob(padded));
+      const exp = Number(decoded?.exp);
+
+      if (Number.isFinite(exp) && exp > 0) {
+        return new Date(exp * 1000).toISOString();
+      }
+    } catch (error) {
+      console.error("Failed to decode Jobber access token expiry:", error);
+    }
+  }
+
+  return new Date(Date.now() + 60 * 60 * 1000).toISOString();
+}
+
+function buildTokenRequestBody(params: Record<string, string>) {
+  return new URLSearchParams(params).toString();
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -21,20 +56,14 @@ Deno.serve(async (req) => {
   const CLIENT_SECRET = Deno.env.get("JOBBER_CLIENT_SECRET");
 
   if (!CLIENT_ID || !CLIENT_SECRET) {
-    return new Response(
-      JSON.stringify({ error: "Jobber credentials not configured" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonResponse({ error: "Jobber credentials not configured" }, 500);
   }
 
   // Step 1: Redirect user to Jobber's OAuth consent screen
   if (action === "authorize") {
     const redirectUri = url.searchParams.get("redirect_uri");
     if (!redirectUri) {
-      return new Response(
-        JSON.stringify({ error: "redirect_uri is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonResponse({ error: "redirect_uri is required" }, 400);
     }
 
     const authUrl = new URL(JOBBER_AUTH_URL);
@@ -42,9 +71,7 @@ Deno.serve(async (req) => {
     authUrl.searchParams.set("redirect_uri", redirectUri);
     authUrl.searchParams.set("response_type", "code");
 
-    return new Response(JSON.stringify({ url: authUrl.toString() }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ url: authUrl.toString() });
   }
 
   // Step 2: Exchange authorization code for tokens
@@ -53,17 +80,14 @@ Deno.serve(async (req) => {
     const redirectUri = url.searchParams.get("redirect_uri");
 
     if (!code || !redirectUri) {
-      return new Response(
-        JSON.stringify({ error: "code and redirect_uri are required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonResponse({ error: "code and redirect_uri are required" }, 400);
     }
 
     // Exchange code for tokens
     const tokenRes = await fetch(JOBBER_TOKEN_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+      headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
+      body: buildTokenRequestBody({
         client_id: CLIENT_ID,
         client_secret: CLIENT_SECRET,
         grant_type: "authorization_code",
@@ -76,13 +100,22 @@ Deno.serve(async (req) => {
 
     if (!tokenRes.ok) {
       console.error("Jobber token exchange failed:", tokenBody);
-      return new Response(
-        JSON.stringify({ error: "Token exchange failed", details: tokenBody }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonResponse({ error: "Token exchange failed", details: tokenBody }, 400);
     }
 
-    const tokenData = JSON.parse(tokenBody);
+    let tokenData: { access_token?: string; refresh_token?: string; expires_in?: number | string; scope?: string | null };
+
+    try {
+      tokenData = JSON.parse(tokenBody);
+    } catch (error) {
+      console.error("Jobber token response was not valid JSON:", tokenBody, error);
+      return jsonResponse({ error: "Token exchange returned an invalid response" }, 502);
+    }
+
+    if (!tokenData.access_token || !tokenData.refresh_token) {
+      console.error("Jobber token response missing required tokens:", tokenData);
+      return jsonResponse({ error: "Token exchange returned incomplete credentials" }, 502);
+    }
 
     // Store tokens in database
     const supabase = createClient(
@@ -93,7 +126,7 @@ Deno.serve(async (req) => {
     // Upsert: delete old tokens, insert new one
     await supabase.from("jobber_tokens").delete().neq("id", "00000000-0000-0000-0000-000000000000");
 
-    const expiresAt = new Date(Date.now() + tokenData.expires_in * 1000).toISOString();
+    const expiresAt = getTokenExpiryIso(tokenData);
 
     const { error: insertError } = await supabase.from("jobber_tokens").insert({
       access_token: tokenData.access_token,
@@ -104,16 +137,10 @@ Deno.serve(async (req) => {
 
     if (insertError) {
       console.error("Failed to store tokens:", insertError);
-      return new Response(
-        JSON.stringify({ error: "Failed to store tokens" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonResponse({ error: "Failed to store tokens" }, 500);
     }
 
-    return new Response(
-      JSON.stringify({ success: true, expires_at: expiresAt }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonResponse({ success: true, expires_at: expiresAt });
   }
 
   // Step 3: Check connection status
@@ -130,22 +157,16 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (!tokens) {
-      return new Response(
-        JSON.stringify({ connected: false }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonResponse({ connected: false });
     }
 
     const isExpired = new Date(tokens.expires_at) < new Date();
-    return new Response(
-      JSON.stringify({
-        connected: true,
-        expired: isExpired,
-        expires_at: tokens.expires_at,
-        updated_at: tokens.updated_at,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonResponse({
+      connected: true,
+      expired: isExpired,
+      expires_at: tokens.expires_at,
+      updated_at: tokens.updated_at,
+    });
   }
 
   // Step 4: Refresh token
@@ -162,16 +183,13 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (!tokens) {
-      return new Response(
-        JSON.stringify({ error: "No tokens found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonResponse({ error: "No tokens found" }, 404);
     }
 
     const refreshRes = await fetch(JOBBER_TOKEN_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+      headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
+      body: buildTokenRequestBody({
         client_id: CLIENT_ID,
         client_secret: CLIENT_SECRET,
         grant_type: "refresh_token",
@@ -183,14 +201,24 @@ Deno.serve(async (req) => {
 
     if (!refreshRes.ok) {
       console.error("Jobber refresh failed:", refreshBody);
-      return new Response(
-        JSON.stringify({ error: "Token refresh failed", details: refreshBody }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonResponse({ error: "Token refresh failed", details: refreshBody }, 400);
     }
 
-    const refreshData = JSON.parse(refreshBody);
-    const expiresAt = new Date(Date.now() + refreshData.expires_in * 1000).toISOString();
+    let refreshData: { access_token?: string; refresh_token?: string; expires_in?: number | string };
+
+    try {
+      refreshData = JSON.parse(refreshBody);
+    } catch (error) {
+      console.error("Jobber refresh response was not valid JSON:", refreshBody, error);
+      return jsonResponse({ error: "Token refresh returned an invalid response" }, 502);
+    }
+
+    if (!refreshData.access_token || !refreshData.refresh_token) {
+      console.error("Jobber refresh response missing required tokens:", refreshData);
+      return jsonResponse({ error: "Token refresh returned incomplete credentials" }, 502);
+    }
+
+    const expiresAt = getTokenExpiryIso(refreshData);
 
     await supabase
       .from("jobber_tokens")
@@ -201,14 +229,8 @@ Deno.serve(async (req) => {
       })
       .eq("id", tokens.id);
 
-    return new Response(
-      JSON.stringify({ success: true, expires_at: expiresAt }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonResponse({ success: true, expires_at: expiresAt });
   }
 
-  return new Response(
-    JSON.stringify({ error: "Unknown action. Use: authorize, callback, status, refresh" }),
-    { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-  );
+  return jsonResponse({ error: "Unknown action. Use: authorize, callback, status, refresh" }, 400);
 });
