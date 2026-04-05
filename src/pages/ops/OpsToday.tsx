@@ -29,7 +29,8 @@ export default function OpsToday() {
       j.property_address?.toLowerCase().includes(search.toLowerCase()) ||
       j.job_number?.includes(search);
     const matchStatus = statusFilter === "all" || j.visit_status === statusFilter;
-    const matchCrew = crewFilter === "all" || j.crew_id === crewFilter;
+    const crewKey = j.assigned_employee_names?.join(", ") || "Unassigned";
+    const matchCrew = crewFilter === "all" || crewKey === crewFilter;
     return matchSearch && matchStatus && matchCrew;
   });
 
