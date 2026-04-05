@@ -503,11 +503,13 @@ const VISITS_QUERY = `
 `;
 
 function pickPrimaryEmail(emails: any) {
-  return emails?.nodes?.[0]?.address || null;
+  if (Array.isArray(emails)) return emails[0]?.address || null;
+  return emails?.nodes?.[0]?.address || emails?.address || null;
 }
 
 function pickPrimaryPhone(phones: any) {
-  return phones?.nodes?.[0]?.number || null;
+  if (Array.isArray(phones)) return phones[0]?.number || null;
+  return phones?.nodes?.[0]?.number || phones?.number || null;
 }
 
 async function fetchChangedClientIds(accessToken: string, lastSuccessAt: string | null, context: SyncContext) {
