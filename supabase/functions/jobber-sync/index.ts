@@ -398,9 +398,9 @@ const CLIENTS_QUERY = `
         lastName
         companyName
         name
-        emails { address primary }
-        phones { number primary }
-        tags { nodes { label } }
+        emails { address }
+        phones { number }
+        tags(first: 5) { nodes { label } }
       }
       pageInfo { hasNextPage endCursor }
     }
@@ -502,12 +502,14 @@ const VISITS_QUERY = `
   }
 `;
 
-function pickPrimaryEmail(emails: Array<{ address?: string | null; primary?: boolean }> | null | undefined) {
-  return emails?.find((item) => item.primary)?.address || emails?.[0]?.address || null;
+function pickPrimaryEmail(emails: any) {
+  if (Array.isArray(emails)) return emails[0]?.address || null;
+  return emails?.nodes?.[0]?.address || emails?.address || null;
 }
 
-function pickPrimaryPhone(phones: Array<{ number?: string | null; primary?: boolean }> | null | undefined) {
-  return phones?.find((item) => item.primary)?.number || phones?.[0]?.number || null;
+function pickPrimaryPhone(phones: any) {
+  if (Array.isArray(phones)) return phones[0]?.number || null;
+  return phones?.nodes?.[0]?.number || phones?.number || null;
 }
 
 async function fetchChangedClientIds(accessToken: string, lastSuccessAt: string | null, context: SyncContext) {
@@ -521,7 +523,7 @@ async function fetchChangedClientIds(accessToken: string, lastSuccessAt: string 
     "clients",
     { filter },
     context,
-    { limit: 100, pageDelayMs: DEFAULT_PAGE_DELAY_MS, expectedCost: 8 }
+    { limit: 25, pageDelayMs: DEFAULT_PAGE_DELAY_MS, expectedCost: 8 }
   );
 
   return nodes.map((node) => node.id);
@@ -537,7 +539,7 @@ async function runClientsModule(accessToken: string, supabase: any, context: Syn
     "clients",
     { filter },
     context,
-    { limit: 100, pageDelayMs: DEFAULT_PAGE_DELAY_MS, maxPages: context.dryRun ? DRY_RUN_PAGE_LIMIT : undefined, expectedCost: 18 }
+    { limit: 25, pageDelayMs: DEFAULT_PAGE_DELAY_MS, maxPages: context.dryRun ? DRY_RUN_PAGE_LIMIT : undefined, expectedCost: 18 }
   );
 
   if (!context.dryRun) {
@@ -588,7 +590,7 @@ async function runPropertiesModule(
         "properties",
         { filter: { clientId } },
         context,
-        { limit: 50, pageDelayMs: DEFAULT_PAGE_DELAY_MS, maxPages: context.dryRun ? DRY_RUN_PAGE_LIMIT : undefined, expectedCost: 14 }
+        { limit: 25, pageDelayMs: DEFAULT_PAGE_DELAY_MS, maxPages: context.dryRun ? DRY_RUN_PAGE_LIMIT : undefined, expectedCost: 14 }
       );
       nodes.push(...result.nodes);
       finalMeta = result.meta;
@@ -602,7 +604,7 @@ async function runPropertiesModule(
       "properties",
       {},
       context,
-      { limit: 100, pageDelayMs: DEFAULT_PAGE_DELAY_MS, maxPages: context.dryRun ? DRY_RUN_PAGE_LIMIT : undefined, expectedCost: 14 }
+      { limit: 25, pageDelayMs: DEFAULT_PAGE_DELAY_MS, maxPages: context.dryRun ? DRY_RUN_PAGE_LIMIT : undefined, expectedCost: 14 }
     );
     nodes = result.nodes;
     finalMeta = result.meta;
@@ -669,7 +671,7 @@ async function runJobsModule(accessToken: string, supabase: any, context: SyncCo
     "jobs",
     { filter: { visitsScheduledBetween: { after: window.after, before: window.before }, includeUnscheduled: false } },
     context,
-    { limit: 50, pageDelayMs: DEFAULT_PAGE_DELAY_MS, maxPages: context.dryRun ? DRY_RUN_PAGE_LIMIT : undefined, expectedCost: 20 }
+    { limit: 25, pageDelayMs: DEFAULT_PAGE_DELAY_MS, maxPages: context.dryRun ? DRY_RUN_PAGE_LIMIT : undefined, expectedCost: 20 }
   );
 
   if (!context.dryRun && nodes.length) {
@@ -752,7 +754,6 @@ async function runVisitsModule(accessToken: string, supabase: any, context: Sync
         const client = visit.client?.id ? clientCache[visit.client.id] : null;
         const property = visit.property?.id ? propertyCache[visit.property.id] : null;
         const assignedNames = visit.assignedUsers?.nodes?.map((member: any) => member.name?.full).filter(Boolean) || [];
-        const assignedIds = visit.assignedUsers?.nodes?.map((member: any) => member.id).filter(Boolean) || [];
 
         return cleanObject({
           jobber_id: jobId,
@@ -764,7 +765,6 @@ async function runVisitsModule(accessToken: string, supabase: any, context: Sync
           property_id: property?.id,
           property_address: formatPropertyAddress(visit.property?.address) || property?.address || undefined,
           assigned_employee_names: assignedNames.length ? assignedNames : undefined,
-          assigned_employee_ids: assignedIds.length ? assignedIds : undefined,
           internal_notes: visit.instructions || undefined,
           synced_at: syncedAt,
         });
