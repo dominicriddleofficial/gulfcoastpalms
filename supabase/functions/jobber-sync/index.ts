@@ -337,7 +337,7 @@ Deno.serve(async (req) => {
           job_number: j.jobNumber?.toString() || null,
           title: j.title || null,
           status: j.jobStatus?.toLowerCase() || "scheduled",
-          visit_status: latestVisit?.status?.toLowerCase() || "scheduled",
+          visit_status: latestVisit?.visitStatus?.toLowerCase() || "scheduled",
           scheduled_start: latestVisit?.startAt || null,
           scheduled_end: latestVisit?.endAt || null,
           client_id: clientLocalId,
