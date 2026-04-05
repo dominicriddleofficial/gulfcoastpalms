@@ -21,16 +21,34 @@ async function jobberQuery(accessToken: string, query: string, variables: Record
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
-      "X-JOBBER-GRAPHQL-VERSION": "2024-12-10",
     },
     body: JSON.stringify({ query, variables }),
   });
 
-  const body = await res.json();
+  const text = await res.text();
+  console.log("Jobber GraphQL response status:", res.status);
+
+  if (!res.ok) {
+    console.error("Jobber GraphQL HTTP error:", res.status, text);
+    throw new Error(`Jobber API returned ${res.status}: ${text.slice(0, 200)}`);
+  }
+
+  let body: any;
+  try {
+    body = JSON.parse(text);
+  } catch {
+    console.error("Jobber returned non-JSON:", text.slice(0, 300));
+    throw new Error("Jobber returned non-JSON response");
+  }
 
   if (body.errors?.length) {
     console.error("Jobber GraphQL errors:", JSON.stringify(body.errors));
     throw new Error(body.errors[0]?.message || "Jobber GraphQL error");
+  }
+
+  if (!body.data) {
+    console.error("Jobber response missing data:", JSON.stringify(body).slice(0, 300));
+    throw new Error("Jobber response missing data field");
   }
 
   return body.data;
@@ -53,7 +71,10 @@ async function fetchAllPages(
     const data = await jobberQuery(accessToken, query, variables);
     const connection = data[rootField];
 
-    if (!connection?.nodes) break;
+    if (!connection?.nodes) {
+      console.log(`No more nodes for ${rootField}, got:`, JSON.stringify(connection).slice(0, 200));
+      break;
+    }
 
     allNodes.push(...connection.nodes);
     hasNextPage = connection.pageInfo?.hasNextPage ?? false;
