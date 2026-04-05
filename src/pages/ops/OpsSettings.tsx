@@ -3,8 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useOpsAuth } from "@/hooks/useOpsAuth";
-import { RefreshCw, CheckCircle2, XCircle, Clock, Shield, ExternalLink } from "lucide-react";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { RefreshCw, CheckCircle2, XCircle, Clock, Shield, ExternalLink, Wifi, AlertTriangle } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
@@ -26,14 +26,25 @@ type ConnectionStatus = {
   updated_at?: string;
 };
 
+type ModuleResult = {
+  module: string;
+  success: boolean;
+  records: number;
+  error?: string;
+  timestamp: string;
+};
+
 export default function OpsSettings() {
   const { isAdmin } = useOpsAuth();
   const { toast } = useToast();
   const [syncing, setSyncing] = useState(false);
+  const [syncingModule, setSyncingModule] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(false);
+  const [testing, setTesting] = useState(false);
   const [status, setStatus] = useState<ConnectionStatus | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
   const [syncLogs, setSyncLogs] = useState<SyncLog[]>([]);
+  const [lastSyncResults, setLastSyncResults] = useState<ModuleResult[]>([]);
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const fnBase = `${supabaseUrl}/functions/v1/jobber-oauth`;
@@ -41,14 +52,10 @@ export default function OpsSettings() {
 
   const parseJsonResponse = async (res: Response) => {
     const text = await res.text();
-
     try {
       return text ? JSON.parse(text) : {};
     } catch {
-      if (!res.ok) {
-        throw new Error("Received an invalid response from the backend.");
-      }
-
+      if (!res.ok) throw new Error("Received an invalid response from the backend.");
       return {};
     }
   };
@@ -65,7 +72,6 @@ export default function OpsSettings() {
     }
   }, [fnBase]);
 
-  // Check status on load
   useEffect(() => {
     checkStatus();
     fetchSyncLogs();
@@ -80,45 +86,29 @@ export default function OpsSettings() {
     if (data) setSyncLogs(data as unknown as SyncLog[]);
   };
 
-  // Handle OAuth callback code in URL
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
     if (!code) return;
-
-    // Clean URL
     window.history.replaceState({}, "", window.location.pathname);
-
     const exchangeCode = async () => {
       setConnecting(true);
       try {
         const redirectUri = `${window.location.origin}/ops/settings`;
-        const res = await fetch(
-          `${fnBase}?action=callback&code=${encodeURIComponent(code)}&redirect_uri=${encodeURIComponent(redirectUri)}`
-        );
+        const res = await fetch(`${fnBase}?action=callback&code=${encodeURIComponent(code)}&redirect_uri=${encodeURIComponent(redirectUri)}`);
         const data = await parseJsonResponse(res);
-
         if (data.success) {
           toast({ title: "Jobber Connected!", description: "Your Jobber account is now linked." });
           await checkStatus();
         } else {
-          toast({
-            title: "Connection Failed",
-            description: data.details || data.error || "Could not connect Jobber.",
-            variant: "destructive",
-          });
+          toast({ title: "Connection Failed", description: data.details || data.error || "Could not connect Jobber.", variant: "destructive" });
         }
       } catch (error) {
-        toast({
-          title: "Connection Failed",
-          description: error instanceof Error ? error.message : "Network error during token exchange.",
-          variant: "destructive",
-        });
+        toast({ title: "Connection Failed", description: error instanceof Error ? error.message : "Network error.", variant: "destructive" });
       } finally {
         setConnecting(false);
       }
     };
-
     exchangeCode();
   }, [fnBase, toast, checkStatus]);
 
@@ -128,7 +118,6 @@ export default function OpsSettings() {
       const redirectUri = `${window.location.origin}/ops/settings`;
       const res = await fetch(`${fnBase}?action=authorize&redirect_uri=${encodeURIComponent(redirectUri)}`);
       const data = await parseJsonResponse(res);
-
       if (data.url) {
         window.location.href = data.url;
       } else {
@@ -146,7 +135,6 @@ export default function OpsSettings() {
     try {
       const res = await fetch(`${fnBase}?action=refresh`);
       const data = await parseJsonResponse(res);
-
       if (data.success) {
         toast({ title: "Token Refreshed", description: "Jobber access token renewed." });
         await checkStatus();
@@ -160,25 +148,62 @@ export default function OpsSettings() {
     }
   };
 
-  const handleSync = async () => {
-    setSyncing(true);
+  const handleTestConnection = async () => {
+    setTesting(true);
     try {
-      const res = await fetch(syncFnUrl, { method: "POST" });
+      const res = await fetch(syncFnUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "test" }),
+      });
       const data = await parseJsonResponse(res);
+      if (data.success) {
+        toast({ title: "Connection OK", description: "Jobber API responded successfully." });
+      } else {
+        toast({ title: "Connection Failed", description: data.error || "Could not reach Jobber API.", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Test Failed", description: "Network error.", variant: "destructive" });
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const handleSync = async (moduleList?: string[]) => {
+    const label = moduleList ? moduleList.join(", ") : "full";
+    setSyncing(true);
+    setSyncingModule(label);
+    try {
+      const res = await fetch(syncFnUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "full", modules: moduleList || [] }),
+      });
+      const data = await parseJsonResponse(res);
+
+      if (data.modules) setLastSyncResults(data.modules);
 
       if (data.success) {
         toast({
           title: "Sync Complete",
           description: `Synced ${data.records_synced} records (${data.breakdown?.clients || 0} clients, ${data.breakdown?.jobs || 0} jobs, ${data.breakdown?.properties || 0} properties).`,
         });
+      } else if (data.status === "partial") {
+        const failed = (data.modules as ModuleResult[])?.filter((m: ModuleResult) => !m.success).map((m: ModuleResult) => m.module).join(", ");
+        toast({
+          title: "Partial Sync",
+          description: `Some modules failed: ${failed}. ${data.records_synced} records synced.`,
+          variant: "destructive",
+        });
       } else {
-        toast({ title: "Sync Failed", description: data.details || data.error || "Unknown error.", variant: "destructive" });
+        toast({ title: "Sync Failed", description: data.modules?.[0]?.error || data.error || "Unknown error.", variant: "destructive" });
       }
       await fetchSyncLogs();
     } catch (error) {
       toast({ title: "Sync Failed", description: error instanceof Error ? error.message : "Network error.", variant: "destructive" });
     } finally {
       setSyncing(false);
+      setSyncingModule(null);
     }
   };
 
@@ -221,9 +246,13 @@ export default function OpsSettings() {
                 </Button>
               ) : (
                 <>
-                  <Button variant="outline" className="font-body" onClick={handleSync} disabled={syncing}>
+                  <Button variant="outline" className="font-body" onClick={() => handleSync()} disabled={syncing}>
                     <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? "animate-spin" : ""}`} />
-                    {syncing ? "Syncing..." : "Sync Now"}
+                    {syncing ? `Syncing ${syncingModule || ""}...` : "Full Sync"}
+                  </Button>
+                  <Button variant="outline" className="font-body" onClick={handleTestConnection} disabled={testing || syncing}>
+                    <Wifi className="w-4 h-4 mr-2" />
+                    {testing ? "Testing..." : "Test Connection"}
                   </Button>
                   {status.expired && (
                     <Button variant="outline" className="font-body" onClick={handleRefreshToken} disabled={syncing}>
@@ -242,7 +271,71 @@ export default function OpsSettings() {
           </CardContent>
         </Card>
 
-        {/* Sync Logs */}
+        {/* Per-Module Sync */}
+        {status?.connected && (
+          <Card className="border-border">
+            <CardHeader className="pb-3">
+              <CardTitle className="font-body text-base">Sync Individual Modules</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {["clients", "properties", "jobs"].map((mod) => (
+                  <Button
+                    key={mod}
+                    variant="outline"
+                    size="sm"
+                    className="font-body capitalize"
+                    disabled={syncing}
+                    onClick={() => handleSync([mod])}
+                  >
+                    <RefreshCw className={`w-3 h-3 mr-1 ${syncing && syncingModule === mod ? "animate-spin" : ""}`} />
+                    Sync {mod}
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Sync Diagnostics */}
+        {lastSyncResults.length > 0 && (
+          <Card className="border-border">
+            <CardHeader className="pb-3">
+              <CardTitle className="font-body text-base flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4" /> Sync Diagnostics
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {lastSyncResults.map((r) => (
+                  <div key={r.module} className="flex items-start justify-between py-2 border-b border-border last:border-0">
+                    <div className="flex items-center gap-2">
+                      {r.success ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                      ) : (
+                        <XCircle className="w-4 h-4 text-red-500 shrink-0" />
+                      )}
+                      <div>
+                        <span className="font-body text-sm font-medium capitalize text-foreground">{r.module}</span>
+                        {r.error && (
+                          <p className="font-body text-xs text-red-600 mt-0.5 break-all">{r.error}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="font-body text-sm text-foreground">{r.records} records</span>
+                      <p className="font-body text-xs text-muted-foreground">
+                        {new Date(r.timestamp).toLocaleTimeString()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Sync History */}
         <Card className="border-border">
           <CardHeader className="pb-3">
             <CardTitle className="font-body text-base">Sync History</CardTitle>
@@ -253,19 +346,28 @@ export default function OpsSettings() {
                 <p className="font-body text-sm text-muted-foreground">No syncs yet. Connect Jobber and click Sync Now.</p>
               )}
               {syncLogs.map((log) => (
-                <div key={log.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                  <div className="flex items-center gap-2">
-                    {log.status === "success" || log.status === "running" ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    ) : (
-                      <XCircle className="w-4 h-4 text-red-500" />
-                    )}
-                    <span className="font-body text-sm text-foreground">{log.sync_type}</span>
+                <div key={log.id}>
+                  <div className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                    <div className="flex items-center gap-2">
+                      {log.status === "success" ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                      ) : log.status === "partial" ? (
+                        <AlertTriangle className="w-4 h-4 text-amber-500" />
+                      ) : log.status === "running" ? (
+                        <RefreshCw className="w-4 h-4 text-blue-500 animate-spin" />
+                      ) : (
+                        <XCircle className="w-4 h-4 text-red-500" />
+                      )}
+                      <span className="font-body text-sm text-foreground">{log.sync_type}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs font-body text-muted-foreground">
+                      <span>{log.records_synced ?? 0} records</span>
+                      <span>{formatDistanceToNow(new Date(log.started_at), { addSuffix: true })}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3 text-xs font-body text-muted-foreground">
-                    <span>{log.records_synced ?? 0} records</span>
-                    <span>{formatDistanceToNow(new Date(log.started_at), { addSuffix: true })}</span>
-                  </div>
+                  {log.error_message && log.status !== "success" && (
+                    <p className="font-body text-xs text-red-600 pl-6 pb-2 break-all">{log.error_message}</p>
+                  )}
                 </div>
               ))}
             </div>
@@ -311,7 +413,8 @@ export default function OpsSettings() {
                 <li className="line-through text-emerald-600">Add <strong>JOBBER_CLIENT_SECRET</strong> secret</li>
                 <li>Set redirect URI to: <code className="text-xs bg-muted px-1 py-0.5 rounded break-all">{window.location.origin}/ops/settings</code></li>
                 <li>Click "Connect Jobber Account" above to authorize</li>
-                <li>Click "Sync Now" to pull your first batch of data</li>
+                <li>Click "Test Connection" to verify API access</li>
+                <li>Click "Full Sync" to pull your first batch of data</li>
               </ol>
             </CardContent>
           </Card>
