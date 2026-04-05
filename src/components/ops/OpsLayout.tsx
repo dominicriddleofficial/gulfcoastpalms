@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { label: "Dashboard", path: "/ops", icon: LayoutDashboard },
   { label: "Today", path: "/ops/today", icon: Calendar },
   { label: "Week", path: "/ops/week", icon: CalendarDays },
+  { label: "Schedule", path: "/ops/schedule", icon: Map },
   { label: "Crew", path: "/ops/crew", icon: Users },
   { label: "Settings", path: "/ops/settings", icon: Settings },
 ];
