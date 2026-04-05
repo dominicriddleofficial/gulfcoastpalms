@@ -234,12 +234,12 @@ export default function OpsSettings() {
     <Badge variant="outline" className="font-body text-xs">Loading...</Badge>
   ) : status?.connected ? (
     status.expired ? (
-      <Badge variant="outline" className="font-body text-xs text-amber-600 border-amber-300 bg-amber-50">Token Expired</Badge>
+      <Badge variant="outline" className="font-body text-xs text-warning border-border bg-muted">Token Expired</Badge>
     ) : (
-      <Badge variant="outline" className="font-body text-xs text-emerald-600 border-emerald-300 bg-emerald-50">Connected</Badge>
+      <Badge variant="outline" className="font-body text-xs text-primary border-border bg-muted">Connected</Badge>
     )
   ) : (
-    <Badge variant="outline" className="font-body text-xs text-amber-600 border-amber-300 bg-amber-50">Not Connected</Badge>
+    <Badge variant="outline" className="font-body text-xs text-warning border-border bg-muted">Not Connected</Badge>
   );
 
   return (
@@ -350,9 +350,9 @@ export default function OpsSettings() {
                   <div key={`${result.module}-${result.timestamp}`} className="flex items-start justify-between py-2 border-b border-border last:border-0 gap-3">
                     <div className="flex items-start gap-2 min-w-0">
                       {result.success ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                        <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                       ) : (
-                        <XCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                        <XCircle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
                       )}
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -368,7 +368,7 @@ export default function OpsSettings() {
                           <p className="font-body text-xs text-muted-foreground">Last success: {new Date(result.lastSuccessAt).toLocaleString()}</p>
                         )}
                         {result.error && (
-                          <p className="font-body text-xs text-red-600 mt-1 break-all">{result.error}</p>
+                          <p className="font-body text-xs text-destructive mt-1 break-all">{result.error}</p>
                         )}
                       </div>
                     </div>
@@ -397,13 +397,13 @@ export default function OpsSettings() {
                   <div className="flex items-center justify-between py-2 border-b border-border last:border-0 gap-3">
                     <div className="flex items-center gap-2 min-w-0">
                       {log.status === "success" ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
                       ) : log.status === "partial" ? (
-                        <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+                        <AlertTriangle className="w-4 h-4 text-warning shrink-0" />
                       ) : log.status === "running" ? (
-                        <RefreshCw className="w-4 h-4 text-blue-500 animate-spin shrink-0" />
+                        <RefreshCw className="w-4 h-4 text-primary animate-spin shrink-0" />
                       ) : (
-                        <XCircle className="w-4 h-4 text-red-500 shrink-0" />
+                        <XCircle className="w-4 h-4 text-destructive shrink-0" />
                       )}
                       <span className="font-body text-sm text-foreground truncate">{log.sync_type}</span>
                     </div>
@@ -413,7 +413,7 @@ export default function OpsSettings() {
                     </div>
                   </div>
                   {log.error_message && log.status !== "success" && (
-                    <p className="font-body text-xs text-red-600 pl-6 pb-2 break-all">{log.error_message}</p>
+                    <p className="font-body text-xs text-destructive pl-6 pb-2 break-all">{log.error_message}</p>
                   )}
                 </div>
               ))}
