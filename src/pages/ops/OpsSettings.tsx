@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useOpsAuth } from "@/hooks/useOpsAuth";
-import { RefreshCw, CheckCircle2, XCircle, Clock, Shield, ExternalLink, Wifi, AlertTriangle } from "lucide-react";
+import { RefreshCw, CheckCircle2, XCircle, Clock, Shield, ExternalLink, Wifi, AlertTriangle, FlaskConical } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,7 +32,22 @@ type ModuleResult = {
   records: number;
   error?: string;
   timestamp: string;
+  queryName: string;
+  incremental: boolean;
+  lastSuccessAt?: string | null;
+  requestedCost?: number | null;
+  actualCost?: number | null;
+  currentlyAvailable?: number | null;
+  restoreRate?: number | null;
 };
+
+const MODULES = [
+  { key: "clients", label: "Clients" },
+  { key: "properties", label: "Properties" },
+  { key: "users", label: "Crew" },
+  { key: "jobs", label: "Jobs" },
+  { key: "visits", label: "Schedule" },
+];
 
 export default function OpsSettings() {
   const { isAdmin } = useOpsAuth();
@@ -72,31 +87,34 @@ export default function OpsSettings() {
     }
   }, [fnBase]);
 
-  useEffect(() => {
-    checkStatus();
-    fetchSyncLogs();
-  }, [checkStatus]);
-
-  const fetchSyncLogs = async () => {
+  const fetchSyncLogs = useCallback(async () => {
     const { data } = await supabase
       .from("sync_logs")
       .select("*")
       .order("started_at", { ascending: false })
-      .limit(10);
+      .limit(20);
     if (data) setSyncLogs(data as unknown as SyncLog[]);
-  };
+  }, []);
+
+  useEffect(() => {
+    checkStatus();
+    fetchSyncLogs();
+  }, [checkStatus, fetchSyncLogs]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
     if (!code) return;
+
     window.history.replaceState({}, "", window.location.pathname);
+
     const exchangeCode = async () => {
       setConnecting(true);
       try {
         const redirectUri = `${window.location.origin}/ops/settings`;
         const res = await fetch(`${fnBase}?action=callback&code=${encodeURIComponent(code)}&redirect_uri=${encodeURIComponent(redirectUri)}`);
         const data = await parseJsonResponse(res);
+
         if (data.success) {
           toast({ title: "Jobber Connected!", description: "Your Jobber account is now linked." });
           await checkStatus();
@@ -109,6 +127,7 @@ export default function OpsSettings() {
         setConnecting(false);
       }
     };
+
     exchangeCode();
   }, [fnBase, toast, checkStatus]);
 
@@ -118,6 +137,7 @@ export default function OpsSettings() {
       const redirectUri = `${window.location.origin}/ops/settings`;
       const res = await fetch(`${fnBase}?action=authorize&redirect_uri=${encodeURIComponent(redirectUri)}`);
       const data = await parseJsonResponse(res);
+
       if (data.url) {
         window.location.href = data.url;
       } else {
@@ -135,6 +155,7 @@ export default function OpsSettings() {
     try {
       const res = await fetch(`${fnBase}?action=refresh`);
       const data = await parseJsonResponse(res);
+
       if (data.success) {
         toast({ title: "Token Refreshed", description: "Jobber access token renewed." });
         await checkStatus();
@@ -157,8 +178,9 @@ export default function OpsSettings() {
         body: JSON.stringify({ action: "test" }),
       });
       const data = await parseJsonResponse(res);
+
       if (data.success) {
-        toast({ title: "Connection OK", description: "Jobber API responded successfully." });
+        toast({ title: "Connection OK", description: `Jobber responded successfully. Budget available: ${data.currentlyAvailable ?? "unknown"}.` });
       } else {
         toast({ title: "Connection Failed", description: data.error || "Could not reach Jobber API.", variant: "destructive" });
       }
@@ -169,15 +191,16 @@ export default function OpsSettings() {
     }
   };
 
-  const handleSync = async (moduleList?: string[]) => {
-    const label = moduleList ? moduleList.join(", ") : "full";
+  const runSyncAction = async (action: "full" | "test_query", moduleList?: string[]) => {
+    const label = moduleList?.length ? moduleList.join(", ") : action === "full" ? "full" : "test";
     setSyncing(true);
     setSyncingModule(label);
+
     try {
       const res = await fetch(syncFnUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "full", modules: moduleList || [] }),
+        body: JSON.stringify({ action, modules: moduleList || [] }),
       });
       const data = await parseJsonResponse(res);
 
@@ -185,22 +208,22 @@ export default function OpsSettings() {
 
       if (data.success) {
         toast({
-          title: "Sync Complete",
-          description: `Synced ${data.records_synced} records (${data.breakdown?.clients || 0} clients, ${data.breakdown?.jobs || 0} jobs, ${data.breakdown?.properties || 0} properties).`,
+          title: action === "test_query" ? "Query Test Passed" : "Sync Complete",
+          description:
+            action === "test_query"
+              ? `Verified ${(data.modules as ModuleResult[])?.map((item) => item.module).join(", ") || "module"} against Jobber.`
+              : `Synced ${data.records_synced} records across staged modules.`,
         });
       } else if (data.status === "partial") {
-        const failed = (data.modules as ModuleResult[])?.filter((m: ModuleResult) => !m.success).map((m: ModuleResult) => m.module).join(", ");
-        toast({
-          title: "Partial Sync",
-          description: `Some modules failed: ${failed}. ${data.records_synced} records synced.`,
-          variant: "destructive",
-        });
+        const failed = (data.modules as ModuleResult[])?.filter((item) => !item.success).map((item) => item.module).join(", ");
+        toast({ title: "Partial Sync", description: `Some modules failed: ${failed}.`, variant: "destructive" });
       } else {
-        toast({ title: "Sync Failed", description: data.modules?.[0]?.error || data.error || "Unknown error.", variant: "destructive" });
+        toast({ title: action === "test_query" ? "Query Test Failed" : "Sync Failed", description: data.modules?.[0]?.error || data.error || "Unknown error.", variant: "destructive" });
       }
+
       await fetchSyncLogs();
     } catch (error) {
-      toast({ title: "Sync Failed", description: error instanceof Error ? error.message : "Network error.", variant: "destructive" });
+      toast({ title: action === "test_query" ? "Query Test Failed" : "Sync Failed", description: error instanceof Error ? error.message : "Network error.", variant: "destructive" });
     } finally {
       setSyncing(false);
       setSyncingModule(null);
@@ -224,7 +247,6 @@ export default function OpsSettings() {
       <div className="space-y-6 max-w-2xl">
         <h1 className="font-display text-2xl font-bold text-foreground">Settings</h1>
 
-        {/* Jobber Connection */}
         <Card className="border-border">
           <CardHeader className="pb-3">
             <CardTitle className="font-body text-base flex items-center gap-2">
@@ -235,7 +257,7 @@ export default function OpsSettings() {
           <CardContent className="space-y-3">
             <p className="font-body text-sm text-muted-foreground">
               {status?.connected
-                ? "Your Jobber account is connected. You can sync jobs, clients, and schedule data."
+                ? "Your Jobber account is connected. Sync now runs in staged, lower-cost modules."
                 : "Connect your Jobber account to sync jobs, clients, and schedule data automatically."}
             </p>
             <div className="flex flex-col sm:flex-row gap-2">
@@ -246,9 +268,9 @@ export default function OpsSettings() {
                 </Button>
               ) : (
                 <>
-                  <Button variant="outline" className="font-body" onClick={() => handleSync()} disabled={syncing}>
+                  <Button variant="outline" className="font-body" onClick={() => runSyncAction("full")} disabled={syncing}>
                     <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? "animate-spin" : ""}`} />
-                    {syncing ? `Syncing ${syncingModule || ""}...` : "Full Sync"}
+                    {syncing ? `Running ${syncingModule || "sync"}...` : "Full Sync"}
                   </Button>
                   <Button variant="outline" className="font-body" onClick={handleTestConnection} disabled={testing || syncing}>
                     <Wifi className="w-4 h-4 mr-2" />
@@ -271,33 +293,50 @@ export default function OpsSettings() {
           </CardContent>
         </Card>
 
-        {/* Per-Module Sync */}
         {status?.connected && (
           <Card className="border-border">
             <CardHeader className="pb-3">
               <CardTitle className="font-body text-base">Sync Individual Modules</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-2">
-                {["clients", "properties", "jobs"].map((mod) => (
+                {MODULES.map((module) => (
                   <Button
-                    key={mod}
+                    key={module.key}
                     variant="outline"
                     size="sm"
-                    className="font-body capitalize"
+                    className="font-body"
                     disabled={syncing}
-                    onClick={() => handleSync([mod])}
+                    onClick={() => runSyncAction("full", [module.key])}
                   >
-                    <RefreshCw className={`w-3 h-3 mr-1 ${syncing && syncingModule === mod ? "animate-spin" : ""}`} />
-                    Sync {mod}
+                    <RefreshCw className={`w-3 h-3 mr-1 ${syncing && syncingModule === module.key ? "animate-spin" : ""}`} />
+                    Sync {module.label}
                   </Button>
                 ))}
+              </div>
+
+              <div className="space-y-2">
+                <p className="font-body text-xs text-muted-foreground">Test each module query without writing data.</p>
+                <div className="flex flex-wrap gap-2">
+                  {MODULES.map((module) => (
+                    <Button
+                      key={`test-${module.key}`}
+                      variant="ghost"
+                      size="sm"
+                      className="font-body"
+                      disabled={syncing}
+                      onClick={() => runSyncAction("test_query", [module.key])}
+                    >
+                      <FlaskConical className="w-3 h-3 mr-1" />
+                      Test {module.label}
+                    </Button>
+                  ))}
+                </div>
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Sync Diagnostics */}
         {lastSyncResults.length > 0 && (
           <Card className="border-border">
             <CardHeader className="pb-3">
@@ -307,26 +346,35 @@ export default function OpsSettings() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {lastSyncResults.map((r) => (
-                  <div key={r.module} className="flex items-start justify-between py-2 border-b border-border last:border-0">
-                    <div className="flex items-center gap-2">
-                      {r.success ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                {lastSyncResults.map((result) => (
+                  <div key={`${result.module}-${result.timestamp}`} className="flex items-start justify-between py-2 border-b border-border last:border-0 gap-3">
+                    <div className="flex items-start gap-2 min-w-0">
+                      {result.success ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                       ) : (
-                        <XCircle className="w-4 h-4 text-red-500 shrink-0" />
+                        <XCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
                       )}
-                      <div>
-                        <span className="font-body text-sm font-medium capitalize text-foreground">{r.module}</span>
-                        {r.error && (
-                          <p className="font-body text-xs text-red-600 mt-0.5 break-all">{r.error}</p>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-body text-sm font-medium capitalize text-foreground">{MODULES.find((item) => item.key === result.module)?.label || result.module}</span>
+                          <Badge variant="secondary" className="font-body text-[10px]">
+                            {result.incremental ? "Incremental" : "Full scan"}
+                          </Badge>
+                        </div>
+                        <p className="font-body text-xs text-muted-foreground mt-1">
+                          {result.queryName} · requested {result.requestedCost ?? "?"} · actual {result.actualCost ?? "?"} · available {result.currentlyAvailable ?? "?"}
+                        </p>
+                        {result.lastSuccessAt && (
+                          <p className="font-body text-xs text-muted-foreground">Last success: {new Date(result.lastSuccessAt).toLocaleString()}</p>
+                        )}
+                        {result.error && (
+                          <p className="font-body text-xs text-red-600 mt-1 break-all">{result.error}</p>
                         )}
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <span className="font-body text-sm text-foreground">{r.records} records</span>
-                      <p className="font-body text-xs text-muted-foreground">
-                        {new Date(r.timestamp).toLocaleTimeString()}
-                      </p>
+                      <span className="font-body text-sm text-foreground">{result.records} records</span>
+                      <p className="font-body text-xs text-muted-foreground">{new Date(result.timestamp).toLocaleTimeString()}</p>
                     </div>
                   </div>
                 ))}
@@ -335,7 +383,6 @@ export default function OpsSettings() {
           </Card>
         )}
 
-        {/* Sync History */}
         <Card className="border-border">
           <CardHeader className="pb-3">
             <CardTitle className="font-body text-base">Sync History</CardTitle>
@@ -347,20 +394,20 @@ export default function OpsSettings() {
               )}
               {syncLogs.map((log) => (
                 <div key={log.id}>
-                  <div className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between py-2 border-b border-border last:border-0 gap-3">
+                    <div className="flex items-center gap-2 min-w-0">
                       {log.status === "success" ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                       ) : log.status === "partial" ? (
-                        <AlertTriangle className="w-4 h-4 text-amber-500" />
+                        <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
                       ) : log.status === "running" ? (
-                        <RefreshCw className="w-4 h-4 text-blue-500 animate-spin" />
+                        <RefreshCw className="w-4 h-4 text-blue-500 animate-spin shrink-0" />
                       ) : (
-                        <XCircle className="w-4 h-4 text-red-500" />
+                        <XCircle className="w-4 h-4 text-red-500 shrink-0" />
                       )}
-                      <span className="font-body text-sm text-foreground">{log.sync_type}</span>
+                      <span className="font-body text-sm text-foreground truncate">{log.sync_type}</span>
                     </div>
-                    <div className="flex items-center gap-3 text-xs font-body text-muted-foreground">
+                    <div className="flex items-center gap-3 text-xs font-body text-muted-foreground shrink-0">
                       <span>{log.records_synced ?? 0} records</span>
                       <span>{formatDistanceToNow(new Date(log.started_at), { addSuffix: true })}</span>
                     </div>
@@ -374,7 +421,6 @@ export default function OpsSettings() {
           </CardContent>
         </Card>
 
-        {/* Roles */}
         {isAdmin && (
           <Card className="border-border">
             <CardHeader className="pb-3">
@@ -389,10 +435,10 @@ export default function OpsSettings() {
                   { role: "Manager", desc: "Full schedule and crew view, no config changes" },
                   { role: "Crew Lead", desc: "View all jobs and crew assignments" },
                   { role: "Rookie", desc: "Today's assigned schedule only, read-only" },
-                ].map(r => (
-                  <div key={r.role} className="flex items-start gap-2 py-1.5">
-                    <Badge variant="secondary" className="font-body text-xs shrink-0">{r.role}</Badge>
-                    <span className="text-muted-foreground">{r.desc}</span>
+                ].map((item) => (
+                  <div key={item.role} className="flex items-start gap-2 py-1.5">
+                    <Badge variant="secondary" className="font-body text-xs shrink-0">{item.role}</Badge>
+                    <span className="text-muted-foreground">{item.desc}</span>
                   </div>
                 ))}
               </div>
@@ -400,7 +446,6 @@ export default function OpsSettings() {
           </Card>
         )}
 
-        {/* Setup checklist */}
         {isAdmin && !status?.connected && (
           <Card className="border-border">
             <CardHeader className="pb-3">
@@ -414,7 +459,7 @@ export default function OpsSettings() {
                 <li>Set redirect URI to: <code className="text-xs bg-muted px-1 py-0.5 rounded break-all">{window.location.origin}/ops/settings</code></li>
                 <li>Click "Connect Jobber Account" above to authorize</li>
                 <li>Click "Test Connection" to verify API access</li>
-                <li>Click "Full Sync" to pull your first batch of data</li>
+                <li>Run staged module syncs to populate cache safely</li>
               </ol>
             </CardContent>
           </Card>
