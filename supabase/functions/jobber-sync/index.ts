@@ -398,8 +398,8 @@ const CLIENTS_QUERY = `
         lastName
         companyName
         name
-        emails(first: 1) { nodes { address } }
-        phones(first: 1) { nodes { number } }
+        emails { address }
+        phones { number }
         tags(first: 5) { nodes { label } }
       }
       pageInfo { hasNextPage endCursor }
