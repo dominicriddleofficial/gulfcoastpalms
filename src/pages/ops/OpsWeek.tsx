@@ -1,14 +1,15 @@
 import OpsLayout from "@/components/ops/OpsLayout";
 import JobCard from "@/components/ops/JobCard";
-import { MOCK_JOBS } from "@/lib/mock-ops-data";
 import { startOfToday, addDays, format, isSameDay } from "date-fns";
 import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useJobberJobs } from "@/hooks/useJobberJobs";
 
 export default function OpsWeek() {
   const [weekStart, setWeekStart] = useState(startOfToday());
+  const { loading, getJobsForDate } = useJobberJobs();
 
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
@@ -16,7 +17,7 @@ export default function OpsWeek() {
 
   const jobsByDay = days.map(d => ({
     date: d,
-    jobs: MOCK_JOBS.filter(j => j.scheduled_start && isSameDay(new Date(j.scheduled_start), d))
+    jobs: getJobsForDate(d)
       .sort((a, b) => new Date(a.scheduled_start).getTime() - new Date(b.scheduled_start).getTime()),
   }));
 
@@ -28,7 +29,9 @@ export default function OpsWeek() {
     <OpsLayout>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="font-display text-2xl font-bold text-foreground">Weekly Schedule</h1>
+          <h1 className="font-display text-2xl font-bold text-foreground">
+            Weekly Schedule {loading && <Loader2 className="w-4 h-4 animate-spin inline ml-1" />}
+          </h1>
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="icon" className="w-8 h-8" onClick={() => setWeekStart(addDays(weekStart, -7))}>
               <ChevronLeft className="w-4 h-4" />

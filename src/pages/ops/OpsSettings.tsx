@@ -4,8 +4,20 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useOpsAuth } from "@/hooks/useOpsAuth";
 import { RefreshCw, CheckCircle2, XCircle, Clock, Shield, ExternalLink } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { formatDistanceToNow } from "date-fns";
+
+type SyncLog = {
+  id: string;
+  sync_type: string;
+  status: string;
+  records_synced: number | null;
+  error_message: string | null;
+  started_at: string;
+  completed_at: string | null;
+};
 
 type ConnectionStatus = {
   connected: boolean;
@@ -21,8 +33,11 @@ export default function OpsSettings() {
   const [connecting, setConnecting] = useState(false);
   const [status, setStatus] = useState<ConnectionStatus | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
+  const [syncLogs, setSyncLogs] = useState<SyncLog[]>([]);
 
-  const fnBase = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/jobber-oauth`;
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const fnBase = `${supabaseUrl}/functions/v1/jobber-oauth`;
+  const syncFnUrl = `${supabaseUrl}/functions/v1/jobber-sync`;
 
   const parseJsonResponse = async (res: Response) => {
     const text = await res.text();
@@ -53,7 +68,17 @@ export default function OpsSettings() {
   // Check status on load
   useEffect(() => {
     checkStatus();
+    fetchSyncLogs();
   }, [checkStatus]);
+
+  const fetchSyncLogs = async () => {
+    const { data } = await supabase
+      .from("sync_logs")
+      .select("*")
+      .order("started_at", { ascending: false })
+      .limit(10);
+    if (data) setSyncLogs(data as unknown as SyncLog[]);
+  };
 
   // Handle OAuth callback code in URL
   useEffect(() => {
@@ -137,11 +162,24 @@ export default function OpsSettings() {
 
   const handleSync = async () => {
     setSyncing(true);
-    // TODO: Replace with real jobber-sync edge function call
-    setTimeout(() => {
+    try {
+      const res = await fetch(syncFnUrl, { method: "POST" });
+      const data = await parseJsonResponse(res);
+
+      if (data.success) {
+        toast({
+          title: "Sync Complete",
+          description: `Synced ${data.records_synced} records (${data.breakdown?.clients || 0} clients, ${data.breakdown?.jobs || 0} jobs, ${data.breakdown?.properties || 0} properties).`,
+        });
+      } else {
+        toast({ title: "Sync Failed", description: data.details || data.error || "Unknown error.", variant: "destructive" });
+      }
+      await fetchSyncLogs();
+    } catch (error) {
+      toast({ title: "Sync Failed", description: error instanceof Error ? error.message : "Network error.", variant: "destructive" });
+    } finally {
       setSyncing(false);
-      toast({ title: "Sync complete", description: "Mock data refreshed successfully." });
-    }, 2000);
+    }
   };
 
   const statusBadge = statusLoading ? (
@@ -211,21 +249,22 @@ export default function OpsSettings() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {[
-                { type: "Mock Seed", status: "success", records: 7, time: "Just now" },
-              ].map((log, i) => (
-                <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+              {syncLogs.length === 0 && (
+                <p className="font-body text-sm text-muted-foreground">No syncs yet. Connect Jobber and click Sync Now.</p>
+              )}
+              {syncLogs.map((log) => (
+                <div key={log.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                   <div className="flex items-center gap-2">
-                    {log.status === "success" ? (
+                    {log.status === "success" || log.status === "running" ? (
                       <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                     ) : (
                       <XCircle className="w-4 h-4 text-red-500" />
                     )}
-                    <span className="font-body text-sm text-foreground">{log.type}</span>
+                    <span className="font-body text-sm text-foreground">{log.sync_type}</span>
                   </div>
                   <div className="flex items-center gap-3 text-xs font-body text-muted-foreground">
-                    <span>{log.records} records</span>
-                    <span>{log.time}</span>
+                    <span>{log.records_synced ?? 0} records</span>
+                    <span>{formatDistanceToNow(new Date(log.started_at), { addSuffix: true })}</span>
                   </div>
                 </div>
               ))}

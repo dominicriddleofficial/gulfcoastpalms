@@ -1,17 +1,21 @@
 import OpsLayout from "@/components/ops/OpsLayout";
 import { Card, CardContent } from "@/components/ui/card";
-import { MOCK_JOBS, getMockJobsForDate } from "@/lib/mock-ops-data";
 import { startOfToday, format } from "date-fns";
-import { Users, Briefcase, CheckCircle2 } from "lucide-react";
+import { Users, Briefcase, CheckCircle2, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
-
-const CREWS = [
-  { id: "crew-1", name: "Alpha Crew", members: ["Marcus Johnson", "Darius Lee"] },
-  { id: "crew-2", name: "Bravo Crew", members: ["Tyler Smith", "Andre Williams"] },
-];
+import { useJobberJobs } from "@/hooks/useJobberJobs";
 
 export default function OpsCrew() {
-  const todayJobs = getMockJobsForDate(startOfToday());
+  const { loading, getJobsForDate } = useJobberJobs();
+  const todayJobs = getJobsForDate(startOfToday());
+
+  // Build dynamic crew groups from assigned employee names
+  const crewGroups: Record<string, typeof todayJobs> = {};
+  todayJobs.forEach(j => {
+    const key = j.assigned_employee_names?.join(", ") || "Unassigned";
+    if (!crewGroups[key]) crewGroups[key] = [];
+    crewGroups[key].push(j);
+  });
 
   return (
     <OpsLayout>
@@ -19,14 +23,18 @@ export default function OpsCrew() {
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Crew View</h1>
           <p className="font-body text-sm text-muted-foreground">{format(startOfToday(), "EEEE, MMMM d")}</p>
+          {loading && (
+            <div className="flex items-center gap-2 text-sm font-body text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin" /> Loading...
+            </div>
+          )}
         </div>
 
-        {CREWS.map(crew => {
-          const crewJobs = todayJobs.filter(j => j.crew_id === crew.id);
+        {Object.entries(crewGroups).map(([crewName, crewJobs]) => {
           const completed = crewJobs.filter(j => j.visit_status === "completed");
 
           return (
-            <Card key={crew.id} className="border-border">
+            <Card key={crewName} className="border-border">
               <CardContent className="p-5 space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -34,8 +42,7 @@ export default function OpsCrew() {
                       <Users className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <h2 className="font-body font-bold text-foreground">{crew.name}</h2>
-                      <p className="font-body text-xs text-muted-foreground">{crew.members.join(", ")}</p>
+                      <h2 className="font-body font-bold text-foreground">{crewName}</h2>
                     </div>
                   </div>
                   <div className="text-right">
@@ -86,6 +93,10 @@ export default function OpsCrew() {
             </Card>
           );
         })}
+
+        {!loading && Object.keys(crewGroups).length === 0 && (
+          <p className="text-center py-8 font-body text-muted-foreground">No jobs assigned today</p>
+        )}
       </div>
     </OpsLayout>
   );

@@ -1,11 +1,11 @@
 import OpsLayout from "@/components/ops/OpsLayout";
 import JobCard from "@/components/ops/JobCard";
-import { getMockJobsForDate } from "@/lib/mock-ops-data";
 import { startOfToday, format } from "date-fns";
 import { useOpsAuth } from "@/hooks/useOpsAuth";
+import { useJobberJobs } from "@/hooks/useJobberJobs";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import { Search, Filter } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -16,11 +16,12 @@ import {
 
 export default function OpsToday() {
   const { isRookie } = useOpsAuth();
+  const { loading, getJobsForDate } = useJobberJobs();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [crewFilter, setCrewFilter] = useState("all");
 
-  const todayJobs = getMockJobsForDate(startOfToday());
+  const todayJobs = getJobsForDate(startOfToday());
 
   const filtered = todayJobs.filter(j => {
     const matchSearch = !search ||
@@ -28,14 +29,15 @@ export default function OpsToday() {
       j.property_address?.toLowerCase().includes(search.toLowerCase()) ||
       j.job_number?.includes(search);
     const matchStatus = statusFilter === "all" || j.visit_status === statusFilter;
-    const matchCrew = crewFilter === "all" || j.crew_id === crewFilter;
+    const crewKey = j.assigned_employee_names?.join(", ") || "Unassigned";
+    const matchCrew = crewFilter === "all" || crewKey === crewFilter;
     return matchSearch && matchStatus && matchCrew;
   });
 
   // Group by crew
   const grouped: Record<string, typeof filtered> = {};
   filtered.forEach(j => {
-    const crewName = j.crew_id === "crew-1" ? "Alpha Crew" : j.crew_id === "crew-2" ? "Bravo Crew" : "Unassigned";
+    const crewName = j.assigned_employee_names?.join(", ") || "Unassigned";
     if (!grouped[crewName]) grouped[crewName] = [];
     grouped[crewName].push(j);
   });
@@ -45,6 +47,9 @@ export default function OpsToday() {
     arr.sort((a, b) => new Date(a.scheduled_start).getTime() - new Date(b.scheduled_start).getTime())
   );
 
+  // Get unique crew groups for filter
+  const crewNames = [...new Set(todayJobs.map(j => j.assigned_employee_names?.join(", ") || "Unassigned"))];
+
   return (
     <OpsLayout>
       <div className="space-y-4">
@@ -52,6 +57,7 @@ export default function OpsToday() {
           <h1 className="font-display text-2xl font-bold text-foreground">Today's Schedule</h1>
           <p className="font-body text-sm text-muted-foreground">
             {format(startOfToday(), "EEEE, MMMM d")} · {todayJobs.length} jobs
+          {loading && <Loader2 className="w-3 h-3 animate-spin inline ml-1" />}
           </p>
         </div>
 
@@ -85,8 +91,9 @@ export default function OpsToday() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Crews</SelectItem>
-                <SelectItem value="crew-1">Alpha Crew</SelectItem>
-                <SelectItem value="crew-2">Bravo Crew</SelectItem>
+                {crewNames.map(name => (
+                  <SelectItem key={name} value={name}>{name}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
