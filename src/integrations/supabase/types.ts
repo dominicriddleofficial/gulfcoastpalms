@@ -263,6 +263,39 @@ export type Database = {
         }
         Relationships: []
       }
+      geocode_cache: {
+        Row: {
+          address: string
+          created_at: string
+          error_message: string | null
+          id: string
+          lat: number | null
+          lng: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           amount: number
