@@ -669,7 +669,7 @@ async function runJobsModule(accessToken: string, supabase: any, context: SyncCo
     "jobs",
     { filter: { visitsScheduledBetween: { after: window.after, before: window.before }, includeUnscheduled: false } },
     context,
-    { limit: 50, pageDelayMs: DEFAULT_PAGE_DELAY_MS, maxPages: context.dryRun ? DRY_RUN_PAGE_LIMIT : undefined, expectedCost: 20 }
+    { limit: 25, pageDelayMs: DEFAULT_PAGE_DELAY_MS, maxPages: context.dryRun ? DRY_RUN_PAGE_LIMIT : undefined, expectedCost: 20 }
   );
 
   if (!context.dryRun && nodes.length) {
