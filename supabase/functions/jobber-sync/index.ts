@@ -537,7 +537,7 @@ async function runClientsModule(accessToken: string, supabase: any, context: Syn
     "clients",
     { filter },
     context,
-    { limit: 100, pageDelayMs: DEFAULT_PAGE_DELAY_MS, maxPages: context.dryRun ? DRY_RUN_PAGE_LIMIT : undefined, expectedCost: 18 }
+    { limit: 25, pageDelayMs: DEFAULT_PAGE_DELAY_MS, maxPages: context.dryRun ? DRY_RUN_PAGE_LIMIT : undefined, expectedCost: 18 }
   );
 
   if (!context.dryRun) {
