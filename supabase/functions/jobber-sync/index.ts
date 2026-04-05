@@ -85,7 +85,7 @@ async function fetchAllPages(
     cursor = connection.pageInfo?.endCursor ?? null;
 
     // Respect Jobber rate limits
-    if (hasNextPage) await new Promise((r) => setTimeout(r, 1000));
+    if (hasNextPage) await new Promise((r) => setTimeout(r, 200));
   }
 
   return allNodes;
@@ -147,8 +147,9 @@ const JOBS_QUERY = `
             title
             startAt
             endAt
-            status
-            team { nodes { id firstName lastName } }
+            visitStatus
+            isComplete
+            assignedUsers { nodes { id firstName lastName } }
           }
         }
         instructions
@@ -319,11 +320,11 @@ Deno.serve(async (req) => {
       const latestVisit = j.visits?.nodes?.[0];
 
       const assignedNames =
-        latestVisit?.team?.nodes?.map(
+        latestVisit?.assignedUsers?.nodes?.map(
           (m: any) => `${m.firstName || ""} ${m.lastName || ""}`.trim()
         ) || [];
 
-      const assignedIds = latestVisit?.team?.nodes?.map((m: any) => m.id) || [];
+      const assignedIds = latestVisit?.assignedUsers?.nodes?.map((m: any) => m.id) || [];
 
       const propAddr = j.property?.address;
       const addressStr = propAddr
@@ -336,7 +337,7 @@ Deno.serve(async (req) => {
           job_number: j.jobNumber?.toString() || null,
           title: j.title || null,
           status: j.jobStatus?.toLowerCase() || "scheduled",
-          visit_status: latestVisit?.status?.toLowerCase() || "scheduled",
+          visit_status: latestVisit?.visitStatus?.toLowerCase() || "scheduled",
           scheduled_start: latestVisit?.startAt || null,
           scheduled_end: latestVisit?.endAt || null,
           client_id: clientLocalId,
