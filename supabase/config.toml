@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.process-email-drip]
 verify_jwt = false
+
+[functions.jobber-oauth]
+verify_jwt = false
