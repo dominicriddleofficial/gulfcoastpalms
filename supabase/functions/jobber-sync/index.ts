@@ -754,7 +754,6 @@ async function runVisitsModule(accessToken: string, supabase: any, context: Sync
         const client = visit.client?.id ? clientCache[visit.client.id] : null;
         const property = visit.property?.id ? propertyCache[visit.property.id] : null;
         const assignedNames = visit.assignedUsers?.nodes?.map((member: any) => member.name?.full).filter(Boolean) || [];
-        const assignedIds = visit.assignedUsers?.nodes?.map((member: any) => member.id).filter(Boolean) || [];
 
         return cleanObject({
           jobber_id: jobId,
@@ -766,7 +765,6 @@ async function runVisitsModule(accessToken: string, supabase: any, context: Sync
           property_id: property?.id,
           property_address: formatPropertyAddress(visit.property?.address) || property?.address || undefined,
           assigned_employee_names: assignedNames.length ? assignedNames : undefined,
-          assigned_employee_ids: assignedIds.length ? assignedIds : undefined,
           internal_notes: visit.instructions || undefined,
           synced_at: syncedAt,
         });
