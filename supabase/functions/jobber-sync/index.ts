@@ -320,11 +320,11 @@ Deno.serve(async (req) => {
       const latestVisit = j.visits?.nodes?.[0];
 
       const assignedNames =
-        latestVisit?.team?.nodes?.map(
+        latestVisit?.assignedUsers?.nodes?.map(
           (m: any) => `${m.firstName || ""} ${m.lastName || ""}`.trim()
         ) || [];
 
-      const assignedIds = latestVisit?.team?.nodes?.map((m: any) => m.id) || [];
+      const assignedIds = latestVisit?.assignedUsers?.nodes?.map((m: any) => m.id) || [];
 
       const propAddr = j.property?.address;
       const addressStr = propAddr
