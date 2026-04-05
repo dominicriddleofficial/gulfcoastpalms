@@ -1,15 +1,26 @@
 import { useParams, Link } from "react-router-dom";
 import OpsLayout from "@/components/ops/OpsLayout";
 import StatusChip from "@/components/ops/StatusChip";
-import { MOCK_JOBS } from "@/lib/mock-ops-data";
 import { format } from "date-fns";
-import { ArrowLeft, Phone, MapPin, Clock, User, StickyNote, DollarSign, FileText } from "lucide-react";
+import { ArrowLeft, Phone, MapPin, Clock, User, StickyNote, DollarSign, FileText, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useJobberJobs } from "@/hooks/useJobberJobs";
 
 export default function OpsJobDetail() {
   const { jobId } = useParams();
-  const job = MOCK_JOBS.find(j => j.id === jobId);
+  const { loading, getJobById } = useJobberJobs();
+  const job = jobId ? getJobById(jobId) : null;
+
+  if (loading) {
+    return (
+      <OpsLayout>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        </div>
+      </OpsLayout>
+    );
+  }
 
   if (!job) {
     return (

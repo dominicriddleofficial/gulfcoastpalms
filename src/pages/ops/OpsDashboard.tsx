@@ -1,14 +1,15 @@
 import OpsLayout from "@/components/ops/OpsLayout";
 import { Card, CardContent } from "@/components/ui/card";
-import { MOCK_JOBS, getMockJobsForDate } from "@/lib/mock-ops-data";
 import { startOfToday, format } from "date-fns";
-import { Briefcase, CheckCircle2, Clock, Users } from "lucide-react";
+import { Briefcase, CheckCircle2, Clock, Users, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useOpsAuth } from "@/hooks/useOpsAuth";
+import { useJobberJobs } from "@/hooks/useJobberJobs";
 
 export default function OpsDashboard() {
   const { isRookie } = useOpsAuth();
-  const todayJobs = getMockJobsForDate(startOfToday());
+  const { loading, getJobsForDate, jobs } = useJobberJobs();
+  const todayJobs = getJobsForDate(startOfToday());
   const completed = todayJobs.filter(j => j.visit_status === "completed");
   const upcoming = todayJobs.filter(j => j.visit_status !== "completed");
 
@@ -20,10 +21,10 @@ export default function OpsDashboard() {
   });
 
   const stats = [
-    { label: "Total Today", value: todayJobs.length, icon: Briefcase, color: "text-primary" },
-    { label: "Completed", value: completed.length, icon: CheckCircle2, color: "text-emerald-600" },
-    { label: "Upcoming", value: upcoming.length, icon: Clock, color: "text-amber-600" },
-    { label: "Crews Active", value: Object.keys(crewGroups).length, icon: Users, color: "text-purple-600" },
+    { label: "Total Today", value: todayJobs.length, icon: Briefcase },
+    { label: "Completed", value: completed.length, icon: CheckCircle2 },
+    { label: "Upcoming", value: upcoming.length, icon: Clock },
+    { label: "Crews Active", value: Object.keys(crewGroups).length, icon: Users },
   ];
 
   return (
@@ -34,12 +35,19 @@ export default function OpsDashboard() {
           <p className="font-body text-sm text-muted-foreground">{format(startOfToday(), "EEEE, MMMM d, yyyy")}</p>
         </div>
 
+
+        {loading && (
+          <div className="flex items-center gap-2 text-sm font-body text-muted-foreground">
+            <Loader2 className="w-4 h-4 animate-spin" /> Loading live data...
+          </div>
+        )}
+
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {stats.map(s => (
             <Card key={s.label} className="border-border">
               <CardContent className="p-4 flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl bg-secondary flex items-center justify-center ${s.color}`}>
+                <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-primary">
                   <s.icon className="w-5 h-5" />
                 </div>
                 <div>
@@ -70,7 +78,7 @@ export default function OpsDashboard() {
                 <Briefcase className="w-5 h-5 text-primary" />
                 <div>
                   <p className="font-body font-semibold text-foreground">Weekly View</p>
-                  <p className="font-body text-xs text-muted-foreground">{MOCK_JOBS.length} total jobs this week</p>
+                  <p className="font-body text-xs text-muted-foreground">{jobs.length} total jobs loaded</p>
                 </div>
               </CardContent>
             </Card>
