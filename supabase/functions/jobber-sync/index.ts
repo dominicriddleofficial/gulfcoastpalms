@@ -85,7 +85,7 @@ async function fetchAllPages(
     cursor = connection.pageInfo?.endCursor ?? null;
 
     // Respect Jobber rate limits
-    if (hasNextPage) await new Promise((r) => setTimeout(r, 1000));
+    if (hasNextPage) await new Promise((r) => setTimeout(r, 200));
   }
 
   return allNodes;
