@@ -58,7 +58,7 @@ const Index = () => {
             transition={{ duration: 0.5 }}
             className="font-body text-palm-gold font-semibold uppercase tracking-[0.2em] text-sm mb-4"
           >
-            Palm Tree Trimming & Professional Palm Services from Pensacola to Destin
+            Palm Tree Trimming & Professional Palm Services from Perdido Key to 30A
           </motion.p>
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
