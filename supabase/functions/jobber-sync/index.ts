@@ -31,6 +31,16 @@ async function jobberQuery(accessToken: string, query: string, variables: Record
     },
     body: JSON.stringify({ query, variables }),
   });
+async function jobberQuery(accessToken: string, query: string, variables: Record<string, unknown> = {}) {
+  const res = await fetch(JOBBER_GRAPHQL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+      "X-JOBBER-GRAPHQL-VERSION": "2025-01-20",
+    },
+    body: JSON.stringify({ query, variables }),
+  });
 
   const text = await res.text();
   console.log("Jobber GraphQL response status:", res.status);
