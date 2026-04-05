@@ -54,6 +54,14 @@ import SOPTeamLeader from "./pages/employee/SOPTeamLeader";
 import SOPGroundsman from "./pages/employee/SOPGroundsman";
 import SOPSalesOperations from "./pages/employee/SOPSalesOperations";
 import NotFound from "./pages/NotFound";
+// Ops dashboard
+import OpsLogin from "./pages/ops/OpsLogin";
+import OpsDashboard from "./pages/ops/OpsDashboard";
+import OpsToday from "./pages/ops/OpsToday";
+import OpsWeek from "./pages/ops/OpsWeek";
+import OpsJobDetail from "./pages/ops/OpsJobDetail";
+import OpsCrew from "./pages/ops/OpsCrew";
+import OpsSettings from "./pages/ops/OpsSettings";
 // Service pages
 import PalmTreeTrimming from "./pages/services/PalmTreeTrimming";
 import PalmTreeInstallation from "./pages/services/PalmTreeInstallation";
