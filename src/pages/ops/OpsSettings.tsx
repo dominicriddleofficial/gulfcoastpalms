@@ -6,7 +6,6 @@ import { useOpsAuth } from "@/hooks/useOpsAuth";
 import { RefreshCw, CheckCircle2, XCircle, Clock, Shield, ExternalLink } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 type ConnectionStatus = {
   connected: boolean;
@@ -16,20 +15,33 @@ type ConnectionStatus = {
 };
 
 export default function OpsSettings() {
-  const { isAdmin, userRole } = useOpsAuth();
+  const { isAdmin } = useOpsAuth();
   const { toast } = useToast();
   const [syncing, setSyncing] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [status, setStatus] = useState<ConnectionStatus | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
 
-  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-  const fnBase = `https://${projectId}.supabase.co/functions/v1/jobber-oauth`;
+  const fnBase = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/jobber-oauth`;
+
+  const parseJsonResponse = async (res: Response) => {
+    const text = await res.text();
+
+    try {
+      return text ? JSON.parse(text) : {};
+    } catch {
+      if (!res.ok) {
+        throw new Error("Received an invalid response from the backend.");
+      }
+
+      return {};
+    }
+  };
 
   const checkStatus = useCallback(async () => {
     try {
       const res = await fetch(`${fnBase}?action=status`);
-      const data = await res.json();
+      const data = await parseJsonResponse(res);
       setStatus(data);
     } catch {
       setStatus({ connected: false });
@@ -59,16 +71,24 @@ export default function OpsSettings() {
         const res = await fetch(
           `${fnBase}?action=callback&code=${encodeURIComponent(code)}&redirect_uri=${encodeURIComponent(redirectUri)}`
         );
-        const data = await res.json();
+        const data = await parseJsonResponse(res);
 
         if (data.success) {
           toast({ title: "Jobber Connected!", description: "Your Jobber account is now linked." });
           await checkStatus();
         } else {
-          toast({ title: "Connection Failed", description: data.error || "Could not connect Jobber.", variant: "destructive" });
+          toast({
+            title: "Connection Failed",
+            description: data.details || data.error || "Could not connect Jobber.",
+            variant: "destructive",
+          });
         }
-      } catch {
-        toast({ title: "Connection Failed", description: "Network error during token exchange.", variant: "destructive" });
+      } catch (error) {
+        toast({
+          title: "Connection Failed",
+          description: error instanceof Error ? error.message : "Network error during token exchange.",
+          variant: "destructive",
+        });
       } finally {
         setConnecting(false);
       }
@@ -82,7 +102,7 @@ export default function OpsSettings() {
     try {
       const redirectUri = `${window.location.origin}/ops/settings`;
       const res = await fetch(`${fnBase}?action=authorize&redirect_uri=${encodeURIComponent(redirectUri)}`);
-      const data = await res.json();
+      const data = await parseJsonResponse(res);
 
       if (data.url) {
         window.location.href = data.url;
@@ -100,7 +120,7 @@ export default function OpsSettings() {
     setSyncing(true);
     try {
       const res = await fetch(`${fnBase}?action=refresh`);
-      const data = await res.json();
+      const data = await parseJsonResponse(res);
 
       if (data.success) {
         toast({ title: "Token Refreshed", description: "Jobber access token renewed." });
