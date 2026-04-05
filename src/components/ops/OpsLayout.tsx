@@ -4,7 +4,7 @@ import { useOpsAuth, OpsRole } from "@/hooks/useOpsAuth";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard, Calendar, CalendarDays, Users, Settings,
-  LogOut, Menu, X, Search,
+  LogOut, Menu, X, Search, Map,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
