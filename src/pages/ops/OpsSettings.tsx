@@ -453,9 +453,9 @@ export default function OpsSettings() {
             </CardHeader>
             <CardContent>
               <ol className="space-y-2 font-body text-sm text-muted-foreground list-decimal list-inside">
-                <li className="line-through text-emerald-600">Create a Jobber Developer App</li>
-                <li className="line-through text-emerald-600">Add <strong>JOBBER_CLIENT_ID</strong> secret</li>
-                <li className="line-through text-emerald-600">Add <strong>JOBBER_CLIENT_SECRET</strong> secret</li>
+                <li className="line-through text-primary">Create a Jobber Developer App</li>
+                <li className="line-through text-primary">Add <strong>JOBBER_CLIENT_ID</strong> secret</li>
+                <li className="line-through text-primary">Add <strong>JOBBER_CLIENT_SECRET</strong> secret</li>
                 <li>Set redirect URI to: <code className="text-xs bg-muted px-1 py-0.5 rounded break-all">{window.location.origin}/ops/settings</code></li>
                 <li>Click "Connect Jobber Account" above to authorize</li>
                 <li>Click "Test Connection" to verify API access</li>
