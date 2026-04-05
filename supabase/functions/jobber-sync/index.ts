@@ -22,11 +22,6 @@ async function jobberQuery(accessToken: string, query: string, variables: Record
       "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
     },
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-      "X-JOBBER-GRAPHQL-VERSION": "2025-01-20",
-    },
     body: JSON.stringify({ query, variables }),
   });
 
