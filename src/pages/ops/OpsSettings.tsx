@@ -234,12 +234,12 @@ export default function OpsSettings() {
     <Badge variant="outline" className="font-body text-xs">Loading...</Badge>
   ) : status?.connected ? (
     status.expired ? (
-      <Badge variant="outline" className="font-body text-xs text-warning border-border bg-muted">Token Expired</Badge>
+      <Badge variant="outline" className="font-body text-xs text-accent border-border bg-muted">Token Expired</Badge>
     ) : (
       <Badge variant="outline" className="font-body text-xs text-primary border-border bg-muted">Connected</Badge>
     )
   ) : (
-    <Badge variant="outline" className="font-body text-xs text-warning border-border bg-muted">Not Connected</Badge>
+    <Badge variant="outline" className="font-body text-xs text-accent border-border bg-muted">Not Connected</Badge>
   );
 
   return (
@@ -399,7 +399,7 @@ export default function OpsSettings() {
                       {log.status === "success" ? (
                         <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
                       ) : log.status === "partial" ? (
-                        <AlertTriangle className="w-4 h-4 text-warning shrink-0" />
+                        <AlertTriangle className="w-4 h-4 text-accent shrink-0" />
                       ) : log.status === "running" ? (
                         <RefreshCw className="w-4 h-4 text-primary animate-spin shrink-0" />
                       ) : (
