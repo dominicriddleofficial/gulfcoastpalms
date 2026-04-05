@@ -602,7 +602,7 @@ async function runPropertiesModule(
       "properties",
       {},
       context,
-      { limit: 100, pageDelayMs: DEFAULT_PAGE_DELAY_MS, maxPages: context.dryRun ? DRY_RUN_PAGE_LIMIT : undefined, expectedCost: 14 }
+      { limit: 25, pageDelayMs: DEFAULT_PAGE_DELAY_MS, maxPages: context.dryRun ? DRY_RUN_PAGE_LIMIT : undefined, expectedCost: 14 }
     );
     nodes = result.nodes;
     finalMeta = result.meta;
