@@ -29,6 +29,7 @@ import ThankYou from "./pages/ThankYou";
 import Referral from "./pages/Referral";
 import Payments from "./pages/Payments";
 import TextConsent from "./pages/TextConsent";
+import TermsOfService from "./pages/TermsOfService";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminHome from "./pages/admin/AdminHome";
 import AdminLeads from "./pages/admin/AdminLeads";
@@ -120,6 +121,7 @@ const App = () => (
           <Route path="/referral" element={<Referral />} />
           <Route path="/payments" element={<Payments />} />
           <Route path="/text-consent" element={<TextConsent />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
           {/* Admin */}
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminHome />} />
