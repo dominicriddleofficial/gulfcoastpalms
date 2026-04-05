@@ -158,6 +158,7 @@ const App = () => (
           <Route path="/ops/week" element={<OpsWeek />} />
           <Route path="/ops/job/:jobId" element={<OpsJobDetail />} />
           <Route path="/ops/crew" element={<OpsCrew />} />
+          <Route path="/ops/schedule" element={<OpsSchedule />} />
           <Route path="/ops/settings" element={<OpsSettings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

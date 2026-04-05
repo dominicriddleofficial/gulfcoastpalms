@@ -19,10 +19,10 @@ const NAV_ITEMS = [
 
 const ROLE_ACCESS: Record<OpsRole, string[]> = {
   admin: NAV_ITEMS.map(i => i.path),
-  manager: ["/ops", "/ops/today", "/ops/week", "/ops/crew"],
-  operations: ["/ops", "/ops/today", "/ops/week", "/ops/crew"],
-  team_leader: ["/ops", "/ops/today", "/ops/week", "/ops/crew"],
-  limited_staff: ["/ops/today"],
+  manager: ["/ops", "/ops/today", "/ops/week", "/ops/schedule", "/ops/crew"],
+  operations: ["/ops", "/ops/today", "/ops/week", "/ops/schedule", "/ops/crew"],
+  team_leader: ["/ops", "/ops/today", "/ops/week", "/ops/schedule", "/ops/crew"],
+  limited_staff: ["/ops/today", "/ops/schedule"],
   user: [],
 };
 
