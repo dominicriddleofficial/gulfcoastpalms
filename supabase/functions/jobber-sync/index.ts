@@ -20,20 +20,51 @@ async function jobberQuery(
   query: string,
   variables: Record<string, unknown> = {}
 ) {
-  const res = await fetch(JOBBER_GRAPHQL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-      "X-JOBBER-GRAPHQL-VERSION": "2025-01-20",
-    },
-    body: JSON.stringify({ query, variables }),
-  });
+  // Retry with backoff for throttling
+  let lastError = "";
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) {
+      const delay = Math.min(2000 * Math.pow(2, attempt), 10000);
+      console.log(`Retry attempt ${attempt + 1}, waiting ${delay}ms...`);
+      await new Promise((r) => setTimeout(r, delay));
+    }
 
-  const text = await res.text();
-  if (!res.ok) {
-    throw new Error(`Jobber API returned ${res.status}: ${text.slice(0, 200)}`);
+    const res = await fetch(JOBBER_GRAPHQL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+        "X-JOBBER-GRAPHQL-VERSION": "2025-01-20",
+      },
+      body: JSON.stringify({ query, variables }),
+    });
+
+    const text = await res.text();
+
+    if (res.status === 429) {
+      lastError = "Throttled";
+      continue;
+    }
+
+    if (!res.ok) {
+      throw new Error(`Jobber API returned ${res.status}: ${text.slice(0, 200)}`);
+    }
+
+    let body: any;
+    try { body = JSON.parse(text); } catch {
+      throw new Error("Jobber returned non-JSON response");
+    }
+
+    if (body.errors?.length) {
+      console.error("Jobber GQL errors:", JSON.stringify(body.errors));
+      throw new Error(body.errors[0]?.message || "Jobber GraphQL error");
+    }
+
+    if (!body.data) throw new Error("Jobber response missing data field");
+    return body.data;
   }
+
+  throw new Error(lastError || "Max retries exceeded");
 
   let body: any;
   try { body = JSON.parse(text); } catch {
