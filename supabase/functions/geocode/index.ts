@@ -45,9 +45,8 @@ Deno.serve(async (req) => {
       const c = cachedMap.get(addr);
       if (c && c.status === "success" && c.lat && c.lng) {
         results[addr] = { lat: c.lat, lng: c.lng, status: "success" };
-      } else if (c && c.status === "failed") {
-        results[addr] = { status: "failed", error: "Previously failed geocoding" };
       } else {
+        // Retry failed addresses — don't permanently cache failures
         toGeocode.push(addr);
       }
     }
