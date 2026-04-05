@@ -147,8 +147,9 @@ const JOBS_QUERY = `
             title
             startAt
             endAt
-            status
-            team { nodes { id firstName lastName } }
+            visitStatus
+            isComplete
+            assignedUsers { nodes { id firstName lastName } }
           }
         }
         instructions
