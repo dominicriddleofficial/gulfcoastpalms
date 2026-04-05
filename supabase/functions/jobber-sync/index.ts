@@ -31,30 +31,21 @@ async function jobberQuery(
   });
 
   const text = await res.text();
-
   if (!res.ok) {
-    console.error("Jobber GraphQL HTTP error:", res.status, text);
     throw new Error(`Jobber API returned ${res.status}: ${text.slice(0, 200)}`);
   }
 
   let body: any;
-  try {
-    body = JSON.parse(text);
-  } catch {
-    console.error("Jobber returned non-JSON:", text.slice(0, 300));
+  try { body = JSON.parse(text); } catch {
     throw new Error("Jobber returned non-JSON response");
   }
 
   if (body.errors?.length) {
-    console.error("Jobber GraphQL errors:", JSON.stringify(body.errors));
+    console.error("Jobber GQL errors:", JSON.stringify(body.errors));
     throw new Error(body.errors[0]?.message || "Jobber GraphQL error");
   }
 
-  if (!body.data) {
-    console.error("Jobber response missing data:", JSON.stringify(body).slice(0, 300));
-    throw new Error("Jobber response missing data field");
-  }
-
+  if (!body.data) throw new Error("Jobber response missing data field");
   return body.data;
 }
 
@@ -74,23 +65,19 @@ async function fetchAllPages(
 
     const data = await jobberQuery(accessToken, query, variables);
     const connection = data[rootField];
-
-    if (!connection?.nodes) {
-      console.log(`No nodes for ${rootField}`);
-      break;
-    }
+    if (!connection?.nodes) break;
 
     allNodes.push(...connection.nodes);
     hasNextPage = connection.pageInfo?.hasNextPage ?? false;
     cursor = connection.pageInfo?.endCursor ?? null;
 
-    if (hasNextPage) await new Promise((r) => setTimeout(r, 250));
+    if (hasNextPage) await new Promise((r) => setTimeout(r, 200));
   }
 
   return allNodes;
 }
 
-// --- SAFE QUERIES: Only confirmed fields from the live Jobber schema ---
+// --- QUERIES: Validated against live Jobber schema ---
 
 const CLIENTS_QUERY = `
   query($limit: Int, $cursor: String) {
@@ -115,14 +102,7 @@ const PROPERTIES_QUERY = `
     properties(first: $limit, after: $cursor) {
       nodes {
         id
-        address {
-          street1
-          street2
-          city
-          province
-          postalCode
-          country
-        }
+        address { street1 street2 city province postalCode country }
         client { id }
       }
       pageInfo { hasNextPage endCursor }
@@ -130,8 +110,7 @@ const PROPERTIES_QUERY = `
   }
 `;
 
-// FIXED: User type does NOT have firstName/lastName.
-// User has name { full } and id only for safe access.
+// User type uses name { full }, NOT firstName/lastName
 const JOBS_QUERY = `
   query($limit: Int, $cursor: String) {
     jobs(first: $limit, after: $cursor) {
@@ -146,12 +125,7 @@ const JOBS_QUERY = `
         lineItems { nodes { name description quantity unitPrice } }
         visits(first: 5) {
           nodes {
-            id
-            title
-            startAt
-            endAt
-            visitStatus
-            isComplete
+            id title startAt endAt visitStatus isComplete
             assignedUsers { nodes { id name { full } } }
           }
         }
@@ -162,8 +136,6 @@ const JOBS_QUERY = `
   }
 `;
 
-// --- Individual sync modules with error isolation ---
-
 type ModuleResult = {
   module: string;
   success: boolean;
@@ -172,133 +144,105 @@ type ModuleResult = {
   timestamp: string;
 };
 
-async function syncClients(
-  accessToken: string,
-  supabase: any
-): Promise<{ result: ModuleResult; idMap: Record<string, string> }> {
-  const clientIdMap: Record<string, string> = {};
+// --- BATCH upsert helper (chunks of 100) ---
+async function batchUpsert(supabase: any, table: string, rows: any[], onConflict: string) {
+  const CHUNK = 100;
+  const allResults: any[] = [];
+  for (let i = 0; i < rows.length; i += CHUNK) {
+    const chunk = rows.slice(i, i + CHUNK);
+    const { data } = await supabase
+      .from(table)
+      .upsert(chunk, { onConflict })
+      .select("id, jobber_id");
+    if (data) allResults.push(...data);
+  }
+  return allResults;
+}
+
+async function syncClients(accessToken: string, supabase: any): Promise<{ result: ModuleResult; idMap: Record<string, string> }> {
   const ts = new Date().toISOString();
+  const clientIdMap: Record<string, string> = {};
   try {
     const clients = (await fetchAllPages(accessToken, CLIENTS_QUERY, "clients")) as any[];
-    for (const c of clients) {
+    const rows = clients.map((c: any) => {
       const primaryEmail = c.emails?.find((e: any) => e.primary)?.address || c.emails?.[0]?.address || null;
       const primaryPhone = c.phones?.find((p: any) => p.primary)?.number || c.phones?.[0]?.number || null;
       const tags = c.tags?.nodes?.map((t: any) => t.label) || null;
+      return {
+        jobber_id: c.id,
+        first_name: c.firstName || null,
+        last_name: c.lastName || null,
+        company_name: c.companyName || null,
+        display_name: c.name || `${c.firstName || ""} ${c.lastName || ""}`.trim() || "Unknown",
+        email: primaryEmail,
+        phone: primaryPhone,
+        tags,
+        synced_at: ts,
+      };
+    });
 
-      const { data: upserted } = await supabase
-        .from("jobber_clients")
-        .upsert(
-          {
-            jobber_id: c.id,
-            first_name: c.firstName || null,
-            last_name: c.lastName || null,
-            company_name: c.companyName || null,
-            display_name: c.name || `${c.firstName || ""} ${c.lastName || ""}`.trim() || "Unknown",
-            email: primaryEmail,
-            phone: primaryPhone,
-            tags,
-            synced_at: ts,
-          },
-          { onConflict: "jobber_id" }
-        )
-        .select("id")
-        .single();
-
-      if (upserted) clientIdMap[c.id] = upserted.id;
+    const results = await batchUpsert(supabase, "jobber_clients", rows, "jobber_id");
+    for (const r of results) {
+      if (r.jobber_id && r.id) clientIdMap[r.jobber_id] = r.id;
     }
-    return {
-      result: { module: "clients", success: true, records: clients.length, timestamp: ts },
-      idMap: clientIdMap,
-    };
+
+    console.log(`Clients synced: ${clients.length}`);
+    return { result: { module: "clients", success: true, records: clients.length, timestamp: ts }, idMap: clientIdMap };
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     console.error("Sync clients failed:", msg);
-    return {
-      result: { module: "clients", success: false, records: 0, error: msg, timestamp: ts },
-      idMap: clientIdMap,
-    };
+    return { result: { module: "clients", success: false, records: 0, error: msg, timestamp: ts }, idMap: clientIdMap };
   }
 }
 
-async function syncProperties(
-  accessToken: string,
-  supabase: any,
-  clientIdMap: Record<string, string>
-): Promise<{ result: ModuleResult; idMap: Record<string, string> }> {
-  const propertyIdMap: Record<string, string> = {};
+async function syncProperties(accessToken: string, supabase: any, clientIdMap: Record<string, string>): Promise<{ result: ModuleResult; idMap: Record<string, string> }> {
   const ts = new Date().toISOString();
+  const propertyIdMap: Record<string, string> = {};
   try {
     const properties = (await fetchAllPages(accessToken, PROPERTIES_QUERY, "properties")) as any[];
-    for (const p of properties) {
+    const rows = properties.map((p: any) => {
       const addr = p.address || {};
-      const clientLocalId = p.client?.id ? clientIdMap[p.client.id] || null : null;
+      return {
+        jobber_id: p.id,
+        street1: addr.street1 || null,
+        street2: addr.street2 || null,
+        city: addr.city || null,
+        state: addr.province || null,
+        zip: addr.postalCode || null,
+        country: addr.country || "US",
+        client_id: p.client?.id ? clientIdMap[p.client.id] || null : null,
+        synced_at: ts,
+      };
+    });
 
-      const { data: upserted } = await supabase
-        .from("jobber_properties")
-        .upsert(
-          {
-            jobber_id: p.id,
-            street1: addr.street1 || null,
-            street2: addr.street2 || null,
-            city: addr.city || null,
-            state: addr.province || null,
-            zip: addr.postalCode || null,
-            country: addr.country || "US",
-            client_id: clientLocalId,
-            synced_at: ts,
-          },
-          { onConflict: "jobber_id" }
-        )
-        .select("id")
-        .single();
-
-      if (upserted) propertyIdMap[p.id] = upserted.id;
+    const results = await batchUpsert(supabase, "jobber_properties", rows, "jobber_id");
+    for (const r of results) {
+      if (r.jobber_id && r.id) propertyIdMap[r.jobber_id] = r.id;
     }
-    return {
-      result: { module: "properties", success: true, records: properties.length, timestamp: ts },
-      idMap: propertyIdMap,
-    };
+
+    console.log(`Properties synced: ${properties.length}`);
+    return { result: { module: "properties", success: true, records: properties.length, timestamp: ts }, idMap: propertyIdMap };
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     console.error("Sync properties failed:", msg);
-    return {
-      result: { module: "properties", success: false, records: 0, error: msg, timestamp: ts },
-      idMap: propertyIdMap,
-    };
+    return { result: { module: "properties", success: false, records: 0, error: msg, timestamp: ts }, idMap: propertyIdMap };
   }
 }
 
-async function syncJobs(
-  accessToken: string,
-  supabase: any,
-  clientIdMap: Record<string, string>,
-  propertyIdMap: Record<string, string>
-): Promise<ModuleResult> {
+async function syncJobs(accessToken: string, supabase: any, clientIdMap: Record<string, string>, propertyIdMap: Record<string, string>): Promise<ModuleResult> {
   const ts = new Date().toISOString();
   try {
     const jobs = (await fetchAllPages(accessToken, JOBS_QUERY, "jobs")) as any[];
-    let count = 0;
-
-    for (const j of jobs) {
-      const clientLocalId = j.client?.id ? clientIdMap[j.client.id] || null : null;
-      const propLocalId = j.property?.id ? propertyIdMap[j.property.id] || null : null;
+    const rows = jobs.map((j: any) => {
       const clientPhone = j.client?.phones?.find((p: any) => p.primary)?.number || j.client?.phones?.[0]?.number || null;
-
-      const lineItems =
-        j.lineItems?.nodes?.map((li: any) => ({
-          name: li.name || li.description,
-          quantity: li.quantity,
-          unitPrice: li.unitPrice,
-        })) || [];
+      const lineItems = j.lineItems?.nodes?.map((li: any) => ({
+        name: li.name || li.description,
+        quantity: li.quantity,
+        unitPrice: li.unitPrice,
+      })) || [];
 
       const latestVisit = j.visits?.nodes?.[0];
-
-      // FIXED: Use name.full instead of firstName/lastName on User type
-      const assignedNames =
-        latestVisit?.assignedUsers?.nodes?.map(
-          (m: any) => m.name?.full || "Unknown"
-        ) || [];
-
+      const assignedNames = latestVisit?.assignedUsers?.nodes?.map((m: any) => m.name?.full || "Unknown") || [];
       const assignedIds = latestVisit?.assignedUsers?.nodes?.map((m: any) => m.id) || [];
 
       const propAddr = j.property?.address;
@@ -306,34 +250,31 @@ async function syncJobs(
         ? [propAddr.street1, propAddr.city, propAddr.province, propAddr.postalCode].filter(Boolean).join(", ")
         : null;
 
-      await supabase.from("jobber_jobs").upsert(
-        {
-          jobber_id: j.id,
-          job_number: j.jobNumber?.toString() || null,
-          title: j.title || null,
-          status: j.jobStatus?.toLowerCase() || "scheduled",
-          visit_status: latestVisit?.visitStatus?.toLowerCase() || "scheduled",
-          scheduled_start: latestVisit?.startAt || null,
-          scheduled_end: latestVisit?.endAt || null,
-          client_id: clientLocalId,
-          client_name: j.client?.name || null,
-          client_phone: clientPhone,
-          property_id: propLocalId,
-          property_address: addressStr,
-          assigned_employee_names: assignedNames.length ? assignedNames : null,
-          assigned_employee_ids: assignedIds.length ? assignedIds : null,
-          service_items: lineItems.length ? lineItems : [],
-          total_amount: j.total || 0,
-          internal_notes: j.instructions || null,
-          synced_at: ts,
-        },
-        { onConflict: "jobber_id" }
-      );
+      return {
+        jobber_id: j.id,
+        job_number: j.jobNumber?.toString() || null,
+        title: j.title || null,
+        status: j.jobStatus?.toLowerCase() || "scheduled",
+        visit_status: latestVisit?.visitStatus?.toLowerCase() || "scheduled",
+        scheduled_start: latestVisit?.startAt || null,
+        scheduled_end: latestVisit?.endAt || null,
+        client_id: j.client?.id ? clientIdMap[j.client.id] || null : null,
+        client_name: j.client?.name || null,
+        client_phone: clientPhone,
+        property_id: j.property?.id ? propertyIdMap[j.property.id] || null : null,
+        property_address: addressStr,
+        assigned_employee_names: assignedNames.length ? assignedNames : null,
+        assigned_employee_ids: assignedIds.length ? assignedIds : null,
+        service_items: lineItems.length ? lineItems : [],
+        total_amount: j.total || 0,
+        internal_notes: j.instructions || null,
+        synced_at: ts,
+      };
+    });
 
-      count++;
-    }
-
-    return { module: "jobs", success: true, records: count, timestamp: ts };
+    await batchUpsert(supabase, "jobber_jobs", rows, "jobber_id");
+    console.log(`Jobs synced: ${jobs.length}`);
+    return { module: "jobs", success: true, records: jobs.length, timestamp: ts };
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     console.error("Sync jobs failed:", msg);
@@ -341,7 +282,6 @@ async function syncJobs(
   }
 }
 
-// --- Test connection: minimal query to validate token ---
 async function testConnection(accessToken: string): Promise<{ success: boolean; error?: string }> {
   try {
     await jobberQuery(accessToken, `query { account { name } }`);
@@ -351,7 +291,7 @@ async function testConnection(accessToken: string): Promise<{ success: boolean; 
   }
 }
 
-// --- Main handler ---
+// --- Main ---
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -362,16 +302,13 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
-  // Parse action from body or default to full sync
   let action = "full";
   let modules: string[] = [];
   try {
     const body = await req.json();
     action = body?.action || "full";
     modules = body?.modules || [];
-  } catch {
-    // No body = full sync
-  }
+  } catch {}
 
   const { data: tokenRow } = await supabase
     .from("jobber_tokens")
@@ -380,16 +317,15 @@ Deno.serve(async (req) => {
     .maybeSingle();
 
   if (!tokenRow) {
-    return jsonResponse({ error: "Jobber not connected. Connect first in Settings." }, 400);
+    return jsonResponse({ error: "Jobber not connected." }, 400);
   }
 
   let accessToken = tokenRow.access_token;
 
-  // Auto-refresh if expired
+  // Auto-refresh
   if (new Date(tokenRow.expires_at) < new Date()) {
     const CLIENT_ID = Deno.env.get("JOBBER_CLIENT_ID");
     const CLIENT_SECRET = Deno.env.get("JOBBER_CLIENT_SECRET");
-
     if (!CLIENT_ID || !CLIENT_SECRET) {
       return jsonResponse({ error: "Jobber credentials not configured" }, 500);
     }
@@ -406,91 +342,75 @@ Deno.serve(async (req) => {
     });
 
     if (!refreshRes.ok) {
-      const errBody = await refreshRes.text();
-      console.error("Token refresh failed during sync:", errBody);
       return jsonResponse({ error: "Token expired and refresh failed" }, 401);
     }
 
     const refreshData = await refreshRes.json();
     accessToken = refreshData.access_token;
-
     const expiresIn = Number(refreshData.expires_in);
     const expiresAt = Number.isFinite(expiresIn) && expiresIn > 0
       ? new Date(Date.now() + expiresIn * 1000).toISOString()
       : new Date(Date.now() + 3600 * 1000).toISOString();
 
-    await supabase
-      .from("jobber_tokens")
-      .update({
-        access_token: refreshData.access_token,
-        refresh_token: refreshData.refresh_token,
-        expires_at: expiresAt,
-      })
-      .eq("id", tokenRow.id);
+    await supabase.from("jobber_tokens").update({
+      access_token: refreshData.access_token,
+      refresh_token: refreshData.refresh_token,
+      expires_at: expiresAt,
+    }).eq("id", tokenRow.id);
   }
 
-  // --- Action: test connection ---
   if (action === "test") {
-    const result = await testConnection(accessToken);
-    return jsonResponse(result);
+    return jsonResponse(await testConnection(accessToken));
   }
 
-  // --- Determine which modules to sync ---
   const syncModules = modules.length > 0 ? modules : ["clients", "properties", "jobs"];
 
-  // Create sync log
   const { data: syncLog } = await supabase
     .from("sync_logs")
     .insert({ sync_type: syncModules.join(","), status: "running" })
     .select("id")
     .single();
-
   const syncLogId = syncLog?.id;
+
   const results: ModuleResult[] = [];
   let clientIdMap: Record<string, string> = {};
   let propertyIdMap: Record<string, string> = {};
 
-  // --- Run each module independently ---
   if (syncModules.includes("clients")) {
     console.log("Syncing clients...");
-    const clientResult = await syncClients(accessToken, supabase);
-    results.push(clientResult.result);
-    clientIdMap = clientResult.idMap;
+    const r = await syncClients(accessToken, supabase);
+    results.push(r.result);
+    clientIdMap = r.idMap;
   }
 
   if (syncModules.includes("properties")) {
     console.log("Syncing properties...");
-    const propResult = await syncProperties(accessToken, supabase, clientIdMap);
-    results.push(propResult.result);
-    propertyIdMap = propResult.idMap;
+    const r = await syncProperties(accessToken, supabase, clientIdMap);
+    results.push(r.result);
+    propertyIdMap = r.idMap;
   }
 
   if (syncModules.includes("jobs")) {
     console.log("Syncing jobs...");
-    const jobResult = await syncJobs(accessToken, supabase, clientIdMap, propertyIdMap);
-    results.push(jobResult.result);
+    results.push(await syncJobs(accessToken, supabase, clientIdMap, propertyIdMap));
   }
 
   const totalRecords = results.reduce((sum, r) => sum + r.records, 0);
   const allSuccess = results.every((r) => r.success);
   const failedModules = results.filter((r) => !r.success);
-
   const finalStatus = allSuccess ? "success" : failedModules.length === results.length ? "failed" : "partial";
   const errorMessages = failedModules.map((f) => `${f.module}: ${f.error}`).join("; ");
 
   if (syncLogId) {
-    await supabase
-      .from("sync_logs")
-      .update({
-        status: finalStatus,
-        records_synced: totalRecords,
-        error_message: errorMessages || null,
-        completed_at: new Date().toISOString(),
-      })
-      .eq("id", syncLogId);
+    await supabase.from("sync_logs").update({
+      status: finalStatus,
+      records_synced: totalRecords,
+      error_message: errorMessages || null,
+      completed_at: new Date().toISOString(),
+    }).eq("id", syncLogId);
   }
 
-  console.log(`Sync ${finalStatus}: ${totalRecords} records. ${errorMessages || "No errors."}`);
+  console.log(`Sync ${finalStatus}: ${totalRecords} records`);
 
   return jsonResponse({
     success: allSuccess,
