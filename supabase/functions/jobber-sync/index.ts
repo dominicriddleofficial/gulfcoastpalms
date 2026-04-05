@@ -240,7 +240,7 @@ Deno.serve(async (req) => {
     for (const c of clients) {
       const primaryEmail = c.emails?.find((e: any) => e.primary)?.address || c.emails?.[0]?.address || null;
       const primaryPhone = c.phones?.find((p: any) => p.primary)?.number || c.phones?.[0]?.number || null;
-      const tags = c.tags?.map((t: any) => t.label) || null;
+      const tags = c.tags?.nodes?.map((t: any) => t.label) || null;
 
       const { data: upserted } = await supabase
         .from("jobber_clients")
