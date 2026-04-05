@@ -10,7 +10,7 @@ import RoutePanel from "@/components/ops/schedule/RoutePanel";
 import JobDrawer from "@/components/ops/schedule/JobDrawer";
 import { ScheduleJob } from "@/hooks/useScheduleJobs";
 import { format, addDays, startOfToday } from "date-fns";
-import { ChevronLeft, ChevronRight, Loader2, Map, List, CalendarDays, Route, Search, Filter } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Map, List, CalendarDays, Route, Search, Bug } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -29,12 +29,12 @@ export default function OpsSchedule() {
   const [showRoutes, setShowRoutes] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [showFilters, setShowFilters] = useState(false);
+  const [showDebug, setShowDebug] = useState(false);
 
-  const { jobs, loading, geocoding, crewNames, crewCounts, geocodedJobs, ungeocodedJobs } = useScheduleJobs(selectedDate);
+  const { jobs, loading, geocoding, crewNames, crewCounts, geocodedJobs, ungeocodedJobs, diagnostics } = useScheduleJobs(selectedDate);
   const { apiKey, loading: mapsLoading } = useGoogleMapsKey();
 
-  // Apply filters
+  // Apply filters — single canonical filter for all views
   const filtered = jobs.filter(j => {
     const crew = j.assigned_employee_names?.join(", ") || "Unassigned";
     if (selectedCrew && crew !== selectedCrew) return false;
@@ -52,6 +52,10 @@ export default function OpsSchedule() {
 
   const filteredGeocoded = filtered.filter(j => j.lat && j.lng);
 
+  const handleDateChange = (days: number) => {
+    setSelectedDate(prev => addDays(prev, days));
+  };
+
   return (
     <OpsLayout>
       <div className="flex flex-col h-[calc(100vh-60px)] lg:h-[calc(100vh-24px)]">
@@ -62,13 +66,14 @@ export default function OpsSchedule() {
             <div>
               <h1 className="font-display text-xl font-bold text-foreground">Schedule</h1>
               <p className="font-body text-xs text-muted-foreground flex items-center gap-1">
-                {format(selectedDate, "EEEE, MMMM d")} · {jobs.length} jobs
-                {(loading || geocoding) && <Loader2 className="w-3 h-3 animate-spin" />}
+                {format(selectedDate, "EEEE, MMMM d")} · {filtered.length}/{jobs.length} jobs
+                {loading && <Loader2 className="w-3 h-3 animate-spin" />}
+                {geocoding && <span className="text-primary">(geocoding…)</span>}
               </p>
             </div>
             <div className="flex items-center gap-1">
               <Button variant="ghost" size="icon" className="w-8 h-8"
-                onClick={() => setSelectedDate(addDays(selectedDate, -1))}>
+                onClick={() => handleDateChange(-1)}>
                 <ChevronLeft className="w-4 h-4" />
               </Button>
               <Button variant="ghost" size="sm" className="font-body text-xs"
@@ -76,11 +81,31 @@ export default function OpsSchedule() {
                 Today
               </Button>
               <Button variant="ghost" size="icon" className="w-8 h-8"
-                onClick={() => setSelectedDate(addDays(selectedDate, 1))}>
+                onClick={() => handleDateChange(1)}>
                 <ChevronRight className="w-4 h-4" />
               </Button>
+              {(isAdmin || isManager) && (
+                <Button variant="ghost" size="icon" className="w-8 h-8"
+                  onClick={() => setShowDebug(!showDebug)}>
+                  <Bug className="w-4 h-4" />
+                </Button>
+              )}
             </div>
           </div>
+
+          {/* Debug panel */}
+          {showDebug && diagnostics && (
+            <div className="bg-muted border border-border rounded-lg p-3 text-xs font-mono space-y-1">
+              <p className="font-body font-semibold text-foreground text-xs">Schedule Diagnostics</p>
+              <p>Date: <span className="text-primary">{diagnostics.selectedDate}</span></p>
+              <p>TZ: {diagnostics.timezone}</p>
+              <p>Query: {diagnostics.queryStart} → {diagnostics.queryEnd}</p>
+              <p>DB jobs: {diagnostics.jobsFromDb} | Geocoded: {diagnostics.jobsGeocoded} | Missing coords: {diagnostics.jobsUngeocoded}</p>
+              <p>After filters: {filtered.length} | Crew: {selectedCrew || "All"} | Status: {statusFilter} | Search: "{search}"</p>
+              <p>Map pins: {filteredGeocoded.length} | Fetch: {diagnostics.fetchDurationMs}ms</p>
+              <p>Last fetch: {diagnostics.lastFetchAt}</p>
+            </div>
+          )}
 
           {/* View toggle */}
           <div className="flex items-center gap-1 bg-muted rounded-xl p-1">
@@ -157,18 +182,36 @@ export default function OpsSchedule() {
 
         {/* Content area */}
         <div className="flex-1 min-h-0 relative">
-          {viewMode === "map" ? (
+          {loading ? (
+            <div className="h-full flex flex-col items-center justify-center gap-2">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              <p className="font-body text-sm text-muted-foreground">Loading jobs for {format(selectedDate, "MMM d")}…</p>
+            </div>
+          ) : viewMode === "map" ? (
             apiKey ? (
-              <div className="h-full rounded-xl overflow-hidden border border-border">
-                <ScheduleMap
-                  jobs={filteredGeocoded}
-                  apiKey={apiKey}
-                  selectedCrew={selectedCrew}
-                  crewNames={crewNames}
-                  onJobSelect={setSelectedJob}
-                  showRoutes={showRoutes}
-                />
-              </div>
+              filteredGeocoded.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center gap-2">
+                  <Map className="w-10 h-10 text-muted-foreground/50" />
+                  <p className="font-body text-sm text-muted-foreground">
+                    {jobs.length === 0
+                      ? "No jobs scheduled for this day"
+                      : filtered.length === 0
+                        ? "No jobs match your current filters"
+                        : "No jobs have map coordinates yet"}
+                  </p>
+                </div>
+              ) : (
+                <div className="h-full rounded-xl overflow-hidden border border-border">
+                  <ScheduleMap
+                    jobs={filteredGeocoded}
+                    apiKey={apiKey}
+                    selectedCrew={selectedCrew}
+                    crewNames={crewNames}
+                    onJobSelect={setSelectedJob}
+                    showRoutes={showRoutes}
+                  />
+                </div>
+              )
             ) : mapsLoading ? (
               <div className="h-full flex items-center justify-center">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -180,10 +223,9 @@ export default function OpsSchedule() {
             )
           ) : viewMode === "list" ? (
             <div className="h-full overflow-y-auto pb-4">
-              <ScheduleListView jobs={filtered} selectedCrew={selectedCrew} />
+              <ScheduleListView jobs={filtered} />
             </div>
           ) : (
-            /* Day view - list + route panel side by side on larger screens */
             <div className="h-full overflow-y-auto pb-4 space-y-4">
               <RoutePanel
                 jobs={filtered}
@@ -191,7 +233,7 @@ export default function OpsSchedule() {
                 crewNames={crewNames}
                 ungeocodedCount={ungeocodedJobs.length}
               />
-              <ScheduleListView jobs={filtered} selectedCrew={selectedCrew} />
+              <ScheduleListView jobs={filtered} />
             </div>
           )}
         </div>
