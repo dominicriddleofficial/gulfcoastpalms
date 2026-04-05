@@ -99,7 +99,7 @@ const CLIENTS_QUERY = `
         name
         emails { address primary }
         phones { number primary }
-        tags { label }
+        tags { nodes { label } }
       }
       pageInfo { hasNextPage endCursor }
     }
