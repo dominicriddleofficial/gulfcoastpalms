@@ -502,12 +502,12 @@ const VISITS_QUERY = `
   }
 `;
 
-function pickPrimaryEmail(emails: Array<{ address?: string | null; primary?: boolean }> | null | undefined) {
-  return emails?.find((item) => item.primary)?.address || emails?.[0]?.address || null;
+function pickPrimaryEmail(emails: any) {
+  return emails?.nodes?.[0]?.address || null;
 }
 
-function pickPrimaryPhone(phones: Array<{ number?: string | null; primary?: boolean }> | null | undefined) {
-  return phones?.find((item) => item.primary)?.number || phones?.[0]?.number || null;
+function pickPrimaryPhone(phones: any) {
+  return phones?.nodes?.[0]?.number || null;
 }
 
 async function fetchChangedClientIds(accessToken: string, lastSuccessAt: string | null, context: SyncContext) {
