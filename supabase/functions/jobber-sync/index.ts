@@ -84,12 +84,13 @@ async function fetchAllPages(
     hasNextPage = connection.pageInfo?.hasNextPage ?? false;
     cursor = connection.pageInfo?.endCursor ?? null;
 
-    // Respect Jobber rate limits
-    if (hasNextPage) await new Promise((r) => setTimeout(r, 200));
+    if (hasNextPage) await new Promise((r) => setTimeout(r, 250));
   }
 
   return allNodes;
 }
+
+// --- SAFE QUERIES: Only confirmed fields from the live Jobber schema ---
 
 const CLIENTS_QUERY = `
   query($limit: Int, $cursor: String) {
@@ -129,6 +130,8 @@ const PROPERTIES_QUERY = `
   }
 `;
 
+// FIXED: User type does NOT have firstName/lastName.
+// User has name { full } and id only for safe access.
 const JOBS_QUERY = `
   query($limit: Int, $cursor: String) {
     jobs(first: $limit, after: $cursor) {
@@ -149,7 +152,7 @@ const JOBS_QUERY = `
             endAt
             visitStatus
             isComplete
-            assignedUsers { nodes { id firstName lastName } }
+            assignedUsers { nodes { id name { full } } }
           }
         }
         instructions
@@ -159,6 +162,196 @@ const JOBS_QUERY = `
   }
 `;
 
+// --- Individual sync modules with error isolation ---
+
+type ModuleResult = {
+  module: string;
+  success: boolean;
+  records: number;
+  error?: string;
+  timestamp: string;
+};
+
+async function syncClients(
+  accessToken: string,
+  supabase: any
+): Promise<{ result: ModuleResult; idMap: Record<string, string> }> {
+  const clientIdMap: Record<string, string> = {};
+  const ts = new Date().toISOString();
+  try {
+    const clients = (await fetchAllPages(accessToken, CLIENTS_QUERY, "clients")) as any[];
+    for (const c of clients) {
+      const primaryEmail = c.emails?.find((e: any) => e.primary)?.address || c.emails?.[0]?.address || null;
+      const primaryPhone = c.phones?.find((p: any) => p.primary)?.number || c.phones?.[0]?.number || null;
+      const tags = c.tags?.nodes?.map((t: any) => t.label) || null;
+
+      const { data: upserted } = await supabase
+        .from("jobber_clients")
+        .upsert(
+          {
+            jobber_id: c.id,
+            first_name: c.firstName || null,
+            last_name: c.lastName || null,
+            company_name: c.companyName || null,
+            display_name: c.name || `${c.firstName || ""} ${c.lastName || ""}`.trim() || "Unknown",
+            email: primaryEmail,
+            phone: primaryPhone,
+            tags,
+            synced_at: ts,
+          },
+          { onConflict: "jobber_id" }
+        )
+        .select("id")
+        .single();
+
+      if (upserted) clientIdMap[c.id] = upserted.id;
+    }
+    return {
+      result: { module: "clients", success: true, records: clients.length, timestamp: ts },
+      idMap: clientIdMap,
+    };
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("Sync clients failed:", msg);
+    return {
+      result: { module: "clients", success: false, records: 0, error: msg, timestamp: ts },
+      idMap: clientIdMap,
+    };
+  }
+}
+
+async function syncProperties(
+  accessToken: string,
+  supabase: any,
+  clientIdMap: Record<string, string>
+): Promise<{ result: ModuleResult; idMap: Record<string, string> }> {
+  const propertyIdMap: Record<string, string> = {};
+  const ts = new Date().toISOString();
+  try {
+    const properties = (await fetchAllPages(accessToken, PROPERTIES_QUERY, "properties")) as any[];
+    for (const p of properties) {
+      const addr = p.address || {};
+      const clientLocalId = p.client?.id ? clientIdMap[p.client.id] || null : null;
+
+      const { data: upserted } = await supabase
+        .from("jobber_properties")
+        .upsert(
+          {
+            jobber_id: p.id,
+            street1: addr.street1 || null,
+            street2: addr.street2 || null,
+            city: addr.city || null,
+            state: addr.province || null,
+            zip: addr.postalCode || null,
+            country: addr.country || "US",
+            client_id: clientLocalId,
+            synced_at: ts,
+          },
+          { onConflict: "jobber_id" }
+        )
+        .select("id")
+        .single();
+
+      if (upserted) propertyIdMap[p.id] = upserted.id;
+    }
+    return {
+      result: { module: "properties", success: true, records: properties.length, timestamp: ts },
+      idMap: propertyIdMap,
+    };
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("Sync properties failed:", msg);
+    return {
+      result: { module: "properties", success: false, records: 0, error: msg, timestamp: ts },
+      idMap: propertyIdMap,
+    };
+  }
+}
+
+async function syncJobs(
+  accessToken: string,
+  supabase: any,
+  clientIdMap: Record<string, string>,
+  propertyIdMap: Record<string, string>
+): Promise<ModuleResult> {
+  const ts = new Date().toISOString();
+  try {
+    const jobs = (await fetchAllPages(accessToken, JOBS_QUERY, "jobs")) as any[];
+    let count = 0;
+
+    for (const j of jobs) {
+      const clientLocalId = j.client?.id ? clientIdMap[j.client.id] || null : null;
+      const propLocalId = j.property?.id ? propertyIdMap[j.property.id] || null : null;
+      const clientPhone = j.client?.phones?.find((p: any) => p.primary)?.number || j.client?.phones?.[0]?.number || null;
+
+      const lineItems =
+        j.lineItems?.nodes?.map((li: any) => ({
+          name: li.name || li.description,
+          quantity: li.quantity,
+          unitPrice: li.unitPrice,
+        })) || [];
+
+      const latestVisit = j.visits?.nodes?.[0];
+
+      // FIXED: Use name.full instead of firstName/lastName on User type
+      const assignedNames =
+        latestVisit?.assignedUsers?.nodes?.map(
+          (m: any) => m.name?.full || "Unknown"
+        ) || [];
+
+      const assignedIds = latestVisit?.assignedUsers?.nodes?.map((m: any) => m.id) || [];
+
+      const propAddr = j.property?.address;
+      const addressStr = propAddr
+        ? [propAddr.street1, propAddr.city, propAddr.province, propAddr.postalCode].filter(Boolean).join(", ")
+        : null;
+
+      await supabase.from("jobber_jobs").upsert(
+        {
+          jobber_id: j.id,
+          job_number: j.jobNumber?.toString() || null,
+          title: j.title || null,
+          status: j.jobStatus?.toLowerCase() || "scheduled",
+          visit_status: latestVisit?.visitStatus?.toLowerCase() || "scheduled",
+          scheduled_start: latestVisit?.startAt || null,
+          scheduled_end: latestVisit?.endAt || null,
+          client_id: clientLocalId,
+          client_name: j.client?.name || null,
+          client_phone: clientPhone,
+          property_id: propLocalId,
+          property_address: addressStr,
+          assigned_employee_names: assignedNames.length ? assignedNames : null,
+          assigned_employee_ids: assignedIds.length ? assignedIds : null,
+          service_items: lineItems.length ? lineItems : [],
+          total_amount: j.total || 0,
+          internal_notes: j.instructions || null,
+          synced_at: ts,
+        },
+        { onConflict: "jobber_id" }
+      );
+
+      count++;
+    }
+
+    return { module: "jobs", success: true, records: count, timestamp: ts };
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("Sync jobs failed:", msg);
+    return { module: "jobs", success: false, records: 0, error: msg, timestamp: ts };
+  }
+}
+
+// --- Test connection: minimal query to validate token ---
+async function testConnection(accessToken: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    await jobberQuery(accessToken, `query { account { name } }`);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+// --- Main handler ---
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -168,6 +361,17 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
+
+  // Parse action from body or default to full sync
+  let action = "full";
+  let modules: string[] = [];
+  try {
+    const body = await req.json();
+    action = body?.action || "full";
+    modules = body?.modules || [];
+  } catch {
+    // No body = full sync
+  }
 
   const { data: tokenRow } = await supabase
     .from("jobber_tokens")
@@ -225,175 +429,78 @@ Deno.serve(async (req) => {
       .eq("id", tokenRow.id);
   }
 
+  // --- Action: test connection ---
+  if (action === "test") {
+    const result = await testConnection(accessToken);
+    return jsonResponse(result);
+  }
+
+  // --- Determine which modules to sync ---
+  const syncModules = modules.length > 0 ? modules : ["clients", "properties", "jobs"];
+
   // Create sync log
   const { data: syncLog } = await supabase
     .from("sync_logs")
-    .insert({ sync_type: "full", status: "running" })
+    .insert({ sync_type: syncModules.join(","), status: "running" })
     .select("id")
     .single();
 
   const syncLogId = syncLog?.id;
-  let totalRecords = 0;
+  const results: ModuleResult[] = [];
+  let clientIdMap: Record<string, string> = {};
+  let propertyIdMap: Record<string, string> = {};
 
-  try {
-    // ---- Clients ----
+  // --- Run each module independently ---
+  if (syncModules.includes("clients")) {
     console.log("Syncing clients...");
-    const clients = (await fetchAllPages(accessToken, CLIENTS_QUERY, "clients")) as any[];
-    const clientIdMap: Record<string, string> = {};
-
-    for (const c of clients) {
-      const primaryEmail = c.emails?.find((e: any) => e.primary)?.address || c.emails?.[0]?.address || null;
-      const primaryPhone = c.phones?.find((p: any) => p.primary)?.number || c.phones?.[0]?.number || null;
-      const tags = c.tags?.nodes?.map((t: any) => t.label) || null;
-
-      const { data: upserted } = await supabase
-        .from("jobber_clients")
-        .upsert(
-          {
-            jobber_id: c.id,
-            first_name: c.firstName || null,
-            last_name: c.lastName || null,
-            company_name: c.companyName || null,
-            display_name: c.name || `${c.firstName || ""} ${c.lastName || ""}`.trim() || "Unknown",
-            email: primaryEmail,
-            phone: primaryPhone,
-            tags,
-            synced_at: new Date().toISOString(),
-          },
-          { onConflict: "jobber_id" }
-        )
-        .select("id")
-        .single();
-
-      if (upserted) clientIdMap[c.id] = upserted.id;
-      totalRecords++;
-    }
-
-    // ---- Properties ----
-    console.log("Syncing properties...");
-    const properties = (await fetchAllPages(accessToken, PROPERTIES_QUERY, "properties")) as any[];
-    const propertyIdMap: Record<string, string> = {};
-
-    for (const p of properties) {
-      const addr = p.address || {};
-      const clientLocalId = p.client?.id ? clientIdMap[p.client.id] || null : null;
-
-      const { data: upserted } = await supabase
-        .from("jobber_properties")
-        .upsert(
-          {
-            jobber_id: p.id,
-            street1: addr.street1 || null,
-            street2: addr.street2 || null,
-            city: addr.city || null,
-            state: addr.province || null,
-            zip: addr.postalCode || null,
-            country: addr.country || "US",
-            client_id: clientLocalId,
-            synced_at: new Date().toISOString(),
-          },
-          { onConflict: "jobber_id" }
-        )
-        .select("id")
-        .single();
-
-      if (upserted) propertyIdMap[p.id] = upserted.id;
-      totalRecords++;
-    }
-
-    // ---- Jobs ----
-    console.log("Syncing jobs...");
-    const jobs = (await fetchAllPages(accessToken, JOBS_QUERY, "jobs")) as any[];
-
-    for (const j of jobs) {
-      const clientLocalId = j.client?.id ? clientIdMap[j.client.id] || null : null;
-      const propLocalId = j.property?.id ? propertyIdMap[j.property.id] || null : null;
-      const clientPhone = j.client?.phones?.find((p: any) => p.primary)?.number || j.client?.phones?.[0]?.number || null;
-
-      const lineItems =
-        j.lineItems?.nodes?.map((li: any) => ({
-          name: li.name || li.description,
-          quantity: li.quantity,
-          unitPrice: li.unitPrice,
-        })) || [];
-
-      const latestVisit = j.visits?.nodes?.[0];
-
-      const assignedNames =
-        latestVisit?.assignedUsers?.nodes?.map(
-          (m: any) => `${m.firstName || ""} ${m.lastName || ""}`.trim()
-        ) || [];
-
-      const assignedIds = latestVisit?.assignedUsers?.nodes?.map((m: any) => m.id) || [];
-
-      const propAddr = j.property?.address;
-      const addressStr = propAddr
-        ? [propAddr.street1, propAddr.city, propAddr.province, propAddr.postalCode].filter(Boolean).join(", ")
-        : null;
-
-      await supabase.from("jobber_jobs").upsert(
-        {
-          jobber_id: j.id,
-          job_number: j.jobNumber?.toString() || null,
-          title: j.title || null,
-          status: j.jobStatus?.toLowerCase() || "scheduled",
-          visit_status: latestVisit?.visitStatus?.toLowerCase() || "scheduled",
-          scheduled_start: latestVisit?.startAt || null,
-          scheduled_end: latestVisit?.endAt || null,
-          client_id: clientLocalId,
-          client_name: j.client?.name || null,
-          client_phone: clientPhone,
-          property_id: propLocalId,
-          property_address: addressStr,
-          assigned_employee_names: assignedNames.length ? assignedNames : null,
-          assigned_employee_ids: assignedIds.length ? assignedIds : null,
-          service_items: lineItems.length ? lineItems : [],
-          total_amount: j.total || 0,
-          internal_notes: j.instructions || null,
-          synced_at: new Date().toISOString(),
-        },
-        { onConflict: "jobber_id" }
-      );
-
-      totalRecords++;
-    }
-
-    // Mark sync complete
-    if (syncLogId) {
-      await supabase
-        .from("sync_logs")
-        .update({
-          status: "success",
-          records_synced: totalRecords,
-          completed_at: new Date().toISOString(),
-        })
-        .eq("id", syncLogId);
-    }
-
-    console.log(`Sync complete: ${totalRecords} records`);
-
-    return jsonResponse({
-      success: true,
-      records_synced: totalRecords,
-      breakdown: { clients: clients.length, properties: properties.length, jobs: jobs.length },
-    });
-  } catch (error) {
-    console.error("Sync failed:", error);
-
-    if (syncLogId) {
-      await supabase
-        .from("sync_logs")
-        .update({
-          status: "failed",
-          error_message: error instanceof Error ? error.message : String(error),
-          completed_at: new Date().toISOString(),
-        })
-        .eq("id", syncLogId);
-    }
-
-    return jsonResponse(
-      { error: "Sync failed", details: error instanceof Error ? error.message : String(error) },
-      500
-    );
+    const clientResult = await syncClients(accessToken, supabase);
+    results.push(clientResult.result);
+    clientIdMap = clientResult.idMap;
   }
+
+  if (syncModules.includes("properties")) {
+    console.log("Syncing properties...");
+    const propResult = await syncProperties(accessToken, supabase, clientIdMap);
+    results.push(propResult.result);
+    propertyIdMap = propResult.idMap;
+  }
+
+  if (syncModules.includes("jobs")) {
+    console.log("Syncing jobs...");
+    const jobResult = await syncJobs(accessToken, supabase, clientIdMap, propertyIdMap);
+    results.push(jobResult.result);
+  }
+
+  const totalRecords = results.reduce((sum, r) => sum + r.records, 0);
+  const allSuccess = results.every((r) => r.success);
+  const failedModules = results.filter((r) => !r.success);
+
+  const finalStatus = allSuccess ? "success" : failedModules.length === results.length ? "failed" : "partial";
+  const errorMessages = failedModules.map((f) => `${f.module}: ${f.error}`).join("; ");
+
+  if (syncLogId) {
+    await supabase
+      .from("sync_logs")
+      .update({
+        status: finalStatus,
+        records_synced: totalRecords,
+        error_message: errorMessages || null,
+        completed_at: new Date().toISOString(),
+      })
+      .eq("id", syncLogId);
+  }
+
+  console.log(`Sync ${finalStatus}: ${totalRecords} records. ${errorMessages || "No errors."}`);
+
+  return jsonResponse({
+    success: allSuccess,
+    status: finalStatus,
+    records_synced: totalRecords,
+    modules: results,
+    breakdown: {
+      clients: results.find((r) => r.module === "clients")?.records || 0,
+      properties: results.find((r) => r.module === "properties")?.records || 0,
+      jobs: results.find((r) => r.module === "jobs")?.records || 0,
+    },
+  });
 });
