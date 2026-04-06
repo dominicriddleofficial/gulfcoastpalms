@@ -14,6 +14,311 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action_type: string
+          business_id: string | null
+          context_json: Json | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          event_name: string
+          id: string
+          ip_address: string | null
+          new_values_json: Json | null
+          old_values_json: Json | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          business_id?: string | null
+          context_json?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          event_name: string
+          id?: string
+          ip_address?: string | null
+          new_values_json?: Json | null
+          old_values_json?: Json | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          business_id?: string | null
+          context_json?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          event_name?: string
+          id?: string
+          ip_address?: string | null
+          new_values_json?: Json | null
+          old_values_json?: Json | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_brand_assets: {
+        Row: {
+          asset_type: string
+          business_id: string
+          created_at: string
+          file_name: string | null
+          file_url: string
+          id: string
+          mime_type: string | null
+          usage_context: string | null
+        }
+        Insert: {
+          asset_type: string
+          business_id: string
+          created_at?: string
+          file_name?: string | null
+          file_url: string
+          id?: string
+          mime_type?: string | null
+          usage_context?: string | null
+        }
+        Update: {
+          asset_type?: string
+          business_id?: string
+          created_at?: string
+          file_name?: string | null
+          file_url?: string
+          id?: string
+          mime_type?: string | null
+          usage_context?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_brand_assets_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_settings: {
+        Row: {
+          automation_enabled: boolean | null
+          business_id: string
+          cancellation_policy: string | null
+          created_at: string
+          customer_prefix: string | null
+          default_business_color: string | null
+          default_deposit_type: string | null
+          default_deposit_value: number | null
+          default_invoice_terms: string | null
+          default_job_reminder_offset: number | null
+          default_quote_expiration_days: number | null
+          default_quote_follow_up_days: number | null
+          default_secondary_color: string | null
+          default_tax_rate: number | null
+          email_from_address: string | null
+          email_from_name: string | null
+          id: string
+          invoice_notes_default: string | null
+          invoice_prefix: string | null
+          job_prefix: string | null
+          late_fee_settings: Json | null
+          lead_prefix: string | null
+          payment_prefix: string | null
+          payments_enabled: boolean | null
+          quote_notes_default: string | null
+          quote_prefix: string | null
+          review_request_enabled: boolean | null
+          route_mode_defaults: string | null
+          scheduling_enabled: boolean | null
+          sms_sender_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          automation_enabled?: boolean | null
+          business_id: string
+          cancellation_policy?: string | null
+          created_at?: string
+          customer_prefix?: string | null
+          default_business_color?: string | null
+          default_deposit_type?: string | null
+          default_deposit_value?: number | null
+          default_invoice_terms?: string | null
+          default_job_reminder_offset?: number | null
+          default_quote_expiration_days?: number | null
+          default_quote_follow_up_days?: number | null
+          default_secondary_color?: string | null
+          default_tax_rate?: number | null
+          email_from_address?: string | null
+          email_from_name?: string | null
+          id?: string
+          invoice_notes_default?: string | null
+          invoice_prefix?: string | null
+          job_prefix?: string | null
+          late_fee_settings?: Json | null
+          lead_prefix?: string | null
+          payment_prefix?: string | null
+          payments_enabled?: boolean | null
+          quote_notes_default?: string | null
+          quote_prefix?: string | null
+          review_request_enabled?: boolean | null
+          route_mode_defaults?: string | null
+          scheduling_enabled?: boolean | null
+          sms_sender_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          automation_enabled?: boolean | null
+          business_id?: string
+          cancellation_policy?: string | null
+          created_at?: string
+          customer_prefix?: string | null
+          default_business_color?: string | null
+          default_deposit_type?: string | null
+          default_deposit_value?: number | null
+          default_invoice_terms?: string | null
+          default_job_reminder_offset?: number | null
+          default_quote_expiration_days?: number | null
+          default_quote_follow_up_days?: number | null
+          default_secondary_color?: string | null
+          default_tax_rate?: number | null
+          email_from_address?: string | null
+          email_from_name?: string | null
+          id?: string
+          invoice_notes_default?: string | null
+          invoice_prefix?: string | null
+          job_prefix?: string | null
+          late_fee_settings?: Json | null
+          lead_prefix?: string | null
+          payment_prefix?: string | null
+          payments_enabled?: boolean | null
+          quote_notes_default?: string | null
+          quote_prefix?: string | null
+          review_request_enabled?: boolean | null
+          route_mode_defaults?: string | null
+          scheduling_enabled?: boolean | null
+          sms_sender_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_settings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      businesses: {
+        Row: {
+          active_status: string
+          archived_at: string | null
+          billing_email: string | null
+          business_type: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          currency: string | null
+          description: string | null
+          favicon_url: string | null
+          id: string
+          legal_name: string
+          locale: string | null
+          logo_url: string | null
+          primary_address_1: string | null
+          primary_address_2: string | null
+          public_brand_name: string
+          shortcode: string
+          state: string | null
+          support_email: string | null
+          support_phone: string | null
+          tax_registration_info: string | null
+          timezone: string | null
+          updated_at: string
+          website_url: string | null
+          workspace_id: string
+          zip: string | null
+        }
+        Insert: {
+          active_status?: string
+          archived_at?: string | null
+          billing_email?: string | null
+          business_type?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          favicon_url?: string | null
+          id?: string
+          legal_name: string
+          locale?: string | null
+          logo_url?: string | null
+          primary_address_1?: string | null
+          primary_address_2?: string | null
+          public_brand_name: string
+          shortcode: string
+          state?: string | null
+          support_email?: string | null
+          support_phone?: string | null
+          tax_registration_info?: string | null
+          timezone?: string | null
+          updated_at?: string
+          website_url?: string | null
+          workspace_id: string
+          zip?: string | null
+        }
+        Update: {
+          active_status?: string
+          archived_at?: string | null
+          billing_email?: string | null
+          business_type?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          favicon_url?: string | null
+          id?: string
+          legal_name?: string
+          locale?: string | null
+          logo_url?: string | null
+          primary_address_1?: string | null
+          primary_address_2?: string | null
+          public_brand_name?: string
+          shortcode?: string
+          state?: string | null
+          support_email?: string | null
+          support_phone?: string | null
+          tax_registration_info?: string | null
+          timezone?: string | null
+          updated_at?: string
+          website_url?: string | null
+          workspace_id?: string
+          zip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "businesses_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_conversations: {
         Row: {
           created_at: string
@@ -856,6 +1161,44 @@ export type Database = {
         }
         Relationships: []
       }
+      numbering_sequences: {
+        Row: {
+          business_id: string
+          id: string
+          next_number: number
+          padding_length: number | null
+          prefix: string
+          record_type: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          id?: string
+          next_number?: number
+          padding_length?: number | null
+          prefix: string
+          record_type: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          id?: string
+          next_number?: number
+          padding_length?: number | null
+          prefix?: string
+          record_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "numbering_sequences_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recurring_services: {
         Row: {
           client_id: string | null
@@ -1104,6 +1447,133 @@ export type Database = {
         }
         Relationships: []
       }
+      timeline_events: {
+        Row: {
+          actor_user_id: string | null
+          business_id: string
+          created_at: string
+          event_payload_json: Json | null
+          event_summary: string
+          event_type: string
+          id: string
+          related_entity_id: string
+          related_entity_type: string
+        }
+        Insert: {
+          actor_user_id?: string | null
+          business_id: string
+          created_at?: string
+          event_payload_json?: Json | null
+          event_summary: string
+          event_type: string
+          id?: string
+          related_entity_id: string
+          related_entity_type: string
+        }
+        Update: {
+          actor_user_id?: string | null
+          business_id?: string
+          created_at?: string
+          event_payload_json?: Json | null
+          event_summary?: string
+          event_type?: string
+          id?: string
+          related_entity_id?: string
+          related_entity_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timeline_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_business_access: {
+        Row: {
+          access_scope: string | null
+          active_status: string
+          business_id: string
+          can_delete_records: boolean | null
+          can_export_data: boolean | null
+          can_manage_communications: boolean | null
+          can_manage_invoices: boolean | null
+          can_manage_jobs: boolean | null
+          can_manage_leads: boolean | null
+          can_manage_payments: boolean | null
+          can_manage_quotes: boolean | null
+          can_manage_schedule: boolean | null
+          can_manage_settings: boolean | null
+          can_manage_users: boolean | null
+          can_view_all_business_data: boolean | null
+          can_view_financials: boolean | null
+          created_at: string
+          default_business: boolean | null
+          id: string
+          role_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_scope?: string | null
+          active_status?: string
+          business_id: string
+          can_delete_records?: boolean | null
+          can_export_data?: boolean | null
+          can_manage_communications?: boolean | null
+          can_manage_invoices?: boolean | null
+          can_manage_jobs?: boolean | null
+          can_manage_leads?: boolean | null
+          can_manage_payments?: boolean | null
+          can_manage_quotes?: boolean | null
+          can_manage_schedule?: boolean | null
+          can_manage_settings?: boolean | null
+          can_manage_users?: boolean | null
+          can_view_all_business_data?: boolean | null
+          can_view_financials?: boolean | null
+          created_at?: string
+          default_business?: boolean | null
+          id?: string
+          role_name?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_scope?: string | null
+          active_status?: string
+          business_id?: string
+          can_delete_records?: boolean | null
+          can_export_data?: boolean | null
+          can_manage_communications?: boolean | null
+          can_manage_invoices?: boolean | null
+          can_manage_jobs?: boolean | null
+          can_manage_leads?: boolean | null
+          can_manage_payments?: boolean | null
+          can_manage_quotes?: boolean | null
+          can_manage_schedule?: boolean | null
+          can_manage_settings?: boolean | null
+          can_manage_users?: boolean | null
+          can_view_all_business_data?: boolean | null
+          can_view_financials?: boolean | null
+          created_at?: string
+          default_business?: boolean | null
+          id?: string
+          role_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_business_access_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -1122,11 +1592,47 @@ export type Database = {
         }
         Relationships: []
       }
+      workspaces: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          owner_user_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          owner_user_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_user_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      generate_next_number: {
+        Args: { _business_id: string; _record_type: string }
+        Returns: string
+      }
+      get_user_business_ids: { Args: { _user_id: string }; Returns: string[] }
+      has_business_access: {
+        Args: { _business_id: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1134,6 +1640,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_workspace_owner: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role:
