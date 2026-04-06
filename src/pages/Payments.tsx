@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { CreditCard, Phone, Shield, FileText, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
+import SEOHead from "@/components/SEOHead";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
