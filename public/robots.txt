@@ -12,3 +12,12 @@ Allow: /
 
 User-agent: *
 Allow: /
+
+Disallow: /admin
+Disallow: /ops
+Disallow: /platform
+Disallow: /employee
+Disallow: /pay
+Disallow: /app
+
+Sitemap: https://gulfcoastpalms.lovable.app/sitemap.xml
