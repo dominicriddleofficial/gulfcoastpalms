@@ -181,17 +181,17 @@ function CustomerDetail({ customer, biz }: { customer: PlatformCustomer; biz: an
         )}
       </div>
 
-      {/* Placeholder sections */}
+      {/* Related records */}
       {[
-        { icon: FileText, label: "Quotes", count: 0 },
-        { icon: Briefcase, label: "Jobs", count: 0 },
-        { icon: CreditCard, label: "Invoices", count: 0 },
+        { icon: FileText, label: "Quotes" },
+        { icon: Briefcase, label: "Jobs" },
+        { icon: CreditCard, label: "Invoices" },
       ].map(section => (
         <div key={section.label} className="space-y-2">
           <p className="font-body text-xs text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-            <section.icon className="w-3 h-3" /> {section.label} ({section.count})
+            <section.icon className="w-3 h-3" /> {section.label}
           </p>
-          <p className="font-body text-xs text-muted-foreground/50 italic">Coming in Phase 3+</p>
+          <p className="font-body text-xs text-muted-foreground/50 italic">No {section.label.toLowerCase()} linked yet</p>
         </div>
       ))}
 

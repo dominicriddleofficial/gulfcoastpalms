@@ -64,9 +64,7 @@ function SectionCard({ title, description, children }: { title: string; descript
       </div>
       {children || (
         <div className="flex items-center justify-center py-8">
-          <span className="inline-block px-2.5 py-1 rounded-md bg-secondary/50 text-[10px] font-display font-medium text-muted-foreground uppercase tracking-wider">
-            Coming Soon
-          </span>
+          <span className="font-body text-[11px] text-muted-foreground/50">No data yet</span>
         </div>
       )}
     </div>
