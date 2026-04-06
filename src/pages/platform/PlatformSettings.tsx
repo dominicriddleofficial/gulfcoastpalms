@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Settings, Palette, Hash, CreditCard, RefreshCw, CheckCircle, XCircle,
-  AlertTriangle, Zap, Globe,
+  AlertTriangle, Zap, Globe, Smartphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
