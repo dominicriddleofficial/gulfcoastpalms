@@ -59,15 +59,20 @@ const Index = () => {
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
-          <img
-            src={heroImage}
-            alt="Beautiful manicured palm trees along Florida Gulf Coast waterfront property"
-            className="w-full h-full object-cover"
-            loading="eager"
-            fetchPriority="high"
-            width={1920}
-            height={1080}
-          />
+          <picture>
+            {/* WebP sources — replace with actual WebP URLs when available */}
+            {/* <source media="(max-width: 768px)" srcSet="hero-mobile.webp" type="image/webp" /> */}
+            {/* <source media="(min-width: 769px)" srcSet="hero-desktop.webp" type="image/webp" /> */}
+            <img
+              src={heroImage}
+              alt="Beautiful manicured palm trees along Florida Gulf Coast waterfront property"
+              className="w-full h-full object-cover"
+              loading="eager"
+              fetchPriority="high"
+              width={1920}
+              height={1080}
+            />
+          </picture>
           <div className="absolute inset-0 bg-gradient-to-b from-palm-dark/70 via-palm-dark/50 to-palm-dark/80" />
         </div>
 

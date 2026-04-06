@@ -637,6 +637,36 @@ export type Database = {
         }
         Relationships: []
       }
+      error_logs: {
+        Row: {
+          component_stack: string | null
+          created_at: string
+          error_message: string | null
+          error_stack: string | null
+          id: string
+          page_url: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          component_stack?: string | null
+          created_at?: string
+          error_message?: string | null
+          error_stack?: string | null
+          id?: string
+          page_url?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          component_stack?: string | null
+          created_at?: string
+          error_message?: string | null
+          error_stack?: string | null
+          id?: string
+          page_url?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       geocode_cache: {
         Row: {
           address: string
