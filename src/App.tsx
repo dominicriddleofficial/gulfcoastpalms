@@ -80,6 +80,9 @@ import PlatformAnalytics from "./pages/platform/PlatformAnalytics";
 import PlatformComms from "./pages/platform/PlatformComms";
 import PlatformTasks from "./pages/platform/PlatformTasks";
 import PlatformSettings from "./pages/platform/PlatformSettings";
+// Customer payment pages
+import PayInvoice from "./pages/pay/PayInvoice";
+import PaymentSuccess from "./pages/pay/PaymentSuccess";
 // Service pages
 import PalmTreeTrimming from "./pages/services/PalmTreeTrimming";
 import PalmTreeInstallation from "./pages/services/PalmTreeInstallation";
@@ -190,6 +193,9 @@ const App = () => (
           <Route path="/platform/communications" element={<PlatformComms />} />
           <Route path="/platform/tasks" element={<PlatformTasks />} />
           <Route path="/platform/settings" element={<PlatformSettings />} />
+          {/* Customer payment pages */}
+          <Route path="/pay/:shortcode/:invoiceId" element={<PayInvoice />} />
+          <Route path="/pay/:shortcode/success" element={<PaymentSuccess />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

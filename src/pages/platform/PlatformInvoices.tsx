@@ -12,7 +12,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Search, Plus, Receipt, DollarSign, Calendar, Hash, User,
-  AlertTriangle, CheckCircle, Send, Eye, Clock, Ban,
+  AlertTriangle, CheckCircle, Send, Eye, Clock, Ban, Link2, ExternalLink,
 } from "lucide-react";
 import { format, formatDistanceToNow, isPast, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -266,9 +266,26 @@ function InvoiceDetailPanel({ invoice, businessId, onStatusChange, onRecordPayme
   const [showPayment, setShowPayment] = useState(false);
   const [payAmount, setPayAmount] = useState(String(Number(invoice.balance_due || invoice.total || 0)));
   const [payMethod, setPayMethod] = useState("card");
+  const { toast } = useToast();
 
   const isPaid = invoice.status === "paid";
   const isVoid = invoice.status === "void";
+  const hasBalance = Number(invoice.balance_due || invoice.total || 0) > 0;
+
+  const getPaymentUrl = () => {
+    const shortcode = invoice.invoice_number?.split("-")[0]?.toLowerCase() || "gcp";
+    return `${window.location.origin}/pay/${shortcode}/${invoice.id}`;
+  };
+
+  const copyPaymentLink = () => {
+    navigator.clipboard.writeText(getPaymentUrl());
+    toast({ title: "Payment link copied" });
+  };
+
+  const openPaymentPage = () => {
+    window.open(getPaymentUrl(), "_blank");
+  };
+
 
   return (
     <div className="space-y-5 pt-4">
@@ -322,6 +339,18 @@ function InvoiceDetailPanel({ invoice, businessId, onStatusChange, onRecordPayme
         <div className="bg-card border border-border rounded-lg p-3">
           <p className="font-body text-xs text-muted-foreground mb-1">Internal Notes</p>
           <p className="font-body text-sm text-foreground">{invoice.internal_notes}</p>
+        </div>
+      )}
+
+      {/* Payment Link Actions */}
+      {!isPaid && !isVoid && hasBalance && (
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" className="flex-1 font-body text-xs" onClick={copyPaymentLink}>
+            <Link2 className="w-3.5 h-3.5 mr-1" /> Copy Payment Link
+          </Button>
+          <Button size="sm" variant="outline" className="font-body text-xs" onClick={openPaymentPage}>
+            <ExternalLink className="w-3.5 h-3.5 mr-1" /> Open
+          </Button>
         </div>
       )}
 
