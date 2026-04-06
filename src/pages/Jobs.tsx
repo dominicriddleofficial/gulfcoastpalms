@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import Layout from "@/components/Layout";
+import SEOHead from "@/components/SEOHead";
 import job1 from "@/assets/gallery/job-1.jpeg";
 import job2 from "@/assets/gallery/job-2.jpeg";
 import job3 from "@/assets/gallery/job-3.jpeg";
