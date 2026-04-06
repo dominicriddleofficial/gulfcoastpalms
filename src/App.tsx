@@ -186,10 +186,10 @@ const App = () => (
           <Route path="/platform/schedule" element={<PlatformSchedule />} />
           <Route path="/platform/invoices" element={<PlatformInvoices />} />
           <Route path="/platform/payments" element={<PlatformPayments />} />
-          <Route path="/platform/analytics" element={<PlatformModule />} />
-          <Route path="/platform/communications" element={<PlatformModule />} />
-          <Route path="/platform/tasks" element={<PlatformModule />} />
-          <Route path="/platform/settings" element={<PlatformModule />} />
+          <Route path="/platform/analytics" element={<PlatformAnalytics />} />
+          <Route path="/platform/communications" element={<PlatformComms />} />
+          <Route path="/platform/tasks" element={<PlatformTasks />} />
+          <Route path="/platform/settings" element={<PlatformSettings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
