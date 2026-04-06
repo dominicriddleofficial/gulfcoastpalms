@@ -4,7 +4,7 @@ import { useOpsAuth, OpsRole } from "@/hooks/useOpsAuth";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard, Calendar, CalendarDays, Users, Settings,
-  LogOut, Menu, X, Search, Map,
+  LogOut, Menu, X, Map,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -36,7 +36,7 @@ export default function OpsLayout({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="ops-theme min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           <p className="font-body text-sm text-muted-foreground">Loading...</p>
@@ -48,7 +48,7 @@ export default function OpsLayout({ children }: { children: React.ReactNode }) {
   // Rookies get a simplified single-page layout
   if (isRookie) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="ops-theme min-h-screen bg-background">
         <header className="bg-card border-b border-border px-4 py-3 flex items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
@@ -56,7 +56,7 @@ export default function OpsLayout({ children }: { children: React.ReactNode }) {
             </div>
             <span className="font-display text-base font-bold text-foreground">Today's Schedule</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground">
+          <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground hover:text-primary">
             <LogOut className="w-4 h-4" />
           </Button>
         </header>
@@ -66,9 +66,9 @@ export default function OpsLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="ops-theme min-h-screen bg-background flex">
       {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0 bg-black/60 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
       <aside className={cn(
@@ -82,10 +82,10 @@ export default function OpsLayout({ children }: { children: React.ReactNode }) {
             </div>
             <div>
               <h2 className="font-display text-sm font-bold text-foreground leading-tight">Operations</h2>
-              <p className="font-body text-[10px] text-muted-foreground capitalize">{userRole.replace("_", " ")}</p>
+              <p className="font-body text-[10px] text-primary/70 capitalize">{userRole.replace("_", " ")}</p>
             </div>
           </div>
-          <button className="lg:hidden" onClick={() => setSidebarOpen(false)}>
+          <button className="lg:hidden text-muted-foreground hover:text-primary" onClick={() => setSidebarOpen(false)}>
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -99,13 +99,13 @@ export default function OpsLayout({ children }: { children: React.ReactNode }) {
                 to={item.path}
                 onClick={() => setSidebarOpen(false)}
                 className={cn(
-                  "flex items-center gap-2.5 px-3 py-2.5 rounded-lg font-body text-sm transition-colors",
+                  "flex items-center gap-2.5 px-3 py-2.5 rounded-lg font-body text-sm transition-all",
                   isActive
-                    ? "bg-primary text-primary-foreground"
+                    ? "bg-primary/15 text-primary border border-primary/20"
                     : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                 )}
               >
-                <item.icon className="w-4 h-4" />
+                <item.icon className={cn("w-4 h-4", isActive && "text-primary")} />
                 {item.label}
               </Link>
             );
@@ -114,7 +114,7 @@ export default function OpsLayout({ children }: { children: React.ReactNode }) {
 
         <div className="p-3 border-t border-border space-y-1">
           <p className="font-body text-[11px] text-muted-foreground truncate px-1">{userEmail}</p>
-          <Button variant="ghost" size="sm" className="w-full justify-start font-body text-muted-foreground text-xs" onClick={signOut}>
+          <Button variant="ghost" size="sm" className="w-full justify-start font-body text-muted-foreground text-xs hover:text-primary" onClick={signOut}>
             <LogOut className="w-3.5 h-3.5 mr-2" /> Sign Out
           </Button>
         </div>
@@ -122,10 +122,15 @@ export default function OpsLayout({ children }: { children: React.ReactNode }) {
 
       <div className="flex-1 min-w-0">
         <header className="border-b border-border bg-card px-4 py-3 flex items-center gap-3 lg:hidden sticky top-0 z-30">
-          <button onClick={() => setSidebarOpen(true)}>
+          <button onClick={() => setSidebarOpen(true)} className="text-muted-foreground hover:text-primary">
             <Menu className="w-5 h-5" />
           </button>
-          <h1 className="font-display text-lg font-bold flex-1">Operations</h1>
+          <div className="flex items-center gap-2 flex-1">
+            <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
+              <span className="text-primary-foreground font-display text-[9px] font-bold">GCP</span>
+            </div>
+            <h1 className="font-display text-lg font-bold text-foreground">Operations</h1>
+          </div>
         </header>
         <main className="p-4 md:p-6 max-w-7xl mx-auto">{children}</main>
       </div>

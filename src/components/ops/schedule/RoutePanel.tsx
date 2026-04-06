@@ -1,6 +1,5 @@
 import { ScheduleJob } from "@/hooks/useScheduleJobs";
-import { Button } from "@/components/ui/button";
-import { Route, RotateCcw, Navigation } from "lucide-react";
+import { Route, Navigation } from "lucide-react";
 
 interface RoutePanelProps {
   jobs: ScheduleJob[];
@@ -19,20 +18,20 @@ export default function RoutePanel({ jobs, selectedCrew, crewNames, ungeocodedCo
           (j.assigned_employee_names?.join(", ") || "Unassigned") === crew && j.lat && j.lng
         );
         return (
-          <div key={crew} className="bg-card border border-border rounded-xl p-3 space-y-2">
+          <div key={crew} className="bg-card border border-border rounded-xl p-3 space-y-2 hover:border-primary/20 transition-colors">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Route className="w-4 h-4 text-primary" />
                 <span className="font-body font-semibold text-sm text-foreground truncate max-w-[180px]">{crew}</span>
               </div>
-              <span className="text-xs font-body text-muted-foreground">{crewJobs.length} stops</span>
+              <span className="text-xs font-body font-mono text-muted-foreground">{crewJobs.length} stops</span>
             </div>
             {crewJobs.length >= 2 && (
               <a
                 href={buildMultiStopUrl(crewJobs)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-xs font-body text-primary hover:underline"
+                className="flex items-center gap-1.5 text-xs font-body text-primary hover:text-primary/80"
               >
                 <Navigation className="w-3.5 h-3.5" /> Navigate entire route
               </a>

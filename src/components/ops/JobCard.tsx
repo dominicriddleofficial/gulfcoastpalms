@@ -34,18 +34,18 @@ export default function JobCard({
     : null;
 
   return (
-    <Card className="p-4 hover:shadow-md transition-shadow border-border">
+    <Card className="p-4 bg-card border-border hover:border-primary/30 transition-all">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0 space-y-2">
           {/* Time + Status */}
           <div className="flex items-center gap-2 flex-wrap">
             <div className="flex items-center gap-1.5 text-sm font-body font-medium text-foreground">
-              <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+              <Clock className="w-3.5 h-3.5 text-primary/60" />
               {timeStr}
             </div>
             <StatusChip status={visitStatus || "scheduled"} />
             {jobNumber && (
-              <span className="text-[11px] font-body text-muted-foreground">#{jobNumber}</span>
+              <span className="text-[11px] font-body text-muted-foreground font-mono">#{jobNumber}</span>
             )}
           </div>
 
@@ -65,7 +65,7 @@ export default function JobCard({
               href={mapsUrl || "#"}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-start gap-1.5 text-sm font-body text-primary hover:underline"
+              className="flex items-start gap-1.5 text-sm font-body text-primary hover:text-primary/80"
               onClick={e => e.stopPropagation()}
             >
               <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0" />
@@ -77,7 +77,7 @@ export default function JobCard({
           {clientPhone && (
             <a
               href={`tel:${clientPhone}`}
-              className="flex items-center gap-1.5 text-sm font-body text-primary hover:underline"
+              className="flex items-center gap-1.5 text-sm font-body text-primary hover:text-primary/80"
               onClick={e => e.stopPropagation()}
             >
               <Phone className="w-3.5 h-3.5" />
@@ -104,7 +104,7 @@ export default function JobCard({
 
           {/* Notes */}
           {!compact && internalNotes && (
-            <div className="flex items-start gap-1.5 text-xs font-body text-muted-foreground bg-muted/50 rounded-md p-2">
+            <div className="flex items-start gap-1.5 text-xs font-body text-muted-foreground bg-secondary/50 rounded-md p-2 border border-border">
               <StickyNote className="w-3 h-3 mt-0.5 shrink-0" />
               <span className="line-clamp-2">{internalNotes}</span>
             </div>
@@ -113,7 +113,7 @@ export default function JobCard({
 
         <Link
           to={`/ops/job/${id}`}
-          className="shrink-0 w-8 h-8 rounded-full bg-secondary flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
+          className="shrink-0 w-8 h-8 rounded-full bg-secondary flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors text-muted-foreground"
         >
           <ChevronRight className="w-4 h-4" />
         </Link>

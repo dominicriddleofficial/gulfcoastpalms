@@ -14,14 +14,14 @@ export default function CrewStrip({ crewNames, crewCounts, selectedCrew, onSelec
       <button
         onClick={() => onSelectCrew(null)}
         className={cn(
-          "flex items-center gap-2 px-3 py-2 rounded-xl font-body text-sm whitespace-nowrap transition-colors shrink-0",
+          "flex items-center gap-2 px-3 py-2 rounded-xl font-body text-sm whitespace-nowrap transition-all shrink-0",
           !selectedCrew
-            ? "bg-primary text-primary-foreground"
-            : "bg-card border border-border text-foreground hover:bg-secondary"
+            ? "bg-primary/15 text-primary border border-primary/30"
+            : "bg-card border border-border text-foreground hover:border-primary/20"
         )}
       >
         <span className="font-semibold">All</span>
-        <span className={cn("text-xs", !selectedCrew ? "text-primary-foreground/80" : "text-muted-foreground")}>
+        <span className={cn("text-xs font-mono", !selectedCrew ? "text-primary/80" : "text-muted-foreground")}>
           {totalJobs}
         </span>
       </button>
@@ -30,16 +30,16 @@ export default function CrewStrip({ crewNames, crewCounts, selectedCrew, onSelec
           key={name}
           onClick={() => onSelectCrew(selectedCrew === name ? null : name)}
           className={cn(
-            "flex items-center gap-2 px-3 py-2 rounded-xl font-body text-sm whitespace-nowrap transition-colors shrink-0",
+            "flex items-center gap-2 px-3 py-2 rounded-xl font-body text-sm whitespace-nowrap transition-all shrink-0",
             selectedCrew === name
-              ? "bg-primary text-primary-foreground"
-              : "bg-card border border-border text-foreground hover:bg-secondary"
+              ? "bg-primary/15 text-primary border border-primary/30"
+              : "bg-card border border-border text-foreground hover:border-primary/20"
           )}
         >
           <span className="font-semibold truncate max-w-[120px]">{name}</span>
           <span className={cn(
-            "text-xs font-medium px-1.5 py-0.5 rounded-md",
-            selectedCrew === name ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
+            "text-xs font-mono font-medium px-1.5 py-0.5 rounded-md",
+            selectedCrew === name ? "bg-primary/20 text-primary" : "bg-secondary text-muted-foreground"
           )}>
             {crewCounts[name] || 0}
           </span>
