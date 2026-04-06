@@ -82,6 +82,17 @@ export default function PaymentActionPanel({
         onOnline={onOpenPaymentPage}
         onSendLink={onSendPaymentLink || onCopyPaymentLink}
         onRecord={() => setStep("record")}
+        onTapToPay={() => {
+          const params: TapToPayParams = {
+            business_id: businessId || "",
+            invoice_id: invoice.id,
+            customer_id: customerId || "",
+            amount: suggestedAmount,
+            payment_mode: "tap_to_pay",
+            return_url: window.location.origin + "/platform/invoices",
+          };
+          launchTapToPay(params);
+        }}
       />
     );
   }
