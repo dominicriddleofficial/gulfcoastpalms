@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Phone, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import heroImage from "@/assets/hero-palms.jpg";
+import { HERO_IMAGE_URL } from "@/data/assets";
 import HeroReviewBadge from "@/components/home/HeroReviewBadge";
 
 const HeroSection = () => {
@@ -9,17 +9,28 @@ const HeroSection = () => {
     <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0">
         <picture>
-          {/* TODO: Upload hero image to Supabase Storage to enable WebP transform.
-              Once uploaded, uncomment and use URLs like:
-              [SUPABASE_STORAGE_URL]/render/image/public/[bucket]/hero.jpg?width=768&format=webp&quality=80 (mobile)
-              [SUPABASE_STORAGE_URL]/render/image/public/[bucket]/hero.jpg?width=1920&format=webp&quality=80 (desktop)
-          */}
+          <source
+            media="(max-width: 768px)"
+            srcSet={`${HERO_IMAGE_URL}?width=768&format=webp&quality=80`}
+            type="image/webp"
+          />
+          <source
+            media="(max-width: 1280px)"
+            srcSet={`${HERO_IMAGE_URL}?width=1280&format=webp&quality=80`}
+            type="image/webp"
+          />
+          <source
+            media="(min-width: 1281px)"
+            srcSet={`${HERO_IMAGE_URL}?width=1920&format=webp&quality=80`}
+            type="image/webp"
+          />
           <img
-            src={heroImage}
-            alt="Beautiful manicured palm trees along Florida Gulf Coast waterfront property"
+            src={HERO_IMAGE_URL}
+            alt="Gulf Coast Palms — Professional Palm Tree Trimming and Removal in NW Florida"
             className="w-full h-full object-cover"
             loading="eager"
             fetchPriority="high"
+            decoding="async"
             width={1920}
             height={1080}
           />

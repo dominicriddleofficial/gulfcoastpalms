@@ -25,6 +25,15 @@ export const GOOGLE_REVIEW_URL =
   import.meta.env.VITE_GOOGLE_REVIEW_URL ||
   "https://www.google.com/search?q=Gulf+Coast+Palms+Navarre+Florida";
 
+/**
+ * ⚠️ ACTION REQUIRED: Update aggregateRating regularly
+ * Current: 5.0 rating, 37 reviews (as of April 2026)
+ *
+ * How to update:
+ * 1. Check your Google Business Profile for current review count
+ * 2. Update the score and count below
+ * 3. This automatically updates the homepage badge AND the JSON-LD structured data
+ */
 export const aggregateRating = {
   score: 5.0,
   count: 37,

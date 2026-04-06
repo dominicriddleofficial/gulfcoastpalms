@@ -1,14 +1,11 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Phone, MessageSquare, Menu, X, ChevronDown } from "lucide-react";
+import { Phone, MessageSquare, Menu, ChevronDown } from "lucide-react";
 import { locations } from "@/data/locations";
 import { serviceNavLinks } from "@/data/services";
 import { PHONE_NUMBER_TEL, PHONE_NUMBER_DISPLAY, SMS_NUMBER } from "@/data/contact";
-
-const palmTreeLinks = [
-  { label: "Palm Tree Types", to: "/palm-trees/types" },
-  { label: "Palm Care Guides", to: "/palm-trees/guides" },
-];
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import { trackEvent } from "@/lib/analytics";
 
 const learnLinks = [
   { label: "Palm Tree Types", to: "/palm-trees/types" },
@@ -19,18 +16,16 @@ const learnLinks = [
 ];
 
 const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
   const [areasOpen, setAreasOpen] = useState(false);
-  const [palmsOpen, setPalmsOpen] = useState(false);
   const [learnOpen, setLearnOpen] = useState(false);
   const location = useLocation();
 
   const closeAll = () => {
-    setIsOpen(false);
+    setSheetOpen(false);
     setServicesOpen(false);
     setAreasOpen(false);
-    setPalmsOpen(false);
     setLearnOpen(false);
   };
 
@@ -119,7 +114,11 @@ const Navbar = () => {
 
         {/* CTA buttons */}
         <div className="hidden lg:flex items-center gap-3">
-          <a href={PHONE_NUMBER_TEL} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-body font-semibold text-sm hover:bg-palm-light transition-colors">
+          <a
+            href={PHONE_NUMBER_TEL}
+            onClick={() => trackEvent("call_now_click", { source: "navbar" })}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-body font-semibold text-sm hover:bg-palm-light transition-colors"
+          >
             <Phone className="w-4 h-4" /> {PHONE_NUMBER_DISPLAY}
           </a>
           <a href={SMS_NUMBER} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-primary text-primary font-body font-semibold text-sm hover:bg-primary hover:text-primary-foreground transition-colors">
@@ -127,86 +126,87 @@ const Navbar = () => {
           </a>
         </div>
 
-        {/* Mobile: phone icon + menu toggle */}
+        {/* Mobile: phone icon + Sheet menu */}
         <div className="lg:hidden flex items-center gap-2">
           <a href={PHONE_NUMBER_TEL} className="p-2 rounded-lg bg-primary text-primary-foreground" aria-label="Call Gulf Coast Palms">
             <Phone className="w-5 h-5" />
           </a>
-          <button className="text-foreground p-2" onClick={() => setIsOpen(!isOpen)} aria-label="Toggle menu">
-            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+            <SheetTrigger asChild>
+              <button className="text-foreground p-2" aria-label="Open navigation menu">
+                <Menu className="w-6 h-6" />
+              </button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[85%] max-w-sm bg-background p-0 overflow-y-auto">
+              <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+              <nav className="flex flex-col items-center gap-4 py-6 px-4">
+                <Link to="/" onClick={closeAll} className={`font-body font-medium text-lg transition-colors hover:text-primary ${location.pathname === "/" ? "text-primary" : "text-muted-foreground"}`}>
+                  Home
+                </Link>
+
+                {/* Mobile Services */}
+                <button onClick={() => toggleOne(setServicesOpen, [setAreasOpen, setLearnOpen])} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.startsWith("/services") ? "text-primary" : "text-muted-foreground"}`}>
+                  Services <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${servicesOpen ? "rotate-180" : ""}`} />
+                </button>
+                {servicesOpen && (
+                  <div className="flex flex-col items-center gap-2 w-full">
+                    {serviceNavLinks.map((link) => (
+                      <Link key={link.to} to={link.to} onClick={closeAll} className={`font-body text-sm transition-colors hover:text-primary ${location.pathname === link.to ? "text-primary" : "text-muted-foreground"}`}>
+                        {link.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+
+                <Link to="/jobs" onClick={closeAll} className={`font-body font-medium text-lg transition-colors hover:text-primary ${location.pathname === "/jobs" ? "text-primary" : "text-muted-foreground"}`}>
+                  Jobs Completed
+                </Link>
+
+                {/* Mobile Learn */}
+                <button onClick={() => toggleOne(setLearnOpen, [setServicesOpen, setAreasOpen])} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${["/palm-trees", "/palm-tree-cost", "/hurricane-palm-preparation"].some((p) => location.pathname.startsWith(p)) ? "text-primary" : "text-muted-foreground"}`}>
+                  Learn <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${learnOpen ? "rotate-180" : ""}`} />
+                </button>
+                {learnOpen && (
+                  <div className="flex flex-col items-center gap-2 w-full">
+                    {learnLinks.map((link) => (
+                      <Link key={link.to} to={link.to} onClick={closeAll} className={`font-body text-sm transition-colors hover:text-primary ${location.pathname === link.to ? "text-primary" : "text-muted-foreground"}`}>
+                        {link.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+
+                {/* Mobile Service Areas */}
+                <button onClick={() => toggleOne(setAreasOpen, [setServicesOpen, setLearnOpen])} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.includes("palm-tree-trimming") ? "text-primary" : "text-muted-foreground"}`}>
+                  Service Areas <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${areasOpen ? "rotate-180" : ""}`} />
+                </button>
+                {areasOpen && (
+                  <div className="flex flex-col items-center gap-2 w-full">
+                    {locations.map((loc) => (
+                      <Link key={loc.slug} to={`/${loc.slug}`} onClick={closeAll} className={`font-body text-sm transition-colors hover:text-primary ${location.pathname === `/${loc.slug}` ? "text-primary" : "text-muted-foreground"}`}>
+                        {loc.city}, {loc.state}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+
+                <Link to="/about" onClick={closeAll} className={`font-body font-medium text-lg transition-colors hover:text-primary ${location.pathname === "/about" ? "text-primary" : "text-muted-foreground"}`}>
+                  About
+                </Link>
+
+                <div className="flex flex-col gap-3 mt-4 w-full max-w-xs">
+                  <a href={SMS_NUMBER} className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-primary text-primary-foreground font-body font-semibold">
+                    <MessageSquare className="w-4 h-4" /> Text Us a Photo for Instant Quote
+                  </a>
+                  <a href={PHONE_NUMBER_TEL} className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg border-2 border-primary text-primary font-body font-semibold">
+                    <Phone className="w-4 h-4" /> Call {PHONE_NUMBER_DISPLAY}
+                  </a>
+                </div>
+              </nav>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
-
-      {/* Mobile Nav */}
-      {isOpen && (
-        <div className="lg:hidden bg-background border-b border-border animate-fade-in">
-          <nav className="flex flex-col items-center gap-4 py-6 max-h-[75vh] overflow-y-auto">
-            <Link to="/" onClick={closeAll} className={`font-body font-medium text-lg transition-colors hover:text-primary ${location.pathname === "/" ? "text-primary" : "text-muted-foreground"}`}>
-              Home
-            </Link>
-
-            {/* Mobile Services */}
-            <button onClick={() => toggleOne(setServicesOpen, [setPalmsOpen, setAreasOpen, setLearnOpen])} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.startsWith("/services") ? "text-primary" : "text-muted-foreground"}`}>
-              Services <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${servicesOpen ? "rotate-180" : ""}`} />
-            </button>
-            {servicesOpen && (
-              <div className="flex flex-col items-center gap-2 w-full px-4">
-                {serviceNavLinks.map((link) => (
-                  <Link key={link.to} to={link.to} onClick={closeAll} className={`font-body text-sm transition-colors hover:text-primary ${location.pathname === link.to ? "text-primary" : "text-muted-foreground"}`}>
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
-            )}
-
-            <Link to="/jobs" onClick={closeAll} className={`font-body font-medium text-lg transition-colors hover:text-primary ${location.pathname === "/jobs" ? "text-primary" : "text-muted-foreground"}`}>
-              Jobs Completed
-            </Link>
-
-            {/* Mobile Learn */}
-            <button onClick={() => toggleOne(setLearnOpen, [setServicesOpen, setPalmsOpen, setAreasOpen])} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${["/palm-trees", "/palm-tree-cost", "/hurricane-palm-preparation"].some((p) => location.pathname.startsWith(p)) ? "text-primary" : "text-muted-foreground"}`}>
-              Learn <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${learnOpen ? "rotate-180" : ""}`} />
-            </button>
-            {learnOpen && (
-              <div className="flex flex-col items-center gap-2 w-full px-4">
-                {learnLinks.map((link) => (
-                  <Link key={link.to} to={link.to} onClick={closeAll} className={`font-body text-sm transition-colors hover:text-primary ${location.pathname === link.to ? "text-primary" : "text-muted-foreground"}`}>
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
-            )}
-
-            {/* Mobile Service Areas */}
-            <button onClick={() => toggleOne(setAreasOpen, [setServicesOpen, setPalmsOpen, setLearnOpen])} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.includes("palm-tree-trimming") ? "text-primary" : "text-muted-foreground"}`}>
-              Service Areas <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${areasOpen ? "rotate-180" : ""}`} />
-            </button>
-            {areasOpen && (
-              <div className="flex flex-col items-center gap-2 w-full px-4">
-                {locations.map((loc) => (
-                  <Link key={loc.slug} to={`/${loc.slug}`} onClick={closeAll} className={`font-body text-sm transition-colors hover:text-primary ${location.pathname === `/${loc.slug}` ? "text-primary" : "text-muted-foreground"}`}>
-                    {loc.city}, {loc.state}
-                  </Link>
-                ))}
-              </div>
-            )}
-
-            <Link to="/about" onClick={closeAll} className={`font-body font-medium text-lg transition-colors hover:text-primary ${location.pathname === "/about" ? "text-primary" : "text-muted-foreground"}`}>
-              About
-            </Link>
-
-            <div className="flex flex-col gap-3 mt-4 w-full max-w-xs">
-              <a href={SMS_NUMBER} className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-primary text-primary-foreground font-body font-semibold">
-                <MessageSquare className="w-4 h-4" /> Text Us a Photo for Instant Quote
-              </a>
-              <a href={PHONE_NUMBER_TEL} className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg border-2 border-primary text-primary font-body font-semibold">
-                <Phone className="w-4 h-4" /> Call {PHONE_NUMBER_DISPLAY}
-              </a>
-            </div>
-          </nav>
-        </div>
-      )}
     </header>
   );
 };

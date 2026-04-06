@@ -14,7 +14,13 @@ type ConversionEvent =
   | "sop_signed"
   | "call_now_click"
   | "text_us_click"
-  | "cta_click";
+  | "cta_click"
+  | "maintenance_plan_inquiry"
+  | "phone_click"
+  | "chat_widget_open"
+  | "emergency_page_view"
+  | "lead_conversion"
+  | "drip_optin";
 
 interface EventParams {
   source?: string;
@@ -24,10 +30,15 @@ interface EventParams {
   sop_type?: string;
   cta_text?: string;
   page_path?: string;
+  form_source?: string;
+  plan_type?: string;
+  click_location?: string;
+  sequence?: string;
+  value?: number;
   [key: string]: string | number | boolean | undefined;
 }
 
-export function trackEvent(event: ConversionEvent, params?: EventParams) {
+export function trackEvent(event: ConversionEvent | string, params?: EventParams) {
   if (typeof window.gtag === "function") {
     window.gtag("event", event, {
       ...params,
@@ -44,3 +55,19 @@ export function trackPageView(path?: string) {
     });
   }
 }
+
+// Predefined event helpers
+export const trackMaintenancePlanInquiry = (planType: string) =>
+  trackEvent("maintenance_plan_inquiry", {
+    plan_type: planType,
+    value: planType === "quarterly" ? 3 : planType === "semi-annual" ? 2 : 1,
+  });
+
+export const trackPhoneClick = (location: string) =>
+  trackEvent("phone_click", { click_location: location });
+
+export const trackChatOpen = () =>
+  trackEvent("chat_widget_open");
+
+export const trackEmergencyPageView = () =>
+  trackEvent("emergency_page_view");
