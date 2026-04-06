@@ -29,6 +29,8 @@ interface Props {
   onCopyPaymentLink: () => void;
   onSendPaymentLink?: () => void;
   onViewHistory?: () => void;
+  businessId?: string;
+  customerId?: string;
 }
 
 type FlowStep = "menu" | "collect" | "record" | "confirm";
