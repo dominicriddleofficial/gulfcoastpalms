@@ -23,7 +23,7 @@ export interface GoogleReview {
  */
 export const GOOGLE_REVIEW_URL =
   import.meta.env.VITE_GOOGLE_REVIEW_URL ||
-  "https://www.google.com/search?q=Gulf+Coast+Palms+Navarre+Florida";
+  "https://g.page/r/CVI5xmZYC-NAEBM/review";
 
 /**
  * ⚠️ ACTION REQUIRED: Update aggregateRating regularly
