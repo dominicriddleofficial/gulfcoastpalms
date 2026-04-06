@@ -198,6 +198,8 @@ const App = () => (
           {/* Customer payment pages */}
           <Route path="/pay/:shortcode/:invoiceId" element={<PayInvoice />} />
           <Route path="/pay/:shortcode/success" element={<PaymentSuccess />} />
+          {/* Tap to Pay universal link fallback */}
+          <Route path="/app/tap-to-pay" element={<TapToPayLanding />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
