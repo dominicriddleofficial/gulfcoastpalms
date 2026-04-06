@@ -193,6 +193,7 @@ const App = () => (
                   <Route path="/admin/recurring" element={<AdminRecurring />} />
                   <Route path="/admin/job-issues" element={<AdminJobIssues />} />
                   <Route path="/admin/settings" element={<AdminSettings />} />
+                  <Route path="/admin/errors" element={<AdminErrors />} />
 
                   {/* Careers */}
                   <Route path="/careers/gulf-coast-palms" element={<GulfCoastPalmsCareers />} />

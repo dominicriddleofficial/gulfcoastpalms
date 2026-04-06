@@ -23,6 +23,7 @@ const NAV_ITEMS = [
   { label: "Uploads", path: "/admin/uploads", icon: Upload },
   { label: "Applicants", path: "/admin/applicants", icon: FileText },
   { label: "SOPs", path: "/admin/sop-acknowledgments", icon: FileText },
+  { label: "Errors", path: "/admin/errors", icon: AlertTriangle },
   { label: "Admin", path: "/admin/settings", icon: Settings },
 ];
 
