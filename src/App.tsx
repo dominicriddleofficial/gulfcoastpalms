@@ -69,6 +69,7 @@ const AdminCrews = lazy(() => import("./pages/admin/AdminCrews"));
 const AdminRecurring = lazy(() => import("./pages/admin/AdminRecurring"));
 const AdminJobIssues = lazy(() => import("./pages/admin/AdminJobIssues"));
 const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
+const AdminErrors = lazy(() => import("./pages/admin/AdminErrors"));
 
 // Careers — lazy
 const GulfCoastPalmsCareers = lazy(() => import("./pages/careers/GulfCoastPalms"));
