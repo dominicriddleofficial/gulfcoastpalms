@@ -85,6 +85,11 @@ const GroundsmanCareers = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title="Groundsman Position | Gulf Coast Palms Careers"
+        description="Apply for the Groundsman position at Gulf Coast Palms. Join our field crew serving Navarre Beach and NW Florida. Competitive pay, flexible schedule."
+        canonicalUrl="/careers/gulf-coast-palms/groundsman"
+      />
       {/* Hero */}
       <section className="relative bg-foreground text-background overflow-hidden">
         <div className="absolute inset-0 opacity-10">
