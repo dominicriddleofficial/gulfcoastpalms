@@ -10,6 +10,8 @@ import BeforeAfterGallery from "@/components/home/BeforeAfterGallery";
 import GoogleReviews from "@/components/home/GoogleReviews";
 import FAQ from "@/components/home/FAQ";
 import GalleryPreview from "@/components/home/GalleryPreview";
+import HeroReviewBadge from "@/components/home/HeroReviewBadge";
+import { aggregateRating } from "@/data/reviews";
 
 const areas = ["Pensacola", "Gulf Breeze", "Navarre", "Fort Walton Beach", "Destin"];
 
