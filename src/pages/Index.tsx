@@ -47,6 +47,11 @@ const Index = () => {
             priceRange: "$$",
             areaServed: ["Navarre", "Gulf Breeze", "Pensacola", "Fort Walton Beach", "Destin", "30A", "Perdido Key"].map((a) => ({ "@type": "City", name: a + ", FL" })),
             serviceType: ["Palm Trimming", "Diamond Cutting", "Trunk Skinning", "Palm Tree Installation", "Palm Tree Removal"],
+            aggregateRating: {
+              "@type": "AggregateRating",
+              ratingValue: aggregateRating.score,
+              reviewCount: aggregateRating.count,
+            },
           }),
         }}
       />
