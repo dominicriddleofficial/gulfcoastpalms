@@ -21,8 +21,8 @@ export const GOOGLE_REVIEW_URL =
   "https://search.google.com/local/writereview?placeid=REPLACE_WITH_PLACE_ID";
 
 export const aggregateRating = {
-  score: 4.9,
-  count: 87,
+  score: 5.0,
+  count: 37,
 };
 
 export const reviews: GoogleReview[] = [
