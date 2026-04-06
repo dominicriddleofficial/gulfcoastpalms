@@ -14,3 +14,9 @@ verify_jwt = false
 
 [functions.jobber-sync]
 verify_jwt = false
+
+[functions.terminal-connection-token]
+verify_jwt = false
+
+[functions.terminal-create-payment]
+verify_jwt = false
