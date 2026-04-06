@@ -90,6 +90,10 @@ const Navbar = () => {
             </div>
           </div>
 
+          <Link to="/palm-trees/buy" className={`font-body font-medium text-sm uppercase tracking-wider transition-colors hover:text-primary ${location.pathname === "/palm-trees/buy" ? "text-primary" : "text-muted-foreground"}`}>
+            Buy Palm Trees
+          </Link>
+
           {/* Service Areas Dropdown */}
           <div className="relative group">
             <Link to="/service-areas" className={`font-body font-medium text-sm uppercase tracking-wider transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.includes("palm-tree-trimming") || location.pathname === "/service-areas" ? "text-primary" : "text-muted-foreground"}`}>
