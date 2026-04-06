@@ -33,12 +33,12 @@ export default function ScheduleListView({ jobs }: ScheduleListViewProps) {
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-primary" />
             <h2 className="font-body font-semibold text-sm text-foreground">{crewName}</h2>
-            <span className="font-body text-xs text-muted-foreground">({crewJobs.length})</span>
+            <span className="font-body text-xs text-muted-foreground font-mono">({crewJobs.length})</span>
           </div>
           <div className="space-y-2">
             {crewJobs.map((j, idx) => (
               <div key={j.id} className="flex gap-2 items-start">
-                <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shrink-0 mt-3">
+                <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shrink-0 mt-3 font-mono">
                   {idx + 1}
                 </div>
                 <div className="flex-1 min-w-0">

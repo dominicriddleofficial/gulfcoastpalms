@@ -107,10 +107,10 @@ export default function OpsDashboard() {
                         </span>
                       </div>
                       <span className={`text-xs font-body px-2 py-0.5 rounded-full ${
-                        j.visit_status === "completed" ? "bg-emerald-100 text-emerald-700" :
-                        j.visit_status === "on_site" ? "bg-purple-100 text-purple-700" :
-                        j.visit_status === "en_route" ? "bg-amber-100 text-amber-700" :
-                        "bg-blue-100 text-blue-700"
+                        j.visit_status === "completed" ? "bg-primary/15 text-primary" :
+                        j.visit_status === "on_site" ? "bg-purple-500/15 text-purple-400" :
+                        j.visit_status === "en_route" ? "bg-amber-500/15 text-amber-400" :
+                        "bg-blue-500/15 text-blue-400"
                       }`}>{j.visit_status?.replace("_", " ")}</span>
                     </Link>
                   ))}

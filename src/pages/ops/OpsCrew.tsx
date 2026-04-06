@@ -74,7 +74,7 @@ export default function OpsCrew() {
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         {j.visit_status === "completed" ? (
-                          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
                         ) : (
                           <Briefcase className="w-4 h-4 text-muted-foreground shrink-0" />
                         )}
