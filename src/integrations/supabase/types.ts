@@ -1307,6 +1307,59 @@ export type Database = {
           },
         ]
       }
+      platform_crew_members: {
+        Row: {
+          business_id: string
+          color: string | null
+          created_at: string
+          display_name: string
+          email: string | null
+          hourly_rate: number | null
+          id: string
+          phone: string | null
+          role: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          business_id: string
+          color?: string | null
+          created_at?: string
+          display_name: string
+          email?: string | null
+          hourly_rate?: number | null
+          id?: string
+          phone?: string | null
+          role?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          business_id?: string
+          color?: string | null
+          created_at?: string
+          display_name?: string
+          email?: string | null
+          hourly_rate?: number | null
+          id?: string
+          phone?: string | null
+          role?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_crew_members_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_customers: {
         Row: {
           business_id: string
@@ -1387,6 +1440,268 @@ export type Database = {
             columns: ["master_person_id"]
             isOneToOne: false
             referencedRelation: "master_people"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_dispatch_notes: {
+        Row: {
+          author_user_id: string | null
+          business_id: string
+          created_at: string
+          flag_type: string | null
+          id: string
+          note: string
+          visit_id: string
+        }
+        Insert: {
+          author_user_id?: string | null
+          business_id: string
+          created_at?: string
+          flag_type?: string | null
+          id?: string
+          note: string
+          visit_id: string
+        }
+        Update: {
+          author_user_id?: string | null
+          business_id?: string
+          created_at?: string
+          flag_type?: string | null
+          id?: string
+          note?: string
+          visit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_dispatch_notes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_dispatch_notes_visit_id_fkey"
+            columns: ["visit_id"]
+            isOneToOne: false
+            referencedRelation: "platform_job_visits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_job_visits: {
+        Row: {
+          actual_end_at: string | null
+          actual_start_at: string | null
+          business_id: string
+          completion_notes: string | null
+          created_at: string
+          duration_minutes: number | null
+          id: string
+          internal_notes: string | null
+          job_id: string
+          property_id: string | null
+          route_order: number | null
+          scheduled_date: string | null
+          scheduled_end_time: string | null
+          scheduled_start_time: string | null
+          status: string
+          title: string | null
+          updated_at: string
+          visit_number: number
+        }
+        Insert: {
+          actual_end_at?: string | null
+          actual_start_at?: string | null
+          business_id: string
+          completion_notes?: string | null
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          internal_notes?: string | null
+          job_id: string
+          property_id?: string | null
+          route_order?: number | null
+          scheduled_date?: string | null
+          scheduled_end_time?: string | null
+          scheduled_start_time?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+          visit_number?: number
+        }
+        Update: {
+          actual_end_at?: string | null
+          actual_start_at?: string | null
+          business_id?: string
+          completion_notes?: string | null
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          internal_notes?: string | null
+          job_id?: string
+          property_id?: string | null
+          route_order?: number | null
+          scheduled_date?: string | null
+          scheduled_end_time?: string | null
+          scheduled_start_time?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+          visit_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_job_visits_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_job_visits_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "platform_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_job_visits_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "platform_properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_jobs: {
+        Row: {
+          assigned_crew_member_id: string | null
+          business_id: string
+          client_notes: string | null
+          completed_at: string | null
+          created_at: string
+          created_by_user_id: string | null
+          customer_id: string | null
+          deposit_collected: number | null
+          description: string | null
+          estimated_duration_minutes: number | null
+          id: string
+          internal_notes: string | null
+          job_number: string
+          job_type: string | null
+          lead_id: string | null
+          priority: string | null
+          property_id: string | null
+          quote_id: string | null
+          scheduled_end: string | null
+          scheduled_start: string | null
+          status: string
+          subtotal: number | null
+          tags: Json | null
+          tax_total: number | null
+          title: string | null
+          total: number | null
+          total_visits_completed: number | null
+          total_visits_planned: number | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_crew_member_id?: string | null
+          business_id: string
+          client_notes?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          customer_id?: string | null
+          deposit_collected?: number | null
+          description?: string | null
+          estimated_duration_minutes?: number | null
+          id?: string
+          internal_notes?: string | null
+          job_number: string
+          job_type?: string | null
+          lead_id?: string | null
+          priority?: string | null
+          property_id?: string | null
+          quote_id?: string | null
+          scheduled_end?: string | null
+          scheduled_start?: string | null
+          status?: string
+          subtotal?: number | null
+          tags?: Json | null
+          tax_total?: number | null
+          title?: string | null
+          total?: number | null
+          total_visits_completed?: number | null
+          total_visits_planned?: number | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_crew_member_id?: string | null
+          business_id?: string
+          client_notes?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          customer_id?: string | null
+          deposit_collected?: number | null
+          description?: string | null
+          estimated_duration_minutes?: number | null
+          id?: string
+          internal_notes?: string | null
+          job_number?: string
+          job_type?: string | null
+          lead_id?: string | null
+          priority?: string | null
+          property_id?: string | null
+          quote_id?: string | null
+          scheduled_end?: string | null
+          scheduled_start?: string | null
+          status?: string
+          subtotal?: number | null
+          tags?: Json | null
+          tax_total?: number | null
+          title?: string | null
+          total?: number | null
+          total_visits_completed?: number | null
+          total_visits_planned?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_jobs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_jobs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "platform_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_jobs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "platform_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_jobs_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "platform_properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_jobs_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "platform_quotes"
             referencedColumns: ["id"]
           },
         ]
@@ -1936,6 +2251,55 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "platform_properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_visit_assignments: {
+        Row: {
+          business_id: string
+          created_at: string
+          crew_member_id: string
+          id: string
+          is_lead: boolean | null
+          visit_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          crew_member_id: string
+          id?: string
+          is_lead?: boolean | null
+          visit_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          crew_member_id?: string
+          id?: string
+          is_lead?: boolean | null
+          visit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_visit_assignments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_visit_assignments_crew_member_id_fkey"
+            columns: ["crew_member_id"]
+            isOneToOne: false
+            referencedRelation: "platform_crew_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_visit_assignments_visit_id_fkey"
+            columns: ["visit_id"]
+            isOneToOne: false
+            referencedRelation: "platform_job_visits"
             referencedColumns: ["id"]
           },
         ]
