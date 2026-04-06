@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Phone, Star, CheckCircle, MapPin, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
+import SEOHead from "@/components/SEOHead";
 import { LocationData, locations } from "@/data/locations";
 
 const fadeUp = {
