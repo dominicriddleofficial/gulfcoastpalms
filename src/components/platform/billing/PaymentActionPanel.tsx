@@ -196,8 +196,13 @@ export default function PaymentActionPanel({
             </Button>
           </div>
 
-          {/* Tap to Pay — real status */}
-          <TapToPayStatus />
+          {/* Tap to Pay — deep link */}
+          <TapToPayButton
+            businessId={businessId || ""}
+            invoiceId={invoice.id}
+            customerId={customerId || ""}
+            amount={suggestedAmount}
+          />
         </>
       )}
 
