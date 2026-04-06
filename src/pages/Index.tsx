@@ -8,6 +8,7 @@ import BeforeAfterGallery from "@/components/home/BeforeAfterGallery";
 import ServiceAreasSection from "@/components/home/ServiceAreasSection";
 import GalleryPreview from "@/components/home/GalleryPreview";
 import GoogleReviews from "@/components/home/GoogleReviews";
+import VideoTestimonials from "@/components/home/VideoTestimonials";
 import FAQ from "@/components/home/FAQ";
 import CTASection from "@/components/home/CTASection";
 import { aggregateRating } from "@/data/reviews";
@@ -52,6 +53,8 @@ const Index = () => {
       <ServiceAreasSection />
       <GalleryPreview />
       <GoogleReviews />
+      <VideoTestimonials />
+      {/* TODO: Update SEOHead description to mention video testimonials once real videos are added */}
       <FAQ />
       <CTASection />
     </Layout>
