@@ -187,6 +187,7 @@ function QuoteDetail({ quote, biz, onUpdate, onClose }: {
   const [versions, setVersions] = useState<any[]>([]);
   const [showVersions, setShowVersions] = useState(false);
   const [loadingItems, setLoadingItems] = useState(true);
+  const [converting, setConverting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
