@@ -109,6 +109,7 @@ const PlatformTasks = lazy(() => import("./pages/platform/PlatformTasks"));
 const PlatformSettings = lazy(() => import("./pages/platform/PlatformSettings"));
 
 // Payment pages — lazy
+const PalmTreeMaintenancePlans = lazy(() => import("./pages/PalmTreeMaintenancePlans"));
 const PayInvoice = lazy(() => import("./pages/pay/PayInvoice"));
 const PaymentSuccess = lazy(() => import("./pages/pay/PaymentSuccess"));
 const TapToPayLanding = lazy(() => import("./pages/app/TapToPayLanding"));
