@@ -1695,6 +1695,251 @@ export type Database = {
           },
         ]
       }
+      platform_quote_line_items: {
+        Row: {
+          business_id: string
+          created_at: string
+          description: string
+          discount_amount: number | null
+          id: string
+          line_total: number
+          line_type: string | null
+          quantity: number
+          quote_id: string
+          service_catalog_id: string | null
+          sort_order: number | null
+          taxable_flag: boolean | null
+          unit: string | null
+          unit_price: number
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          description: string
+          discount_amount?: number | null
+          id?: string
+          line_total?: number
+          line_type?: string | null
+          quantity?: number
+          quote_id: string
+          service_catalog_id?: string | null
+          sort_order?: number | null
+          taxable_flag?: boolean | null
+          unit?: string | null
+          unit_price?: number
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          description?: string
+          discount_amount?: number | null
+          id?: string
+          line_total?: number
+          line_type?: string | null
+          quantity?: number
+          quote_id?: string
+          service_catalog_id?: string | null
+          sort_order?: number | null
+          taxable_flag?: boolean | null
+          unit?: string | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_quote_line_items_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_quote_line_items_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "platform_quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_quote_versions: {
+        Row: {
+          business_id: string
+          created_at: string
+          created_by_user_id: string | null
+          id: string
+          quote_id: string
+          snapshot_json: Json
+          version_number: number
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          created_by_user_id?: string | null
+          id?: string
+          quote_id: string
+          snapshot_json: Json
+          version_number: number
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          created_by_user_id?: string | null
+          id?: string
+          quote_id?: string
+          snapshot_json?: Json
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_quote_versions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_quote_versions_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "platform_quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_quotes: {
+        Row: {
+          accepted_at: string | null
+          business_id: string
+          created_at: string
+          created_by_user_id: string | null
+          customer_id: string | null
+          declined_at: string | null
+          deposit_amount_calculated: number | null
+          deposit_required_flag: boolean | null
+          deposit_type: string | null
+          deposit_value: number | null
+          discount_total: number | null
+          expired_at: string | null
+          first_viewed_at: string | null
+          id: string
+          internal_notes: string | null
+          last_modified_by_user_id: string | null
+          lead_id: string | null
+          lost_reason: string | null
+          property_id: string | null
+          public_notes: string | null
+          quote_number: string
+          quote_stage: string | null
+          sent_at: string | null
+          status: string
+          subtotal: number | null
+          tax_rate: number | null
+          tax_total: number | null
+          terms_snapshot: string | null
+          total: number | null
+          updated_at: string
+          valid_until: string | null
+          version_number: number | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          business_id: string
+          created_at?: string
+          created_by_user_id?: string | null
+          customer_id?: string | null
+          declined_at?: string | null
+          deposit_amount_calculated?: number | null
+          deposit_required_flag?: boolean | null
+          deposit_type?: string | null
+          deposit_value?: number | null
+          discount_total?: number | null
+          expired_at?: string | null
+          first_viewed_at?: string | null
+          id?: string
+          internal_notes?: string | null
+          last_modified_by_user_id?: string | null
+          lead_id?: string | null
+          lost_reason?: string | null
+          property_id?: string | null
+          public_notes?: string | null
+          quote_number: string
+          quote_stage?: string | null
+          sent_at?: string | null
+          status?: string
+          subtotal?: number | null
+          tax_rate?: number | null
+          tax_total?: number | null
+          terms_snapshot?: string | null
+          total?: number | null
+          updated_at?: string
+          valid_until?: string | null
+          version_number?: number | null
+        }
+        Update: {
+          accepted_at?: string | null
+          business_id?: string
+          created_at?: string
+          created_by_user_id?: string | null
+          customer_id?: string | null
+          declined_at?: string | null
+          deposit_amount_calculated?: number | null
+          deposit_required_flag?: boolean | null
+          deposit_type?: string | null
+          deposit_value?: number | null
+          discount_total?: number | null
+          expired_at?: string | null
+          first_viewed_at?: string | null
+          id?: string
+          internal_notes?: string | null
+          last_modified_by_user_id?: string | null
+          lead_id?: string | null
+          lost_reason?: string | null
+          property_id?: string | null
+          public_notes?: string | null
+          quote_number?: string
+          quote_stage?: string | null
+          sent_at?: string | null
+          status?: string
+          subtotal?: number | null
+          tax_rate?: number | null
+          tax_total?: number | null
+          terms_snapshot?: string | null
+          total?: number | null
+          updated_at?: string
+          valid_until?: string | null
+          version_number?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_quotes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_quotes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "platform_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_quotes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "platform_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_quotes_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "platform_properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recurring_services: {
         Row: {
           client_id: string | null
