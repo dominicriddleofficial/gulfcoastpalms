@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { Phone, MessageSquare, MapPin } from "lucide-react";
 import { locations } from "@/data/locations";
 import { serviceNavLinks } from "@/data/services";
+import { GOOGLE_REVIEW_URL } from "@/data/reviews";
+import { trackEvent } from "@/lib/analytics";
 
 const Footer = () => {
   return (
@@ -26,6 +28,9 @@ const Footer = () => {
                   {link.label}
                 </Link>
               ))}
+              <Link to="/palm-tree-maintenance-plans" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">
+                Maintenance Plans
+              </Link>
             </nav>
           </div>
 
@@ -38,9 +43,11 @@ const Footer = () => {
               <Link to="/palm-trees/types" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Palm Tree Types</Link>
               <Link to="/palm-trees/buy" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Buy Palm Trees</Link>
               <Link to="/palm-tree-cost" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Palm Tree Cost</Link>
-              <Link to="/palm-tree-maintenance-plans" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Maintenance Plans</Link>
               <Link to="/referral" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Referral Program</Link>
               <Link to="/payments" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Payments</Link>
+              <a href={GOOGLE_REVIEW_URL} target="_blank" rel="noopener noreferrer" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">
+                Leave Us a Review ⭐
+              </a>
               <Link to="/terms-of-service" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Terms of Service</Link>
               <Link to="/privacy-policy" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Privacy Policy</Link>
             </nav>
@@ -60,7 +67,11 @@ const Footer = () => {
           <div>
             <h4 className="font-display font-bold text-lg mb-4">Contact Us</h4>
             <div className="flex flex-col gap-3">
-              <a href="tel:8509101290" className="inline-flex items-center gap-2 font-body text-palm-sand/70 hover:text-palm-light transition-colors">
+              <a
+                href="tel:8509101290"
+                onClick={() => trackEvent("call_now_click", { source: "footer", click_location: "footer" })}
+                className="inline-flex items-center gap-2 font-body text-palm-sand/70 hover:text-palm-light transition-colors"
+              >
                 <Phone className="w-4 h-4" /> (850) 910-1290
               </a>
               <a href="sms:8509101290" className="inline-flex items-center gap-2 font-body text-palm-sand/70 hover:text-palm-light transition-colors">

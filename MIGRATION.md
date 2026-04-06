@@ -1,51 +1,29 @@
-# Legacy Table Migration Guide
+# Gulf Coast Palms — Database Migration Plan
 
-This document tracks the migration from legacy single-tenant tables to the multi-tenant `platform_` equivalents.
+## Legacy Tables (Single-Tenant)
+These tables predate the multi-tenant platform and are still used by the Admin Dashboard:
+- `leads` → migrate to `platform_leads`
+- `clients` → migrate to `platform_customers`
+- `jobs` → migrate to `platform_jobs`
+- `invoices` → migrate to `platform_invoices`
+- `employees` → no direct platform equivalent (crew management differs)
+- `reviews` → no direct platform equivalent (standalone feature)
 
-## Table Mapping
+## Migration Order (when ready)
+1. leads (highest priority — active data)
+2. clients
+3. jobs
+4. invoices
+5. employees, reviews (lower priority)
 
-| Legacy Table | Platform Equivalent | Status |
-|---|---|---|
-| `clients` | `platform_customers` | Not migrated |
-| `jobs` | `platform_jobs` | Not migrated |
-| `leads` | `platform_leads` | Not migrated |
-| `invoices` | `platform_invoices` | Not migrated |
-| `employees` | `platform_crew_members` | Not migrated |
+## Rules
+- Do NOT delete legacy tables without a full data migration and backup
+- Do NOT add new features to components using legacy tables
+- All new features should be built against platform_ tables
+- Migration requires a data backfill script + a cutover window
 
-## Admin Dashboard Pages Using Legacy Tables
-
-| Page | Legacy Table(s) | File |
-|---|---|---|
-| Admin Clients | `clients` | `src/pages/admin/AdminClients.tsx` |
-| Admin Jobs | `jobs` | `src/pages/admin/AdminJobs.tsx` |
-| Admin Leads | `leads` | `src/pages/admin/AdminLeads.tsx` |
-| Admin Employees | `employees` | `src/pages/admin/AdminEmployees.tsx` |
-| Admin Crews | `crews` | `src/pages/admin/AdminCrews.tsx` |
-| Admin Reviews | `reviews` | `src/pages/admin/AdminReviews.tsx` |
-| Admin Job Issues | `job_issues` | `src/pages/admin/AdminJobIssues.tsx` |
-| Admin Leaderboards | `leaderboard_rewards` | `src/pages/admin/AdminLeaderboards.tsx` |
-| Admin Recurring | `recurring_services` | `src/pages/admin/AdminRecurring.tsx` |
-| Admin Applicants | `job_applications` | `src/pages/admin/AdminApplicants.tsx` |
-
-## Recommended Migration Order
-
-1. **Leads** → `platform_leads` (lowest risk, new leads already go to platform_leads via public site)
-2. **Clients** → `platform_customers` (depends on leads migration)
-3. **Jobs** → `platform_jobs` (depends on clients migration)
-4. **Invoices** → `platform_invoices` (depends on jobs migration)
-
-## Migration Requirements
-
-- [ ] Full database backup before starting
-- [ ] Data backfill scripts for each table
-- [ ] Update all admin dashboard queries
-- [ ] Update all Jobber sync logic
-- [ ] Verify RLS policies on platform_ tables cover admin access
-- [ ] Test all admin CRUD operations after migration
-
-## Important Notes
-
-- **Do NOT delete legacy tables** until all admin dashboard pages are migrated and verified
-- Legacy tables have different column schemas — mapping scripts are needed
-- The `platform_` tables require a `business_id` foreign key for multi-tenancy
-- Some legacy tables (e.g., `job_applications`, `sop_acknowledgments`) may not need platform_ equivalents if they are Gulf Coast Palms-specific
+## Status
+Currently: Legacy tables and platform_ tables coexist
+Admin Dashboard: Uses legacy tables
+Platform: Uses platform_ tables
+Goal: Full migration to platform_ tables (estimated effort: 1-2 weeks)
