@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Phone, MessageSquare, DollarSign, TreePine, Ruler, MapPin, Scissors, Truck, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
+import SEOHead from "@/components/SEOHead";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
