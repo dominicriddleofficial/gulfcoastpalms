@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { MessageSquare, X, Send, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { submitLead } from "@/lib/submit-lead";
 import { trackEvent } from "@/lib/analytics";
 
@@ -13,7 +12,6 @@ const ChatWidget = () => {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [conversationId, setConversationId] = useState<string | null>(null);
   const [visitorId] = useState(() => {
     const stored = localStorage.getItem("gcp_visitor_id");
     if (stored) return stored;
@@ -32,26 +30,12 @@ const ChatWidget = () => {
     if (isOpen && inputRef.current) inputRef.current.focus();
   }, [isOpen]);
 
-  const ensureConversation = useCallback(async () => {
-    if (conversationId) return conversationId;
-    const { data, error } = await supabase
-      .from("chat_conversations")
-      .insert({ visitor_id: visitorId })
-      .select("id")
-      .single();
-    if (error) { console.error(error); return null; }
-    setConversationId(data.id);
-    return data.id;
-  }, [conversationId, visitorId]);
-
   // Check for contact info in message and auto-capture as lead
   const checkForContactInfo = (text: string) => {
     const phoneMatch = text.match(/\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/);
     const emailMatch = text.match(/[\w.-]+@[\w.-]+\.\w+/);
     if (phoneMatch || emailMatch) {
-      trackEvent("chat_lead_captured", {
-        source: "ai_chat",
-      });
+      trackEvent("chat_lead_captured", { source: "ai_chat" });
       submitLead({
         name: "Chat Visitor",
         phone: phoneMatch?.[0],
@@ -71,12 +55,6 @@ const ChatWidget = () => {
 
     checkForContactInfo(userMsg.content);
 
-    // Store user message
-    const convId = await ensureConversation();
-    if (convId) {
-      supabase.from("chat_messages").insert({ conversation_id: convId, role: "user", content: userMsg.content }).then();
-    }
-
     let assistantSoFar = "";
     const allMessages = [...messages, userMsg];
 
@@ -87,7 +65,7 @@ const ChatWidget = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ messages: allMessages }),
+        body: JSON.stringify({ messages: allMessages, visitor_id: visitorId }),
       });
 
       if (!resp.ok || !resp.body) {
@@ -134,7 +112,7 @@ const ChatWidget = () => {
         }
       }
 
-      // Flush remaining
+      // Flush remaining buffer
       if (textBuffer.trim()) {
         for (let raw of textBuffer.split("\n")) {
           if (!raw) continue;
@@ -159,11 +137,6 @@ const ChatWidget = () => {
           } catch { /* ignore */ }
         }
       }
-
-      // Store assistant message
-      if (convId && assistantSoFar) {
-        supabase.from("chat_messages").insert({ conversation_id: convId, role: "assistant", content: assistantSoFar }).then();
-      }
     } catch (err) {
       console.error("Chat error:", err);
       setMessages((prev) => [...prev, { role: "assistant", content: "Sorry, I'm having trouble right now. Please call us at (850) 910-1290 for immediate help!" }]);
@@ -179,7 +152,7 @@ const ChatWidget = () => {
         <button
           onClick={() => setIsOpen(true)}
           className="fixed bottom-20 md:bottom-6 right-4 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-all flex items-center justify-center animate-fade-in"
-          aria-label="Open chat"
+          aria-label="Open chat assistant"
         >
           <MessageSquare className="w-6 h-6" />
         </button>
@@ -194,7 +167,7 @@ const ChatWidget = () => {
               <p className="font-body font-semibold text-sm">Gulf Coast Palms</p>
               <p className="font-body text-xs opacity-80">Ask us anything!</p>
             </div>
-            <button onClick={() => setIsOpen(false)} className="p-1 hover:bg-primary-foreground/20 rounded-lg transition-colors">
+            <button onClick={() => setIsOpen(false)} className="p-1 hover:bg-primary-foreground/20 rounded-lg transition-colors" aria-label="Close chat">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -244,6 +217,7 @@ const ChatWidget = () => {
                 type="submit"
                 disabled={!input.trim() || isLoading}
                 className="p-2 rounded-lg bg-primary text-primary-foreground disabled:opacity-50 hover:bg-primary/90 transition-colors"
+                aria-label="Send message"
               >
                 <Send className="w-4 h-4" />
               </button>

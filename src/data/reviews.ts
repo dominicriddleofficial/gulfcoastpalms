@@ -11,14 +11,19 @@ export interface GoogleReview {
 
 /**
  * Google Business Profile review link.
- * To find yours: Google Business Profile dashboard → Get more reviews → Copy link
- * Format: https://g.page/r/[YOUR_BUSINESS_ID]/review
  *
- * Set VITE_GOOGLE_REVIEW_URL in your .env file, or update the fallback below.
+ * ACTION REQUIRED: Set VITE_GOOGLE_REVIEW_URL in your .env file
+ * How to get your link:
+ * 1. Go to Google Business Profile (business.google.com)
+ * 2. Click "Ask for reviews"
+ * 3. Copy the short link
+ * Format will look like: https://g.page/r/[YOUR_ID]/review
+ *
+ * Fallback: searches Google for the business name so customers can still find reviews.
  */
 export const GOOGLE_REVIEW_URL =
   import.meta.env.VITE_GOOGLE_REVIEW_URL ||
-  "https://search.google.com/local/writereview?placeid=REPLACE_WITH_PLACE_ID";
+  "https://www.google.com/search?q=Gulf+Coast+Palms+Navarre+Florida";
 
 export const aggregateRating = {
   score: 5.0,
