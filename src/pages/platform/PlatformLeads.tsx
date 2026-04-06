@@ -210,6 +210,21 @@ function LeadDetail({ lead, biz, onStatusChange, onClose }: {
   onStatusChange: (status: string) => void;
   onClose: () => void;
 }) {
+  const [converting, setConverting] = useState(false);
+
+  const handleConvert = async () => {
+    setConverting(true);
+    const { convertLeadToCustomer } = await import("@/lib/platform-conversions");
+    const result = await convertLeadToCustomer(lead);
+    setConverting(false);
+    if (result.error) {
+      alert("Conversion failed: " + result.error);
+      return;
+    }
+    onStatusChange("won");
+    onClose();
+  };
+
   return (
     <div className="space-y-6 pt-2">
       <SheetHeader>
