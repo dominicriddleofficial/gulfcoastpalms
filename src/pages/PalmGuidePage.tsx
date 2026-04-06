@@ -2,6 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Phone, MessageSquare, ArrowLeft, BookOpen } from "lucide-react";
 import Layout from "@/components/Layout";
+import SEOHead from "@/components/SEOHead";
 import { palmGuides } from "@/data/palmGuides";
 import NotFound from "./NotFound";
 
