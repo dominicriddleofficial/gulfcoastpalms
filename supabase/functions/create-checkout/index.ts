@@ -26,11 +26,26 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const { invoice_id, origin_url } = await req.json();
-    if (!invoice_id) throw new Error("invoice_id is required");
+    const body = await req.json();
+    const { invoice_id, origin_url } = body;
+
+    // Server-side validation
+    if (!invoice_id || typeof invoice_id !== "string") {
+      return new Response(JSON.stringify({ error: true, message: "invoice_id is required", code: "VALIDATION_ERROR" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    // UUID format check
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(invoice_id)) {
+      return new Response(JSON.stringify({ error: true, message: "Invalid invoice_id format", code: "VALIDATION_ERROR" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     log("Request received", { invoice_id });
 
-    // Fetch invoice with customer and business info
+    // Fetch invoice with customer and business info — ALWAYS use server-side amount
     const { data: invoice, error: invErr } = await supabaseAdmin
       .from("platform_invoices")
       .select("*, platform_customers(display_name, email, phone), businesses(shortcode, public_brand_name)")
@@ -40,6 +55,7 @@ serve(async (req) => {
     if (invErr || !invoice) throw new Error(`Invoice not found: ${invErr?.message}`);
     if (["paid", "void"].includes(invoice.status)) throw new Error(`Invoice is ${invoice.status}`);
 
+    // Always use server-fetched amount, never client-supplied
     const balanceDue = Number(invoice.balance_due) || Number(invoice.total) || 0;
     if (balanceDue <= 0) throw new Error("No balance due on this invoice");
 
@@ -47,6 +63,11 @@ serve(async (req) => {
     const shortcode = invoice.businesses?.shortcode || "PAY";
     const customerEmail = invoice.platform_customers?.email || undefined;
     const customerName = invoice.platform_customers?.display_name || "Customer";
+
+    // Validate shortcode format
+    if (shortcode && !/^[A-Z0-9]{2,10}$/i.test(shortcode)) {
+      throw new Error("Invalid business shortcode");
+    }
 
     log("Creating checkout session", {
       business: businessName,
@@ -110,7 +131,7 @@ serve(async (req) => {
     });
   } catch (error) {
     log("ERROR", { message: error.message });
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: true, message: error.message, code: "SERVER_ERROR" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 400,
     });

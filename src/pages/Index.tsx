@@ -119,12 +119,22 @@ const Index = () => {
             </Link>
           </motion.div>
 
+          {/* Review badge */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6, duration: 0.5 }}
+            className="mt-6"
+          >
+            <HeroReviewBadge />
+          </motion.div>
+
           {/* Emergency banner */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8, duration: 0.5 }}
-            className="mt-8"
+            className="mt-4"
           >
             <Link
               to="/emergency-palm-service"

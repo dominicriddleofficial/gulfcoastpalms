@@ -3,10 +3,19 @@ import { Link, useLocation } from "react-router-dom";
 import { Phone, MessageSquare, Menu, X, ChevronDown } from "lucide-react";
 import { locations } from "@/data/locations";
 import { serviceNavLinks } from "@/data/services";
+import { PHONE_NUMBER_TEL, PHONE_NUMBER_DISPLAY, SMS_NUMBER } from "@/data/contact";
 
 const palmTreeLinks = [
   { label: "Palm Tree Types", to: "/palm-trees/types" },
   { label: "Palm Care Guides", to: "/palm-trees/guides" },
+];
+
+const learnLinks = [
+  { label: "Palm Tree Types", to: "/palm-trees/types" },
+  { label: "Care Guides", to: "/palm-trees/guides" },
+  { label: "Palm Tree Cost Guide", to: "/palm-tree-cost" },
+  { label: "Hurricane Prep Guide", to: "/hurricane-palm-preparation" },
+  { label: "Buy Palm Trees", to: "/palm-trees/buy" },
 ];
 
 const Navbar = () => {
@@ -14,6 +23,7 @@ const Navbar = () => {
   const [servicesOpen, setServicesOpen] = useState(false);
   const [areasOpen, setAreasOpen] = useState(false);
   const [palmsOpen, setPalmsOpen] = useState(false);
+  const [learnOpen, setLearnOpen] = useState(false);
   const location = useLocation();
 
   const closeAll = () => {
@@ -21,37 +31,13 @@ const Navbar = () => {
     setServicesOpen(false);
     setAreasOpen(false);
     setPalmsOpen(false);
+    setLearnOpen(false);
   };
 
-  const toggleServices = () => {
-    setServicesOpen((prev) => {
+  const toggleOne = (setter: React.Dispatch<React.SetStateAction<boolean>>, others: React.Dispatch<React.SetStateAction<boolean>>[]) => {
+    setter((prev) => {
       const next = !prev;
-      if (next) {
-        setPalmsOpen(false);
-        setAreasOpen(false);
-      }
-      return next;
-    });
-  };
-
-  const togglePalms = () => {
-    setPalmsOpen((prev) => {
-      const next = !prev;
-      if (next) {
-        setServicesOpen(false);
-        setAreasOpen(false);
-      }
-      return next;
-    });
-  };
-
-  const toggleAreas = () => {
-    setAreasOpen((prev) => {
-      const next = !prev;
-      if (next) {
-        setServicesOpen(false);
-        setPalmsOpen(false);
-      }
+      if (next) others.forEach((s) => s(false));
       return next;
     });
   };
@@ -66,7 +52,7 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden lg:flex items-center gap-6">
+        <nav className="hidden lg:flex items-center gap-5">
           <Link to="/" className={`font-body font-medium text-sm uppercase tracking-wider transition-colors hover:text-primary ${location.pathname === "/" ? "text-primary" : "text-muted-foreground"}`}>
             Home
           </Link>
@@ -91,14 +77,14 @@ const Navbar = () => {
             Jobs Completed
           </Link>
 
-          {/* Palm Trees Dropdown */}
+          {/* Learn Dropdown */}
           <div className="relative group">
-            <Link to="/palm-trees/types" className={`font-body font-medium text-sm uppercase tracking-wider transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.includes("/palm-trees") && location.pathname !== "/palm-trees/buy" ? "text-primary" : "text-muted-foreground"}`}>
-              Palm Trees <ChevronDown className="w-3.5 h-3.5" />
-            </Link>
+            <span className={`font-body font-medium text-sm uppercase tracking-wider transition-colors hover:text-primary inline-flex items-center gap-1 cursor-pointer ${["/palm-trees", "/palm-tree-cost", "/hurricane-palm-preparation"].some((p) => location.pathname.startsWith(p)) ? "text-primary" : "text-muted-foreground"}`}>
+              Learn <ChevronDown className="w-3.5 h-3.5" />
+            </span>
             <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-              <div className="bg-card border border-border rounded-xl shadow-xl py-2 min-w-[220px]">
-                {palmTreeLinks.map((link) => (
+              <div className="bg-card border border-border rounded-xl shadow-xl py-2 min-w-[240px]">
+                {learnLinks.map((link) => (
                   <Link key={link.to} to={link.to} className={`block px-4 py-2.5 font-body text-sm hover:bg-secondary transition-colors ${location.pathname === link.to ? "text-primary font-semibold" : "text-foreground"}`}>
                     {link.label}
                   </Link>
@@ -106,14 +92,6 @@ const Navbar = () => {
               </div>
             </div>
           </div>
-
-          <Link to="/palm-trees/buy" className={`font-body font-medium text-sm uppercase tracking-wider transition-colors hover:text-primary ${location.pathname === "/palm-trees/buy" ? "text-primary" : "text-muted-foreground"}`}>
-            Buy Palm Trees
-          </Link>
-
-          <Link to="/palm-tree-cost" className={`font-body font-medium text-sm uppercase tracking-wider transition-colors hover:text-primary ${location.pathname === "/palm-tree-cost" ? "text-primary" : "text-muted-foreground"}`}>
-            Palm Tree Cost
-          </Link>
 
           {/* Service Areas Dropdown */}
           <div className="relative group">
@@ -138,18 +116,23 @@ const Navbar = () => {
 
         {/* CTA buttons */}
         <div className="hidden lg:flex items-center gap-3">
-          <a href="tel:8509101290" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-body font-semibold text-sm hover:bg-palm-light transition-colors">
-            <Phone className="w-4 h-4" /> Call Now
+          <a href={PHONE_NUMBER_TEL} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-body font-semibold text-sm hover:bg-palm-light transition-colors">
+            <Phone className="w-4 h-4" /> {PHONE_NUMBER_DISPLAY}
           </a>
-          <a href="sms:8509101290" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-primary text-primary font-body font-semibold text-sm hover:bg-primary hover:text-primary-foreground transition-colors">
+          <a href={SMS_NUMBER} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-primary text-primary font-body font-semibold text-sm hover:bg-primary hover:text-primary-foreground transition-colors">
             <MessageSquare className="w-4 h-4" /> Text Us a Photo
           </a>
         </div>
 
-        {/* Mobile menu toggle */}
-        <button className="lg:hidden text-foreground" onClick={() => setIsOpen(!isOpen)} aria-label="Toggle menu">
-          {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+        {/* Mobile: phone icon + menu toggle */}
+        <div className="lg:hidden flex items-center gap-2">
+          <a href={PHONE_NUMBER_TEL} className="p-2 rounded-lg bg-primary text-primary-foreground" aria-label="Call Gulf Coast Palms">
+            <Phone className="w-5 h-5" />
+          </a>
+          <button className="text-foreground p-2" onClick={() => setIsOpen(!isOpen)} aria-label="Toggle menu">
+            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Nav */}
@@ -160,8 +143,8 @@ const Navbar = () => {
               Home
             </Link>
 
-            {/* Mobile Services Accordion */}
-            <button onClick={toggleServices} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.startsWith("/services") ? "text-primary" : "text-muted-foreground"}`}>
+            {/* Mobile Services */}
+            <button onClick={() => toggleOne(setServicesOpen, [setPalmsOpen, setAreasOpen, setLearnOpen])} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.startsWith("/services") ? "text-primary" : "text-muted-foreground"}`}>
               Services <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${servicesOpen ? "rotate-180" : ""}`} />
             </button>
             {servicesOpen && (
@@ -178,13 +161,13 @@ const Navbar = () => {
               Jobs Completed
             </Link>
 
-            {/* Mobile Palm Trees Accordion */}
-            <button onClick={togglePalms} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.includes("/palm-trees") && location.pathname !== "/palm-trees/buy" ? "text-primary" : "text-muted-foreground"}`}>
-              Palm Trees <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${palmsOpen ? "rotate-180" : ""}`} />
+            {/* Mobile Learn */}
+            <button onClick={() => toggleOne(setLearnOpen, [setServicesOpen, setPalmsOpen, setAreasOpen])} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${["/palm-trees", "/palm-tree-cost", "/hurricane-palm-preparation"].some((p) => location.pathname.startsWith(p)) ? "text-primary" : "text-muted-foreground"}`}>
+              Learn <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${learnOpen ? "rotate-180" : ""}`} />
             </button>
-            {palmsOpen && (
+            {learnOpen && (
               <div className="flex flex-col items-center gap-2 w-full px-4">
-                {palmTreeLinks.map((link) => (
+                {learnLinks.map((link) => (
                   <Link key={link.to} to={link.to} onClick={closeAll} className={`font-body text-sm transition-colors hover:text-primary ${location.pathname === link.to ? "text-primary" : "text-muted-foreground"}`}>
                     {link.label}
                   </Link>
@@ -192,16 +175,8 @@ const Navbar = () => {
               </div>
             )}
 
-            <Link to="/palm-trees/buy" onClick={closeAll} className={`font-body font-medium text-lg transition-colors hover:text-primary ${location.pathname === "/palm-trees/buy" ? "text-primary" : "text-muted-foreground"}`}>
-              Buy Palm Trees
-            </Link>
-
-            <Link to="/palm-tree-cost" onClick={closeAll} className={`font-body font-medium text-lg transition-colors hover:text-primary ${location.pathname === "/palm-tree-cost" ? "text-primary" : "text-muted-foreground"}`}>
-              Palm Tree Cost
-            </Link>
-
-            {/* Mobile Service Areas Accordion */}
-            <button onClick={toggleAreas} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.includes("palm-tree-trimming") ? "text-primary" : "text-muted-foreground"}`}>
+            {/* Mobile Service Areas */}
+            <button onClick={() => toggleOne(setAreasOpen, [setServicesOpen, setPalmsOpen, setLearnOpen])} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.includes("palm-tree-trimming") ? "text-primary" : "text-muted-foreground"}`}>
               Service Areas <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${areasOpen ? "rotate-180" : ""}`} />
             </button>
             {areasOpen && (
@@ -219,11 +194,11 @@ const Navbar = () => {
             </Link>
 
             <div className="flex flex-col gap-3 mt-4 w-full max-w-xs">
-              <a href="sms:8509101290" className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-primary text-primary-foreground font-body font-semibold">
+              <a href={SMS_NUMBER} className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-primary text-primary-foreground font-body font-semibold">
                 <MessageSquare className="w-4 h-4" /> Text Us a Photo for Instant Quote
               </a>
-              <a href="tel:8509101290" className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg border-2 border-primary text-primary font-body font-semibold">
-                <Phone className="w-4 h-4" /> Call (850) 910-1290
+              <a href={PHONE_NUMBER_TEL} className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg border-2 border-primary text-primary font-body font-semibold">
+                <Phone className="w-4 h-4" /> Call {PHONE_NUMBER_DISPLAY}
               </a>
             </div>
           </nav>
