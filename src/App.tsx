@@ -193,6 +193,9 @@ const App = () => (
           <Route path="/platform/communications" element={<PlatformComms />} />
           <Route path="/platform/tasks" element={<PlatformTasks />} />
           <Route path="/platform/settings" element={<PlatformSettings />} />
+          {/* Customer payment pages */}
+          <Route path="/pay/:shortcode/:invoiceId" element={<PayInvoice />} />
+          <Route path="/pay/:shortcode/success" element={<PaymentSuccess />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
