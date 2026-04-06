@@ -71,6 +71,7 @@ import PlatformDashboard from "./pages/platform/PlatformDashboard";
 import PlatformModule from "./pages/platform/PlatformModule";
 import PlatformLeads from "./pages/platform/PlatformLeads";
 import PlatformCustomers from "./pages/platform/PlatformCustomers";
+import PlatformQuotes from "./pages/platform/PlatformQuotes";
 // Service pages
 import PalmTreeTrimming from "./pages/services/PalmTreeTrimming";
 import PalmTreeInstallation from "./pages/services/PalmTreeInstallation";
@@ -171,7 +172,7 @@ const App = () => (
           <Route path="/platform" element={<PlatformDashboard />} />
           <Route path="/platform/leads" element={<PlatformLeads />} />
           <Route path="/platform/customers" element={<PlatformCustomers />} />
-          <Route path="/platform/quotes" element={<PlatformModule />} />
+          <Route path="/platform/quotes" element={<PlatformQuotes />} />
           <Route path="/platform/jobs" element={<PlatformModule />} />
           <Route path="/platform/schedule" element={<PlatformModule />} />
           <Route path="/platform/invoices" element={<PlatformModule />} />
