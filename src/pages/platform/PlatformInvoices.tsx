@@ -266,6 +266,25 @@ function InvoiceDetailPanel({ invoice, businessId, onStatusChange, onRecordPayme
   const [showPayment, setShowPayment] = useState(false);
   const [payAmount, setPayAmount] = useState(String(Number(invoice.balance_due || invoice.total || 0)));
   const [payMethod, setPayMethod] = useState("card");
+  const { toast } = useToast();
+
+  const isPaid = invoice.status === "paid";
+  const isVoid = invoice.status === "void";
+  const hasBalance = Number(invoice.balance_due || invoice.total || 0) > 0;
+
+  const getPaymentUrl = () => {
+    const shortcode = invoice.invoice_number?.split("-")[0]?.toLowerCase() || "gcp";
+    return `${window.location.origin}/pay/${shortcode}/${invoice.id}`;
+  };
+
+  const copyPaymentLink = () => {
+    navigator.clipboard.writeText(getPaymentUrl());
+    toast({ title: "Payment link copied" });
+  };
+
+  const openPaymentPage = () => {
+    window.open(getPaymentUrl(), "_blank");
+  };
 
   const isPaid = invoice.status === "paid";
   const isVoid = invoice.status === "void";
