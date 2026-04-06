@@ -1307,6 +1307,242 @@ export type Database = {
           },
         ]
       }
+      payment_intents: {
+        Row: {
+          amount: number
+          business_id: string
+          completed_at: string | null
+          created_at: string
+          currency: string
+          customer_id: string | null
+          expires_at: string | null
+          id: string
+          invoice_id: string | null
+          metadata_json: Json | null
+          payment_method_type: string | null
+          provider_payment_intent_id: string | null
+          provider_session_id: string | null
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          business_id: string
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          expires_at?: string | null
+          id?: string
+          invoice_id?: string | null
+          metadata_json?: Json | null
+          payment_method_type?: string | null
+          provider_payment_intent_id?: string | null
+          provider_session_id?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          business_id?: string
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          expires_at?: string | null
+          id?: string
+          invoice_id?: string | null
+          metadata_json?: Json | null
+          payment_method_type?: string | null
+          provider_payment_intent_id?: string | null
+          provider_session_id?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_intents_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_intents_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "platform_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_intents_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "platform_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_provider_accounts: {
+        Row: {
+          active: boolean
+          allowed_payment_methods: Json | null
+          business_id: string
+          config_json: Json | null
+          created_at: string
+          display_name: string | null
+          id: string
+          online_payments_enabled: boolean
+          provider_account_id: string | null
+          provider_type: string
+          statement_descriptor: string | null
+          tap_to_pay_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          allowed_payment_methods?: Json | null
+          business_id: string
+          config_json?: Json | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          online_payments_enabled?: boolean
+          provider_account_id?: string | null
+          provider_type?: string
+          statement_descriptor?: string | null
+          tap_to_pay_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          allowed_payment_methods?: Json | null
+          business_id?: string
+          config_json?: Json | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          online_payments_enabled?: boolean
+          provider_account_id?: string | null
+          provider_type?: string
+          statement_descriptor?: string | null
+          tap_to_pay_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_provider_accounts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_webhook_events: {
+        Row: {
+          business_id: string | null
+          created_at: string
+          error_message: string | null
+          event_id: string
+          event_type: string
+          id: string
+          payload_json: Json
+          processed: boolean
+          processed_at: string | null
+          provider: string
+        }
+        Insert: {
+          business_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          event_id: string
+          event_type: string
+          id?: string
+          payload_json?: Json
+          processed?: boolean
+          processed_at?: string | null
+          provider?: string
+        }
+        Update: {
+          business_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          event_id?: string
+          event_type?: string
+          id?: string
+          payload_json?: Json
+          processed?: boolean
+          processed_at?: string | null
+          provider?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_webhook_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_comm_logs: {
+        Row: {
+          body: string | null
+          business_id: string
+          channel: string
+          created_at: string
+          customer_id: string | null
+          direction: string
+          id: string
+          sent_at: string
+          sent_by_user_id: string | null
+          subject: string | null
+        }
+        Insert: {
+          body?: string | null
+          business_id: string
+          channel?: string
+          created_at?: string
+          customer_id?: string | null
+          direction?: string
+          id?: string
+          sent_at?: string
+          sent_by_user_id?: string | null
+          subject?: string | null
+        }
+        Update: {
+          body?: string | null
+          business_id?: string
+          channel?: string
+          created_at?: string
+          customer_id?: string | null
+          direction?: string
+          id?: string
+          sent_at?: string
+          sent_by_user_id?: string | null
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_comm_logs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_comm_logs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "platform_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_crew_members: {
         Row: {
           business_id: string
@@ -1379,6 +1615,9 @@ export type Database = {
           referral_source: string | null
           secondary_phone: string | null
           source: string | null
+          source_last_synced_at: string | null
+          source_record_id: string | null
+          source_system: string | null
           tags: Json | null
           updated_at: string
           vip_flag: boolean | null
@@ -1401,6 +1640,9 @@ export type Database = {
           referral_source?: string | null
           secondary_phone?: string | null
           source?: string | null
+          source_last_synced_at?: string | null
+          source_record_id?: string | null
+          source_system?: string | null
           tags?: Json | null
           updated_at?: string
           vip_flag?: boolean | null
@@ -1423,6 +1665,9 @@ export type Database = {
           referral_source?: string | null
           secondary_phone?: string | null
           source?: string | null
+          source_last_synced_at?: string | null
+          source_record_id?: string | null
+          source_system?: string | null
           tags?: Json | null
           updated_at?: string
           vip_flag?: boolean | null
@@ -1574,6 +1819,9 @@ export type Database = {
           public_notes: string | null
           quote_id: string | null
           sent_at: string | null
+          source_last_synced_at: string | null
+          source_record_id: string | null
+          source_system: string | null
           status: string
           subtotal: number | null
           tax_rate: number | null
@@ -1608,6 +1856,9 @@ export type Database = {
           public_notes?: string | null
           quote_id?: string | null
           sent_at?: string | null
+          source_last_synced_at?: string | null
+          source_record_id?: string | null
+          source_system?: string | null
           status?: string
           subtotal?: number | null
           tax_rate?: number | null
@@ -1642,6 +1893,9 @@ export type Database = {
           public_notes?: string | null
           quote_id?: string | null
           sent_at?: string | null
+          source_last_synced_at?: string | null
+          source_record_id?: string | null
+          source_system?: string | null
           status?: string
           subtotal?: number | null
           tax_rate?: number | null
@@ -1797,6 +2051,9 @@ export type Database = {
           quote_id: string | null
           scheduled_end: string | null
           scheduled_start: string | null
+          source_last_synced_at: string | null
+          source_record_id: string | null
+          source_system: string | null
           status: string
           subtotal: number | null
           tags: Json | null
@@ -1828,6 +2085,9 @@ export type Database = {
           quote_id?: string | null
           scheduled_end?: string | null
           scheduled_start?: string | null
+          source_last_synced_at?: string | null
+          source_record_id?: string | null
+          source_system?: string | null
           status?: string
           subtotal?: number | null
           tags?: Json | null
@@ -1859,6 +2119,9 @@ export type Database = {
           quote_id?: string | null
           scheduled_end?: string | null
           scheduled_start?: string | null
+          source_last_synced_at?: string | null
+          source_record_id?: string | null
+          source_system?: string | null
           status?: string
           subtotal?: number | null
           tags?: Json | null
@@ -2535,6 +2798,65 @@ export type Database = {
           },
         ]
       }
+      platform_tasks: {
+        Row: {
+          assigned_user_id: string | null
+          business_id: string
+          completed_at: string | null
+          created_at: string
+          created_by_user_id: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          priority: string
+          related_entity_id: string | null
+          related_entity_type: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_user_id?: string | null
+          business_id: string
+          completed_at?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_user_id?: string | null
+          business_id?: string
+          completed_at?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_tasks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_visit_assignments: {
         Row: {
           business_id: string
@@ -2805,6 +3127,95 @@ export type Database = {
         }
         Relationships: []
       }
+      tap_to_pay_transactions: {
+        Row: {
+          amount: number
+          business_id: string
+          created_at: string
+          currency: string
+          customer_id: string | null
+          device_id: string | null
+          device_label: string | null
+          id: string
+          invoice_id: string | null
+          location_lat: number | null
+          location_lng: number | null
+          operator_user_id: string | null
+          payment_intent_id: string | null
+          provider_charge_id: string | null
+          receipt_url: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          business_id: string
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          device_id?: string | null
+          device_label?: string | null
+          id?: string
+          invoice_id?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
+          operator_user_id?: string | null
+          payment_intent_id?: string | null
+          provider_charge_id?: string | null
+          receipt_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          business_id?: string
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          device_id?: string | null
+          device_label?: string | null
+          id?: string
+          invoice_id?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
+          operator_user_id?: string | null
+          payment_intent_id?: string | null
+          provider_charge_id?: string | null
+          receipt_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tap_to_pay_transactions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tap_to_pay_transactions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "platform_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tap_to_pay_transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "platform_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tap_to_pay_transactions_payment_intent_id_fkey"
+            columns: ["payment_intent_id"]
+            isOneToOne: false
+            referencedRelation: "payment_intents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       text_consents: {
         Row: {
           created_at: string
@@ -3029,6 +3440,9 @@ export type Database = {
           referral_source: string | null
           secondary_phone: string | null
           source: string | null
+          source_last_synced_at: string | null
+          source_record_id: string | null
+          source_system: string | null
           tags: Json | null
           updated_at: string
           vip_flag: boolean | null
