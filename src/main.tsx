@@ -31,6 +31,19 @@ window.addEventListener("unhandledrejection", (event) => {
   logErrorToSupabase(message, stack);
 });
 
+// Register service worker for ops PWA (production only)
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  const isInIframe = (() => { try { return window.self !== window.top; } catch { return true; } })();
+  const isPreviewHost = window.location.hostname.includes("id-preview--") || window.location.hostname.includes("lovableproject.com");
+  if (!isInIframe && !isPreviewHost) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch((err) => {
+        console.error('Service worker registration failed:', err);
+      });
+    });
+  }
+}
+
 createRoot(document.getElementById("root")!).render(
   <HelmetProvider>
     <App />

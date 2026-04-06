@@ -5,6 +5,8 @@ import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
 import { LocationData, locations } from "@/data/locations";
 
+const BASE_URL = "https://gulfcoastpalms.lovable.app";
+
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
   visible: (i: number) => ({
@@ -23,14 +25,17 @@ const LocationPage = ({ location }: Props) => {
     .map((slug) => locations.find((l) => l.slug === slug))
     .filter(Boolean) as LocationData[];
 
+  const canonicalUrl = `/${location.slug}`;
+
   return (
     <Layout>
       <SEOHead
         title={location.metaTitle}
         description={location.metaDescription}
-        canonicalUrl={`/${location.slug}`}
+        canonicalUrl={canonicalUrl}
       />
-      {/* JSON-LD */}
+
+      {/* JSON-LD: Service */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -42,10 +47,26 @@ const LocationPage = ({ location }: Props) => {
               "@type": "LocalBusiness",
               name: "Gulf Coast Palms",
               telephone: "(850) 910-1290",
-              url: "https://gulfcoastpalmcleaning.com",
+              url: "https://gulfcoastpalms.lovable.app",
             },
             areaServed: { "@type": "City", name: `${location.city}, ${location.state}` },
             serviceType: ["Palm Trimming", "Diamond Cutting", "Trunk Skinning", "Palm Installation", "Palm Removal"],
+          }),
+        }}
+      />
+
+      {/* JSON-LD: BreadcrumbList */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Home", item: BASE_URL },
+              { "@type": "ListItem", position: 2, name: "Service Areas", item: `${BASE_URL}/service-areas` },
+              { "@type": "ListItem", position: 3, name: `${location.city} Palm Tree Trimming`, item: `${BASE_URL}${canonicalUrl}` },
+            ],
           }),
         }}
       />
@@ -100,47 +121,22 @@ const LocationPage = ({ location }: Props) => {
             <div className="lg:col-span-2">
               <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }}>
                 {location.introParagraphs.map((p, i) => (
-                  <motion.p
-                    key={i}
-                    variants={fadeUp}
-                    custom={i}
-                    className="font-body text-muted-foreground leading-relaxed mb-6 text-lg"
-                  >
+                  <motion.p key={i} variants={fadeUp} custom={i} className="font-body text-muted-foreground leading-relaxed mb-6 text-lg">
                     {p}
                   </motion.p>
                 ))}
               </motion.div>
 
               {location.highlight && (
-                <motion.blockquote
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true }}
-                  variants={fadeUp}
-                  custom={0}
-                  className="border-l-4 border-primary pl-6 py-4 my-8 bg-secondary/50 rounded-r-lg"
-                >
-                  <p className="font-body text-foreground font-semibold text-lg italic">
-                    {location.highlight}
-                  </p>
+                <motion.blockquote initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0} className="border-l-4 border-primary pl-6 py-4 my-8 bg-secondary/50 rounded-r-lg">
+                  <p className="font-body text-foreground font-semibold text-lg italic">{location.highlight}</p>
                 </motion.blockquote>
               )}
             </div>
 
-            {/* Sidebar image */}
             <div className="space-y-4">
-              <img
-                src={location.images[1].src}
-                alt={location.images[1].alt}
-                className="w-full rounded-xl shadow-lg object-cover aspect-[4/3]"
-                loading="lazy"
-              />
-              <img
-                src={location.images[2].src}
-                alt={location.images[2].alt}
-                className="w-full rounded-xl shadow-lg object-cover aspect-[4/3]"
-                loading="lazy"
-              />
+              <img src={location.images[1].src} alt={location.images[1].alt} className="w-full rounded-xl shadow-lg object-cover aspect-[4/3]" loading="lazy" width={400} height={300} />
+              <img src={location.images[2].src} alt={location.images[2].alt} className="w-full rounded-xl shadow-lg object-cover aspect-[4/3]" loading="lazy" width={400} height={300} />
             </div>
           </div>
         </div>
@@ -150,25 +146,13 @@ const LocationPage = ({ location }: Props) => {
       <section className="section-padding bg-palm-dark">
         <div className="container mx-auto">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-12">
-            <motion.p variants={fadeUp} custom={0} className="font-body text-sm uppercase tracking-[0.2em] text-palm-gold font-semibold mb-3">
-              Our Services
-            </motion.p>
-            <motion.h2 variants={fadeUp} custom={1} className="font-display text-3xl md:text-5xl font-bold text-primary-foreground">
-              Services in {location.city} Include
-            </motion.h2>
+            <motion.p variants={fadeUp} custom={0} className="font-body text-sm uppercase tracking-[0.2em] text-palm-gold font-semibold mb-3">Our Services</motion.p>
+            <motion.h2 variants={fadeUp} custom={1} className="font-display text-3xl md:text-5xl font-bold text-primary-foreground">Services in {location.city} Include</motion.h2>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
             {location.services.map((service, i) => (
-              <motion.div
-                key={service}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={fadeUp}
-                custom={i}
-                className="flex items-center gap-3 p-5 rounded-xl border border-palm-green/20 bg-palm-dark"
-              >
+              <motion.div key={service} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="flex items-center gap-3 p-5 rounded-xl border border-palm-green/20 bg-palm-dark">
                 <CheckCircle className="w-5 h-5 text-primary shrink-0" />
                 <span className="font-body text-primary-foreground font-medium">{service}</span>
               </motion.div>
@@ -181,41 +165,41 @@ const LocationPage = ({ location }: Props) => {
       <section className="section-padding bg-background">
         <div className="container mx-auto">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-12">
-            <motion.p variants={fadeUp} custom={0} className="font-body text-sm uppercase tracking-[0.2em] text-palm-gold font-semibold mb-3">
-              Why Choose Us
-            </motion.p>
-            <motion.h2 variants={fadeUp} custom={1} className="font-display text-3xl md:text-5xl font-bold text-foreground">
-              {location.whyChooseTitle}
-            </motion.h2>
+            <motion.p variants={fadeUp} custom={0} className="font-body text-sm uppercase tracking-[0.2em] text-palm-gold font-semibold mb-3">Why Choose Us</motion.p>
+            <motion.h2 variants={fadeUp} custom={1} className="font-display text-3xl md:text-5xl font-bold text-foreground">{location.whyChooseTitle}</motion.h2>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto mb-10">
             {location.whyChoosePoints.map((point, i) => (
-              <motion.div
-                key={point}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={fadeUp}
-                custom={i}
-                className="flex items-start gap-3 p-5 rounded-xl border border-border bg-card"
-              >
+              <motion.div key={point} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="flex items-start gap-3 p-5 rounded-xl border border-border bg-card">
                 <Star className="w-5 h-5 text-palm-gold shrink-0 mt-0.5" />
                 <p className="font-body text-foreground font-medium">{point}</p>
               </motion.div>
             ))}
           </div>
 
-          <motion.p
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeUp}
-            custom={0}
-            className="font-body text-muted-foreground max-w-3xl mx-auto text-center leading-relaxed text-lg"
-          >
+          <motion.p initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0} className="font-body text-muted-foreground max-w-3xl mx-auto text-center leading-relaxed text-lg">
             {location.whyChooseClosing}
           </motion.p>
+        </div>
+      </section>
+
+      {/* Maintenance CTA */}
+      <section className="section-padding bg-secondary/50">
+        <div className="container mx-auto text-center">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }}>
+            <motion.h3 variants={fadeUp} custom={0} className="font-display text-2xl md:text-3xl font-bold text-foreground mb-3">
+              Protect Your {location.city} Palms Year-Round
+            </motion.h3>
+            <motion.p variants={fadeUp} custom={1} className="font-body text-muted-foreground mb-6 max-w-xl mx-auto">
+              Scheduled trimming, health checks, and hurricane prep — all handled for you.
+            </motion.p>
+            <motion.div variants={fadeUp} custom={2}>
+              <Link to="/palm-tree-maintenance-plans" className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-body font-semibold hover:bg-primary/90 transition-colors">
+                View Maintenance Plans <ArrowRight className="w-4 h-4" />
+              </Link>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
@@ -224,29 +208,16 @@ const LocationPage = ({ location }: Props) => {
         <section className="section-padding bg-secondary/30">
           <div className="container mx-auto text-center">
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }}>
-              <motion.p variants={fadeUp} custom={0} className="font-body text-sm uppercase tracking-[0.2em] text-palm-gold font-semibold mb-3">
-                Nearby Service Areas
-              </motion.p>
-              <motion.h2 variants={fadeUp} custom={1} className="font-display text-3xl md:text-4xl font-bold text-foreground mb-8">
-                We Also Serve These Communities
-              </motion.h2>
+              <motion.p variants={fadeUp} custom={0} className="font-body text-sm uppercase tracking-[0.2em] text-palm-gold font-semibold mb-3">Nearby Service Areas</motion.p>
+              <motion.h2 variants={fadeUp} custom={1} className="font-display text-3xl md:text-4xl font-bold text-foreground mb-8">We Also Serve These Communities</motion.h2>
               <motion.div variants={fadeUp} custom={2} className="flex flex-wrap justify-center gap-3">
                 {nearbyLocations.map((loc) => (
-                  <Link
-                    key={loc.slug}
-                    to={`/${loc.slug}`}
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-card border border-border text-foreground font-body font-medium hover:border-primary hover:text-primary transition-colors"
-                  >
-                    {loc.city}, {loc.state}
-                    <ArrowRight className="w-4 h-4" />
+                  <Link key={loc.slug} to={`/${loc.slug}`} className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-card border border-border text-foreground font-body font-medium hover:border-primary hover:text-primary transition-colors">
+                    {loc.city}, {loc.state} <ArrowRight className="w-4 h-4" />
                   </Link>
                 ))}
-                <Link
-                  to="/service-areas"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-body font-semibold hover:bg-palm-light transition-colors"
-                >
-                  View All Service Areas
-                  <ArrowRight className="w-4 h-4" />
+                <Link to="/service-areas" className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-body font-semibold hover:bg-palm-light transition-colors">
+                  View All Service Areas <ArrowRight className="w-4 h-4" />
                 </Link>
               </motion.div>
             </motion.div>
@@ -258,20 +229,10 @@ const LocationPage = ({ location }: Props) => {
       <section className="section-padding bg-primary">
         <div className="container mx-auto text-center">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            <motion.h2 variants={fadeUp} custom={0} className="font-display text-3xl md:text-5xl font-bold text-primary-foreground mb-4">
-              {location.ctaHeading}
-            </motion.h2>
-            <motion.p variants={fadeUp} custom={1} className="font-body text-lg text-primary-foreground/80 mb-8 max-w-xl mx-auto">
-              {location.ctaText}
-            </motion.p>
-            <motion.a
-              variants={fadeUp}
-              custom={2}
-              href="tel:8509101290"
-              className="inline-flex items-center gap-3 px-10 py-5 rounded-xl bg-primary-foreground text-primary font-body font-bold text-xl hover:scale-105 transition-transform shadow-xl"
-            >
-              <Phone className="w-6 h-6" />
-              (850) 910-1290
+            <motion.h2 variants={fadeUp} custom={0} className="font-display text-3xl md:text-5xl font-bold text-primary-foreground mb-4">{location.ctaHeading}</motion.h2>
+            <motion.p variants={fadeUp} custom={1} className="font-body text-lg text-primary-foreground/80 mb-8 max-w-xl mx-auto">{location.ctaText}</motion.p>
+            <motion.a variants={fadeUp} custom={2} href="tel:8509101290" className="inline-flex items-center gap-3 px-10 py-5 rounded-xl bg-primary-foreground text-primary font-body font-bold text-xl hover:scale-105 transition-transform shadow-xl">
+              <Phone className="w-6 h-6" /> (850) 910-1290
             </motion.a>
           </motion.div>
         </div>

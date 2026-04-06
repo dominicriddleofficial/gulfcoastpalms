@@ -69,6 +69,9 @@ const Navbar = () => {
                     {link.label}
                   </Link>
                 ))}
+                <Link to="/palm-tree-maintenance-plans" className={`block px-4 py-2.5 font-body text-sm hover:bg-secondary transition-colors ${location.pathname === "/palm-tree-maintenance-plans" ? "text-primary font-semibold" : "text-foreground"}`}>
+                  Maintenance Plans
+                </Link>
               </div>
             </div>
           </div>

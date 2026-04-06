@@ -69,6 +69,7 @@ const AdminCrews = lazy(() => import("./pages/admin/AdminCrews"));
 const AdminRecurring = lazy(() => import("./pages/admin/AdminRecurring"));
 const AdminJobIssues = lazy(() => import("./pages/admin/AdminJobIssues"));
 const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
+const AdminErrors = lazy(() => import("./pages/admin/AdminErrors"));
 
 // Careers — lazy
 const GulfCoastPalmsCareers = lazy(() => import("./pages/careers/GulfCoastPalms"));
@@ -108,6 +109,7 @@ const PlatformTasks = lazy(() => import("./pages/platform/PlatformTasks"));
 const PlatformSettings = lazy(() => import("./pages/platform/PlatformSettings"));
 
 // Payment pages — lazy
+const PalmTreeMaintenancePlans = lazy(() => import("./pages/PalmTreeMaintenancePlans"));
 const PayInvoice = lazy(() => import("./pages/pay/PayInvoice"));
 const PaymentSuccess = lazy(() => import("./pages/pay/PaymentSuccess"));
 const TapToPayLanding = lazy(() => import("./pages/app/TapToPayLanding"));
@@ -172,6 +174,7 @@ const App = () => (
                   <Route path="/text-consent" element={<TextConsent />} />
                   <Route path="/terms-of-service" element={<TermsOfService />} />
                   <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                  <Route path="/palm-tree-maintenance-plans" element={<PalmTreeMaintenancePlans />} />
 
                   {/* Admin */}
                   <Route path="/admin/login" element={<AdminLogin />} />
@@ -190,6 +193,7 @@ const App = () => (
                   <Route path="/admin/recurring" element={<AdminRecurring />} />
                   <Route path="/admin/job-issues" element={<AdminJobIssues />} />
                   <Route path="/admin/settings" element={<AdminSettings />} />
+                  <Route path="/admin/errors" element={<AdminErrors />} />
 
                   {/* Careers */}
                   <Route path="/careers/gulf-coast-palms" element={<GulfCoastPalmsCareers />} />

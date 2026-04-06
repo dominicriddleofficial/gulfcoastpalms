@@ -49,7 +49,7 @@ const HurricanePalmPreparation = () => {
   return (
     <Layout>
       <SEOHead title="Hurricane Palm Tree Preparation Navarre & NW Florida | Gulf Coast Palms" description="Prepare your palms for hurricane season. Professional pre-storm trimming, hazard assessment, and emergency response across NW Florida." canonicalUrl="/hurricane-palm-preparation" />
-      {/* JSON-LD */}
+      {/* JSON-LD: Service */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -67,6 +67,52 @@ const HurricanePalmPreparation = () => {
                 "Fort Walton Beach, FL", "Destin, FL", "30A, FL", "Perdido Key, FL",
               ],
             },
+          }),
+        }}
+      />
+
+      {/* JSON-LD: HowTo */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "HowTo",
+            name: "How to Prepare Your Palm Trees for Hurricane Season in NW Florida",
+            description: "Step-by-step guide to protecting your palm trees before a hurricane hits the NW Florida coast.",
+            totalTime: "PT2H",
+            step: [
+              {
+                "@type": "HowToStep",
+                name: "Schedule a Pre-Hurricane Trimming",
+                text: "Have your palms professionally trimmed 4-6 weeks before hurricane season. Removing dead fronds and excess growth reduces wind resistance and the risk of fronds becoming projectiles.",
+                position: 1,
+              },
+              {
+                "@type": "HowToStep",
+                name: "Inspect for Disease or Weakness",
+                text: "Have a professional assess each palm for signs of Ganoderma rot, Fusarium wilt, or structural weakness. A compromised palm is far more likely to fail in high winds.",
+                position: 2,
+              },
+              {
+                "@type": "HowToStep",
+                name: "Secure Young or Newly Planted Palms",
+                text: "Palms planted within the last 2-3 years have shallower root systems. Stake them before storm season to prevent uprooting.",
+                position: 3,
+              },
+              {
+                "@type": "HowToStep",
+                name: "Document Your Palms Before Storm Season",
+                text: "Photograph your palms before hurricane season starts. If a storm damages them, this documentation supports your homeowner insurance claim.",
+                position: 4,
+              },
+              {
+                "@type": "HowToStep",
+                name: "Know Your Emergency Service Options",
+                text: "Have a trusted palm service's contact saved before a storm. Emergency trimming and storm damage assessment are in high demand after a hurricane — book early.",
+                position: 5,
+              },
+            ],
           }),
         }}
       />
