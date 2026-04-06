@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { CreditCard, CheckCircle, XCircle, Loader2, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -33,40 +32,32 @@ export default function PayInvoice() {
   const cancelled = searchParams.get("cancelled") === "true";
 
   const theme = BUSINESS_THEMES[shortcode?.toLowerCase() || ""] || BUSINESS_THEMES.gcp;
+  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+  const baseUrl = `https://${projectId}.supabase.co/functions/v1`;
 
   useEffect(() => {
     async function load() {
       if (!invoiceId) { setError("No invoice specified"); setLoading(false); return; }
 
-      const { data, error: fetchErr } = await supabase
-        .from("platform_invoices")
-        .select("*, platform_customers(display_name), businesses(shortcode, public_brand_name)")
-        .eq("id", invoiceId)
-        .single();
-
-      if (fetchErr || !data) {
-        setError("Invoice not found");
-        setLoading(false);
-        return;
+      try {
+        const resp = await fetch(`${baseUrl}/get-invoice-public`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ invoice_id: invoiceId }),
+        });
+        const data = await resp.json();
+        if (!resp.ok || data.error) {
+          setError(data.error || "Invoice not found");
+        } else {
+          setInvoice(data);
+        }
+      } catch {
+        setError("Failed to load invoice");
       }
-
-      setInvoice({
-        id: data.id,
-        invoice_number: data.invoice_number,
-        total: Number(data.total) || 0,
-        balance_due: Number(data.balance_due) || Number(data.total) || 0,
-        status: data.status,
-        deposit_required: !!data.deposit_required,
-        deposit_amount: Number(data.deposit_amount) || 0,
-        deposit_paid: !!data.deposit_paid,
-        customer_name: (data as any).platform_customers?.display_name || "Customer",
-        business_name: (data as any).businesses?.public_brand_name || theme.name,
-        shortcode: (data as any).businesses?.shortcode || shortcode || "",
-      });
       setLoading(false);
     }
     load();
-  }, [invoiceId, shortcode]);
+  }, [invoiceId, baseUrl]);
 
   const handlePay = async () => {
     if (!invoice) return;
@@ -74,8 +65,7 @@ export default function PayInvoice() {
     setError(null);
 
     try {
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-      const resp = await fetch(`https://${projectId}.supabase.co/functions/v1/create-checkout`, {
+      const resp = await fetch(`${baseUrl}/create-checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -129,10 +119,9 @@ export default function PayInvoice() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Business header */}
       <div className={`bg-gradient-to-r ${theme.gradient} text-white py-8 px-4`}>
         <div className="max-w-md mx-auto text-center">
-          <h1 className="text-2xl font-bold mb-1">{invoice.business_name}</h1>
+          <h1 className="text-2xl font-bold mb-1">{invoice.business_name || theme.name}</h1>
           <p className="text-white/70 text-sm">Secure Online Payment</p>
         </div>
       </div>
@@ -151,7 +140,6 @@ export default function PayInvoice() {
             </div>
           )}
 
-          {/* Invoice card */}
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
             <div className="p-6 space-y-4">
               <div className="flex justify-between items-start">
