@@ -172,7 +172,7 @@ const App = () => (
           <Route path="/platform" element={<PlatformDashboard />} />
           <Route path="/platform/leads" element={<PlatformLeads />} />
           <Route path="/platform/customers" element={<PlatformCustomers />} />
-          <Route path="/platform/quotes" element={<PlatformModule />} />
+          <Route path="/platform/quotes" element={<PlatformQuotes />} />
           <Route path="/platform/jobs" element={<PlatformModule />} />
           <Route path="/platform/schedule" element={<PlatformModule />} />
           <Route path="/platform/invoices" element={<PlatformModule />} />
