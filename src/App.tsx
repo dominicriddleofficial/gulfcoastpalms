@@ -179,8 +179,8 @@ const App = () => (
           <Route path="/platform/quotes" element={<PlatformQuotes />} />
           <Route path="/platform/jobs" element={<PlatformJobs />} />
           <Route path="/platform/schedule" element={<PlatformSchedule />} />
-          <Route path="/platform/invoices" element={<PlatformModule />} />
-          <Route path="/platform/payments" element={<PlatformModule />} />
+          <Route path="/platform/invoices" element={<PlatformInvoices />} />
+          <Route path="/platform/payments" element={<PlatformPayments />} />
           <Route path="/platform/analytics" element={<PlatformModule />} />
           <Route path="/platform/communications" element={<PlatformModule />} />
           <Route path="/platform/tasks" element={<PlatformModule />} />
