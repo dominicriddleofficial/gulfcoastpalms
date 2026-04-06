@@ -30,6 +30,11 @@ const ROLES = [
 const GulfCoastPalmsCareers = () => {
   return (
     <Layout>
+      <SEOHead
+        title="Careers at Gulf Coast Palms | NW Florida"
+        description="Build a career in the outdoors with Gulf Coast Palms. View open positions for groundsmen, team leaders, and sales operations in Navarre and NW Florida."
+        canonicalUrl="/careers/gulf-coast-palms"
+      />
       {/* Hero */}
       <section className="relative bg-foreground text-background overflow-hidden">
         <div className="absolute inset-0 opacity-10">
