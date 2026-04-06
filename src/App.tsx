@@ -72,6 +72,8 @@ import PlatformModule from "./pages/platform/PlatformModule";
 import PlatformLeads from "./pages/platform/PlatformLeads";
 import PlatformCustomers from "./pages/platform/PlatformCustomers";
 import PlatformQuotes from "./pages/platform/PlatformQuotes";
+import PlatformJobs from "./pages/platform/PlatformJobs";
+import PlatformSchedule from "./pages/platform/PlatformSchedule";
 // Service pages
 import PalmTreeTrimming from "./pages/services/PalmTreeTrimming";
 import PalmTreeInstallation from "./pages/services/PalmTreeInstallation";
