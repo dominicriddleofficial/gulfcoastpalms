@@ -398,3 +398,110 @@ function OnlinePaymentsConfig({ businessId, businesses }: { businessId: string |
     </div>
   );
 }
+
+function TapToPayReadiness({ businessId, businesses }: { businessId: string | null; businesses: any[] }) {
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      let sq = supabase.from("terminal_sessions").select("*, businesses(public_brand_name, shortcode)").order("created_at", { ascending: false }).limit(5);
+      if (businessId) sq = sq.eq("business_id", businessId);
+      const { data: s } = await sq;
+      setSessions(s || []);
+
+      let tq = supabase.from("tap_to_pay_transactions").select("*").order("created_at", { ascending: false }).limit(10);
+      if (businessId) tq = tq.eq("business_id", businessId);
+      const { data: t } = await tq;
+      setTransactions(t || []);
+      setLoading(false);
+    };
+    load();
+  }, [businessId]);
+
+  const targetBizzes = businessId ? businesses.filter(b => b.id === businessId) : businesses;
+
+  const readinessItems = [
+    { label: "Stripe Online Checkout", status: "ready" as const },
+    { label: "Stripe Webhook Reconciliation", status: "ready" as const },
+    { label: "Payment Records / Invoice Reconciliation", status: "ready" as const },
+    { label: "Stripe Terminal Backend Schema", status: "ready" as const },
+    { label: "Connection Token Endpoint", status: "ready" as const },
+    { label: "PaymentIntent Server Flow (In-Person)", status: "ready" as const },
+    { label: "Business-Aware Payment Routing", status: "ready" as const },
+    { label: "Mobile / Native Client Layer", status: "pending" as const },
+    { label: "iPhone Tap to Pay Entitlement", status: "pending" as const },
+    { label: "Android Tap to Pay", status: "pending" as const },
+    { label: "Staff-Facing Tap to Pay UX", status: "pending" as const },
+  ];
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 mb-1">
+        <Smartphone className="w-4 h-4 text-primary" />
+        <span className="font-body text-sm font-medium text-foreground">Tap to Pay</span>
+        <span className="ml-auto text-[10px] font-body px-2 py-0.5 rounded-full bg-[#f59e0b]/15 text-[#f59e0b] border border-[#f59e0b]/20">
+          Setup Pending
+        </span>
+      </div>
+
+      <p className="font-body text-[11px] text-muted-foreground leading-snug">
+        Backend endpoints are ready. A native mobile app (iOS/Android) is required to complete Tap to Pay setup.
+      </p>
+
+      {/* Per-business readiness */}
+      {targetBizzes.map(biz => (
+        <div key={biz.id} className="bg-secondary/50 rounded-lg p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: biz.default_business_color || "#22c55e" }} />
+            <p className="font-body text-xs font-medium text-foreground">{biz.public_brand_name}</p>
+            <span className="ml-auto font-body text-[10px] text-[#f59e0b]">Mobile Setup Required</span>
+          </div>
+        </div>
+      ))}
+
+      {/* Readiness checklist */}
+      <div className="space-y-1">
+        <p className="font-body text-[10px] font-semibold text-foreground uppercase tracking-wider mb-1">Readiness Checklist</p>
+        {readinessItems.map(item => (
+          <div key={item.label} className="flex items-center gap-2 py-0.5">
+            {item.status === "ready" ? (
+              <CheckCircle className="w-3 h-3 text-[#22c55e] shrink-0" />
+            ) : (
+              <AlertTriangle className="w-3 h-3 text-[#f59e0b] shrink-0" />
+            )}
+            <span className="font-body text-[11px] text-foreground">{item.label}</span>
+            <span className={cn(
+              "ml-auto font-body text-[10px]",
+              item.status === "ready" ? "text-[#22c55e]" : "text-[#f59e0b]"
+            )}>
+              {item.status === "ready" ? "Ready" : "Pending"}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Recent transactions */}
+      {transactions.length > 0 && (
+        <div className="mt-2 pt-2 border-t border-border">
+          <p className="font-body text-[10px] font-semibold text-foreground uppercase tracking-wider mb-1">Recent Tap to Pay Transactions</p>
+          {transactions.slice(0, 5).map(t => (
+            <div key={t.id} className="flex items-center justify-between py-1">
+              <span className="font-body text-[11px] text-foreground">${Number(t.amount).toLocaleString()}</span>
+              <span className={cn(
+                "font-body text-[10px] px-1.5 py-0.5 rounded-full",
+                t.status === "completed" ? "bg-[#22c55e]/15 text-[#22c55e]" :
+                t.status === "failed" ? "bg-destructive/15 text-destructive" :
+                "bg-muted text-muted-foreground"
+              )}>{t.status}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {loading && <p className="font-body text-[10px] text-muted-foreground text-center py-2">Loading...</p>}
+    </div>
+  );
+}
