@@ -261,8 +261,8 @@ function TapToPayButton({ businessId, invoiceId, customerId, amount }: {
 }
 
 /* ─── Collect Menu ─── */
-function CollectMenu({ onBack, onOnline, onSendLink, onRecord }: {
-  onBack: () => void; onOnline: () => void; onSendLink: () => void; onRecord: () => void;
+function CollectMenu({ onBack, onOnline, onSendLink, onRecord, onTapToPay }: {
+  onBack: () => void; onOnline: () => void; onSendLink: () => void; onRecord: () => void; onTapToPay: () => void;
 }) {
   return (
     <div className="bg-card border border-border rounded-xl p-5 space-y-3">
