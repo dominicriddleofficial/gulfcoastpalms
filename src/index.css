@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800;900&family=Outfit:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -42,7 +42,7 @@
     --palm-gold: 38 90% 55%;
     --palm-sand: 35 30% 92%;
 
-    --font-display: 'Playfair Display', serif;
+    --font-display: 'Inter', sans-serif;
     --font-body: 'Outfit', sans-serif;
 
     --sidebar-background: 0 0% 98%;
@@ -100,27 +100,39 @@
   }
 }
 
-/* Ops dark tech theme */
+/* Platform dark tech theme — premium SaaS feel */
 .ops-theme {
-  --background: 0 0% 5%;
-  --foreground: 0 0% 95%;
-  --card: 0 0% 8%;
-  --card-foreground: 0 0% 95%;
-  --popover: 0 0% 10%;
-  --popover-foreground: 0 0% 95%;
-  --primary: 82 85% 50%;
-  --primary-foreground: 0 0% 0%;
-  --secondary: 0 0% 12%;
-  --secondary-foreground: 0 0% 90%;
-  --muted: 0 0% 12%;
-  --muted-foreground: 0 0% 55%;
-  --accent: 82 85% 50%;
-  --accent-foreground: 0 0% 0%;
-  --destructive: 0 70% 50%;
+  --background: 220 16% 4%;
+  --foreground: 220 10% 92%;
+  --card: 220 14% 7%;
+  --card-foreground: 220 10% 92%;
+  --popover: 220 14% 9%;
+  --popover-foreground: 220 10% 92%;
+  --primary: 142 71% 45%;
+  --primary-foreground: 220 16% 4%;
+  --secondary: 220 12% 12%;
+  --secondary-foreground: 220 10% 85%;
+  --muted: 220 12% 11%;
+  --muted-foreground: 220 8% 50%;
+  --accent: 142 71% 45%;
+  --accent-foreground: 220 16% 4%;
+  --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 100%;
-  --border: 0 0% 15%;
-  --input: 0 0% 15%;
-  --ring: 82 85% 50%;
+  --border: 220 12% 14%;
+  --input: 220 12% 14%;
+  --ring: 142 71% 45%;
+  --font-display: 'Inter', sans-serif;
+  --font-body: 'Outfit', sans-serif;
+}
+
+/* Platform-specific refinements */
+.ops-theme .platform-card {
+  background: linear-gradient(145deg, hsl(220 14% 8%), hsl(220 14% 6%));
+  border: 1px solid hsl(220 12% 15%);
+}
+
+.ops-theme .platform-card-glow {
+  box-shadow: 0 0 0 1px hsl(220 12% 15%), 0 4px 24px -4px hsl(0 0% 0% / 0.4);
 }
 
 @layer utilities {

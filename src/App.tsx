@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BusinessProvider } from "@/contexts/BusinessContext";
 import { trackPageView } from "@/lib/analytics";
 import Index from "./pages/Index";
 import Services from "./pages/Services";
@@ -98,11 +99,12 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <RouteTracker />
-        <Routes>
+      <BusinessProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <RouteTracker />
+          <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/services" element={<Services />} />
           <Route path="/services/palm-tree-trimming" element={<PalmTreeTrimming />} />
@@ -188,6 +190,7 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
+      </BusinessProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
