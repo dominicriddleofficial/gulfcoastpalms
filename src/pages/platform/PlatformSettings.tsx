@@ -251,3 +251,147 @@ function JobberConnectionStatus() {
     </div>
   );
 }
+
+function OnlinePaymentsConfig({ businessId, businesses }: { businessId: string | null; businesses: any[] }) {
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    loadAccounts();
+  }, [businessId]);
+
+  const loadAccounts = async () => {
+    setLoading(true);
+    let q = supabase.from("payment_provider_accounts").select("*, businesses(public_brand_name, shortcode)");
+    if (businessId) q = q.eq("business_id", businessId);
+    const { data } = await q;
+    setAccounts(data || []);
+    setLoading(false);
+  };
+
+  const togglePayments = async (accountId: string, field: "online_payments_enabled" | "active", current: boolean) => {
+    setSaving(true);
+    const { error } = await supabase
+      .from("payment_provider_accounts")
+      .update({ [field]: !current })
+      .eq("id", accountId);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Updated", description: `Payment setting updated.` });
+      loadAccounts();
+    }
+    setSaving(false);
+  };
+
+  const createAccount = async (bizId: string) => {
+    setSaving(true);
+    const biz = businesses.find(b => b.id === bizId);
+    const { error } = await supabase.from("payment_provider_accounts").insert({
+      business_id: bizId,
+      provider_type: "stripe",
+      display_name: `${biz?.public_brand_name || "Business"} Stripe`,
+      online_payments_enabled: true,
+      active: true,
+    });
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Created", description: "Payment account configured." });
+      loadAccounts();
+    }
+    setSaving(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 py-2">
+        <CreditCard className="w-4 h-4 text-primary" />
+        <span className="font-body text-sm text-foreground">Online Payments</span>
+        <span className="ml-auto text-[10px] font-body text-muted-foreground">Loading...</span>
+      </div>
+    );
+  }
+
+  const configuredBizIds = accounts.map(a => a.business_id);
+  const unconfigured = (businessId ? businesses.filter(b => b.id === businessId) : businesses)
+    .filter(b => !configuredBizIds.includes(b.id));
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 mb-1">
+        <CreditCard className="w-4 h-4 text-primary" />
+        <span className="font-body text-sm font-medium text-foreground">Online Payments</span>
+        {accounts.length > 0 && (
+          <span className="ml-auto text-[10px] font-body px-2 py-0.5 rounded-full bg-primary/15 text-primary">
+            {accounts.filter(a => a.active && a.online_payments_enabled).length} active
+          </span>
+        )}
+      </div>
+
+      {accounts.map(acc => (
+        <div key={acc.id} className="bg-secondary/50 rounded-lg p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-body text-sm font-medium text-foreground">
+                {(acc as any).businesses?.public_brand_name || acc.display_name}
+              </p>
+              <p className="font-body text-[10px] text-muted-foreground font-mono uppercase">
+                {(acc as any).businesses?.shortcode || "—"} · {acc.provider_type}
+              </p>
+            </div>
+            <div className={cn(
+              "w-2.5 h-2.5 rounded-full",
+              acc.active && acc.online_payments_enabled ? "bg-primary" : "bg-muted-foreground/40"
+            )} />
+          </div>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant={acc.online_payments_enabled ? "default" : "outline"}
+              className="h-7 text-[11px] flex-1"
+              disabled={saving}
+              onClick={() => togglePayments(acc.id, "online_payments_enabled", acc.online_payments_enabled)}
+            >
+              {acc.online_payments_enabled ? "Checkout Enabled" : "Enable Checkout"}
+            </Button>
+            <Button
+              size="sm"
+              variant={acc.active ? "secondary" : "destructive"}
+              className="h-7 text-[11px]"
+              disabled={saving}
+              onClick={() => togglePayments(acc.id, "active", acc.active)}
+            >
+              {acc.active ? "Active" : "Disabled"}
+            </Button>
+          </div>
+        </div>
+      ))}
+
+      {unconfigured.map(biz => (
+        <div key={biz.id} className="bg-secondary/30 rounded-lg p-3 flex items-center justify-between border border-dashed border-border">
+          <div>
+            <p className="font-body text-sm text-foreground">{biz.public_brand_name}</p>
+            <p className="font-body text-[10px] text-muted-foreground">No payment account configured</p>
+          </div>
+          <Button
+            size="sm"
+            className="h-7 text-[11px]"
+            disabled={saving}
+            onClick={() => createAccount(biz.id)}
+          >
+            Configure
+          </Button>
+        </div>
+      ))}
+
+      {accounts.length === 0 && unconfigured.length === 0 && (
+        <p className="font-body text-[11px] text-muted-foreground text-center py-2">
+          Select a business to configure payments.
+        </p>
+      )}
+    </div>
+  );
+}
