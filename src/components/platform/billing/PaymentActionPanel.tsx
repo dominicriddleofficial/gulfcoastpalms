@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { launchTapToPay, type TapToPayParams } from "@/lib/tap-to-pay";
 
 interface Props {
   invoice: {
