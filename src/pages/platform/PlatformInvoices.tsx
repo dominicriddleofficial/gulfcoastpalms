@@ -12,7 +12,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Search, Plus, Receipt, DollarSign, Calendar, Hash, User,
-  AlertTriangle, CheckCircle, Send, Eye, Clock, Ban,
+  AlertTriangle, CheckCircle, Send, Eye, Clock, Ban, Link2, ExternalLink,
 } from "lucide-react";
 import { format, formatDistanceToNow, isPast, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
