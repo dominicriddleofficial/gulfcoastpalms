@@ -80,6 +80,9 @@ import PlatformAnalytics from "./pages/platform/PlatformAnalytics";
 import PlatformComms from "./pages/platform/PlatformComms";
 import PlatformTasks from "./pages/platform/PlatformTasks";
 import PlatformSettings from "./pages/platform/PlatformSettings";
+// Customer payment pages
+import PayInvoice from "./pages/pay/PayInvoice";
+import PaymentSuccess from "./pages/pay/PaymentSuccess";
 // Service pages
 import PalmTreeTrimming from "./pages/services/PalmTreeTrimming";
 import PalmTreeInstallation from "./pages/services/PalmTreeInstallation";
