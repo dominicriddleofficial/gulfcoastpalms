@@ -2,6 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Phone, MessageSquare, ArrowLeft, TreePine, Ruler, Sun, Snowflake, Wrench, Scissors, Shovel } from "lucide-react";
 import Layout from "@/components/Layout";
+import SEOHead from "@/components/SEOHead";
 import { palmTypes } from "@/data/palmTypes";
 import NotFound from "./NotFound";
 
