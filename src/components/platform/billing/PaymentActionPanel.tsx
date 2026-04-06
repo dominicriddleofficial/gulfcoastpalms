@@ -216,38 +216,47 @@ export default function PaymentActionPanel({
   );
 }
 
-/* ─── Tap to Pay Status Indicator ─── */
-function TapToPayStatus() {
-  // In a real implementation, this would check:
-  // 1. Is this a supported mobile device?
-  // 2. Is the Stripe Terminal backend configured?
-  // 3. Does the business have a terminal location?
-  // For now, show honest readiness status.
-  const isNativeMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
-  const backendReady = true; // We have the edge functions deployed
+/* ─── Tap to Pay Deep Link Button ─── */
+function TapToPayButton({ businessId, invoiceId, customerId, amount }: {
+  businessId: string; invoiceId: string; customerId: string; amount: number;
+}) {
+  const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+  const { toast } = useToast();
+
+  const handleTap = () => {
+    const params: TapToPayParams = {
+      business_id: businessId,
+      invoice_id: invoiceId,
+      customer_id: customerId,
+      amount,
+      payment_mode: "tap_to_pay",
+      return_url: window.location.origin + "/platform/invoices",
+    };
+    launchTapToPay(params);
+    toast({ title: "Opening Tap to Pay...", description: "If the app is not installed, a fallback page will open." });
+  };
 
   return (
-    <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-secondary/40 border border-border">
-      <Smartphone className="w-4 h-4 text-muted-foreground/60" />
+    <button
+      onClick={handleTap}
+      className="w-full text-left flex items-center gap-2 px-3 py-2.5 rounded-lg bg-secondary/40 border border-border hover:border-primary/20 transition-all"
+    >
+      <Smartphone className="w-4 h-4 text-primary" />
       <div className="flex-1">
-        <p className="font-body text-xs font-medium text-muted-foreground">Tap to Pay</p>
+        <p className="font-body text-xs font-medium text-foreground">Tap to Pay in Mobile App</p>
         <p className="font-body text-[10px] text-muted-foreground/70">
-          {backendReady && !isNativeMobile
-            ? "Backend ready — requires mobile app"
-            : backendReady && isNativeMobile
-            ? "Backend ready — mobile setup pending"
-            : "Not configured"}
+          {isMobile ? "Tap to launch POS app" : "Open on mobile device to collect"}
         </p>
       </div>
       <span className={cn(
         "font-body text-[10px] px-2 py-0.5 rounded-full border",
-        backendReady
-          ? "bg-[#f59e0b]/10 text-[#f59e0b] border-[#f59e0b]/20"
-          : "bg-muted text-muted-foreground border-border"
+        isMobile
+          ? "bg-primary/10 text-primary border-primary/20"
+          : "bg-[#f59e0b]/10 text-[#f59e0b] border-[#f59e0b]/20"
       )}>
-        {backendReady ? "Setup Pending" : "Not Ready"}
+        {isMobile ? "Ready" : "Mobile Only"}
       </span>
-    </div>
+    </button>
   );
 }
 
