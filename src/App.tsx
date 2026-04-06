@@ -69,7 +69,6 @@ import OpsSchedule from "./pages/ops/OpsSchedule";
 // Platform (multi-business)
 import PlatformLogin from "./pages/platform/PlatformLogin";
 import PlatformDashboard from "./pages/platform/PlatformDashboard";
-import PlatformModule from "./pages/platform/PlatformModule";
 import PlatformLeads from "./pages/platform/PlatformLeads";
 import PlatformCustomers from "./pages/platform/PlatformCustomers";
 import PlatformQuotes from "./pages/platform/PlatformQuotes";
@@ -77,6 +76,10 @@ import PlatformJobs from "./pages/platform/PlatformJobs";
 import PlatformSchedule from "./pages/platform/PlatformSchedule";
 import PlatformInvoices from "./pages/platform/PlatformInvoices";
 import PlatformPayments from "./pages/platform/PlatformPayments";
+import PlatformAnalytics from "./pages/platform/PlatformAnalytics";
+import PlatformComms from "./pages/platform/PlatformComms";
+import PlatformTasks from "./pages/platform/PlatformTasks";
+import PlatformSettings from "./pages/platform/PlatformSettings";
 // Service pages
 import PalmTreeTrimming from "./pages/services/PalmTreeTrimming";
 import PalmTreeInstallation from "./pages/services/PalmTreeInstallation";
