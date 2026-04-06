@@ -286,8 +286,6 @@ function InvoiceDetailPanel({ invoice, businessId, onStatusChange, onRecordPayme
     window.open(getPaymentUrl(), "_blank");
   };
 
-  const isPaid = invoice.status === "paid";
-  const isVoid = invoice.status === "void";
 
   return (
     <div className="space-y-5 pt-4">
