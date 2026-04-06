@@ -302,15 +302,13 @@ function CollectMenu({ onBack, onOnline, onSendLink, onRecord, onTapToPay }: {
         onClick={onRecord}
       />
 
-      {/* Tap to Pay — honest status */}
-      <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-secondary/30 border border-dashed border-border opacity-60">
-        <Smartphone className="w-4 h-4 text-muted-foreground" />
-        <div className="flex-1">
-          <p className="font-body text-xs font-medium text-muted-foreground">Tap to Pay</p>
-          <p className="font-body text-[10px] text-muted-foreground/70">Requires supported device & mobile app</p>
-        </div>
-        <span className="font-body text-[10px] px-2 py-0.5 rounded-full bg-[#f59e0b]/10 text-[#f59e0b] border border-[#f59e0b]/20">Setup Pending</span>
-      </div>
+      {/* Tap to Pay — deep link */}
+      <CollectOption
+        icon={Smartphone}
+        title="Tap to Pay in Mobile App"
+        desc="Collect in-person payment via the POS app on your phone."
+        onClick={onTapToPay}
+      />
     </div>
   );
 }
