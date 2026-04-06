@@ -43,6 +43,12 @@ const TextConsent = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title="SMS Text Consent | Gulf Coast Palms"
+        description="Opt in to receive text message updates from Gulf Coast Palms regarding your palm tree service appointments and estimates."
+        canonicalUrl="/text-consent"
+        noIndex
+      />
       <section className="relative py-20 md:py-28 bg-palm-dark overflow-hidden">
         <div className="container mx-auto px-4 text-center relative z-10">
           <motion.div initial="hidden" animate="visible">
