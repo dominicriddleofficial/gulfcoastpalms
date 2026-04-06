@@ -16,6 +16,7 @@ const fadeUp = {
 const PalmTreeTypes = () => {
   return (
     <Layout>
+      <SEOHead title="Palm Tree Types for Florida's Emerald Coast | Gulf Coast Palms" description="Learn about the most popular palm tree species for the Emerald Coast including care guides, trimming recommendations, and installation tips." canonicalUrl="/palm-trees/types" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         "@context": "https://schema.org",
         "@type": "CollectionPage",

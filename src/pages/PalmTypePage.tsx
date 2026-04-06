@@ -24,6 +24,7 @@ const PalmTypePage = () => {
 
   return (
     <Layout>
+      <SEOHead title={`${palm.name} — Care, Trimming & Removal Guide | Gulf Coast Palms`} description={palm.heroDescription} canonicalUrl={`/palm-trees/${palm.slug}`} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         "@context": "https://schema.org",
         "@type": "Article",

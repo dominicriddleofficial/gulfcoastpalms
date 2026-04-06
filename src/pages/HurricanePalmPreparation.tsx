@@ -48,6 +48,7 @@ const serviceAreas = [
 const HurricanePalmPreparation = () => {
   return (
     <Layout>
+      <SEOHead title="Hurricane Palm Tree Preparation Navarre & NW Florida | Gulf Coast Palms" description="Prepare your palms for hurricane season. Professional pre-storm trimming, hazard assessment, and emergency response across NW Florida." canonicalUrl="/hurricane-palm-preparation" />
       {/* JSON-LD */}
       <script
         type="application/ld+json"

@@ -42,6 +42,7 @@ const PalmGuidePage = () => {
 
   return (
     <Layout>
+      <SEOHead title={`${guide.title} | Gulf Coast Palms`} description={guide.metaDescription} canonicalUrl={`/palm-trees/guides/${guide.slug}`} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         "@context": "https://schema.org",
         "@type": "Article",

@@ -25,6 +25,7 @@ const trimmingFactors = [
 const PalmTreeCost = () => {
   return (
     <Layout>
+      <SEOHead title="How Much Does Palm Tree Trimming Cost in Florida? | Gulf Coast Palms" description="Get a breakdown of palm tree trimming, removal, and installation costs in Florida. Factors that affect pricing and how to get a free estimate." canonicalUrl="/palm-tree-cost" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         "@context": "https://schema.org",
         "@type": "FAQPage",
