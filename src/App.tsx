@@ -99,11 +99,12 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <RouteTracker />
-        <Routes>
+      <BusinessProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <RouteTracker />
+          <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/services" element={<Services />} />
           <Route path="/services/palm-tree-trimming" element={<PalmTreeTrimming />} />
