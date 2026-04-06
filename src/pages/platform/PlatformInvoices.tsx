@@ -258,8 +258,8 @@ function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayme
         businessShortcode={biz?.shortcode}
       />
 
-      {/* Payment Actions */}
-      {!isPaid && !isVoid && hasBalance && (
+      {/* Payment Actions — always shown, panel adapts to state */}
+      {!isVoid && (
         <PaymentActionPanel
           invoice={{
             id: invoice.id,

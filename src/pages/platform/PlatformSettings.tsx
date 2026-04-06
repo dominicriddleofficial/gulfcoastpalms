@@ -111,6 +111,9 @@ export default function PlatformSettings() {
               <div className="mt-3 pt-3 border-t border-border">
                 <OnlinePaymentsConfig businessId={selectedBusinessId} businesses={businesses} />
               </div>
+              <div className="mt-3 pt-3 border-t border-border">
+                <TapToPayReadiness businessId={selectedBusinessId} businesses={businesses} />
+              </div>
             </SettingsSection>
 
             {/* Sync Diagnostics */}
