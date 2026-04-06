@@ -179,6 +179,10 @@ const Navbar = () => {
                   </div>
                 )}
 
+                <Link to="/palm-trees/buy" onClick={closeAll} className={`font-body font-medium text-lg transition-colors hover:text-primary ${location.pathname === "/palm-trees/buy" ? "text-primary" : "text-muted-foreground"}`}>
+                  Buy Palm Trees
+                </Link>
+
                 {/* Mobile Service Areas */}
                 <button onClick={() => toggleOne(setAreasOpen, [setServicesOpen, setLearnOpen])} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.includes("palm-tree-trimming") ? "text-primary" : "text-muted-foreground"}`}>
                   Service Areas <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${areasOpen ? "rotate-180" : ""}`} />
