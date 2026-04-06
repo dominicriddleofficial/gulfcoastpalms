@@ -482,6 +482,75 @@ export type Database = {
           },
         ]
       }
+      customer_business_metrics: {
+        Row: {
+          business_id: string
+          customer_id: string
+          first_contact_at: string | null
+          first_job_at: string | null
+          id: string
+          last_activity_at: string | null
+          last_invoice_status: string | null
+          last_quote_status: string | null
+          lifetime_value: number | null
+          repeat_customer_flag: boolean | null
+          total_collected: number | null
+          total_invoiced: number | null
+          total_jobs: number | null
+          total_quotes: number | null
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          customer_id: string
+          first_contact_at?: string | null
+          first_job_at?: string | null
+          id?: string
+          last_activity_at?: string | null
+          last_invoice_status?: string | null
+          last_quote_status?: string | null
+          lifetime_value?: number | null
+          repeat_customer_flag?: boolean | null
+          total_collected?: number | null
+          total_invoiced?: number | null
+          total_jobs?: number | null
+          total_quotes?: number | null
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          customer_id?: string
+          first_contact_at?: string | null
+          first_job_at?: string | null
+          id?: string
+          last_activity_at?: string | null
+          last_invoice_status?: string | null
+          last_quote_status?: string | null
+          lifetime_value?: number | null
+          repeat_customer_flag?: boolean | null
+          total_collected?: number | null
+          total_invoiced?: number | null
+          total_jobs?: number | null
+          total_quotes?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_business_metrics_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_business_metrics_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "platform_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_drip_enrollments: {
         Row: {
           created_at: string
@@ -1161,6 +1230,45 @@ export type Database = {
         }
         Relationships: []
       }
+      master_people: {
+        Row: {
+          company_name: string | null
+          created_at: string
+          first_name: string
+          id: string
+          last_name: string
+          notes: string | null
+          primary_email: string | null
+          primary_phone: string | null
+          secondary_phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string
+          first_name: string
+          id?: string
+          last_name: string
+          notes?: string | null
+          primary_email?: string | null
+          primary_phone?: string | null
+          secondary_phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          notes?: string | null
+          primary_email?: string | null
+          primary_phone?: string | null
+          secondary_phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       numbering_sequences: {
         Row: {
           business_id: string
@@ -1195,6 +1303,394 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_customers: {
+        Row: {
+          business_id: string
+          company_name: string | null
+          created_at: string
+          customer_status: string
+          display_name: string
+          do_not_contact_flag: boolean | null
+          email: string | null
+          first_name: string | null
+          id: string
+          internal_notes: string | null
+          last_name: string | null
+          master_person_id: string | null
+          phone: string | null
+          preferred_contact_method: string | null
+          referral_source: string | null
+          secondary_phone: string | null
+          source: string | null
+          tags: Json | null
+          updated_at: string
+          vip_flag: boolean | null
+        }
+        Insert: {
+          business_id: string
+          company_name?: string | null
+          created_at?: string
+          customer_status?: string
+          display_name: string
+          do_not_contact_flag?: boolean | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          internal_notes?: string | null
+          last_name?: string | null
+          master_person_id?: string | null
+          phone?: string | null
+          preferred_contact_method?: string | null
+          referral_source?: string | null
+          secondary_phone?: string | null
+          source?: string | null
+          tags?: Json | null
+          updated_at?: string
+          vip_flag?: boolean | null
+        }
+        Update: {
+          business_id?: string
+          company_name?: string | null
+          created_at?: string
+          customer_status?: string
+          display_name?: string
+          do_not_contact_flag?: boolean | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          internal_notes?: string | null
+          last_name?: string | null
+          master_person_id?: string | null
+          phone?: string | null
+          preferred_contact_method?: string | null
+          referral_source?: string | null
+          secondary_phone?: string | null
+          source?: string | null
+          tags?: Json | null
+          updated_at?: string
+          vip_flag?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_customers_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_customers_master_person_id_fkey"
+            columns: ["master_person_id"]
+            isOneToOne: false
+            referencedRelation: "master_people"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_lead_files: {
+        Row: {
+          business_id: string
+          file_name: string | null
+          file_url: string
+          id: string
+          lead_id: string
+          mime_type: string | null
+          uploaded_at: string
+        }
+        Insert: {
+          business_id: string
+          file_name?: string | null
+          file_url: string
+          id?: string
+          lead_id: string
+          mime_type?: string | null
+          uploaded_at?: string
+        }
+        Update: {
+          business_id?: string
+          file_name?: string | null
+          file_url?: string
+          id?: string
+          lead_id?: string
+          mime_type?: string | null
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_lead_files_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_lead_files_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "platform_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_lead_sources: {
+        Row: {
+          active_status: string | null
+          business_id: string | null
+          created_at: string
+          id: string
+          source_name: string
+          source_type: string | null
+        }
+        Insert: {
+          active_status?: string | null
+          business_id?: string | null
+          created_at?: string
+          id?: string
+          source_name: string
+          source_type?: string | null
+        }
+        Update: {
+          active_status?: string | null
+          business_id?: string | null
+          created_at?: string
+          id?: string
+          source_name?: string
+          source_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_lead_sources_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_leads: {
+        Row: {
+          assigned_to_user_id: string | null
+          budget_range: string | null
+          business_id: string
+          converted_job_id: string | null
+          converted_quote_id: string | null
+          created_at: string
+          customer_id: string | null
+          id: string
+          inquiry_email: string | null
+          inquiry_name: string
+          inquiry_phone: string | null
+          landing_page_url: string | null
+          lead_status: string
+          lost_reason: string | null
+          message: string | null
+          next_follow_up_at: string | null
+          property_id: string | null
+          raw_payload_json: Json | null
+          referrer_url: string | null
+          requested_service: string | null
+          requested_service_category: string | null
+          source_id: string | null
+          source_name: string | null
+          updated_at: string
+          uploaded_files_count: number | null
+          urgency_level: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+          website_origin: string | null
+        }
+        Insert: {
+          assigned_to_user_id?: string | null
+          budget_range?: string | null
+          business_id: string
+          converted_job_id?: string | null
+          converted_quote_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          inquiry_email?: string | null
+          inquiry_name: string
+          inquiry_phone?: string | null
+          landing_page_url?: string | null
+          lead_status?: string
+          lost_reason?: string | null
+          message?: string | null
+          next_follow_up_at?: string | null
+          property_id?: string | null
+          raw_payload_json?: Json | null
+          referrer_url?: string | null
+          requested_service?: string | null
+          requested_service_category?: string | null
+          source_id?: string | null
+          source_name?: string | null
+          updated_at?: string
+          uploaded_files_count?: number | null
+          urgency_level?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          website_origin?: string | null
+        }
+        Update: {
+          assigned_to_user_id?: string | null
+          budget_range?: string | null
+          business_id?: string
+          converted_job_id?: string | null
+          converted_quote_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          inquiry_email?: string | null
+          inquiry_name?: string
+          inquiry_phone?: string | null
+          landing_page_url?: string | null
+          lead_status?: string
+          lost_reason?: string | null
+          message?: string | null
+          next_follow_up_at?: string | null
+          property_id?: string | null
+          raw_payload_json?: Json | null
+          referrer_url?: string | null
+          requested_service?: string | null
+          requested_service_category?: string | null
+          source_id?: string | null
+          source_name?: string | null
+          updated_at?: string
+          uploaded_files_count?: number | null
+          urgency_level?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          website_origin?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_leads_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_leads_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "platform_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_leads_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "platform_properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_leads_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "platform_lead_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_properties: {
+        Row: {
+          access_notes: string | null
+          address_1: string
+          address_2: string | null
+          business_id: string
+          city: string
+          country: string | null
+          created_at: string
+          customer_id: string
+          gate_code: string | null
+          geocode_last_attempt_at: string | null
+          geocode_source: string | null
+          geocode_status: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          lot_size: string | null
+          map_place_id: string | null
+          property_label: string | null
+          property_type: string | null
+          state: string
+          updated_at: string
+          zip: string
+        }
+        Insert: {
+          access_notes?: string | null
+          address_1: string
+          address_2?: string | null
+          business_id: string
+          city: string
+          country?: string | null
+          created_at?: string
+          customer_id: string
+          gate_code?: string | null
+          geocode_last_attempt_at?: string | null
+          geocode_source?: string | null
+          geocode_status?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          lot_size?: string | null
+          map_place_id?: string | null
+          property_label?: string | null
+          property_type?: string | null
+          state?: string
+          updated_at?: string
+          zip: string
+        }
+        Update: {
+          access_notes?: string | null
+          address_1?: string
+          address_2?: string | null
+          business_id?: string
+          city?: string
+          country?: string | null
+          created_at?: string
+          customer_id?: string
+          gate_code?: string | null
+          geocode_last_attempt_at?: string | null
+          geocode_source?: string | null
+          geocode_status?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          lot_size?: string | null
+          map_place_id?: string | null
+          property_label?: string | null
+          property_type?: string | null
+          state?: string
+          updated_at?: string
+          zip?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_properties_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_properties_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "platform_customers"
             referencedColumns: ["id"]
           },
         ]
@@ -1624,6 +2120,80 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      find_duplicate_customers: {
+        Args: { _business_id: string; _email?: string; _phone?: string }
+        Returns: {
+          business_id: string
+          company_name: string | null
+          created_at: string
+          customer_status: string
+          display_name: string
+          do_not_contact_flag: boolean | null
+          email: string | null
+          first_name: string | null
+          id: string
+          internal_notes: string | null
+          last_name: string | null
+          master_person_id: string | null
+          phone: string | null
+          preferred_contact_method: string | null
+          referral_source: string | null
+          secondary_phone: string | null
+          source: string | null
+          tags: Json | null
+          updated_at: string
+          vip_flag: boolean | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "platform_customers"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      find_duplicate_leads: {
+        Args: { _business_id: string; _email?: string; _phone?: string }
+        Returns: {
+          assigned_to_user_id: string | null
+          budget_range: string | null
+          business_id: string
+          converted_job_id: string | null
+          converted_quote_id: string | null
+          created_at: string
+          customer_id: string | null
+          id: string
+          inquiry_email: string | null
+          inquiry_name: string
+          inquiry_phone: string | null
+          landing_page_url: string | null
+          lead_status: string
+          lost_reason: string | null
+          message: string | null
+          next_follow_up_at: string | null
+          property_id: string | null
+          raw_payload_json: Json | null
+          referrer_url: string | null
+          requested_service: string | null
+          requested_service_category: string | null
+          source_id: string | null
+          source_name: string | null
+          updated_at: string
+          uploaded_files_count: number | null
+          urgency_level: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+          website_origin: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "platform_leads"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       generate_next_number: {
         Args: { _business_id: string; _record_type: string }
         Returns: string
