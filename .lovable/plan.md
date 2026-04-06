@@ -1,43 +1,32 @@
 
-# Multi-Business Field Service Platform — Build Plan
+## Phase A: Schema & Backend (Migration)
+1. **Payment infrastructure tables**: `payment_provider_accounts`, `payment_intents`, `tap_to_pay_transactions`, `payment_webhook_events`
+2. **Source tracking columns**: Add `source_system`, `source_record_id`, `source_last_synced_at` to key platform tables that lack them
+3. **Sync log table**: `sync_logs` for Jobber import diagnostics
 
-## Reality Check
-This spec describes a full SaaS product (42+ tables, 7+ modules, complete UI). Building it all at once would produce broken, untestable code. Instead, I'll build it in **focused, working phases** where each phase delivers usable functionality.
+## Phase B: Stripe Integration
+1. Enable Stripe via the Stripe tool
+2. Create `create-checkout` edge function for invoice payment links
+3. Create `stripe-webhook` edge function for payment status updates
+4. Create customer-facing payment page route `/pay/:businessShortcode/:invoiceId`
 
-## Phase 1 — Foundation (This Session)
-Build the core infrastructure that everything else depends on:
+## Phase C: Replace All Placeholders with Real Pages
+1. **Analytics page** — live queries for revenue trends, lead sources, quote conversion, jobs by status
+2. **Tasks page** — create/list tasks linked to leads/jobs/invoices with status and due dates
+3. **Comms page** — communication timeline/log with manual entry support
+4. **Settings page** — business settings, numbering, integrations panel, Jobber sync diagnostics, payment config
+5. **Remove "Phase 2+"** from PlatformModule.tsx
+6. **Remove "Coming Soon"** from Dashboard section cards — replace with live Recent Activity and pipeline data
+7. **Remove "Phase 3+"** from Customer detail — wire real quote/job/invoice counts
 
-### Database Schema (Phase 1 tables only)
-1. **workspaces** — single master workspace
-2. **businesses** — Gulf Coast Palms + Prestige Property Services
-3. **business_settings** — per-business config (prefixes, defaults, colors)
-4. **numbering_sequences** — independent numbering per business per record type
-5. **user_business_access** — maps users to businesses with role + permissions
-6. **audit_logs** — foundation for change tracking
-7. **Refactor existing user_roles** — integrate with new business-aware access model
+## Phase D: Dashboard Live Data
+1. Replace static "Coming Soon" sections with real queries
+2. Business comparison cards with per-business metrics
+3. Recent activity timeline from actual records
 
-### UI (Phase 1)
-1. **Business switcher** — global context selector (All / GCP / PPS)
-2. **Platform shell** — new `/platform` route with dark ops theme, nav, business badge
-3. **Owner command center dashboard** — KPI cards that respect business filter
-4. **Seed data** — realistic demo records for both businesses
+## Phase E: Quote Detail Cleanup
+1. Remove "(Phase 4)" label from convert-to-job button (it already works)
 
-### Auth/Permissions
-- Existing Supabase auth preserved
-- New `user_business_access` table controls which businesses a user can see
-- RLS policies on all new tables using business_id scoping
-
-### What Phase 1 does NOT include (deferred to future phases):
-- Leads/CRM module (Phase 2)
-- Quotes module (Phase 3)
-- Jobs/Schedule/Dispatch (Phase 4)  
-- Invoices/Payments (Phase 5)
-- Analytics/Exports (Phase 6)
-- Automations/Integrations (Phase 7)
-
-Each future phase will add tables + UI modules that plug into this foundation via `business_id`.
-
-## Existing System Preservation
-- The current `/ops` dashboard, `/admin` dashboard, and public website remain untouched
-- New platform lives at `/platform/*`
-- Migration path from old ops → new platform can happen gradually
+## Deferred (separate message):
+- Full Jobber sync improvements (edge function work)
+- Prestige lead normalization (data insertion)

@@ -377,15 +377,6 @@ function QuoteDetail({ quote, biz, onUpdate, onClose }: {
         </div>
       )}
 
-      {/* Convert to job (accepted quotes) */}
-      {quote.status === "accepted" && (
-        <div className="pt-2">
-          <Button size="sm" className="w-full gap-1.5">
-            <FileText className="w-4 h-4" /> Convert to Job
-            <span className="text-[10px] opacity-70">(Phase 4)</span>
-          </Button>
-        </div>
-      )}
 
       <div className="text-[10px] font-body text-muted-foreground/50">
         Created {format(new Date(quote.created_at), "MMM d, yyyy h:mm a")} · v{quote.version_number}
