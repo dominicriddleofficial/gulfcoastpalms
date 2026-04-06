@@ -85,6 +85,11 @@ const TeamLeaderCareers = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title="Team Leader Position | Gulf Coast Palms Careers"
+        description="Lead a crew with Gulf Coast Palms. We're hiring experienced Team Leaders for palm tree service operations across NW Florida. Apply today."
+        canonicalUrl="/careers/gulf-coast-palms/team-leader"
+      />
       {/* Hero */}
       <section className="relative bg-foreground text-background overflow-hidden">
         <div className="absolute inset-0 opacity-10">
