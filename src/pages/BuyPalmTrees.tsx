@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Phone, MessageSquare, Ruler, DollarSign } from "lucide-react";
 import Layout from "@/components/Layout";
+import SEOHead from "@/components/SEOHead";
 import { palmTypes } from "@/data/palmTypes";
 import { Link } from "react-router-dom";
 
