@@ -6,6 +6,9 @@ import {
   type PlatformInvoice, type InvoiceLineItem,
 } from "@/hooks/usePlatformInvoices";
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
+import { InvoiceStatusBadge, getInvoiceDisplayState, getAmountDueNow } from "@/components/platform/billing/InvoiceStatusBadge";
+import BillingSummaryCard from "@/components/platform/billing/BillingSummaryCard";
+import PaymentActionPanel from "@/components/platform/billing/PaymentActionPanel";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -18,19 +21,6 @@ import { format, formatDistanceToNow, isPast, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
-function InvoiceStatusBadge({ status }: { status: string }) {
-  const s = INVOICE_STATUSES.find(is => is.value === status);
-  if (!s) return <span className="text-xs text-muted-foreground">{status}</span>;
-  return (
-    <span
-      className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-body font-medium"
-      style={{ backgroundColor: s.color + "20", color: s.color, border: `1px solid ${s.color}30` }}
-    >
-      {s.label}
-    </span>
-  );
-}
 
 export default function PlatformInvoices() {
   const { selectedBusinessId, businesses, userId } = usePlatformAuth();
@@ -50,9 +40,9 @@ export default function PlatformInvoices() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="font-display text-xl font-bold text-foreground">Invoices</h1>
+            <h1 className="font-display text-xl font-bold text-foreground tracking-tight">Invoices</h1>
             <p className="font-body text-xs text-muted-foreground">
-              {statusCounts.all} total · ${totals.totalOutstanding.toLocaleString()} outstanding
+              {statusCounts.all} total · <span className="text-foreground font-medium">${totals.totalOutstanding.toLocaleString()}</span> outstanding
             </p>
           </div>
           <Button size="sm" className="font-body text-xs" onClick={() => setShowCreate(true)}>
@@ -62,56 +52,22 @@ export default function PlatformInvoices() {
 
         {/* KPI cards */}
         <div className="grid grid-cols-3 gap-2">
-          <div className="bg-card border border-border rounded-lg p-3">
-            <div className="flex items-center gap-1.5 mb-1">
-              <DollarSign className="w-3.5 h-3.5 text-primary" />
-              <span className="font-body text-[10px] text-muted-foreground">Collected</span>
-            </div>
-            <p className="font-display text-lg font-bold text-foreground">${totals.totalCollected.toLocaleString()}</p>
-          </div>
-          <div className="bg-card border border-border rounded-lg p-3">
-            <div className="flex items-center gap-1.5 mb-1">
-              <Clock className="w-3.5 h-3.5 text-accent" />
-              <span className="font-body text-[10px] text-muted-foreground">Outstanding</span>
-            </div>
-            <p className="font-display text-lg font-bold text-foreground">${totals.totalOutstanding.toLocaleString()}</p>
-          </div>
-          <div className="bg-card border border-border rounded-lg p-3">
-            <div className="flex items-center gap-1.5 mb-1">
-              <AlertTriangle className="w-3.5 h-3.5 text-destructive" />
-              <span className="font-body text-[10px] text-muted-foreground">Overdue</span>
-            </div>
-            <p className="font-display text-lg font-bold text-foreground">{totals.overdueCount}</p>
-          </div>
+          <KPICard icon={DollarSign} label="Collected" value={`$${totals.totalCollected.toLocaleString()}`} color="text-[#22c55e]" />
+          <KPICard icon={Clock} label="Outstanding" value={`$${totals.totalOutstanding.toLocaleString()}`} color="text-[#f59e0b]" />
+          <KPICard icon={AlertTriangle} label="Overdue" value={String(totals.overdueCount)} color="text-destructive" />
         </div>
 
         {/* Status pills */}
         <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
-          <button
-            onClick={() => setStatusFilter("all")}
-            className={cn(
-              "px-3 py-1 rounded-full text-[11px] font-body font-medium whitespace-nowrap transition-all border",
-              statusFilter === "all"
-                ? "bg-primary/15 text-primary border-primary/30"
-                : "bg-secondary text-muted-foreground border-border hover:text-foreground"
-            )}
-          >
-            All ({statusCounts.all})
-          </button>
+          <StatusPill active={statusFilter === "all"} onClick={() => setStatusFilter("all")} label={`All (${statusCounts.all})`} />
           {INVOICE_STATUSES.map(s => (
-            <button
+            <StatusPill
               key={s.value}
+              active={statusFilter === s.value}
               onClick={() => setStatusFilter(s.value)}
-              className={cn(
-                "px-3 py-1 rounded-full text-[11px] font-body font-medium whitespace-nowrap transition-all border",
-                statusFilter === s.value
-                  ? "border-primary/30"
-                  : "bg-secondary text-muted-foreground border-border hover:text-foreground"
-              )}
-              style={statusFilter === s.value ? { backgroundColor: s.color + "20", color: s.color, borderColor: s.color + "40" } : {}}
-            >
-              {s.label} ({statusCounts[s.value] || 0})
-            </button>
+              label={`${s.label} (${statusCounts[s.value] || 0})`}
+              color={s.color}
+            />
           ))}
         </div>
 
@@ -140,44 +96,45 @@ export default function PlatformInvoices() {
           <div className="space-y-2">
             {invoices.map(inv => {
               const biz = getBiz(inv.business_id);
-              const isOverdue = inv.due_date && isPast(parseISO(inv.due_date)) && !["paid", "void"].includes(inv.status);
+              const displayState = getInvoiceDisplayState(inv);
+              const { amount: dueNow } = getAmountDueNow(inv);
               return (
                 <button
                   key={inv.id}
                   onClick={() => setSelectedInvoice(inv)}
-                  className="w-full text-left bg-card border border-border rounded-lg p-3 hover:border-primary/30 transition-all"
+                  className="w-full text-left bg-card border border-border rounded-lg p-3.5 hover:border-primary/30 transition-all"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-body text-[11px] text-muted-foreground font-mono">{inv.invoice_number}</span>
-                        <InvoiceStatusBadge status={isOverdue && inv.status !== "overdue" ? "overdue" : inv.status} />
+                        <span className="font-mono text-[11px] font-semibold text-foreground/70">{inv.invoice_number}</span>
+                        <InvoiceStatusBadge status={displayState} />
                         {!selectedBusinessId && biz && (
                           <InlineBadge shortcode={biz.shortcode} color={biz.default_business_color} />
                         )}
                       </div>
-                      <p className="font-body text-sm font-medium text-foreground truncate">
+                      <p className="font-body text-sm font-semibold text-foreground truncate">
                         {inv.customer_name || "Unknown Customer"}
                       </p>
                       <div className="flex items-center gap-3 mt-1 text-[11px] text-muted-foreground font-body">
                         {inv.issue_date && (
-                          <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{format(parseISO(inv.issue_date), "MMM d")}</span>
+                          <span>{format(parseISO(inv.issue_date), "MMM d")}</span>
                         )}
                         {inv.due_date && (
-                          <span className={cn("flex items-center gap-1", isOverdue && "text-destructive")}>
+                          <span className={cn(displayState === "overdue" && "text-destructive font-medium")}>
                             Due {format(parseISO(inv.due_date), "MMM d")}
                           </span>
                         )}
                         {inv.job_number && (
-                          <span className="flex items-center gap-1"><Hash className="w-3 h-3" />{inv.job_number}</span>
+                          <span className="font-mono">#{inv.job_number}</span>
                         )}
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="font-body text-sm font-semibold text-foreground">${Number(inv.total || 0).toLocaleString()}</p>
-                      {Number(inv.balance_due || 0) > 0 && Number(inv.balance_due) !== Number(inv.total) && (
-                        <p className="font-body text-[10px] text-accent">
-                          ${Number(inv.balance_due).toLocaleString()} due
+                      <p className="font-body text-base font-bold text-foreground">${Number(inv.total || 0).toLocaleString()}</p>
+                      {dueNow > 0 && dueNow !== Number(inv.total) && (
+                        <p className="font-body text-[11px] font-semibold text-[#f59e0b]">
+                          ${dueNow.toLocaleString()} due
                         </p>
                       )}
                     </div>
@@ -195,7 +152,7 @@ export default function PlatformInvoices() {
           {selectedInvoice && (
             <InvoiceDetailPanel
               invoice={selectedInvoice}
-              businessId={selectedInvoice.business_id}
+              businesses={businesses}
               onStatusChange={async (newStatus) => {
                 const updates: any = { status: newStatus };
                 if (newStatus === "sent") updates.sent_at = new Date().toISOString();
@@ -210,7 +167,7 @@ export default function PlatformInvoices() {
                 refetch();
                 setSelectedInvoice(null);
               }}
-              onRecordPayment={async (amount, method) => {
+              onRecordPayment={async (amount, method, notes, isDeposit) => {
                 const { data: numData } = await supabase.rpc("generate_next_number", {
                   _business_id: selectedInvoice.business_id,
                   _record_type: "payment",
@@ -222,17 +179,20 @@ export default function PlatformInvoices() {
                   customer_id: selectedInvoice.customer_id,
                   amount,
                   method,
+                  notes: notes || null,
+                  is_deposit: isDeposit,
                   recorded_by_user_id: userId,
                 });
                 const newPaid = (Number(selectedInvoice.amount_paid) || 0) + amount;
                 const newBalance = (Number(selectedInvoice.total) || 0) - newPaid;
-                const newStatus = newBalance <= 0 ? "paid" : "partial";
-                await supabase.from("platform_invoices").update({
+                const invoiceUpdates: any = {
                   amount_paid: newPaid,
                   balance_due: Math.max(0, newBalance),
-                  status: newStatus,
-                  ...(newStatus === "paid" ? { paid_at: new Date().toISOString() } : {}),
-                }).eq("id", selectedInvoice.id);
+                  status: newBalance <= 0 ? "paid" : "partial",
+                };
+                if (newBalance <= 0) invoiceUpdates.paid_at = new Date().toISOString();
+                if (isDeposit) invoiceUpdates.deposit_paid = true;
+                await supabase.from("platform_invoices").update(invoiceUpdates).eq("id", selectedInvoice.id);
                 toast({ title: `Payment of $${amount.toLocaleString()} recorded` });
                 refetch();
                 setSelectedInvoice(null);
@@ -257,17 +217,15 @@ export default function PlatformInvoices() {
   );
 }
 
-function InvoiceDetailPanel({ invoice, businessId, onStatusChange, onRecordPayment }: {
+/* ─── Invoice Detail ─── */
+function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayment }: {
   invoice: PlatformInvoice;
-  businessId: string;
+  businesses: any[];
   onStatusChange: (status: string) => void;
-  onRecordPayment: (amount: number, method: string) => void;
+  onRecordPayment: (amount: number, method: string, notes: string, isDeposit: boolean) => void;
 }) {
-  const [showPayment, setShowPayment] = useState(false);
-  const [payAmount, setPayAmount] = useState(String(Number(invoice.balance_due || invoice.total || 0)));
-  const [payMethod, setPayMethod] = useState("card");
   const { toast } = useToast();
-
+  const biz = businesses.find(b => b.id === invoice.business_id);
   const isPaid = invoice.status === "paid";
   const isVoid = invoice.status === "void";
   const hasBalance = Number(invoice.balance_due || invoice.total || 0) > 0;
@@ -279,125 +237,78 @@ function InvoiceDetailPanel({ invoice, businessId, onStatusChange, onRecordPayme
 
   const copyPaymentLink = () => {
     navigator.clipboard.writeText(getPaymentUrl());
-    toast({ title: "Payment link copied" });
+    toast({ title: "Payment link copied to clipboard" });
   };
 
   const openPaymentPage = () => {
     window.open(getPaymentUrl(), "_blank");
   };
 
-
   return (
     <div className="space-y-5 pt-4">
       <SheetHeader>
-        <SheetTitle className="font-display text-foreground flex items-center gap-2">
-          <span className="font-mono text-sm text-muted-foreground">{invoice.invoice_number}</span>
-          <InvoiceStatusBadge status={invoice.status} />
-        </SheetTitle>
+        <SheetTitle className="font-display text-foreground sr-only">Invoice Detail</SheetTitle>
       </SheetHeader>
 
-      <div className="bg-card border border-border rounded-lg p-4">
-        <div className="grid grid-cols-2 gap-4">
+      {/* Billing Summary Card */}
+      <BillingSummaryCard
+        invoice={invoice}
+        businessName={biz?.public_brand_name}
+        businessColor={biz?.default_business_color}
+        businessShortcode={biz?.shortcode}
+      />
+
+      {/* Payment Actions */}
+      {!isPaid && !isVoid && hasBalance && (
+        <PaymentActionPanel
+          invoice={{
+            id: invoice.id,
+            invoice_number: invoice.invoice_number,
+            total: invoice.total,
+            balance_due: invoice.balance_due,
+            amount_paid: invoice.amount_paid,
+            deposit_required: invoice.deposit_required,
+            deposit_paid: invoice.deposit_paid,
+            deposit_amount: invoice.deposit_amount,
+            status: invoice.status,
+          }}
+          onRecordPayment={onRecordPayment}
+          onOpenPaymentPage={openPaymentPage}
+          onCopyPaymentLink={copyPaymentLink}
+        />
+      )}
+
+      {/* Paid state */}
+      {isPaid && (
+        <div className="flex items-center gap-3 bg-[#22c55e]/10 border border-[#22c55e]/20 rounded-xl p-4">
+          <CheckCircle className="w-6 h-6 text-[#22c55e]" />
           <div>
-            <p className="font-body text-[10px] text-muted-foreground">Total</p>
-            <p className="font-display text-2xl font-bold text-foreground">${Number(invoice.total || 0).toLocaleString()}</p>
-          </div>
-          <div>
-            <p className="font-body text-[10px] text-muted-foreground">Balance Due</p>
-            <p className={cn("font-display text-2xl font-bold", Number(invoice.balance_due || 0) > 0 ? "text-accent" : "text-primary")}>
-              ${Number(invoice.balance_due || 0).toLocaleString()}
-            </p>
-          </div>
-        </div>
-        {Number(invoice.amount_paid || 0) > 0 && (
-          <div className="mt-2 pt-2 border-t border-border">
+            <p className="font-body text-sm font-semibold text-[#22c55e]">Payment Complete</p>
             <p className="font-body text-xs text-muted-foreground">
-              Paid: <span className="text-primary font-medium">${Number(invoice.amount_paid).toLocaleString()}</span>
+              ${Number(invoice.amount_paid || invoice.total || 0).toLocaleString()} collected
             </p>
           </div>
-        )}
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <InfoCard label="Customer" value={invoice.customer_name || "—"} icon={User} />
-        <InfoCard label="Issued" value={invoice.issue_date ? format(parseISO(invoice.issue_date), "MMM d, yyyy") : "—"} icon={Calendar} />
-        <InfoCard label="Due Date" value={invoice.due_date ? format(parseISO(invoice.due_date), "MMM d, yyyy") : "—"} icon={Clock} />
-        <InfoCard label="Terms" value={invoice.terms || "—"} icon={Receipt} />
-      </div>
-
-      {invoice.deposit_required && (
-        <div className="bg-card border border-border rounded-lg p-3">
-          <p className="font-body text-xs text-muted-foreground mb-1">Deposit Required</p>
-          <p className="font-body text-sm text-foreground">
-            ${Number(invoice.deposit_amount || 0).toLocaleString()}
-            {invoice.deposit_paid ? " ✓ Collected" : " — Pending"}
-          </p>
         </div>
       )}
+
+      {/* Details grid */}
+      <div className="grid grid-cols-2 gap-2.5">
+        <DetailCard label="Customer" value={invoice.customer_name || "—"} />
+        <DetailCard label="Issued" value={invoice.issue_date ? format(parseISO(invoice.issue_date), "MMM d, yyyy") : "—"} />
+        <DetailCard label="Due Date" value={invoice.due_date ? format(parseISO(invoice.due_date), "MMM d, yyyy") : "—"} />
+        <DetailCard label="Terms" value={invoice.terms || "—"} />
+      </div>
 
       {invoice.internal_notes && (
         <div className="bg-card border border-border rounded-lg p-3">
-          <p className="font-body text-xs text-muted-foreground mb-1">Internal Notes</p>
-          <p className="font-body text-sm text-foreground">{invoice.internal_notes}</p>
+          <p className="font-body text-xs font-medium text-foreground mb-1">Internal Notes</p>
+          <p className="font-body text-sm text-muted-foreground">{invoice.internal_notes}</p>
         </div>
       )}
 
-      {/* Payment Link Actions */}
-      {!isPaid && !isVoid && hasBalance && (
-        <div className="flex gap-2">
-          <Button size="sm" variant="outline" className="flex-1 font-body text-xs" onClick={copyPaymentLink}>
-            <Link2 className="w-3.5 h-3.5 mr-1" /> Copy Payment Link
-          </Button>
-          <Button size="sm" variant="outline" className="font-body text-xs" onClick={openPaymentPage}>
-            <ExternalLink className="w-3.5 h-3.5 mr-1" /> Open
-          </Button>
-        </div>
-      )}
-
-      {/* Actions */}
-      {!isPaid && !isVoid && (
-        <div className="space-y-2">
-          {!showPayment ? (
-            <div className="flex gap-2">
-              <Button size="sm" className="flex-1 font-body text-xs" onClick={() => setShowPayment(true)}>
-                <DollarSign className="w-3.5 h-3.5 mr-1" /> Record Payment
-              </Button>
-              {invoice.status === "draft" && (
-                <Button size="sm" variant="outline" className="font-body text-xs" onClick={() => onStatusChange("sent")}>
-                  <Send className="w-3.5 h-3.5 mr-1" /> Mark Sent
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div className="bg-card border border-border rounded-lg p-3 space-y-3">
-              <p className="font-body text-xs text-muted-foreground">Record Payment</p>
-              <Input
-                type="number"
-                value={payAmount}
-                onChange={e => setPayAmount(e.target.value)}
-                placeholder="Amount"
-                className="bg-background border-border font-body"
-              />
-              <Select value={payMethod} onValueChange={setPayMethod}>
-                <SelectTrigger className="bg-background border-border font-body text-sm"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {PAYMENT_METHODS.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <div className="flex gap-2">
-                <Button size="sm" className="flex-1 font-body text-xs" onClick={() => onRecordPayment(Number(payAmount), payMethod)}>
-                  Confirm Payment
-                </Button>
-                <Button size="sm" variant="ghost" className="font-body text-xs" onClick={() => setShowPayment(false)}>Cancel</Button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Status buttons */}
+      {/* Status Update */}
       <div>
-        <p className="font-body text-xs text-muted-foreground mb-2">Update Status</p>
+        <p className="font-body text-xs font-semibold text-foreground mb-2">Update Status</p>
         <div className="flex flex-wrap gap-1.5">
           {INVOICE_STATUSES.map(s => (
             <Button
@@ -414,25 +325,57 @@ function InvoiceDetailPanel({ invoice, businessId, onStatusChange, onRecordPayme
         </div>
       </div>
 
-      <p className="font-body text-[10px] text-muted-foreground">
+      <p className="font-body text-[11px] text-muted-foreground">
         Created {formatDistanceToNow(new Date(invoice.created_at), { addSuffix: true })}
       </p>
     </div>
   );
 }
 
-function InfoCard({ label, value, icon: Icon }: { label: string; value: string; icon: any }) {
+/* ─── Detail Card ─── */
+function DetailCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-card border border-border rounded-lg p-2.5">
-      <div className="flex items-center gap-1.5 mb-0.5">
-        <Icon className="w-3 h-3 text-muted-foreground" />
-        <p className="font-body text-[10px] text-muted-foreground">{label}</p>
-      </div>
-      <p className="font-body text-sm text-foreground truncate">{value}</p>
+      <p className="font-body text-[10px] font-medium text-muted-foreground mb-0.5">{label}</p>
+      <p className="font-body text-sm font-medium text-foreground truncate">{value}</p>
     </div>
   );
 }
 
+/* ─── KPI Card ─── */
+function KPICard({ icon: Icon, label, value, color }: { icon: any; label: string; value: string; color: string }) {
+  return (
+    <div className="bg-card border border-border rounded-lg p-3">
+      <div className="flex items-center gap-1.5 mb-1">
+        <Icon className={cn("w-3.5 h-3.5", color)} />
+        <span className="font-body text-[10px] font-medium text-muted-foreground">{label}</span>
+      </div>
+      <p className="font-display text-lg font-bold text-foreground">{value}</p>
+    </div>
+  );
+}
+
+/* ─── Status Pill ─── */
+function StatusPill({ active, onClick, label, color }: { active: boolean; onClick: () => void; label: string; color?: string }) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "px-3 py-1 rounded-full text-[11px] font-body font-semibold whitespace-nowrap transition-all border",
+        active
+          ? color
+            ? "border-transparent"
+            : "bg-primary/15 text-primary border-primary/30"
+          : "bg-secondary text-muted-foreground border-border hover:text-foreground"
+      )}
+      style={active && color ? { backgroundColor: color + "20", color: color, borderColor: color + "40" } : {}}
+    >
+      {label}
+    </button>
+  );
+}
+
+/* ─── Create Invoice Form ─── */
 function CreateInvoiceForm({ businessId, businesses, userId, onCreated }: {
   businessId: string | null;
   businesses: any[];
@@ -517,7 +460,7 @@ function CreateInvoiceForm({ businessId, businesses, userId, onCreated }: {
 
       {!businessId && businesses.length > 1 && (
         <div>
-          <label className="font-body text-xs text-muted-foreground mb-1 block">Business</label>
+          <label className="font-body text-xs font-medium text-foreground mb-1.5 block">Business</label>
           <Select value={bizId} onValueChange={setBizId}>
             <SelectTrigger className="bg-card border-border font-body text-sm"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -528,7 +471,7 @@ function CreateInvoiceForm({ businessId, businesses, userId, onCreated }: {
       )}
 
       <div>
-        <label className="font-body text-xs text-muted-foreground mb-1 block">Terms</label>
+        <label className="font-body text-xs font-medium text-foreground mb-1.5 block">Terms</label>
         <Select value={terms} onValueChange={setTerms}>
           <SelectTrigger className="bg-card border-border font-body text-sm"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -542,7 +485,7 @@ function CreateInvoiceForm({ businessId, businesses, userId, onCreated }: {
 
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="font-body text-xs text-muted-foreground">Line Items</label>
+          <label className="font-body text-xs font-medium text-foreground">Line Items</label>
           <Button size="sm" variant="ghost" className="font-body text-xs text-primary h-6 px-2" onClick={addLine}>
             <Plus className="w-3 h-3 mr-1" /> Add
           </Button>
@@ -578,16 +521,16 @@ function CreateInvoiceForm({ businessId, businesses, userId, onCreated }: {
         </div>
         <div className="text-right mt-2">
           <span className="font-body text-sm text-muted-foreground">Total: </span>
-          <span className="font-body text-sm font-semibold text-foreground">${subtotal.toLocaleString()}</span>
+          <span className="font-body text-sm font-bold text-foreground">${subtotal.toLocaleString()}</span>
         </div>
       </div>
 
       <div>
-        <label className="font-body text-xs text-muted-foreground mb-1 block">Internal Notes</label>
+        <label className="font-body text-xs font-medium text-foreground mb-1.5 block">Internal Notes</label>
         <Input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Optional..." className="bg-card border-border font-body" />
       </div>
 
-      <Button className="w-full font-body" onClick={handleSubmit} disabled={saving}>
+      <Button className="w-full font-body font-semibold" onClick={handleSubmit} disabled={saving}>
         {saving ? "Creating..." : "Create Invoice"}
       </Button>
     </div>
