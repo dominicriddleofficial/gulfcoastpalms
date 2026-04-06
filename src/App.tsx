@@ -65,6 +65,10 @@ import OpsJobDetail from "./pages/ops/OpsJobDetail";
 import OpsCrew from "./pages/ops/OpsCrew";
 import OpsSettings from "./pages/ops/OpsSettings";
 import OpsSchedule from "./pages/ops/OpsSchedule";
+// Platform (multi-business)
+import PlatformLogin from "./pages/platform/PlatformLogin";
+import PlatformDashboard from "./pages/platform/PlatformDashboard";
+import PlatformModule from "./pages/platform/PlatformModule";
 // Service pages
 import PalmTreeTrimming from "./pages/services/PalmTreeTrimming";
 import PalmTreeInstallation from "./pages/services/PalmTreeInstallation";
