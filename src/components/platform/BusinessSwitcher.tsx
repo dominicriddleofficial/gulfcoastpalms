@@ -1,6 +1,7 @@
-import { Building2, ChevronDown, Globe } from "lucide-react";
+import { Building2, ChevronDown, Globe, Check } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
@@ -24,31 +25,52 @@ export default function BusinessSwitcher({ businesses, selectedBusinessId, onSel
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary/50 border border-border hover:border-primary/30 transition-all w-full text-left">
+      <DropdownMenuTrigger className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-secondary/40 border border-border hover:border-primary/20 hover:bg-secondary/60 transition-all w-full text-left group">
         {selected ? (
           <BusinessBadge biz={selected} size="sm" />
         ) : (
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-primary/20 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-md bg-primary/10 border border-primary/15 flex items-center justify-center">
               <Globe className="w-3.5 h-3.5 text-primary" />
             </div>
-            <span className="font-body text-sm text-foreground font-medium">All Businesses</span>
+            <div className="flex flex-col">
+              <span className="font-display text-[12px] text-foreground font-semibold tracking-tight">All Businesses</span>
+              <span className="font-body text-[10px] text-muted-foreground">Combined view</span>
+            </div>
           </div>
         )}
-        <ChevronDown className="w-4 h-4 text-muted-foreground ml-auto" />
+        <ChevronDown className="w-3.5 h-3.5 text-muted-foreground/60 ml-auto group-hover:text-foreground transition-colors" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-56 bg-card border-border">
+      <DropdownMenuContent align="start" className="w-60 bg-card border-border p-1">
+        <p className="px-2 py-1.5 font-display text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/50">
+          Select workspace
+        </p>
         {isOwner && (
-          <DropdownMenuItem onClick={() => onSelect(null)} className="gap-2">
-            <div className="w-6 h-6 rounded bg-primary/20 flex items-center justify-center">
+          <DropdownMenuItem
+            onClick={() => onSelect(null)}
+            className="gap-2 px-2 py-2.5 rounded-md cursor-pointer"
+          >
+            <div className="w-7 h-7 rounded-md bg-primary/10 border border-primary/15 flex items-center justify-center">
               <Globe className="w-3.5 h-3.5 text-primary" />
             </div>
-            <span className="font-body text-sm">All Businesses</span>
+            <div className="flex flex-col flex-1">
+              <span className="font-display text-[12px] font-semibold">All Businesses</span>
+              <span className="font-body text-[10px] text-muted-foreground">Combined overview</span>
+            </div>
+            {selectedBusinessId === null && <Check className="w-3.5 h-3.5 text-primary" />}
           </DropdownMenuItem>
         )}
+        {isOwner && <DropdownMenuSeparator />}
         {businesses.map(biz => (
-          <DropdownMenuItem key={biz.id} onClick={() => onSelect(biz.id)} className="gap-2">
+          <DropdownMenuItem
+            key={biz.id}
+            onClick={() => onSelect(biz.id)}
+            className="gap-2 px-2 py-2.5 rounded-md cursor-pointer"
+          >
             <BusinessBadge biz={biz} size="sm" />
+            <div className="ml-auto">
+              {selectedBusinessId === biz.id && <Check className="w-3.5 h-3.5 text-primary" />}
+            </div>
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
@@ -58,19 +80,23 @@ export default function BusinessSwitcher({ businesses, selectedBusinessId, onSel
 
 export function BusinessBadge({ biz, size = "sm" }: { biz: Business; size?: "xs" | "sm" }) {
   const color = biz.default_business_color || "#22c55e";
-  const iconSize = size === "xs" ? "w-5 h-5" : "w-6 h-6";
-  const textSize = size === "xs" ? "text-xs" : "text-sm";
-  const codeSize = size === "xs" ? "text-[8px]" : "text-[10px]";
+  const iconSize = size === "xs" ? "w-5 h-5" : "w-7 h-7";
+  const textSize = size === "xs" ? "text-[11px]" : "text-[12px]";
+  const codeSize = size === "xs" ? "text-[8px]" : "text-[9px]";
 
   return (
     <div className="flex items-center gap-2">
       <div
-        className={cn(iconSize, "rounded flex items-center justify-center")}
-        style={{ backgroundColor: color + "30", color }}
+        className={cn(iconSize, "rounded-md flex items-center justify-center border")}
+        style={{ 
+          backgroundColor: color + "15", 
+          color, 
+          borderColor: color + "25" 
+        }}
       >
-        <span className={cn("font-display font-bold", codeSize)}>{biz.shortcode}</span>
+        <span className={cn("font-display font-bold tracking-tight", codeSize)}>{biz.shortcode}</span>
       </div>
-      <span className={cn("font-body font-medium text-foreground", textSize)}>
+      <span className={cn("font-display font-semibold text-foreground tracking-tight", textSize)}>
         {biz.public_brand_name}
       </span>
     </div>
@@ -81,8 +107,8 @@ export function InlineBadge({ shortcode, color }: { shortcode: string; color?: s
   const c = color || "#22c55e";
   return (
     <span
-      className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-display font-bold"
-      style={{ backgroundColor: c + "20", color: c, border: `1px solid ${c}40` }}
+      className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-display font-bold tracking-tight"
+      style={{ backgroundColor: c + "15", color: c, border: `1px solid ${c}25` }}
     >
       {shortcode}
     </span>
