@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
   children: ReactNode;
@@ -20,6 +21,15 @@ class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error("ErrorBoundary caught:", error, info);
+
+    // Log to error_logs table for tracking
+    supabase.from("error_logs").insert({
+      error_message: error.message,
+      error_stack: error.stack || "",
+      component_stack: info.componentStack || "",
+      page_url: window.location.href,
+      user_agent: navigator.userAgent,
+    }).then(() => {}, () => {});
   }
 
   render() {
