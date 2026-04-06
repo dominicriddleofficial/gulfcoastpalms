@@ -83,6 +83,8 @@ import PlatformSettings from "./pages/platform/PlatformSettings";
 // Customer payment pages
 import PayInvoice from "./pages/pay/PayInvoice";
 import PaymentSuccess from "./pages/pay/PaymentSuccess";
+// Tap to Pay universal link fallback
+import TapToPayLanding from "./pages/app/TapToPayLanding";
 // Service pages
 import PalmTreeTrimming from "./pages/services/PalmTreeTrimming";
 import PalmTreeInstallation from "./pages/services/PalmTreeInstallation";
