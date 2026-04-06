@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { MapPin, ArrowRight, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
+import SEOHead from "@/components/SEOHead";
 import { locations } from "@/data/locations";
 
 const fadeUp = {
@@ -16,6 +17,11 @@ const fadeUp = {
 const ServiceAreas = () => {
   return (
     <Layout>
+      <SEOHead
+        title="Palm Tree Service Areas | Gulf Coast Palms NW Florida"
+        description="Gulf Coast Palms serves Navarre, Gulf Breeze, Pensacola, Fort Walton Beach, Destin, 30A, Perdido Key, and all of NW Florida. View our full service coverage area."
+        canonicalUrl="/service-areas"
+      />
       <section className="py-20 md:py-28 bg-palm-dark">
         <div className="container mx-auto px-4 text-center">
           <motion.div initial="hidden" animate="visible">

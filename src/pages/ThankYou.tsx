@@ -1,10 +1,17 @@
 import { Link } from "react-router-dom";
 import { CheckCircle, Phone, ArrowLeft } from "lucide-react";
 import Layout from "@/components/Layout";
+import SEOHead from "@/components/SEOHead";
 
 const ThankYou = () => {
   return (
     <Layout>
+      <SEOHead
+        title="Thank You | Gulf Coast Palms"
+        description="Thank you for contacting Gulf Coast Palms. A member of our team will be in touch shortly to discuss your palm tree service needs."
+        canonicalUrl="/thank-you"
+        noIndex
+      />
       <section className="section-padding min-h-[60vh] flex items-center">
         <div className="container mx-auto text-center max-w-2xl">
           <div className="flex justify-center mb-6">

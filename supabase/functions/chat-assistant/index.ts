@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -50,7 +51,67 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const { messages } = await req.json();
+    const body = await req.json();
+
+    // Server-side validation
+    const { messages, visitor_id } = body;
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return new Response(JSON.stringify({ error: true, message: "Messages array is required", code: "VALIDATION_ERROR" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const lastMessage = messages[messages.length - 1];
+    if (!lastMessage?.content || typeof lastMessage.content !== "string" || lastMessage.content.trim().length === 0) {
+      return new Response(JSON.stringify({ error: true, message: "Message content cannot be empty", code: "VALIDATION_ERROR" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (lastMessage.content.length > 2000) {
+      return new Response(JSON.stringify({ error: true, message: "Message too long (max 2000 characters)", code: "VALIDATION_ERROR" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Rate limiting: 20 requests per visitor per 60 minutes
+    const identifier = (typeof visitor_id === "string" && visitor_id.length > 0) ? visitor_id : (req.headers.get("x-forwarded-for") || "unknown");
+
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
+
+    // Clean up old records
+    await supabaseAdmin.from("rate_limit_counters").delete().lt("window_start", new Date(Date.now() - 86400000).toISOString());
+
+    const { data: existing } = await supabaseAdmin
+      .from("rate_limit_counters")
+      .select("request_count, window_start")
+      .eq("identifier", identifier)
+      .eq("endpoint", "chat-assistant")
+      .single();
+
+    if (existing) {
+      const windowAge = Date.now() - new Date(existing.window_start).getTime();
+      if (windowAge < 3600000 && existing.request_count >= 20) {
+        return new Response(JSON.stringify({ error: "You have sent a lot of messages — please call or text us directly for faster help at (850) 910-1290." }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      } else if (windowAge >= 3600000) {
+        await supabaseAdmin.from("rate_limit_counters").upsert({
+          identifier, endpoint: "chat-assistant", request_count: 1, window_start: new Date().toISOString(),
+        }, { onConflict: "identifier,endpoint" });
+      } else {
+        await supabaseAdmin.from("rate_limit_counters").upsert({
+          identifier, endpoint: "chat-assistant", request_count: existing.request_count + 1, window_start: existing.window_start,
+        }, { onConflict: "identifier,endpoint" });
+      }
+    } else {
+      await supabaseAdmin.from("rate_limit_counters").upsert({
+        identifier, endpoint: "chat-assistant", request_count: 1, window_start: new Date().toISOString(),
+      }, { onConflict: "identifier,endpoint" });
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -91,7 +152,7 @@ serve(async (req) => {
     });
   } catch (e) {
     console.error("chat-assistant error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
+    return new Response(JSON.stringify({ error: true, message: e instanceof Error ? e.message : "Unknown error", code: "SERVER_ERROR" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

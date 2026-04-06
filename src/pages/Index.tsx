@@ -10,6 +10,8 @@ import BeforeAfterGallery from "@/components/home/BeforeAfterGallery";
 import GoogleReviews from "@/components/home/GoogleReviews";
 import FAQ from "@/components/home/FAQ";
 import GalleryPreview from "@/components/home/GalleryPreview";
+import HeroReviewBadge from "@/components/home/HeroReviewBadge";
+import { aggregateRating } from "@/data/reviews";
 
 const areas = ["Pensacola", "Gulf Breeze", "Navarre", "Fort Walton Beach", "Destin"];
 
@@ -45,6 +47,11 @@ const Index = () => {
             priceRange: "$$",
             areaServed: ["Navarre", "Gulf Breeze", "Pensacola", "Fort Walton Beach", "Destin", "30A", "Perdido Key"].map((a) => ({ "@type": "City", name: a + ", FL" })),
             serviceType: ["Palm Trimming", "Diamond Cutting", "Trunk Skinning", "Palm Tree Installation", "Palm Tree Removal"],
+            aggregateRating: {
+              "@type": "AggregateRating",
+              ratingValue: aggregateRating.score,
+              reviewCount: aggregateRating.count,
+            },
           }),
         }}
       />
@@ -57,6 +64,9 @@ const Index = () => {
             alt="Beautiful manicured palm trees along Florida Gulf Coast waterfront property"
             className="w-full h-full object-cover"
             loading="eager"
+            fetchPriority="high"
+            width={1920}
+            height={1080}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-palm-dark/70 via-palm-dark/50 to-palm-dark/80" />
         </div>
@@ -112,12 +122,22 @@ const Index = () => {
             </Link>
           </motion.div>
 
+          {/* Review badge */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6, duration: 0.5 }}
+            className="mt-6"
+          >
+            <HeroReviewBadge />
+          </motion.div>
+
           {/* Emergency banner */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8, duration: 0.5 }}
-            className="mt-8"
+            className="mt-4"
           >
             <Link
               to="/emergency-palm-service"

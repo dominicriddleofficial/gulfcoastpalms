@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Gift, Phone, ArrowRight } from "lucide-react";
 import Layout from "@/components/Layout";
+import SEOHead from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,6 +52,11 @@ const Referral = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title="Refer a Friend & Earn | Gulf Coast Palms Referral Program"
+        description="Love your results? Refer a neighbor or friend to Gulf Coast Palms and earn rewards. Join our referral program serving NW Florida."
+        canonicalUrl="/referral"
+      />
       <section className="relative py-20 md:py-28 bg-palm-dark overflow-hidden">
         <div className="container mx-auto px-4 text-center relative z-10">
           <motion.div initial="hidden" animate="visible" viewport={{ once: true }}>

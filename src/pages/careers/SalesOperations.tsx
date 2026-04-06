@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import SEOHead from "@/components/SEOHead";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { trackEvent } from "@/lib/analytics";
@@ -84,6 +85,11 @@ const SalesOperationsCareers = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title="Sales & Operations Role | Gulf Coast Palms Careers"
+        description="Join the Gulf Coast Palms operations team. We're looking for a sales and operations coordinator to help grow our NW Florida palm tree service business."
+        canonicalUrl="/careers/gulf-coast-palms/sales-operations"
+      />
       {/* Hero */}
       <section className="relative bg-foreground text-background overflow-hidden">
         <div className="absolute inset-0 opacity-10">

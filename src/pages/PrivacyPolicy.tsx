@@ -1,8 +1,14 @@
 import Layout from "@/components/Layout";
+import SEOHead from "@/components/SEOHead";
 
 const PrivacyPolicy = () => {
   return (
     <Layout>
+      <SEOHead
+        title="Privacy Policy | Gulf Coast Palms"
+        description="Read the Gulf Coast Palms privacy policy to understand how we collect, use, and protect your personal information."
+        canonicalUrl="/privacy-policy"
+      />
       <div className="bg-background min-h-screen">
         <div className="container mx-auto px-5 py-16 max-w-3xl">
           <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground mb-2">Privacy Policy</h1>

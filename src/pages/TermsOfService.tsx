@@ -1,8 +1,14 @@
 import Layout from "@/components/Layout";
+import SEOHead from "@/components/SEOHead";
 
 const TermsOfService = () => {
   return (
     <Layout>
+      <SEOHead
+        title="Terms of Service | Gulf Coast Palms"
+        description="Review the terms of service for Gulf Coast Palms palm tree trimming, removal, and maintenance services in NW Florida."
+        canonicalUrl="/terms-of-service"
+      />
       <div className="bg-background min-h-screen">
         <div className="container mx-auto px-5 py-16 max-w-3xl">
           <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground mb-2">Terms of Service</h1>

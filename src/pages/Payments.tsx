@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { CreditCard, Phone, Shield, FileText, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
+import SEOHead from "@/components/SEOHead";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -11,6 +12,11 @@ const fadeUp = {
 const Payments = () => {
   return (
     <Layout>
+      <SEOHead
+        title="Pay Your Invoice | Gulf Coast Palms"
+        description="Easily pay your Gulf Coast Palms invoice online. Secure payments powered by Stripe. Have your invoice number ready."
+        canonicalUrl="/payments"
+      />
       <section className="relative py-20 md:py-28 bg-palm-dark overflow-hidden">
         <div className="container mx-auto px-4 text-center relative z-10">
           <motion.div initial="hidden" animate="visible">

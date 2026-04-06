@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import Layout from "@/components/Layout";
+import SEOHead from "@/components/SEOHead";
 import job1 from "@/assets/gallery/job-1.jpeg";
 import job2 from "@/assets/gallery/job-2.jpeg";
 import job3 from "@/assets/gallery/job-3.jpeg";
@@ -42,6 +43,11 @@ const Jobs = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title="Jobs & Careers | Gulf Coast Palms Navarre FL"
+        description="Join the Gulf Coast Palms crew. We're hiring palm tree trimmers, team leaders, and operations staff in NW Florida. View open positions and apply today."
+        canonicalUrl="/jobs"
+      />
       {/* Hero */}
       <section className="pt-32 pb-16 bg-palm-dark">
         <div className="container mx-auto px-4 text-center">

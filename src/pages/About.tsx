@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Phone, MapPin, TreePalm, Heart, Users } from "lucide-react";
 import Layout from "@/components/Layout";
+import SEOHead from "@/components/SEOHead";
 import heroImage from "@/assets/hero-palms.jpg";
 
 const fadeUp = {
@@ -17,6 +18,11 @@ const areas = ["Navarre", "Fort Walton Beach", "Destin", "Pensacola", "Gulf Bree
 const About = () => {
   return (
     <Layout>
+      <SEOHead
+        title="About Gulf Coast Palms | Navarre Beach's Palm Tree Specialists"
+        description="Family-owned and operated in Navarre Beach, FL. Learn why NW Florida homeowners trust Gulf Coast Palms for expert palm tree trimming, removal, and hurricane preparation."
+        canonicalUrl="/about"
+      />
       {/* Hero */}
       <section className="relative py-24 md:py-32 overflow-hidden">
         <div className="absolute inset-0">
