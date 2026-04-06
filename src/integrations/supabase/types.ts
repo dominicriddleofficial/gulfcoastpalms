@@ -1489,6 +1489,207 @@ export type Database = {
           },
         ]
       }
+      platform_invoice_line_items: {
+        Row: {
+          business_id: string
+          created_at: string
+          description: string
+          discount_amount: number | null
+          id: string
+          invoice_id: string
+          line_total: number
+          quantity: number
+          sort_order: number | null
+          taxable_flag: boolean | null
+          unit: string | null
+          unit_price: number
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          description: string
+          discount_amount?: number | null
+          id?: string
+          invoice_id: string
+          line_total?: number
+          quantity?: number
+          sort_order?: number | null
+          taxable_flag?: boolean | null
+          unit?: string | null
+          unit_price?: number
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          description?: string
+          discount_amount?: number | null
+          id?: string
+          invoice_id?: string
+          line_total?: number
+          quantity?: number
+          sort_order?: number | null
+          taxable_flag?: boolean | null
+          unit?: string | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_invoice_line_items_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_invoice_line_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "platform_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_invoices: {
+        Row: {
+          amount_paid: number | null
+          balance_due: number | null
+          business_id: string
+          created_at: string
+          created_by_user_id: string | null
+          customer_id: string | null
+          deposit_amount: number | null
+          deposit_paid: boolean | null
+          deposit_required: boolean | null
+          discount_total: number | null
+          due_date: string | null
+          id: string
+          internal_notes: string | null
+          invoice_number: string
+          issue_date: string | null
+          job_id: string | null
+          overdue_notified_at: string | null
+          paid_at: string | null
+          payment_instructions: string | null
+          property_id: string | null
+          public_notes: string | null
+          quote_id: string | null
+          sent_at: string | null
+          status: string
+          subtotal: number | null
+          tax_rate: number | null
+          tax_total: number | null
+          terms: string | null
+          total: number | null
+          updated_at: string
+          viewed_at: string | null
+          voided_at: string | null
+        }
+        Insert: {
+          amount_paid?: number | null
+          balance_due?: number | null
+          business_id: string
+          created_at?: string
+          created_by_user_id?: string | null
+          customer_id?: string | null
+          deposit_amount?: number | null
+          deposit_paid?: boolean | null
+          deposit_required?: boolean | null
+          discount_total?: number | null
+          due_date?: string | null
+          id?: string
+          internal_notes?: string | null
+          invoice_number: string
+          issue_date?: string | null
+          job_id?: string | null
+          overdue_notified_at?: string | null
+          paid_at?: string | null
+          payment_instructions?: string | null
+          property_id?: string | null
+          public_notes?: string | null
+          quote_id?: string | null
+          sent_at?: string | null
+          status?: string
+          subtotal?: number | null
+          tax_rate?: number | null
+          tax_total?: number | null
+          terms?: string | null
+          total?: number | null
+          updated_at?: string
+          viewed_at?: string | null
+          voided_at?: string | null
+        }
+        Update: {
+          amount_paid?: number | null
+          balance_due?: number | null
+          business_id?: string
+          created_at?: string
+          created_by_user_id?: string | null
+          customer_id?: string | null
+          deposit_amount?: number | null
+          deposit_paid?: boolean | null
+          deposit_required?: boolean | null
+          discount_total?: number | null
+          due_date?: string | null
+          id?: string
+          internal_notes?: string | null
+          invoice_number?: string
+          issue_date?: string | null
+          job_id?: string | null
+          overdue_notified_at?: string | null
+          paid_at?: string | null
+          payment_instructions?: string | null
+          property_id?: string | null
+          public_notes?: string | null
+          quote_id?: string | null
+          sent_at?: string | null
+          status?: string
+          subtotal?: number | null
+          tax_rate?: number | null
+          tax_total?: number | null
+          terms?: string | null
+          total?: number | null
+          updated_at?: string
+          viewed_at?: string | null
+          voided_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_invoices_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "platform_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_invoices_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "platform_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_invoices_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "platform_properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_invoices_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "platform_quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_job_visits: {
         Row: {
           actual_end_at: string | null
@@ -1916,6 +2117,85 @@ export type Database = {
             columns: ["source_id"]
             isOneToOne: false
             referencedRelation: "platform_lead_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_payments: {
+        Row: {
+          amount: number
+          business_id: string
+          created_at: string
+          customer_id: string | null
+          id: string
+          invoice_id: string | null
+          is_deposit: boolean | null
+          is_refund: boolean | null
+          method: string | null
+          notes: string | null
+          payment_date: string | null
+          payment_number: string
+          recorded_by_user_id: string | null
+          reference_number: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          business_id: string
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          invoice_id?: string | null
+          is_deposit?: boolean | null
+          is_refund?: boolean | null
+          method?: string | null
+          notes?: string | null
+          payment_date?: string | null
+          payment_number: string
+          recorded_by_user_id?: string | null
+          reference_number?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          business_id?: string
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          invoice_id?: string | null
+          is_deposit?: boolean | null
+          is_refund?: boolean | null
+          method?: string | null
+          notes?: string | null
+          payment_date?: string | null
+          payment_number?: string
+          recorded_by_user_id?: string | null
+          reference_number?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_payments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_payments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "platform_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "platform_invoices"
             referencedColumns: ["id"]
           },
         ]
