@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Phone, MessageSquare, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
+import SEOHead from "@/components/SEOHead";
 import { servicesData } from "@/data/services";
 import palmTrimming from "@/assets/palm-trimming.jpg";
 import diamondCutting from "@/assets/diamond-cutting.jpg";
