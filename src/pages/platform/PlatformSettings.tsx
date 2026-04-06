@@ -27,16 +27,12 @@ interface BizSettings {
 
 interface SyncLog {
   id: string;
-  module_name: string;
   sync_type: string;
   started_at: string;
-  finished_at: string | null;
-  records_created: number;
-  records_updated: number;
-  records_skipped: number;
-  records_failed: number;
+  completed_at: string | null;
+  records_synced: number;
   status: string;
-  error_summary: string | null;
+  error_message: string | null;
 }
 
 export default function PlatformSettings() {
