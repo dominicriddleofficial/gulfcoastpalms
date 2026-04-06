@@ -71,6 +71,7 @@ import PlatformDashboard from "./pages/platform/PlatformDashboard";
 import PlatformModule from "./pages/platform/PlatformModule";
 import PlatformLeads from "./pages/platform/PlatformLeads";
 import PlatformCustomers from "./pages/platform/PlatformCustomers";
+import PlatformQuotes from "./pages/platform/PlatformQuotes";
 // Service pages
 import PalmTreeTrimming from "./pages/services/PalmTreeTrimming";
 import PalmTreeInstallation from "./pages/services/PalmTreeInstallation";
