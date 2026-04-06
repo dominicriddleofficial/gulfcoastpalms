@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Phone, Star, CheckCircle, MapPin, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
+import SEOHead from "@/components/SEOHead";
 import { LocationData, locations } from "@/data/locations";
 
 const fadeUp = {
@@ -24,7 +25,12 @@ const LocationPage = ({ location }: Props) => {
 
   return (
     <Layout>
-      {/* SEO Meta */}
+      <SEOHead
+        title={location.metaTitle}
+        description={location.metaDescription}
+        canonicalUrl={`/${location.slug}`}
+      />
+      {/* JSON-LD */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Phone, Check, ArrowRight, Shield, Package } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
+import SEOHead from "@/components/SEOHead";
 import type { ServiceData } from "@/data/services";
 
 const fadeUp = {
@@ -20,6 +21,11 @@ interface ServicePageProps {
 const ServicePage = ({ service }: ServicePageProps) => {
   return (
     <Layout>
+      <SEOHead
+        title={service.metaTitle}
+        description={service.metaDescription}
+        canonicalUrl={`/services/${service.slug}`}
+      />
       {/* JSON-LD */}
       <script
         type="application/ld+json"

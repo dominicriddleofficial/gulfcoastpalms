@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Phone, MessageSquare, DollarSign, TreePine, Ruler, MapPin, Scissors, Truck, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
+import SEOHead from "@/components/SEOHead";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -24,6 +25,7 @@ const trimmingFactors = [
 const PalmTreeCost = () => {
   return (
     <Layout>
+      <SEOHead title="How Much Does Palm Tree Trimming Cost in Florida? | Gulf Coast Palms" description="Get a breakdown of palm tree trimming, removal, and installation costs in Florida. Factors that affect pricing and how to get a free estimate." canonicalUrl="/palm-tree-cost" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         "@context": "https://schema.org",
         "@type": "FAQPage",

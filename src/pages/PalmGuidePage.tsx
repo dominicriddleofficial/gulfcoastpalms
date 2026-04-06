@@ -2,6 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Phone, MessageSquare, ArrowLeft, BookOpen } from "lucide-react";
 import Layout from "@/components/Layout";
+import SEOHead from "@/components/SEOHead";
 import { palmGuides } from "@/data/palmGuides";
 import NotFound from "./NotFound";
 
@@ -41,6 +42,7 @@ const PalmGuidePage = () => {
 
   return (
     <Layout>
+      <SEOHead title={`${guide.title} | Gulf Coast Palms`} description={guide.metaDescription} canonicalUrl={`/palm-trees/guides/${guide.slug}`} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         "@context": "https://schema.org",
         "@type": "Article",

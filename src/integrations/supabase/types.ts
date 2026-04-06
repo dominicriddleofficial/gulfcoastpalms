@@ -1184,6 +1184,7 @@ export type Database = {
           created_at: string
           email: string | null
           follow_up_date: string | null
+          hurricane_reminder_optin: boolean | null
           id: string
           last_contacted: string | null
           location: string | null
@@ -1200,6 +1201,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           follow_up_date?: string | null
+          hurricane_reminder_optin?: boolean | null
           id?: string
           last_contacted?: string | null
           location?: string | null
@@ -1216,6 +1218,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           follow_up_date?: string | null
+          hurricane_reminder_optin?: boolean | null
           id?: string
           last_contacted?: string | null
           location?: string | null

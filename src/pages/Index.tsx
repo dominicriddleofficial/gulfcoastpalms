@@ -2,9 +2,12 @@ import { motion } from "framer-motion";
 import { Phone, Star, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
+import SEOHead from "@/components/SEOHead";
 import heroImage from "@/assets/hero-palms.jpg";
+import TrustBadges from "@/components/home/TrustBadges";
 import ServicesPreview from "@/components/home/ServicesPreview";
-import Testimonials from "@/components/home/Testimonials";
+import BeforeAfterGallery from "@/components/home/BeforeAfterGallery";
+import GoogleReviews from "@/components/home/GoogleReviews";
 import FAQ from "@/components/home/FAQ";
 import GalleryPreview from "@/components/home/GalleryPreview";
 
@@ -22,6 +25,12 @@ const fadeUp = {
 const Index = () => {
   return (
     <Layout>
+      <SEOHead
+        title="Gulf Coast Palms | Palm Tree Trimming & Removal — NW Florida"
+        description="Gulf Coast Palms is Northwest Florida's palm tree specialist. Expert trimming, removal, and hurricane prep across Navarre, Pensacola, Destin, and the Emerald Coast."
+        canonicalUrl="/"
+      />
+
       {/* JSON-LD for Local Business SEO */}
       <script
         type="application/ld+json"
@@ -30,10 +39,11 @@ const Index = () => {
             "@context": "https://schema.org",
             "@type": "LocalBusiness",
             name: "Gulf Coast Palms",
-            description: "Professional palm tree trimming, diamond cutting, trunk skinning, installations and removals serving Navarre, Fort Walton Beach, Destin, Pensacola, Gulf Breeze, Milton, Niceville, Crestview, 30A, and Perdido Key, Florida.",
+            description: "NW Florida's palm tree trimming, removal, and hurricane preparation specialist.",
             telephone: "(850) 910-1290",
-            url: "https://gulfcoastpalmcleaning.com",
-            areaServed: areas.map((a) => ({ "@type": "City", name: a + ", FL" })),
+            url: "https://gulfcoastpalms.lovable.app",
+            priceRange: "$$",
+            areaServed: ["Navarre", "Gulf Breeze", "Pensacola", "Fort Walton Beach", "Destin", "30A", "Perdido Key"].map((a) => ({ "@type": "City", name: a + ", FL" })),
             serviceType: ["Palm Trimming", "Diamond Cutting", "Trunk Skinning", "Palm Tree Installation", "Palm Tree Removal"],
           }),
         }}
@@ -101,8 +111,26 @@ const Index = () => {
               <ArrowRight className="w-5 h-5" />
             </Link>
           </motion.div>
+
+          {/* Emergency banner */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8, duration: 0.5 }}
+            className="mt-8"
+          >
+            <Link
+              to="/emergency-palm-service"
+              className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-destructive/20 border border-destructive/40 text-primary-foreground font-body text-sm font-semibold hover:bg-destructive/30 transition-colors"
+            >
+              🌀 Hurricane Season — Emergency Palm Service Available
+            </Link>
+          </motion.div>
         </div>
       </section>
+
+      {/* Trust Badges */}
+      <TrustBadges />
 
       {/* Why Choose Us */}
       <section className="section-padding bg-palm-dark">
@@ -163,6 +191,7 @@ const Index = () => {
 
       <ServicesPreview />
 
+      <BeforeAfterGallery />
 
       {/* Service Areas SEO Section */}
       <section className="section-padding bg-background">
@@ -193,7 +222,7 @@ const Index = () => {
 
       <GalleryPreview />
 
-      <Testimonials />
+      <GoogleReviews />
 
       <FAQ />
 

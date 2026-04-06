@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Phone, ArrowRight, BookOpen } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
+import SEOHead from "@/components/SEOHead";
 import { palmGuides } from "@/data/palmGuides";
 
 const fadeUp = {
@@ -15,6 +16,7 @@ const fadeUp = {
 const PalmCareGuides = () => {
   return (
     <Layout>
+      <SEOHead title="Palm Care Guides — Expert Tips for Florida Palms | Gulf Coast Palms" description="Expert palm tree care guides covering trimming frequency, seasonal timing, species care, and maintenance tips for Florida's Emerald Coast." canonicalUrl="/palm-trees/guides" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         "@context": "https://schema.org",
         "@type": "Blog",

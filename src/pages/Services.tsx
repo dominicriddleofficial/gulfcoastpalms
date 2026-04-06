@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Phone, MessageSquare, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
+import SEOHead from "@/components/SEOHead";
 import { servicesData } from "@/data/services";
 import palmTrimming from "@/assets/palm-trimming.jpg";
 import diamondCutting from "@/assets/diamond-cutting.jpg";
@@ -27,6 +28,7 @@ const fadeUp = {
 const Services = () => {
   return (
     <Layout>
+      <SEOHead title="Palm Tree Services — Trimming, Removal, Installation | Gulf Coast Palms" description="Full-service palm care across NW Florida. Trimming, diamond cutting, trunk skinning, installation, removal, and hurricane prep. Free estimates." canonicalUrl="/services" />
       <section className="bg-palm-dark section-padding text-center">
         <div className="container mx-auto">
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="font-body text-sm uppercase tracking-[0.2em] text-palm-gold font-semibold mb-3">

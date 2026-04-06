@@ -2,6 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Phone, MessageSquare, ArrowLeft, TreePine, Ruler, Sun, Snowflake, Wrench, Scissors, Shovel } from "lucide-react";
 import Layout from "@/components/Layout";
+import SEOHead from "@/components/SEOHead";
 import { palmTypes } from "@/data/palmTypes";
 import NotFound from "./NotFound";
 
@@ -23,6 +24,7 @@ const PalmTypePage = () => {
 
   return (
     <Layout>
+      <SEOHead title={`${palm.name} — Care, Trimming & Removal Guide | Gulf Coast Palms`} description={palm.heroDescription} canonicalUrl={`/palm-trees/${palm.slug}`} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         "@context": "https://schema.org",
         "@type": "Article",

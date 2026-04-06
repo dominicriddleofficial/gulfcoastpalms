@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Phone, MessageSquare, Check, AlertTriangle, Wind, MapPin, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
+import SEOHead from "@/components/SEOHead";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -47,6 +48,7 @@ const serviceAreas = [
 const HurricanePalmPreparation = () => {
   return (
     <Layout>
+      <SEOHead title="Hurricane Palm Tree Preparation Navarre & NW Florida | Gulf Coast Palms" description="Prepare your palms for hurricane season. Professional pre-storm trimming, hazard assessment, and emergency response across NW Florida." canonicalUrl="/hurricane-palm-preparation" />
       {/* JSON-LD */}
       <script
         type="application/ld+json"

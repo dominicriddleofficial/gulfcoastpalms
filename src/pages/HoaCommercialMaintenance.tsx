@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Phone, MessageSquare, Check, Building2, TreePalm, ShieldCheck, Calendar, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
+import SEOHead from "@/components/SEOHead";
 
 
 const fadeUp = {
@@ -47,6 +48,7 @@ const maintenanceBenefits = [
 const HoaCommercialMaintenance = () => {
   return (
     <Layout>
+      <SEOHead title="Commercial & HOA Palm Tree Maintenance NW Florida | Gulf Coast Palms" description="Large-scale palm tree maintenance for HOAs, condos, resorts, and commercial properties across the Florida Emerald Coast. Licensed, insured, and experienced." canonicalUrl="/hoa-commercial-palm-maintenance" />
       {/* JSON-LD */}
       <script
         type="application/ld+json"
