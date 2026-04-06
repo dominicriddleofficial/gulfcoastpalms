@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useBusinessContext } from "@/contexts/BusinessContext";
 
 export interface BusinessAccess {
   id: string;
@@ -35,7 +36,7 @@ export function usePlatformAuth() {
   const [userEmail, setUserEmail] = useState("");
   const [isOwner, setIsOwner] = useState(false);
   const [businessAccess, setBusinessAccess] = useState<BusinessAccess[]>([]);
-  const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null); // null = all
+  const { selectedBusinessId, setSelectedBusinessId } = useBusinessContext();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -46,7 +47,6 @@ export function usePlatformAuth() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { navigate("/platform/login"); return; }
 
-    // Check workspace ownership
     const { data: workspaces } = await supabase
       .from("workspaces")
       .select("id")
@@ -54,7 +54,6 @@ export function usePlatformAuth() {
 
     const owner = !!(workspaces && workspaces.length > 0);
 
-    // Check admin role as fallback
     const { data: roles } = await supabase
       .from("user_roles")
       .select("role")
@@ -62,7 +61,6 @@ export function usePlatformAuth() {
 
     const isAdmin = roles?.some(r => r.role === "admin") || false;
 
-    // Get business access
     const { data: access } = await supabase
       .from("user_business_access")
       .select(`
@@ -81,7 +79,6 @@ export function usePlatformAuth() {
       return;
     }
 
-    // Get business details for each access
     let enrichedAccess: BusinessAccess[] = [];
     if (access && access.length > 0) {
       const bizIds = access.map(a => a.business_id);
@@ -90,7 +87,6 @@ export function usePlatformAuth() {
         .select("id, public_brand_name, shortcode, logo_url")
         .in("id", bizIds);
 
-      // Also get settings for color
       const { data: settings } = await supabase
         .from("business_settings")
         .select("business_id, default_business_color")
@@ -107,7 +103,6 @@ export function usePlatformAuth() {
         },
       }));
     } else if (owner || isAdmin) {
-      // Owner/admin gets all businesses
       const { data: allBiz } = await supabase
         .from("businesses")
         .select("id, public_brand_name, shortcode, logo_url");
@@ -148,18 +143,28 @@ export function usePlatformAuth() {
     setIsOwner(owner || isAdmin);
     setBusinessAccess(enrichedAccess);
 
-    // Set default business
-    const defaultBiz = enrichedAccess.find(a => a.default_business);
-    if (defaultBiz) {
-      setSelectedBusinessId(defaultBiz.business_id);
+    // Only set default business if nothing is persisted yet
+    if (selectedBusinessId === null) {
+      const defaultBiz = enrichedAccess.find(a => a.default_business);
+      if (defaultBiz) {
+        setSelectedBusinessId(defaultBiz.business_id);
+      }
+      // If owner and no default, leave as null (= "All Businesses")
+    } else {
+      // Validate that persisted business is still accessible
+      const isValid = enrichedAccess.some(a => a.business_id === selectedBusinessId);
+      if (!isValid && !owner && !isAdmin) {
+        const defaultBiz = enrichedAccess.find(a => a.default_business);
+        setSelectedBusinessId(defaultBiz?.business_id || enrichedAccess[0]?.business_id || null);
+      }
     }
-    // If owner, default to "all"
     
     setLoading(false);
   };
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    setSelectedBusinessId(null);
     navigate("/platform/login");
   };
 
