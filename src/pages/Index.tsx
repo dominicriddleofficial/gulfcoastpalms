@@ -64,6 +64,9 @@ const Index = () => {
             alt="Beautiful manicured palm trees along Florida Gulf Coast waterfront property"
             className="w-full h-full object-cover"
             loading="eager"
+            fetchPriority="high"
+            width={1920}
+            height={1080}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-palm-dark/70 via-palm-dark/50 to-palm-dark/80" />
         </div>
