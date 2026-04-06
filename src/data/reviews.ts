@@ -9,8 +9,16 @@ export interface GoogleReview {
   text: string;
 }
 
-export const GOOGLE_REVIEW_URL = "https://g.page/r/YOUR_GOOGLE_BUSINESS_PROFILE/review";
-// TODO: Replace with actual Google Business Profile review link
+/**
+ * Google Business Profile review link.
+ * To find yours: Google Business Profile dashboard → Get more reviews → Copy link
+ * Format: https://g.page/r/[YOUR_BUSINESS_ID]/review
+ *
+ * Set VITE_GOOGLE_REVIEW_URL in your .env file, or update the fallback below.
+ */
+export const GOOGLE_REVIEW_URL =
+  import.meta.env.VITE_GOOGLE_REVIEW_URL ||
+  "https://search.google.com/local/writereview?placeid=REPLACE_WITH_PLACE_ID";
 
 export const aggregateRating = {
   score: 4.9,
