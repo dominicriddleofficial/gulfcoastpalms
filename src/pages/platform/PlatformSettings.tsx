@@ -109,14 +109,7 @@ export default function PlatformSettings() {
             <SettingsSection title="Integrations" icon={Zap}>
               <JobberConnectionStatus />
               <div className="mt-3 pt-3 border-t border-border">
-                <div className="flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-primary" />
-                  <span className="font-body text-sm text-foreground">Online Payments</span>
-                  <span className="ml-auto text-[10px] font-body px-2 py-0.5 rounded-full bg-primary/15 text-primary">Ready</span>
-                </div>
-                <p className="font-body text-[11px] text-muted-foreground mt-1">
-                  Stripe integration ready. Configure per-business payment accounts to enable customer checkout.
-                </p>
+                <OnlinePaymentsConfig businessId={selectedBusinessId} businesses={businesses} />
               </div>
             </SettingsSection>
 
