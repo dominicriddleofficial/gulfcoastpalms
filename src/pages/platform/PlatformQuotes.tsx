@@ -187,6 +187,7 @@ function QuoteDetail({ quote, biz, onUpdate, onClose }: {
   const [versions, setVersions] = useState<any[]>([]);
   const [showVersions, setShowVersions] = useState(false);
   const [loadingItems, setLoadingItems] = useState(true);
+  const [converting, setConverting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -239,6 +240,28 @@ function QuoteDetail({ quote, biz, onUpdate, onClose }: {
               <XCircle className="w-3 h-3" /> Decline
             </Button>
           </>
+        )}
+        {quote.status === "accepted" && (
+          <Button
+            size="sm"
+            className="gap-1 text-xs"
+            disabled={converting}
+            onClick={async () => {
+              setConverting(true);
+              const { convertQuoteToJob } = await import("@/lib/platform-conversions");
+              const result = await convertQuoteToJob(quote);
+              setConverting(false);
+              if (result.error) {
+                toast({ title: "Conversion failed", description: result.error, variant: "destructive" });
+                return;
+              }
+              toast({ title: "Job created", description: `Job ${result.jobNumber} created from quote` });
+              onUpdate();
+              onClose();
+            }}
+          >
+            <ChevronRight className="w-3 h-3" /> {converting ? "Converting..." : "Convert to Job"}
+          </Button>
         )}
       </div>
 

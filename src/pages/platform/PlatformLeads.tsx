@@ -210,6 +210,21 @@ function LeadDetail({ lead, biz, onStatusChange, onClose }: {
   onStatusChange: (status: string) => void;
   onClose: () => void;
 }) {
+  const [converting, setConverting] = useState(false);
+
+  const handleConvert = async () => {
+    setConverting(true);
+    const { convertLeadToCustomer } = await import("@/lib/platform-conversions");
+    const result = await convertLeadToCustomer(lead);
+    setConverting(false);
+    if (result.error) {
+      alert("Conversion failed: " + result.error);
+      return;
+    }
+    onStatusChange("won");
+    onClose();
+  };
+
   return (
     <div className="space-y-6 pt-2">
       <SheetHeader>
@@ -295,8 +310,15 @@ function LeadDetail({ lead, biz, onStatusChange, onClose }: {
 
       {/* Actions */}
       <div className="flex gap-2 pt-2">
-        <Button size="sm" variant="outline" className="flex-1 gap-1.5 border-border">
-          <ArrowRight className="w-3.5 h-3.5" /> Convert to Customer
+        <Button
+          size="sm"
+          variant="outline"
+          className="flex-1 gap-1.5 border-border"
+          disabled={converting || lead.lead_status === "won"}
+          onClick={handleConvert}
+        >
+          <ArrowRight className="w-3.5 h-3.5" />
+          {converting ? "Converting..." : lead.lead_status === "won" ? "Already Converted" : "Convert to Customer"}
         </Button>
         <Button size="sm" variant="outline" className="flex-1 gap-1.5 border-border">
           <MessageSquare className="w-3.5 h-3.5" /> Add Note
