@@ -272,6 +272,8 @@ function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayme
             deposit_amount: invoice.deposit_amount,
             status: invoice.status,
           }}
+          businessId={invoice.business_id}
+          customerId={invoice.customer_id || undefined}
           onRecordPayment={onRecordPayment}
           onOpenPaymentPage={openPaymentPage}
           onCopyPaymentLink={copyPaymentLink}

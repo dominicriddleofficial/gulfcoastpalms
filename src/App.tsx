@@ -83,6 +83,8 @@ import PlatformSettings from "./pages/platform/PlatformSettings";
 // Customer payment pages
 import PayInvoice from "./pages/pay/PayInvoice";
 import PaymentSuccess from "./pages/pay/PaymentSuccess";
+// Tap to Pay universal link fallback
+import TapToPayLanding from "./pages/app/TapToPayLanding";
 // Service pages
 import PalmTreeTrimming from "./pages/services/PalmTreeTrimming";
 import PalmTreeInstallation from "./pages/services/PalmTreeInstallation";
@@ -196,6 +198,8 @@ const App = () => (
           {/* Customer payment pages */}
           <Route path="/pay/:shortcode/:invoiceId" element={<PayInvoice />} />
           <Route path="/pay/:shortcode/success" element={<PaymentSuccess />} />
+          {/* Tap to Pay universal link fallback */}
+          <Route path="/app/tap-to-pay" element={<TapToPayLanding />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
