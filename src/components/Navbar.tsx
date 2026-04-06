@@ -12,7 +12,6 @@ const learnLinks = [
   { label: "Care Guides", to: "/palm-trees/guides" },
   { label: "Palm Tree Cost Guide", to: "/palm-tree-cost" },
   { label: "Hurricane Prep Guide", to: "/hurricane-palm-preparation" },
-  { label: "Buy Palm Trees", to: "/palm-trees/buy" },
 ];
 
 const Navbar = () => {
@@ -90,6 +89,10 @@ const Navbar = () => {
               </div>
             </div>
           </div>
+
+          <Link to="/palm-trees/buy" className={`font-body font-medium text-sm uppercase tracking-wider transition-colors hover:text-primary ${location.pathname === "/palm-trees/buy" ? "text-primary" : "text-muted-foreground"}`}>
+            Buy Palm Trees
+          </Link>
 
           {/* Service Areas Dropdown */}
           <div className="relative group">
@@ -175,6 +178,10 @@ const Navbar = () => {
                     ))}
                   </div>
                 )}
+
+                <Link to="/palm-trees/buy" onClick={closeAll} className={`font-body font-medium text-lg transition-colors hover:text-primary ${location.pathname === "/palm-trees/buy" ? "text-primary" : "text-muted-foreground"}`}>
+                  Buy Palm Trees
+                </Link>
 
                 {/* Mobile Service Areas */}
                 <button onClick={() => toggleOne(setAreasOpen, [setServicesOpen, setLearnOpen])} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.includes("palm-tree-trimming") ? "text-primary" : "text-muted-foreground"}`}>
