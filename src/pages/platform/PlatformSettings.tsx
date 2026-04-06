@@ -131,12 +131,12 @@ export default function PlatformSettings() {
                       <div key={log.id} className="bg-secondary/50 rounded-lg p-3">
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-2">
-                            <span className="font-body text-xs font-medium text-foreground capitalize">{log.module_name}</span>
+                            <span className="font-body text-xs font-medium text-foreground capitalize">{log.sync_type}</span>
                             <span className={cn(
                               "text-[10px] font-body px-1.5 py-0.5 rounded-full",
                               log.status === "completed" ? "bg-primary/15 text-primary" :
                               log.status === "failed" ? "bg-destructive/15 text-destructive" :
-                              "bg-yellow-500/15 text-yellow-600"
+                              "bg-accent/15 text-accent"
                             )}>{log.status}</span>
                           </div>
                           <span className="font-body text-[10px] text-muted-foreground">
@@ -144,13 +144,10 @@ export default function PlatformSettings() {
                           </span>
                         </div>
                         <div className="flex gap-3 text-[10px] font-body text-muted-foreground">
-                          <span className="text-primary">+{log.records_created}</span>
-                          <span className="text-yellow-600">~{log.records_updated}</span>
-                          <span>⊘{log.records_skipped}</span>
-                          {log.records_failed > 0 && <span className="text-destructive">✕{log.records_failed}</span>}
+                          <span className="text-primary">synced: {log.records_synced}</span>
                         </div>
-                        {log.error_summary && (
-                          <p className="font-body text-[10px] text-destructive mt-1">{log.error_summary}</p>
+                        {log.error_message && (
+                          <p className="font-body text-[10px] text-destructive mt-1">{log.error_message}</p>
                         )}
                       </div>
                     ))}
