@@ -25,7 +25,12 @@ const LocationPage = ({ location }: Props) => {
 
   return (
     <Layout>
-      {/* SEO Meta */}
+      <SEOHead
+        title={location.metaTitle}
+        description={location.metaDescription}
+        canonicalUrl={`/${location.slug}`}
+      />
+      {/* JSON-LD */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

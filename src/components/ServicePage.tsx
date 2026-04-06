@@ -21,6 +21,11 @@ interface ServicePageProps {
 const ServicePage = ({ service }: ServicePageProps) => {
   return (
     <Layout>
+      <SEOHead
+        title={service.metaTitle}
+        description={service.metaDescription}
+        canonicalUrl={`/services/${service.slug}`}
+      />
       {/* JSON-LD */}
       <script
         type="application/ld+json"
