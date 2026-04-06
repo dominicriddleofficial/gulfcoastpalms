@@ -258,8 +258,8 @@ function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayme
         businessShortcode={biz?.shortcode}
       />
 
-      {/* Payment Actions */}
-      {!isPaid && !isVoid && hasBalance && (
+      {/* Payment Actions — always shown, panel adapts to state */}
+      {!isVoid && (
         <PaymentActionPanel
           invoice={{
             id: invoice.id,
@@ -278,18 +278,7 @@ function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayme
         />
       )}
 
-      {/* Paid state */}
-      {isPaid && (
-        <div className="flex items-center gap-3 bg-[#22c55e]/10 border border-[#22c55e]/20 rounded-xl p-4">
-          <CheckCircle className="w-6 h-6 text-[#22c55e]" />
-          <div>
-            <p className="font-body text-sm font-semibold text-[#22c55e]">Payment Complete</p>
-            <p className="font-body text-xs text-muted-foreground">
-              ${Number(invoice.amount_paid || invoice.total || 0).toLocaleString()} collected
-            </p>
-          </div>
-        </div>
-      )}
+      {/* Paid state is now handled by PaymentActionPanel's opinionated mode */}
 
       {/* Details grid */}
       <div className="grid grid-cols-2 gap-2.5">
