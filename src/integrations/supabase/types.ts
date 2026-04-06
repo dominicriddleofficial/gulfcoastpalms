@@ -645,6 +645,7 @@ export type Database = {
           error_stack: string | null
           id: string
           page_url: string | null
+          resolved: boolean
           user_agent: string | null
         }
         Insert: {
@@ -654,6 +655,7 @@ export type Database = {
           error_stack?: string | null
           id?: string
           page_url?: string | null
+          resolved?: boolean
           user_agent?: string | null
         }
         Update: {
@@ -663,6 +665,7 @@ export type Database = {
           error_stack?: string | null
           id?: string
           page_url?: string | null
+          resolved?: boolean
           user_agent?: string | null
         }
         Relationships: []
