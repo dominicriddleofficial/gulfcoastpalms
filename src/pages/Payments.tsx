@@ -12,6 +12,11 @@ const fadeUp = {
 const Payments = () => {
   return (
     <Layout>
+      <SEOHead
+        title="Pay Your Invoice | Gulf Coast Palms"
+        description="Easily pay your Gulf Coast Palms invoice online. Secure payments powered by Stripe. Have your invoice number ready."
+        canonicalUrl="/payments"
+      />
       <section className="relative py-20 md:py-28 bg-palm-dark overflow-hidden">
         <div className="container mx-auto px-4 text-center relative z-10">
           <motion.div initial="hidden" animate="visible">
