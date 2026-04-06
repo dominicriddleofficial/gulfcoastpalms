@@ -69,6 +69,8 @@ import OpsSchedule from "./pages/ops/OpsSchedule";
 import PlatformLogin from "./pages/platform/PlatformLogin";
 import PlatformDashboard from "./pages/platform/PlatformDashboard";
 import PlatformModule from "./pages/platform/PlatformModule";
+import PlatformLeads from "./pages/platform/PlatformLeads";
+import PlatformCustomers from "./pages/platform/PlatformCustomers";
 // Service pages
 import PalmTreeTrimming from "./pages/services/PalmTreeTrimming";
 import PalmTreeInstallation from "./pages/services/PalmTreeInstallation";
