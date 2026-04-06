@@ -12,7 +12,6 @@ const learnLinks = [
   { label: "Care Guides", to: "/palm-trees/guides" },
   { label: "Palm Tree Cost Guide", to: "/palm-tree-cost" },
   { label: "Hurricane Prep Guide", to: "/hurricane-palm-preparation" },
-  { label: "Buy Palm Trees", to: "/palm-trees/buy" },
 ];
 
 const Navbar = () => {
