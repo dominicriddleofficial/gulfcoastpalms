@@ -65,6 +65,10 @@ import OpsJobDetail from "./pages/ops/OpsJobDetail";
 import OpsCrew from "./pages/ops/OpsCrew";
 import OpsSettings from "./pages/ops/OpsSettings";
 import OpsSchedule from "./pages/ops/OpsSchedule";
+// Platform (multi-business)
+import PlatformLogin from "./pages/platform/PlatformLogin";
+import PlatformDashboard from "./pages/platform/PlatformDashboard";
+import PlatformModule from "./pages/platform/PlatformModule";
 // Service pages
 import PalmTreeTrimming from "./pages/services/PalmTreeTrimming";
 import PalmTreeInstallation from "./pages/services/PalmTreeInstallation";
@@ -160,6 +164,20 @@ const App = () => (
           <Route path="/ops/crew" element={<OpsCrew />} />
           <Route path="/ops/schedule" element={<OpsSchedule />} />
           <Route path="/ops/settings" element={<OpsSettings />} />
+          {/* Platform (multi-business) */}
+          <Route path="/platform/login" element={<PlatformLogin />} />
+          <Route path="/platform" element={<PlatformDashboard />} />
+          <Route path="/platform/leads" element={<PlatformModule />} />
+          <Route path="/platform/customers" element={<PlatformModule />} />
+          <Route path="/platform/quotes" element={<PlatformModule />} />
+          <Route path="/platform/jobs" element={<PlatformModule />} />
+          <Route path="/platform/schedule" element={<PlatformModule />} />
+          <Route path="/platform/invoices" element={<PlatformModule />} />
+          <Route path="/platform/payments" element={<PlatformModule />} />
+          <Route path="/platform/analytics" element={<PlatformModule />} />
+          <Route path="/platform/communications" element={<PlatformModule />} />
+          <Route path="/platform/tasks" element={<PlatformModule />} />
+          <Route path="/platform/settings" element={<PlatformModule />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
