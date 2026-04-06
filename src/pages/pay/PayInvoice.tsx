@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
-import { CreditCard, CheckCircle, XCircle, Loader2, Shield } from "lucide-react";
+import { CreditCard, CheckCircle, XCircle, Loader2, Shield, Calendar, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const BUSINESS_THEMES: Record<string, { name: string; accent: string; gradient: string }> = {
-  gcp: { name: "Gulf Coast Palms", accent: "hsl(142, 60%, 40%)", gradient: "from-green-800 to-green-600" },
-  pps: { name: "Prestige Property Services", accent: "hsl(220, 60%, 40%)", gradient: "from-blue-900 to-blue-700" },
+const BUSINESS_THEMES: Record<string, { name: string; accent: string; gradient: string; accentLight: string }> = {
+  gcp: { name: "Gulf Coast Palms", accent: "hsl(142, 60%, 40%)", gradient: "from-green-800 to-green-600", accentLight: "hsl(142, 60%, 95%)" },
+  pps: { name: "Prestige Property Services", accent: "hsl(220, 60%, 40%)", gradient: "from-blue-900 to-blue-700", accentLight: "hsl(220, 60%, 95%)" },
 };
 
 type InvoiceData = {
@@ -38,7 +38,6 @@ export default function PayInvoice() {
   useEffect(() => {
     async function load() {
       if (!invoiceId) { setError("No invoice specified"); setLoading(false); return; }
-
       try {
         const resp = await fetch(`${baseUrl}/get-invoice-public`, {
           method: "POST",
@@ -63,17 +62,12 @@ export default function PayInvoice() {
     if (!invoice) return;
     setPaying(true);
     setError(null);
-
     try {
       const resp = await fetch(`${baseUrl}/create-checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          invoice_id: invoice.id,
-          origin_url: window.location.origin,
-        }),
+        body: JSON.stringify({ invoice_id: invoice.id, origin_url: window.location.origin }),
       });
-
       const result = await resp.json();
       if (result.error) throw new Error(result.error);
       if (result.url) window.location.href = result.url;
@@ -93,11 +87,11 @@ export default function PayInvoice() {
 
   if (error && !invoice) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <XCircle className="w-12 h-12 mx-auto text-red-400 mb-3" />
-          <h1 className="text-xl font-bold text-gray-900 mb-1">Invoice Not Found</h1>
-          <p className="text-gray-500">{error}</p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="text-center max-w-sm">
+          <XCircle className="w-14 h-14 mx-auto text-red-400 mb-4" />
+          <h1 className="text-xl font-bold text-gray-900 mb-2">Invoice Not Found</h1>
+          <p className="text-gray-500 text-sm">{error}</p>
         </div>
       </div>
     );
@@ -107,81 +101,112 @@ export default function PayInvoice() {
 
   if (invoice.status === "paid") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center max-w-sm mx-auto px-6">
-          <CheckCircle className="w-16 h-16 mx-auto text-green-500 mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Already Paid</h1>
-          <p className="text-gray-500">Invoice {invoice.invoice_number} has been paid in full.</p>
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <div className={`bg-gradient-to-r ${theme.gradient} text-white py-6 px-4`}>
+          <div className="max-w-md mx-auto text-center">
+            <h1 className="text-xl font-bold">{invoice.business_name || theme.name}</h1>
+          </div>
+        </div>
+        <div className="flex-1 flex items-center justify-center px-4">
+          <div className="text-center max-w-sm">
+            <CheckCircle className="w-16 h-16 mx-auto text-green-500 mb-4" />
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Already Paid</h1>
+            <p className="text-gray-500">Invoice {invoice.invoice_number} has been paid in full.</p>
+          </div>
         </div>
       </div>
     );
   }
 
+  const dueNow = invoice.deposit_required && !invoice.deposit_paid && invoice.deposit_amount > 0
+    ? invoice.deposit_amount
+    : invoice.balance_due;
+
+  const dueLabel = invoice.deposit_required && !invoice.deposit_paid
+    ? "Deposit Due Now"
+    : "Amount Due";
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Header */}
       <div className={`bg-gradient-to-r ${theme.gradient} text-white py-8 px-4`}>
         <div className="max-w-md mx-auto text-center">
           <h1 className="text-2xl font-bold mb-1">{invoice.business_name || theme.name}</h1>
-          <p className="text-white/70 text-sm">Secure Online Payment</p>
+          <p className="text-white/60 text-sm">Secure Online Payment</p>
         </div>
       </div>
 
-      <div className="flex-1 flex items-start justify-center px-4 py-8">
+      {/* Content */}
+      <div className="flex-1 flex items-start justify-center px-4 py-6">
         <div className="w-full max-w-md space-y-4">
+
+          {/* Cancelled message */}
           {cancelled && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-center">
-              <p className="text-sm text-amber-700">Payment was cancelled. You can try again below.</p>
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
+              <AlertCircle className="w-5 h-5 text-amber-500 mx-auto mb-1.5" />
+              <p className="text-sm font-semibold text-amber-800">Payment Not Completed</p>
+              <p className="text-xs text-amber-600 mt-0.5">No charges were made. You can try again below.</p>
             </div>
           )}
 
+          {/* Error */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
-              <p className="text-sm text-red-700">{error}</p>
+            <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-center">
+              <p className="text-sm font-medium text-red-700">{error}</p>
             </div>
           )}
 
+          {/* Invoice Card */}
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-            <div className="p-6 space-y-4">
-              <div className="flex justify-between items-start">
+            {/* Invoice header */}
+            <div className="p-5 pb-4">
+              <div className="flex justify-between items-start mb-4">
                 <div>
-                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Invoice</p>
-                  <p className="text-lg font-bold text-gray-900 font-mono">{invoice.invoice_number}</p>
+                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Invoice</p>
+                  <p className="text-lg font-bold text-gray-900 font-mono tracking-wide">{invoice.invoice_number}</p>
                 </div>
-                <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-medium capitalize">
+                <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold capitalize">
                   {invoice.status}
                 </span>
               </div>
 
-              <div>
-                <p className="text-xs text-gray-400 mb-0.5">Bill To</p>
-                <p className="text-gray-900 font-medium">{invoice.customer_name}</p>
-              </div>
-
-              <div className="border-t border-gray-100 pt-4">
-                {invoice.deposit_required && !invoice.deposit_paid && (
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-500">Deposit Required</span>
-                    <span className="font-medium text-gray-900">${invoice.deposit_amount.toLocaleString()}</span>
-                  </div>
-                )}
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-gray-500">Invoice Total</span>
-                  <span className="text-gray-700">${invoice.total.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between items-baseline border-t border-gray-100 pt-2">
-                  <span className="text-gray-900 font-semibold">Amount Due</span>
-                  <span className="text-2xl font-bold" style={{ color: theme.accent }}>
-                    ${invoice.balance_due.toLocaleString()}
-                  </span>
-                </div>
+              <div className="mb-4">
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-0.5">Bill To</p>
+                <p className="text-gray-900 font-semibold">{invoice.customer_name}</p>
               </div>
             </div>
 
-            <div className="px-6 pb-6">
+            {/* Financial summary */}
+            <div className="px-5 pb-5 space-y-3">
+              {/* Primary: Amount due now */}
+              <div className="rounded-xl p-4" style={{ backgroundColor: theme.accentLight }}>
+                <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: theme.accent }}>{dueLabel}</p>
+                <p className="text-3xl font-extrabold tracking-tight" style={{ color: theme.accent }}>
+                  ${dueNow.toLocaleString()}
+                </p>
+              </div>
+
+              {/* Breakdown */}
+              <div className="space-y-2 pt-1">
+                {invoice.deposit_required && !invoice.deposit_paid && (
+                  <SummaryRow label="Deposit Required" value={`$${invoice.deposit_amount.toLocaleString()}`} highlight />
+                )}
+                {invoice.deposit_required && invoice.deposit_paid && (
+                  <SummaryRow label="Deposit Paid ✓" value={`$${invoice.deposit_amount.toLocaleString()}`} positive />
+                )}
+                <SummaryRow label="Invoice Total" value={`$${invoice.total.toLocaleString()}`} />
+                {invoice.balance_due !== invoice.total && (
+                  <SummaryRow label="Remaining Balance" value={`$${invoice.balance_due.toLocaleString()}`} bold />
+                )}
+              </div>
+            </div>
+
+            {/* CTA */}
+            <div className="px-5 pb-5">
               <Button
                 onClick={handlePay}
                 disabled={paying}
-                className="w-full h-14 text-lg font-semibold rounded-xl shadow-md"
+                className="w-full h-14 text-lg font-bold rounded-xl shadow-md transition-all"
                 style={{ backgroundColor: theme.accent }}
               >
                 {paying ? (
@@ -189,17 +214,33 @@ export default function PayInvoice() {
                 ) : (
                   <CreditCard className="w-5 h-5 mr-2" />
                 )}
-                {paying ? "Redirecting to checkout..." : `Pay $${invoice.balance_due.toLocaleString()}`}
+                {paying ? "Redirecting to checkout..." : `Pay $${dueNow.toLocaleString()}`}
               </Button>
             </div>
           </div>
 
-          <div className="flex items-center justify-center gap-1.5 text-gray-400 text-xs">
+          {/* Trust footer */}
+          <div className="flex items-center justify-center gap-1.5 text-gray-400 text-xs py-2">
             <Shield className="w-3.5 h-3.5" />
             <span>Secured by Stripe · 256-bit SSL encryption</span>
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function SummaryRow({ label, value, bold, highlight, positive }: {
+  label: string; value: string; bold?: boolean; highlight?: boolean; positive?: boolean;
+}) {
+  return (
+    <div className="flex justify-between items-center">
+      <span className={`text-sm ${bold ? "font-semibold text-gray-900" : "text-gray-500"} ${highlight ? "text-amber-600 font-medium" : ""} ${positive ? "text-green-600" : ""}`}>
+        {label}
+      </span>
+      <span className={`text-sm ${bold ? "font-bold text-gray-900" : "font-medium text-gray-700"}`}>
+        {value}
+      </span>
     </div>
   );
 }
