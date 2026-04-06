@@ -72,6 +72,8 @@ import PlatformModule from "./pages/platform/PlatformModule";
 import PlatformLeads from "./pages/platform/PlatformLeads";
 import PlatformCustomers from "./pages/platform/PlatformCustomers";
 import PlatformQuotes from "./pages/platform/PlatformQuotes";
+import PlatformJobs from "./pages/platform/PlatformJobs";
+import PlatformSchedule from "./pages/platform/PlatformSchedule";
 // Service pages
 import PalmTreeTrimming from "./pages/services/PalmTreeTrimming";
 import PalmTreeInstallation from "./pages/services/PalmTreeInstallation";
@@ -173,8 +175,8 @@ const App = () => (
           <Route path="/platform/leads" element={<PlatformLeads />} />
           <Route path="/platform/customers" element={<PlatformCustomers />} />
           <Route path="/platform/quotes" element={<PlatformQuotes />} />
-          <Route path="/platform/jobs" element={<PlatformModule />} />
-          <Route path="/platform/schedule" element={<PlatformModule />} />
+          <Route path="/platform/jobs" element={<PlatformJobs />} />
+          <Route path="/platform/schedule" element={<PlatformSchedule />} />
           <Route path="/platform/invoices" element={<PlatformModule />} />
           <Route path="/platform/payments" element={<PlatformModule />} />
           <Route path="/platform/analytics" element={<PlatformModule />} />
