@@ -3216,6 +3216,53 @@ export type Database = {
           },
         ]
       }
+      terminal_sessions: {
+        Row: {
+          business_id: string
+          connection_token_id: string | null
+          created_at: string
+          device_type: string
+          id: string
+          last_active_at: string | null
+          location_id: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          business_id: string
+          connection_token_id?: string | null
+          created_at?: string
+          device_type?: string
+          id?: string
+          last_active_at?: string | null
+          location_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          business_id?: string
+          connection_token_id?: string | null
+          created_at?: string
+          device_type?: string
+          id?: string
+          last_active_at?: string | null
+          location_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "terminal_sessions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       text_consents: {
         Row: {
           created_at: string
