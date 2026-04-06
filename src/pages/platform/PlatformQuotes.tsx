@@ -241,6 +241,28 @@ function QuoteDetail({ quote, biz, onUpdate, onClose }: {
             </Button>
           </>
         )}
+        {quote.status === "accepted" && (
+          <Button
+            size="sm"
+            className="gap-1 text-xs"
+            disabled={converting}
+            onClick={async () => {
+              setConverting(true);
+              const { convertQuoteToJob } = await import("@/lib/platform-conversions");
+              const result = await convertQuoteToJob(quote);
+              setConverting(false);
+              if (result.error) {
+                toast({ title: "Conversion failed", description: result.error, variant: "destructive" });
+                return;
+              }
+              toast({ title: "Job created", description: `Job ${result.jobNumber} created from quote` });
+              onUpdate();
+              onClose();
+            }}
+          >
+            <ChevronRight className="w-3 h-3" /> {converting ? "Converting..." : "Convert to Job"}
+          </Button>
+        )}
       </div>
 
       {/* Financial summary */}
