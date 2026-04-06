@@ -16,6 +16,11 @@ const fadeUp = {
 const BuyPalmTrees = () => {
   return (
     <Layout>
+      <SEOHead
+        title="Buy Palm Trees in NW Florida | Gulf Coast Palms"
+        description="Looking to buy and install a new palm tree? Gulf Coast Palms supplies and installs quality palm trees across Navarre, Pensacola, and the Emerald Coast. Free estimates."
+        canonicalUrl="/palm-trees/buy"
+      />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         "@context": "https://schema.org",
         "@type": "Product",
