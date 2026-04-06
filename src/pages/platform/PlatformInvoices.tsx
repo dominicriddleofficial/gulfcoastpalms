@@ -342,6 +342,18 @@ function InvoiceDetailPanel({ invoice, businessId, onStatusChange, onRecordPayme
         </div>
       )}
 
+      {/* Payment Link Actions */}
+      {!isPaid && !isVoid && hasBalance && (
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" className="flex-1 font-body text-xs" onClick={copyPaymentLink}>
+            <Link2 className="w-3.5 h-3.5 mr-1" /> Copy Payment Link
+          </Button>
+          <Button size="sm" variant="outline" className="font-body text-xs" onClick={openPaymentPage}>
+            <ExternalLink className="w-3.5 h-3.5 mr-1" /> Open
+          </Button>
+        </div>
+      )}
+
       {/* Actions */}
       {!isPaid && !isVoid && (
         <div className="space-y-2">
