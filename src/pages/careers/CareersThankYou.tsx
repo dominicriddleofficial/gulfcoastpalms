@@ -1,10 +1,17 @@
 import { Link } from "react-router-dom";
 import { CheckCircle, ArrowLeft } from "lucide-react";
 import Layout from "@/components/Layout";
+import SEOHead from "@/components/SEOHead";
 
 const CareersThankYou = () => {
   return (
     <Layout>
+      <SEOHead
+        title="Application Received | Gulf Coast Palms Careers"
+        description="Thank you for applying to Gulf Coast Palms. We review every application and will be in touch if your experience is a match for our team."
+        canonicalUrl="/careers/thank-you"
+        noIndex
+      />
       <section className="section-padding min-h-[60vh] flex items-center">
         <div className="container mx-auto text-center max-w-2xl">
           <div className="flex justify-center mb-6">
