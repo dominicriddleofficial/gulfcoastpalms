@@ -2846,6 +2846,41 @@ export type Database = {
           },
         ]
       }
+      platform_saved_items: {
+        Row: {
+          business_id: string
+          created_at: string
+          default_price: number
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          default_price?: number
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          default_price?: number
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_saved_items_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_tasks: {
         Row: {
           assigned_user_id: string | null
