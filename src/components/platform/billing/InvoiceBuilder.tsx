@@ -36,6 +36,8 @@ interface CustomerResult {
   email: string | null;
   phone: string | null;
   company_name: string | null;
+  address?: string;
+  source?: string;
 }
 
 interface InvoiceBuilderProps {
