@@ -79,7 +79,9 @@ Deno.serve(async (req) => {
       metadata: { invoiceNumber, total, businessName },
     });
 
-    // Enqueue the email for delivery via the email queue
+    // Get or create unsubscribe token for recipient
+    const unsubToken = await getOrCreateUnsubToken(supabase, recipientEmail);
+
     const plainText = `Hi ${recipientName || "there"},\n\n${message || "Please find your invoice details below."}\n\nInvoice: ${invoiceNumber}\nAmount Due: $${Number(total || 0).toFixed(2)}\n${dueDate ? `Due Date: ${dueDate}\n` : ""}${paymentUrl ? `\nPay online: ${paymentUrl}\n` : ""}\nThank you for your business! — ${businessName}`;
 
     const emailPayload = {
@@ -92,6 +94,7 @@ Deno.serve(async (req) => {
       message_id: messageId,
       idempotency_key: messageId,
       purpose: "transactional",
+      unsubscribe_token: unsubToken,
     };
 
     const { error: enqueueError } = await supabase.rpc("enqueue_email", {
