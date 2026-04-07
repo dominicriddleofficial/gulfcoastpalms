@@ -75,6 +75,11 @@ export default function PlatformCustomers() {
                         <User className="w-4 h-4 text-muted-foreground" />
                         <span className="font-body text-sm font-medium text-foreground truncate">{cust.display_name}</span>
                         {cust.vip_flag && <Star className="w-3.5 h-3.5 text-yellow-500" />}
+                        {cust.source_system === "jobber" && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-body font-bold tracking-tight bg-primary/10 text-primary border border-primary/20">
+                            Jobber
+                          </span>
+                        )}
                         {biz && <InlineBadge shortcode={biz.shortcode} color={biz.default_business_color} />}
                       </div>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground font-body">
