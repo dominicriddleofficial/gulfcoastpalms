@@ -143,6 +143,14 @@ export default function InvoicePreviewPanel({ data }: { data: PreviewData }) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           {/* Left - business info */}
           <div>
+            {data.logoUrl && (
+              <img
+                src={data.logoUrl}
+                alt={data.businessName || brand.name}
+                style={{ height: 44, marginBottom: 8, maxWidth: 180, objectFit: "contain" }}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+              />
+            )}
             <div style={{
               fontSize: "13px", fontWeight: 700, letterSpacing: "0.15em",
               textTransform: "uppercase", color: "#fff",

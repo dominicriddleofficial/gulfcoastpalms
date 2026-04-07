@@ -609,15 +609,27 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
         </div>
       </div>
 
-      {/* Mobile Preview */}
-      <Dialog open={showMobilePreview} onOpenChange={setShowMobilePreview}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white p-0">
-          <DialogHeader className="p-4 pb-0">
-            <DialogTitle className="text-foreground">Invoice Preview</DialogTitle>
-          </DialogHeader>
-          <InvoicePreviewPanel data={previewData} />
-        </DialogContent>
-      </Dialog>
+      {/* Mobile Preview — full-screen bottom sheet */}
+      <Sheet open={showMobilePreview} onOpenChange={setShowMobilePreview}>
+        <SheetContent side="bottom" className="h-[95vh] p-0 bg-[#0a0f0a] border-t border-border overflow-hidden flex flex-col">
+          <SheetHeader className="px-4 pt-4 pb-2 shrink-0">
+            <SheetTitle className="text-foreground font-display text-base">Invoice Preview</SheetTitle>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto px-4 pb-4">
+            <div className="max-w-[480px] mx-auto">
+              <InvoicePreviewPanel data={previewData} />
+            </div>
+          </div>
+          <div className="shrink-0 px-4 py-3 border-t border-border bg-background flex gap-2">
+            <Button variant="outline" className="flex-1 font-body text-sm" onClick={() => window.print()}>
+              Download PDF
+            </Button>
+            <Button variant="ghost" className="font-body text-sm" onClick={() => setShowMobilePreview(false)}>
+              Close
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Send Modal */}
       {showSendModal && (
