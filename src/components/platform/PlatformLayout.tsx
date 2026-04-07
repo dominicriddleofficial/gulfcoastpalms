@@ -1,16 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import BusinessSwitcher from "./BusinessSwitcher";
 import QuickActionFAB from "./QuickActionFAB";
 import UniversalSearch from "./UniversalSearch";
 import { Button } from "@/components/ui/button";
+import { prefetchRoute } from "@/lib/route-prefetch";
 import {
   LayoutDashboard, Users, FileText, Briefcase, CalendarDays, Receipt,
   CreditCard, MessageSquare, ClipboardList, Settings, LogOut, Menu, X,
   Bell, TrendingUp, Target, ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 const NAV_SECTIONS = [
   {
@@ -51,16 +53,62 @@ interface Props {
   children: React.ReactNode;
 }
 
+function SidebarBizLogo({ business }: { business: { id: string; shortcode: string; public_brand_name: string; logo_url: string | null; default_business_color?: string } | undefined }) {
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!business) return;
+    // Try logo_url from businesses table first
+    if (business.logo_url) {
+      setLogoUrl(business.logo_url);
+      return;
+    }
+    // Fallback: query business_brand_assets
+    supabase
+      .from("business_brand_assets")
+      .select("file_url")
+      .eq("business_id", business.id)
+      .eq("asset_type", "logo")
+      .limit(1)
+      .then(({ data }) => {
+        if (data && data.length > 0) setLogoUrl(data[0].file_url);
+      });
+  }, [business?.id, business?.logo_url]);
+
+  if (!business) return null;
+
+  if (logoUrl) {
+    return (
+      <img
+        src={logoUrl}
+        alt={business.public_brand_name}
+        className="w-7 h-7 rounded-md object-contain"
+        onError={() => setLogoUrl(null)}
+      />
+    );
+  }
+
+  const color = business.default_business_color || "#22c55e";
+  return (
+    <div
+      className="w-7 h-7 rounded-md flex items-center justify-center border"
+      style={{ backgroundColor: color + "15", color, borderColor: color + "25" }}
+    >
+      <span className="font-display text-[9px] font-bold tracking-tight">
+        {business.shortcode}
+      </span>
+    </div>
+  );
+}
+
 export default function PlatformLayout({ children }: Props) {
   const auth = usePlatformAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
-  // Derive current page title from nav
   const currentPage = NAV_SECTIONS.flatMap(s => s.items).find(i => i.path === location.pathname);
   const pageTitle = currentPage?.label || "Platform";
 
-  // Business context label
   const selectedBiz = auth.businesses.find(b => b.id === auth.selectedBusinessId);
   const contextLabel = selectedBiz ? selectedBiz.public_brand_name : "All Businesses";
 
@@ -125,6 +173,7 @@ export default function PlatformLayout({ children }: Props) {
                       key={item.path}
                       to={item.path}
                       onClick={() => setSidebarOpen(false)}
+                      onMouseEnter={() => prefetchRoute(item.path)}
                       className={cn(
                         "group flex items-center gap-2.5 px-3 py-2 rounded-lg font-body text-[13px] font-medium transition-all duration-150",
                         isActive
@@ -175,8 +224,9 @@ export default function PlatformLayout({ children }: Props) {
             <Menu className="w-5 h-5" />
           </button>
           
-          {/* Page context */}
+          {/* Page context with business logo */}
           <div className="flex items-center gap-2">
+            {selectedBiz && <SidebarBizLogo business={selectedBiz} />}
             <h1 className="font-display text-[15px] font-semibold text-foreground tracking-tight">{pageTitle}</h1>
             <span className="text-border">·</span>
             <span className="font-body text-[12px] text-muted-foreground">{contextLabel}</span>
@@ -196,18 +246,6 @@ export default function PlatformLayout({ children }: Props) {
 
       {/* Quick Action FAB */}
       <QuickActionFAB brandColor={selectedBiz?.default_business_color || (selectedBiz?.shortcode === "PPS" ? "#141414" : "#22c55e")} />
-
-      {/* Debug panel — dev only */}
-      {import.meta.env.DEV && (
-        <div className="fixed bottom-2 right-2 z-[100] bg-card border border-border rounded-lg p-3 text-[10px] font-mono text-muted-foreground max-w-xs shadow-lg opacity-60 hover:opacity-100 transition-opacity">
-          <p className="text-primary font-bold mb-1">🔧 Biz Context Debug</p>
-          <p>Route: {location.pathname}</p>
-          <p>Selected: {auth.selectedBusinessId || "ALL"}</p>
-          <p>Biz: {contextLabel}</p>
-          <p>Persisted: {typeof window !== 'undefined' ? localStorage.getItem('platform_selected_business') || "null" : "ssr"}</p>
-          <p>Access: {auth.businesses.map(b => b.shortcode).join(", ")}</p>
-        </div>
-      )}
     </div>
   );
 }
