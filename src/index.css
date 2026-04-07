@@ -140,6 +140,17 @@
   50% { opacity: 1; }
 }
 
+@keyframes ambient-shift {
+  0%, 100% {
+    background-position: 50% 100%, 20% 30%, 80% 10%;
+    opacity: 1;
+  }
+  50% {
+    background-position: 52% 98%, 22% 28%, 78% 12%;
+    opacity: 0.85;
+  }
+}
+
 @layer utilities {
   .text-gradient-primary {
     @apply bg-clip-text text-transparent;

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
@@ -6,10 +6,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   TrendingUp, CreditCard, AlertTriangle, Briefcase,
-  ArrowUpRight, ArrowDownRight, Minus, Calendar, MapPin, Clock, User,
+  Calendar, MapPin, Clock,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { format, startOfWeek, endOfWeek, isToday } from "date-fns";
+import { format, startOfWeek, endOfWeek } from "date-fns";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 interface KPIData {
@@ -28,28 +27,36 @@ interface TodayJob {
   status: string;
 }
 
-interface RevenuePoint {
-  month: string;
-  revenue: number;
-}
+interface RevenuePoint { month: string; revenue: number; }
 
-function KPICard({ label, value, icon: Icon, trendDirection }: {
-  label: string;
-  value: string;
-  icon: any;
-  trendDirection?: "up" | "down" | "neutral";
-}) {
+function KPICard({ label, value, icon: Icon }: { label: string; value: string; icon: any }) {
   return (
-    <div className="platform-card platform-card-glow rounded-xl p-4 space-y-3 hover:border-primary/10 transition-colors hover:shadow-[0_0_20px_-4px_hsl(142_71%_45%/0.15)]">
+    <div
+      className="rounded-xl p-5 space-y-3 transition-all duration-300 cursor-default"
+      style={{
+        background: "rgba(255,255,255,0.04)",
+        border: "1px solid rgba(34,197,94,0.12)",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = "rgba(34,197,94,0.30)";
+        e.currentTarget.style.boxShadow = "0 0 20px rgba(34,197,94,0.10)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = "rgba(34,197,94,0.12)";
+        e.currentTarget.style.boxShadow = "none";
+      }}
+    >
       <div className="flex items-center justify-between">
-        <span className="font-body text-[11px] text-muted-foreground uppercase tracking-wider">{label}</span>
-        <div className="w-8 h-8 rounded-lg bg-primary/8 flex items-center justify-center">
-          <Icon className="w-4 h-4 text-primary/70" />
+        <span style={{ fontSize: "10px", letterSpacing: "0.15em", textTransform: "uppercase", color: "hsl(220 8% 50%)" }} className="font-body">
+          {label}
+        </span>
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(34,197,94,0.08)" }}>
+          <Icon className="w-4 h-4" style={{ color: "rgba(34,197,94,0.7)" }} />
         </div>
       </div>
-      <div className="flex items-end gap-2">
-        <span className="font-display text-2xl font-bold text-foreground tracking-tight">{value}</span>
-      </div>
+      <span className="font-display block" style={{ fontSize: "32px", fontWeight: 800, color: "#fff", letterSpacing: "-0.02em" }}>
+        {value}
+      </span>
     </div>
   );
 }
@@ -66,19 +73,14 @@ const VISIT_STATUS_COLORS: Record<string, { bg: string; text: string; label: str
 export default function PlatformDashboard() {
   const { selectedBusinessId, businesses, isOwner } = usePlatformAuth();
   const queryClient = useQueryClient();
-  const [kpis, setKpis] = useState<KPIData>({
-    totalInvoiced: 0, totalCollected: 0, outstandingBalance: 0, jobsThisWeek: 0,
-  });
+  const [kpis, setKpis] = useState<KPIData>({ totalInvoiced: 0, totalCollected: 0, outstandingBalance: 0, jobsThisWeek: 0 });
   const [todayJobs, setTodayJobs] = useState<TodayJob[]>([]);
   const [revenueData, setRevenueData] = useState<RevenuePoint[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Prefetch common routes data on mount
   useEffect(() => {
     if (!selectedBusinessId) return;
-    // Prefetch leads, jobs, invoices for faster nav
     const bizFilter = (q: any) => q.eq("business_id", selectedBusinessId);
-
     queryClient.prefetchQuery({
       queryKey: ["platform-leads-prefetch", selectedBusinessId],
       queryFn: () => bizFilter(supabase.from("platform_leads").select("id", { count: "exact", head: true })).then(r => r.count),
@@ -91,14 +93,11 @@ export default function PlatformDashboard() {
     });
   }, [selectedBusinessId, queryClient]);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, [selectedBusinessId]);
+  useEffect(() => { fetchDashboardData(); }, [selectedBusinessId]);
 
   const fetchDashboardData = async () => {
     setLoading(true);
     const bizFilter = (q: any) => selectedBusinessId ? q.eq("business_id", selectedBusinessId) : q;
-
     const today = new Date();
     const weekStart = startOfWeek(today, { weekStartsOn: 1 });
     const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
@@ -106,38 +105,17 @@ export default function PlatformDashboard() {
 
     const [invoices, jobsWeek, todayVisits, payments] = await Promise.all([
       bizFilter(supabase.from("platform_invoices").select("total, amount_paid, balance_due")),
-      bizFilter(
-        supabase.from("platform_job_visits")
-          .select("id", { count: "exact", head: true })
-          .gte("scheduled_date", format(weekStart, "yyyy-MM-dd"))
-          .lte("scheduled_date", format(weekEnd, "yyyy-MM-dd"))
-      ),
-      bizFilter(
-        supabase.from("platform_job_visits")
-          .select("id, title, status, scheduled_start_time, platform_jobs(title, platform_customers(display_name)), platform_properties(address_1, city)")
-          .eq("scheduled_date", todayStr)
-          .order("route_order", { ascending: true })
-      ),
-      bizFilter(
-        supabase.from("platform_payments")
-          .select("amount, payment_date")
-          .order("payment_date", { ascending: true })
-      ),
+      bizFilter(supabase.from("platform_job_visits").select("id", { count: "exact", head: true }).gte("scheduled_date", format(weekStart, "yyyy-MM-dd")).lte("scheduled_date", format(weekEnd, "yyyy-MM-dd"))),
+      bizFilter(supabase.from("platform_job_visits").select("id, title, status, scheduled_start_time, platform_jobs(title, platform_customers(display_name)), platform_properties(address_1, city)").eq("scheduled_date", todayStr).order("route_order", { ascending: true })),
+      bizFilter(supabase.from("platform_payments").select("amount, payment_date").order("payment_date", { ascending: true })),
     ]);
 
     const invoiceData = invoices.data || [];
     const totalInvoiced = invoiceData.reduce((s: number, i: any) => s + (i.total || 0), 0);
     const totalCollected = invoiceData.reduce((s: number, i: any) => s + (i.amount_paid || 0), 0);
     const outstanding = invoiceData.reduce((s: number, i: any) => s + (i.balance_due || 0), 0);
+    setKpis({ totalInvoiced, totalCollected, outstandingBalance: outstanding, jobsThisWeek: jobsWeek.count || 0 });
 
-    setKpis({
-      totalInvoiced,
-      totalCollected,
-      outstandingBalance: outstanding,
-      jobsThisWeek: jobsWeek.count || 0,
-    });
-
-    // Today's jobs
     setTodayJobs((todayVisits.data || []).map((v: any) => ({
       id: v.id,
       job_title: v.platform_jobs?.title || v.title || "Visit",
@@ -147,15 +125,11 @@ export default function PlatformDashboard() {
       status: v.status,
     })));
 
-    // Revenue chart - group payments by month
     const paymentData = payments.data || [];
     const monthMap: Record<string, number> = {};
-    // Pre-fill last 12 months with 0
     for (let i = 11; i >= 0; i--) {
-      const d = new Date();
-      d.setMonth(d.getMonth() - i);
-      const key = format(d, "MMM yyyy");
-      monthMap[key] = 0;
+      const d = new Date(); d.setMonth(d.getMonth() - i);
+      monthMap[format(d, "MMM yyyy")] = 0;
     }
     paymentData.forEach((p: any) => {
       if (p.payment_date) {
@@ -164,7 +138,6 @@ export default function PlatformDashboard() {
       }
     });
     setRevenueData(Object.entries(monthMap).map(([month, revenue]) => ({ month, revenue })));
-
     setLoading(false);
   };
 
@@ -174,16 +147,18 @@ export default function PlatformDashboard() {
   return (
     <PlatformLayout>
       <div className="space-y-6 relative">
-        {/* Green glow background — dashboard only */}
+        {/* Atmospheric gradient background */}
         <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden rounded-2xl">
           <div
-            className="absolute inset-0 animate-[glow-pulse_8s_ease-in-out_infinite]"
+            className="absolute inset-0"
             style={{
               background: `
-                radial-gradient(ellipse at 20% 20%, rgba(26, 92, 56, 0.15) 0%, transparent 60%),
-                radial-gradient(ellipse at 80% 80%, rgba(26, 92, 56, 0.10) 0%, transparent 55%),
-                radial-gradient(ellipse at 50% 0%, rgba(45, 122, 79, 0.08) 0%, transparent 50%)
+                radial-gradient(ellipse 60% 50% at 50% 100%, rgba(34,197,94,0.18) 0%, rgba(34,197,94,0.06) 50%, transparent 75%),
+                radial-gradient(ellipse 40% 30% at 20% 30%, rgba(34,197,94,0.10) 0%, transparent 60%),
+                radial-gradient(ellipse 30% 20% at 80% 10%, rgba(34,197,94,0.07) 0%, transparent 55%),
+                #080d08
               `,
+              animation: "ambient-shift 15s ease-in-out infinite",
             }}
           />
         </div>
@@ -191,38 +166,39 @@ export default function PlatformDashboard() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="font-display text-xl font-bold text-foreground tracking-tight">Command Center</h1>
-            <p className="font-body text-[12px] text-muted-foreground mt-0.5">
+            <h1 className="font-display font-bold text-foreground" style={{ fontSize: "28px", letterSpacing: "-0.02em" }}>
+              Command Center
+            </h1>
+            <p className="font-body mt-0.5" style={{ fontSize: "13px", color: "hsl(220 8% 50%)" }}>
               {selectedBiz ? selectedBiz.public_brand_name : "All Businesses"} · Overview
             </p>
           </div>
           {!selectedBusinessId && isOwner && businesses.length > 1 && (
             <div className="flex gap-1.5">
-              {businesses.map(b => (
-                <InlineBadge key={b.id} shortcode={b.shortcode} color={b.default_business_color} />
-              ))}
+              {businesses.map(b => <InlineBadge key={b.id} shortcode={b.shortcode} color={b.default_business_color} />)}
             </div>
           )}
         </div>
 
-        {/* Primary KPIs */}
+        {/* KPI Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <KPICard label="Total Revenue" value={`$${kpis.totalInvoiced.toLocaleString()}`} icon={TrendingUp} />
           <KPICard label="Collected" value={`$${kpis.totalCollected.toLocaleString()}`} icon={CreditCard} />
-          <KPICard
-            label="Outstanding"
-            value={`$${kpis.outstandingBalance.toLocaleString()}`}
-            icon={AlertTriangle}
-            trendDirection={kpis.outstandingBalance > 0 ? "down" : "neutral"}
-          />
+          <KPICard label="Outstanding" value={`$${kpis.outstandingBalance.toLocaleString()}`} icon={AlertTriangle} />
           <KPICard label="Jobs This Week" value={kpis.jobsThisWeek.toString()} icon={Briefcase} />
         </div>
 
         {/* Revenue Chart */}
-        <div className="platform-card platform-card-glow rounded-xl p-5 space-y-3">
+        <div
+          className="rounded-2xl p-5 space-y-3"
+          style={{
+            background: "rgba(34,197,94,0.04)",
+            border: "1px solid rgba(34,197,94,0.10)",
+          }}
+        >
           <div>
             <h3 className="font-display text-sm font-semibold text-foreground tracking-tight">Revenue Trend</h3>
-            <p className="font-body text-[11px] text-muted-foreground">Monthly collected revenue</p>
+            <p className="font-body text-muted-foreground" style={{ fontSize: "11px" }}>Monthly collected revenue</p>
           </div>
           <div className="h-[280px] md:h-[320px]">
             {hasRevenueData ? (
@@ -230,69 +206,51 @@ export default function PlatformDashboard() {
                 <AreaChart data={revenueData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                   <defs>
                     <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(142 71% 45%)" stopOpacity={0.4} />
-                      <stop offset="100%" stopColor="hsl(142 71% 45%)" stopOpacity={0} />
+                      <stop offset="0%" stopColor="#22c55e" stopOpacity={0.4} />
+                      <stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 12% 14%)" strokeOpacity={0.5} />
-                  <XAxis
-                    dataKey="month"
-                    tick={{ fill: "hsl(220 8% 50%)", fontSize: 11, fontFamily: "Outfit" }}
-                    axisLine={{ stroke: "hsl(220 12% 14%)" }}
-                    tickLine={false}
-                    tickFormatter={(v) => v.split(" ")[0]}
-                  />
-                  <YAxis
-                    tick={{ fill: "hsl(220 8% 50%)", fontSize: 11, fontFamily: "Outfit" }}
-                    axisLine={false}
-                    tickLine={false}
-                    tickFormatter={(v) => `$${(v / 1000).toFixed(v >= 1000 ? 1 : 0)}${v >= 1000 ? "k" : ""}`}
-                  />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                  <XAxis dataKey="month" tick={{ fill: "hsl(220 8% 50%)", fontSize: 11, fontFamily: "Outfit" }} axisLine={{ stroke: "rgba(255,255,255,0.06)" }} tickLine={false} tickFormatter={(v) => v.split(" ")[0]} />
+                  <YAxis tick={{ fill: "hsl(220 8% 50%)", fontSize: 11, fontFamily: "Outfit" }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(v >= 1000 ? 1 : 0)}${v >= 1000 ? "k" : ""}`} />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(220 14% 9%)",
-                      border: "1px solid hsl(220 12% 18%)",
-                      borderRadius: "8px",
-                      fontFamily: "Outfit",
-                      fontSize: "12px",
-                      color: "hsl(220 10% 92%)",
-                    }}
+                    contentStyle={{ backgroundColor: "#111811", border: "1px solid rgba(34,197,94,0.15)", borderRadius: "8px", fontFamily: "Outfit", fontSize: "12px", color: "#fff" }}
                     formatter={(value: number) => [`$${value.toLocaleString()}`, "Revenue"]}
                     labelStyle={{ color: "hsl(220 8% 50%)", marginBottom: 4 }}
                   />
-                  <Area
-                    type="monotone"
-                    dataKey="revenue"
-                    stroke="hsl(142 71% 45%)"
-                    strokeWidth={2}
-                    fill="url(#revenueGradient)"
-                  />
+                  <Area type="monotone" dataKey="revenue" stroke="#22c55e" strokeWidth={2} fill="url(#revenueGradient)" />
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
               <div className="h-full flex flex-col items-center justify-center">
-                <TrendingUp className="w-10 h-10 text-muted-foreground/20 mb-3" />
-                <p className="font-body text-sm text-muted-foreground/60">Revenue will appear here as invoices are paid</p>
+                <TrendingUp className="w-10 h-10 mb-3" style={{ color: "rgba(255,255,255,0.1)" }} />
+                <p className="font-body text-sm" style={{ color: "rgba(255,255,255,0.3)" }}>Revenue will appear here as invoices are paid</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Today's Schedule Strip */}
-        <div className="platform-card platform-card-glow rounded-xl p-5 space-y-3">
+        {/* Today's Schedule */}
+        <div
+          className="rounded-2xl p-5 space-y-3"
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(34,197,94,0.10)",
+          }}
+        >
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-display text-sm font-semibold text-foreground tracking-tight">Today's Schedule</h3>
-              <p className="font-body text-[11px] text-muted-foreground">{format(new Date(), "EEEE, MMMM d, yyyy")}</p>
+              <p className="font-body" style={{ fontSize: "11px", color: "hsl(220 8% 50%)" }}>{format(new Date(), "EEEE, MMMM d, yyyy")}</p>
             </div>
-            <span className="font-body text-[11px] text-primary font-medium">{todayJobs.length} visit{todayJobs.length !== 1 ? "s" : ""}</span>
+            <span className="font-body text-primary font-medium" style={{ fontSize: "11px" }}>{todayJobs.length} visit{todayJobs.length !== 1 ? "s" : ""}</span>
           </div>
 
           {todayJobs.length === 0 ? (
             <div className="flex items-center justify-center py-8">
               <div className="text-center">
-                <Calendar className="w-8 h-8 mx-auto text-muted-foreground/30 mb-2" />
-                <p className="font-body text-sm text-muted-foreground/60">No jobs scheduled today</p>
+                <Calendar className="w-8 h-8 mx-auto mb-2" style={{ color: "rgba(255,255,255,0.15)" }} />
+                <p className="font-body text-sm" style={{ color: "rgba(255,255,255,0.3)" }}>No jobs scheduled today</p>
               </div>
             </div>
           ) : (
@@ -302,27 +260,31 @@ export default function PlatformDashboard() {
                 return (
                   <div
                     key={job.id}
-                    className="flex-shrink-0 w-56 bg-secondary/40 border border-border rounded-lg p-3 hover:border-primary/20 transition-colors cursor-pointer"
+                    className="flex-shrink-0 w-56 rounded-lg p-3 transition-colors cursor-pointer"
+                    style={{
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(34,197,94,0.08)",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(34,197,94,0.20)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(34,197,94,0.08)"; }}
                   >
                     <div className="flex items-center justify-between mb-1.5">
                       {job.scheduled_start_time && (
-                        <span className="flex items-center gap-1 font-body text-[11px] text-muted-foreground">
+                        <span className="flex items-center gap-1 font-body" style={{ fontSize: "11px", color: "hsl(220 8% 50%)" }}>
                           <Clock className="w-3 h-3" />
                           {job.scheduled_start_time.slice(0, 5)}
                         </span>
                       )}
                       <span
-                        className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-body font-medium"
-                        style={{ backgroundColor: statusInfo.bg, color: statusInfo.text }}
+                        className="inline-flex items-center px-1.5 py-0.5 rounded-full font-body font-medium"
+                        style={{ fontSize: "9px", backgroundColor: statusInfo.bg, color: statusInfo.text }}
                       >
                         {statusInfo.label}
                       </span>
                     </div>
-                    <p className="font-body text-sm font-medium text-foreground truncate">
-                      {job.customer_name || job.job_title}
-                    </p>
+                    <p className="font-body text-sm font-medium text-foreground truncate">{job.customer_name || job.job_title}</p>
                     {job.property_address && (
-                      <p className="font-body text-[11px] text-muted-foreground truncate flex items-center gap-1 mt-0.5">
+                      <p className="font-body truncate flex items-center gap-1 mt-0.5" style={{ fontSize: "11px", color: "hsl(220 8% 50%)" }}>
                         <MapPin className="w-3 h-3 shrink-0" />
                         {job.property_address}
                       </p>
@@ -334,34 +296,24 @@ export default function PlatformDashboard() {
           )}
         </div>
 
-        {/* Business Comparison (owner only, combined view) */}
+        {/* Business Comparison */}
         {!selectedBusinessId && isOwner && businesses.length > 1 && (
-          <div className="platform-card platform-card-glow rounded-xl p-5">
+          <div className="rounded-2xl p-5" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(34,197,94,0.10)" }}>
             <h2 className="font-display text-sm font-semibold text-foreground tracking-tight mb-4">Business Comparison</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {businesses.map(biz => (
-                <div
-                  key={biz.id}
-                  className="rounded-lg border border-border/50 p-4 space-y-3 hover:border-primary/10 transition-colors"
-                  style={{ borderLeftColor: (biz.default_business_color || "#22c55e"), borderLeftWidth: 3 }}
-                >
+                <div key={biz.id} className="rounded-lg p-4 space-y-3" style={{ border: "1px solid rgba(255,255,255,0.06)", borderLeftColor: biz.default_business_color || "#22c55e", borderLeftWidth: 3 }}>
                   <div className="flex items-center gap-2">
                     <InlineBadge shortcode={biz.shortcode} color={biz.default_business_color} />
-                    <span className="font-display text-[12px] font-semibold text-foreground tracking-tight">{biz.public_brand_name}</span>
+                    <span className="font-display font-semibold text-foreground tracking-tight" style={{ fontSize: "12px" }}>{biz.public_brand_name}</span>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <p className="font-body text-[10px] text-muted-foreground uppercase tracking-wider">Revenue</p>
-                      <p className="font-display text-lg font-bold text-foreground tracking-tight">$0</p>
-                    </div>
-                    <div>
-                      <p className="font-body text-[10px] text-muted-foreground uppercase tracking-wider">Jobs</p>
-                      <p className="font-display text-lg font-bold text-foreground tracking-tight">0</p>
-                    </div>
-                    <div>
-                      <p className="font-body text-[10px] text-muted-foreground uppercase tracking-wider">Leads</p>
-                      <p className="font-display text-lg font-bold text-foreground tracking-tight">0</p>
-                    </div>
+                    {["Revenue", "Jobs", "Leads"].map(l => (
+                      <div key={l}>
+                        <p className="font-body uppercase tracking-wider" style={{ fontSize: "10px", color: "hsl(220 8% 50%)" }}>{l}</p>
+                        <p className="font-display text-lg font-bold text-foreground tracking-tight">$0</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}
