@@ -36,6 +36,8 @@ interface CustomerResult {
   email: string | null;
   phone: string | null;
   company_name: string | null;
+  address?: string;
+  source?: string;
 }
 
 interface InvoiceBuilderProps {
@@ -130,19 +132,36 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
     })();
   }, [bizId]);
 
-  // Customer search
+  // Customer search — searches both jobber_clients and platform_customers
   useEffect(() => {
     if (!customerSearch || customerSearch.length < 2) { setCustomerResults([]); return; }
     const timer = setTimeout(async () => {
-      const q = `%${customerSearch}%`;
-      const { data } = await supabase
-        .from("platform_customers")
-        .select("id, display_name, email, phone, company_name")
-        .eq("business_id", bizId)
-        .or(`display_name.ilike.${q},phone.ilike.${q},email.ilike.${q}`)
-        .limit(8);
-      setCustomerResults((data as CustomerResult[]) || []);
-    }, 300);
+      const like = `%${customerSearch}%`;
+      const [jobberRes, platformRes] = await Promise.all([
+        supabase
+          .from("jobber_clients")
+          .select("id, display_name, email, phone, company_name")
+          .eq("business_id", bizId)
+          .or(`display_name.ilike.${like},phone.ilike.${like},email.ilike.${like}`)
+          .limit(8),
+        supabase
+          .from("platform_customers")
+          .select("id, display_name, email, phone, company_name")
+          .eq("business_id", bizId)
+          .or(`display_name.ilike.${like},phone.ilike.${like},email.ilike.${like}`)
+          .limit(4),
+      ]);
+      const seen = new Set<string>();
+      const combined: CustomerResult[] = [];
+      for (const c of [...(jobberRes.data || []), ...(platformRes.data || [])]) {
+        const key = c.display_name?.toLowerCase();
+        if (key && !seen.has(key)) {
+          seen.add(key);
+          combined.push(c as CustomerResult);
+        }
+      }
+      setCustomerResults(combined.slice(0, 10));
+    }, 250);
     return () => clearTimeout(timer);
   }, [customerSearch, bizId]);
 
@@ -347,9 +366,9 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
                       onFocus={() => setShowCustomerSearch(true)}
                       className="pl-8 bg-secondary/50 border-border font-body text-sm"
                     />
-                    {showCustomerSearch && customerResults.length > 0 && (
+                    {showCustomerSearch && customerSearch.length >= 2 && (
                       <div className="absolute z-20 left-0 right-0 top-full mt-1 bg-card border border-border rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                        {customerResults.map(c => (
+                        {customerResults.length > 0 ? customerResults.map(c => (
                           <button
                             key={c.id}
                             className="w-full text-left px-3 py-2 hover:bg-secondary/50 transition-colors"
@@ -360,7 +379,11 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
                               {[c.phone, c.email].filter(Boolean).join(" · ")}
                             </p>
                           </button>
-                        ))}
+                        )) : (
+                          <p className="px-3 py-3 font-body text-xs text-muted-foreground text-center">
+                            No customers found — try a phone number or email
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>
