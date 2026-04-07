@@ -735,7 +735,8 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
           dueDate={dueDate}
           businessName={activeBiz?.public_brand_name || ""}
           shortcode={activeBiz?.shortcode || "gcp"}
-          onSend={async () => {
+          onSend={async (emailData) => {
+            setPendingSendData(emailData);
             await handleSave(true);
             setShowSendModal(false);
           }}
