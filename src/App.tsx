@@ -114,7 +114,6 @@ const PayInvoice = lazy(() => import("./pages/pay/PayInvoice"));
 const PaymentSuccess = lazy(() => import("./pages/pay/PaymentSuccess"));
 const TapToPayLanding = lazy(() => import("./pages/app/TapToPayLanding"));
 const ViewQuote = lazy(() => import("./pages/quote/ViewQuote"));
-const TapToPayLanding = lazy(() => import("./pages/app/TapToPayLanding"));
 
 const RouteTracker = () => {
   const location = useLocation();
