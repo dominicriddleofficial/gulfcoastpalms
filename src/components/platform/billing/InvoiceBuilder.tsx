@@ -63,6 +63,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
   // Form state
   const [bizId, setBizId] = useState(businessId || businesses[0]?.id || "");
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [customerSource, setCustomerSource] = useState<"platform" | "jobber">("platform");
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
