@@ -63,6 +63,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
   // Form state
   const [bizId, setBizId] = useState(businessId || businesses[0]?.id || "");
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [customerSource, setCustomerSource] = useState<"platform" | "jobber">("platform");
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -153,11 +154,18 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
       ]);
       const seen = new Set<string>();
       const combined: CustomerResult[] = [];
-      for (const c of [...(jobberRes.data || []), ...(platformRes.data || [])]) {
+      for (const c of (jobberRes.data || [])) {
         const key = c.display_name?.toLowerCase();
         if (key && !seen.has(key)) {
           seen.add(key);
-          combined.push(c as CustomerResult);
+          combined.push({ ...c, source: "jobber" } as CustomerResult);
+        }
+      }
+      for (const c of (platformRes.data || [])) {
+        const key = c.display_name?.toLowerCase();
+        if (key && !seen.has(key)) {
+          seen.add(key);
+          combined.push({ ...c, source: "platform" } as CustomerResult);
         }
       }
       setCustomerResults(combined.slice(0, 10));
@@ -201,6 +209,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
 
   const selectCustomer = (c: CustomerResult) => {
     setCustomerId(c.id);
+    setCustomerSource((c.source as "platform" | "jobber") || "platform");
     setCustomerName(c.display_name);
     setCustomerEmail(c.email || "");
     setCustomerPhone(c.phone || "");
@@ -252,10 +261,47 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
     if (validLines.length === 0) { toast.error("Add at least one line item"); return; }
 
     setSaving(true);
+
+    // If customer came from jobber_clients, find or create a platform_customer
+    let resolvedCustomerId = customerId;
+    if (customerSource === "jobber" && customerId) {
+      // Check if a platform_customer already exists for this jobber client
+      const { data: existing } = await supabase
+        .from("platform_customers")
+        .select("id")
+        .eq("business_id", bizId)
+        .eq("source_system", "jobber")
+        .eq("source_record_id", customerId)
+        .maybeSingle();
+      if (existing) {
+        resolvedCustomerId = existing.id;
+      } else {
+        // Create a new platform_customer linked to the jobber client
+        const { data: newCust, error: custErr } = await supabase
+          .from("platform_customers")
+          .insert({
+            business_id: bizId,
+            display_name: customerName,
+            email: customerEmail || null,
+            phone: customerPhone || null,
+            source_system: "jobber",
+            source_record_id: customerId,
+          })
+          .select("id")
+          .single();
+        if (custErr || !newCust) {
+          toast.error("Failed to create customer record");
+          setSaving(false);
+          return;
+        }
+        resolvedCustomerId = newCust.id;
+      }
+    }
+
     const { data: inv, error } = await supabase.from("platform_invoices").insert({
       business_id: bizId,
       invoice_number: invoiceNumber,
-      customer_id: customerId,
+      customer_id: resolvedCustomerId,
       status: "draft",
       terms,
       issue_date: issueDate,
