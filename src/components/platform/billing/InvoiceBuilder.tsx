@@ -224,7 +224,8 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
     businessName: activeBiz?.public_brand_name || "",
     shortcode: activeBiz?.shortcode || "gcp",
     isDraft: true,
-  }), [invoiceNumber, issueDate, dueDate, customerName, customerEmail, customerPhone, lineItems, subtotal, taxEnabled, taxRate, taxAmount, discountAmount, total, publicNotes, activeBiz]);
+    logoUrl: logoUrl,
+  }), [invoiceNumber, issueDate, dueDate, customerName, customerEmail, customerPhone, lineItems, subtotal, taxEnabled, taxRate, taxAmount, discountAmount, total, publicNotes, activeBiz, logoUrl]);
 
   // Save invoice
   const handleSave = async (sendAfter: boolean = false) => {
