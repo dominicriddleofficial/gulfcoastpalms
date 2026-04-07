@@ -6,13 +6,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import {
   DollarSign,
-  Users,
-  CalendarDays,
+  TrendingUp,
+  Briefcase,
   AlertTriangle,
   Clock,
   MapPin,
+  CalendarDays,
 } from "lucide-react";
-import { format, isToday, subDays } from "date-fns";
+import {
+  format,
+  isToday,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  subDays,
+} from "date-fns";
 import {
   AreaChart,
   Area,
@@ -35,7 +44,17 @@ type JobberJob = {
   job_number: string | null;
 };
 
-function KPICard({ label, value, icon: Icon }: { label: string; value: string; icon: any }) {
+function KPICard({
+  label,
+  value,
+  icon: Icon,
+  valueColor,
+}: {
+  label: string;
+  value: string;
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+  valueColor?: string;
+}) {
   return (
     <div
       className="rounded-[14px] p-5 space-y-3 transition-all duration-200 cursor-default"
@@ -46,14 +65,33 @@ function KPICard({ label, value, icon: Icon }: { label: string; value: string; i
       }}
     >
       <div className="flex items-center justify-between">
-        <span style={{ fontSize: "10px", letterSpacing: "0.15em", textTransform: "uppercase", color: "hsl(220 8% 50%)" }} className="font-body">
+        <span
+          style={{
+            fontSize: "10px",
+            letterSpacing: "0.15em",
+            textTransform: "uppercase",
+            color: "hsl(220 8% 50%)",
+          }}
+          className="font-body"
+        >
           {label}
         </span>
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(34,197,94,0.08)" }}>
+        <div
+          className="w-8 h-8 rounded-lg flex items-center justify-center"
+          style={{ background: "rgba(34,197,94,0.08)" }}
+        >
           <Icon className="w-4 h-4" style={{ color: "rgba(34,197,94,0.7)" }} />
         </div>
       </div>
-      <span className="font-display block" style={{ fontSize: "32px", fontWeight: 800, color: "#fff", letterSpacing: "-0.02em" }}>
+      <span
+        className="font-display block"
+        style={{
+          fontSize: "32px",
+          fontWeight: 800,
+          color: valueColor ?? "#fff",
+          letterSpacing: "-0.02em",
+        }}
+      >
         {value}
       </span>
     </div>
@@ -76,26 +114,85 @@ function normalizeStatus(status: string | null | undefined, visitStatus: string 
 export default function PlatformDashboard() {
   const { selectedBusinessId, businesses } = usePlatformAuth();
 
+  const now = new Date();
+  const weekStart = startOfWeek(now, { weekStartsOn: 1 }).toISOString();
+  const weekEnd = endOfWeek(now, { weekStartsOn: 1 }).toISOString();
+  const monthStart = startOfMonth(now).toISOString();
+  const monthEnd = endOfMonth(now).toISOString();
+
+  // Card 1 — Revenue This Week
+  const { data: revenueThisWeek = 0 } = useQuery({
+    queryKey: ["dashboard-rev-week", selectedBusinessId],
+    queryFn: async () => {
+      let q = supabase
+        .from("jobber_jobs")
+        .select("total_amount")
+        .gte("scheduled_start", weekStart)
+        .lte("scheduled_start", weekEnd);
+      if (selectedBusinessId) q = q.eq("business_id", selectedBusinessId);
+      const { data } = await q;
+      return data?.reduce((sum, j) => sum + (Number(j.total_amount) || 0), 0) ?? 0;
+    },
+  });
+
+  // Card 2 — Revenue This Month
+  const { data: revenueThisMonth = 0 } = useQuery({
+    queryKey: ["dashboard-rev-month", selectedBusinessId],
+    queryFn: async () => {
+      let q = supabase
+        .from("jobber_jobs")
+        .select("total_amount")
+        .gte("scheduled_start", monthStart)
+        .lte("scheduled_start", monthEnd);
+      if (selectedBusinessId) q = q.eq("business_id", selectedBusinessId);
+      const { data } = await q;
+      return data?.reduce((sum, j) => sum + (Number(j.total_amount) || 0), 0) ?? 0;
+    },
+  });
+
+  // Card 3 — Jobs This Week
+  const { data: jobsThisWeek = 0 } = useQuery({
+    queryKey: ["dashboard-jobs-week", selectedBusinessId],
+    queryFn: async () => {
+      let q = supabase
+        .from("jobber_jobs")
+        .select("id", { count: "exact", head: true })
+        .gte("scheduled_start", weekStart)
+        .lte("scheduled_start", weekEnd);
+      if (selectedBusinessId) q = q.eq("business_id", selectedBusinessId);
+      const { count } = await q;
+      return count ?? 0;
+    },
+  });
+
+  // Card 4 — Late Jobs
+  const { data: lateJobs = 0 } = useQuery({
+    queryKey: ["dashboard-late", selectedBusinessId],
+    queryFn: async () => {
+      const todayStr = format(now, "yyyy-MM-dd");
+      let q = supabase
+        .from("jobber_jobs")
+        .select("id", { count: "exact", head: true })
+        .lt("scheduled_start", `${todayStr}T00:00:00`)
+        .neq("status", "completed");
+      if (selectedBusinessId) q = q.eq("business_id", selectedBusinessId);
+      const { count } = await q;
+      return count ?? 0;
+    },
+  });
+
+  // Today's jobs for schedule strip
   const { data: jobs = [], isLoading: loading } = useQuery({
     queryKey: ["dashboard-jobs", selectedBusinessId],
     queryFn: async () => {
       let q = supabase
         .from("jobber_jobs")
         .select("id, title, client_name, property_address, status, visit_status, scheduled_start, total_amount, job_number")
+        .not("scheduled_start", "is", null)
         .order("scheduled_start", { ascending: true, nullsFirst: false });
       if (selectedBusinessId) q = q.eq("business_id", selectedBusinessId);
       const { data } = await q;
-      return (data as JobberJob[]) || [];
-    },
-  });
-
-  const { data: customerCount = 0 } = useQuery({
-    queryKey: ["dashboard-customers", selectedBusinessId],
-    queryFn: async () => {
-      let q = supabase.from("jobber_clients").select("id", { count: "exact", head: true });
-      if (selectedBusinessId) q = q.eq("business_id", selectedBusinessId);
-      const { count } = await q;
-      return count || 0;
+      return (data as JobberJob[]) ?? [];
     },
   });
 
@@ -110,16 +207,9 @@ export default function PlatformDashboard() {
         .order("started_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      return data?.completed_at || null;
+      return data?.completed_at ?? null;
     },
   });
-
-  const kpis = useMemo(() => {
-    const totalJobValue = jobs.reduce((sum, job) => sum + (Number(job.total_amount) || 0), 0);
-    const jobsToday = jobs.filter((job) => job.scheduled_start && isToday(new Date(job.scheduled_start))).length;
-    const lateJobs = jobs.filter((job) => normalizeStatus(job.status, job.visit_status) === "late").length;
-    return { totalJobValue, syncedCustomers: customerCount, jobsToday, lateJobs };
-  }, [jobs, customerCount]);
 
   const trendData = useMemo(() => {
     return Array.from({ length: 8 }, (_, index) => {
@@ -135,7 +225,7 @@ export default function PlatformDashboard() {
   const todayJobs = useMemo(() => {
     return jobs
       .filter((job) => job.scheduled_start && isToday(new Date(job.scheduled_start)))
-      .sort((a, b) => new Date(a.scheduled_start || 0).getTime() - new Date(b.scheduled_start || 0).getTime());
+      .sort((a, b) => new Date(a.scheduled_start!).getTime() - new Date(b.scheduled_start!).getTime());
   }, [jobs]);
 
   const selectedBiz = businesses.find((b) => b.id === selectedBusinessId);
@@ -173,12 +263,18 @@ export default function PlatformDashboard() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <KPICard label="Total Job Value" value={`$${Math.round(kpis.totalJobValue).toLocaleString()}`} icon={DollarSign} />
-            <KPICard label="Synced Customers" value={kpis.syncedCustomers.toLocaleString()} icon={Users} />
-            <KPICard label="Jobs Today" value={kpis.jobsToday.toString()} icon={CalendarDays} />
-            <KPICard label="Late Jobs" value={kpis.lateJobs.toString()} icon={AlertTriangle} />
+            <KPICard label="Revenue This Week" value={`$${Math.round(revenueThisWeek).toLocaleString()}`} icon={TrendingUp} />
+            <KPICard label="Revenue This Month" value={`$${Math.round(revenueThisMonth).toLocaleString()}`} icon={DollarSign} />
+            <KPICard label="Jobs This Week" value={jobsThisWeek.toString()} icon={Briefcase} />
+            <KPICard
+              label="Late Jobs"
+              value={lateJobs.toString()}
+              icon={AlertTriangle}
+              valueColor={lateJobs > 0 ? "#f87171" : "#fff"}
+            />
           </div>
 
+          {/* Chart */}
           <div
             className="rounded-2xl p-5 space-y-3"
             style={{ background: "rgba(34,197,94,0.04)", border: "1px solid rgba(34,197,94,0.10)", borderRadius: "16px" }}
@@ -217,6 +313,7 @@ export default function PlatformDashboard() {
             </div>
           </div>
 
+          {/* Today's schedule */}
           <div
             className="rounded-2xl p-5 space-y-3"
             style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(34,197,94,0.10)", borderRadius: "16px" }}
@@ -246,7 +343,7 @@ export default function PlatformDashboard() {
               <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
                 {todayJobs.map((job) => {
                   const normalizedStatus = normalizeStatus(job.status, job.visit_status);
-                  const statusInfo = STATUS_STYLES[normalizedStatus] || STATUS_STYLES.scheduled;
+                  const statusInfo = STATUS_STYLES[normalizedStatus] ?? STATUS_STYLES.scheduled;
                   return (
                     <div
                       key={job.id}
