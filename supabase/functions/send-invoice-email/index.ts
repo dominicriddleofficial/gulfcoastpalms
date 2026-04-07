@@ -87,6 +87,7 @@ Deno.serve(async (req) => {
       html,
       sender_domain: SENDER_DOMAIN,
       message_id: messageId,
+      idempotency_key: messageId,
       purpose: "transactional",
     };
 
