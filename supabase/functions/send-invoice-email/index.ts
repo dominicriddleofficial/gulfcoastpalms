@@ -181,6 +181,7 @@ Deno.serve(async (req) => {
 </html>`;
 
       const ownerMessageId = `invoice-owner-${invoiceId || invoiceNumber}-${Date.now()}`;
+      const ownerUnsubToken = await getOrCreateUnsubToken(supabase, ownerEmail);
       await supabase.rpc("enqueue_email", {
         queue_name: "transactional_emails",
         payload: {
@@ -193,6 +194,7 @@ Deno.serve(async (req) => {
           message_id: ownerMessageId,
           idempotency_key: ownerMessageId,
           purpose: "transactional",
+          unsubscribe_token: ownerUnsubToken,
         },
       });
     }
