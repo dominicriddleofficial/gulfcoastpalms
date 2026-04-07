@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import BusinessSwitcher from "./BusinessSwitcher";
