@@ -359,10 +359,14 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
             ownerEmail: "dominicriddleofficial@gmail.com",
           },
         });
-        if (fnErr) {
+        const functionError = fnErr?.message || fnRes?.error;
+        if (functionError) {
           console.error("send-invoice-email error:", fnErr);
-          toast.error(`Invoice created but email failed: ${fnErr.message}`);
+          toast.error(`Invoice created but email failed: ${functionError}`);
         } else {
+          if (fnRes?.ownerNotificationWarning) {
+            console.warn("send-invoice-email owner notification warning:", fnRes.ownerNotificationWarning);
+          }
           toast.success(`Invoice sent to ${customerName} at ${pendingSendData.email}`);
         }
       } catch (e: any) {
