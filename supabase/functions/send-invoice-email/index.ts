@@ -171,6 +171,7 @@ Deno.serve(async (req) => {
           from: `${businessName || "Invoices"} <${FROM_EMAIL}>`,
           subject: ownerSubject,
           html: ownerHtml,
+          text: `Invoice ${invoiceNumber} was sent to ${recipientName || recipientEmail}. Amount: $${Number(total || 0).toFixed(2)}`,
           sender_domain: SENDER_DOMAIN,
           message_id: ownerMessageId,
           idempotency_key: ownerMessageId,
