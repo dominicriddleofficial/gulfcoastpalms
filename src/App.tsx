@@ -234,9 +234,11 @@ const App = () => (
                   <Route path="/platform/tasks" element={<PlatformTasks />} />
                   <Route path="/platform/settings" element={<PlatformSettings />} />
 
-                  {/* Payment pages */}
+                  {/* Payment & Quote public pages */}
                   <Route path="/pay/:shortcode/:invoiceId" element={<PayInvoice />} />
                   <Route path="/pay/:shortcode/success" element={<PaymentSuccess />} />
+                  <Route path="/quote/:shortcode/:quoteId" element={<ViewQuote />} />
+                  <Route path="/app/tap-to-pay" element={<TapToPayLanding />} />
                   <Route path="/app/tap-to-pay" element={<TapToPayLanding />} />
 
                   <Route path="*" element={<NotFound />} />
