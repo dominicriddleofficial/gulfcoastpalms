@@ -93,6 +93,21 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
 
   const activeBiz = businesses.find(b => b.id === bizId);
 
+  // Fetch logo for invoice preview
+  const { data: brandAssets } = useQuery({
+    queryKey: ['brand-assets-invoice', bizId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('business_brand_assets')
+        .select('file_url, asset_type, usage_context')
+        .eq('business_id', bizId);
+      return data || [];
+    },
+    enabled: !!bizId,
+  });
+  const logoAsset = brandAssets?.find(a => a.asset_type === 'logo');
+  const logoUrl = logoAsset?.file_url || activeBiz?.logo_url || null;
+
   // Generate invoice number on mount
   useEffect(() => {
     (async () => {
