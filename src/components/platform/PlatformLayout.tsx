@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import BusinessSwitcher from "./BusinessSwitcher";
@@ -105,12 +105,42 @@ export default function PlatformLayout({ children }: Props) {
   const auth = usePlatformAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const autoSyncTriggered = useRef(false);
 
   const currentPage = NAV_SECTIONS.flatMap(s => s.items).find(i => i.path === location.pathname);
   const pageTitle = currentPage?.label || "Platform";
 
   const selectedBiz = auth.businesses.find(b => b.id === auth.selectedBusinessId);
   const contextLabel = selectedBiz ? selectedBiz.public_brand_name : "All Businesses";
+
+  // Auto-sync Jobber if last sync > 30 minutes ago
+  useEffect(() => {
+    if (autoSyncTriggered.current || auth.loading) return;
+    autoSyncTriggered.current = true;
+
+    (async () => {
+      try {
+        const { data: tokens } = await supabase.from("jobber_tokens").select("id").limit(1);
+        if (!tokens?.length) return; // No Jobber connection
+
+        const { data: lastSync } = await supabase.from("sync_logs")
+          .select("completed_at")
+          .eq("status", "success")
+          .order("started_at", { ascending: false })
+          .limit(1);
+
+        const lastSyncTime = lastSync?.[0]?.completed_at ? new Date(lastSync[0].completed_at) : null;
+        const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+
+        if (!lastSyncTime || lastSyncTime < thirtyMinutesAgo) {
+          console.log("[AutoSync] Triggering Jobber sync (last sync:", lastSyncTime?.toISOString() || "never", ")");
+          supabase.functions.invoke("jobber-sync").catch(console.error);
+        }
+      } catch (e) {
+        console.error("[AutoSync] Check failed:", e);
+      }
+    })();
+  }, [auth.loading]);
 
   if (auth.loading) {
     return (
