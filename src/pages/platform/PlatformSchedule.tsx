@@ -1,18 +1,22 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { usePlatformSchedule, usePlatformCrewMembers, type PlatformJobVisit } from "@/hooks/usePlatformJobs";
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { supabase } from "@/integrations/supabase/client";
 import {
   ChevronLeft, ChevronRight, CalendarDays, List, Map as MapIcon,
-  Clock, MapPin, User, Briefcase, Phone, Navigation,
+  Clock, MapPin, User, Briefcase, Phone, Navigation, RefreshCw, Zap, Settings,
 } from "lucide-react";
 import { format, addDays, subDays, isToday, startOfWeek, addWeeks, eachDayOfInterval, isSameDay } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
+import { toast } from "sonner";
 
 type ViewMode = "day" | "week" | "list";
+type ScheduleTab = "platform" | "jobber";
 
 const VISIT_STATUS_COLORS: Record<string, { bg: string; text: string; label: string }> = {
   scheduled: { bg: "#2563eb20", text: "#2563eb", label: "Scheduled" },
@@ -23,12 +27,26 @@ const VISIT_STATUS_COLORS: Record<string, { bg: string; text: string; label: str
   cancelled: { bg: "#ef444420", text: "#ef4444", label: "Cancelled" },
 };
 
+interface JobberJob {
+  id: string;
+  title: string | null;
+  client_name: string | null;
+  property_address: string | null;
+  status: string;
+  scheduled_start: string | null;
+  scheduled_end: string | null;
+  total_amount: number | null;
+  job_number: string | null;
+  visit_status: string | null;
+}
+
 export default function PlatformSchedule() {
   const { selectedBusinessId, businesses } = usePlatformAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>("day");
   const [selectedCrew, setSelectedCrew] = useState<string | null>(null);
   const [selectedVisit, setSelectedVisit] = useState<PlatformJobVisit | null>(null);
+  const [scheduleTab, setScheduleTab] = useState<ScheduleTab>("platform");
 
   const { visits, loading, crewNames } = usePlatformSchedule(selectedBusinessId, selectedDate);
   const { crew } = usePlatformCrewMembers(selectedBusinessId);
@@ -38,7 +56,6 @@ export default function PlatformSchedule() {
     return visits.filter(v => v.crew_names?.includes(selectedCrew));
   }, [visits, selectedCrew]);
 
-  // Group visits by crew
   const grouped = useMemo(() => {
     const g: Record<string, PlatformJobVisit[]> = {};
     filteredVisits.forEach(v => {
@@ -69,96 +86,127 @@ export default function PlatformSchedule() {
           <div>
             <h1 className="font-display text-xl font-bold text-foreground">Schedule</h1>
             <p className="font-body text-xs text-muted-foreground">
-              {filteredVisits.length} visits · {crewNames.length} crew
+              {scheduleTab === "platform" ? `${filteredVisits.length} visits · ${crewNames.length} crew` : "Jobber synced schedule"}
             </p>
           </div>
-          <div className="flex items-center gap-1 bg-card border border-border rounded-lg p-0.5">
-            {(["day", "week", "list"] as const).map(m => (
+          <div className="flex items-center gap-2">
+            {/* Schedule source tabs */}
+            <div className="flex items-center gap-0.5 bg-card border border-border rounded-lg p-0.5">
               <button
-                key={m}
-                onClick={() => setViewMode(m)}
+                onClick={() => setScheduleTab("platform")}
                 className={cn(
-                  "px-2.5 py-1 rounded-md text-[11px] font-body font-medium transition-all capitalize",
-                  viewMode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  "px-2.5 py-1 rounded-md text-[11px] font-body font-medium transition-all",
+                  scheduleTab === "platform" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                {m}
+                Platform
               </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Date nav */}
-        <div className="flex items-center justify-between bg-card border border-border rounded-lg p-2">
-          <button onClick={() => setSelectedDate(prev => subDays(prev, viewMode === "week" ? 7 : 1))} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground">
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setSelectedDate(new Date())}
-            className={cn(
-              "font-body text-sm font-medium px-3 py-1 rounded-md transition-all",
-              isToday(selectedDate) ? "text-primary" : "text-foreground hover:text-primary"
+              <button
+                onClick={() => setScheduleTab("jobber")}
+                className={cn(
+                  "px-2.5 py-1 rounded-md text-[11px] font-body font-medium transition-all",
+                  scheduleTab === "jobber" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Jobber
+              </button>
+            </div>
+            {scheduleTab === "platform" && (
+              <div className="flex items-center gap-0.5 bg-card border border-border rounded-lg p-0.5">
+                {(["day", "week", "list"] as const).map(m => (
+                  <button
+                    key={m}
+                    onClick={() => setViewMode(m)}
+                    className={cn(
+                      "px-2.5 py-1 rounded-md text-[11px] font-body font-medium transition-all capitalize",
+                      viewMode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
             )}
-          >
-            {viewMode === "week"
-              ? `${format(weekDays[0], "MMM d")} – ${format(weekDays[6], "MMM d, yyyy")}`
-              : format(selectedDate, "EEEE, MMMM d, yyyy")
-            }
-          </button>
-          <button onClick={() => setSelectedDate(prev => addDays(prev, viewMode === "week" ? 7 : 1))} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground">
-            <ChevronRight className="w-4 h-4" />
-          </button>
+          </div>
         </div>
 
-        {/* Crew filter strip */}
-        {crewNames.length > 0 && (
-          <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
-            <button
-              onClick={() => setSelectedCrew(null)}
-              className={cn(
-                "px-3 py-1 rounded-full text-[11px] font-body font-medium whitespace-nowrap border transition-all",
-                !selectedCrew ? "bg-primary/15 text-primary border-primary/30" : "bg-secondary text-muted-foreground border-border"
-              )}
-            >
-              All Crew
-            </button>
-            {crewNames.map(name => (
-              <button
-                key={name}
-                onClick={() => setSelectedCrew(selectedCrew === name ? null : name)}
-                className={cn(
-                  "px-3 py-1 rounded-full text-[11px] font-body font-medium whitespace-nowrap border transition-all flex items-center gap-1.5",
-                  selectedCrew === name ? "border-primary/30" : "bg-secondary text-muted-foreground border-border"
-                )}
-                style={selectedCrew === name ? { backgroundColor: crewColor(name) + "20", color: crewColor(name), borderColor: crewColor(name) + "40" } : {}}
-              >
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: crewColor(name) }} />
-                {name}
+        {scheduleTab === "platform" ? (
+          <>
+            {/* Date nav */}
+            <div className="flex items-center justify-between bg-card border border-border rounded-lg p-2">
+              <button onClick={() => setSelectedDate(prev => subDays(prev, viewMode === "week" ? 7 : 1))} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground">
+                <ChevronLeft className="w-4 h-4" />
               </button>
-            ))}
-          </div>
-        )}
+              <button
+                onClick={() => setSelectedDate(new Date())}
+                className={cn(
+                  "font-body text-sm font-medium px-3 py-1 rounded-md transition-all",
+                  isToday(selectedDate) ? "text-primary" : "text-foreground hover:text-primary"
+                )}
+              >
+                {viewMode === "week"
+                  ? `${format(weekDays[0], "MMM d")} – ${format(weekDays[6], "MMM d, yyyy")}`
+                  : format(selectedDate, "EEEE, MMMM d, yyyy")
+                }
+              </button>
+              <button onClick={() => setSelectedDate(prev => addDays(prev, viewMode === "week" ? 7 : 1))} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground">
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
 
-        {/* Content */}
-        {loading ? (
-          <div className="space-y-3">
-            {[1,2,3].map(i => <div key={i} className="h-20 bg-card rounded-lg animate-pulse border border-border" />)}
-          </div>
-        ) : viewMode === "week" ? (
-          <WeekView
-            weekDays={weekDays}
-            selectedDate={selectedDate}
-            onSelectDay={(d) => { setSelectedDate(d); setViewMode("day"); }}
-            visits={filteredVisits}
-          />
+            {/* Crew filter strip */}
+            {crewNames.length > 0 && (
+              <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+                <button
+                  onClick={() => setSelectedCrew(null)}
+                  className={cn(
+                    "px-3 py-1 rounded-full text-[11px] font-body font-medium whitespace-nowrap border transition-all",
+                    !selectedCrew ? "bg-primary/15 text-primary border-primary/30" : "bg-secondary text-muted-foreground border-border"
+                  )}
+                >
+                  All Crew
+                </button>
+                {crewNames.map(name => (
+                  <button
+                    key={name}
+                    onClick={() => setSelectedCrew(selectedCrew === name ? null : name)}
+                    className={cn(
+                      "px-3 py-1 rounded-full text-[11px] font-body font-medium whitespace-nowrap border transition-all flex items-center gap-1.5",
+                      selectedCrew === name ? "border-primary/30" : "bg-secondary text-muted-foreground border-border"
+                    )}
+                    style={selectedCrew === name ? { backgroundColor: crewColor(name) + "20", color: crewColor(name), borderColor: crewColor(name) + "40" } : {}}
+                  >
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: crewColor(name) }} />
+                    {name}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Content */}
+            {loading ? (
+              <div className="space-y-3">
+                {[1,2,3].map(i => <div key={i} className="h-20 bg-card rounded-lg animate-pulse border border-border" />)}
+              </div>
+            ) : viewMode === "week" ? (
+              <WeekView
+                weekDays={weekDays}
+                selectedDate={selectedDate}
+                onSelectDay={(d) => { setSelectedDate(d); setViewMode("day"); }}
+                visits={filteredVisits}
+              />
+            ) : (
+              <DayListView
+                grouped={grouped}
+                crewColor={crewColor}
+                onSelectVisit={setSelectedVisit}
+                selectedBusinessId={selectedBusinessId}
+                getBiz={getBiz}
+              />
+            )}
+          </>
         ) : (
-          <DayListView
-            grouped={grouped}
-            crewColor={crewColor}
-            onSelectVisit={setSelectedVisit}
-            selectedBusinessId={selectedBusinessId}
-            getBiz={getBiz}
-          />
+          <JobberScheduleTab />
         )}
       </div>
 
@@ -169,6 +217,136 @@ export default function PlatformSchedule() {
         </SheetContent>
       </Sheet>
     </PlatformLayout>
+  );
+}
+
+function JobberScheduleTab() {
+  const [jobs, setJobs] = useState<JobberJob[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+
+  useEffect(() => {
+    fetchJobberJobs();
+  }, []);
+
+  const fetchJobberJobs = async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from("jobber_jobs")
+      .select("id, title, client_name, property_address, status, scheduled_start, scheduled_end, total_amount, job_number, visit_status")
+      .order("scheduled_start", { ascending: true, nullsFirst: false })
+      .limit(50);
+    setJobs((data as JobberJob[]) || []);
+    setLoading(false);
+  };
+
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      const { error } = await supabase.functions.invoke("jobber-sync");
+      if (error) throw error;
+      toast.success("Sync complete — refreshing schedule");
+      await fetchJobberJobs();
+    } catch (err: any) {
+      toast.error(err.message || "Sync failed");
+    }
+    setSyncing(false);
+  };
+
+  const statusColors: Record<string, string> = {
+    active: "#22c55e", requires_invoicing: "#f59e0b", late: "#ef4444",
+    completed: "#22c55e", scheduled: "#2563eb",
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-3">
+        {[1,2,3,4].map(i => <div key={i} className="h-20 bg-card rounded-lg animate-pulse border border-border" />)}
+      </div>
+    );
+  }
+
+  if (jobs.length === 0) {
+    return (
+      <div className="text-center py-12 space-y-3">
+        <Zap className="w-10 h-10 mx-auto text-muted-foreground/40" />
+        <p className="font-body text-sm text-muted-foreground">Connect Jobber and sync to see your schedule here</p>
+        <Link to="/platform/settings">
+          <Button size="sm" variant="outline" className="font-body text-xs gap-1.5">
+            <Settings className="w-3.5 h-3.5" /> Go to Settings → Integrations
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
+  // Group by date
+  const grouped: Record<string, JobberJob[]> = {};
+  jobs.forEach(j => {
+    const dateKey = j.scheduled_start ? format(new Date(j.scheduled_start), "yyyy-MM-dd") : "Unscheduled";
+    if (!grouped[dateKey]) grouped[dateKey] = [];
+    grouped[dateKey].push(j);
+  });
+
+  return (
+    <div className="space-y-4">
+      <Button
+        size="sm"
+        variant="outline"
+        className="font-body text-xs gap-1.5"
+        disabled={syncing}
+        onClick={handleSync}
+      >
+        <RefreshCw className={cn("w-3.5 h-3.5", syncing && "animate-spin")} />
+        {syncing ? "Syncing…" : "Sync to get latest schedule"}
+      </Button>
+
+      {Object.entries(grouped).map(([dateKey, dateJobs]) => (
+        <div key={dateKey} className="space-y-2">
+          <h3 className="font-body text-xs text-muted-foreground uppercase tracking-wider">
+            {dateKey === "Unscheduled" ? "Unscheduled" : format(new Date(dateKey), "EEEE, MMMM d, yyyy")}
+          </h3>
+          <div className="space-y-1.5">
+            {dateJobs.map(job => {
+              const sc = statusColors[job.status] || "#6b7280";
+              return (
+                <div key={job.id} className="bg-card border border-border rounded-lg p-3 hover:border-primary/20 transition-colors">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        {job.job_number && <span className="font-body text-[10px] text-muted-foreground font-mono">{job.job_number}</span>}
+                        <span
+                          className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-body font-medium capitalize"
+                          style={{ backgroundColor: sc + "20", color: sc }}
+                        >
+                          {(job.visit_status || job.status).replace(/_/g, " ")}
+                        </span>
+                      </div>
+                      <p className="font-body text-sm font-medium text-foreground truncate">{job.title || "Jobber Job"}</p>
+                      <div className="flex items-center gap-3 mt-0.5 text-[11px] text-muted-foreground font-body">
+                        {job.client_name && <span className="flex items-center gap-1"><User className="w-3 h-3" />{job.client_name}</span>}
+                        {job.scheduled_start && (
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {format(new Date(job.scheduled_start), "h:mm a")}
+                          </span>
+                        )}
+                        {job.property_address && (
+                          <span className="flex items-center gap-1 truncate"><MapPin className="w-3 h-3 shrink-0" />{job.property_address}</span>
+                        )}
+                      </div>
+                    </div>
+                    {job.total_amount != null && job.total_amount > 0 && (
+                      <span className="font-body text-sm font-semibold text-foreground shrink-0">${Number(job.total_amount).toLocaleString()}</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 

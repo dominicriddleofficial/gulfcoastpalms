@@ -229,27 +229,73 @@ function NumberingSection({ businessId }: { businessId: string | null }) {
 
 function JobberConnectionStatus() {
   const [hasToken, setHasToken] = useState<boolean | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [lastSync, setLastSync] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     supabase.from("jobber_tokens").select("id").limit(1).then(({ data }) => {
       setHasToken(!!(data && data.length > 0));
     });
+    // Get last sync
+    supabase.from("sync_logs").select("completed_at").order("started_at", { ascending: false }).limit(1)
+      .then(({ data }) => {
+        if (data && data.length > 0 && data[0].completed_at) {
+          setLastSync(data[0].completed_at);
+        }
+      });
   }, []);
 
+  const handleSyncNow = async () => {
+    setSyncing(true);
+    try {
+      const { error } = await supabase.functions.invoke("jobber-sync");
+      if (error) throw error;
+      toast({ title: "Sync complete", description: "Clients, jobs, and properties updated." });
+      // Refresh last sync time
+      const { data } = await supabase.from("sync_logs").select("completed_at").order("started_at", { ascending: false }).limit(1);
+      if (data && data.length > 0 && data[0].completed_at) setLastSync(data[0].completed_at);
+    } catch (err: any) {
+      toast({ title: "Sync failed", description: err.message || "Unknown error", variant: "destructive" });
+    }
+    setSyncing(false);
+  };
+
   return (
-    <div className="flex items-center gap-2">
-      <Zap className="w-4 h-4 text-primary" />
-      <span className="font-body text-sm text-foreground">Jobber</span>
-      {hasToken === null ? (
-        <span className="ml-auto text-[10px] font-body text-muted-foreground">Checking...</span>
-      ) : hasToken ? (
-        <span className="ml-auto flex items-center gap-1 text-[10px] font-body text-primary">
-          <CheckCircle className="w-3 h-3" /> Connected
-        </span>
-      ) : (
-        <span className="ml-auto flex items-center gap-1 text-[10px] font-body text-destructive">
-          <XCircle className="w-3 h-3" /> Not connected
-        </span>
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <Zap className="w-4 h-4 text-primary" />
+        <span className="font-body text-sm text-foreground">Jobber</span>
+        {hasToken === null ? (
+          <span className="ml-auto text-[10px] font-body text-muted-foreground">Checking...</span>
+        ) : hasToken ? (
+          <span className="ml-auto flex items-center gap-1 text-[10px] font-body text-primary">
+            <CheckCircle className="w-3 h-3" /> Connected
+          </span>
+        ) : (
+          <span className="ml-auto flex items-center gap-1 text-[10px] font-body text-destructive">
+            <XCircle className="w-3 h-3" /> Not connected
+          </span>
+        )}
+      </div>
+      {lastSync && (
+        <p className="font-body text-[10px] text-muted-foreground">
+          Last synced: {format(new Date(lastSync), "MMM d, h:mm a")}
+        </p>
+      )}
+      {hasToken && (
+        <Button
+          size="sm"
+          className="font-body text-xs w-full"
+          disabled={syncing}
+          onClick={handleSyncNow}
+        >
+          {syncing ? (
+            <><RefreshCw className="w-3 h-3 mr-1.5 animate-spin" /> Syncing…</>
+          ) : (
+            <><RefreshCw className="w-3 h-3 mr-1.5" /> Sync Now</>
+          )}
+        </Button>
       )}
     </div>
   );

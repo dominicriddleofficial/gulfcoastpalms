@@ -19,6 +19,7 @@ export interface PlatformCustomer {
   do_not_contact_flag: boolean;
   referral_source: string | null;
   internal_notes: string | null;
+  source_system: string | null;
   created_at: string;
   updated_at: string;
 }
