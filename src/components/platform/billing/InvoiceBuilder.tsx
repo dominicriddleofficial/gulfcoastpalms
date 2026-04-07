@@ -209,6 +209,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
 
   const selectCustomer = (c: CustomerResult) => {
     setCustomerId(c.id);
+    setCustomerSource((c.source as "platform" | "jobber") || "platform");
     setCustomerName(c.display_name);
     setCustomerEmail(c.email || "");
     setCustomerPhone(c.phone || "");
