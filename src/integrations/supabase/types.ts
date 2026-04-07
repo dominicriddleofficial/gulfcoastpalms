@@ -2703,7 +2703,11 @@ export type Database = {
       platform_quotes: {
         Row: {
           accepted_at: string | null
+          approved_at: string | null
+          approved_by: string | null
           business_id: string
+          change_request_notes: string | null
+          change_requested_at: string | null
           created_at: string
           created_by_user_id: string | null
           customer_id: string | null
@@ -2737,7 +2741,11 @@ export type Database = {
         }
         Insert: {
           accepted_at?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           business_id: string
+          change_request_notes?: string | null
+          change_requested_at?: string | null
           created_at?: string
           created_by_user_id?: string | null
           customer_id?: string | null
@@ -2771,7 +2779,11 @@ export type Database = {
         }
         Update: {
           accepted_at?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           business_id?: string
+          change_request_notes?: string | null
+          change_requested_at?: string | null
           created_at?: string
           created_by_user_id?: string | null
           customer_id?: string | null

@@ -1,14 +1,19 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export type QuoteStatus = "draft" | "sent" | "viewed" | "accepted" | "declined" | "expired" | "archived";
+export type QuoteStatus = "draft" | "sent" | "viewed" | "approved" | "changes_requested" | "revised" | "accepted" | "declined" | "won" | "lost" | "expired" | "archived";
 
 export const QUOTE_STATUSES: { value: QuoteStatus; label: string; color: string }[] = [
   { value: "draft", label: "Draft", color: "#6b7280" },
   { value: "sent", label: "Sent", color: "#3b82f6" },
   { value: "viewed", label: "Viewed", color: "#8b5cf6" },
+  { value: "approved", label: "Approved", color: "#22c55e" },
+  { value: "changes_requested", label: "Changes Requested", color: "#f97316" },
+  { value: "revised", label: "Revised", color: "#0ea5e9" },
   { value: "accepted", label: "Accepted", color: "#22c55e" },
   { value: "declined", label: "Declined", color: "#ef4444" },
+  { value: "won", label: "Won", color: "#16a34a" },
+  { value: "lost", label: "Lost", color: "#dc2626" },
   { value: "expired", label: "Expired", color: "#f59e0b" },
   { value: "archived", label: "Archived", color: "#6b7280" },
 ];

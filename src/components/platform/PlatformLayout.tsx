@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import BusinessSwitcher from "./BusinessSwitcher";
+import QuickActionFAB from "./QuickActionFAB";
+import UniversalSearch from "./UniversalSearch";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard, Users, FileText, Briefcase, CalendarDays, Receipt,
   CreditCard, MessageSquare, ClipboardList, Settings, LogOut, Menu, X,
-  Search, Bell, TrendingUp, Target, ChevronRight,
+  Bell, TrendingUp, Target, ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -180,11 +182,9 @@ export default function PlatformLayout({ children }: Props) {
             <span className="font-body text-[12px] text-muted-foreground">{contextLabel}</span>
           </div>
 
-          <div className="flex-1" />
-          
-          <button className="text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-lg hover:bg-secondary/50">
-            <Search className="w-4 h-4" />
-          </button>
+          <div className="flex-1 flex justify-center">
+            <UniversalSearch businessId={auth.selectedBusinessId} />
+          </div>
           <button className="text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-lg hover:bg-secondary/50 relative">
             <Bell className="w-4 h-4" />
             <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-primary" />
@@ -193,6 +193,9 @@ export default function PlatformLayout({ children }: Props) {
 
         <main className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full">{children}</main>
       </div>
+
+      {/* Quick Action FAB */}
+      <QuickActionFAB brandColor={selectedBiz?.default_business_color || (selectedBiz?.shortcode === "PPS" ? "#141414" : "#22c55e")} />
 
       {/* Debug panel — dev only */}
       {import.meta.env.DEV && (

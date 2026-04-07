@@ -113,6 +113,7 @@ const PalmTreeMaintenancePlans = lazy(() => import("./pages/PalmTreeMaintenanceP
 const PayInvoice = lazy(() => import("./pages/pay/PayInvoice"));
 const PaymentSuccess = lazy(() => import("./pages/pay/PaymentSuccess"));
 const TapToPayLanding = lazy(() => import("./pages/app/TapToPayLanding"));
+const ViewQuote = lazy(() => import("./pages/quote/ViewQuote"));
 
 const RouteTracker = () => {
   const location = useLocation();
@@ -232,9 +233,11 @@ const App = () => (
                   <Route path="/platform/tasks" element={<PlatformTasks />} />
                   <Route path="/platform/settings" element={<PlatformSettings />} />
 
-                  {/* Payment pages */}
+                  {/* Payment & Quote public pages */}
                   <Route path="/pay/:shortcode/:invoiceId" element={<PayInvoice />} />
                   <Route path="/pay/:shortcode/success" element={<PaymentSuccess />} />
+                  <Route path="/quote/:shortcode/:quoteId" element={<ViewQuote />} />
+                  <Route path="/app/tap-to-pay" element={<TapToPayLanding />} />
                   <Route path="/app/tap-to-pay" element={<TapToPayLanding />} />
 
                   <Route path="*" element={<NotFound />} />
