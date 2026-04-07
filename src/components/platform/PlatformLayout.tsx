@@ -194,6 +194,9 @@ export default function PlatformLayout({ children }: Props) {
         <main className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full">{children}</main>
       </div>
 
+      {/* Quick Action FAB */}
+      <QuickActionFAB brandColor={selectedBiz?.default_business_color || (selectedBiz?.shortcode === "PPS" ? "#141414" : "#22c55e")} />
+
       {/* Debug panel — dev only */}
       {import.meta.env.DEV && (
         <div className="fixed bottom-2 right-2 z-[100] bg-card border border-border rounded-lg p-3 text-[10px] font-mono text-muted-foreground max-w-xs shadow-lg opacity-60 hover:opacity-100 transition-opacity">
