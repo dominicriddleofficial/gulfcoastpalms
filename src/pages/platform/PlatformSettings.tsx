@@ -103,6 +103,11 @@ export default function PlatformSettings() {
               </SettingsSection>
             )}
 
+            {/* Saved Items */}
+            {selectedBusinessId && (
+              <SavedItemsSection businessId={selectedBusinessId} />
+            )}
+
             {/* Numbering */}
             <NumberingSection businessId={selectedBusinessId} />
 
