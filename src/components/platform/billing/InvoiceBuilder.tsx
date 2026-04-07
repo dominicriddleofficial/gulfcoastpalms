@@ -12,7 +12,6 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { format, addDays } from "date-fns";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import InvoicePreviewPanel from "./InvoicePreviewPanel";
 import SendInvoiceModal from "./SendInvoiceModal";
 import { useQuery } from "@tanstack/react-query";
