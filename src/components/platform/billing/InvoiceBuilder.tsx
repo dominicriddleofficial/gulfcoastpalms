@@ -366,9 +366,9 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
                       onFocus={() => setShowCustomerSearch(true)}
                       className="pl-8 bg-secondary/50 border-border font-body text-sm"
                     />
-                    {showCustomerSearch && customerResults.length > 0 && (
+                    {showCustomerSearch && customerSearch.length >= 2 && (
                       <div className="absolute z-20 left-0 right-0 top-full mt-1 bg-card border border-border rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                        {customerResults.map(c => (
+                        {customerResults.length > 0 ? customerResults.map(c => (
                           <button
                             key={c.id}
                             className="w-full text-left px-3 py-2 hover:bg-secondary/50 transition-colors"
@@ -379,7 +379,11 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
                               {[c.phone, c.email].filter(Boolean).join(" · ")}
                             </p>
                           </button>
-                        ))}
+                        )) : (
+                          <p className="px-3 py-3 font-body text-xs text-muted-foreground text-center">
+                            No customers found — try a phone number or email
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>
