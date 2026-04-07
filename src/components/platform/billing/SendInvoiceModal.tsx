@@ -14,7 +14,7 @@ interface SendInvoiceModalProps {
   dueDate: string;
   businessName: string;
   shortcode: string;
-  onSend: () => Promise<void>;
+  onSend: (data: { email: string; subject: string; message: string; ccEmail: string }) => Promise<void>;
   onClose: () => void;
   saving: boolean;
 }
