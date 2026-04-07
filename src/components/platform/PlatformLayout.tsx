@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import BusinessSwitcher from "./BusinessSwitcher";
+import QuickActionFAB from "./QuickActionFAB";
+import UniversalSearch from "./UniversalSearch";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard, Users, FileText, Briefcase, CalendarDays, Receipt,
   CreditCard, MessageSquare, ClipboardList, Settings, LogOut, Menu, X,
-  Search, Bell, TrendingUp, Target, ChevronRight,
+  Bell, TrendingUp, Target, ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
