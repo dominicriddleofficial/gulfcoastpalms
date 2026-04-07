@@ -80,11 +80,14 @@ Deno.serve(async (req) => {
     });
 
     // Enqueue the email for delivery via the email queue
+    const plainText = `Hi ${recipientName || "there"},\n\n${message || "Please find your invoice details below."}\n\nInvoice: ${invoiceNumber}\nAmount Due: $${Number(total || 0).toFixed(2)}\n${dueDate ? `Due Date: ${dueDate}\n` : ""}${paymentUrl ? `\nPay online: ${paymentUrl}\n` : ""}\nThank you for your business! — ${businessName}`;
+
     const emailPayload = {
       to: recipientEmail,
       from: `${businessName || "Invoices"} <${FROM_EMAIL}>`,
       subject: emailSubject,
       html,
+      text: plainText,
       sender_domain: SENDER_DOMAIN,
       message_id: messageId,
       idempotency_key: messageId,
