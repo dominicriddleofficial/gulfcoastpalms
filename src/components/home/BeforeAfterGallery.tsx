@@ -16,7 +16,7 @@ import job6 from "@/assets/gallery/job-6.jpeg";
  */
 const galleryPairs = [
   {
-    before: job1,
+    before: beforeGarage,
     after: job2,
     service: "Trimming",
     caption: "Overgrown Canary Island Date Palm — trimmed & diamond cut",
