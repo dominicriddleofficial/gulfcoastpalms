@@ -308,16 +308,21 @@ function JobberScheduleTab() {
 
   return (
     <div className="space-y-4">
-      <Button
-        size="sm"
-        variant="outline"
-        className="font-body text-xs gap-1.5"
-        disabled={syncing}
-        onClick={handleSync}
-      >
-        <RefreshCw className={cn("w-3.5 h-3.5", syncing && "animate-spin")} />
-        {syncing ? "Syncing…" : "Sync to get latest schedule"}
-      </Button>
+      <div className="flex items-center gap-3">
+        <Button
+          size="sm"
+          variant="outline"
+          className="font-body text-xs gap-1.5"
+          disabled={syncing}
+          onClick={handleSync}
+        >
+          <RefreshCw className={cn("w-3.5 h-3.5", syncing && "animate-spin")} />
+          {syncing ? "Syncing…" : "Sync Now"}
+        </Button>
+        {timeSinceSync && (
+          <span className="font-body text-[10px] text-muted-foreground">Last synced {timeSinceSync}</span>
+        )}
+      </div>
 
       {Object.entries(grouped).map(([dateKey, dateJobs]) => (
         <div key={dateKey} className="space-y-2">
