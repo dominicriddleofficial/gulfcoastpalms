@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import {
   ChevronLeft,
   ChevronRight,
@@ -21,7 +22,6 @@ import {
   endOfWeek,
   format,
   isWithinInterval,
-  isSameDay,
   startOfDay,
   startOfWeek,
   subDays,
@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 type ViewMode = "day" | "week";
+type ScheduleTab = "jobber" | "combined";
 
 type JobberJob = {
   id: string;
@@ -44,6 +45,7 @@ type JobberJob = {
   job_number: string | null;
   internal_notes: string | null;
   assigned_employee_names: string[] | null;
+  business_id: string | null;
 };
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
@@ -59,42 +61,71 @@ function getStatusKey(job: JobberJob) {
   return STATUS_STYLES[status] ? status : "scheduled";
 }
 
+// Business color mapping
+const BIZ_COLORS: Record<string, { border: string; badge: string; badgeText: string; label: string }> = {
+  "b0000000-0000-0000-0000-000000000001": { border: "#22c55e", badge: "rgba(34,197,94,0.15)", badgeText: "#22c55e", label: "GCP" },
+  "b0000000-0000-0000-0000-000000000002": { border: "#ffffff", badge: "rgba(255,255,255,0.12)", badgeText: "#ffffff", label: "PPS" },
+};
+
+function getBizStyle(businessId: string | null) {
+  return BIZ_COLORS[businessId || ""] || { border: "#6b7280", badge: "rgba(107,114,128,0.15)", badgeText: "#6b7280", label: "?" };
+}
+
 export default function PlatformSchedule() {
   const { selectedBusinessId, businesses } = usePlatformAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>("day");
-  const [jobs, setJobs] = useState<JobberJob[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [scheduleTab, setScheduleTab] = useState<ScheduleTab>("jobber");
   const [syncing, setSyncing] = useState(false);
-  const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
   const [selectedJob, setSelectedJob] = useState<JobberJob | null>(null);
 
-  const fetchJobs = async () => {
-    setLoading(true);
-    const { data } = await supabase
-      .from("jobber_jobs")
-      .select("id, title, client_name, property_address, status, visit_status, scheduled_start, scheduled_end, total_amount, job_number, internal_notes, assigned_employee_names")
-      .order("scheduled_start", { ascending: true, nullsFirst: false });
-    setJobs((data as JobberJob[]) || []);
-    setLoading(false);
-  };
+  // For "jobber" tab — scoped to active business
+  const { data: jobberJobs = [], isLoading: loading, refetch: refetchJobs } = useQuery({
+    queryKey: ["schedule-jobber", selectedBusinessId],
+    queryFn: async () => {
+      let q = supabase
+        .from("jobber_jobs")
+        .select("id, title, client_name, property_address, status, visit_status, scheduled_start, scheduled_end, total_amount, job_number, internal_notes, assigned_employee_names, business_id")
+        .order("scheduled_start", { ascending: true, nullsFirst: false });
+      if (selectedBusinessId) q = q.eq("business_id", selectedBusinessId);
+      const { data } = await q;
+      return (data as JobberJob[]) || [];
+    },
+  });
 
-  const fetchLastSync = async () => {
-    const { data } = await supabase
-      .from("sync_logs")
-      .select("completed_at")
-      .eq("status", "success")
-      .in("sync_type", ["full", "jobs", "visits"])
-      .order("started_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    setLastSyncTime(data?.completed_at || null);
-  };
+  // For "combined" tab — all businesses
+  const { data: combinedJobs = [], isLoading: combinedLoading } = useQuery({
+    queryKey: ["schedule-combined"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("jobber_jobs")
+        .select("id, title, client_name, property_address, status, visit_status, scheduled_start, scheduled_end, total_amount, job_number, internal_notes, assigned_employee_names, business_id")
+        .order("scheduled_start", { ascending: true, nullsFirst: false });
+      // TODO: When transitioning away from Jobber, switch this query from jobber_jobs
+      // to platform_job_visits joined to platform_jobs.
+      // During transition, union both tables and deduplicate by customer + date.
+      return (data as JobberJob[]) || [];
+    },
+    enabled: scheduleTab === "combined",
+  });
 
-  useEffect(() => {
-    fetchJobs();
-    fetchLastSync();
-  }, []);
+  const { data: lastSyncTime, refetch: refetchSync } = useQuery({
+    queryKey: ["schedule-last-sync"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("sync_logs")
+        .select("completed_at")
+        .eq("status", "success")
+        .in("sync_type", ["full", "jobs", "visits"])
+        .order("started_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data?.completed_at || null;
+    },
+  });
+
+  const activeJobs = scheduleTab === "combined" ? combinedJobs : jobberJobs;
+  const isLoading = scheduleTab === "combined" ? combinedLoading : loading;
 
   const handleSync = async () => {
     setSyncing(true);
@@ -102,7 +133,7 @@ export default function PlatformSchedule() {
       const { error } = await supabase.functions.invoke("jobber-sync");
       if (error) throw error;
       toast.success("Jobber sync complete");
-      await Promise.all([fetchJobs(), fetchLastSync()]);
+      await Promise.all([refetchJobs(), refetchSync()]);
     } catch (error: any) {
       toast.error(error.message || "Sync failed");
     }
@@ -111,27 +142,19 @@ export default function PlatformSchedule() {
 
   const selectedRange = useMemo(() => {
     if (viewMode === "week") {
-      return {
-        start: startOfWeek(selectedDate, { weekStartsOn: 1 }),
-        end: endOfWeek(selectedDate, { weekStartsOn: 1 }),
-      };
+      return { start: startOfWeek(selectedDate, { weekStartsOn: 1 }), end: endOfWeek(selectedDate, { weekStartsOn: 1 }) };
     }
-
-    return {
-      start: startOfDay(selectedDate),
-      end: endOfDay(selectedDate),
-    };
+    return { start: startOfDay(selectedDate), end: endOfDay(selectedDate) };
   }, [selectedDate, viewMode]);
 
   const scheduledJobs = useMemo(() => {
-    return jobs.filter((job) => {
+    return activeJobs.filter((job) => {
       if (!job.scheduled_start) return false;
-      const start = new Date(job.scheduled_start);
-      return isWithinInterval(start, { start: selectedRange.start, end: selectedRange.end });
+      return isWithinInterval(new Date(job.scheduled_start), { start: selectedRange.start, end: selectedRange.end });
     });
-  }, [jobs, selectedRange]);
+  }, [activeJobs, selectedRange]);
 
-  const unscheduledJobs = useMemo(() => jobs.filter((job) => !job.scheduled_start), [jobs]);
+  const unscheduledJobs = useMemo(() => activeJobs.filter((job) => !job.scheduled_start), [activeJobs]);
 
   const groupedJobs = useMemo(() => {
     const groups: Record<string, JobberJob[]> = {};
@@ -143,7 +166,15 @@ export default function PlatformSchedule() {
     return groups;
   }, [scheduledJobs]);
 
-  const selectedBiz = businesses.find((business) => business.id === selectedBusinessId);
+  // Day summary for combined tab
+  const daySummary = useMemo(() => {
+    if (scheduleTab !== "combined") return null;
+    const gcpCount = scheduledJobs.filter((j) => j.business_id === "b0000000-0000-0000-0000-000000000001").length;
+    const ppsCount = scheduledJobs.filter((j) => j.business_id === "b0000000-0000-0000-0000-000000000002").length;
+    return { total: scheduledJobs.length, gcp: gcpCount, pps: ppsCount };
+  }, [scheduledJobs, scheduleTab]);
+
+  const selectedBiz = businesses.find((b) => b.id === selectedBusinessId);
   const syncLabel = lastSyncTime
     ? `${Math.max(1, Math.round((Date.now() - new Date(lastSyncTime).getTime()) / 60000))}m ago`
     : "waiting for first sync";
@@ -155,41 +186,72 @@ export default function PlatformSchedule() {
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="font-display text-xl font-bold text-foreground">Schedule</h1>
-              {selectedBiz && <InlineBadge shortcode={selectedBiz.shortcode} color={selectedBiz.default_business_color} />}
+              {scheduleTab !== "combined" && selectedBiz && <InlineBadge shortcode={selectedBiz.shortcode} color={selectedBiz.default_business_color} />}
             </div>
             <p className="font-body text-xs text-muted-foreground">
               {scheduledJobs.length} synced Jobber jobs · Last synced {syncLabel}
             </p>
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            className="font-body text-xs gap-1.5"
-            disabled={syncing}
-            onClick={handleSync}
-          >
+          <Button size="sm" variant="outline" className="font-body text-xs gap-1.5" disabled={syncing} onClick={handleSync}>
             <RefreshCw className={cn("w-3.5 h-3.5", syncing && "animate-spin")} />
             {syncing ? "Syncing…" : "Sync Now"}
           </Button>
         </div>
 
+        {/* Schedule tab selector */}
+        <div className="flex items-center gap-0.5 bg-card border border-border rounded-lg p-0.5 w-fit">
+          {(["jobber", "combined"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setScheduleTab(tab)}
+              className={cn(
+                "px-2.5 py-1 rounded-md text-[11px] font-body font-medium transition-all capitalize",
+                scheduleTab === tab ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {tab === "jobber" ? "Jobber" : "Combined"}
+            </button>
+          ))}
+        </div>
+
+        {/* Combined legend */}
+        {scheduleTab === "combined" && (
+          <div className="flex items-center gap-4 font-body text-[11px] text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#22c55e" }} />
+              Gulf Coast Palms
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full border border-white/40" style={{ backgroundColor: "#ffffff" }} />
+              Prestige Property Services
+            </span>
+          </div>
+        )}
+
+        {/* Day summary for combined */}
+        {scheduleTab === "combined" && daySummary && (
+          <div className="font-body text-xs text-muted-foreground bg-card border border-border rounded-lg px-3 py-2">
+            {format(selectedDate, "EEEE, MMMM d")} — <span className="text-foreground font-medium">{daySummary.total} total jobs</span>
+            {" | "}GCP: {daySummary.gcp}{" | "}PPS: {daySummary.pps}
+          </div>
+        )}
+
+        {/* Date nav */}
         <div className="flex items-center justify-between bg-card border border-border rounded-lg p-2">
-          <button onClick={() => setSelectedDate((current) => subDays(current, viewMode === "week" ? 7 : 1))} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground">
+          <button onClick={() => setSelectedDate((d) => subDays(d, viewMode === "week" ? 7 : 1))} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground">
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <button
-            onClick={() => setSelectedDate(new Date())}
-            className="font-body text-sm font-medium px-3 py-1 rounded-md transition-all text-foreground hover:text-primary"
-          >
+          <button onClick={() => setSelectedDate(new Date())} className="font-body text-sm font-medium px-3 py-1 rounded-md transition-all text-foreground hover:text-primary">
             {viewMode === "week"
               ? `${format(selectedRange.start, "MMM d")} – ${format(selectedRange.end, "MMM d, yyyy")}`
               : format(selectedDate, "EEEE, MMMM d, yyyy")}
           </button>
-          <button onClick={() => setSelectedDate((current) => addDays(current, viewMode === "week" ? 7 : 1))} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground">
+          <button onClick={() => setSelectedDate((d) => addDays(d, viewMode === "week" ? 7 : 1))} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground">
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
 
+        {/* Day / Week toggle */}
         <div className="flex items-center gap-0.5 bg-card border border-border rounded-lg p-0.5 w-fit">
           {(["day", "week"] as const).map((mode) => (
             <button
@@ -205,7 +267,8 @@ export default function PlatformSchedule() {
           ))}
         </div>
 
-        {loading ? (
+        {/* Jobs list */}
+        {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((item) => <div key={item} className="h-20 bg-card rounded-lg animate-pulse border border-border" />)}
           </div>
@@ -225,11 +288,15 @@ export default function PlatformSchedule() {
                   {dateJobs.map((job) => {
                     const statusKey = getStatusKey(job);
                     const style = STATUS_STYLES[statusKey] || STATUS_STYLES.scheduled;
+                    const isCombined = scheduleTab === "combined";
+                    const bizStyle = isCombined ? getBizStyle(job.business_id) : null;
+
                     return (
                       <button
                         key={job.id}
                         onClick={() => setSelectedJob(job)}
                         className="w-full bg-card border border-border rounded-lg p-3 hover:border-primary/20 transition-colors text-left"
+                        style={isCombined ? { borderLeftWidth: "4px", borderLeftColor: bizStyle!.border } : undefined}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0 flex-1">
@@ -241,6 +308,14 @@ export default function PlatformSchedule() {
                               >
                                 {style.label}
                               </span>
+                              {isCombined && bizStyle && (
+                                <span
+                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-display font-bold tracking-tight"
+                                  style={{ backgroundColor: bizStyle.badge, color: bizStyle.badgeText }}
+                                >
+                                  {bizStyle.label}
+                                </span>
+                              )}
                             </div>
                             <p className="font-body text-sm font-medium text-foreground truncate">{job.title || job.client_name || "Jobber Job"}</p>
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5 text-[11px] text-muted-foreground font-body">
@@ -266,23 +341,35 @@ export default function PlatformSchedule() {
               <div className="space-y-2">
                 <h3 className="font-body text-xs text-muted-foreground uppercase tracking-wider">Unscheduled</h3>
                 <div className="space-y-1.5">
-                  {unscheduledJobs.map((job) => (
-                    <button
-                      key={job.id}
-                      onClick={() => setSelectedJob(job)}
-                      className="w-full bg-card border border-border rounded-lg p-3 hover:border-primary/20 transition-colors text-left"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                          <p className="font-body text-sm font-medium text-foreground truncate">{job.title || job.client_name || "Jobber Job"}</p>
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5 text-[11px] text-muted-foreground font-body">
-                            {job.client_name && <span className="flex items-center gap-1"><User className="w-3 h-3" />{job.client_name}</span>}
-                            {job.property_address && <span className="flex items-center gap-1 truncate"><MapPin className="w-3 h-3 shrink-0" />{job.property_address}</span>}
+                  {unscheduledJobs.map((job) => {
+                    const isCombined = scheduleTab === "combined";
+                    const bizStyle = isCombined ? getBizStyle(job.business_id) : null;
+                    return (
+                      <button
+                        key={job.id}
+                        onClick={() => setSelectedJob(job)}
+                        className="w-full bg-card border border-border rounded-lg p-3 hover:border-primary/20 transition-colors text-left"
+                        style={isCombined ? { borderLeftWidth: "4px", borderLeftColor: bizStyle!.border } : undefined}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                              <p className="font-body text-sm font-medium text-foreground truncate">{job.title || job.client_name || "Jobber Job"}</p>
+                              {isCombined && bizStyle && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-display font-bold tracking-tight" style={{ backgroundColor: bizStyle.badge, color: bizStyle.badgeText }}>
+                                  {bizStyle.label}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5 text-[11px] text-muted-foreground font-body">
+                              {job.client_name && <span className="flex items-center gap-1"><User className="w-3 h-3" />{job.client_name}</span>}
+                              {job.property_address && <span className="flex items-center gap-1 truncate"><MapPin className="w-3 h-3 shrink-0" />{job.property_address}</span>}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}

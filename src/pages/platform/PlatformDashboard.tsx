@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import {
   DollarSign,
   Users,
@@ -32,18 +33,6 @@ type JobberJob = {
   scheduled_start: string | null;
   total_amount: number | null;
   job_number: string | null;
-};
-
-type KPIData = {
-  totalJobValue: number;
-  syncedCustomers: number;
-  jobsToday: number;
-  lateJobs: number;
-};
-
-type TrendPoint = {
-  day: string;
-  value: number;
 };
 
 function KPICard({ label, value, icon: Icon }: { label: string; value: string; icon: any }) {
@@ -86,65 +75,60 @@ function normalizeStatus(status: string | null | undefined, visitStatus: string 
 
 export default function PlatformDashboard() {
   const { selectedBusinessId, businesses } = usePlatformAuth();
-  const [jobs, setJobs] = useState<JobberJob[]>([]);
-  const [customerCount, setCustomerCount] = useState(0);
-  const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      setLoading(true);
+  const { data: jobs = [], isLoading: loading } = useQuery({
+    queryKey: ["dashboard-jobs", selectedBusinessId],
+    queryFn: async () => {
+      let q = supabase
+        .from("jobber_jobs")
+        .select("id, title, client_name, property_address, status, visit_status, scheduled_start, total_amount, job_number")
+        .order("scheduled_start", { ascending: true, nullsFirst: false });
+      if (selectedBusinessId) q = q.eq("business_id", selectedBusinessId);
+      const { data } = await q;
+      return (data as JobberJob[]) || [];
+    },
+  });
 
-      const [jobsResult, customersResult, syncResult] = await Promise.all([
-        supabase
-          .from("jobber_jobs")
-          .select("id, title, client_name, property_address, status, visit_status, scheduled_start, total_amount, job_number")
-          .order("scheduled_start", { ascending: true, nullsFirst: false }),
-        supabase.from("jobber_clients").select("id", { count: "exact", head: true }),
-        supabase
-          .from("sync_logs")
-          .select("completed_at")
-          .eq("status", "success")
-          .in("sync_type", ["full", "jobs", "visits"])
-          .order("started_at", { ascending: false })
-          .limit(1)
-          .maybeSingle(),
-      ]);
+  const { data: customerCount = 0 } = useQuery({
+    queryKey: ["dashboard-customers", selectedBusinessId],
+    queryFn: async () => {
+      let q = supabase.from("jobber_clients").select("id", { count: "exact", head: true });
+      if (selectedBusinessId) q = q.eq("business_id", selectedBusinessId);
+      const { count } = await q;
+      return count || 0;
+    },
+  });
 
-      setJobs((jobsResult.data as JobberJob[]) || []);
-      setCustomerCount(customersResult.count || 0);
-      setLastSyncTime(syncResult.data?.completed_at || null);
-      setLoading(false);
-    };
+  const { data: lastSyncTime } = useQuery({
+    queryKey: ["dashboard-last-sync"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("sync_logs")
+        .select("completed_at")
+        .eq("status", "success")
+        .in("sync_type", ["full", "jobs", "visits"])
+        .order("started_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data?.completed_at || null;
+    },
+  });
 
-    fetchDashboardData();
-  }, []);
-
-  const kpis = useMemo<KPIData>(() => {
+  const kpis = useMemo(() => {
     const totalJobValue = jobs.reduce((sum, job) => sum + (Number(job.total_amount) || 0), 0);
     const jobsToday = jobs.filter((job) => job.scheduled_start && isToday(new Date(job.scheduled_start))).length;
     const lateJobs = jobs.filter((job) => normalizeStatus(job.status, job.visit_status) === "late").length;
-
-    return {
-      totalJobValue,
-      syncedCustomers: customerCount,
-      jobsToday,
-      lateJobs,
-    };
+    return { totalJobValue, syncedCustomers: customerCount, jobsToday, lateJobs };
   }, [jobs, customerCount]);
 
-  const trendData = useMemo<TrendPoint[]>(() => {
+  const trendData = useMemo(() => {
     return Array.from({ length: 8 }, (_, index) => {
       const date = subDays(new Date(), 7 - index);
       const key = format(date, "yyyy-MM-dd");
       const value = jobs
         .filter((job) => job.scheduled_start && format(new Date(job.scheduled_start), "yyyy-MM-dd") === key)
         .reduce((sum, job) => sum + (Number(job.total_amount) || 0), 0);
-
-      return {
-        day: format(date, "MMM d"),
-        value,
-      };
+      return { day: format(date, "MMM d"), value };
     });
   }, [jobs]);
 
@@ -154,7 +138,7 @@ export default function PlatformDashboard() {
       .sort((a, b) => new Date(a.scheduled_start || 0).getTime() - new Date(b.scheduled_start || 0).getTime());
   }, [jobs]);
 
-  const selectedBiz = businesses.find((business) => business.id === selectedBusinessId);
+  const selectedBiz = businesses.find((b) => b.id === selectedBusinessId);
   const hasTrendData = trendData.some((point) => point.value > 0);
   const syncLabel = lastSyncTime
     ? `${Math.max(1, Math.round((Date.now() - new Date(lastSyncTime).getTime()) / 60000))}m ago`
@@ -182,7 +166,7 @@ export default function PlatformDashboard() {
               <div className="mt-1 flex items-center gap-2 flex-wrap">
                 {selectedBiz && <InlineBadge shortcode={selectedBiz.shortcode} color={selectedBiz.default_business_color} />}
                 <p className="font-body" style={{ fontSize: "13px", color: "hsl(220 8% 50%)" }}>
-                  Live Jobber snapshot · Last synced {syncLabel}
+                  {selectedBiz?.public_brand_name ?? "All Businesses"} · Live Jobber snapshot · Last synced {syncLabel}
                 </p>
               </div>
             </div>
@@ -197,11 +181,7 @@ export default function PlatformDashboard() {
 
           <div
             className="rounded-2xl p-5 space-y-3"
-            style={{
-              background: "rgba(34,197,94,0.04)",
-              border: "1px solid rgba(34,197,94,0.10)",
-              borderRadius: "16px",
-            }}
+            style={{ background: "rgba(34,197,94,0.04)", border: "1px solid rgba(34,197,94,0.10)", borderRadius: "16px" }}
           >
             <div>
               <h3 className="font-display text-sm font-semibold tracking-tight" style={{ color: "#fff" }}>Scheduled Job Value</h3>
@@ -239,11 +219,7 @@ export default function PlatformDashboard() {
 
           <div
             className="rounded-2xl p-5 space-y-3"
-            style={{
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(34,197,94,0.10)",
-              borderRadius: "16px",
-            }}
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(34,197,94,0.10)", borderRadius: "16px" }}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -271,15 +247,11 @@ export default function PlatformDashboard() {
                 {todayJobs.map((job) => {
                   const normalizedStatus = normalizeStatus(job.status, job.visit_status);
                   const statusInfo = STATUS_STYLES[normalizedStatus] || STATUS_STYLES.scheduled;
-
                   return (
                     <div
                       key={job.id}
                       className="flex-shrink-0 w-56 rounded-lg p-3"
-                      style={{
-                        background: "rgba(255,255,255,0.04)",
-                        border: "1px solid rgba(34,197,94,0.08)",
-                      }}
+                      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(34,197,94,0.08)" }}
                     >
                       <div className="flex items-center justify-between mb-1.5 gap-2">
                         {job.scheduled_start && (

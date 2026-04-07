@@ -3,7 +3,6 @@ import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { TrendingUp, Target, FileText, Briefcase, Receipt, CreditCard, Users, BarChart3 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface AnalyticsData {
   revenue: { total: number; collected: number; outstanding: number };
@@ -14,8 +13,8 @@ interface AnalyticsData {
   invoices: { total: number; paid: number; overdue: number };
 }
 
-function MetricCard({ label, value, sub, icon: Icon, color }: {
-  label: string; value: string; sub?: string; icon: any; color?: string;
+function MetricCard({ label, value, sub, icon: Icon }: {
+  label: string; value: string; sub?: string; icon: any;
 }) {
   return (
     <div className="platform-card rounded-xl p-4 space-y-2">
@@ -54,7 +53,10 @@ export default function PlatformAnalytics() {
 
   const fetchAnalytics = async () => {
     setLoading(true);
-    const biz = (q: any) => selectedBusinessId ? q.eq("business_id", selectedBusinessId) : q;
+    const biz = <T,>(q: T): T => {
+      if (selectedBusinessId) return (q as any).eq("business_id", selectedBusinessId);
+      return q;
+    };
 
     const [leads, quotes, jobs, invoices, customers, payments] = await Promise.all([
       biz(supabase.from("platform_leads").select("lead_status")),
@@ -87,9 +89,7 @@ export default function PlatformAnalytics() {
         lost: ld.filter((l: any) => l.lead_status === "lost").length,
       },
       quotes: {
-        total: qd.length,
-        sent: sentQuotes,
-        accepted: acceptedQuotes,
+        total: qd.length, sent: sentQuotes, accepted: acceptedQuotes,
         declined: qd.filter((q: any) => q.status === "declined").length,
         conversionRate: sentQuotes > 0 ? Math.round((acceptedQuotes / sentQuotes) * 100) : 0,
       },
@@ -99,15 +99,8 @@ export default function PlatformAnalytics() {
         completed: jd.filter((j: any) => j.status === "completed").length,
         inProgress: jd.filter((j: any) => j.status === "in_progress").length,
       },
-      customers: {
-        total: cd.length,
-        active: cd.filter((c: any) => c.customer_status === "active").length,
-      },
-      invoices: {
-        total: id.length,
-        paid: id.filter((i: any) => i.status === "paid").length,
-        overdue: id.filter((i: any) => i.status === "overdue").length,
-      },
+      customers: { total: cd.length, active: cd.filter((c: any) => c.customer_status === "active").length },
+      invoices: { total: id.length, paid: id.filter((i: any) => i.status === "paid").length, overdue: id.filter((i: any) => i.status === "overdue").length },
     });
     setLoading(false);
   };
@@ -132,14 +125,12 @@ export default function PlatformAnalytics() {
           <p className="font-body text-xs text-muted-foreground">Business performance overview</p>
         </div>
 
-        {/* Revenue */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <MetricCard label="Total Revenue" value={`$${d.revenue.total.toLocaleString()}`} icon={TrendingUp} />
           <MetricCard label="Collected" value={`$${d.revenue.collected.toLocaleString()}`} icon={CreditCard} />
           <MetricCard label="Outstanding" value={`$${d.revenue.outstanding.toLocaleString()}`} icon={Receipt} />
         </div>
 
-        {/* Pipeline */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <MetricCard label="Leads" value={d.leads.total.toString()} sub={`${d.leads.new} new · ${d.leads.won} won`} icon={Target} />
           <MetricCard label="Quotes" value={d.quotes.total.toString()} sub={`${d.quotes.conversionRate}% conversion`} icon={FileText} />
@@ -147,7 +138,6 @@ export default function PlatformAnalytics() {
           <MetricCard label="Customers" value={d.customers.total.toString()} sub={`${d.customers.active} active`} icon={Users} />
         </div>
 
-        {/* Breakdowns */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="platform-card rounded-xl p-5 space-y-4">
             <div className="flex items-center gap-2">
