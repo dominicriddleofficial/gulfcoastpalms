@@ -5,17 +5,16 @@ import { cn } from "@/lib/utils";
 
 interface QuickAction {
   label: string;
-  icon: typeof FileText;
   path: string;
   emoji: string;
 }
 
 const ACTIONS: QuickAction[] = [
-  { label: "New Quote", icon: FileText, path: "/platform/quotes", emoji: "📋" },
-  { label: "New Job", icon: Briefcase, path: "/platform/jobs", emoji: "🔧" },
-  { label: "New Customer", icon: Users, path: "/platform/customers", emoji: "👤" },
-  { label: "New Invoice", icon: Receipt, path: "/platform/invoices", emoji: "💵" },
-  { label: "Log a Lead", icon: Phone, path: "/platform/leads", emoji: "📞" },
+  { label: "New Quote", path: "/platform/quotes", emoji: "📋" },
+  { label: "New Job", path: "/platform/jobs", emoji: "🔧" },
+  { label: "New Customer", path: "/platform/customers", emoji: "👤" },
+  { label: "New Invoice", path: "/platform/invoices", emoji: "💵" },
+  { label: "Log a Lead", path: "/platform/leads", emoji: "📞" },
 ];
 
 interface Props {
@@ -27,11 +26,6 @@ export default function QuickActionFAB({ brandColor = "#22c55e" }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
-
-  // Only show on platform/* and admin/* routes
-  const isPlatform = location.pathname.startsWith("/platform");
-  const isAdmin = location.pathname.startsWith("/admin");
-  if (!isPlatform && !isAdmin) return null;
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -50,6 +44,11 @@ export default function QuickActionFAB({ brandColor = "#22c55e" }: Props) {
     };
   }, [open]);
 
+  // Only show on platform/* and admin/* routes
+  const isPlatform = location.pathname.startsWith("/platform");
+  const isAdmin = location.pathname.startsWith("/admin");
+  if (!isPlatform && !isAdmin) return null;
+
   const handleAction = (path: string) => {
     setOpen(false);
     navigate(path);
@@ -57,7 +56,6 @@ export default function QuickActionFAB({ brandColor = "#22c55e" }: Props) {
 
   return (
     <div ref={ref} className="fixed bottom-6 right-6 z-[60] flex flex-col-reverse items-end gap-2">
-      {/* Action items */}
       {open && (
         <div className="flex flex-col gap-1.5 mb-2 animate-in fade-in slide-in-from-bottom-4 duration-200">
           {ACTIONS.map((action) => (
@@ -75,7 +73,6 @@ export default function QuickActionFAB({ brandColor = "#22c55e" }: Props) {
         </div>
       )}
 
-      {/* FAB button */}
       <button
         onClick={() => setOpen(!open)}
         className={cn(
@@ -86,9 +83,9 @@ export default function QuickActionFAB({ brandColor = "#22c55e" }: Props) {
         aria-label={open ? "Close quick actions" : "Open quick actions"}
       >
         {open ? (
-          <X className="w-6 h-6 text-white transition-transform" />
+          <X className="w-6 h-6 text-white" />
         ) : (
-          <Plus className="w-6 h-6 text-white transition-transform" />
+          <Plus className="w-6 h-6 text-white" />
         )}
       </button>
     </div>
