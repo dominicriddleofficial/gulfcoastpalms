@@ -132,19 +132,36 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
     })();
   }, [bizId]);
 
-  // Customer search
+  // Customer search — searches both jobber_clients and platform_customers
   useEffect(() => {
     if (!customerSearch || customerSearch.length < 2) { setCustomerResults([]); return; }
     const timer = setTimeout(async () => {
-      const q = `%${customerSearch}%`;
-      const { data } = await supabase
-        .from("platform_customers")
-        .select("id, display_name, email, phone, company_name")
-        .eq("business_id", bizId)
-        .or(`display_name.ilike.${q},phone.ilike.${q},email.ilike.${q}`)
-        .limit(8);
-      setCustomerResults((data as CustomerResult[]) || []);
-    }, 300);
+      const like = `%${customerSearch}%`;
+      const [jobberRes, platformRes] = await Promise.all([
+        supabase
+          .from("jobber_clients")
+          .select("id, display_name, email, phone, company_name")
+          .eq("business_id", bizId)
+          .or(`display_name.ilike.${like},phone.ilike.${like},email.ilike.${like}`)
+          .limit(8),
+        supabase
+          .from("platform_customers")
+          .select("id, display_name, email, phone, company_name")
+          .eq("business_id", bizId)
+          .or(`display_name.ilike.${like},phone.ilike.${like},email.ilike.${like}`)
+          .limit(4),
+      ]);
+      const seen = new Set<string>();
+      const combined: CustomerResult[] = [];
+      for (const c of [...(jobberRes.data || []), ...(platformRes.data || [])]) {
+        const key = c.display_name?.toLowerCase();
+        if (key && !seen.has(key)) {
+          seen.add(key);
+          combined.push(c as CustomerResult);
+        }
+      }
+      setCustomerResults(combined.slice(0, 10));
+    }, 250);
     return () => clearTimeout(timer);
   }, [customerSearch, bizId]);
 
