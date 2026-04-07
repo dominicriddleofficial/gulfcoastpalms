@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.terminal-create-payment]
 verify_jwt = false
+
+[functions.process-email-queue]
+verify_jwt = true
