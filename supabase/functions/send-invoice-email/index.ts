@@ -170,6 +170,7 @@ Deno.serve(async (req) => {
           html: ownerHtml,
           sender_domain: SENDER_DOMAIN,
           message_id: ownerMessageId,
+          idempotency_key: ownerMessageId,
           purpose: "transactional",
         },
       });
