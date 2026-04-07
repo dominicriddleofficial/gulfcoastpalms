@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Search, Plus, X, ChevronDown, Calendar, User, Building2, FileText,
   Eye, Save, Send, Trash2, Package,
@@ -15,6 +14,7 @@ import { toast } from "sonner";
 import { format, addDays } from "date-fns";
 import InvoicePreviewPanel from "./InvoicePreviewPanel";
 import SendInvoiceModal from "./SendInvoiceModal";
+import { useQuery } from "@tanstack/react-query";
 
 interface LineItem {
   id: string;
@@ -90,6 +90,21 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
   const [saving, setSaving] = useState(false);
 
   const activeBiz = businesses.find(b => b.id === bizId);
+
+  // Fetch logo for invoice preview
+  const { data: brandAssets } = useQuery({
+    queryKey: ['brand-assets-invoice', bizId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('business_brand_assets')
+        .select('file_url, asset_type, usage_context')
+        .eq('business_id', bizId);
+      return data || [];
+    },
+    enabled: !!bizId,
+  });
+  const logoAsset = brandAssets?.find(a => a.asset_type === 'logo');
+  const logoUrl = logoAsset?.file_url || activeBiz?.logo_url || null;
 
   // Generate invoice number on mount
   useEffect(() => {
@@ -207,7 +222,8 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
     businessName: activeBiz?.public_brand_name || "",
     shortcode: activeBiz?.shortcode || "gcp",
     isDraft: true,
-  }), [invoiceNumber, issueDate, dueDate, customerName, customerEmail, customerPhone, lineItems, subtotal, taxEnabled, taxRate, taxAmount, discountAmount, total, publicNotes, activeBiz]);
+    logoUrl: logoUrl,
+  }), [invoiceNumber, issueDate, dueDate, customerName, customerEmail, customerPhone, lineItems, subtotal, taxEnabled, taxRate, taxAmount, discountAmount, total, publicNotes, activeBiz, logoUrl]);
 
   // Save invoice
   const handleSave = async (sendAfter: boolean = false) => {
@@ -272,7 +288,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
 
   return (
     <>
-      <div className="fixed inset-0 z-50 bg-background flex flex-col">
+      <div className="fixed inset-0 z-50 bg-background flex flex-col invoice-form">
         {/* Top bar */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
           <div className="flex items-center gap-3">
@@ -591,15 +607,27 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
         </div>
       </div>
 
-      {/* Mobile Preview */}
-      <Dialog open={showMobilePreview} onOpenChange={setShowMobilePreview}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white p-0">
-          <DialogHeader className="p-4 pb-0">
-            <DialogTitle className="text-foreground">Invoice Preview</DialogTitle>
-          </DialogHeader>
-          <InvoicePreviewPanel data={previewData} />
-        </DialogContent>
-      </Dialog>
+      {/* Mobile Preview — full-screen bottom sheet */}
+      <Sheet open={showMobilePreview} onOpenChange={setShowMobilePreview}>
+        <SheetContent side="bottom" className="h-[95vh] p-0 bg-[#0a0f0a] border-t border-border overflow-hidden flex flex-col">
+          <SheetHeader className="px-4 pt-4 pb-2 shrink-0">
+            <SheetTitle className="text-foreground font-display text-base">Invoice Preview</SheetTitle>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto px-4 pb-4">
+            <div className="max-w-[480px] mx-auto">
+              <InvoicePreviewPanel data={previewData} />
+            </div>
+          </div>
+          <div className="shrink-0 px-4 py-3 border-t border-border bg-background flex gap-2">
+            <Button variant="outline" className="flex-1 font-body text-sm" onClick={() => window.print()}>
+              Download PDF
+            </Button>
+            <Button variant="ghost" className="font-body text-sm" onClick={() => setShowMobilePreview(false)}>
+              Close
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Send Modal */}
       {showSendModal && (

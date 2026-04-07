@@ -309,7 +309,7 @@ export default function PlatformDashboard() {
                       {["Revenue", "Jobs", "Leads"].map(l => (
                         <div key={l}>
                           <p className="font-body uppercase tracking-wider" style={{ fontSize: "10px", color: "hsl(220 8% 50%)" }}>{l}</p>
-                          <p className="font-display text-lg font-bold tracking-tight" style={{ color: "#fff" }}>$0</p>
+                          <p className="font-display text-lg font-bold tracking-tight" style={{ color: "hsl(220 8% 50%)" }}>—</p>
                         </div>
                       ))}
                     </div>

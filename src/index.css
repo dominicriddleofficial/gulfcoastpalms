@@ -156,6 +156,24 @@
   50% { opacity: 0.75; }
 }
 
+/* Invoice form input visibility on dark theme */
+.invoice-form input,
+.invoice-form textarea,
+.invoice-form select,
+.invoice-form [role="combobox"] {
+  color: #ffffff !important;
+  caret-color: #22c55e !important;
+}
+.invoice-form input::placeholder,
+.invoice-form textarea::placeholder {
+  color: rgba(255, 255, 255, 0.40) !important;
+}
+.invoice-form input:focus,
+.invoice-form textarea:focus {
+  border-color: rgba(34, 197, 94, 0.60) !important;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.12) !important;
+}
+
 .platform-dashboard-bg {
   background:
     radial-gradient(ellipse 70% 50% at 50% 0%, rgba(34, 197, 94, 0.28) 0%, rgba(34, 197, 94, 0.08) 45%, transparent 70%),
