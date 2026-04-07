@@ -88,75 +88,65 @@ export default function UniversalSearch({ businessId }: Props) {
     const allResults: SearchResult[] = [];
 
     try {
-      // Parallel searches
-      const [customers, leads, quotes, jobs, invoices, properties, crew] = await Promise.all([
+      // Parallel searches across jobber (synced) and platform tables
+      const [jobberClients, jobberJobs, jobberProps, platformCustomers, invoices, crew] = await Promise.all([
+        // Jobber clients — display_name, phone, email
+        supabase.from("jobber_clients").select("id, display_name, phone, email, business_id")
+          .eq("business_id", businessId).or(`display_name.ilike.${like},phone.ilike.${like},email.ilike.${like}`).limit(6),
+        // Jobber jobs — title, job_number, client_name, property_address
+        supabase.from("jobber_jobs").select("id, title, job_number, status, client_name, property_address, total_amount, business_id")
+          .eq("business_id", businessId).or(`title.ilike.${like},job_number.ilike.${like},client_name.ilike.${like},property_address.ilike.${like}`).limit(6),
+        // Jobber properties — street1, city
+        supabase.from("jobber_properties").select("id, street1, city, business_id")
+          .eq("business_id", businessId).or(`street1.ilike.${like},city.ilike.${like}`).limit(4),
+        // Platform customers
         supabase.from("platform_customers").select("id, display_name, email, phone")
-          .eq("business_id", businessId).or(`display_name.ilike.${like},email.ilike.${like},phone.ilike.${like}`).limit(5),
-        supabase.from("platform_leads").select("id, inquiry_name, inquiry_email, inquiry_phone, requested_service")
-          .eq("business_id", businessId).or(`inquiry_name.ilike.${like},inquiry_email.ilike.${like},inquiry_phone.ilike.${like}`).limit(5),
-        supabase.from("platform_quotes").select("id, quote_number, total, status, customer:platform_customers!platform_quotes_customer_id_fkey(display_name)")
-          .eq("business_id", businessId).or(`quote_number.ilike.${like}`).limit(5),
-        supabase.from("platform_jobs").select("id, job_number, title, status, customer:platform_customers!platform_jobs_customer_id_fkey(display_name)")
-          .eq("business_id", businessId).or(`job_number.ilike.${like},title.ilike.${like}`).limit(5),
-        supabase.from("platform_invoices").select("id, invoice_number, total, status, customer:platform_customers!platform_invoices_customer_id_fkey(display_name)")
-          .eq("business_id", businessId).or(`invoice_number.ilike.${like}`).limit(5),
-        supabase.from("platform_properties").select("id, address_1, city, customer:platform_customers!platform_properties_customer_id_fkey(display_name)")
-          .eq("business_id", businessId).or(`address_1.ilike.${like},city.ilike.${like}`).limit(5),
+          .eq("business_id", businessId).or(`display_name.ilike.${like},email.ilike.${like},phone.ilike.${like}`).limit(4),
+        // Platform invoices
+        supabase.from("platform_invoices").select("id, invoice_number, total, status")
+          .eq("business_id", businessId).ilike("invoice_number", like).limit(3),
+        // Crew members
         supabase.from("platform_crew_members").select("id, display_name, phone")
           .eq("business_id", businessId).or(`display_name.ilike.${like},phone.ilike.${like}`).limit(5),
       ]);
 
-      customers.data?.forEach(c => allResults.push({
-        type: "customer", id: c.id, title: c.display_name,
-        subtitle: [c.phone, c.email].filter(Boolean).join(" · "),
-        path: "/platform/customers",
-      }));
-
-      leads.data?.forEach(l => allResults.push({
-        type: "lead", id: l.id, title: l.inquiry_name,
-        subtitle: [l.inquiry_phone, l.requested_service].filter(Boolean).join(" · "),
-        path: "/platform/leads",
-      }));
-
-      quotes.data?.forEach(q => {
-        const cust = Array.isArray(q.customer) ? q.customer[0] : q.customer;
+      // Merge jobber + platform customers, dedup by display_name
+      const seenNames = new Set<string>();
+      const mergedCustomers = [
+        ...(jobberClients.data ?? []).map(c => ({ id: c.id, name: c.display_name, phone: c.phone, email: c.email })),
+        ...(platformCustomers.data ?? []).map(c => ({ id: c.id, name: c.display_name, phone: c.phone, email: c.email })),
+      ];
+      mergedCustomers.forEach(c => {
+        if (seenNames.has(c.name)) return;
+        seenNames.add(c.name);
         allResults.push({
-          type: "quote", id: q.id, title: q.quote_number,
-          subtitle: [cust?.display_name, q.total ? `$${q.total}` : null, q.status].filter(Boolean).join(" · "),
-          path: "/platform/quotes",
-        });
-      });
-
-      jobs.data?.forEach(j => {
-        const cust = Array.isArray(j.customer) ? j.customer[0] : j.customer;
-        allResults.push({
-          type: "job", id: j.id, title: j.job_number,
-          subtitle: [cust?.display_name, j.title, j.status].filter(Boolean).join(" · "),
-          path: "/platform/jobs",
-        });
-      });
-
-      invoices.data?.forEach(inv => {
-        const cust = Array.isArray(inv.customer) ? inv.customer[0] : inv.customer;
-        allResults.push({
-          type: "invoice", id: inv.id, title: inv.invoice_number,
-          subtitle: [cust?.display_name, inv.total ? `$${inv.total}` : null, inv.status].filter(Boolean).join(" · "),
-          path: "/platform/invoices",
-        });
-      });
-
-      properties.data?.forEach(p => {
-        const cust = Array.isArray(p.customer) ? p.customer[0] : p.customer;
-        allResults.push({
-          type: "property", id: p.id, title: p.address_1,
-          subtitle: [p.city, cust?.display_name].filter(Boolean).join(" · "),
+          type: "customer", id: c.id, title: c.name,
+          subtitle: [c.phone, c.email].filter(Boolean).join(" · "),
           path: "/platform/customers",
         });
       });
 
+      jobberJobs.data?.forEach(j => allResults.push({
+        type: "job", id: j.id, title: j.client_name ?? j.title ?? j.job_number ?? "Job",
+        subtitle: [j.job_number, j.property_address, j.status, j.total_amount ? `$${Number(j.total_amount).toLocaleString()}` : null].filter(Boolean).join(" · "),
+        path: "/platform/jobs",
+      }));
+
+      jobberProps.data?.forEach(p => allResults.push({
+        type: "property", id: p.id, title: [p.street1, p.city].filter(Boolean).join(", ") || "Property",
+        subtitle: p.city ?? "",
+        path: "/platform/customers",
+      }));
+
+      invoices.data?.forEach(inv => allResults.push({
+        type: "invoice", id: inv.id, title: inv.invoice_number,
+        subtitle: [inv.total ? `$${inv.total}` : null, inv.status].filter(Boolean).join(" · "),
+        path: "/platform/invoices",
+      }));
+
       crew.data?.forEach(c => allResults.push({
         type: "crew", id: c.id, title: c.display_name,
-        subtitle: c.phone || "",
+        subtitle: c.phone ?? "",
         path: "/platform/settings",
       }));
 
