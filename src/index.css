@@ -151,6 +151,21 @@
   }
 }
 
+@keyframes glow-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.75; }
+}
+
+.platform-dashboard-bg {
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(34, 197, 94, 0.28) 0%, rgba(34, 197, 94, 0.08) 45%, transparent 70%),
+    radial-gradient(ellipse 40% 30% at 15% 40%, rgba(34, 197, 94, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 35% 25% at 85% 20%, rgba(34, 197, 94, 0.10) 0%, transparent 55%),
+    #080d08 !important;
+  min-height: 100vh;
+  animation: glow-breathe 12s ease-in-out infinite;
+}
+
 @layer utilities {
   .text-gradient-primary {
     @apply bg-clip-text text-transparent;
