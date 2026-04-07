@@ -1,50 +1,59 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
 import {
-  TrendingUp, CreditCard, AlertTriangle, Briefcase,
-  Calendar, MapPin, Clock,
+  DollarSign,
+  Users,
+  CalendarDays,
+  AlertTriangle,
+  Clock,
+  MapPin,
 } from "lucide-react";
-import { format, startOfWeek, endOfWeek } from "date-fns";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { format, isToday, subDays } from "date-fns";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
 
-interface KPIData {
-  totalInvoiced: number;
-  totalCollected: number;
-  outstandingBalance: number;
-  jobsThisWeek: number;
-}
-
-interface TodayJob {
+type JobberJob = {
   id: string;
-  job_title: string | null;
-  customer_name: string | null;
+  title: string | null;
+  client_name: string | null;
   property_address: string | null;
-  scheduled_start_time: string | null;
   status: string;
-}
+  visit_status: string | null;
+  scheduled_start: string | null;
+  total_amount: number | null;
+  job_number: string | null;
+};
 
-interface RevenuePoint { month: string; revenue: number; }
+type KPIData = {
+  totalJobValue: number;
+  syncedCustomers: number;
+  jobsToday: number;
+  lateJobs: number;
+};
+
+type TrendPoint = {
+  day: string;
+  value: number;
+};
 
 function KPICard({ label, value, icon: Icon }: { label: string; value: string; icon: any }) {
   return (
     <div
-      className="rounded-[14px] p-5 space-y-3 transition-all duration-200 cursor-default group"
+      className="rounded-[14px] p-5 space-y-3 transition-all duration-200 cursor-default"
       style={{
         background: "rgba(255,255,255,0.04)",
         border: "1px solid rgba(34,197,94,0.18)",
         borderRadius: "14px",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = "rgba(34,197,94,0.35)";
-        e.currentTarget.style.boxShadow = "0 0 24px rgba(34,197,94,0.12)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "rgba(34,197,94,0.18)";
-        e.currentTarget.style.boxShadow = "none";
       }}
     >
       <div className="flex items-center justify-between">
@@ -62,88 +71,94 @@ function KPICard({ label, value, icon: Icon }: { label: string; value: string; i
   );
 }
 
-const VISIT_STATUS_COLORS: Record<string, { bg: string; text: string; label: string }> = {
+const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
+  late: { bg: "#ef444420", text: "#ef4444", label: "Late" },
+  today: { bg: "#22c55e20", text: "#22c55e", label: "Today" },
   scheduled: { bg: "#2563eb20", text: "#2563eb", label: "Scheduled" },
-  en_route: { bg: "#8b5cf620", text: "#8b5cf6", label: "En Route" },
-  in_progress: { bg: "#f59e0b20", text: "#f59e0b", label: "In Progress" },
   completed: { bg: "#22c55e20", text: "#22c55e", label: "Completed" },
-  skipped: { bg: "#6b728020", text: "#6b7280", label: "Skipped" },
-  cancelled: { bg: "#ef444420", text: "#ef4444", label: "Cancelled" },
+  upcoming: { bg: "#8b5cf620", text: "#8b5cf6", label: "Upcoming" },
 };
 
+function normalizeStatus(status: string | null | undefined, visitStatus: string | null | undefined) {
+  const value = (visitStatus || status || "scheduled").toLowerCase();
+  return STATUS_STYLES[value] ? value : "scheduled";
+}
+
 export default function PlatformDashboard() {
-  const { selectedBusinessId, businesses, isOwner } = usePlatformAuth();
-  const queryClient = useQueryClient();
-  const [kpis, setKpis] = useState<KPIData>({ totalInvoiced: 0, totalCollected: 0, outstandingBalance: 0, jobsThisWeek: 0 });
-  const [todayJobs, setTodayJobs] = useState<TodayJob[]>([]);
-  const [revenueData, setRevenueData] = useState<RevenuePoint[]>([]);
+  const { selectedBusinessId, businesses } = usePlatformAuth();
+  const [jobs, setJobs] = useState<JobberJob[]>([]);
+  const [customerCount, setCustomerCount] = useState(0);
+  const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!selectedBusinessId) return;
-    const bizFilter = (q: any) => q.eq("business_id", selectedBusinessId);
-    queryClient.prefetchQuery({
-      queryKey: ["platform-leads-prefetch", selectedBusinessId],
-      queryFn: () => bizFilter(supabase.from("platform_leads").select("id", { count: "exact", head: true })).then(r => r.count),
-      staleTime: 60_000,
+    const fetchDashboardData = async () => {
+      setLoading(true);
+
+      const [jobsResult, customersResult, syncResult] = await Promise.all([
+        supabase
+          .from("jobber_jobs")
+          .select("id, title, client_name, property_address, status, visit_status, scheduled_start, total_amount, job_number")
+          .order("scheduled_start", { ascending: true, nullsFirst: false }),
+        supabase.from("jobber_clients").select("id", { count: "exact", head: true }),
+        supabase
+          .from("sync_logs")
+          .select("completed_at")
+          .eq("status", "success")
+          .in("sync_type", ["full", "jobs", "visits"])
+          .order("started_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
+
+      setJobs((jobsResult.data as JobberJob[]) || []);
+      setCustomerCount(customersResult.count || 0);
+      setLastSyncTime(syncResult.data?.completed_at || null);
+      setLoading(false);
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  const kpis = useMemo<KPIData>(() => {
+    const totalJobValue = jobs.reduce((sum, job) => sum + (Number(job.total_amount) || 0), 0);
+    const jobsToday = jobs.filter((job) => job.scheduled_start && isToday(new Date(job.scheduled_start))).length;
+    const lateJobs = jobs.filter((job) => normalizeStatus(job.status, job.visit_status) === "late").length;
+
+    return {
+      totalJobValue,
+      syncedCustomers: customerCount,
+      jobsToday,
+      lateJobs,
+    };
+  }, [jobs, customerCount]);
+
+  const trendData = useMemo<TrendPoint[]>(() => {
+    return Array.from({ length: 8 }, (_, index) => {
+      const date = subDays(new Date(), 7 - index);
+      const key = format(date, "yyyy-MM-dd");
+      const value = jobs
+        .filter((job) => job.scheduled_start && format(new Date(job.scheduled_start), "yyyy-MM-dd") === key)
+        .reduce((sum, job) => sum + (Number(job.total_amount) || 0), 0);
+
+      return {
+        day: format(date, "MMM d"),
+        value,
+      };
     });
-    queryClient.prefetchQuery({
-      queryKey: ["platform-jobs-prefetch", selectedBusinessId],
-      queryFn: () => bizFilter(supabase.from("platform_jobs").select("id", { count: "exact", head: true })).then(r => r.count),
-      staleTime: 60_000,
-    });
-  }, [selectedBusinessId, queryClient]);
+  }, [jobs]);
 
-  useEffect(() => { fetchDashboardData(); }, [selectedBusinessId]);
+  const todayJobs = useMemo(() => {
+    return jobs
+      .filter((job) => job.scheduled_start && isToday(new Date(job.scheduled_start)))
+      .sort((a, b) => new Date(a.scheduled_start || 0).getTime() - new Date(b.scheduled_start || 0).getTime());
+  }, [jobs]);
 
-  const fetchDashboardData = async () => {
-    setLoading(true);
-    const bizFilter = (q: any) => selectedBusinessId ? q.eq("business_id", selectedBusinessId) : q;
-    const today = new Date();
-    const weekStart = startOfWeek(today, { weekStartsOn: 1 });
-    const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
-    const todayStr = format(today, "yyyy-MM-dd");
-
-    const [invoices, jobsWeek, todayVisits, payments] = await Promise.all([
-      bizFilter(supabase.from("platform_invoices").select("total, amount_paid, balance_due")),
-      bizFilter(supabase.from("platform_job_visits").select("id", { count: "exact", head: true }).gte("scheduled_date", format(weekStart, "yyyy-MM-dd")).lte("scheduled_date", format(weekEnd, "yyyy-MM-dd"))),
-      bizFilter(supabase.from("platform_job_visits").select("id, title, status, scheduled_start_time, platform_jobs(title, platform_customers(display_name)), platform_properties(address_1, city)").eq("scheduled_date", todayStr).order("route_order", { ascending: true })),
-      bizFilter(supabase.from("platform_payments").select("amount, payment_date").order("payment_date", { ascending: true })),
-    ]);
-
-    const invoiceData = invoices.data || [];
-    const totalInvoiced = invoiceData.reduce((s: number, i: any) => s + (i.total || 0), 0);
-    const totalCollected = invoiceData.reduce((s: number, i: any) => s + (i.amount_paid || 0), 0);
-    const outstanding = invoiceData.reduce((s: number, i: any) => s + (i.balance_due || 0), 0);
-    setKpis({ totalInvoiced, totalCollected, outstandingBalance: outstanding, jobsThisWeek: jobsWeek.count || 0 });
-
-    setTodayJobs((todayVisits.data || []).map((v: any) => ({
-      id: v.id,
-      job_title: v.platform_jobs?.title || v.title || "Visit",
-      customer_name: v.platform_jobs?.platform_customers?.display_name || null,
-      property_address: v.platform_properties ? `${v.platform_properties.address_1}, ${v.platform_properties.city}` : null,
-      scheduled_start_time: v.scheduled_start_time,
-      status: v.status,
-    })));
-
-    const paymentData = payments.data || [];
-    const monthMap: Record<string, number> = {};
-    for (let i = 11; i >= 0; i--) {
-      const d = new Date(); d.setMonth(d.getMonth() - i);
-      monthMap[format(d, "MMM yyyy")] = 0;
-    }
-    paymentData.forEach((p: any) => {
-      if (p.payment_date) {
-        const key = format(new Date(p.payment_date), "MMM yyyy");
-        if (key in monthMap) monthMap[key] += Number(p.amount) || 0;
-      }
-    });
-    setRevenueData(Object.entries(monthMap).map(([month, revenue]) => ({ month, revenue })));
-    setLoading(false);
-  };
-
-  const selectedBiz = businesses.find(b => b.id === selectedBusinessId);
-  const hasRevenueData = revenueData.some(d => d.revenue > 0);
+  const selectedBiz = businesses.find((business) => business.id === selectedBusinessId);
+  const hasTrendData = trendData.some((point) => point.value > 0);
+  const syncLabel = lastSyncTime
+    ? `${Math.max(1, Math.round((Date.now() - new Date(lastSyncTime).getTime()) / 60000))}m ago`
+    : "waiting for first sync";
 
   return (
     <PlatformLayout>
@@ -159,32 +174,27 @@ export default function PlatformDashboard() {
         }}
       >
         <div className="space-y-6 max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <div>
               <h1 className="font-display font-bold" style={{ fontSize: "28px", letterSpacing: "-0.02em", color: "#fff" }}>
                 Command Center
               </h1>
-              <p className="font-body mt-0.5" style={{ fontSize: "13px", color: "hsl(220 8% 50%)" }}>
-                {selectedBiz ? selectedBiz.public_brand_name : "All Businesses"} · Overview
-              </p>
-            </div>
-            {!selectedBusinessId && isOwner && businesses.length > 1 && (
-              <div className="flex gap-1.5">
-                {businesses.map(b => <InlineBadge key={b.id} shortcode={b.shortcode} color={b.default_business_color} />)}
+              <div className="mt-1 flex items-center gap-2 flex-wrap">
+                {selectedBiz && <InlineBadge shortcode={selectedBiz.shortcode} color={selectedBiz.default_business_color} />}
+                <p className="font-body" style={{ fontSize: "13px", color: "hsl(220 8% 50%)" }}>
+                  Live Jobber snapshot · Last synced {syncLabel}
+                </p>
               </div>
-            )}
+            </div>
           </div>
 
-          {/* KPI Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <KPICard label="Total Revenue" value={`$${kpis.totalInvoiced.toLocaleString()}`} icon={TrendingUp} />
-            <KPICard label="Collected" value={`$${kpis.totalCollected.toLocaleString()}`} icon={CreditCard} />
-            <KPICard label="Outstanding" value={`$${kpis.outstandingBalance.toLocaleString()}`} icon={AlertTriangle} />
-            <KPICard label="Jobs This Week" value={kpis.jobsThisWeek.toString()} icon={Briefcase} />
+            <KPICard label="Total Job Value" value={`$${Math.round(kpis.totalJobValue).toLocaleString()}`} icon={DollarSign} />
+            <KPICard label="Synced Customers" value={kpis.syncedCustomers.toLocaleString()} icon={Users} />
+            <KPICard label="Jobs Today" value={kpis.jobsToday.toString()} icon={CalendarDays} />
+            <KPICard label="Late Jobs" value={kpis.lateJobs.toString()} icon={AlertTriangle} />
           </div>
 
-          {/* Revenue Chart */}
           <div
             className="rounded-2xl p-5 space-y-3"
             style={{
@@ -194,40 +204,39 @@ export default function PlatformDashboard() {
             }}
           >
             <div>
-              <h3 className="font-display text-sm font-semibold tracking-tight" style={{ color: "#fff" }}>Revenue Trend</h3>
-              <p className="font-body" style={{ fontSize: "11px", color: "hsl(220 8% 50%)" }}>Monthly collected revenue</p>
+              <h3 className="font-display text-sm font-semibold tracking-tight" style={{ color: "#fff" }}>Scheduled Job Value</h3>
+              <p className="font-body" style={{ fontSize: "11px", color: "hsl(220 8% 50%)" }}>Last 8 scheduled days from synced Jobber jobs</p>
             </div>
             <div className="h-[280px] md:h-[320px]">
-              {hasRevenueData ? (
+              {hasTrendData ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={revenueData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+                  <AreaChart data={trendData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                     <defs>
-                      <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient id="jobberTrendGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#22c55e" stopOpacity={0.4} />
                         <stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                    <XAxis dataKey="month" tick={{ fill: "hsl(220 8% 50%)", fontSize: 11, fontFamily: "Outfit" }} axisLine={{ stroke: "rgba(255,255,255,0.06)" }} tickLine={false} tickFormatter={(v) => v.split(" ")[0]} />
-                    <YAxis tick={{ fill: "hsl(220 8% 50%)", fontSize: 11, fontFamily: "Outfit" }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(v >= 1000 ? 1 : 0)}${v >= 1000 ? "k" : ""}`} />
+                    <XAxis dataKey="day" tick={{ fill: "hsl(220 8% 50%)", fontSize: 11, fontFamily: "Outfit" }} axisLine={{ stroke: "rgba(255,255,255,0.06)" }} tickLine={false} />
+                    <YAxis tick={{ fill: "hsl(220 8% 50%)", fontSize: 11, fontFamily: "Outfit" }} axisLine={false} tickLine={false} tickFormatter={(value) => `$${Number(value).toLocaleString()}`} />
                     <Tooltip
                       contentStyle={{ backgroundColor: "#111811", border: "1px solid rgba(34,197,94,0.15)", borderRadius: "8px", fontFamily: "Outfit", fontSize: "12px", color: "#fff" }}
-                      formatter={(value: number) => [`$${value.toLocaleString()}`, "Revenue"]}
+                      formatter={(value: number) => [`$${Number(value).toLocaleString()}`, "Scheduled value"]}
                       labelStyle={{ color: "hsl(220 8% 50%)", marginBottom: 4 }}
                     />
-                    <Area type="monotone" dataKey="revenue" stroke="#22c55e" strokeWidth={2} fill="url(#revenueGradient)" />
+                    <Area type="monotone" dataKey="value" stroke="#22c55e" strokeWidth={2} fill="url(#jobberTrendGradient)" />
                   </AreaChart>
                 </ResponsiveContainer>
               ) : (
                 <div className="h-full flex flex-col items-center justify-center">
-                  <TrendingUp className="w-10 h-10 mb-3" style={{ color: "rgba(255,255,255,0.1)" }} />
-                  <p className="font-body text-sm" style={{ color: "rgba(255,255,255,0.3)" }}>Revenue will appear here as invoices are paid</p>
+                  <DollarSign className="w-10 h-10 mb-3" style={{ color: "rgba(255,255,255,0.1)" }} />
+                  <p className="font-body text-sm" style={{ color: "rgba(255,255,255,0.3)" }}>Scheduled job value will appear here as synced jobs populate</p>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Today's Schedule */}
           <div
             className="rounded-2xl p-5 space-y-3"
             style={{
@@ -238,49 +247,52 @@ export default function PlatformDashboard() {
           >
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-display text-sm font-semibold tracking-tight" style={{ color: "#fff" }}>Today's Schedule</h3>
+                <h3 className="font-display text-sm font-semibold tracking-tight" style={{ color: "#fff" }}>Today's Jobber Schedule</h3>
                 <p className="font-body" style={{ fontSize: "11px", color: "hsl(220 8% 50%)" }}>{format(new Date(), "EEEE, MMMM d, yyyy")}</p>
               </div>
-              <span className="font-body font-medium" style={{ fontSize: "11px", color: "#22c55e" }}>{todayJobs.length} visit{todayJobs.length !== 1 ? "s" : ""}</span>
+              <span className="font-body font-medium" style={{ fontSize: "11px", color: "#22c55e" }}>{todayJobs.length} job{todayJobs.length !== 1 ? "s" : ""}</span>
             </div>
 
-            {todayJobs.length === 0 ? (
+            {loading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((item) => (
+                  <div key={item} className="h-20 rounded-lg animate-pulse" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(34,197,94,0.08)" }} />
+                ))}
+              </div>
+            ) : todayJobs.length === 0 ? (
               <div className="flex items-center justify-center py-8">
                 <div className="text-center">
-                  <Calendar className="w-8 h-8 mx-auto mb-2" style={{ color: "rgba(255,255,255,0.15)" }} />
-                  <p className="font-body text-sm" style={{ color: "rgba(255,255,255,0.3)" }}>No jobs scheduled today</p>
+                  <CalendarDays className="w-8 h-8 mx-auto mb-2" style={{ color: "rgba(255,255,255,0.15)" }} />
+                  <p className="font-body text-sm" style={{ color: "rgba(255,255,255,0.3)" }}>No synced Jobber jobs scheduled today</p>
                 </div>
               </div>
             ) : (
               <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
-                {todayJobs.map(job => {
-                  const statusInfo = VISIT_STATUS_COLORS[job.status] || VISIT_STATUS_COLORS.scheduled;
+                {todayJobs.map((job) => {
+                  const normalizedStatus = normalizeStatus(job.status, job.visit_status);
+                  const statusInfo = STATUS_STYLES[normalizedStatus] || STATUS_STYLES.scheduled;
+
                   return (
                     <div
                       key={job.id}
-                      className="flex-shrink-0 w-56 rounded-lg p-3 transition-colors cursor-pointer"
+                      className="flex-shrink-0 w-56 rounded-lg p-3"
                       style={{
                         background: "rgba(255,255,255,0.04)",
                         border: "1px solid rgba(34,197,94,0.08)",
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(34,197,94,0.20)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(34,197,94,0.08)"; }}
                     >
-                      <div className="flex items-center justify-between mb-1.5">
-                        {job.scheduled_start_time && (
+                      <div className="flex items-center justify-between mb-1.5 gap-2">
+                        {job.scheduled_start && (
                           <span className="flex items-center gap-1 font-body" style={{ fontSize: "11px", color: "hsl(220 8% 50%)" }}>
                             <Clock className="w-3 h-3" />
-                            {job.scheduled_start_time.slice(0, 5)}
+                            {format(new Date(job.scheduled_start), "h:mm a")}
                           </span>
                         )}
-                        <span
-                          className="inline-flex items-center px-1.5 py-0.5 rounded-full font-body font-medium"
-                          style={{ fontSize: "9px", backgroundColor: statusInfo.bg, color: statusInfo.text }}
-                        >
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full font-body font-medium" style={{ fontSize: "9px", backgroundColor: statusInfo.bg, color: statusInfo.text }}>
                           {statusInfo.label}
                         </span>
                       </div>
-                      <p className="font-body text-sm font-medium truncate" style={{ color: "#fff" }}>{job.customer_name || job.job_title}</p>
+                      <p className="font-body text-sm font-medium truncate" style={{ color: "#fff" }}>{job.client_name || job.title || "Jobber Job"}</p>
                       {job.property_address && (
                         <p className="font-body truncate flex items-center gap-1 mt-0.5" style={{ fontSize: "11px", color: "hsl(220 8% 50%)" }}>
                           <MapPin className="w-3 h-3 shrink-0" />
@@ -293,31 +305,6 @@ export default function PlatformDashboard() {
               </div>
             )}
           </div>
-
-          {/* Business Comparison */}
-          {!selectedBusinessId && isOwner && businesses.length > 1 && (
-            <div className="rounded-2xl p-5" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(34,197,94,0.10)", borderRadius: "16px" }}>
-              <h2 className="font-display text-sm font-semibold tracking-tight mb-4" style={{ color: "#fff" }}>Business Comparison</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {businesses.map(biz => (
-                  <div key={biz.id} className="rounded-lg p-4 space-y-3" style={{ border: "1px solid rgba(255,255,255,0.06)", borderLeftColor: biz.default_business_color || "#22c55e", borderLeftWidth: 3 }}>
-                    <div className="flex items-center gap-2">
-                      <InlineBadge shortcode={biz.shortcode} color={biz.default_business_color} />
-                      <span className="font-display font-semibold tracking-tight" style={{ fontSize: "12px", color: "#fff" }}>{biz.public_brand_name}</span>
-                    </div>
-                    <div className="grid grid-cols-3 gap-3">
-                      {["Revenue", "Jobs", "Leads"].map(l => (
-                        <div key={l}>
-                          <p className="font-body uppercase tracking-wider" style={{ fontSize: "10px", color: "hsl(220 8% 50%)" }}>{l}</p>
-                          <p className="font-display text-lg font-bold tracking-tight" style={{ color: "hsl(220 8% 50%)" }}>—</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </PlatformLayout>

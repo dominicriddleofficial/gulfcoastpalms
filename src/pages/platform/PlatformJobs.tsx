@@ -1,76 +1,130 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
-import {
-  usePlatformJobs, usePlatformCrewMembers, JOB_STATUSES,
-  type PlatformJob,
-} from "@/hooks/usePlatformJobs";
-import { usePlatformCustomers } from "@/hooks/usePlatformCustomers";
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Search, Plus, Briefcase, Calendar, Hash, Clock, User, MapPin,
-  ChevronRight, CheckCircle, AlertCircle, Truck,
+  Search,
+  Briefcase,
+  Calendar,
+  Hash,
+  Clock,
+  User,
+  MapPin,
+  FileText,
 } from "lucide-react";
-import { format, formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 
-function JobStatusBadge({ status }: { status: string }) {
-  const s = JOB_STATUSES.find(js => js.value === status);
-  if (!s) return <span className="text-xs text-muted-foreground">{status}</span>;
+type JobberJob = {
+  id: string;
+  jobber_id: string;
+  title: string | null;
+  status: string;
+  visit_status: string | null;
+  scheduled_start: string | null;
+  scheduled_end: string | null;
+  client_name: string | null;
+  client_phone: string | null;
+  property_address: string | null;
+  assigned_employee_names: string[] | null;
+  internal_notes: string | null;
+  job_number: string | null;
+  total_amount: number | null;
+};
+
+const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
+  late: { bg: "#ef444420", text: "#ef4444", label: "Late" },
+  today: { bg: "#22c55e20", text: "#22c55e", label: "Today" },
+  scheduled: { bg: "#2563eb20", text: "#2563eb", label: "Scheduled" },
+  completed: { bg: "#22c55e20", text: "#22c55e", label: "Completed" },
+  upcoming: { bg: "#8b5cf620", text: "#8b5cf6", label: "Upcoming" },
+};
+
+function getStatusKey(job: JobberJob) {
+  const status = (job.visit_status || job.status || "scheduled").toLowerCase();
+  return STATUS_STYLES[status] ? status : "scheduled";
+}
+
+function JobStatusBadge({ job }: { job: JobberJob }) {
+  const style = STATUS_STYLES[getStatusKey(job)] || STATUS_STYLES.scheduled;
   return (
     <span
       className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-body font-medium"
-      style={{ backgroundColor: s.color + "20", color: s.color, border: `1px solid ${s.color}30` }}
+      style={{ backgroundColor: style.bg, color: style.text, border: `1px solid ${style.text}30` }}
     >
-      {s.label}
+      {style.label}
     </span>
   );
 }
 
-function PriorityDot({ priority }: { priority: string | null }) {
-  const colors: Record<string, string> = {
-    urgent: "#ef4444", high: "#f59e0b", normal: "#22c55e", low: "#6b7280",
-  };
-  const c = colors[priority || "normal"] || colors.normal;
-  return <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: c }} />;
-}
-
 export default function PlatformJobs() {
   const { selectedBusinessId, businesses } = usePlatformAuth();
-  const {
-    jobs, loading, statusFilter, setStatusFilter,
-    searchQuery, setSearchQuery, statusCounts, refetch,
-  } = usePlatformJobs(selectedBusinessId);
-  const { crew } = usePlatformCrewMembers(selectedBusinessId);
-  const [selectedJob, setSelectedJob] = useState<PlatformJob | null>(null);
-  const [showCreate, setShowCreate] = useState(false);
-  const { toast } = useToast();
+  const [jobs, setJobs] = useState<JobberJob[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedJob, setSelectedJob] = useState<JobberJob | null>(null);
 
-  const getBiz = (bizId: string) => businesses.find(b => b.id === bizId);
+  useEffect(() => {
+    const fetchJobs = async () => {
+      setLoading(true);
+      const { data } = await supabase
+        .from("jobber_jobs")
+        .select("id, jobber_id, title, status, visit_status, scheduled_start, scheduled_end, client_name, client_phone, property_address, assigned_employee_names, internal_notes, job_number, total_amount")
+        .order("scheduled_start", { ascending: false, nullsFirst: false });
+      setJobs((data as JobberJob[]) || []);
+      setLoading(false);
+    };
+
+    fetchJobs();
+  }, []);
+
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: jobs.length };
+    jobs.forEach((job) => {
+      const key = getStatusKey(job);
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    return counts;
+  }, [jobs]);
+
+  const statusOptions = useMemo(() => {
+    return Object.keys(statusCounts)
+      .filter((key) => key !== "all")
+      .sort((a, b) => (statusCounts[b] || 0) - (statusCounts[a] || 0));
+  }, [statusCounts]);
+
+  const filteredJobs = useMemo(() => {
+    return jobs.filter((job) => {
+      const matchesStatus = statusFilter === "all" || getStatusKey(job) === statusFilter;
+      const search = searchQuery.trim().toLowerCase();
+      const matchesSearch = !search || [job.job_number, job.title, job.client_name, job.property_address]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(search));
+      return matchesStatus && matchesSearch;
+    });
+  }, [jobs, searchQuery, statusFilter]);
+
+  const selectedBiz = businesses.find((business) => business.id === selectedBusinessId);
 
   return (
     <PlatformLayout>
       <div className="space-y-4">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <div>
-            <h1 className="font-display text-xl font-bold text-foreground">Jobs</h1>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="font-display text-xl font-bold text-foreground">Jobs</h1>
+              {selectedBiz && <InlineBadge shortcode={selectedBiz.shortcode} color={selectedBiz.default_business_color} />}
+            </div>
             <p className="font-body text-xs text-muted-foreground">
-              {statusCounts.all} total · {statusCounts.in_progress || 0} in progress
+              {jobs.length} synced Jobber jobs · read only
             </p>
           </div>
-          <Button size="sm" className="font-body text-xs" onClick={() => setShowCreate(true)}>
-            <Plus className="w-3.5 h-3.5 mr-1" /> New Job
-          </Button>
         </div>
 
-        {/* Status pills */}
         <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
           <button
             onClick={() => setStatusFilter("all")}
@@ -81,196 +135,141 @@ export default function PlatformJobs() {
                 : "bg-secondary text-muted-foreground border-border hover:text-foreground"
             )}
           >
-            All ({statusCounts.all})
+            All ({statusCounts.all || 0})
           </button>
-          {JOB_STATUSES.map(s => (
-            <button
-              key={s.value}
-              onClick={() => setStatusFilter(s.value)}
-              className={cn(
-                "px-3 py-1 rounded-full text-[11px] font-body font-medium whitespace-nowrap transition-all border",
-                statusFilter === s.value
-                  ? "border-primary/30"
-                  : "bg-secondary text-muted-foreground border-border hover:text-foreground"
-              )}
-              style={statusFilter === s.value ? { backgroundColor: s.color + "20", color: s.color, borderColor: s.color + "40" } : {}}
-            >
-              {s.label} ({statusCounts[s.value] || 0})
-            </button>
-          ))}
+          {statusOptions.map((status) => {
+            const style = STATUS_STYLES[status] || STATUS_STYLES.scheduled;
+            return (
+              <button
+                key={status}
+                onClick={() => setStatusFilter(status)}
+                className={cn(
+                  "px-3 py-1 rounded-full text-[11px] font-body font-medium whitespace-nowrap transition-all border",
+                  statusFilter === status ? "border-primary/30" : "bg-secondary text-muted-foreground border-border hover:text-foreground"
+                )}
+                style={statusFilter === status ? { backgroundColor: style.bg, color: style.text, borderColor: `${style.text}40` } : {}}
+              >
+                {style.label} ({statusCounts[status] || 0})
+              </button>
+            );
+          })}
         </div>
 
-        {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Search jobs..."
+            placeholder="Search synced jobs..."
             value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
+            onChange={(event) => setSearchQuery(event.target.value)}
             className="pl-9 font-body text-sm bg-card border-border"
           />
         </div>
 
-        {/* Jobs list */}
         {loading ? (
           <div className="space-y-3">
-            {[1,2,3].map(i => <div key={i} className="h-20 bg-card rounded-lg animate-pulse border border-border" />)}
+            {[1, 2, 3].map((item) => <div key={item} className="h-20 bg-card rounded-lg animate-pulse border border-border" />)}
           </div>
-        ) : jobs.length === 0 ? (
+        ) : filteredJobs.length === 0 ? (
           <div className="text-center py-12">
             <Briefcase className="w-10 h-10 mx-auto text-muted-foreground/40 mb-2" />
-            <p className="font-body text-sm text-muted-foreground">No jobs found</p>
+            <p className="font-body text-sm text-muted-foreground">No synced Jobber jobs found</p>
           </div>
         ) : (
           <div className="space-y-2">
-            {jobs.map(job => {
-              const biz = getBiz(job.business_id);
-              return (
-                <button
-                  key={job.id}
-                  onClick={() => setSelectedJob(job)}
-                  className="w-full text-left bg-card border border-border rounded-lg p-3 hover:border-primary/30 transition-all"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <PriorityDot priority={job.priority} />
-                        <span className="font-body text-[11px] text-muted-foreground font-mono">{job.job_number}</span>
-                        <JobStatusBadge status={job.status} />
-                        {!selectedBusinessId && biz && (
-                          <InlineBadge shortcode={biz.shortcode} color={biz.default_business_color} />
-                        )}
-                      </div>
-                      <p className="font-body text-sm font-medium text-foreground truncate">
-                        {job.title || job.customer_name || "Untitled Job"}
-                      </p>
-                      <div className="flex items-center gap-3 mt-1 text-[11px] text-muted-foreground font-body">
-                        {job.customer_name && (
-                          <span className="flex items-center gap-1"><User className="w-3 h-3" />{job.customer_name}</span>
-                        )}
-                        {job.scheduled_start && (
-                          <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{format(new Date(job.scheduled_start), "MMM d")}</span>
-                        )}
-                        {job.crew_member_name && (
-                          <span className="flex items-center gap-1"><Truck className="w-3 h-3" />{job.crew_member_name}</span>
-                        )}
-                      </div>
+            {filteredJobs.map((job) => (
+              <button
+                key={job.id}
+                onClick={() => setSelectedJob(job)}
+                className="w-full text-left bg-card border border-border rounded-lg p-3 hover:border-primary/30 transition-all"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <Hash className="w-3 h-3 text-primary" />
+                      <span className="font-body text-[11px] text-muted-foreground font-mono">{job.job_number || "No #"}</span>
+                      <JobStatusBadge job={job} />
                     </div>
-                    <div className="text-right shrink-0">
-                      {job.total != null && job.total > 0 && (
-                        <p className="font-body text-sm font-semibold text-foreground">${Number(job.total).toLocaleString()}</p>
+                    <p className="font-body text-sm font-medium text-foreground truncate">
+                      {job.title || job.client_name || "Untitled Job"}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-[11px] text-muted-foreground font-body">
+                      {job.client_name && (
+                        <span className="flex items-center gap-1"><User className="w-3 h-3" />{job.client_name}</span>
                       )}
-                      <p className="font-body text-[10px] text-muted-foreground">
-                        {job.total_visits_completed || 0}/{job.total_visits_planned || 1} visits
-                      </p>
+                      {job.scheduled_start && (
+                        <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{format(new Date(job.scheduled_start), "MMM d, h:mm a")}</span>
+                      )}
+                      {job.property_address && (
+                        <span className="flex items-center gap-1 truncate"><MapPin className="w-3 h-3 shrink-0" />{job.property_address}</span>
+                      )}
                     </div>
                   </div>
-                </button>
-              );
-            })}
+                  <div className="text-right shrink-0">
+                    {job.total_amount != null && (
+                      <p className="font-body text-sm font-semibold text-foreground">${Number(job.total_amount).toLocaleString()}</p>
+                    )}
+                  </div>
+                </div>
+              </button>
+            ))}
           </div>
         )}
       </div>
 
-      {/* Job Detail Drawer */}
       <Sheet open={!!selectedJob} onOpenChange={() => setSelectedJob(null)}>
         <SheetContent className="ops-theme bg-background border-border w-full sm:max-w-lg overflow-y-auto">
-          {selectedJob && (
-            <JobDetailPanel
-              job={selectedJob}
-              crew={crew}
-              onStatusChange={async (newStatus) => {
-                await supabase.from("platform_jobs").update({ status: newStatus }).eq("id", selectedJob.id);
-                toast({ title: "Status updated" });
-                refetch();
-                setSelectedJob(null);
-              }}
-            />
-          )}
-        </SheetContent>
-      </Sheet>
-
-      {/* Create Job Drawer */}
-      <Sheet open={showCreate} onOpenChange={setShowCreate}>
-        <SheetContent className="ops-theme bg-background border-border w-full sm:max-w-lg overflow-y-auto">
-          <CreateJobForm
-            businessId={selectedBusinessId}
-            businesses={businesses}
-            crew={crew}
-            onCreated={() => { setShowCreate(false); refetch(); }}
-          />
+          {selectedJob && <JobDetailPanel job={selectedJob} />}
         </SheetContent>
       </Sheet>
     </PlatformLayout>
   );
 }
 
-function JobDetailPanel({ job, crew, onStatusChange }: {
-  job: PlatformJob;
-  crew: any[];
-  onStatusChange: (status: string) => void;
-}) {
-  const currentIdx = JOB_STATUSES.findIndex(s => s.value === job.status);
-
+function JobDetailPanel({ job }: { job: JobberJob }) {
   return (
     <div className="space-y-5 pt-4">
       <SheetHeader>
-        <SheetTitle className="font-display text-foreground flex items-center gap-2">
-          <span className="font-mono text-sm text-muted-foreground">{job.job_number}</span>
-          <JobStatusBadge status={job.status} />
+        <SheetTitle className="font-display text-foreground flex items-center gap-2 flex-wrap">
+          <span className="font-mono text-sm text-muted-foreground">{job.job_number || "No job #"}</span>
+          <JobStatusBadge job={job} />
         </SheetTitle>
       </SheetHeader>
 
       <div>
         <h3 className="font-body text-lg font-semibold text-foreground">{job.title || "Untitled Job"}</h3>
-        {job.description && <p className="font-body text-sm text-muted-foreground mt-1">{job.description}</p>}
+        <p className="font-body text-xs text-muted-foreground mt-1">Managed in Jobber</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <InfoBlock icon={User} label="Customer" value={job.customer_name || "—"} />
+        <InfoBlock icon={User} label="Customer" value={job.client_name || "—"} />
         <InfoBlock icon={MapPin} label="Property" value={job.property_address || "—"} />
-        <InfoBlock icon={Calendar} label="Scheduled" value={job.scheduled_start ? format(new Date(job.scheduled_start), "MMM d, yyyy") : "—"} />
-        <InfoBlock icon={Clock} label="Est. Duration" value={job.estimated_duration_minutes ? `${job.estimated_duration_minutes} min` : "—"} />
-        <InfoBlock icon={Hash} label="Visits" value={`${job.total_visits_completed || 0}/${job.total_visits_planned || 1}`} />
-        <InfoBlock icon={Truck} label="Crew" value={job.crew_member_name || "Unassigned"} />
+        <InfoBlock icon={Calendar} label="Scheduled" value={job.scheduled_start ? format(new Date(job.scheduled_start), "MMM d, yyyy") : "Unscheduled"} />
+        <InfoBlock icon={Clock} label="Time" value={job.scheduled_start ? format(new Date(job.scheduled_start), "h:mm a") : "—"} />
       </div>
 
-      {job.total != null && job.total > 0 && (
+      {job.total_amount != null && (
         <div className="bg-card border border-border rounded-lg p-3">
           <p className="font-body text-xs text-muted-foreground mb-1">Job Total</p>
-          <p className="font-display text-2xl font-bold text-foreground">${Number(job.total).toLocaleString()}</p>
+          <p className="font-display text-2xl font-bold text-foreground">${Number(job.total_amount).toLocaleString()}</p>
+        </div>
+      )}
+
+      {job.assigned_employee_names && job.assigned_employee_names.length > 0 && (
+        <div className="bg-card border border-border rounded-lg p-3">
+          <p className="font-body text-xs text-muted-foreground mb-1">Assigned Crew</p>
+          <p className="font-body text-sm text-foreground">{job.assigned_employee_names.join(", ")}</p>
         </div>
       )}
 
       {job.internal_notes && (
         <div className="bg-card border border-border rounded-lg p-3">
-          <p className="font-body text-xs text-muted-foreground mb-1">Internal Notes</p>
+          <div className="flex items-center gap-2 mb-1">
+            <FileText className="w-3.5 h-3.5 text-muted-foreground" />
+            <p className="font-body text-xs text-muted-foreground">Notes</p>
+          </div>
           <p className="font-body text-sm text-foreground">{job.internal_notes}</p>
         </div>
       )}
-
-      {/* Status progression */}
-      <div>
-        <p className="font-body text-xs text-muted-foreground mb-2">Update Status</p>
-        <div className="flex flex-wrap gap-1.5">
-          {JOB_STATUSES.map(s => (
-            <Button
-              key={s.value}
-              size="sm"
-              variant={job.status === s.value ? "default" : "outline"}
-              className="font-body text-xs"
-              onClick={() => onStatusChange(s.value)}
-              disabled={job.status === s.value}
-            >
-              {s.label}
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      <p className="font-body text-[10px] text-muted-foreground">
-        Created {formatDistanceToNow(new Date(job.created_at), { addSuffix: true })}
-      </p>
     </div>
   );
 }
@@ -283,115 +282,6 @@ function InfoBlock({ icon: Icon, label, value }: { icon: any; label: string; val
         <p className="font-body text-[10px] text-muted-foreground">{label}</p>
       </div>
       <p className="font-body text-sm text-foreground truncate">{value}</p>
-    </div>
-  );
-}
-
-function CreateJobForm({ businessId, businesses, crew, onCreated }: {
-  businessId: string | null;
-  businesses: any[];
-  crew: any[];
-  onCreated: () => void;
-}) {
-  const [title, setTitle] = useState("");
-  const [bizId, setBizId] = useState(businessId || businesses[0]?.id || "");
-  const [priority, setPriority] = useState("normal");
-  const [crewId, setCrewId] = useState("");
-  const [notes, setNotes] = useState("");
-  const [saving, setSaving] = useState(false);
-  const { toast } = useToast();
-
-  const handleSubmit = async () => {
-    if (!bizId) return;
-    setSaving(true);
-
-    // Generate job number
-    const { data: numData, error: numErr } = await supabase.rpc("generate_next_number", {
-      _business_id: bizId,
-      _record_type: "job",
-    });
-
-    if (numErr) {
-      toast({ title: "Error generating job number", description: numErr.message, variant: "destructive" });
-      setSaving(false);
-      return;
-    }
-
-    const { error } = await supabase.from("platform_jobs").insert({
-      business_id: bizId,
-      job_number: numData,
-      title: title || "New Job",
-      priority,
-      assigned_crew_member_id: crewId || null,
-      internal_notes: notes || null,
-      status: "draft",
-    });
-
-    if (error) {
-      toast({ title: "Error creating job", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Job created" });
-      onCreated();
-    }
-    setSaving(false);
-  };
-
-  return (
-    <div className="space-y-4 pt-4">
-      <SheetHeader>
-        <SheetTitle className="font-display text-foreground">Create Job</SheetTitle>
-      </SheetHeader>
-
-      {!businessId && businesses.length > 1 && (
-        <div>
-          <label className="font-body text-xs text-muted-foreground mb-1 block">Business</label>
-          <Select value={bizId} onValueChange={setBizId}>
-            <SelectTrigger className="bg-card border-border font-body text-sm"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {businesses.map(b => <SelectItem key={b.id} value={b.id}>{b.public_brand_name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      <div>
-        <label className="font-body text-xs text-muted-foreground mb-1 block">Job Title</label>
-        <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Palm Trimming - 5 trees" className="bg-card border-border font-body" />
-      </div>
-
-      <div>
-        <label className="font-body text-xs text-muted-foreground mb-1 block">Priority</label>
-        <Select value={priority} onValueChange={setPriority}>
-          <SelectTrigger className="bg-card border-border font-body text-sm"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="low">Low</SelectItem>
-            <SelectItem value="normal">Normal</SelectItem>
-            <SelectItem value="high">High</SelectItem>
-            <SelectItem value="urgent">Urgent</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {crew.length > 0 && (
-        <div>
-          <label className="font-body text-xs text-muted-foreground mb-1 block">Assign Crew</label>
-          <Select value={crewId} onValueChange={setCrewId}>
-            <SelectTrigger className="bg-card border-border font-body text-sm"><SelectValue placeholder="Select crew member" /></SelectTrigger>
-            <SelectContent>
-              {crew.map(c => <SelectItem key={c.id} value={c.id}>{c.display_name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      <div>
-        <label className="font-body text-xs text-muted-foreground mb-1 block">Internal Notes</label>
-        <Input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Optional notes..." className="bg-card border-border font-body" />
-      </div>
-
-      <Button className="w-full font-body" onClick={handleSubmit} disabled={saving}>
-        {saving ? "Creating..." : "Create Job"}
-      </Button>
     </div>
   );
 }
