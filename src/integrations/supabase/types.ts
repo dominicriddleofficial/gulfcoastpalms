@@ -867,6 +867,7 @@ export type Database = {
       }
       jobber_clients: {
         Row: {
+          business_id: string | null
           company_name: string | null
           created_at: string
           display_name: string
@@ -881,6 +882,7 @@ export type Database = {
           tags: string[] | null
         }
         Insert: {
+          business_id?: string | null
           company_name?: string | null
           created_at?: string
           display_name: string
@@ -895,6 +897,7 @@ export type Database = {
           tags?: string[] | null
         }
         Update: {
+          business_id?: string | null
           company_name?: string | null
           created_at?: string
           display_name?: string
@@ -908,12 +911,21 @@ export type Database = {
           synced_at?: string
           tags?: string[] | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "jobber_clients_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       jobber_jobs: {
         Row: {
           assigned_employee_ids: string[] | null
           assigned_employee_names: string[] | null
+          business_id: string | null
           client_id: string | null
           client_name: string | null
           client_phone: string | null
@@ -939,6 +951,7 @@ export type Database = {
         Insert: {
           assigned_employee_ids?: string[] | null
           assigned_employee_names?: string[] | null
+          business_id?: string | null
           client_id?: string | null
           client_name?: string | null
           client_phone?: string | null
@@ -964,6 +977,7 @@ export type Database = {
         Update: {
           assigned_employee_ids?: string[] | null
           assigned_employee_names?: string[] | null
+          business_id?: string | null
           client_id?: string | null
           client_name?: string | null
           client_phone?: string | null
@@ -987,6 +1001,13 @@ export type Database = {
           visit_status?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "jobber_jobs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "jobber_jobs_client_id_fkey"
             columns: ["client_id"]
@@ -1012,6 +1033,7 @@ export type Database = {
       }
       jobber_properties: {
         Row: {
+          business_id: string | null
           city: string | null
           client_id: string | null
           country: string | null
@@ -1027,6 +1049,7 @@ export type Database = {
           zip: string | null
         }
         Insert: {
+          business_id?: string | null
           city?: string | null
           client_id?: string | null
           country?: string | null
@@ -1042,6 +1065,7 @@ export type Database = {
           zip?: string | null
         }
         Update: {
+          business_id?: string | null
           city?: string | null
           client_id?: string | null
           country?: string | null
@@ -1057,6 +1081,13 @@ export type Database = {
           zip?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "jobber_properties_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "jobber_properties_client_id_fkey"
             columns: ["client_id"]
