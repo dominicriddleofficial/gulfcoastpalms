@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Settings, Palette, Hash, CreditCard, RefreshCw, CheckCircle, XCircle,
-  AlertTriangle, Zap, Globe, Smartphone,
+  AlertTriangle, Zap, Globe, Smartphone, Package, Plus, Trash2, Edit,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { toast as sonnerToast } from "sonner";
 import { format } from "date-fns";
 
 interface BizSettings {
@@ -100,6 +101,11 @@ export default function PlatformSettings() {
                   <SettingItem label="Automation" value={settings.automation_enabled ? "Enabled" : "Disabled"} />
                 </div>
               </SettingsSection>
+            )}
+
+            {/* Saved Items */}
+            {selectedBusinessId && (
+              <SavedItemsSection businessId={selectedBusinessId} />
             )}
 
             {/* Numbering */}
@@ -549,5 +555,144 @@ function TapToPayReadiness({ businessId, businesses }: { businessId: string | nu
 
       {loading && <p className="font-body text-[10px] text-muted-foreground text-center py-2">Loading...</p>}
     </div>
+  );
+}
+
+/* ─── Saved Items Section ─── */
+const GCP_DEFAULTS = [
+  { name: "Palm Tree Trimming", default_price: 0 },
+  { name: "Palm Tree Removal", default_price: 0 },
+  { name: "Trunk Skinning", default_price: 0 },
+  { name: "Diamond Cut", default_price: 0 },
+  { name: "Haul Away / Debris Removal", default_price: 0 },
+  { name: "Landscaping", default_price: 0 },
+];
+
+const PPS_DEFAULTS = [
+  { name: "Garage Floor Coating — Flake", default_price: 0 },
+  { name: "Garage Floor Coating — Metallic", default_price: 0 },
+  { name: "Exterior House Wash", default_price: 0 },
+  { name: "Pressure Washing", default_price: 0 },
+  { name: "Roof Soft Wash", default_price: 0 },
+  { name: "Junk Removal", default_price: 0 },
+];
+
+function SavedItemsSection({ businessId }: { businessId: string }) {
+  const [items, setItems] = useState<Array<{ id: string; name: string; default_price: number }>>([]);
+  const [loading, setLoading] = useState(true);
+  const [newName, setNewName] = useState("");
+  const [newPrice, setNewPrice] = useState("");
+  const [editing, setEditing] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editPrice, setEditPrice] = useState("");
+
+  const fetchItems = async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from("platform_saved_items")
+      .select("id, name, default_price")
+      .eq("business_id", businessId)
+      .order("name");
+    
+    if (data && data.length === 0) {
+      // Auto-seed defaults
+      const { data: biz } = await supabase
+        .from("businesses")
+        .select("shortcode")
+        .eq("id", businessId)
+        .single();
+      const defaults = biz?.shortcode === "pps" ? PPS_DEFAULTS : GCP_DEFAULTS;
+      const { data: seeded } = await supabase
+        .from("platform_saved_items")
+        .insert(defaults.map(d => ({ ...d, business_id: businessId })))
+        .select("id, name, default_price");
+      setItems((seeded as any[]) || []);
+    } else {
+      setItems((data as any[]) || []);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchItems(); }, [businessId]);
+
+  const addItem = async () => {
+    if (!newName.trim()) return;
+    await supabase.from("platform_saved_items").insert({
+      business_id: businessId,
+      name: newName.trim(),
+      default_price: Number(newPrice) || 0,
+    });
+    setNewName("");
+    setNewPrice("");
+    fetchItems();
+    sonnerToast.success("Item added");
+  };
+
+  const deleteItem = async (id: string) => {
+    await supabase.from("platform_saved_items").delete().eq("id", id);
+    fetchItems();
+    sonnerToast.success("Item deleted");
+  };
+
+  const saveEdit = async (id: string) => {
+    await supabase.from("platform_saved_items").update({
+      name: editName.trim(),
+      default_price: Number(editPrice) || 0,
+    }).eq("id", id);
+    setEditing(null);
+    fetchItems();
+    sonnerToast.success("Item updated");
+  };
+
+  return (
+    <SettingsSection title="Saved Line Items" icon={Package}>
+      {loading ? (
+        <p className="font-body text-xs text-muted-foreground py-4 text-center">Loading…</p>
+      ) : (
+        <div className="space-y-2">
+          {items.map(item => (
+            <div key={item.id} className="bg-secondary/50 rounded-lg p-2.5 flex items-center gap-2">
+              {editing === item.id ? (
+                <>
+                  <Input value={editName} onChange={e => setEditName(e.target.value)}
+                    className="flex-1 h-7 text-xs bg-card border-border" />
+                  <Input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)}
+                    className="w-20 h-7 text-xs text-right bg-card border-border" placeholder="$0" />
+                  <Button size="sm" className="h-7 text-[10px]" onClick={() => saveEdit(item.id)}>Save</Button>
+                  <Button size="sm" variant="ghost" className="h-7 text-[10px]" onClick={() => setEditing(null)}>✕</Button>
+                </>
+              ) : (
+                <>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-body text-sm text-foreground truncate">{item.name}</p>
+                  </div>
+                  <span className="font-body text-xs text-muted-foreground shrink-0">
+                    {item.default_price > 0 ? `$${item.default_price}` : "Varies"}
+                  </span>
+                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0"
+                    onClick={() => { setEditing(item.id); setEditName(item.name); setEditPrice(String(item.default_price)); }}>
+                    <Edit className="w-3 h-3" />
+                  </Button>
+                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive" onClick={() => deleteItem(item.id)}>
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </>
+              )}
+            </div>
+          ))}
+
+          {/* Add new */}
+          <div className="flex gap-2 pt-2 border-t border-border">
+            <Input value={newName} onChange={e => setNewName(e.target.value)}
+              placeholder="New item name" className="flex-1 h-8 text-xs bg-card border-border" />
+            <Input type="number" value={newPrice} onChange={e => setNewPrice(e.target.value)}
+              placeholder="$0" className="w-20 h-8 text-xs text-right bg-card border-border" />
+            <Button size="sm" className="h-8 text-xs" onClick={addItem} disabled={!newName.trim()}>
+              <Plus className="w-3 h-3 mr-1" /> Add
+            </Button>
+          </div>
+        </div>
+      )}
+    </SettingsSection>
   );
 }
