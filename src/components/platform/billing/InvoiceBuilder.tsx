@@ -290,7 +290,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
 
   return (
     <>
-      <div className="fixed inset-0 z-50 bg-background flex flex-col">
+      <div className="fixed inset-0 z-50 bg-background flex flex-col invoice-form">
         {/* Top bar */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
           <div className="flex items-center gap-3">
