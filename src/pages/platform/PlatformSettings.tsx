@@ -234,62 +234,157 @@ function NumberingSection({ businessId }: { businessId: string | null }) {
 }
 
 function JobberConnectionStatus() {
-  const [hasToken, setHasToken] = useState<boolean | null>(null);
+  const [tokenInfo, setTokenInfo] = useState<{ exists: boolean; expiresAt: string | null; createdAt: string | null; isExpired: boolean } | null>(null);
+  const [lastSyncLog, setLastSyncLog] = useState<{ status: string; completed_at: string | null; error_message: string | null; records_synced: number } | null>(null);
+  const [dataCounts, setDataCounts] = useState<{ clients: number; jobs: number; properties: number } | null>(null);
   const [syncing, setSyncing] = useState(false);
-  const [lastSync, setLastSync] = useState<string | null>(null);
+  const [syncResponse, setSyncResponse] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    supabase.from("jobber_tokens").select("id").limit(1).then(({ data }) => {
-      setHasToken(!!(data && data.length > 0));
-    });
-    // Get last sync
-    supabase.from("sync_logs").select("completed_at").order("started_at", { ascending: false }).limit(1)
-      .then(({ data }) => {
-        if (data && data.length > 0 && data[0].completed_at) {
-          setLastSync(data[0].completed_at);
-        }
-      });
-  }, []);
+  const loadDiagnostics = async () => {
+    // Token status
+    const { data: tokens } = await supabase.from("jobber_tokens").select("id, expires_at, created_at").limit(1);
+    if (tokens && tokens.length > 0) {
+      const t = tokens[0];
+      const isExpired = t.expires_at ? new Date(t.expires_at) < new Date() : true;
+      setTokenInfo({ exists: true, expiresAt: t.expires_at, createdAt: t.created_at, isExpired });
+    } else {
+      setTokenInfo({ exists: false, expiresAt: null, createdAt: null, isExpired: false });
+    }
+
+    // Last sync
+    const { data: logs } = await supabase.from("sync_logs")
+      .select("status, completed_at, error_message, records_synced")
+      .order("started_at", { ascending: false }).limit(1);
+    setLastSyncLog(logs?.[0] || null);
+
+    // Data counts
+    const [{ count: c1 }, { count: c2 }, { count: c3 }] = await Promise.all([
+      supabase.from("jobber_clients").select("id", { count: "exact", head: true }),
+      supabase.from("jobber_jobs").select("id", { count: "exact", head: true }),
+      supabase.from("jobber_properties").select("id", { count: "exact", head: true }),
+    ]);
+    setDataCounts({ clients: c1 || 0, jobs: c2 || 0, properties: c3 || 0 });
+  };
+
+  useEffect(() => { loadDiagnostics(); }, []);
 
   const handleSyncNow = async () => {
     setSyncing(true);
+    setSyncResponse(null);
     try {
-      const { error } = await supabase.functions.invoke("jobber-sync");
+      const { data, error } = await supabase.functions.invoke("jobber-sync");
       if (error) throw error;
-      toast({ title: "Sync complete", description: "Clients, jobs, and properties updated." });
-      // Refresh last sync time
-      const { data } = await supabase.from("sync_logs").select("completed_at").order("started_at", { ascending: false }).limit(1);
-      if (data && data.length > 0 && data[0].completed_at) setLastSync(data[0].completed_at);
+      setSyncResponse(JSON.stringify(data, null, 2));
+      toast({ title: "Sync complete", description: `${data?.records_synced || 0} records synced.` });
+      await loadDiagnostics();
     } catch (err: any) {
+      setSyncResponse(`Error: ${err.message || "Unknown error"}`);
       toast({ title: "Sync failed", description: err.message || "Unknown error", variant: "destructive" });
     }
     setSyncing(false);
   };
 
+  // Determine state: A (not connected), B (connected ok), C (error/expired)
+  const stateA = tokenInfo && !tokenInfo.exists;
+  const stateC = tokenInfo?.exists && (tokenInfo.isExpired || lastSyncLog?.status === "failed");
+  const stateB = tokenInfo?.exists && !stateC;
+
   return (
     <div className="space-y-3">
+      {/* Header */}
       <div className="flex items-center gap-2">
         <Zap className="w-4 h-4 text-primary" />
-        <span className="font-body text-sm text-foreground">Jobber</span>
-        {hasToken === null ? (
+        <span className="font-body text-sm font-medium text-foreground">Jobber</span>
+        {tokenInfo === null ? (
           <span className="ml-auto text-[10px] font-body text-muted-foreground">Checking...</span>
-        ) : hasToken ? (
-          <span className="ml-auto flex items-center gap-1 text-[10px] font-body text-primary">
-            <CheckCircle className="w-3 h-3" /> Connected
-          </span>
-        ) : (
+        ) : stateA ? (
           <span className="ml-auto flex items-center gap-1 text-[10px] font-body text-destructive">
             <XCircle className="w-3 h-3" /> Not connected
           </span>
+        ) : stateC ? (
+          <span className="ml-auto flex items-center gap-1 text-[10px] font-body text-[#f59e0b]">
+            <AlertTriangle className="w-3 h-3" /> Needs attention
+          </span>
+        ) : (
+          <span className="ml-auto flex items-center gap-1 text-[10px] font-body text-primary">
+            <CheckCircle className="w-3 h-3" /> Connected
+          </span>
         )}
       </div>
-      {lastSync && (
-        <p className="font-body text-[10px] text-muted-foreground">
-          Last synced: {format(new Date(lastSync), "MMM d, h:mm a")}
+
+      {/* State A - Not connected */}
+      {stateA && (
+        <p className="font-body text-[11px] text-muted-foreground">
+          Jobber is not connected. Connect via OAuth to sync clients, jobs, and schedule data.
         </p>
       )}
-      {hasToken && (
+
+      {/* State C - Error/Expired */}
+      {stateC && (
+        <div className="bg-[#f59e0b]/10 border border-[#f59e0b]/20 rounded-lg p-2.5">
+          <p className="font-body text-[11px] text-[#f59e0b] font-medium mb-1">
+            {tokenInfo?.isExpired ? "⚠️ Jobber token has expired." : "⚠️ Last sync failed."}
+          </p>
+          {lastSyncLog?.error_message && (
+            <p className="font-body text-[10px] text-destructive">{lastSyncLog.error_message}</p>
+          )}
+        </div>
+      )}
+
+      {/* Token details */}
+      {tokenInfo?.exists && (
+        <div className="grid grid-cols-2 gap-2">
+          <div className="bg-secondary/50 rounded-lg p-2">
+            <p className="font-body text-[9px] text-muted-foreground uppercase tracking-wider">Token Created</p>
+            <p className="font-body text-[11px] text-foreground">{tokenInfo.createdAt ? format(new Date(tokenInfo.createdAt), "MMM d, h:mm a") : "—"}</p>
+          </div>
+          <div className="bg-secondary/50 rounded-lg p-2">
+            <p className="font-body text-[9px] text-muted-foreground uppercase tracking-wider">Token Expires</p>
+            <p className={cn("font-body text-[11px]", tokenInfo.isExpired ? "text-destructive" : "text-foreground")}>
+              {tokenInfo.expiresAt ? format(new Date(tokenInfo.expiresAt), "MMM d, h:mm a") : "—"}
+              {tokenInfo.isExpired && " (expired)"}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Last sync */}
+      {lastSyncLog && (
+        <div className="bg-secondary/50 rounded-lg p-2.5">
+          <div className="flex items-center justify-between mb-1">
+            <p className="font-body text-[9px] text-muted-foreground uppercase tracking-wider">Last Sync</p>
+            <span className={cn(
+              "text-[10px] font-body px-1.5 py-0.5 rounded-full",
+              lastSyncLog.status === "success" ? "bg-primary/15 text-primary" :
+              lastSyncLog.status === "failed" ? "bg-destructive/15 text-destructive" :
+              "bg-[#f59e0b]/15 text-[#f59e0b]"
+            )}>{lastSyncLog.status}</span>
+          </div>
+          <p className="font-body text-[11px] text-foreground">
+            {lastSyncLog.completed_at ? format(new Date(lastSyncLog.completed_at), "MMM d, yyyy · h:mm a") : "In progress…"}
+          </p>
+          <p className="font-body text-[10px] text-primary mt-0.5">{lastSyncLog.records_synced} records synced</p>
+          {lastSyncLog.error_message && (
+            <p className="font-body text-[10px] text-destructive mt-1">{lastSyncLog.error_message}</p>
+          )}
+        </div>
+      )}
+
+      {/* Data counts */}
+      {dataCounts && (
+        <div className="grid grid-cols-3 gap-2">
+          {([["Clients", dataCounts.clients], ["Jobs", dataCounts.jobs], ["Properties", dataCounts.properties]] as const).map(([label, count]) => (
+            <div key={label} className="bg-secondary/50 rounded-lg p-2 text-center">
+              <p className="font-body text-lg font-bold text-foreground">{count}</p>
+              <p className="font-body text-[9px] text-muted-foreground uppercase tracking-wider">{label}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Sync button */}
+      {tokenInfo?.exists && (
         <Button
           size="sm"
           className="font-body text-xs w-full"
@@ -302,6 +397,18 @@ function JobberConnectionStatus() {
             <><RefreshCw className="w-3 h-3 mr-1.5" /> Sync Now</>
           )}
         </Button>
+      )}
+
+      {/* Raw sync response */}
+      {syncResponse && (
+        <details className="mt-2">
+          <summary className="font-body text-[10px] text-muted-foreground cursor-pointer hover:text-foreground">
+            View raw sync response
+          </summary>
+          <pre className="mt-1 bg-secondary/70 rounded-lg p-2 text-[10px] font-mono text-foreground overflow-x-auto max-h-48 overflow-y-auto whitespace-pre-wrap">
+            {syncResponse}
+          </pre>
+        </details>
       )}
     </div>
   );

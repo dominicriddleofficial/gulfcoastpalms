@@ -224,9 +224,11 @@ function JobberScheduleTab() {
   const [jobs, setJobs] = useState<JobberJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
 
   useEffect(() => {
     fetchJobberJobs();
+    fetchLastSync();
   }, []);
 
   const fetchJobberJobs = async () => {
@@ -235,9 +237,18 @@ function JobberScheduleTab() {
       .from("jobber_jobs")
       .select("id, title, client_name, property_address, status, scheduled_start, scheduled_end, total_amount, job_number, visit_status")
       .order("scheduled_start", { ascending: true, nullsFirst: false })
-      .limit(50);
+      .limit(100);
     setJobs((data as JobberJob[]) || []);
     setLoading(false);
+  };
+
+  const fetchLastSync = async () => {
+    const { data } = await supabase.from("sync_logs")
+      .select("completed_at")
+      .eq("status", "success")
+      .order("started_at", { ascending: false })
+      .limit(1);
+    if (data?.[0]?.completed_at) setLastSyncTime(data[0].completed_at);
   };
 
   const handleSync = async () => {
@@ -246,12 +257,19 @@ function JobberScheduleTab() {
       const { error } = await supabase.functions.invoke("jobber-sync");
       if (error) throw error;
       toast.success("Sync complete — refreshing schedule");
-      await fetchJobberJobs();
+      await Promise.all([fetchJobberJobs(), fetchLastSync()]);
     } catch (err: any) {
       toast.error(err.message || "Sync failed");
     }
     setSyncing(false);
   };
+
+  const timeSinceSync = lastSyncTime ? (() => {
+    const mins = Math.round((Date.now() - new Date(lastSyncTime).getTime()) / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return `${mins}m ago`;
+    return `${Math.round(mins / 60)}h ago`;
+  })() : null;
 
   const statusColors: Record<string, string> = {
     active: "#22c55e", requires_invoicing: "#f59e0b", late: "#ef4444",
