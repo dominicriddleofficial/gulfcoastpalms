@@ -253,6 +253,11 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
     logoUrl: logoUrl,
   }), [invoiceNumber, issueDate, dueDate, customerName, customerEmail, customerPhone, lineItems, subtotal, taxEnabled, taxRate, taxAmount, discountAmount, total, publicNotes, activeBiz, logoUrl]);
 
+  // Track send email data from the modal
+  const [pendingSendData, setPendingSendData] = useState<{
+    email: string; subject: string; message: string; ccEmail: string;
+  } | null>(null);
+
   // Save invoice
   const handleSave = async (sendAfter: boolean = false) => {
     if (!bizId) return;
@@ -265,7 +270,6 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
     // If customer came from jobber_clients, find or create a platform_customer
     let resolvedCustomerId = customerId;
     if (customerSource === "jobber" && customerId) {
-      // Check if a platform_customer already exists for this jobber client
       const { data: existing } = await supabase
         .from("platform_customers")
         .select("id")
@@ -276,7 +280,6 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
       if (existing) {
         resolvedCustomerId = existing.id;
       } else {
-        // Create a new platform_customer linked to the jobber client
         const { data: newCust, error: custErr } = await supabase
           .from("platform_customers")
           .insert({
@@ -336,18 +339,42 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
       }))
     );
 
-    toast.success("Invoice created");
-    setSaving(false);
-
-    if (sendAfter) {
-      // update status to sent
-      await supabase.from("platform_invoices").update({
-        status: "sent",
-        sent_at: new Date().toISOString(),
-      }).eq("id", inv.id);
-      toast.success(`Invoice sent to ${customerName}`);
+    if (sendAfter && pendingSendData) {
+      const shortcode = activeBiz?.shortcode || "gcp";
+      const paymentUrl = `${window.location.origin}/pay/${shortcode}/${inv.id}`;
+      try {
+        const { data: fnRes, error: fnErr } = await supabase.functions.invoke("send-invoice-email", {
+          body: {
+            invoiceId: inv.id,
+            recipientEmail: pendingSendData.email,
+            recipientName: customerName,
+            subject: pendingSendData.subject,
+            message: pendingSendData.message,
+            businessName: activeBiz?.public_brand_name || "",
+            invoiceNumber,
+            total,
+            dueDate,
+            paymentUrl,
+            ccEmail: pendingSendData.ccEmail || null,
+            ownerEmail: "dominicriddleofficial@gmail.com",
+          },
+        });
+        if (fnErr) {
+          console.error("send-invoice-email error:", fnErr);
+          toast.error(`Invoice created but email failed: ${fnErr.message}`);
+        } else {
+          toast.success(`Invoice sent to ${customerName} at ${pendingSendData.email}`);
+        }
+      } catch (e: any) {
+        console.error("send-invoice-email exception:", e);
+        toast.error(`Invoice created but email failed: ${e.message}`);
+      }
+      setPendingSendData(null);
+    } else {
+      toast.success("Invoice created");
     }
 
+    setSaving(false);
     onCreated();
   };
 
@@ -708,7 +735,8 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
           dueDate={dueDate}
           businessName={activeBiz?.public_brand_name || ""}
           shortcode={activeBiz?.shortcode || "gcp"}
-          onSend={async () => {
+          onSend={async (emailData) => {
+            setPendingSendData(emailData);
             await handleSave(true);
             setShowSendModal(false);
           }}
