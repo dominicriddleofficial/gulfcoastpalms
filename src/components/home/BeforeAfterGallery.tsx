@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import job1 from "@/assets/gallery/job-1.jpeg";
+import beforeGarage from "@/assets/before-garage.jpeg";
 import job2 from "@/assets/gallery/job-2.jpeg";
 import job3 from "@/assets/gallery/job-3.jpeg";
 import job4 from "@/assets/gallery/job-4.jpeg";
@@ -16,7 +16,7 @@ import job6 from "@/assets/gallery/job-6.jpeg";
  */
 const galleryPairs = [
   {
-    before: job1,
+    before: beforeGarage,
     after: job2,
     service: "Trimming",
     caption: "Overgrown Canary Island Date Palm — trimmed & diamond cut",
