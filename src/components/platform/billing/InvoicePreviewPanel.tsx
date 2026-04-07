@@ -72,6 +72,7 @@ interface PreviewData {
   shortcode: string;
   isDraft: boolean;
   status?: string;
+  logoUrl?: string | null;
 }
 
 export default function InvoicePreviewPanel({ data }: { data: PreviewData }) {
