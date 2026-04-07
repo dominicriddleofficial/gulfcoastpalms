@@ -154,11 +154,18 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
       ]);
       const seen = new Set<string>();
       const combined: CustomerResult[] = [];
-      for (const c of [...(jobberRes.data || []), ...(platformRes.data || [])]) {
+      for (const c of (jobberRes.data || [])) {
         const key = c.display_name?.toLowerCase();
         if (key && !seen.has(key)) {
           seen.add(key);
-          combined.push(c as CustomerResult);
+          combined.push({ ...c, source: "jobber" } as CustomerResult);
+        }
+      }
+      for (const c of (platformRes.data || [])) {
+        const key = c.display_name?.toLowerCase();
+        if (key && !seen.has(key)) {
+          seen.add(key);
+          combined.push({ ...c, source: "platform" } as CustomerResult);
         }
       }
       setCustomerResults(combined.slice(0, 10));
