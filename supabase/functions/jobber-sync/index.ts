@@ -660,8 +660,10 @@ async function runUsersModule(accessToken: string, supabase: any, context: SyncC
 }
 
 async function runJobsModule(accessToken: string, supabase: any, context: SyncContext): Promise<ModuleRunResult> {
-  const lastSuccessAt = await getLastModuleSuccessAt(supabase, "jobs");
-  const window = buildOpsWindow(lastSuccessAt, 30, 90);
+  const lastSuccessAt = context.historical ? null : await getLastModuleSuccessAt(supabase, "jobs");
+  const window = context.historical
+    ? { after: "2024-01-01T00:00:00Z", before: toIso(addDays(new Date(), 90)) }
+    : buildOpsWindow(lastSuccessAt, 30, 90);
   const clientCache = await loadClientCache(supabase);
   const propertyCache = await loadPropertyCache(supabase);
 
