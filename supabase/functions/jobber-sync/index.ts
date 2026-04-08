@@ -60,6 +60,7 @@ type ModuleResult = {
 type SyncContext = {
   lastMeta: QueryMeta | null;
   dryRun: boolean;
+  historical: boolean;
 };
 
 type ConnectionPageOptions = {
