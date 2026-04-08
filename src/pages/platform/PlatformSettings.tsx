@@ -438,7 +438,7 @@ function OnlinePaymentsConfig({ businessId, businesses }: { businessId: string |
 
   const togglePayments = async (accountId: string, field: "online_payments_enabled" | "active", current: boolean) => {
     setSaving(true);
-    const updates: PaymentProviderAccountUpdate = { [field]: !current };
+    const updates: Record<string, boolean> = { [field]: !current };
     const { error } = await supabase
       .from("payment_provider_accounts")
       .update(updates)
