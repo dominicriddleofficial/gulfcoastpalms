@@ -2,13 +2,14 @@ import { useState, useMemo } from "react";
 import PlatformLayout from "@/components/platform/PlatformLayout";
 import { useBusinessContext } from "@/contexts/BusinessContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
-import { TrendingUp, TrendingDown, DollarSign, Briefcase, Trophy, Users, MapPin, BarChart3, Calendar } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, Briefcase, Trophy, Users, MapPin, BarChart3, Calendar, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const GREEN = "#22c55e";
@@ -21,6 +22,71 @@ function extractCity(addr: string | null): string {
   if (!addr) return "Unknown";
   const parts = addr.split(",").map(s => s.trim());
   return parts.length >= 2 ? parts[parts.length - 3] || parts[1] || "Unknown" : "Unknown";
+}
+
+type UnifiedJob = {
+  id: string;
+  scheduled_start: string | null;
+  total_amount: number;
+  client_name: string | null;
+  property_address: string | null;
+  status: string | null;
+  title: string | null;
+};
+
+async function fetchLegacyJobs(yearStart: string, yearEnd: string): Promise<UnifiedJob[]> {
+  const { data } = await supabase
+    .from("jobs")
+    .select("id, job_date, revenue, customer_name, city, service_type, status")
+    .gte("job_date", yearStart.slice(0, 10))
+    .lt("job_date", yearEnd.slice(0, 10));
+
+  return (data || []).map(j => ({
+    id: j.id,
+    scheduled_start: j.job_date ? `${j.job_date}T00:00:00Z` : null,
+    total_amount: Number(j.revenue) || 0,
+    client_name: j.customer_name || null,
+    property_address: j.city ? `${j.city}` : null,
+    status: j.status || null,
+    title: j.service_type || null,
+  }));
+}
+
+async function fetchLegacyInvoices(yearStart: string, yearEnd: string): Promise<UnifiedJob[]> {
+  const { data } = await supabase
+    .from("invoices")
+    .select("id, amount, created_at, customer_name, status")
+    .gte("created_at", yearStart)
+    .lt("created_at", yearEnd);
+
+  return (data || []).map(i => ({
+    id: `inv-${i.id}`,
+    scheduled_start: i.created_at || null,
+    total_amount: Number(i.amount) || 0,
+    client_name: i.customer_name || null,
+    property_address: null,
+    status: i.status || null,
+    title: null,
+  }));
+}
+
+function deduplicateByRevenue(jobberJobs: UnifiedJob[], legacyJobs: UnifiedJob[], legacyInvoices: UnifiedJob[]): UnifiedJob[] {
+  // If jobber has data for a period, prefer it. Otherwise use legacy.
+  // Simple approach: use all jobber jobs, then add legacy jobs that don't overlap by client+date
+  const jobberKeys = new Set(
+    jobberJobs.map(j => `${j.client_name?.toLowerCase()}-${j.scheduled_start?.slice(0, 10)}`)
+  );
+
+  const uniqueLegacyJobs = legacyJobs.filter(j => {
+    const key = `${j.client_name?.toLowerCase()}-${j.scheduled_start?.slice(0, 10)}`;
+    return !jobberKeys.has(key);
+  });
+
+  // For invoices, only include if we don't already have revenue from jobs
+  // Skip invoices entirely if we have job data to avoid double-counting
+  const hasJobData = jobberJobs.length > 0 || legacyJobs.length > 0;
+
+  return [...jobberJobs, ...uniqueLegacyJobs, ...(hasJobData ? [] : legacyInvoices)];
 }
 
 async function fetchAnalytics(businessId: string | null, year: number) {
@@ -36,43 +102,64 @@ async function fetchAnalytics(businessId: string | null, year: number) {
   const now = new Date();
   const samePeriodEnd = new Date(year - 1, now.getMonth(), now.getDate()).toISOString();
 
+  // Fetch Jobber data
   const [currentYear, prevYear, twoYearsAgo, prevYearSamePeriod] = await Promise.all([
     supabase.from("jobber_jobs").select("id, title, status, scheduled_start, total_amount, client_name, property_address")
       .eq("business_id", businessId).gte("scheduled_start", yearStart).lt("scheduled_start", yearEnd),
     supabase.from("jobber_jobs").select("id, title, status, scheduled_start, total_amount, client_name, property_address")
       .eq("business_id", businessId).gte("scheduled_start", prevYearStart).lt("scheduled_start", prevYearEnd),
-    supabase.from("jobber_jobs").select("id, scheduled_start, total_amount")
+    supabase.from("jobber_jobs").select("id, scheduled_start, total_amount, client_name, property_address, title, status")
       .eq("business_id", businessId).gte("scheduled_start", twoYearsAgoStart).lt("scheduled_start", twoYearsAgoEnd),
-    supabase.from("jobber_jobs").select("id, total_amount")
+    supabase.from("jobber_jobs").select("id, total_amount, scheduled_start, client_name, property_address, title, status")
       .eq("business_id", businessId).gte("scheduled_start", prevYearStart).lt("scheduled_start", samePeriodEnd),
   ]);
 
-  // Also get unscheduled jobs
-  const { data: unscheduled } = await supabase.from("jobber_jobs").select("id, total_amount, client_name")
-    .eq("business_id", businessId).is("scheduled_start", null);
+  // Fetch legacy data for all three year ranges
+  const [legacyCur, legacyPrev, legacyTwoAgo, legacyInvCur, legacyInvPrev, legacyInvTwoAgo,
+    legacySamePeriod, legacyInvSamePeriod] = await Promise.all([
+    fetchLegacyJobs(yearStart, yearEnd),
+    fetchLegacyJobs(prevYearStart, prevYearEnd),
+    fetchLegacyJobs(twoYearsAgoStart, twoYearsAgoEnd),
+    fetchLegacyInvoices(yearStart, yearEnd),
+    fetchLegacyInvoices(prevYearStart, prevYearEnd),
+    fetchLegacyInvoices(twoYearsAgoStart, twoYearsAgoEnd),
+    fetchLegacyJobs(prevYearStart, samePeriodEnd),
+    fetchLegacyInvoices(prevYearStart, samePeriodEnd),
+  ]);
+
+  const toUnified = (data: any[]): UnifiedJob[] =>
+    (data || []).map(j => ({
+      id: j.id,
+      scheduled_start: j.scheduled_start || null,
+      total_amount: Number(j.total_amount) || 0,
+      client_name: j.client_name || null,
+      property_address: j.property_address || null,
+      status: j.status || null,
+      title: j.title || null,
+    }));
 
   return {
-    currentYear: currentYear.data || [],
-    prevYear: prevYear.data || [],
-    twoYearsAgo: twoYearsAgo.data || [],
-    prevYearSamePeriod: prevYearSamePeriod.data || [],
-    unscheduled: unscheduled || [],
+    currentYear: deduplicateByRevenue(toUnified(currentYear.data || []), legacyCur, legacyInvCur),
+    prevYear: deduplicateByRevenue(toUnified(prevYear.data || []), legacyPrev, legacyInvPrev),
+    twoYearsAgo: deduplicateByRevenue(toUnified(twoYearsAgo.data || []), legacyTwoAgo, legacyInvTwoAgo),
+    prevYearSamePeriod: deduplicateByRevenue(toUnified(prevYearSamePeriod.data || []), legacySamePeriod, legacyInvSamePeriod),
+    unscheduled: [] as UnifiedJob[],
     year,
   };
 }
 
-function groupByMonth(jobs: any[]): number[] {
+function groupByMonth(jobs: UnifiedJob[]): number[] {
   const months = Array(12).fill(0);
   jobs.forEach(j => {
     if (j.scheduled_start) {
       const m = new Date(j.scheduled_start).getMonth();
-      months[m] += Number(j.total_amount) || 0;
+      months[m] += j.total_amount;
     }
   });
   return months;
 }
 
-function countByMonth(jobs: any[]): number[] {
+function countByMonth(jobs: UnifiedJob[]): number[] {
   const months = Array(12).fill(0);
   jobs.forEach(j => {
     if (j.scheduled_start) {
@@ -83,13 +170,13 @@ function countByMonth(jobs: any[]): number[] {
   return months;
 }
 
-function groupByCity(jobs: any[]): Array<{ city: string; count: number; revenue: number }> {
+function groupByCity(jobs: UnifiedJob[]): Array<{ city: string; count: number; revenue: number }> {
   const map: Record<string, { count: number; revenue: number }> = {};
   jobs.forEach(j => {
     const city = extractCity(j.property_address);
     if (!map[city]) map[city] = { count: 0, revenue: 0 };
     map[city].count++;
-    map[city].revenue += Number(j.total_amount) || 0;
+    map[city].revenue += j.total_amount;
   });
   return Object.entries(map)
     .map(([city, v]) => ({ city, ...v }))
@@ -97,13 +184,13 @@ function groupByCity(jobs: any[]): Array<{ city: string; count: number; revenue:
     .slice(0, 8);
 }
 
-function groupByService(jobs: any[]): Array<{ service: string; count: number; revenue: number }> {
+function groupByService(jobs: UnifiedJob[]): Array<{ service: string; count: number; revenue: number }> {
   const map: Record<string, { count: number; revenue: number }> = {};
   jobs.forEach(j => {
     const svc = j.title?.trim() || "Other";
     if (!map[svc]) map[svc] = { count: 0, revenue: 0 };
     map[svc].count++;
-    map[svc].revenue += Number(j.total_amount) || 0;
+    map[svc].revenue += j.total_amount;
   });
   return Object.entries(map)
     .map(([service, v]) => ({ service, ...v }))
@@ -180,15 +267,33 @@ const customTooltipStyle = {
 
 export default function PlatformAnalytics() {
   const { selectedBusinessId } = useBusinessContext();
+  const queryClient = useQueryClient();
   const currentActualYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentActualYear);
-  const years = [2024, 2025, 2026].filter((_, i, arr) => true);
+  const [syncing, setSyncing] = useState(false);
+  const years = [2024, 2025, 2026];
 
   const { data, isLoading } = useQuery({
     queryKey: ["platform-analytics", selectedBusinessId, selectedYear],
     queryFn: () => fetchAnalytics(selectedBusinessId, selectedYear),
     enabled: !!selectedBusinessId,
   });
+
+  const handleSyncHistorical = async () => {
+    setSyncing(true);
+    try {
+      const { data: fnData, error } = await supabase.functions.invoke("jobber-sync", {
+        body: { action: "full", historical: true },
+      });
+      if (error) throw error;
+      toast.success(`Historical sync complete — ${fnData?.records_synced || 0} records synced`);
+      queryClient.invalidateQueries({ queryKey: ["platform-analytics"] });
+    } catch (err: any) {
+      toast.error(`Sync failed: ${err.message || "Unknown error"}`);
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   if (!selectedBusinessId) {
     return <PlatformLayout><p className="text-muted-foreground text-center py-20 font-body text-sm">Select a business to view analytics</p></PlatformLayout>;
@@ -203,13 +308,13 @@ export default function PlatformAnalytics() {
   const twoAgoJobs = data.twoYearsAgo;
 
   // Hero stat
-  const curRevenue = curJobs.reduce((s, j) => s + (Number(j.total_amount) || 0), 0);
-  const prevSamePeriodRev = data.prevYearSamePeriod.reduce((s: number, j: any) => s + (Number(j.total_amount) || 0), 0);
+  const curRevenue = curJobs.reduce((s, j) => s + j.total_amount, 0);
+  const prevSamePeriodRev = data.prevYearSamePeriod.reduce((s: number, j: UnifiedJob) => s + j.total_amount, 0);
   const yoyPct = prevSamePeriodRev > 0 ? Math.round(((curRevenue - prevSamePeriodRev) / prevSamePeriodRev) * 100) : 0;
   const yoyPositive = curRevenue >= prevSamePeriodRev;
 
   // Cards
-  const prevFullRev = prevJobs.reduce((s, j) => s + (Number(j.total_amount) || 0), 0);
+  const prevFullRev = prevJobs.reduce((s, j) => s + j.total_amount, 0);
   const jobsCompleted = curJobs.filter(j => ["completed", "done"].includes(j.status?.toLowerCase() || "")).length;
   const prevJobsCompleted = prevJobs.filter(j => ["completed", "done"].includes(j.status?.toLowerCase() || "")).length;
   const avgJobValue = curJobs.length > 0 ? curRevenue / curJobs.length : 0;
@@ -260,7 +365,7 @@ export default function PlatformAnalytics() {
   const prevClients = new Set(prevJobs.map(j => j.client_name).filter(Boolean));
   const repeatClients = curJobs.filter(j => j.client_name && prevClients.has(j.client_name));
   const repeatCount = new Set(repeatClients.map(j => j.client_name)).size;
-  const biggestJob = curJobs.reduce((max, j) => (Number(j.total_amount) || 0) > max.amount ? { amount: Number(j.total_amount) || 0, name: j.client_name || "—" } : max, { amount: 0, name: "—" });
+  const biggestJob = curJobs.reduce((max, j) => j.total_amount > max.amount ? { amount: j.total_amount, name: j.client_name || "—" } : max, { amount: 0, name: "—" });
   const thisMonthJobs = curJobs.filter(j => j.scheduled_start && new Date(j.scheduled_start).getMonth() === currentMonth).length;
 
   return (
@@ -272,21 +377,35 @@ export default function PlatformAnalytics() {
             <h1 className="font-display text-xl font-bold text-foreground tracking-tight">Analytics</h1>
             <p className="font-body text-xs text-muted-foreground">Business performance overview</p>
           </div>
-          <div className="flex items-center gap-1.5">
-            {years.map(y => (
-              <button
-                key={y}
-                onClick={() => setSelectedYear(y)}
-                className={cn(
-                  "px-3 py-1.5 rounded-lg font-body text-xs font-medium transition-all",
-                  y === selectedYear
-                    ? "text-[#22c55e] border border-[rgba(34,197,94,0.4)] bg-[rgba(34,197,94,0.1)]"
-                    : "text-muted-foreground border border-transparent hover:text-foreground"
-                )}
-              >
-                {y}
-              </button>
-            ))}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleSyncHistorical}
+              disabled={syncing}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-body text-[11px] font-medium transition-all border",
+                "text-muted-foreground border-[rgba(34,197,94,0.2)] hover:text-foreground hover:border-[rgba(34,197,94,0.4)] hover:bg-[rgba(34,197,94,0.05)]",
+                syncing && "opacity-60 pointer-events-none"
+              )}
+            >
+              <RefreshCw className={cn("w-3 h-3", syncing && "animate-spin")} />
+              {syncing ? "Syncing…" : "Sync Historical Data"}
+            </button>
+            <div className="flex items-center gap-1.5">
+              {years.map(y => (
+                <button
+                  key={y}
+                  onClick={() => setSelectedYear(y)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg font-body text-xs font-medium transition-all",
+                    y === selectedYear
+                      ? "text-[#22c55e] border border-[rgba(34,197,94,0.4)] bg-[rgba(34,197,94,0.1)]"
+                      : "text-muted-foreground border border-transparent hover:text-foreground"
+                  )}
+                >
+                  {y}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
