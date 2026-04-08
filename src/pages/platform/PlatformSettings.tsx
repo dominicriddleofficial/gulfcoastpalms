@@ -276,7 +276,9 @@ function JobberConnectionStatus() {
     setSyncing(true);
     setSyncResponse(null);
     try {
-      const { data, error } = await supabase.functions.invoke("jobber-sync");
+      const { data, error } = await supabase.functions.invoke("jobber-sync", {
+        body: { businessId: selectedBusinessId },
+      });
       if (error) throw error;
       setSyncResponse(JSON.stringify(data, null, 2));
       toast({ title: "Sync complete", description: `${data?.records_synced || 0} records synced.` });

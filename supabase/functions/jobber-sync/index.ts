@@ -61,6 +61,7 @@ type SyncContext = {
   lastMeta: QueryMeta | null;
   dryRun: boolean;
   historical: boolean;
+  businessId: string | null;
 };
 
 type ConnectionPageOptions = {
@@ -274,13 +275,18 @@ async function fetchConnectionPages<T>(
   return { nodes, meta: lastMeta };
 }
 
-async function fetchAllTableRows(supabase: any, table: string, columns: string) {
+async function fetchAllTableRows(supabase: any, table: string, columns: string, businessId?: string | null) {
   const pageSize = 1000;
   let from = 0;
   const rows: any[] = [];
 
   while (true) {
-    const { data, error } = await supabase.from(table).select(columns).range(from, from + pageSize - 1);
+    let query = supabase.from(table).select(columns);
+    if (businessId) {
+      query = query.eq("business_id", businessId);
+    }
+
+    const { data, error } = await query.range(from, from + pageSize - 1);
     if (error) throw new Error(`Failed to load ${table}: ${error.message}`);
     if (!data?.length) break;
     rows.push(...data);
@@ -291,8 +297,8 @@ async function fetchAllTableRows(supabase: any, table: string, columns: string) 
   return rows;
 }
 
-async function loadClientCache(supabase: any) {
-  const rows = await fetchAllTableRows(supabase, "jobber_clients", "id, jobber_id, phone, display_name");
+async function loadClientCache(supabase: any, businessId?: string | null) {
+  const rows = await fetchAllTableRows(supabase, "jobber_clients", "id, jobber_id, phone, display_name", businessId);
   const byJobberId: Record<string, { id: string; phone: string | null; display_name: string | null }> = {};
 
   for (const row of rows) {
@@ -302,8 +308,8 @@ async function loadClientCache(supabase: any) {
   return byJobberId;
 }
 
-async function loadPropertyCache(supabase: any) {
-  const rows = await fetchAllTableRows(supabase, "jobber_properties", "id, jobber_id, street1, city, state, zip");
+async function loadPropertyCache(supabase: any, businessId?: string | null) {
+  const rows = await fetchAllTableRows(supabase, "jobber_properties", "id, jobber_id, street1, city, state, zip", businessId);
   const byJobberId: Record<string, { id: string; address: string | null }> = {};
 
   for (const row of rows) {
@@ -357,6 +363,48 @@ async function getLastModuleSuccessAt(supabase: any, module: ModuleName) {
     .maybeSingle();
 
   return data?.completed_at || null;
+}
+
+async function resolveTargetBusinessId(supabase: any, requestedBusinessId?: string | null) {
+  if (requestedBusinessId) {
+    const { data, error } = await supabase
+      .from("businesses")
+      .select("id")
+      .eq("id", requestedBusinessId)
+      .maybeSingle();
+
+    if (error) throw new Error(`Failed to verify business: ${error.message}`);
+    if (data?.id) return data.id as string;
+  }
+
+  const scopedSources: Array<{ table: string; orderColumn: string }> = [
+    { table: "jobber_clients", orderColumn: "synced_at" },
+    { table: "jobber_properties", orderColumn: "synced_at" },
+    { table: "jobber_jobs", orderColumn: "synced_at" },
+  ];
+
+  for (const source of scopedSources) {
+    const { data, error } = await supabase
+      .from(source.table)
+      .select("business_id")
+      .not("business_id", "is", null)
+      .order(source.orderColumn, { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw new Error(`Failed to resolve business from ${source.table}: ${error.message}`);
+    if (data?.business_id) return data.business_id as string;
+  }
+
+  const { data: businesses, error: businessError } = await supabase
+    .from("businesses")
+    .select("id")
+    .order("created_at", { ascending: true });
+
+  if (businessError) throw new Error(`Failed to load businesses: ${businessError.message}`);
+  if ((businesses || []).length === 1) return businesses[0].id as string;
+
+  return null;
 }
 
 function buildClientsFilter(lastSuccessAt: string | null) {
@@ -549,6 +597,7 @@ async function runClientsModule(accessToken: string, supabase: any, context: Syn
       supabase,
       "jobber_clients",
       nodes.map((client) => ({
+        business_id: context.businessId,
         jobber_id: client.id,
         first_name: client.firstName || null,
         last_name: client.lastName || null,
@@ -576,7 +625,7 @@ async function runPropertiesModule(
   changedClientIds?: string[] | null
 ): Promise<ModuleRunResult> {
   const lastSuccessAt = await getLastModuleSuccessAt(supabase, "properties");
-  const clientCache = await loadClientCache(supabase);
+  const clientCache = await loadClientCache(supabase, context.businessId);
   const targetClientIds = changedClientIds && changedClientIds.length ? changedClientIds : await fetchChangedClientIds(accessToken, lastSuccessAt, context);
 
   let nodes: any[] = [];
@@ -622,6 +671,7 @@ async function runPropertiesModule(
         const address = property.address || {};
         const client = property.client?.id ? clientCache[property.client.id] : null;
         return {
+          business_id: context.businessId,
           jobber_id: property.id,
           street1: address.street1 || null,
           street2: address.street2 || null,
@@ -664,8 +714,8 @@ async function runJobsModule(accessToken: string, supabase: any, context: SyncCo
   const window = context.historical
     ? { after: "2024-01-01T00:00:00Z", before: toIso(addDays(new Date(), 90)) }
     : buildOpsWindow(lastSuccessAt, 30, 90);
-  const clientCache = await loadClientCache(supabase);
-  const propertyCache = await loadPropertyCache(supabase);
+  const clientCache = await loadClientCache(supabase, context.businessId);
+  const propertyCache = await loadPropertyCache(supabase, context.businessId);
 
   const { nodes, meta } = await fetchConnectionPages<any>(
     accessToken,
@@ -687,6 +737,7 @@ async function runJobsModule(accessToken: string, supabase: any, context: SyncCo
         const property = job.property?.id ? propertyCache[job.property.id] : null;
 
         return cleanObject({
+          business_id: context.businessId,
           jobber_id: job.id,
           job_number: job.jobNumber?.toString() || null,
           title: job.title || null,
@@ -730,8 +781,8 @@ async function runVisitsModule(accessToken: string, supabase: any, context: Sync
   const window = context.historical
     ? { after: "2024-01-01T00:00:00Z", before: toIso(addDays(new Date(), 90)) }
     : buildOpsWindow(lastSuccessAt, 7, 90);
-  const clientCache = await loadClientCache(supabase);
-  const propertyCache = await loadPropertyCache(supabase);
+  const clientCache = await loadClientCache(supabase, context.businessId);
+  const propertyCache = await loadPropertyCache(supabase, context.businessId);
 
   const { nodes, meta } = await fetchConnectionPages<any>(
     accessToken,
@@ -761,6 +812,7 @@ async function runVisitsModule(accessToken: string, supabase: any, context: Sync
         const assignedNames = visit.assignedUsers?.nodes?.map((member: any) => member.name?.full).filter(Boolean) || [];
 
         return cleanObject({
+          business_id: context.businessId,
           jobber_id: jobId,
           visit_status: visit.visitStatus?.toLowerCase() || "scheduled",
           scheduled_start: visit.startAt || null,
@@ -878,7 +930,7 @@ Deno.serve(async (req) => {
   }
 
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-  const context: SyncContext = { lastMeta: null, dryRun: false, historical: false };
+  const context: SyncContext = { lastMeta: null, dryRun: false, historical: false, businessId: null };
 
   let action = "full";
   let modules: ModuleName[] = [];
@@ -887,6 +939,7 @@ Deno.serve(async (req) => {
     const body = await req.json();
     action = body?.action || "full";
     context.historical = body?.historical === true;
+    context.businessId = body?.businessId || null;
     modules = Array.isArray(body?.modules)
       ? body.modules.map((module: string) => normalizeModuleName(module)).filter(Boolean) as ModuleName[]
       : [];
@@ -903,6 +956,14 @@ Deno.serve(async (req) => {
 
   try {
     const accessToken = await refreshAccessTokenIfNeeded(tokenRow, supabase);
+
+    if (action !== "test") {
+      context.businessId = await resolveTargetBusinessId(supabase, context.businessId);
+
+      if (!context.businessId && action !== "test_query") {
+        return jsonResponse({ error: "Unable to determine which business should own synced Jobber data. Select a business and try again." }, 400);
+      }
+    }
 
     if (action === "test") {
       return jsonResponse(await testConnection(accessToken, context));

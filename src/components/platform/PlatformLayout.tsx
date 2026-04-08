@@ -115,7 +115,7 @@ export default function PlatformLayout({ children }: Props) {
 
   // Auto-sync Jobber if last sync > 30 minutes ago
   useEffect(() => {
-    if (autoSyncTriggered.current || auth.loading) return;
+    if (autoSyncTriggered.current || auth.loading || !auth.selectedBusinessId) return;
     autoSyncTriggered.current = true;
 
     (async () => {
@@ -134,13 +134,15 @@ export default function PlatformLayout({ children }: Props) {
 
         if (!lastSyncTime || lastSyncTime < thirtyMinutesAgo) {
           console.log("[AutoSync] Triggering Jobber sync (last sync:", lastSyncTime?.toISOString() || "never", ")");
-          supabase.functions.invoke("jobber-sync").catch(console.error);
+          supabase.functions.invoke("jobber-sync", {
+            body: { businessId: auth.selectedBusinessId },
+          }).catch(console.error);
         }
       } catch (e) {
         console.error("[AutoSync] Check failed:", e);
       }
     })();
-  }, [auth.loading]);
+  }, [auth.loading, auth.selectedBusinessId]);
 
   if (auth.loading) {
     return (

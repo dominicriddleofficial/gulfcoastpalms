@@ -283,7 +283,7 @@ export default function PlatformAnalytics() {
     setSyncing(true);
     try {
       const { data: fnData, error } = await supabase.functions.invoke("jobber-sync", {
-        body: { action: "full", historical: true },
+        body: { action: "full", historical: true, businessId: selectedBusinessId },
       });
       if (error) throw error;
       toast.success(`Historical sync complete — ${fnData?.records_synced || 0} records synced`);
