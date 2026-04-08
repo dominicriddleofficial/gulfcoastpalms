@@ -60,6 +60,7 @@ type ModuleResult = {
 type SyncContext = {
   lastMeta: QueryMeta | null;
   dryRun: boolean;
+  historical: boolean;
 };
 
 type ConnectionPageOptions = {
@@ -659,8 +660,10 @@ async function runUsersModule(accessToken: string, supabase: any, context: SyncC
 }
 
 async function runJobsModule(accessToken: string, supabase: any, context: SyncContext): Promise<ModuleRunResult> {
-  const lastSuccessAt = await getLastModuleSuccessAt(supabase, "jobs");
-  const window = buildOpsWindow(lastSuccessAt, 30, 90);
+  const lastSuccessAt = context.historical ? null : await getLastModuleSuccessAt(supabase, "jobs");
+  const window = context.historical
+    ? { after: "2024-01-01T00:00:00Z", before: toIso(addDays(new Date(), 90)) }
+    : buildOpsWindow(lastSuccessAt, 30, 90);
   const clientCache = await loadClientCache(supabase);
   const propertyCache = await loadPropertyCache(supabase);
 
@@ -723,8 +726,10 @@ function chooseBestVisit(current: any | undefined, nextVisit: any) {
 }
 
 async function runVisitsModule(accessToken: string, supabase: any, context: SyncContext): Promise<ModuleRunResult> {
-  const lastSuccessAt = await getLastModuleSuccessAt(supabase, "visits");
-  const window = buildOpsWindow(lastSuccessAt, 7, 90);
+  const lastSuccessAt = context.historical ? null : await getLastModuleSuccessAt(supabase, "visits");
+  const window = context.historical
+    ? { after: "2024-01-01T00:00:00Z", before: toIso(addDays(new Date(), 90)) }
+    : buildOpsWindow(lastSuccessAt, 7, 90);
   const clientCache = await loadClientCache(supabase);
   const propertyCache = await loadPropertyCache(supabase);
 
@@ -873,7 +878,7 @@ Deno.serve(async (req) => {
   }
 
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-  const context: SyncContext = { lastMeta: null, dryRun: false };
+  const context: SyncContext = { lastMeta: null, dryRun: false, historical: false };
 
   let action = "full";
   let modules: ModuleName[] = [];
@@ -881,6 +886,7 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json();
     action = body?.action || "full";
+    context.historical = body?.historical === true;
     modules = Array.isArray(body?.modules)
       ? body.modules.map((module: string) => normalizeModuleName(module)).filter(Boolean) as ModuleName[]
       : [];
