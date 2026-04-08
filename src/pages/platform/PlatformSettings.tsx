@@ -116,7 +116,7 @@ export default function PlatformSettings() {
 
             {/* Integrations */}
             <SettingsSection title="Integrations" icon={Zap}>
-              <JobberConnectionStatus />
+              <JobberConnectionStatus businessId={selectedBusinessId} />
               <div className="mt-3 pt-3 border-t border-border">
                 <OnlinePaymentsConfig businessId={selectedBusinessId} businesses={businesses} />
               </div>
@@ -236,7 +236,7 @@ function NumberingSection({ businessId }: { businessId: string | null }) {
   );
 }
 
-function JobberConnectionStatus() {
+function JobberConnectionStatus({ businessId }: { businessId: string | null }) {
   const [tokenInfo, setTokenInfo] = useState<{ exists: boolean; expiresAt: string | null; createdAt: string | null; isExpired: boolean } | null>(null);
   const [lastSyncLog, setLastSyncLog] = useState<{ status: string; completed_at: string | null; error_message: string | null; records_synced: number } | null>(null);
   const [dataCounts, setDataCounts] = useState<{ clients: number; jobs: number; properties: number } | null>(null);
@@ -277,7 +277,7 @@ function JobberConnectionStatus() {
     setSyncResponse(null);
     try {
       const { data, error } = await supabase.functions.invoke("jobber-sync", {
-        body: { businessId: selectedBusinessId },
+        body: { businessId },
       });
       if (error) throw error;
       setSyncResponse(JSON.stringify(data, null, 2));
