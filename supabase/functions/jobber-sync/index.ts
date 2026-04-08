@@ -726,8 +726,10 @@ function chooseBestVisit(current: any | undefined, nextVisit: any) {
 }
 
 async function runVisitsModule(accessToken: string, supabase: any, context: SyncContext): Promise<ModuleRunResult> {
-  const lastSuccessAt = await getLastModuleSuccessAt(supabase, "visits");
-  const window = buildOpsWindow(lastSuccessAt, 7, 90);
+  const lastSuccessAt = context.historical ? null : await getLastModuleSuccessAt(supabase, "visits");
+  const window = context.historical
+    ? { after: "2024-01-01T00:00:00Z", before: toIso(addDays(new Date(), 90)) }
+    : buildOpsWindow(lastSuccessAt, 7, 90);
   const clientCache = await loadClientCache(supabase);
   const propertyCache = await loadPropertyCache(supabase);
 
