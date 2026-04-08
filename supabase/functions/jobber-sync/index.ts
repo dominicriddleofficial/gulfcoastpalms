@@ -878,7 +878,7 @@ Deno.serve(async (req) => {
   }
 
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-  const context: SyncContext = { lastMeta: null, dryRun: false };
+  const context: SyncContext = { lastMeta: null, dryRun: false, historical: false };
 
   let action = "full";
   let modules: ModuleName[] = [];
@@ -886,6 +886,7 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json();
     action = body?.action || "full";
+    context.historical = body?.historical === true;
     modules = Array.isArray(body?.modules)
       ? body.modules.map((module: string) => normalizeModuleName(module)).filter(Boolean) as ModuleName[]
       : [];
