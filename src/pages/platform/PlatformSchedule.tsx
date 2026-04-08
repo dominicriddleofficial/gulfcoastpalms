@@ -145,7 +145,9 @@ export default function PlatformSchedule() {
   const handleSync = async () => {
     setSyncing(true);
     try {
-      const { error } = await supabase.functions.invoke("jobber-sync");
+      const { error } = await supabase.functions.invoke("jobber-sync", {
+        body: { businessId: selectedBusinessId },
+      });
       if (error) throw error;
       toast.success("Jobber sync complete");
       await Promise.all([refetchJobs(), refetchSync()]);
