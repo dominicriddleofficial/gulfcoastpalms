@@ -40,6 +40,13 @@ interface CustomerResult {
   source?: string;
 }
 
+interface SendInvoiceData {
+  email: string;
+  subject: string;
+  message: string;
+  ccEmail: string;
+}
+
 interface InvoiceBuilderProps {
   businessId: string;
   businesses: Array<{
@@ -253,13 +260,8 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
     logoUrl: logoUrl,
   }), [invoiceNumber, issueDate, dueDate, customerName, customerEmail, customerPhone, lineItems, subtotal, taxEnabled, taxRate, taxAmount, discountAmount, total, publicNotes, activeBiz, logoUrl]);
 
-  // Track send email data from the modal
-  const [pendingSendData, setPendingSendData] = useState<{
-    email: string; subject: string; message: string; ccEmail: string;
-  } | null>(null);
-
   // Save invoice
-  const handleSave = async (sendAfter: boolean = false) => {
+  const handleSave = async (sendAfter: boolean = false, sendData: SendInvoiceData | null = null) => {
     if (!bizId) return;
     if (!customerId) { toast.error("Please select a customer"); return; }
     const validLines = lineItems.filter(l => l.description.trim());
@@ -339,23 +341,23 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
       }))
     );
 
-    if (sendAfter && pendingSendData) {
+    if (sendAfter && sendData) {
       const shortcode = activeBiz?.shortcode || "gcp";
       const paymentUrl = `${window.location.origin}/pay/${shortcode}/${inv.id}`;
       try {
         const { data: fnRes, error: fnErr } = await supabase.functions.invoke("send-invoice-email", {
           body: {
             invoiceId: inv.id,
-            recipientEmail: pendingSendData.email,
+            recipientEmail: sendData.email,
             recipientName: customerName,
-            subject: pendingSendData.subject,
-            message: pendingSendData.message,
+            subject: sendData.subject,
+            message: sendData.message,
             businessName: activeBiz?.public_brand_name || "",
             invoiceNumber,
             total,
             dueDate,
             paymentUrl,
-            ccEmail: pendingSendData.ccEmail || null,
+            ccEmail: sendData.ccEmail || null,
             ownerEmail: "dominicriddleofficial@gmail.com",
           },
         });
@@ -367,13 +369,12 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
           if (fnRes?.ownerNotificationWarning) {
             console.warn("send-invoice-email owner notification warning:", fnRes.ownerNotificationWarning);
           }
-          toast.success(`Invoice sent to ${customerName} at ${pendingSendData.email}`);
+          toast.success(`Invoice sent to ${customerName} at ${sendData.email}`);
         }
       } catch (e: any) {
         console.error("send-invoice-email exception:", e);
         toast.error(`Invoice created but email failed: ${e.message}`);
       }
-      setPendingSendData(null);
     } else {
       toast.success("Invoice created");
     }
@@ -740,8 +741,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
           businessName={activeBiz?.public_brand_name || ""}
           shortcode={activeBiz?.shortcode || "gcp"}
           onSend={async (emailData) => {
-            setPendingSendData(emailData);
-            await handleSave(true);
+            await handleSave(true, emailData);
             setShowSendModal(false);
           }}
           onClose={() => setShowSendModal(false)}

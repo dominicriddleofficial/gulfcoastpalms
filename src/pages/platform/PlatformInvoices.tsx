@@ -21,12 +21,15 @@ import {
 import { format, formatDistanceToNow, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
 export default function PlatformInvoices() {
+  type PlatformInvoiceUpdate = Database["public"]["Tables"]["platform_invoices"]["Update"];
+
   const { selectedBusinessId, businesses, userId } = usePlatformAuth();
   const {
     invoices, loading, statusFilter, setStatusFilter,
@@ -213,7 +216,7 @@ export default function PlatformInvoices() {
               invoice={selectedInvoice}
               businesses={businesses}
               onStatusChange={async (newStatus) => {
-                const updates: Record<string, unknown> = { status: newStatus };
+                const updates: PlatformInvoiceUpdate = { status: newStatus };
                 if (newStatus === "sent") updates.sent_at = new Date().toISOString();
                 if (newStatus === "void") updates.voided_at = new Date().toISOString();
                 if (newStatus === "paid") {
@@ -244,7 +247,7 @@ export default function PlatformInvoices() {
                 });
                 const newPaid = (Number(selectedInvoice.amount_paid) || 0) + amount;
                 const newBalance = (Number(selectedInvoice.total) || 0) - newPaid;
-                const invoiceUpdates: Record<string, unknown> = {
+                const invoiceUpdates: PlatformInvoiceUpdate = {
                   amount_paid: newPaid,
                   balance_due: Math.max(0, newBalance),
                   status: newBalance <= 0 ? "paid" : "partial",

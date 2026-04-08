@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -37,6 +38,8 @@ interface SyncLog {
 }
 
 export default function PlatformSettings() {
+  type PaymentProviderAccountUpdate = Database["public"]["Tables"]["payment_provider_accounts"]["Update"];
+
   const { selectedBusinessId, businesses, isOwner } = usePlatformAuth();
   const [settings, setSettings] = useState<BizSettings | null>(null);
   const [syncLogs, setSyncLogs] = useState<SyncLog[]>([]);
@@ -435,9 +438,10 @@ function OnlinePaymentsConfig({ businessId, businesses }: { businessId: string |
 
   const togglePayments = async (accountId: string, field: "online_payments_enabled" | "active", current: boolean) => {
     setSaving(true);
+    const updates: PaymentProviderAccountUpdate = { [field]: !current };
     const { error } = await supabase
       .from("payment_provider_accounts")
-      .update({ [field]: !current })
+      .update(updates)
       .eq("id", accountId);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
