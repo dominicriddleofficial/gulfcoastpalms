@@ -236,11 +236,11 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
     );
 
     // Save initial version
-    await supabase.from("platform_quote_versions").insert({
+    await supabase.from("platform_quote_versions").insert([{
       quote_id: quote.id, business_id: bizId, version_number: 1,
       snapshot_json: JSON.parse(JSON.stringify({ quote, line_items: validLines })),
       created_by_user_id: userId,
-    } as Record<string, unknown>);
+    }]);
 
     if (sendAfter && sendData) {
       const shortcode = activeBiz?.shortcode || "gcp";
