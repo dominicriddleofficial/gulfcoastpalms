@@ -3,34 +3,57 @@ import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import {
   usePlatformQuotes, QUOTE_STATUSES, fetchQuoteLineItems, fetchQuoteVersions,
-  generateQuoteNumber, calculateQuoteTotals,
   type PlatformQuote, type QuoteLineItem,
 } from "@/hooks/usePlatformQuotes";
-import { usePlatformCustomers } from "@/hooks/usePlatformCustomers";
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Search, Plus, FileText, DollarSign, Clock, Calendar, Hash, Trash2,
-  Send, CheckCircle, XCircle, History, ChevronRight,
+  Search, Plus, FileText, DollarSign, Clock, Hash, Trash2,
+  Send, CheckCircle, XCircle, History, ChevronRight, Receipt,
+  Link2, MoreHorizontal, Copy, TrendingUp,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
+import QuoteBuilder from "@/components/platform/billing/QuoteBuilder";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useQuery } from "@tanstack/react-query";
 
 function QuoteStatusBadge({ status }: { status: string }) {
   const s = QUOTE_STATUSES.find(qs => qs.value === status);
   if (!s) return <span className="text-xs text-muted-foreground">{status}</span>;
   return (
-    <span
-      className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-body font-medium"
-      style={{ backgroundColor: s.color + "20", color: s.color, border: `1px solid ${s.color}30` }}
-    >
+    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-body font-medium"
+      style={{ backgroundColor: s.color + "20", color: s.color, border: `1px solid ${s.color}30` }}>
       {s.label}
     </span>
+  );
+}
+
+function StatusPill({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
+  return (
+    <button onClick={onClick}
+      className={cn(
+        "px-2.5 py-1 rounded-full text-[11px] font-body font-medium whitespace-nowrap transition-all border",
+        active ? "bg-primary/15 text-primary border-primary/30" : "bg-secondary text-muted-foreground border-border hover:text-foreground"
+      )}>
+      {label}
+    </button>
+  );
+}
+
+function KPICard({ icon: Icon, label, value, color }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string; color: string }) {
+  return (
+    <div className="bg-card border border-border rounded-lg p-3 text-center">
+      <Icon className={cn("w-4 h-4 mx-auto mb-1", color)} />
+      <p className="font-body text-[10px] text-muted-foreground uppercase">{label}</p>
+      <p className="font-display text-lg font-bold text-foreground">{value}</p>
+    </div>
   );
 }
 
@@ -46,47 +69,85 @@ export default function PlatformQuotes() {
 
   const getBiz = (bizId: string) => businesses.find(b => b.id === bizId);
 
+  // KPI calculations
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const totalQuotedThisMonth = quotes
+    .filter(q => q.created_at >= startOfMonth)
+    .reduce((sum, q) => sum + (q.total || 0), 0);
+  const totalWon = quotes.filter(q => q.status === "approved" || q.status === "accepted" || q.status === "won")
+    .reduce((sum, q) => sum + (q.total || 0), 0);
+  const sentCount = quotes.filter(q => q.status !== "draft").length;
+  const wonCount = quotes.filter(q => q.status === "approved" || q.status === "accepted" || q.status === "won").length;
+  const conversionRate = sentCount > 0 ? Math.round((wonCount / sentCount) * 100) : 0;
+
+  const getQuoteUrl = (q: PlatformQuote) => {
+    const shortcode = q.quote_number?.split("-")[0]?.toLowerCase() || "gcp";
+    return `${window.location.origin}/quote/${shortcode}/${q.id}`;
+  };
+
+  const copyQuoteLink = (q: PlatformQuote) => {
+    navigator.clipboard.writeText(getQuoteUrl(q));
+    toast.success("Quote link copied");
+  };
+
+  const deleteQuote = async (q: PlatformQuote) => {
+    if (!confirm(`Delete quote ${q.quote_number}? This cannot be undone.`)) return;
+    await supabase.from("platform_quote_line_items").delete().eq("quote_id", q.id);
+    await supabase.from("platform_quote_versions").delete().eq("quote_id", q.id);
+    await supabase.from("platform_quotes").delete().eq("id", q.id);
+    toast.success("Quote deleted");
+    refetch();
+  };
+
+  if (showCreate && selectedBusinessId) {
+    return (
+      <QuoteBuilder
+        businessId={selectedBusinessId}
+        businesses={businesses.map(b => ({
+          id: b.id, public_brand_name: b.public_brand_name,
+          shortcode: b.shortcode, logo_url: b.logo_url || null,
+          default_business_color: (b as Record<string, unknown>).default_business_color as string | undefined,
+        }))}
+        userId={userId}
+        onClose={() => setShowCreate(false)}
+        onCreated={() => { setShowCreate(false); refetch(); }}
+      />
+    );
+  }
+
   return (
     <PlatformLayout>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="font-display text-2xl font-bold text-foreground">Quotes</h1>
-            <p className="font-body text-sm text-muted-foreground">{quotes.length} quote{quotes.length !== 1 ? "s" : ""}</p>
+            <h1 className="font-display text-xl font-bold text-foreground tracking-tight">Quotes</h1>
+            <p className="font-body text-xs text-muted-foreground">{quotes.length} total</p>
           </div>
-          <Button size="sm" className="gap-1.5" onClick={() => setShowCreate(true)}>
-            <Plus className="w-4 h-4" /> New Quote
+          <Button size="sm" className="font-body text-xs" onClick={() => setShowCreate(true)} disabled={!selectedBusinessId}>
+            <Plus className="w-3.5 h-3.5 mr-1" /> New Quote
           </Button>
         </div>
 
+        {/* KPI cards */}
+        <div className="grid grid-cols-3 gap-2">
+          <KPICard icon={DollarSign} label="Quoted This Month" value={`$${totalQuotedThisMonth.toLocaleString()}`} color="text-[#3b82f6]" />
+          <KPICard icon={CheckCircle} label="Won" value={`$${totalWon.toLocaleString()}`} color="text-[#22c55e]" />
+          <KPICard icon={TrendingUp} label="Conversion" value={`${conversionRate}%`} color="text-[#8b5cf6]" />
+        </div>
+
         {/* Status pills */}
-        <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0">
-          <button
-            onClick={() => setStatusFilter("all")}
-            className={cn(
-              "px-3 py-1.5 rounded-full text-xs font-body font-medium whitespace-nowrap transition-all border",
-              statusFilter === "all"
-                ? "bg-primary/15 text-primary border-primary/30"
-                : "bg-secondary text-muted-foreground border-border hover:text-foreground"
-            )}
-          >
-            All ({quotes.length})
-          </button>
+        <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+          <StatusPill active={statusFilter === "all"} onClick={() => setStatusFilter("all")} label={`All (${quotes.length})`} />
           {QUOTE_STATUSES.map(s => {
             const count = statusCounts[s.value] || 0;
             if (count === 0 && s.value !== statusFilter) return null;
             return (
-              <button
-                key={s.value}
-                onClick={() => setStatusFilter(s.value)}
-                className={cn(
-                  "px-3 py-1.5 rounded-full text-xs font-body font-medium whitespace-nowrap transition-all border",
-                  statusFilter === s.value
-                    ? "border-primary/30"
-                    : "bg-secondary text-muted-foreground border-border hover:text-foreground"
+              <button key={s.value} onClick={() => setStatusFilter(s.value)}
+                className={cn("px-2.5 py-1 rounded-full text-[11px] font-body font-medium whitespace-nowrap transition-all border",
+                  statusFilter === s.value ? "border-primary/30" : "bg-secondary text-muted-foreground border-border hover:text-foreground"
                 )}
-                style={statusFilter === s.value ? { backgroundColor: s.color + "20", color: s.color, borderColor: s.color + "40" } : {}}
-              >
+                style={statusFilter === s.value ? { backgroundColor: s.color + "20", color: s.color, borderColor: s.color + "40" } : {}}>
                 {s.label} ({count})
               </button>
             );
@@ -95,100 +156,154 @@ export default function PlatformQuotes() {
 
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by quote # or customer..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="pl-10 bg-card border-border h-10"
-          />
+          <Input placeholder="Search by quote # or customer…" value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)} className="pl-10 bg-card border-border h-9 font-body text-sm" />
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          </div>
+          <div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>
         ) : quotes.length === 0 ? (
           <div className="bg-card border border-border rounded-xl p-8 text-center">
-            <p className="font-body text-muted-foreground">No quotes found</p>
+            <FileText className="w-8 h-8 mx-auto text-muted-foreground/40 mb-2" />
+            <p className="font-body text-muted-foreground text-sm">No quotes found</p>
           </div>
         ) : (
           <div className="space-y-2">
             {quotes.map(q => {
               const biz = getBiz(q.business_id);
+              const isApproved = q.status === "approved" || q.status === "accepted" || q.status === "won";
               return (
-                <button
-                  key={q.id}
-                  onClick={() => setSelectedQuote(q)}
-                  className="w-full bg-card border border-border rounded-xl p-4 hover:border-primary/30 transition-all text-left"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0 space-y-1.5">
+                <div key={q.id} className="bg-card border border-border rounded-xl p-3.5 hover:border-primary/30 transition-all">
+                  <div className="flex items-start justify-between gap-2">
+                    <button onClick={() => setSelectedQuote(q)} className="flex-1 min-w-0 text-left space-y-1">
                       <div className="flex items-center gap-2">
-                        <Hash className="w-3.5 h-3.5 text-primary" />
+                        <Hash className="w-3.5 h-3.5 text-primary shrink-0" />
                         <span className="font-mono text-sm font-medium text-foreground">{q.quote_number}</span>
-                        {biz && <InlineBadge shortcode={biz.shortcode} color={biz.default_business_color} />}
+                        {biz && <InlineBadge shortcode={biz.shortcode} color={(biz as Record<string, unknown>).default_business_color as string | undefined} />}
                       </div>
-                      <p className="font-body text-sm text-muted-foreground">{q.customer_name}</p>
+                      <p className="font-body text-sm text-muted-foreground truncate">{q.customer_name}</p>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground font-body">
-                        <span className="flex items-center gap-1">
-                          <DollarSign className="w-3 h-3" />${q.total?.toFixed(2) || "0.00"}
-                        </span>
+                        <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" />${q.total?.toFixed(2) || "0.00"}</span>
                         <span>{formatDistanceToNow(new Date(q.created_at), { addSuffix: true })}</span>
-                        {q.deposit_required_flag && (
-                          <span className="text-primary text-[10px]">Deposit req.</span>
-                        )}
                       </div>
-                    </div>
+                    </button>
                     <div className="flex flex-col items-end gap-1.5 shrink-0">
                       <QuoteStatusBadge status={q.status} />
-                      <span className="text-[10px] text-muted-foreground font-mono">v{q.version_number}</span>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="text-muted-foreground hover:text-foreground"><MoreHorizontal className="w-4 h-4" /></button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="bg-card border-border">
+                          <DropdownMenuItem onClick={() => copyQuoteLink(q)} className="text-xs gap-2">
+                            <Link2 className="w-3.5 h-3.5" /> Copy Link
+                          </DropdownMenuItem>
+                          {isApproved && (
+                            <DropdownMenuItem onClick={() => handleConvertToInvoice(q, businesses, refetch)} className="text-xs gap-2">
+                              <Receipt className="w-3.5 h-3.5" /> Convert to Invoice
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem onClick={() => deleteQuote(q)} className="text-xs gap-2 text-destructive">
+                            <Trash2 className="w-3.5 h-3.5" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>
         )}
       </div>
 
-      {/* Quote Detail */}
       <Sheet open={!!selectedQuote} onOpenChange={() => setSelectedQuote(null)}>
-        <SheetContent className="ops-theme bg-card border-border w-full sm:max-w-lg overflow-y-auto">
+        <SheetContent className="bg-card border-border w-full sm:max-w-lg overflow-y-auto">
           {selectedQuote && (
             <QuoteDetail
               quote={selectedQuote}
               biz={getBiz(selectedQuote.business_id)}
+              businesses={businesses}
               onUpdate={() => { refetch(); }}
               onClose={() => setSelectedQuote(null)}
             />
           )}
         </SheetContent>
       </Sheet>
-
-      {/* Create Quote */}
-      <Sheet open={showCreate} onOpenChange={setShowCreate}>
-        <SheetContent className="ops-theme bg-card border-border w-full sm:max-w-lg overflow-y-auto">
-          <CreateQuoteForm
-            businesses={businesses}
-            selectedBusinessId={selectedBusinessId}
-            userId={userId}
-            onCreated={() => { setShowCreate(false); refetch(); }}
-          />
-        </SheetContent>
-      </Sheet>
     </PlatformLayout>
   );
 }
 
-function QuoteDetail({ quote, biz, onUpdate, onClose }: {
-  quote: PlatformQuote; biz: any; onUpdate: () => void; onClose: () => void;
+async function handleConvertToInvoice(quote: PlatformQuote, businesses: Array<Record<string, unknown>>, refetch: () => void) {
+  try {
+    // Generate invoice number
+    const { data: invNum, error: numErr } = await supabase.rpc("generate_next_number", {
+      _business_id: quote.business_id,
+      _record_type: "invoice",
+    });
+    if (numErr) throw numErr;
+
+    // Fetch quote line items
+    const { data: lineItems } = await supabase.from("platform_quote_line_items").select("*").eq("quote_id", quote.id).order("sort_order");
+
+    // Create invoice
+    const { data: inv, error: invErr } = await supabase.from("platform_invoices").insert({
+      business_id: quote.business_id,
+      invoice_number: invNum as string,
+      customer_id: quote.customer_id,
+      quote_id: quote.id,
+      status: "draft",
+      issue_date: new Date().toISOString().split("T")[0],
+      due_date: new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0],
+      terms: "Net 30",
+      subtotal: quote.subtotal,
+      tax_rate: quote.tax_rate,
+      tax_total: quote.tax_total,
+      discount_total: quote.discount_total,
+      total: quote.total,
+      balance_due: quote.total,
+      amount_paid: 0,
+      public_notes: quote.public_notes || null,
+      internal_notes: `Converted from quote ${quote.quote_number}`,
+    }).select().single();
+
+    if (invErr || !inv) throw invErr || new Error("Failed to create invoice");
+
+    // Copy line items
+    if (lineItems && lineItems.length > 0) {
+      await supabase.from("platform_invoice_line_items").insert(
+        lineItems.map((li: Record<string, unknown>, i: number) => ({
+          business_id: quote.business_id,
+          invoice_id: inv.id,
+          description: li.description as string,
+          quantity: li.quantity as number,
+          unit_price: li.unit_price as number,
+          line_total: li.line_total as number,
+          sort_order: i,
+        }))
+      );
+    }
+
+    // Update quote status
+    await supabase.from("platform_quotes").update({ status: "won" }).eq("id", quote.id);
+
+    toast.success(`Invoice ${invNum} created from quote ${quote.quote_number}`);
+    refetch();
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Conversion failed";
+    toast.error(msg);
+  }
+}
+
+function QuoteDetail({ quote, biz, businesses, onUpdate, onClose }: {
+  quote: PlatformQuote; biz: Record<string, unknown> | undefined;
+  businesses: Array<Record<string, unknown>>;
+  onUpdate: () => void; onClose: () => void;
 }) {
   const [lineItems, setLineItems] = useState<QuoteLineItem[]>([]);
-  const [versions, setVersions] = useState<any[]>([]);
+  const [versions, setVersions] = useState<Array<Record<string, unknown>>>([]);
   const [showVersions, setShowVersions] = useState(false);
   const [loadingItems, setLoadingItems] = useState(true);
   const [converting, setConverting] = useState(false);
-  const { toast } = useToast();
 
   useEffect(() => {
     setLoadingItems(true);
@@ -203,27 +318,27 @@ function QuoteDetail({ quote, biz, onUpdate, onClose }: {
   }, [quote.id]);
 
   const updateStatus = async (newStatus: string) => {
-    const updates: any = { status: newStatus };
+    const updates: { status: string; sent_at?: string; accepted_at?: string; declined_at?: string } = { status: newStatus };
     if (newStatus === "sent") updates.sent_at = new Date().toISOString();
     if (newStatus === "accepted") updates.accepted_at = new Date().toISOString();
     if (newStatus === "declined") updates.declined_at = new Date().toISOString();
-
     await supabase.from("platform_quotes").update(updates).eq("id", quote.id);
-    toast({ title: `Quote marked as ${newStatus}` });
+    toast.success(`Quote marked as ${newStatus}`);
     onUpdate();
   };
+
+  const isApproved = quote.status === "approved" || quote.status === "accepted" || quote.status === "won";
 
   return (
     <div className="space-y-6 pt-2">
       <SheetHeader>
         <div className="flex items-center gap-2">
-          {biz && <InlineBadge shortcode={biz.shortcode} color={biz.default_business_color} />}
+          {biz && <InlineBadge shortcode={biz.shortcode as string} color={biz.default_business_color as string | undefined} />}
           <SheetTitle className="font-mono text-lg text-foreground">{quote.quote_number}</SheetTitle>
         </div>
         <p className="font-body text-sm text-muted-foreground">{quote.customer_name}</p>
       </SheetHeader>
 
-      {/* Status + Actions */}
       <div className="flex items-center gap-2 flex-wrap">
         <QuoteStatusBadge status={quote.status} />
         {quote.status === "draft" && (
@@ -241,26 +356,15 @@ function QuoteDetail({ quote, biz, onUpdate, onClose }: {
             </Button>
           </>
         )}
-        {quote.status === "accepted" && (
-          <Button
-            size="sm"
-            className="gap-1 text-xs"
-            disabled={converting}
+        {isApproved && (
+          <Button size="sm" className="gap-1 text-xs" disabled={converting}
             onClick={async () => {
               setConverting(true);
-              const { convertQuoteToJob } = await import("@/lib/platform-conversions");
-              const result = await convertQuoteToJob(quote);
+              await handleConvertToInvoice(quote, businesses as Array<Record<string, unknown>>, onUpdate);
               setConverting(false);
-              if (result.error) {
-                toast({ title: "Conversion failed", description: result.error, variant: "destructive" });
-                return;
-              }
-              toast({ title: "Job created", description: `Job ${result.jobNumber} created from quote` });
-              onUpdate();
               onClose();
-            }}
-          >
-            <ChevronRight className="w-3 h-3" /> {converting ? "Converting..." : "Convert to Job"}
+            }}>
+            <Receipt className="w-3 h-3" /> {converting ? "Converting..." : "Convert to Invoice"}
           </Button>
         )}
       </div>
@@ -271,7 +375,7 @@ function QuoteDetail({ quote, biz, onUpdate, onClose }: {
           <span className="text-muted-foreground">Subtotal</span>
           <span className="text-foreground">${quote.subtotal?.toFixed(2)}</span>
         </div>
-        {quote.discount_total > 0 && (
+        {(quote.discount_total ?? 0) > 0 && (
           <div className="flex justify-between text-sm font-body">
             <span className="text-muted-foreground">Discount</span>
             <span className="text-destructive">-${quote.discount_total?.toFixed(2)}</span>
@@ -287,9 +391,7 @@ function QuoteDetail({ quote, biz, onUpdate, onClose }: {
         </div>
         {quote.deposit_required_flag && (
           <div className="flex justify-between text-sm font-body pt-1">
-            <span className="text-muted-foreground">
-              Deposit ({quote.deposit_type === "percentage" ? `${quote.deposit_value}%` : `$${quote.deposit_value}`})
-            </span>
+            <span className="text-muted-foreground">Deposit ({quote.deposit_type === "percentage" ? `${quote.deposit_value}%` : `$${quote.deposit_value}`})</span>
             <span className="text-primary font-medium">${quote.deposit_amount_calculated?.toFixed(2)}</span>
           </div>
         )}
@@ -304,7 +406,7 @@ function QuoteDetail({ quote, biz, onUpdate, onClose }: {
           <p className="font-body text-sm text-muted-foreground/60">No line items</p>
         ) : (
           <div className="space-y-2">
-            {lineItems.map((li, i) => (
+            {lineItems.map(li => (
               <div key={li.id} className="bg-secondary/50 rounded-lg p-3 space-y-1">
                 <div className="flex justify-between">
                   <p className="font-body text-sm text-foreground">{li.description}</p>
@@ -313,7 +415,6 @@ function QuoteDetail({ quote, biz, onUpdate, onClose }: {
                 <p className="font-body text-xs text-muted-foreground">
                   {li.quantity} {li.unit} × ${li.unit_price.toFixed(2)}
                   {li.discount_amount > 0 && <span className="text-destructive"> (-${li.discount_amount.toFixed(2)})</span>}
-                  {li.taxable_flag && <span className="text-muted-foreground/50 ml-1">• taxable</span>}
                 </p>
               </div>
             ))}
@@ -328,48 +429,35 @@ function QuoteDetail({ quote, biz, onUpdate, onClose }: {
           <p className="font-body text-sm text-foreground bg-secondary rounded-lg p-3">{quote.internal_notes}</p>
         </div>
       )}
-      {quote.public_notes && (
-        <div className="space-y-2">
-          <p className="font-body text-xs text-muted-foreground uppercase tracking-wider">Customer Notes</p>
-          <p className="font-body text-sm text-foreground bg-secondary rounded-lg p-3">{quote.public_notes}</p>
-        </div>
-      )}
 
-      {/* Validity & dates */}
+      {/* Dates */}
       <div className="grid grid-cols-2 gap-3">
         {quote.valid_until && (
-          <div>
-            <p className="font-body text-[10px] text-muted-foreground">Valid Until</p>
-            <p className="font-body text-sm text-foreground">{format(new Date(quote.valid_until), "MMM d, yyyy")}</p>
-          </div>
+          <div><p className="font-body text-[10px] text-muted-foreground">Valid Until</p>
+            <p className="font-body text-sm text-foreground">{format(new Date(quote.valid_until), "MMM d, yyyy")}</p></div>
         )}
         {quote.sent_at && (
-          <div>
-            <p className="font-body text-[10px] text-muted-foreground">Sent</p>
-            <p className="font-body text-sm text-foreground">{format(new Date(quote.sent_at), "MMM d, h:mm a")}</p>
-          </div>
+          <div><p className="font-body text-[10px] text-muted-foreground">Sent</p>
+            <p className="font-body text-sm text-foreground">{format(new Date(quote.sent_at), "MMM d, h:mm a")}</p></div>
         )}
         {quote.accepted_at && (
-          <div>
-            <p className="font-body text-[10px] text-muted-foreground">Accepted</p>
-            <p className="font-body text-sm text-primary">{format(new Date(quote.accepted_at), "MMM d, h:mm a")}</p>
-          </div>
+          <div><p className="font-body text-[10px] text-muted-foreground">Accepted</p>
+            <p className="font-body text-sm text-primary">{format(new Date(quote.accepted_at), "MMM d, h:mm a")}</p></div>
         )}
       </div>
 
-      {/* Version history */}
+      {/* Versions */}
       {versions.length > 0 && (
         <div className="space-y-2">
           <button onClick={() => setShowVersions(!showVersions)} className="flex items-center gap-1.5 font-body text-xs text-muted-foreground hover:text-foreground">
-            <History className="w-3 h-3" />
-            {versions.length} version{versions.length !== 1 ? "s" : ""}
+            <History className="w-3 h-3" /> {versions.length} version{versions.length !== 1 ? "s" : ""}
             <ChevronRight className={cn("w-3 h-3 transition-transform", showVersions && "rotate-90")} />
           </button>
           {showVersions && (
             <div className="space-y-1.5 pl-4 border-l border-border">
               {versions.map(v => (
-                <div key={v.id} className="text-xs font-body text-muted-foreground">
-                  v{v.version_number} — {format(new Date(v.created_at), "MMM d, yyyy h:mm a")}
+                <div key={v.id as string} className="text-xs font-body text-muted-foreground">
+                  v{v.version_number as number} — {format(new Date(v.created_at as string), "MMM d, yyyy h:mm a")}
                 </div>
               ))}
             </div>
@@ -377,261 +465,9 @@ function QuoteDetail({ quote, biz, onUpdate, onClose }: {
         </div>
       )}
 
-
       <div className="text-[10px] font-body text-muted-foreground/50">
         Created {format(new Date(quote.created_at), "MMM d, yyyy h:mm a")} · v{quote.version_number}
       </div>
-    </div>
-  );
-}
-
-function CreateQuoteForm({ businesses, selectedBusinessId, userId, onCreated }: {
-  businesses: any[]; selectedBusinessId: string | null; userId: string | null; onCreated: () => void;
-}) {
-  const [submitting, setSubmitting] = useState(false);
-  const [bizId, setBizId] = useState(selectedBusinessId || businesses[0]?.id || "");
-  const { customers } = usePlatformCustomers(bizId);
-  const [customerId, setCustomerId] = useState("");
-  const [depositRequired, setDepositRequired] = useState(true);
-  const [depositType, setDepositType] = useState("percentage");
-  const [depositValue, setDepositValue] = useState(50);
-  const [taxRate, setTaxRate] = useState(7.5);
-  const [internalNotes, setInternalNotes] = useState("");
-  const [publicNotes, setPublicNotes] = useState("");
-  const [lineItems, setLineItems] = useState<{
-    description: string; quantity: number; unit: string; unit_price: number; discount_amount: number; taxable_flag: boolean;
-  }[]>([
-    { description: "", quantity: 1, unit: "each", unit_price: 0, discount_amount: 0, taxable_flag: true },
-  ]);
-
-  const { toast } = useToast();
-
-  const addLineItem = () => {
-    setLineItems([...lineItems, { description: "", quantity: 1, unit: "each", unit_price: 0, discount_amount: 0, taxable_flag: true }]);
-  };
-
-  const updateLineItem = (index: number, field: string, value: any) => {
-    const updated = [...lineItems];
-    (updated[index] as any)[field] = value;
-    setLineItems(updated);
-  };
-
-  const removeLineItem = (index: number) => {
-    if (lineItems.length <= 1) return;
-    setLineItems(lineItems.filter((_, i) => i !== index));
-  };
-
-  const totals = calculateQuoteTotals(lineItems, taxRate);
-  const depositCalc = depositRequired
-    ? depositType === "percentage"
-      ? totals.total * (depositValue / 100)
-      : depositValue
-    : 0;
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!bizId || lineItems.every(li => !li.description)) return;
-    setSubmitting(true);
-
-    try {
-      const quoteNumber = await generateQuoteNumber(bizId);
-
-      const { data: quote, error } = await supabase.from("platform_quotes").insert({
-        business_id: bizId,
-        quote_number: quoteNumber,
-        customer_id: customerId || null,
-        status: "draft",
-        subtotal: totals.subtotal,
-        discount_total: totals.discountTotal,
-        tax_rate: taxRate,
-        tax_total: totals.taxTotal,
-        total: totals.total,
-        deposit_required_flag: depositRequired,
-        deposit_type: depositType,
-        deposit_value: depositValue,
-        deposit_amount_calculated: depositCalc,
-        valid_until: new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0],
-        internal_notes: internalNotes || null,
-        public_notes: publicNotes || null,
-        created_by_user_id: userId,
-        last_modified_by_user_id: userId,
-      }).select().single();
-
-      if (error) throw error;
-
-      // Insert line items
-      const itemsToInsert = lineItems
-        .filter(li => li.description)
-        .map((li, i) => ({
-          quote_id: quote.id,
-          business_id: bizId,
-          description: li.description,
-          quantity: li.quantity,
-          unit: li.unit,
-          unit_price: li.unit_price,
-          discount_amount: li.discount_amount,
-          taxable_flag: li.taxable_flag,
-          line_total: li.quantity * li.unit_price - li.discount_amount,
-          sort_order: i,
-        }));
-
-      if (itemsToInsert.length > 0) {
-        await supabase.from("platform_quote_line_items").insert(itemsToInsert);
-      }
-
-      // Save initial version
-      await supabase.from("platform_quote_versions").insert({
-        quote_id: quote.id,
-        business_id: bizId,
-        version_number: 1,
-        snapshot_json: { quote, line_items: itemsToInsert },
-        created_by_user_id: userId,
-      });
-
-      toast({ title: `Quote ${quoteNumber} created` });
-      onCreated();
-    } catch (err: any) {
-      toast({ title: "Error creating quote", description: err.message, variant: "destructive" });
-    }
-    setSubmitting(false);
-  };
-
-  return (
-    <div className="space-y-6 pt-2">
-      <SheetHeader>
-        <SheetTitle className="font-display text-lg text-foreground">New Quote</SheetTitle>
-      </SheetHeader>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {businesses.length > 1 && (
-          <div className="space-y-1.5">
-            <label className="font-body text-xs text-muted-foreground">Business</label>
-            <Select value={bizId} onValueChange={v => { setBizId(v); setCustomerId(""); }}>
-              <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
-              <SelectContent className="bg-card border-border">
-                {businesses.map(b => (
-                  <SelectItem key={b.id} value={b.id}>{b.public_brand_name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-
-        <div className="space-y-1.5">
-          <label className="font-body text-xs text-muted-foreground">Customer</label>
-          <Select value={customerId} onValueChange={setCustomerId}>
-            <SelectTrigger className="bg-secondary border-border"><SelectValue placeholder="Select customer..." /></SelectTrigger>
-            <SelectContent className="bg-card border-border">
-              {customers.map(c => (
-                <SelectItem key={c.id} value={c.id}>{c.display_name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Line items */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <p className="font-body text-xs text-muted-foreground uppercase tracking-wider">Line Items</p>
-            <Button type="button" size="sm" variant="ghost" onClick={addLineItem} className="text-primary text-xs gap-1">
-              <Plus className="w-3 h-3" /> Add
-            </Button>
-          </div>
-          {lineItems.map((li, i) => (
-            <div key={i} className="bg-secondary/50 rounded-lg p-3 space-y-2">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Description"
-                  value={li.description}
-                  onChange={e => updateLineItem(i, "description", e.target.value)}
-                  className="bg-secondary border-border text-sm flex-1"
-                />
-                {lineItems.length > 1 && (
-                  <Button type="button" size="sm" variant="ghost" onClick={() => removeLineItem(i)} className="text-destructive px-2">
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
-                )}
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <label className="font-body text-[10px] text-muted-foreground">Qty</label>
-                  <Input
-                    type="number" min={1} step={1}
-                    value={li.quantity}
-                    onChange={e => updateLineItem(i, "quantity", Number(e.target.value))}
-                    className="bg-secondary border-border text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="font-body text-[10px] text-muted-foreground">Unit Price</label>
-                  <Input
-                    type="number" min={0} step={0.01}
-                    value={li.unit_price}
-                    onChange={e => updateLineItem(i, "unit_price", Number(e.target.value))}
-                    className="bg-secondary border-border text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="font-body text-[10px] text-muted-foreground">Total</label>
-                  <p className="font-mono text-sm text-foreground pt-2">
-                    ${(li.quantity * li.unit_price - li.discount_amount).toFixed(2)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Tax */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <label className="font-body text-xs text-muted-foreground">Tax Rate (%)</label>
-            <Input
-              type="number" min={0} step={0.1} value={taxRate}
-              onChange={e => setTaxRate(Number(e.target.value))}
-              className="bg-secondary border-border"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="font-body text-xs text-muted-foreground">Deposit</label>
-            <div className="flex gap-1">
-              <Select value={depositType} onValueChange={setDepositType}>
-                <SelectTrigger className="bg-secondary border-border w-20"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  <SelectItem value="percentage">%</SelectItem>
-                  <SelectItem value="fixed">$</SelectItem>
-                </SelectContent>
-              </Select>
-              <Input
-                type="number" min={0} value={depositValue}
-                onChange={e => setDepositValue(Number(e.target.value))}
-                className="bg-secondary border-border"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Totals preview */}
-        <div className="bg-secondary rounded-lg p-3 space-y-1 text-sm font-body">
-          <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>${totals.subtotal.toFixed(2)}</span></div>
-          <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>${totals.taxTotal.toFixed(2)}</span></div>
-          <div className="flex justify-between font-medium border-t border-border pt-1 mt-1">
-            <span>Total</span><span className="text-primary">${totals.total.toFixed(2)}</span>
-          </div>
-          {depositRequired && (
-            <div className="flex justify-between text-xs"><span className="text-muted-foreground">Deposit</span><span>${depositCalc.toFixed(2)}</span></div>
-          )}
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="font-body text-xs text-muted-foreground">Internal Notes</label>
-          <textarea value={internalNotes} onChange={e => setInternalNotes(e.target.value)} rows={2}
-            className="w-full rounded-md bg-secondary border border-border text-foreground font-body text-sm px-3 py-2 resize-none" />
-        </div>
-
-        <Button type="submit" className="w-full" disabled={submitting || lineItems.every(li => !li.description)}>
-          {submitting ? "Creating..." : "Create Quote"}
-        </Button>
-      </form>
     </div>
   );
 }
