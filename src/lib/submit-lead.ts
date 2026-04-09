@@ -11,8 +11,47 @@ export interface LeadData {
   sqft?: number;
 }
 
+function detectLeadSource(sourcePage?: string): string {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const utmSource = params.get("utm_source") || sessionStorage.getItem("utm_source") || "";
+    const utmMedium = params.get("utm_medium") || sessionStorage.getItem("utm_medium") || "";
+    const page = sourcePage || window.location.pathname;
+
+    if (utmSource === "google" && utmMedium === "cpc") return "Google Ads";
+    if (utmSource === "facebook" || utmSource === "instagram") return "Facebook/Instagram Ads";
+    if (utmSource === "google" && utmMedium === "organic") return "Google Organic";
+    if (page?.includes("cost-calculator") || page?.includes("palm-tree-cost")) return "Cost Calculator";
+    if (page?.includes("holiday-lighting")) return "Holiday Lighting Page";
+    if (page?.includes("emergency")) return "Emergency Page";
+    if (page?.includes("hoa") || page?.includes("commercial")) return "HOA/Commercial Page";
+    if (document?.referrer?.includes("google")) return "Google Organic";
+    if (document?.referrer?.includes("facebook")) return "Facebook Organic";
+    return "Direct / Unknown";
+  } catch {
+    return "Direct / Unknown";
+  }
+}
+
+// Store UTM params on page load
+function storeUtmParams() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const keys = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"];
+    keys.forEach(k => {
+      const v = params.get(k);
+      if (v) sessionStorage.setItem(k, v);
+    });
+  } catch {}
+}
+
+// Auto-store on import
+storeUtmParams();
+
 export async function submitLead(data: LeadData): Promise<{ success: boolean; error?: string }> {
   try {
+    const leadSource = detectLeadSource(data.source);
+
     // Insert lead into database
     const { data: lead, error: insertError } = await supabase
       .from("leads")
@@ -25,6 +64,7 @@ export async function submitLead(data: LeadData): Promise<{ success: boolean; er
         location: data.location || null,
         message: data.message || null,
         sqft: data.sqft || null,
+        lead_source: leadSource,
       })
       .select("id")
       .single();
@@ -59,6 +99,7 @@ export async function submitLead(data: LeadData): Promise<{ success: boolean; er
       source: data.source || "website",
       service: data.service,
       location: data.location,
+      lead_source: leadSource,
     });
 
     return { success: true };
@@ -66,4 +107,5 @@ export async function submitLead(data: LeadData): Promise<{ success: boolean; er
     console.error("Lead submission error:", err);
     return { success: false, error: err instanceof Error ? err.message : "Failed to submit" };
   }
+}
 }
