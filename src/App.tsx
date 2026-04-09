@@ -34,6 +34,7 @@ const PalmTreeCost = lazy(() => import("./pages/PalmTreeCost"));
 const HoaCommercialMaintenance = lazy(() => import("./pages/HoaCommercialMaintenance"));
 const HurricanePalmPreparation = lazy(() => import("./pages/HurricanePalmPreparation"));
 const EmergencyPalmService = lazy(() => import("./pages/EmergencyPalmService"));
+const HolidayLighting = lazy(() => import("./pages/HolidayLighting"));
 const GalleryPage = lazy(() => import("./pages/Gallery"));
 const ThankYou = lazy(() => import("./pages/ThankYou"));
 const Referral = lazy(() => import("./pages/Referral"));
