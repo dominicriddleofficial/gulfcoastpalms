@@ -231,7 +231,9 @@ export default function PlatformJobs() {
 }
 
 function JobDetailPanel({ job }: { job: JobberJob }) {
+  const { selectedBusinessId } = usePlatformAuth();
   const [requestingReview, setRequestingReview] = useState(false);
+  const [jobStatus, setJobStatus] = useState(job.visit_status || job.status || "scheduled");
 
   const requestReview = async () => {
     if (!job.client_phone) {
