@@ -165,16 +165,15 @@ export default function PlatformDashboard() {
     },
   });
 
-  // Card 4 — Late Jobs
-  const { data: lateJobs = 0 } = useQuery({
-    queryKey: ["dashboard-late", selectedBusinessId],
+  // Card 4 — Jobs This Month
+  const { data: jobsThisMonth = 0 } = useQuery({
+    queryKey: ["jobs-this-month", selectedBusinessId],
     queryFn: async () => {
-      const todayStr = format(now, "yyyy-MM-dd");
       let q = supabase
         .from("jobber_jobs")
         .select("id", { count: "exact", head: true })
-        .lt("scheduled_start", `${todayStr}T00:00:00`)
-        .neq("status", "completed");
+        .gte("scheduled_start", monthStart)
+        .lte("scheduled_start", monthEnd);
       if (selectedBusinessId) q = q.eq("business_id", selectedBusinessId);
       const { count } = await q;
       return count ?? 0;
