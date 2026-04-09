@@ -1,0 +1,1 @@
+ALTER TABLE public.platform_quotes ADD COLUMN IF NOT EXISTS scope_of_work text;

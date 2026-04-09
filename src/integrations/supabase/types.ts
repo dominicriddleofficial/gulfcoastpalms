@@ -2846,6 +2846,7 @@ export type Database = {
           public_notes: string | null
           quote_number: string
           quote_stage: string | null
+          scope_of_work: string | null
           sent_at: string | null
           status: string
           subtotal: number | null
@@ -2884,6 +2885,7 @@ export type Database = {
           public_notes?: string | null
           quote_number: string
           quote_stage?: string | null
+          scope_of_work?: string | null
           sent_at?: string | null
           status?: string
           subtotal?: number | null
@@ -2922,6 +2924,7 @@ export type Database = {
           public_notes?: string | null
           quote_number?: string
           quote_stage?: string | null
+          scope_of_work?: string | null
           sent_at?: string | null
           status?: string
           subtotal?: number | null
