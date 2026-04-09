@@ -8,7 +8,7 @@ import {
   DollarSign,
   TrendingUp,
   Briefcase,
-  AlertTriangle,
+  Calendar,
   Clock,
   MapPin,
   CalendarDays,
