@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+import PropertyNotesForm from "@/components/platform/customers/PropertyNotesForm";
+import RecurringContractForm from "@/components/platform/customers/RecurringContractForm";
 
 type JobberCustomer = {
   id: string;
