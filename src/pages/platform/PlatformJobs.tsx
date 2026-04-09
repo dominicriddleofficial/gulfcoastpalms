@@ -77,7 +77,7 @@ export default function PlatformJobs() {
       setLoading(true);
       const { data } = await supabase
         .from("jobber_jobs")
-        .select("id, jobber_id, title, status, visit_status, scheduled_start, scheduled_end, client_name, client_phone, property_address, assigned_employee_names, internal_notes, job_number, total_amount")
+        .select("id, jobber_id, title, status, visit_status, scheduled_start, scheduled_end, client_name, client_phone, property_address, assigned_employee_names, internal_notes, job_number, total_amount, business_id")
         .order("scheduled_start", { ascending: false, nullsFirst: false });
       setJobs((data as JobberJob[]) || []);
       setLoading(false);
