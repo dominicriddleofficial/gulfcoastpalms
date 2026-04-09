@@ -66,6 +66,30 @@ export default function PlatformInvoices() {
     refetch();
   };
 
+  const sendOverdueReminder = async (inv: PlatformInvoice) => {
+    if (!inv.customer_phone) {
+      toast.error("No phone number on file for this customer");
+      return;
+    }
+    const shortcode = inv.invoice_number?.split("-")[0]?.toLowerCase() || "gcp";
+    const paymentUrl = `${window.location.origin}/pay/${shortcode}/${inv.id}`;
+    const amount = Number(inv.balance_due || inv.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2 });
+    const message = `Hi ${inv.customer_name || "there"}, this is a friendly reminder that your invoice from Gulf Coast Palms for $${amount} is past due. Pay here: ${paymentUrl} Questions? Call (850) 910-1290.`;
+
+    try {
+      const { error } = await supabase.functions.invoke("send-sms", {
+        body: { to: inv.customer_phone, message },
+      });
+      if (error) {
+        toast.error("Failed to send reminder: " + error.message);
+      } else {
+        toast.success(`Reminder sent to ${inv.customer_phone}`);
+      }
+    } catch (e: any) {
+      toast.error("SMS failed: " + e.message);
+    }
+  };
+
   // If no business is selected, require one for creating
   const canCreate = !!selectedBusinessId;
 
