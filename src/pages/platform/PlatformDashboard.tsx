@@ -8,7 +8,7 @@ import {
   DollarSign,
   TrendingUp,
   Briefcase,
-  AlertTriangle,
+  Calendar,
   Clock,
   MapPin,
   CalendarDays,
@@ -165,16 +165,15 @@ export default function PlatformDashboard() {
     },
   });
 
-  // Card 4 — Late Jobs
-  const { data: lateJobs = 0 } = useQuery({
-    queryKey: ["dashboard-late", selectedBusinessId],
+  // Card 4 — Jobs This Month
+  const { data: jobsThisMonth = 0 } = useQuery({
+    queryKey: ["jobs-this-month", selectedBusinessId],
     queryFn: async () => {
-      const todayStr = format(now, "yyyy-MM-dd");
       let q = supabase
         .from("jobber_jobs")
         .select("id", { count: "exact", head: true })
-        .lt("scheduled_start", `${todayStr}T00:00:00`)
-        .neq("status", "completed");
+        .gte("scheduled_start", monthStart)
+        .lte("scheduled_start", monthEnd);
       if (selectedBusinessId) q = q.eq("business_id", selectedBusinessId);
       const { count } = await q;
       return count ?? 0;
@@ -266,12 +265,7 @@ export default function PlatformDashboard() {
             <KPICard label="Revenue This Week" value={`$${Math.round(revenueThisWeek).toLocaleString()}`} icon={TrendingUp} />
             <KPICard label="Revenue This Month" value={`$${Math.round(revenueThisMonth).toLocaleString()}`} icon={DollarSign} />
             <KPICard label="Jobs This Week" value={jobsThisWeek.toString()} icon={Briefcase} />
-            <KPICard
-              label="Late Jobs"
-              value={lateJobs.toString()}
-              icon={AlertTriangle}
-              valueColor={lateJobs > 0 ? "#f87171" : "#fff"}
-            />
+            <KPICard label="Jobs This Month" value={jobsThisMonth.toString()} icon={Calendar} />
           </div>
 
           {/* Chart */}
