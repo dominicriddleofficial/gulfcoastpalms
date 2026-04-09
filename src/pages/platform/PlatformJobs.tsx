@@ -295,6 +295,16 @@ function JobDetailPanel({ job }: { job: JobberJob }) {
         <p className="font-body text-xs text-muted-foreground mt-1">Managed in Jobber</p>
       </div>
 
+      {/* Job Status Progress */}
+      <JobStatusProgress
+        jobId={job.id}
+        businessId={job.business_id}
+        clientName={job.client_name}
+        clientPhone={job.client_phone}
+        currentStatus={jobStatus}
+        onStatusChange={(s) => setJobStatus(s)}
+      />
+
       {isCompleted && job.client_phone && (
         <div className="flex gap-2">
           <Button size="sm" className="flex-1 font-body text-xs" onClick={requestReview} disabled={requestingReview}>
