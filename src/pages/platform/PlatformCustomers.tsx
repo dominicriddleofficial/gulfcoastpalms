@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+import PropertyNotesForm from "@/components/platform/customers/PropertyNotesForm";
+import RecurringContractForm from "@/components/platform/customers/RecurringContractForm";
 
 type JobberCustomer = {
   id: string;
@@ -148,6 +150,7 @@ export default function PlatformCustomers() {
 }
 
 function CustomerDetail({ customer }: { customer: JobberCustomer }) {
+  const { selectedBusinessId } = usePlatformAuth();
   const [properties, setProperties] = useState<JobberProperty[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -231,6 +234,16 @@ function CustomerDetail({ customer }: { customer: JobberCustomer }) {
         <p className="font-body text-xs text-muted-foreground/70">Jobber ID: {customer.jobber_id}</p>
         <p className="font-body text-xs text-muted-foreground/70">First synced {format(new Date(customer.created_at), "MMM d, yyyy")}</p>
       </div>
+
+      {/* Property Notes */}
+      {selectedBusinessId && (
+        <PropertyNotesForm customerId={customer.id} businessId={selectedBusinessId} />
+      )}
+
+      {/* Recurring Contracts */}
+      {selectedBusinessId && (
+        <RecurringContractForm customerId={customer.id} businessId={selectedBusinessId} />
+      )}
     </div>
   );
 }

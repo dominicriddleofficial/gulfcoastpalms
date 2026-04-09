@@ -20,6 +20,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import JobStatusProgress from "@/components/platform/jobs/JobStatusProgress";
 
 type JobberJob = {
   id: string;
@@ -230,7 +231,9 @@ export default function PlatformJobs() {
 }
 
 function JobDetailPanel({ job }: { job: JobberJob }) {
+  const { selectedBusinessId } = usePlatformAuth();
   const [requestingReview, setRequestingReview] = useState(false);
+  const [jobStatus, setJobStatus] = useState(job.visit_status || job.status || "scheduled");
 
   const requestReview = async () => {
     if (!job.client_phone) {
@@ -276,7 +279,7 @@ function JobDetailPanel({ job }: { job: JobberJob }) {
     }
   };
 
-  const isCompleted = (job.visit_status || job.status || "").toLowerCase() === "completed";
+  const isCompleted = jobStatus.toLowerCase() === "completed" || jobStatus.toLowerCase() === "complete";
 
   return (
     <div className="space-y-5 pt-4">
@@ -291,6 +294,16 @@ function JobDetailPanel({ job }: { job: JobberJob }) {
         <h3 className="font-body text-lg font-semibold text-foreground">{job.title || "Untitled Job"}</h3>
         <p className="font-body text-xs text-muted-foreground mt-1">Managed in Jobber</p>
       </div>
+
+      {/* Job Status Progress */}
+      <JobStatusProgress
+        jobId={job.id}
+        businessId={job.business_id}
+        clientName={job.client_name}
+        clientPhone={job.client_phone}
+        currentStatus={jobStatus}
+        onStatusChange={(s) => setJobStatus(s)}
+      />
 
       {isCompleted && job.client_phone && (
         <div className="flex gap-2">

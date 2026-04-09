@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import RouteView from "@/components/platform/schedule/RouteView";
 import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
@@ -31,7 +32,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 type ViewMode = "day" | "week";
-type ScheduleTab = "jobber" | "combined" | "unscheduled";
+type ScheduleTab = "jobber" | "combined" | "unscheduled" | "route";
 
 type JobberJob = {
   id: string;
@@ -78,6 +79,17 @@ export default function PlatformSchedule() {
   const [scheduleTab, setScheduleTab] = useState<ScheduleTab>("jobber");
   const [syncing, setSyncing] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobberJob | null>(null);
+
+  // Google Maps key for route view
+  const { data: mapsKey } = useQuery({
+    queryKey: ["google-maps-key"],
+    queryFn: async () => {
+      const { data } = await supabase.functions.invoke("maps-config");
+      return data?.apiKey || null;
+    },
+    enabled: scheduleTab === "route",
+    staleTime: Infinity,
+  });
 
   // Jobber tab — scoped to active business, only scheduled jobs
   const { data: jobberJobs = [], isLoading: loading, refetch: refetchJobs } = useQuery({
@@ -263,7 +275,7 @@ export default function PlatformSchedule() {
 
         {/* Schedule tab selector */}
         <div className="flex items-center gap-0.5 bg-card border border-border rounded-lg p-0.5 w-fit">
-          {(["jobber", "combined", "unscheduled"] as const).map((tab) => (
+          {(["jobber", "combined", "route", "unscheduled"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setScheduleTab(tab)}
@@ -272,7 +284,7 @@ export default function PlatformSchedule() {
                 scheduleTab === tab ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
               )}
             >
-              {tab === "jobber" ? "Jobber" : tab === "combined" ? "Combined" : "Unscheduled"}
+              {tab === "jobber" ? "Jobber" : tab === "combined" ? "Combined" : tab === "route" ? "Route" : "Unscheduled"}
               {tab === "unscheduled" && unscheduledJobs.length > 0 && (
                 <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-medium leading-none">
                   {unscheduledJobs.length}
@@ -304,8 +316,10 @@ export default function PlatformSchedule() {
           </div>
         )}
 
-        {/* Unscheduled tab content */}
-        {scheduleTab === "unscheduled" ? (
+        {/* Route tab content */}
+        {scheduleTab === "route" ? (
+          <RouteView jobs={scheduledJobs} googleMapsKey={mapsKey ?? null} />
+        ) : scheduleTab === "unscheduled" ? (
           <div className="space-y-4">
             {unscheduledLoading ? (
               <div className="space-y-3">
