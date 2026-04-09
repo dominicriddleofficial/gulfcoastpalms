@@ -78,7 +78,7 @@ export default function HolidayLighting() {
       <SEOHead
         title="Holiday Lighting Installation NW Florida | Navarre, Gulf Breeze, Fort Walton | Gulf Coast Palms"
         description="Professional holiday lighting installation and removal for homes, vacation rentals, and HOA communities in Navarre, Gulf Breeze, Fort Walton Beach, and the Emerald Coast."
-        canonical="https://gulfcoastpalmservices.com/holiday-lighting"
+        canonicalUrl="https://gulfcoastpalmservices.com/holiday-lighting"
       />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />

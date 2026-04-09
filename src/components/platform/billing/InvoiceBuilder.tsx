@@ -45,6 +45,7 @@ interface SendInvoiceData {
   subject: string;
   message: string;
   ccEmail: string;
+  sendSms?: boolean;
 }
 
 interface InvoiceBuilderProps {
