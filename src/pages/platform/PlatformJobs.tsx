@@ -279,7 +279,7 @@ function JobDetailPanel({ job }: { job: JobberJob }) {
     }
   };
 
-  const isCompleted = (job.visit_status || job.status || "").toLowerCase() === "completed";
+  const isCompleted = jobStatus.toLowerCase() === "completed" || jobStatus.toLowerCase() === "complete";
 
   return (
     <div className="space-y-5 pt-4">
