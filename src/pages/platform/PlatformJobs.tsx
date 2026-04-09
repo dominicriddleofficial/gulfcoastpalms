@@ -36,6 +36,7 @@ type JobberJob = {
   internal_notes: string | null;
   job_number: string | null;
   total_amount: number | null;
+  business_id: string | null;
 };
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
