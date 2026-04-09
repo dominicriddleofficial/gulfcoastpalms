@@ -3,6 +3,7 @@ import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Search,
@@ -13,10 +14,12 @@ import {
   User,
   MapPin,
   FileText,
+  Star,
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 type JobberJob = {
   id: string;
@@ -33,6 +36,7 @@ type JobberJob = {
   internal_notes: string | null;
   job_number: string | null;
   total_amount: number | null;
+  business_id: string | null;
 };
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
@@ -73,7 +77,7 @@ export default function PlatformJobs() {
       setLoading(true);
       const { data } = await supabase
         .from("jobber_jobs")
-        .select("id, jobber_id, title, status, visit_status, scheduled_start, scheduled_end, client_name, client_phone, property_address, assigned_employee_names, internal_notes, job_number, total_amount")
+        .select("id, jobber_id, title, status, visit_status, scheduled_start, scheduled_end, client_name, client_phone, property_address, assigned_employee_names, internal_notes, job_number, total_amount, business_id")
         .order("scheduled_start", { ascending: false, nullsFirst: false });
       setJobs((data as JobberJob[]) || []);
       setLoading(false);
@@ -226,6 +230,54 @@ export default function PlatformJobs() {
 }
 
 function JobDetailPanel({ job }: { job: JobberJob }) {
+  const [requestingReview, setRequestingReview] = useState(false);
+
+  const requestReview = async () => {
+    if (!job.client_phone) {
+      toast.error("No phone number on file for this customer");
+      return;
+    }
+    setRequestingReview(true);
+    try {
+      const firstName = job.client_name?.split(" ")[0] || "there";
+      const message = `Hi ${firstName}! The team at Gulf Coast Palms just finished up at your property. If we did a great job today we'd really appreciate a quick Google review — it takes less than 60 seconds and means the world to us 🌴 https://g.page/r/CWzVK9t91qF_EAE/review Reply STOP to opt out.`;
+      const { error } = await supabase.functions.invoke("send-sms", {
+        body: { to: job.client_phone, message },
+      });
+      if (error) {
+        toast.error("Failed to send review request");
+      } else {
+        toast.success(`Review request sent to ${job.client_name}`);
+      }
+    } catch {
+      toast.error("SMS failed");
+    }
+    setRequestingReview(false);
+  };
+
+  const scheduleReview = async () => {
+    if (!job.client_phone || !job.business_id) {
+      toast.error("Missing phone or business info");
+      return;
+    }
+    const scheduledFor = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+    const { error } = await supabase.from("review_requests").insert({
+      job_id: job.id,
+      business_id: job.business_id,
+      customer_name: job.client_name,
+      customer_phone: job.client_phone,
+      scheduled_for: scheduledFor,
+      status: "pending",
+    });
+    if (error) {
+      toast.error("Failed to schedule review request");
+    } else {
+      toast.success("Review request scheduled for 2 hours from now");
+    }
+  };
+
+  const isCompleted = (job.visit_status || job.status || "").toLowerCase() === "completed";
+
   return (
     <div className="space-y-5 pt-4">
       <SheetHeader>
@@ -239,6 +291,17 @@ function JobDetailPanel({ job }: { job: JobberJob }) {
         <h3 className="font-body text-lg font-semibold text-foreground">{job.title || "Untitled Job"}</h3>
         <p className="font-body text-xs text-muted-foreground mt-1">Managed in Jobber</p>
       </div>
+
+      {isCompleted && job.client_phone && (
+        <div className="flex gap-2">
+          <Button size="sm" className="flex-1 font-body text-xs" onClick={requestReview} disabled={requestingReview}>
+            <Star className="w-3.5 h-3.5 mr-1" /> {requestingReview ? "Sending…" : "Request Review Now"}
+          </Button>
+          <Button size="sm" variant="outline" className="font-body text-xs" onClick={scheduleReview}>
+            <Clock className="w-3.5 h-3.5 mr-1" /> Schedule (2hr)
+          </Button>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         <InfoBlock icon={User} label="Customer" value={job.client_name || "—"} />

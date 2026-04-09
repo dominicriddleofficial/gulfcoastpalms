@@ -16,7 +16,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import {
   Search, Plus, Receipt, DollarSign, Clock, User,
   AlertTriangle, Send, Link2, ExternalLink, Trash2, Edit, Copy, Download,
-  MoreHorizontal,
+  MoreHorizontal, MessageSquare,
 } from "lucide-react";
 import { format, formatDistanceToNow, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -64,6 +64,40 @@ export default function PlatformInvoices() {
     }).eq("id", inv.id);
     toast.success("Invoice marked as sent");
     refetch();
+  };
+
+  const sendOverdueReminder = async (inv: PlatformInvoice) => {
+    // Look up customer phone
+    let phone: string | null = null;
+    if (inv.customer_id) {
+      const { data: cust } = await supabase
+        .from("platform_customers")
+        .select("phone")
+        .eq("id", inv.customer_id)
+        .single();
+      phone = cust?.phone || null;
+    }
+    if (!phone) {
+      toast.error("No phone number on file for this customer");
+      return;
+    }
+    const shortcode = inv.invoice_number?.split("-")[0]?.toLowerCase() || "gcp";
+    const paymentUrl = `${window.location.origin}/pay/${shortcode}/${inv.id}`;
+    const amount = Number(inv.balance_due || inv.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2 });
+    const message = `Hi ${inv.customer_name || "there"}, this is a friendly reminder that your invoice from Gulf Coast Palms for $${amount} is past due. Pay here: ${paymentUrl} Questions? Call (850) 910-1290.`;
+
+    try {
+      const { error } = await supabase.functions.invoke("send-sms", {
+        body: { to: phone, message },
+      });
+      if (error) {
+        toast.error("Failed to send reminder: " + error.message);
+      } else {
+        toast.success(`Reminder sent to ${phone}`);
+      }
+    } catch (e: any) {
+      toast.error("SMS failed: " + e.message);
+    }
   };
 
   // If no business is selected, require one for creating
@@ -183,6 +217,11 @@ export default function PlatformInvoices() {
                           {["draft", "sent"].includes(inv.status) && (
                             <DropdownMenuItem className="font-body text-xs" onClick={() => markSent(inv)}>
                               <Send className="w-3.5 h-3.5 mr-2" /> Send
+                            </DropdownMenuItem>
+                          )}
+                          {displayState === "overdue" && (
+                            <DropdownMenuItem className="font-body text-xs" onClick={() => sendOverdueReminder(inv)}>
+                              <MessageSquare className="w-3.5 h-3.5 mr-2" /> Send Reminder SMS
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuItem className="font-body text-xs" onClick={() => setSelectedInvoice(inv)}>

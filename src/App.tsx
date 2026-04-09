@@ -34,6 +34,7 @@ const PalmTreeCost = lazy(() => import("./pages/PalmTreeCost"));
 const HoaCommercialMaintenance = lazy(() => import("./pages/HoaCommercialMaintenance"));
 const HurricanePalmPreparation = lazy(() => import("./pages/HurricanePalmPreparation"));
 const EmergencyPalmService = lazy(() => import("./pages/EmergencyPalmService"));
+const HolidayLighting = lazy(() => import("./pages/HolidayLighting"));
 const GalleryPage = lazy(() => import("./pages/Gallery"));
 const ThankYou = lazy(() => import("./pages/ThankYou"));
 const Referral = lazy(() => import("./pages/Referral"));
@@ -163,6 +164,7 @@ const App = () => (
                   <Route path="/hoa-commercial-palm-maintenance" element={<HoaCommercialMaintenance />} />
                   <Route path="/hurricane-palm-preparation" element={<HurricanePalmPreparation />} />
                   <Route path="/emergency-palm-service" element={<EmergencyPalmService />} />
+                  <Route path="/holiday-lighting" element={<HolidayLighting />} />
                   <Route path="/gallery" element={<GalleryPage />} />
                   <Route path="/palm-trees/types" element={<PalmTreeTypes />} />
                   <Route path="/palm-trees/buy" element={<BuyPalmTrees />} />

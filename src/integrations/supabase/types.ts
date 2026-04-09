@@ -551,6 +551,54 @@ export type Database = {
           },
         ]
       }
+      customer_property_notes: {
+        Row: {
+          access_restrictions: string | null
+          business_id: string
+          created_at: string | null
+          customer_id: string
+          dog_notes: string | null
+          equipment_notes: string | null
+          gate_code: string | null
+          general_notes: string | null
+          has_dogs: boolean | null
+          hoa_requirements: string | null
+          id: string
+          parking_instructions: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          access_restrictions?: string | null
+          business_id: string
+          created_at?: string | null
+          customer_id: string
+          dog_notes?: string | null
+          equipment_notes?: string | null
+          gate_code?: string | null
+          general_notes?: string | null
+          has_dogs?: boolean | null
+          hoa_requirements?: string | null
+          id?: string
+          parking_instructions?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          access_restrictions?: string | null
+          business_id?: string
+          created_at?: string | null
+          customer_id?: string
+          dog_notes?: string | null
+          equipment_notes?: string | null
+          gate_code?: string | null
+          general_notes?: string | null
+          has_dogs?: boolean | null
+          hoa_requirements?: string | null
+          id?: string
+          parking_instructions?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       email_drip_enrollments: {
         Row: {
           created_at: string
@@ -1338,6 +1386,7 @@ export type Database = {
           hurricane_reminder_optin: boolean | null
           id: string
           last_contacted: string | null
+          lead_source: string | null
           location: string | null
           message: string | null
           name: string
@@ -1355,6 +1404,7 @@ export type Database = {
           hurricane_reminder_optin?: boolean | null
           id?: string
           last_contacted?: string | null
+          lead_source?: string | null
           location?: string | null
           message?: string | null
           name: string
@@ -1372,6 +1422,7 @@ export type Database = {
           hurricane_reminder_optin?: boolean | null
           id?: string
           last_contacted?: string | null
+          lead_source?: string | null
           location?: string | null
           message?: string | null
           name?: string
@@ -2418,6 +2469,7 @@ export type Database = {
           inquiry_name: string
           inquiry_phone: string | null
           landing_page_url: string | null
+          lead_source: string | null
           lead_status: string
           lost_reason: string | null
           message: string | null
@@ -2452,6 +2504,7 @@ export type Database = {
           inquiry_name: string
           inquiry_phone?: string | null
           landing_page_url?: string | null
+          lead_source?: string | null
           lead_status?: string
           lost_reason?: string | null
           message?: string | null
@@ -2486,6 +2539,7 @@ export type Database = {
           inquiry_name?: string
           inquiry_phone?: string | null
           landing_page_url?: string | null
+          lead_source?: string | null
           lead_status?: string
           lost_reason?: string | null
           message?: string | null
@@ -3134,6 +3188,54 @@ export type Database = {
         }
         Relationships: []
       }
+      recurring_contracts: {
+        Row: {
+          auto_renew: boolean | null
+          business_id: string
+          created_at: string | null
+          customer_id: string
+          end_date: string | null
+          frequency: string
+          id: string
+          next_scheduled_date: string | null
+          palm_count: number | null
+          price_per_visit: number
+          service_type: string
+          start_date: string
+          status: string | null
+        }
+        Insert: {
+          auto_renew?: boolean | null
+          business_id: string
+          created_at?: string | null
+          customer_id: string
+          end_date?: string | null
+          frequency: string
+          id?: string
+          next_scheduled_date?: string | null
+          palm_count?: number | null
+          price_per_visit: number
+          service_type: string
+          start_date: string
+          status?: string | null
+        }
+        Update: {
+          auto_renew?: boolean | null
+          business_id?: string
+          created_at?: string | null
+          customer_id?: string
+          end_date?: string | null
+          frequency?: string
+          id?: string
+          next_scheduled_date?: string | null
+          palm_count?: number | null
+          price_per_visit?: number
+          service_type?: string
+          start_date?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
       recurring_services: {
         Row: {
           client_id: string | null
@@ -3222,6 +3324,42 @@ export type Database = {
           referrer_email?: string | null
           referrer_name?: string
           referrer_phone?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      review_requests: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          customer_name: string | null
+          customer_phone: string
+          id: string
+          job_id: string | null
+          scheduled_for: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          customer_name?: string | null
+          customer_phone: string
+          id?: string
+          job_id?: string | null
+          scheduled_for: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          customer_name?: string | null
+          customer_phone?: string
+          id?: string
+          job_id?: string | null
+          scheduled_for?: string
+          sent_at?: string | null
           status?: string
         }
         Relationships: []
@@ -3776,6 +3914,7 @@ export type Database = {
           inquiry_name: string
           inquiry_phone: string | null
           landing_page_url: string | null
+          lead_source: string | null
           lead_status: string
           lost_reason: string | null
           message: string | null
