@@ -14,7 +14,7 @@ interface SendInvoiceModalProps {
   dueDate: string;
   businessName: string;
   shortcode: string;
-  onSend: (data: { email: string; subject: string; message: string; ccEmail: string }) => Promise<void>;
+  onSend: (data: { email: string; subject: string; message: string; ccEmail: string; sendSms?: boolean }) => Promise<void>;
   onClose: () => void;
   saving: boolean;
 }
@@ -92,7 +92,7 @@ export default function SendInvoiceModal({
             <div className="bg-card border border-border rounded-lg p-3">
               <p className="font-body text-[10px] text-muted-foreground mb-1">Text message preview:</p>
               <p className="font-body text-xs text-foreground">
-                Hi {customerName}, your invoice from {businessName} is ready. Pay online here: [PAYMENT_LINK]
+                Hi {customerName}, your invoice from {businessName} is ready. Pay online here: [PAYMENT_LINK]. Reply STOP to unsubscribe.
               </p>
               <p className="font-body text-[10px] text-muted-foreground mt-2">→ {customerPhone || "No phone on file"}</p>
             </div>
@@ -101,7 +101,7 @@ export default function SendInvoiceModal({
 
         <DialogFooter className="mt-4">
           <Button variant="outline" onClick={onClose} className="font-body text-sm">Cancel</Button>
-          <Button onClick={() => onSend({ email, subject, message, ccEmail })} disabled={saving || (!sendEmail && !sendSms)} className="font-body text-sm">
+          <Button onClick={() => onSend({ email, subject, message, ccEmail, sendSms })} disabled={saving || (!sendEmail && !sendSms)} className="font-body text-sm">
             <Send className="w-3.5 h-3.5 mr-1.5" />
             {saving ? "Sending…" : "Send Invoice"}
           </Button>
