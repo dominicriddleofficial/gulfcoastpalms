@@ -108,4 +108,3 @@ export async function submitLead(data: LeadData): Promise<{ success: boolean; er
     return { success: false, error: err instanceof Error ? err.message : "Failed to submit" };
   }
 }
-}
