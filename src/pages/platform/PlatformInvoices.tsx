@@ -67,7 +67,17 @@ export default function PlatformInvoices() {
   };
 
   const sendOverdueReminder = async (inv: PlatformInvoice) => {
-    if (!inv.customer_phone) {
+    // Look up customer phone
+    let phone: string | null = null;
+    if (inv.customer_id) {
+      const { data: cust } = await supabase
+        .from("platform_customers")
+        .select("phone")
+        .eq("id", inv.customer_id)
+        .single();
+      phone = cust?.phone || null;
+    }
+    if (!phone) {
       toast.error("No phone number on file for this customer");
       return;
     }
@@ -78,12 +88,12 @@ export default function PlatformInvoices() {
 
     try {
       const { error } = await supabase.functions.invoke("send-sms", {
-        body: { to: inv.customer_phone, message },
+        body: { to: phone, message },
       });
       if (error) {
         toast.error("Failed to send reminder: " + error.message);
       } else {
-        toast.success(`Reminder sent to ${inv.customer_phone}`);
+        toast.success(`Reminder sent to ${phone}`);
       }
     } catch (e: any) {
       toast.error("SMS failed: " + e.message);
