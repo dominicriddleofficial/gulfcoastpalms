@@ -318,7 +318,7 @@ function QuoteDetail({ quote, biz, businesses, onUpdate, onClose }: {
   }, [quote.id]);
 
   const updateStatus = async (newStatus: string) => {
-    const updates: Record<string, unknown> = { status: newStatus };
+    const updates: { status: string; sent_at?: string; accepted_at?: string; declined_at?: string } = { status: newStatus };
     if (newStatus === "sent") updates.sent_at = new Date().toISOString();
     if (newStatus === "accepted") updates.accepted_at = new Date().toISOString();
     if (newStatus === "declined") updates.declined_at = new Date().toISOString();
