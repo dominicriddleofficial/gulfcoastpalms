@@ -5,24 +5,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-/**
- * Process Review Queue — runs on a schedule (every 15 minutes via pg_cron).
- * Finds pending review_requests that are due and sends SMS via SimpleTexting.
- *
- * To set up the cron job, run this SQL in the Supabase dashboard:
- *
- * SELECT cron.schedule(
- *   'process-review-queue',
- *   '*/15 * * * *',
- *   $$
- *   SELECT net.http_post(
- *     url:='https://qczcwyqpnxknqbmwpvna.supabase.co/functions/v1/process-review-queue',
- *     headers:='{"Content-Type": "application/json", "Authorization": "Bearer <SERVICE_ROLE_KEY>"}'::jsonb,
- *     body:='{}'::jsonb
- *   ) as request_id;
- *   $$
- * );
- */
+// Process Review Queue — runs on a schedule (every 15 minutes via pg_cron).
+// Finds pending review_requests that are due and sends SMS via SimpleTexting.
+// Set up cron: SELECT cron.schedule('process-review-queue', '*/15 * * * *', ...);
+// See README or migration notes for full cron SQL.
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
