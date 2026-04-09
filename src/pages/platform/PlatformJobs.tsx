@@ -3,6 +3,7 @@ import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Search,
@@ -13,10 +14,12 @@ import {
   User,
   MapPin,
   FileText,
+  Star,
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 type JobberJob = {
   id: string;
