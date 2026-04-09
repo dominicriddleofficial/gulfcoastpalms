@@ -32,7 +32,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 type ViewMode = "day" | "week";
-type ScheduleTab = "jobber" | "combined" | "unscheduled";
+type ScheduleTab = "jobber" | "combined" | "unscheduled" | "route";
 
 type JobberJob = {
   id: string;
