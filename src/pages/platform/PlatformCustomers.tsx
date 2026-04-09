@@ -234,6 +234,16 @@ function CustomerDetail({ customer }: { customer: JobberCustomer }) {
         <p className="font-body text-xs text-muted-foreground/70">Jobber ID: {customer.jobber_id}</p>
         <p className="font-body text-xs text-muted-foreground/70">First synced {format(new Date(customer.created_at), "MMM d, yyyy")}</p>
       </div>
+
+      {/* Property Notes */}
+      {selectedBusinessId && (
+        <PropertyNotesForm customerId={customer.id} businessId={selectedBusinessId} />
+      )}
+
+      {/* Recurring Contracts */}
+      {selectedBusinessId && (
+        <RecurringContractForm customerId={customer.id} businessId={selectedBusinessId} />
+      )}
     </div>
   );
 }
