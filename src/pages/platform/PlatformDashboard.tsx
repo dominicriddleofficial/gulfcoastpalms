@@ -265,12 +265,7 @@ export default function PlatformDashboard() {
             <KPICard label="Revenue This Week" value={`$${Math.round(revenueThisWeek).toLocaleString()}`} icon={TrendingUp} />
             <KPICard label="Revenue This Month" value={`$${Math.round(revenueThisMonth).toLocaleString()}`} icon={DollarSign} />
             <KPICard label="Jobs This Week" value={jobsThisWeek.toString()} icon={Briefcase} />
-            <KPICard
-              label="Late Jobs"
-              value={lateJobs.toString()}
-              icon={AlertTriangle}
-              valueColor={lateJobs > 0 ? "#f87171" : "#fff"}
-            />
+            <KPICard label="Jobs This Month" value={jobsThisMonth.toString()} icon={Calendar} />
           </div>
 
           {/* Chart */}
