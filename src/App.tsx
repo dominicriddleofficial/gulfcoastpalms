@@ -164,6 +164,7 @@ const App = () => (
                   <Route path="/hoa-commercial-palm-maintenance" element={<HoaCommercialMaintenance />} />
                   <Route path="/hurricane-palm-preparation" element={<HurricanePalmPreparation />} />
                   <Route path="/emergency-palm-service" element={<EmergencyPalmService />} />
+                  <Route path="/holiday-lighting" element={<HolidayLighting />} />
                   <Route path="/gallery" element={<GalleryPage />} />
                   <Route path="/palm-trees/types" element={<PalmTreeTypes />} />
                   <Route path="/palm-trees/buy" element={<BuyPalmTrees />} />
