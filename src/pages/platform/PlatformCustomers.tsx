@@ -150,6 +150,7 @@ export default function PlatformCustomers() {
 }
 
 function CustomerDetail({ customer }: { customer: JobberCustomer }) {
+  const { selectedBusinessId } = usePlatformAuth();
   const [properties, setProperties] = useState<JobberProperty[]>([]);
   const [loading, setLoading] = useState(true);
 
