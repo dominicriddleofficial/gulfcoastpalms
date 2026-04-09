@@ -80,6 +80,17 @@ export default function PlatformSchedule() {
   const [syncing, setSyncing] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobberJob | null>(null);
 
+  // Google Maps key for route view
+  const { data: mapsKey } = useQuery({
+    queryKey: ["google-maps-key"],
+    queryFn: async () => {
+      const { data } = await supabase.functions.invoke("maps-config");
+      return data?.apiKey || null;
+    },
+    enabled: scheduleTab === "route",
+    staleTime: Infinity,
+  });
+
   // Jobber tab — scoped to active business, only scheduled jobs
   const { data: jobberJobs = [], isLoading: loading, refetch: refetchJobs } = useQuery({
     queryKey: ["schedule-jobber", selectedBusinessId],
