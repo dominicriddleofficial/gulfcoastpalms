@@ -219,6 +219,11 @@ export default function PlatformInvoices() {
                               <Send className="w-3.5 h-3.5 mr-2" /> Send
                             </DropdownMenuItem>
                           )}
+                          {displayState === "overdue" && (
+                            <DropdownMenuItem className="font-body text-xs" onClick={() => sendOverdueReminder(inv)}>
+                              <MessageSquare className="w-3.5 h-3.5 mr-2" /> Send Reminder SMS
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem className="font-body text-xs" onClick={() => setSelectedInvoice(inv)}>
                             <Edit className="w-3.5 h-3.5 mr-2" /> View Details
                           </DropdownMenuItem>
