@@ -316,8 +316,10 @@ export default function PlatformSchedule() {
           </div>
         )}
 
-        {/* Unscheduled tab content */}
-        {scheduleTab === "unscheduled" ? (
+        {/* Route tab content */}
+        {scheduleTab === "route" ? (
+          <RouteView jobs={scheduledJobs} googleMapsKey={mapsKey ?? null} />
+        ) : scheduleTab === "unscheduled" ? (
           <div className="space-y-4">
             {unscheduledLoading ? (
               <div className="space-y-3">
