@@ -16,7 +16,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import {
   Search, Plus, Receipt, DollarSign, Clock, User,
   AlertTriangle, Send, Link2, ExternalLink, Trash2, Edit, Copy, Download,
-  MoreHorizontal,
+  MoreHorizontal, MessageSquare,
 } from "lucide-react";
 import { format, formatDistanceToNow, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
