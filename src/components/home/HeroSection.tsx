@@ -1,40 +1,23 @@
 import { motion } from "framer-motion";
 import { Phone, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { HERO_IMAGE_URL, HERO_IMAGE_RENDER_URL } from "@/data/assets";
+import { HERO_IMAGE_URL } from "@/data/assets";
 import HeroReviewBadge from "@/components/home/HeroReviewBadge";
 
 const HeroSection = () => {
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0">
-        <picture>
-          <source
-            media="(max-width: 768px)"
-            srcSet={`${HERO_IMAGE_RENDER_URL}?width=768&format=webp&quality=80`}
-            type="image/webp"
-          />
-          <source
-            media="(max-width: 1280px)"
-            srcSet={`${HERO_IMAGE_RENDER_URL}?width=1280&format=webp&quality=80`}
-            type="image/webp"
-          />
-          <source
-            media="(min-width: 1281px)"
-            srcSet={`${HERO_IMAGE_RENDER_URL}?width=1920&format=webp&quality=80`}
-            type="image/webp"
-          />
-          <img
-            src={HERO_IMAGE_URL}
-            alt="Gulf Coast Palms — Professional Palm Tree Trimming and Removal in NW Florida"
-            className="w-full h-full object-cover"
-            loading="eager"
-            fetchPriority="high"
-            decoding="async"
-            width={1920}
-            height={1080}
-          />
-        </picture>
+        <img
+          src={HERO_IMAGE_URL}
+          alt="Gulf Coast Palms — Professional Palm Tree Trimming and Removal in NW Florida"
+          className="w-full h-full object-cover"
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
+          width={1920}
+          height={1080}
+        />
         <div className="absolute inset-0 bg-gradient-to-b from-palm-dark/70 via-palm-dark/50 to-palm-dark/80" />
       </div>
 
