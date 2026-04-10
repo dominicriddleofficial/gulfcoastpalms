@@ -20,3 +20,7 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://qczcwyqpnxknq
 export const HERO_IMAGE_URL =
   import.meta.env.VITE_HERO_IMAGE_URL ||
   `${SUPABASE_URL}/storage/v1/object/public/site-assets/hero.jpg`;
+
+/** Render path for on-the-fly image transforms (width, format, quality) */
+export const HERO_IMAGE_RENDER_URL =
+  `${SUPABASE_URL}/storage/v1/render/image/public/site-assets/hero.jpg`;

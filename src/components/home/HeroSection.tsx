@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Phone, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { HERO_IMAGE_URL } from "@/data/assets";
+import { HERO_IMAGE_URL, HERO_IMAGE_RENDER_URL } from "@/data/assets";
 import HeroReviewBadge from "@/components/home/HeroReviewBadge";
 
 const HeroSection = () => {
@@ -11,17 +11,17 @@ const HeroSection = () => {
         <picture>
           <source
             media="(max-width: 768px)"
-            srcSet={`${HERO_IMAGE_URL}?width=768&format=webp&quality=80`}
+            srcSet={`${HERO_IMAGE_RENDER_URL}?width=768&format=webp&quality=80`}
             type="image/webp"
           />
           <source
             media="(max-width: 1280px)"
-            srcSet={`${HERO_IMAGE_URL}?width=1280&format=webp&quality=80`}
+            srcSet={`${HERO_IMAGE_RENDER_URL}?width=1280&format=webp&quality=80`}
             type="image/webp"
           />
           <source
             media="(min-width: 1281px)"
-            srcSet={`${HERO_IMAGE_URL}?width=1920&format=webp&quality=80`}
+            srcSet={`${HERO_IMAGE_RENDER_URL}?width=1920&format=webp&quality=80`}
             type="image/webp"
           />
           <img
