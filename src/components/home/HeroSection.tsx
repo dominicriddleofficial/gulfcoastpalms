@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Phone, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { HERO_IMAGE_URL } from "@/data/assets";
+import { HERO_IMAGE_URL, HERO_IMAGE_RENDER_URL } from "@/data/assets";
 import HeroReviewBadge from "@/components/home/HeroReviewBadge";
 
 const HeroSection = () => {
