@@ -1,10 +1,24 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+const ALLOWED_ORIGINS = [
+  "https://gulfcoastpalmservices.com",
+  "https://www.gulfcoastpalmservices.com",
+  "https://gulfcoastpalms.lovable.app",
+  "https://id-preview--2e9a44f0-ac4c-4ebd-ad4f-dd591d732484.lovable.app",
+  "http://localhost:5173",
+  "http://localhost:8080",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  };
+}
 
 const SYSTEM_PROMPT = `You are the Gulf Coast Palms AI assistant — a friendly, knowledgeable helper for a palm tree and landscaping company serving Florida's Emerald Coast.
 
@@ -45,6 +59,7 @@ BEHAVIOR:
 - Never make up specific prices — give ranges and say "text us a photo for an exact quote"`;
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
@@ -82,7 +97,6 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Clean up old records
     await supabaseAdmin.from("rate_limit_counters").delete().lt("window_start", new Date(Date.now() - 86400000).toISOString());
 
     const { data: existing } = await supabaseAdmin
@@ -135,14 +149,9 @@ serve(async (req) => {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI service temporarily unavailable." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
       const t = await response.text();
       console.error("AI gateway error:", response.status, t);
-      return new Response(JSON.stringify({ error: "AI service error" }), {
+      return new Response(JSON.stringify({ error: "AI service temporarily unavailable." }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -152,7 +161,7 @@ serve(async (req) => {
     });
   } catch (e) {
     console.error("chat-assistant error:", e);
-    return new Response(JSON.stringify({ error: true, message: e instanceof Error ? e.message : "Unknown error", code: "SERVER_ERROR" }), {
+    return new Response(JSON.stringify({ error: true, message: "An error occurred. Please try again.", code: "SERVER_ERROR" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

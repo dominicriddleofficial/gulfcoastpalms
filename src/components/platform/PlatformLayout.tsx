@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
+import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 import BusinessSwitcher from "./BusinessSwitcher";
 import QuickActionFAB from "./QuickActionFAB";
 import UniversalSearch from "./UniversalSearch";
@@ -103,6 +104,7 @@ function SidebarBizLogo({ business }: { business: { id: string; shortcode: strin
 
 export default function PlatformLayout({ children }: Props) {
   const auth = usePlatformAuth();
+  useSessionTimeout();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const autoSyncTriggered = useRef(false);

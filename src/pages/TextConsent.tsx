@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { textConsentSchema } from "@/lib/validation";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -24,17 +25,22 @@ const TextConsent = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const parsed = textConsentSchema.safeParse({ name, phone });
+    if (!parsed.success) {
+      toast({ title: "Please check the form", description: parsed.error.errors[0]?.message, variant: "destructive" });
+      return;
+    }
     setLoading(true);
 
     const { error } = await supabase.from("text_consents").insert({
-      name,
-      phone,
-      ip_address: null, // Would need a server-side call to get real IP
-      user_agent: navigator.userAgent,
+      name: parsed.data.name,
+      phone: parsed.data.phone,
+      ip_address: null,
+      user_agent: navigator.userAgent.substring(0, 500),
     });
 
     if (error) {
-      toast({ title: "Something went wrong", description: error.message, variant: "destructive" });
+      toast({ title: "Something went wrong", description: "Please try again.", variant: "destructive" });
       setLoading(false);
       return;
     }

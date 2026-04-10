@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Shield, Star, Truck, Lightbulb, MapPin, Calendar, CheckCircle } from "lucide-react";
 import { submitLead } from "@/lib/submit-lead";
+import { holidayLightingSchema } from "@/lib/validation";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -33,16 +34,20 @@ export default function HolidayLighting() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.phone) { toast.error("Name and phone are required"); return; }
+    const parsed = holidayLightingSchema.safeParse(form);
+    if (!parsed.success) {
+      toast.error(parsed.error.errors[0]?.message || "Please check the form");
+      return;
+    }
     setSubmitting(true);
     const result = await submitLead({
-      name: form.name,
-      phone: form.phone,
-      email: form.email || undefined,
+      name: parsed.data.name,
+      phone: parsed.data.phone,
+      email: parsed.data.email || undefined,
       service: "Holiday Lighting",
       source: "holiday-lighting",
-      message: `Property: ${form.propertyType} | Roofline: ${form.roofline} | Address: ${form.address} | ${form.notes}`,
-      location: form.address,
+      message: `Property: ${parsed.data.propertyType} | Roofline: ${parsed.data.roofline} | Address: ${parsed.data.address} | ${parsed.data.notes}`,
+      location: parsed.data.address || undefined,
     });
     setSubmitting(false);
     if (result.success) {

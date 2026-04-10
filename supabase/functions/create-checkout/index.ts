@@ -2,10 +2,23 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+const ALLOWED_ORIGINS = [
+  "https://gulfcoastpalmservices.com",
+  "https://www.gulfcoastpalmservices.com",
+  "https://gulfcoastpalms.lovable.app",
+  "https://id-preview--2e9a44f0-ac4c-4ebd-ad4f-dd591d732484.lovable.app",
+  "http://localhost:5173",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  };
+}
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -37,6 +50,7 @@ async function checkRateLimit(supabase: any, identifier: string, endpoint: strin
 }
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -153,9 +167,9 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    log("ERROR", { message: error.message });
-    return new Response(JSON.stringify({ error: true, message: error.message, code: "SERVER_ERROR" }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    log("ERROR", { message: (error as Error).message });
+    return new Response(JSON.stringify({ error: true, message: "Payment processing failed. Please try again.", code: "SERVER_ERROR" }), {
+      headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       status: 400,
     });
   }

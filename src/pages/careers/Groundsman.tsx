@@ -3,6 +3,7 @@ import SEOHead from "@/components/SEOHead";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { trackEvent } from "@/lib/analytics";
+import { careerApplicationSchema, sanitizeText } from "@/lib/validation";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,8 +46,9 @@ const GroundsmanCareers = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.full_name || !form.phone || !form.acknowledged) {
-      toast({ title: "Please fill in all required fields", variant: "destructive" });
+    const parsed = careerApplicationSchema.safeParse(form);
+    if (!parsed.success) {
+      toast({ title: "Please check the form", description: parsed.error.errors[0]?.message, variant: "destructive" });
       return;
     }
     setSubmitting(true);
