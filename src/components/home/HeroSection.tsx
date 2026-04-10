@@ -11,17 +11,17 @@ const HeroSection = () => {
         <picture>
           <source
             media="(max-width: 768px)"
-            srcSet={`${HERO_IMAGE_URL}?width=768&format=webp&quality=80`}
+            srcSet={`${HERO_IMAGE_RENDER_URL}?width=768&format=webp&quality=80`}
             type="image/webp"
           />
           <source
             media="(max-width: 1280px)"
-            srcSet={`${HERO_IMAGE_URL}?width=1280&format=webp&quality=80`}
+            srcSet={`${HERO_IMAGE_RENDER_URL}?width=1280&format=webp&quality=80`}
             type="image/webp"
           />
           <source
             media="(min-width: 1281px)"
-            srcSet={`${HERO_IMAGE_URL}?width=1920&format=webp&quality=80`}
+            srcSet={`${HERO_IMAGE_RENDER_URL}?width=1920&format=webp&quality=80`}
             type="image/webp"
           />
           <img
