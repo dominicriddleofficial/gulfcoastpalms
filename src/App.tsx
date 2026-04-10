@@ -10,16 +10,18 @@ import { trackPageView } from "@/lib/analytics";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
-// Eagerly loaded: high-traffic public pages
+// Eagerly loaded: only the homepage (highest traffic landing page)
 import Index from "./pages/Index";
-import Services from "./pages/Services";
-import Pensacola from "./pages/locations/Pensacola";
-import GulfBreeze from "./pages/locations/GulfBreeze";
-import Navarre from "./pages/locations/Navarre";
-import FortWaltonBeach from "./pages/locations/FortWaltonBeach";
-import Destin from "./pages/locations/Destin";
-import ThirtyA from "./pages/locations/ThirtyA";
-import PerdidoKey from "./pages/locations/PerdidoKey";
+
+// Location & service pages — lazy loaded (users land on Index first)
+const Services = lazy(() => import("./pages/Services"));
+const Pensacola = lazy(() => import("./pages/locations/Pensacola"));
+const GulfBreeze = lazy(() => import("./pages/locations/GulfBreeze"));
+const Navarre = lazy(() => import("./pages/locations/Navarre"));
+const FortWaltonBeach = lazy(() => import("./pages/locations/FortWaltonBeach"));
+const Destin = lazy(() => import("./pages/locations/Destin"));
+const ThirtyA = lazy(() => import("./pages/locations/ThirtyA"));
+const PerdidoKey = lazy(() => import("./pages/locations/PerdidoKey"));
 
 // Lazy loaded: public secondary pages
 const About = lazy(() => import("./pages/About"));

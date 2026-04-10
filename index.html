@@ -7,7 +7,13 @@
     <meta name="description" content="Gulf Coast Palms is Northwest Florida's palm tree specialist. Expert trimming, removal, and hurricane prep across Navarre, Pensacola, Destin, and the Emerald Coast.">
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700&display=swap" />
+    <!-- Preload hero image for fast LCP -->
+    <link rel="preload" as="image" href="https://qczcwyqpnxknqbmwpvna.supabase.co/storage/v1/object/public/site-assets/hero.jpg?width=768&format=webp&quality=80" media="(max-width: 768px)" type="image/webp" />
+    <link rel="preload" as="image" href="https://qczcwyqpnxknqbmwpvna.supabase.co/storage/v1/object/public/site-assets/hero.jpg?width=1920&format=webp&quality=80" media="(min-width: 769px)" type="image/webp" />
+    <!-- Non-render-blocking fonts -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" /></noscript>
     <meta name="author" content="Lovable" />
 
     <!-- TODO: Update og:title to match your application name -->
