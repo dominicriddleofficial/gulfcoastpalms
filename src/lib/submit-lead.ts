@@ -1,5 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { trackEvent } from "@/lib/analytics";
+import { leadFormSchema, sanitizeText } from "@/lib/validation";
+
 export interface LeadData {
   name: string;
   phone?: string;
@@ -50,20 +52,28 @@ storeUtmParams();
 
 export async function submitLead(data: LeadData): Promise<{ success: boolean; error?: string }> {
   try {
-    const leadSource = detectLeadSource(data.source);
+    // Validate and sanitize input
+    const parsed = leadFormSchema.safeParse(data);
+    if (!parsed.success) {
+      const firstError = parsed.error.errors[0]?.message || "Invalid form data";
+      return { success: false, error: firstError };
+    }
+    const clean = parsed.data;
+
+    const leadSource = detectLeadSource(clean.source);
 
     // Insert lead into database
     const { data: lead, error: insertError } = await supabase
       .from("leads")
       .insert({
-        name: data.name,
-        phone: data.phone || null,
-        email: data.email || null,
-        source: data.source || "website",
-        service: data.service || null,
-        location: data.location || null,
-        message: data.message || null,
-        sqft: data.sqft || null,
+        name: clean.name,
+        phone: clean.phone || null,
+        email: clean.email || null,
+        source: clean.source || "website",
+        service: clean.service || null,
+        location: clean.location || null,
+        message: clean.message || null,
+        sqft: clean.sqft || null,
         lead_source: leadSource,
       })
       .select("id")
