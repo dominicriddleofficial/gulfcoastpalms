@@ -1,16 +1,26 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const ALLOWED_ORIGINS = [
+  "https://gulfcoastpalmservices.com",
+  "https://www.gulfcoastpalmservices.com",
+  "https://gulfcoastpalms.lovable.app",
+  "https://id-preview--2e9a44f0-ac4c-4ebd-ad4f-dd591d732484.lovable.app",
+  "http://localhost:5173",
+  "http://localhost:8080",
+];
 
-/**
- * Send SMS via SimpleTexting API.
- * Requires SIMPLETEXTING_API_KEY secret to be configured.
- * Owner must add their API key in the backend secrets.
- */
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  };
+}
+
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -20,7 +30,7 @@ Deno.serve(async (req) => {
     if (!SIMPLETEXTING_API_KEY) {
       console.error("SIMPLETEXTING_API_KEY not configured");
       return new Response(
-        JSON.stringify({ success: false, error: "SMS service not configured. Add SIMPLETEXTING_API_KEY in backend secrets." }),
+        JSON.stringify({ success: false, error: "SMS service not configured." }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -34,15 +44,53 @@ Deno.serve(async (req) => {
       );
     }
 
+    if (typeof message !== "string" || message.length > 1600) {
+      return new Response(
+        JSON.stringify({ error: "Message too long" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const cleanPhone = to.replace(/\D/g, "");
-    if (cleanPhone.length < 10) {
+    if (cleanPhone.length < 10 || cleanPhone.length > 15) {
       return new Response(
         JSON.stringify({ error: "Invalid phone number" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`[send-sms] Sending SMS to ${cleanPhone}: ${message.substring(0, 50)}...`);
+    // Rate limiting: 10 per business per hour
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    await supabase.from("rate_limit_counters").delete().lt("window_start", cutoff).eq("endpoint", "send-sms");
+
+    const { data: rlData } = await supabase
+      .from("rate_limit_counters")
+      .select("request_count, id")
+      .eq("identifier", ip)
+      .eq("endpoint", "send-sms")
+      .gte("window_start", cutoff)
+      .maybeSingle();
+
+    if (rlData && rlData.request_count >= 20) {
+      return new Response(
+        JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (rlData) {
+      await supabase.from("rate_limit_counters").update({ request_count: rlData.request_count + 1 }).eq("id", rlData.id);
+    } else {
+      await supabase.from("rate_limit_counters").insert({ identifier: ip, endpoint: "send-sms", request_count: 1, window_start: new Date().toISOString() });
+    }
+
+    console.log(`[send-sms] Sending SMS to ${cleanPhone.substring(0, 6)}***`);
 
     const response = await fetch("https://api-app2.simpletexting.com/v2/api/messages", {
       method: "POST",
@@ -62,28 +110,22 @@ Deno.serve(async (req) => {
     try { result = JSON.parse(resultText); } catch { result = { raw: resultText }; }
 
     if (!response.ok) {
-      console.error(`[send-sms] SimpleTexting error (${response.status}):`, resultText);
+      console.error(`[send-sms] SimpleTexting error (${response.status})`);
 
-      // Log to error_logs
       try {
-        const supabase = createClient(
-          Deno.env.get("SUPABASE_URL")!,
-          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-        );
         await supabase.from("error_logs").insert({
-          error_message: `SMS send failed to ${cleanPhone}: ${response.status}`,
-          error_stack: resultText,
+          error_message: `SMS send failed: ${response.status}`,
           page_url: "/edge/send-sms",
         });
       } catch {}
 
       return new Response(
-        JSON.stringify({ success: false, error: `SimpleTexting error (${response.status}): ${resultText}` }),
+        JSON.stringify({ success: false, error: "SMS delivery failed. Please try again." }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`[send-sms] SMS sent successfully to ${cleanPhone}`);
+    console.log(`[send-sms] SMS sent successfully`);
     return new Response(
       JSON.stringify({ success: true, result }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -91,7 +133,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error("[send-sms] Exception:", error);
     return new Response(
-      JSON.stringify({ success: false, error: (error as Error).message }),
+      JSON.stringify({ success: false, error: "An error occurred. Please try again." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
