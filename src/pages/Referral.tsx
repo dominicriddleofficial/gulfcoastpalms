@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { referralFormSchema, sanitizeText } from "@/lib/validation";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -29,20 +30,25 @@ const Referral = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const parsed = referralFormSchema.safeParse(form);
+    if (!parsed.success) {
+      toast({ title: "Please check the form", description: parsed.error.errors[0]?.message, variant: "destructive" });
+      return;
+    }
     setLoading(true);
 
     const { error } = await supabase.from("referrals").insert({
-      referrer_name: form.referrerName,
-      referrer_phone: form.referrerPhone || null,
-      referrer_email: form.referrerEmail || null,
-      referred_name: form.referredName,
-      referred_phone: form.referredPhone || null,
-      referred_email: form.referredEmail || null,
-      referred_service: form.referredService || null,
+      referrer_name: parsed.data.referrerName,
+      referrer_phone: parsed.data.referrerPhone || null,
+      referrer_email: parsed.data.referrerEmail || null,
+      referred_name: parsed.data.referredName,
+      referred_phone: parsed.data.referredPhone || null,
+      referred_email: parsed.data.referredEmail || null,
+      referred_service: parsed.data.referredService || null,
     });
 
     if (error) {
-      toast({ title: "Something went wrong", description: error.message, variant: "destructive" });
+      toast({ title: "Something went wrong", description: "Please try again.", variant: "destructive" });
       setLoading(false);
       return;
     }

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { emergencyFormSchema } from "@/lib/validation";
 import { Phone, AlertTriangle, Clock, FileText, Shield, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -20,19 +21,23 @@ const EmergencyPalmService = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const parsed = emergencyFormSchema.safeParse(form);
+    if (!parsed.success) {
+      return; // HTML5 validation handles display
+    }
     try {
       const { submitLead } = await import("@/lib/submit-lead");
       await submitLead({
-        name: form.name,
-        phone: form.phone,
-        message: `EMERGENCY — ${form.address} — ${form.damage}`,
+        name: parsed.data.name,
+        phone: parsed.data.phone,
+        message: `EMERGENCY — ${parsed.data.address} — ${parsed.data.damage || ""}`,
         service: "Emergency Palm Service",
         source: "emergency-page",
-        location: form.address,
+        location: parsed.data.address,
       });
       setSubmitted(true);
     } catch {
-      setSubmitted(true); // show success anyway — lead is likely saved
+      setSubmitted(true);
     }
   };
 
