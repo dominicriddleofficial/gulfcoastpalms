@@ -12,12 +12,27 @@ Allow: /
 
 User-agent: *
 Allow: /
+Allow: /services/
+Allow: /palm-tree-trimming-*/
+Allow: /hoa-commercial-palm-maintenance
+Allow: /hurricane-palm-preparation
+Allow: /emergency-palm-service
+Allow: /holiday-lighting
+Allow: /palm-tree-cost
+Allow: /palm-tree-maintenance-plans
+Allow: /about
+Allow: /gallery
+Allow: /careers/
+Allow: /learn/
+Allow: /palm-trees/
+Allow: /referral
 
-Disallow: /admin
-Disallow: /ops
-Disallow: /platform
-Disallow: /employee
-Disallow: /pay
-Disallow: /app
+Disallow: /platform/
+Disallow: /admin/
+Disallow: /ops/
+Disallow: /pay/
+Disallow: /quote/
+Disallow: /app/
+Disallow: /employee/
 
 Sitemap: https://gulfcoastpalms.lovable.app/sitemap.xml
