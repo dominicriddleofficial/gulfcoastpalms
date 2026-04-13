@@ -64,9 +64,14 @@ export default function OpsSchedule() {
           {/* Date controls */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="font-display text-xl font-bold text-foreground">Schedule</h1>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="font-display text-xl font-bold text-foreground">Schedule</h1>
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-body font-medium">
+                  {jobs.filter(j => j.visit_status === "completed").length}/{jobs.length} complete
+                </span>
+              </div>
               <p className="font-body text-xs text-muted-foreground flex items-center gap-1">
-                {format(selectedDate, "EEEE, MMMM d")} · {filtered.length}/{jobs.length} jobs
+                {format(selectedDate, "EEEE, MMMM d")} · {filtered.length} shown
                 {loading && <Loader2 className="w-3 h-3 animate-spin" />}
                 {geocoding && <span className="text-primary">(geocoding…)</span>}
               </p>
