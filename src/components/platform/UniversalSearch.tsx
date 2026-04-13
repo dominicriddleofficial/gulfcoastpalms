@@ -4,12 +4,32 @@ import { Search, X, Users, FileText, Briefcase, Receipt, MapPin, Phone } from "l
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
+const JOB_STATUS_MAP: Record<string, { bg: string; text: string; label: string }> = {
+  upcoming: { bg: "rgba(59,130,246,0.15)", text: "#60a5fa", label: "Upcoming" },
+  scheduled: { bg: "rgba(59,130,246,0.15)", text: "#60a5fa", label: "Upcoming" },
+  action_required: { bg: "rgba(245,158,11,0.15)", text: "#fbbf24", label: "In Progress" },
+  requires_invoicing: { bg: "rgba(245,158,11,0.15)", text: "#fbbf24", label: "In Progress" },
+  late: { bg: "rgba(239,68,68,0.15)", text: "#f87171", label: "Late" },
+  completed: { bg: "rgba(34,197,94,0.15)", text: "#22c55e", label: "Complete" },
+  archived: { bg: "rgba(34,197,94,0.15)", text: "#22c55e", label: "Complete" },
+};
+
+function getJobStatusStyle(status: string) {
+  return JOB_STATUS_MAP[status.toLowerCase()] ?? JOB_STATUS_MAP.scheduled;
+}
+
 interface SearchResult {
   type: "customer" | "lead" | "quote" | "job" | "invoice" | "property" | "crew";
   id: string;
   title: string;
   subtitle: string;
   path: string;
+  meta?: {
+    statusLabel?: string;
+    statusBg?: string;
+    statusText?: string;
+    amount?: number | null;
+  };
 }
 
 const TYPE_META: Record<string, { label: string; icon: typeof Users }> = {
@@ -126,11 +146,21 @@ export default function UniversalSearch({ businessId }: Props) {
         });
       });
 
-      jobberJobs.data?.forEach(j => allResults.push({
-        type: "job", id: j.id, title: j.client_name ?? j.title ?? j.job_number ?? "Job",
-        subtitle: [j.job_number, j.property_address, j.status, j.total_amount ? `$${Number(j.total_amount).toLocaleString()}` : null].filter(Boolean).join(" · "),
-        path: "/platform/jobs",
-      }));
+      jobberJobs.data?.forEach(j => {
+        const statusStyle = getJobStatusStyle(j.status);
+        allResults.push({
+          type: "job", id: j.id,
+          title: j.client_name ?? j.title ?? j.job_number ?? "Job",
+          subtitle: [j.job_number, j.property_address].filter(Boolean).join(" · "),
+          path: "/platform/jobs",
+          meta: {
+            statusLabel: statusStyle.label,
+            statusBg: statusStyle.bg,
+            statusText: statusStyle.text,
+            amount: j.total_amount ? Number(j.total_amount) : null,
+          },
+        });
+      });
 
       jobberProps.data?.forEach(p => allResults.push({
         type: "property", id: p.id, title: [p.street1, p.city].filter(Boolean).join(", ") || "Property",
@@ -256,9 +286,22 @@ export default function UniversalSearch({ businessId }: Props) {
                         onClick={() => handleSelect(item)}
                         className="w-full text-left px-3 py-2 rounded-lg hover:bg-secondary/50 transition-colors group flex items-center gap-2"
                       >
-                        <span className="text-sm font-medium font-body text-foreground">{item.title}</span>
+                        <span className="text-sm font-medium font-body text-foreground truncate">{item.title}</span>
                         {item.subtitle && (
                           <span className="text-xs text-muted-foreground truncate">{item.subtitle}</span>
+                        )}
+                        {item.meta?.statusLabel && (
+                          <span
+                            className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-body font-medium shrink-0"
+                            style={{ backgroundColor: item.meta.statusBg, color: item.meta.statusText }}
+                          >
+                            {item.meta.statusLabel}
+                          </span>
+                        )}
+                        {item.meta?.amount != null && item.meta.amount > 0 && (
+                          <span className="ml-auto text-xs font-body font-semibold text-foreground shrink-0">
+                            ${item.meta.amount.toLocaleString()}
+                          </span>
                         )}
                       </button>
                     ))}

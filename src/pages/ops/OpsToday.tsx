@@ -22,6 +22,7 @@ export default function OpsToday() {
   const [crewFilter, setCrewFilter] = useState("all");
 
   const todayJobs = getJobsForDate(startOfToday());
+  const completedCount = todayJobs.filter(j => j.visit_status === "completed").length;
 
   const filtered = todayJobs.filter(j => {
     const matchSearch = !search ||
@@ -54,9 +55,14 @@ export default function OpsToday() {
     <OpsLayout>
       <div className="space-y-4">
         <div>
-          <h1 className="font-display text-2xl font-bold text-foreground">Today's Schedule</h1>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="font-display text-2xl font-bold text-foreground">Today's Schedule</h1>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/15 text-primary text-xs font-body font-medium">
+              {completedCount}/{todayJobs.length} complete
+            </span>
+          </div>
           <p className="font-body text-sm text-muted-foreground">
-            {format(startOfToday(), "EEEE, MMMM d")} · {todayJobs.length} jobs
+            {format(startOfToday(), "EEEE, MMMM d")}
           {loading && <Loader2 className="w-3 h-3 animate-spin inline ml-1" />}
           </p>
         </div>
