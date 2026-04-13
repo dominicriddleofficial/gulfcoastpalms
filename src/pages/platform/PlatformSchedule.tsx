@@ -32,7 +32,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 type ViewMode = "day" | "week";
-type ScheduleTab = "jobber" | "combined" | "unscheduled" | "route";
+type ScheduleTab = "jobber" | "combined" | "map" | "route" | "unscheduled";
 
 type JobberJob = {
   id: string;
@@ -87,7 +87,7 @@ export default function PlatformSchedule() {
       const { data } = await supabase.functions.invoke("maps-config");
       return data?.apiKey || null;
     },
-    enabled: scheduleTab === "route",
+    enabled: scheduleTab === "route" || scheduleTab === "map",
     staleTime: Infinity,
   });
 
