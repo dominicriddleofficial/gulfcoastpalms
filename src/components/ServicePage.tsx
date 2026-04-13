@@ -44,7 +44,15 @@ const ServicePage = ({ service }: ServicePageProps) => {
               "@type": "LocalBusiness",
               name: "Gulf Coast Palms",
               telephone: "+18509101290",
-              areaServed: "Emerald Coast, Florida",
+              areaServed: "NW Florida",
+            },
+            offers: {
+              "@type": "Offer",
+              priceSpecification: {
+                "@type": "PriceSpecification",
+                priceCurrency: "USD",
+                description: "Starting from $45 per palm — free estimates available",
+              },
             },
           }),
         }}
