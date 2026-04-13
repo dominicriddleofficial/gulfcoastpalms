@@ -34,7 +34,14 @@ const Index = () => {
             telephone: "(850) 910-1290",
             url: "https://gulfcoastpalms.lovable.app",
             priceRange: "$$",
-            areaServed: ["Navarre", "Gulf Breeze", "Pensacola", "Fort Walton Beach", "Destin", "30A", "Perdido Key"].map((a) => ({ "@type": "City", name: a + ", FL" })),
+            areaServed: [
+              "Navarre", "Gulf Breeze", "Pensacola", "Fort Walton Beach", "Destin",
+              "30A", "Perdido Key", "Niceville", "Milton", "Mary Esther", "Santa Rosa Beach", "Pace"
+            ].map((a) => ({
+              "@type": "City",
+              name: a,
+              containedInPlace: { "@type": "State", name: "Florida" },
+            })),
             serviceType: ["Palm Trimming", "Diamond Cutting", "Trunk Skinning", "Palm Tree Installation", "Palm Tree Removal"],
             aggregateRating: {
               "@type": "AggregateRating",

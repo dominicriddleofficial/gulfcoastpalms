@@ -8,8 +8,9 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/s
 import { trackEvent } from "@/lib/analytics";
 
 const learnLinks = [
+  { label: "Palm Care Guides", to: "/learn" },
   { label: "Palm Tree Types", to: "/palm-trees/types" },
-  { label: "Care Guides", to: "/palm-trees/guides" },
+  { label: "Care Guides (Legacy)", to: "/palm-trees/guides" },
   { label: "Palm Tree Cost Guide", to: "/palm-tree-cost" },
   { label: "Hurricane Prep Guide", to: "/hurricane-palm-preparation" },
 ];
