@@ -4,6 +4,20 @@ import { Search, X, Users, FileText, Briefcase, Receipt, MapPin, Phone } from "l
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
+const JOB_STATUS_MAP: Record<string, { bg: string; text: string; label: string }> = {
+  upcoming: { bg: "rgba(59,130,246,0.15)", text: "#60a5fa", label: "Upcoming" },
+  scheduled: { bg: "rgba(59,130,246,0.15)", text: "#60a5fa", label: "Upcoming" },
+  action_required: { bg: "rgba(245,158,11,0.15)", text: "#fbbf24", label: "In Progress" },
+  requires_invoicing: { bg: "rgba(245,158,11,0.15)", text: "#fbbf24", label: "In Progress" },
+  late: { bg: "rgba(239,68,68,0.15)", text: "#f87171", label: "Late" },
+  completed: { bg: "rgba(34,197,94,0.15)", text: "#22c55e", label: "Complete" },
+  archived: { bg: "rgba(34,197,94,0.15)", text: "#22c55e", label: "Complete" },
+};
+
+function getJobStatusStyle(status: string) {
+  return JOB_STATUS_MAP[status.toLowerCase()] ?? JOB_STATUS_MAP.scheduled;
+}
+
 interface SearchResult {
   type: "customer" | "lead" | "quote" | "job" | "invoice" | "property" | "crew";
   id: string;
