@@ -140,11 +140,21 @@ export default function UniversalSearch({ businessId }: Props) {
         });
       });
 
-      jobberJobs.data?.forEach(j => allResults.push({
-        type: "job", id: j.id, title: j.client_name ?? j.title ?? j.job_number ?? "Job",
-        subtitle: [j.job_number, j.property_address, j.status, j.total_amount ? `$${Number(j.total_amount).toLocaleString()}` : null].filter(Boolean).join(" · "),
-        path: "/platform/jobs",
-      }));
+      jobberJobs.data?.forEach(j => {
+        const statusStyle = getJobStatusStyle(j.status);
+        allResults.push({
+          type: "job", id: j.id,
+          title: j.client_name ?? j.title ?? j.job_number ?? "Job",
+          subtitle: [j.job_number, j.property_address].filter(Boolean).join(" · "),
+          path: "/platform/jobs",
+          meta: {
+            statusLabel: statusStyle.label,
+            statusBg: statusStyle.bg,
+            statusText: statusStyle.text,
+            amount: j.total_amount ? Number(j.total_amount) : null,
+          },
+        });
+      });
 
       jobberProps.data?.forEach(p => allResults.push({
         type: "property", id: p.id, title: [p.street1, p.city].filter(Boolean).join(", ") || "Property",
