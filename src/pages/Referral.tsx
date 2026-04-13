@@ -70,10 +70,10 @@ const Referral = () => {
               <Gift className="w-4 h-4" /> Referral Program
             </motion.div>
             <motion.h1 variants={fadeUp} custom={1} className="font-display text-4xl md:text-6xl font-bold text-primary-foreground mb-4">
-              Refer a Friend, Get $100 Off
+              Refer a Friend, Both Get Rewarded
             </motion.h1>
             <motion.p variants={fadeUp} custom={2} className="font-body text-lg text-palm-sand/80 max-w-2xl mx-auto">
-              Know someone who needs palm tree services? Refer them to Gulf Coast Palms and you both get $100 off your next service.
+              Share Gulf Coast Palms with your neighbors and earn $50 off your next service — for each referral that becomes a customer.
             </motion.p>
           </motion.div>
         </div>
@@ -85,9 +85,9 @@ const Referral = () => {
           <h2 className="font-display text-3xl font-bold text-foreground text-center mb-12">How It Works</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { step: "1", title: "Submit a Referral", desc: "Fill out the form below with your info and your friend's info." },
-              { step: "2", title: "We Reach Out", desc: "Our team contacts your friend and provides a free quote." },
-              { step: "3", title: "You Both Save", desc: "When they book a service, you both get $100 off!" },
+              { step: "1", title: "Share Your Name", desc: "Tell your friends and neighbors about Gulf Coast Palms, or fill out the form below." },
+              { step: "2", title: "They Book a Service", desc: "Your friend schedules a service and mentions your name during booking." },
+              { step: "3", title: "You Both Save", desc: "You both get $50 off your next service — automatically applied!" },
             ].map((item) => (
               <div key={item.step} className="text-center">
                 <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground font-display text-xl font-bold flex items-center justify-center mx-auto mb-4">
@@ -97,6 +97,25 @@ const Referral = () => {
                 <p className="font-body text-sm text-muted-foreground">{item.desc}</p>
               </div>
             ))}
+          </div>
+
+          {/* Referral Tiers */}
+          <div className="mt-16">
+            <h2 className="font-display text-3xl font-bold text-foreground text-center mb-8">Referral Rewards Tiers</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+              {[
+                { tier: "1 Referral", reward: "$50 Off", desc: "$50 off your next service for each successful referral.", icon: "🌴" },
+                { tier: "3 Referrals", reward: "Free Trimming", desc: "Free palm trimming — up to 3 palms, up to $200 value.", icon: "🏆" },
+                { tier: "5+ Referrals", reward: "VIP Status", desc: "Priority scheduling + 10% off all future services — permanently.", icon: "⭐" },
+              ].map((t) => (
+                <div key={t.tier} className="p-6 rounded-2xl border border-border bg-card text-center">
+                  <span className="text-3xl mb-3 block">{t.icon}</span>
+                  <h3 className="font-display text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">{t.tier}</h3>
+                  <p className="font-display text-xl font-bold text-primary mb-2">{t.reward}</p>
+                  <p className="font-body text-sm text-muted-foreground">{t.desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
