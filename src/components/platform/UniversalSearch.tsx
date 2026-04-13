@@ -24,6 +24,12 @@ interface SearchResult {
   title: string;
   subtitle: string;
   path: string;
+  meta?: {
+    statusLabel?: string;
+    statusBg?: string;
+    statusText?: string;
+    amount?: number | null;
+  };
 }
 
 const TYPE_META: Record<string, { label: string; icon: typeof Users }> = {
