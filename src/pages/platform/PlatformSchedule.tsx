@@ -274,8 +274,8 @@ export default function PlatformSchedule() {
         </div>
 
         {/* Schedule tab selector */}
-        <div className="flex items-center gap-0.5 bg-card border border-border rounded-lg p-0.5 w-fit">
-          {(["jobber", "combined", "route", "unscheduled"] as const).map((tab) => (
+        <div className="flex items-center gap-0.5 bg-card border border-border rounded-lg p-0.5 w-fit flex-wrap">
+          {(["jobber", "combined", "map", "route", "unscheduled"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setScheduleTab(tab)}
@@ -284,7 +284,7 @@ export default function PlatformSchedule() {
                 scheduleTab === tab ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
               )}
             >
-              {tab === "jobber" ? "Jobber" : tab === "combined" ? "Combined" : tab === "route" ? "Route" : "Unscheduled"}
+              {tab === "jobber" ? "Jobber" : tab === "combined" ? "Combined" : tab === "map" ? "Map" : tab === "route" ? "Route" : "Unscheduled"}
               {tab === "unscheduled" && unscheduledJobs.length > 0 && (
                 <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-medium leading-none">
                   {unscheduledJobs.length}
