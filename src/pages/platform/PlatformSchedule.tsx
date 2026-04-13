@@ -17,6 +17,7 @@ import {
   CalendarDays,
   FileText,
   AlertCircle,
+  Map,
 } from "lucide-react";
 import {
   addDays,
@@ -431,6 +432,98 @@ export default function PlatformSchedule() {
         </SheetContent>
       </Sheet>
     </PlatformLayout>
+  );
+}
+
+function PlatformScheduleMap({ jobs, mapsKey }: { jobs: JobberJob[]; mapsKey: string | null }) {
+  const sorted = [...jobs].sort((a, b) => {
+    if (!a.scheduled_start) return 1;
+    if (!b.scheduled_start) return -1;
+    return new Date(a.scheduled_start).getTime() - new Date(b.scheduled_start).getTime();
+  });
+
+  if (!mapsKey) {
+    // Fallback: list view
+    return (
+      <div className="space-y-3">
+        <div className="bg-card border border-border rounded-lg p-4 text-center">
+          <Map className="w-8 h-8 mx-auto text-muted-foreground/40 mb-2" />
+          <p className="font-body text-sm text-muted-foreground">Map unavailable — showing job list</p>
+        </div>
+        {sorted.length === 0 ? (
+          <p className="font-body text-sm text-muted-foreground text-center py-8">No jobs scheduled today</p>
+        ) : (
+          sorted.map((job, i) => (
+            <div key={job.id} className="flex items-start gap-3 bg-card border border-border rounded-lg p-3">
+              <span className="shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-body font-bold flex items-center justify-center">{i + 1}</span>
+              <div className="min-w-0 flex-1">
+                <p className="font-body text-sm font-medium text-foreground truncate">{job.client_name || job.title || "Job"}</p>
+                {job.property_address && <p className="font-body text-xs text-muted-foreground truncate">{job.property_address}</p>}
+                {job.scheduled_start && <p className="font-body text-[11px] text-muted-foreground">{format(new Date(job.scheduled_start), "h:mm a")}</p>}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    );
+  }
+
+  // Build Static Maps URL with numbered markers
+  const buildMapUrl = () => {
+    if (sorted.length === 0) {
+      return `https://www.google.com/maps/embed/v1/place?key=${mapsKey}&q=${encodeURIComponent("Navarre Beach, FL")}&zoom=12`;
+    }
+    // Use first job address as center
+    const firstAddr = sorted[0].property_address;
+    const center = firstAddr ? encodeURIComponent(firstAddr) : encodeURIComponent("Navarre Beach, FL");
+    return `https://www.google.com/maps/embed/v1/place?key=${mapsKey}&q=${center}&zoom=11`;
+  };
+
+  return (
+    <div className="space-y-3">
+      {/* Map embed */}
+      <div className="rounded-xl overflow-hidden border border-border" style={{ height: "45vh", minHeight: 280 }}>
+        <iframe
+          title="Job Map"
+          src={buildMapUrl()}
+          className="w-full h-full border-0"
+          allowFullScreen
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+        />
+      </div>
+
+      {sorted.length === 0 ? (
+        <p className="font-body text-sm text-muted-foreground text-center py-4">No jobs scheduled today</p>
+      ) : (
+        <div className="space-y-1.5">
+          {sorted.map((job, i) => {
+            const statusKey = getStatusKey(job);
+            const style = STATUS_STYLES[statusKey] ?? STATUS_STYLES.scheduled;
+            return (
+              <div key={job.id} className="flex items-center gap-3 bg-card border border-border rounded-lg p-3">
+                <span className="shrink-0 w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-body font-bold flex items-center justify-center">{i + 1}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-body text-sm font-medium text-foreground truncate">{job.client_name || job.title || "Job"}</p>
+                  {job.property_address && <p className="font-body text-xs text-muted-foreground truncate">{job.property_address}</p>}
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span
+                    className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-body font-medium"
+                    style={{ backgroundColor: style.bg, color: style.text }}
+                  >
+                    {style.label}
+                  </span>
+                  {job.scheduled_start && (
+                    <span className="font-body text-xs text-muted-foreground">{format(new Date(job.scheduled_start), "h:mm a")}</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
