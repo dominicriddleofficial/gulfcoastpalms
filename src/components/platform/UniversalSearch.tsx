@@ -286,9 +286,22 @@ export default function UniversalSearch({ businessId }: Props) {
                         onClick={() => handleSelect(item)}
                         className="w-full text-left px-3 py-2 rounded-lg hover:bg-secondary/50 transition-colors group flex items-center gap-2"
                       >
-                        <span className="text-sm font-medium font-body text-foreground">{item.title}</span>
+                        <span className="text-sm font-medium font-body text-foreground truncate">{item.title}</span>
                         {item.subtitle && (
                           <span className="text-xs text-muted-foreground truncate">{item.subtitle}</span>
+                        )}
+                        {item.meta?.statusLabel && (
+                          <span
+                            className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-body font-medium shrink-0"
+                            style={{ backgroundColor: item.meta.statusBg, color: item.meta.statusText }}
+                          >
+                            {item.meta.statusLabel}
+                          </span>
+                        )}
+                        {item.meta?.amount != null && item.meta.amount > 0 && (
+                          <span className="ml-auto text-xs font-body font-semibold text-foreground shrink-0">
+                            ${item.meta.amount.toLocaleString()}
+                          </span>
                         )}
                       </button>
                     ))}
