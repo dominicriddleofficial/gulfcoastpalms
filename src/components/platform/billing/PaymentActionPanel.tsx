@@ -7,6 +7,7 @@ import { getAmountDueNow, getInvoiceDisplayState } from "./InvoiceStatusBadge";
 import {
   CreditCard, Send, Link2, Banknote, History, ExternalLink,
   Smartphone, ChevronRight, X, CheckCircle, AlertCircle,
+  Copy, Mail, MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
