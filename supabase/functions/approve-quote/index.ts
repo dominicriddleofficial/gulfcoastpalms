@@ -20,10 +20,10 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Fetch quote details for SMS
+    // Fetch full quote details
     const { data: quote } = await supabase
       .from("platform_quotes")
-      .select("quote_number, total, customer_id, business_id")
+      .select("quote_number, total, subtotal, tax_rate, tax_total, discount_total, customer_id, business_id, public_notes, internal_notes")
       .eq("id", quote_id)
       .single();
 
@@ -39,6 +39,7 @@ Deno.serve(async (req) => {
 
     const ownerPhone = "8509101290";
 
+    // ── Change Request Flow ──
     if (action === "request_changes") {
       if (!change_notes || typeof change_notes !== "string" || change_notes.trim().length === 0) {
         return new Response(JSON.stringify({ error: "change_notes required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -57,7 +58,6 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ error: "Failed to submit change request" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
-      // Send SMS to owner about change request
       try {
         const smsMsg = `${customerName} requested changes on ${quote?.quote_number || "a quote"}. Check the platform.`;
         await fetch(`${supabaseUrl}/functions/v1/send-sms`, {
@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ success: true, status: "changes_requested" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Approve flow
+    // ── Approve Flow ──
     if (!approved_by || typeof approved_by !== "string" || approved_by.trim().length === 0) {
       return new Response(JSON.stringify({ error: "approved_by name required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
@@ -89,10 +89,73 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Failed to approve quote" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // ── Auto-create draft invoice from approved quote ──
+    let invoiceNumber = "";
+    try {
+      if (quote?.business_id) {
+        // Generate invoice number
+        const { data: invNum, error: numErr } = await supabase.rpc("generate_next_number", {
+          _business_id: quote.business_id,
+          _record_type: "invoice",
+        });
+        if (numErr) throw numErr;
+        invoiceNumber = invNum as string;
+
+        // Fetch quote line items
+        const { data: lineItems } = await supabase
+          .from("platform_quote_line_items")
+          .select("*")
+          .eq("quote_id", quote_id)
+          .order("sort_order");
+
+        // Create draft invoice
+        const { data: inv, error: invErr } = await supabase.from("platform_invoices").insert({
+          business_id: quote.business_id,
+          invoice_number: invoiceNumber,
+          customer_id: quote.customer_id,
+          quote_id: quote_id,
+          status: "draft",
+          issue_date: new Date().toISOString().split("T")[0],
+          due_date: new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0],
+          terms: "Net 30",
+          subtotal: quote.subtotal,
+          tax_rate: quote.tax_rate,
+          tax_total: quote.tax_total,
+          discount_total: quote.discount_total,
+          total: quote.total,
+          balance_due: quote.total,
+          amount_paid: 0,
+          public_notes: quote.public_notes || null,
+          internal_notes: `Auto-created from approved quote ${quote.quote_number}`,
+        }).select("id").single();
+
+        if (invErr || !inv) throw invErr || new Error("Failed to create invoice");
+
+        // Copy line items to invoice
+        if (lineItems && lineItems.length > 0) {
+          await supabase.from("platform_invoice_line_items").insert(
+            lineItems.map((li: Record<string, unknown>, i: number) => ({
+              business_id: quote.business_id,
+              invoice_id: inv.id,
+              description: li.description as string,
+              quantity: li.quantity as number,
+              unit_price: li.unit_price as number,
+              line_total: li.line_total as number,
+              sort_order: i,
+            }))
+          );
+        }
+
+        // Mark quote as won since invoice was created
+        await supabase.from("platform_quotes").update({ status: "won" }).eq("id", quote_id);
+      }
+    } catch { /* Invoice creation is best-effort — owner can still convert manually */ }
+
     // Send SMS to owner about approval
     try {
       const total = quote?.total ? `$${Number(quote.total).toLocaleString("en-US", { minimumFractionDigits: 2 })}` : "";
-      const smsMsg = `Quote approved! ${customerName} approved ${quote?.quote_number || "a quote"}${total ? ` for ${total}` : ""}. Convert to invoice in the platform.`;
+      const invoiceNote = invoiceNumber ? ` Draft invoice ${invoiceNumber} created automatically.` : " Convert to invoice in the platform.";
+      const smsMsg = `Quote approved! ${customerName} approved ${quote?.quote_number || "a quote"}${total ? ` for ${total}` : ""}.${invoiceNote}`;
       await fetch(`${supabaseUrl}/functions/v1/send-sms`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${serviceKey}` },
@@ -100,7 +163,7 @@ Deno.serve(async (req) => {
       });
     } catch { /* SMS is best-effort */ }
 
-    return new Response(JSON.stringify({ success: true, status: "approved" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ success: true, status: "approved", invoice_number: invoiceNumber || null }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (err) {
     return new Response(JSON.stringify({ error: "Internal error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
