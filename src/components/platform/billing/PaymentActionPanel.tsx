@@ -29,6 +29,8 @@ interface Props {
   onOpenPaymentPage: () => void;
   onCopyPaymentLink: () => void;
   onSendPaymentLink?: () => void;
+  onSendPaymentLinkSMS?: () => void;
+  onSendPaymentLinkEmail?: () => void;
   onViewHistory?: () => void;
   businessId?: string;
   customerId?: string;
