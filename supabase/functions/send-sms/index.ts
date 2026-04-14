@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         contactPhone: cleanPhone,
-        mode: "SINGLE_SMS",
+        mode: "AUTO",
         text: message,
       }),
     });
