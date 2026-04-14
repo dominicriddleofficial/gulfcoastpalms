@@ -83,6 +83,9 @@ export default function PaymentActionPanel({
       <CollectMenu
         onBack={() => setStep("menu")}
         onOnline={onOpenPaymentPage}
+        onCopyLink={onCopyPaymentLink}
+        onSendLinkSMS={onSendPaymentLinkSMS}
+        onSendLinkEmail={onSendPaymentLinkEmail}
         onSendLink={onSendPaymentLink || onCopyPaymentLink}
         onRecord={() => setStep("record")}
         onTapToPay={() => {
