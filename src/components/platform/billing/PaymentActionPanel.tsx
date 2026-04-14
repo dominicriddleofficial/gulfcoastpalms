@@ -65,7 +65,7 @@ function getPrimaryAction(invoice: Props["invoice"]): {
 }
 
 export default function PaymentActionPanel({
-  invoice, onRecordPayment, onOpenPaymentPage, onCopyPaymentLink, onSendPaymentLink, onViewHistory, businessId, customerId,
+  invoice, onRecordPayment, onOpenPaymentPage, onCopyPaymentLink, onSendPaymentLink, onSendPaymentLinkSMS, onSendPaymentLinkEmail, onViewHistory, businessId, customerId,
 }: Props) {
   const [step, setStep] = useState<FlowStep>("menu");
   const { amount: suggestedAmount, label: suggestedLabel } = getAmountDueNow(invoice);
