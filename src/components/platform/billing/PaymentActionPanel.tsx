@@ -278,8 +278,8 @@ function TapToPayButton({ businessId, invoiceId, customerId, amount }: {
 }
 
 /* ─── Collect Menu ─── */
-function CollectMenu({ onBack, onOnline, onSendLink, onRecord, onTapToPay }: {
-  onBack: () => void; onOnline: () => void; onSendLink: () => void; onRecord: () => void; onTapToPay: () => void;
+function CollectMenu({ onBack, onOnline, onCopyLink, onSendLinkSMS, onSendLinkEmail, onSendLink, onRecord, onTapToPay }: {
+  onBack: () => void; onOnline: () => void; onCopyLink?: () => void; onSendLinkSMS?: () => void; onSendLinkEmail?: () => void; onSendLink: () => void; onRecord: () => void; onTapToPay: () => void;
 }) {
   return (
     <div className="bg-card border border-border rounded-xl p-5 space-y-3">
@@ -295,12 +295,43 @@ function CollectMenu({ onBack, onOnline, onSendLink, onRecord, onTapToPay }: {
         desc="Open the hosted payment page for card, Apple Pay, or Link."
         onClick={onOnline}
       />
-      <CollectOption
-        icon={Send}
-        title="Send Payment Link"
-        desc="Send a link so the customer can pay from their phone."
-        onClick={onSendLink}
-      />
+
+      {onCopyLink && (
+        <CollectOption
+          icon={Copy}
+          title="Copy Payment Link"
+          desc="Copy the payment URL to your clipboard."
+          onClick={onCopyLink}
+        />
+      )}
+
+      {onSendLinkSMS && (
+        <CollectOption
+          icon={MessageSquare}
+          title="Text Payment Link"
+          desc="Send payment link to customer via SMS."
+          onClick={onSendLinkSMS}
+        />
+      )}
+
+      {onSendLinkEmail && (
+        <CollectOption
+          icon={Mail}
+          title="Email Payment Link"
+          desc="Send payment link to customer via email."
+          onClick={onSendLinkEmail}
+        />
+      )}
+
+      {!onSendLinkSMS && !onSendLinkEmail && (
+        <CollectOption
+          icon={Send}
+          title="Send Payment Link"
+          desc="Send a link so the customer can pay from their phone."
+          onClick={onSendLink}
+        />
+      )}
+
       <CollectOption
         icon={Banknote}
         title="Record Cash / Check / Manual"
@@ -308,7 +339,6 @@ function CollectMenu({ onBack, onOnline, onSendLink, onRecord, onTapToPay }: {
         onClick={onRecord}
       />
 
-      {/* Tap to Pay — deep link */}
       <CollectOption
         icon={Smartphone}
         title="Tap to Pay in Mobile App"
