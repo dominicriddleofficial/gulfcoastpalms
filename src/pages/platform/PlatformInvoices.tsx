@@ -337,6 +337,41 @@ function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayme
     toast.success("Payment link copied to clipboard");
   };
 
+  const sendPaymentLinkSMS = async () => {
+    if (!invoice.customer_id) { toast.error("No customer linked to this invoice"); return; }
+    const { data: cust } = await supabase.from("platform_customers").select("phone").eq("id", invoice.customer_id).single();
+    const phone = cust?.phone;
+    if (!phone) { toast.error("No phone number on file for this customer"); return; }
+    const bizName = biz?.public_brand_name || "our company";
+    const amount = Number(invoice.balance_due || invoice.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2 });
+    const msg = `Hi ${invoice.customer_name || "there"}, here's your payment link from ${bizName} for $${amount}: ${getPaymentUrl()} Questions? Call (850) 910-1290.`;
+    try {
+      const { error } = await supabase.functions.invoke("send-sms", { body: { to: phone, message: msg } });
+      if (error) toast.error("Failed to send SMS"); else toast.success(`Payment link texted to ${phone}`);
+    } catch { toast.error("SMS failed"); }
+  };
+
+  const sendPaymentLinkEmail = async () => {
+    if (!invoice.customer_id) { toast.error("No customer linked to this invoice"); return; }
+    const { data: cust } = await supabase.from("platform_customers").select("email").eq("id", invoice.customer_id).single();
+    const email = cust?.email;
+    if (!email) { toast.error("No email on file for this customer"); return; }
+    const bizName = biz?.public_brand_name || "our company";
+    const amount = Number(invoice.balance_due || invoice.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2 });
+    const payUrl = getPaymentUrl();
+    try {
+      const { error } = await supabase.functions.invoke("send-invoice-email", {
+        body: {
+          to: email,
+          subject: `Pay your invoice ${invoice.invoice_number} — $${amount}`,
+          html: `<p>Hi ${invoice.customer_name || "there"},</p><p>Here's your payment link from ${bizName} for <strong>$${amount}</strong>:</p><p><a href="${payUrl}" style="color:#22c55e;font-weight:bold;">${payUrl}</a></p><p>Thank you for your business!</p>`,
+          text: `Hi ${invoice.customer_name || "there"}, here's your payment link from ${bizName} for $${amount}: ${payUrl}`,
+        },
+      });
+      if (error) toast.error("Failed to send email"); else toast.success(`Payment link emailed to ${email}`);
+    } catch { toast.error("Email failed"); }
+  };
+
   return (
     <div className="space-y-5 pt-4">
       <SheetHeader>
@@ -368,6 +403,8 @@ function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayme
           onRecordPayment={onRecordPayment}
           onOpenPaymentPage={() => window.open(getPaymentUrl(), "_blank")}
           onCopyPaymentLink={copyPaymentLink}
+          onSendPaymentLinkSMS={sendPaymentLinkSMS}
+          onSendPaymentLinkEmail={sendPaymentLinkEmail}
         />
       )}
 
