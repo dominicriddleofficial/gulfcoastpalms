@@ -92,6 +92,26 @@ Deno.serve(async (req) => {
 
     console.log(`[send-sms] Sending SMS to ${cleanPhone.substring(0, 6)}***`);
 
+    // Step 1: Ensure contact exists in SimpleTexting (upsert)
+    const contactResponse = await fetch(`https://api-app2.simpletexting.com/v2/api/contacts`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${SIMPLETEXTING_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        phone: cleanPhone,
+      }),
+    });
+
+    // 201 = created, 204 = already exists (updated), both are fine
+    if (!contactResponse.ok && contactResponse.status !== 201 && contactResponse.status !== 204) {
+      const contactErr = await contactResponse.text();
+      console.warn(`[send-sms] Contact upsert returned ${contactResponse.status}: ${contactErr}`);
+      // Continue anyway — the contact may already exist
+    }
+
+    // Step 2: Send the message
     const response = await fetch("https://api-app2.simpletexting.com/v2/api/messages", {
       method: "POST",
       headers: {
@@ -100,7 +120,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         contactPhone: cleanPhone,
-        mode: "SINGLE_SMS",
+        mode: "AUTO",
         text: message,
       }),
     });
@@ -110,17 +130,17 @@ Deno.serve(async (req) => {
     try { result = JSON.parse(resultText); } catch { result = { raw: resultText }; }
 
     if (!response.ok) {
-      console.error(`[send-sms] SimpleTexting error (${response.status})`);
+      console.error(`[send-sms] SimpleTexting error (${response.status}): ${resultText}`);
 
       try {
         await supabase.from("error_logs").insert({
-          error_message: `SMS send failed: ${response.status}`,
+          error_message: `SMS send failed (${response.status}): ${resultText.substring(0, 500)}`,
           page_url: "/edge/send-sms",
         });
       } catch {}
 
       return new Response(
-        JSON.stringify({ success: false, error: "SMS delivery failed. Please try again." }),
+        JSON.stringify({ success: false, error: `SMS delivery failed (${response.status}). Please try again.`, detail: result }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
