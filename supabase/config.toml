@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.process-review-queue]
 verify_jwt = false
+
+[functions.receive-external-lead]
+verify_jwt = false
