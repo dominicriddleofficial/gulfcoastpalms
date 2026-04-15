@@ -111,6 +111,7 @@ const PlatformDashboard = lazy(() => import("./pages/platform/PlatformDashboard"
 const PlatformLeads = lazy(() => import("./pages/platform/PlatformLeads"));
 const PlatformCustomers = lazy(() => import("./pages/platform/PlatformCustomers"));
 const PlatformQuotes = lazy(() => import("./pages/platform/PlatformQuotes"));
+const PlatformQuoteDisplay = lazy(() => import("./pages/platform/PlatformQuoteDisplay"));
 const PlatformJobs = lazy(() => import("./pages/platform/PlatformJobs"));
 const PlatformSchedule = lazy(() => import("./pages/platform/PlatformSchedule"));
 const PlatformInvoices = lazy(() => import("./pages/platform/PlatformInvoices"));
@@ -245,6 +246,8 @@ const App = () => (
                   <Route path="/platform/leads" element={<PlatformLeads />} />
                   <Route path="/platform/customers" element={<PlatformCustomers />} />
                   <Route path="/platform/quotes" element={<PlatformQuotes />} />
+                  <Route path="/platform/quote-display" element={<PlatformQuoteDisplay />} />
+                  <Route path="/platform/quote-display/:shortcode/:quoteId" element={<PlatformQuoteDisplay />} />
                   <Route path="/platform/jobs" element={<PlatformJobs />} />
                   <Route path="/platform/schedule" element={<PlatformSchedule />} />
                   <Route path="/platform/invoices" element={<PlatformInvoices />} />

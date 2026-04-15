@@ -86,8 +86,13 @@ export default function PlatformQuotes() {
     return `${window.location.origin}/quote/${shortcode}/${q.id}`;
   };
 
+  const getPreviewUrl = (q: PlatformQuote) => {
+    const shortcode = q.quote_number?.split("-")[0]?.toLowerCase() || "gcp";
+    return `${window.location.origin}/platform/quote-display/${shortcode}/${q.id}`;
+  };
+
   const previewQuote = (q: PlatformQuote) => {
-    window.open(getQuoteUrl(q), "_blank");
+    window.open(getPreviewUrl(q), "_blank");
   };
 
   const copyQuoteLink = (q: PlatformQuote) => {
@@ -347,7 +352,7 @@ function QuoteDetail({ quote, biz, businesses, onUpdate, onClose }: {
 
   const previewUrl = (() => {
     const sc = quote.quote_number?.split("-")[0]?.toLowerCase() || "gcp";
-    return `${window.location.origin}/quote/${sc}/${quote.id}`;
+    return `${window.location.origin}/platform/quote-display/${sc}/${quote.id}`;
   })();
 
   return (
