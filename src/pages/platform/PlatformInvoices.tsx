@@ -386,6 +386,11 @@ function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayme
         <SheetTitle className="font-display text-foreground sr-only">Invoice Detail</SheetTitle>
       </SheetHeader>
 
+      {/* Preview Invoice button */}
+      <Button size="sm" variant="outline" className="w-full gap-2 border-primary/30 text-primary text-xs" onClick={() => window.open(getPaymentUrl(), "_blank")}>
+        <Eye className="w-3.5 h-3.5" /> Preview Invoice (Customer View)
+      </Button>
+
       <BillingSummaryCard
         invoice={invoice}
         businessName={biz?.public_brand_name}
