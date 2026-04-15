@@ -12,7 +12,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import {
   Search, Plus, FileText, DollarSign, Clock, Hash, Trash2,
   Send, CheckCircle, XCircle, History, ChevronRight, Receipt,
-  Link2, MoreHorizontal, Copy, TrendingUp,
+  Link2, MoreHorizontal, Copy, TrendingUp, Eye,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -84,6 +84,10 @@ export default function PlatformQuotes() {
   const getQuoteUrl = (q: PlatformQuote) => {
     const shortcode = q.quote_number?.split("-")[0]?.toLowerCase() || "gcp";
     return `${window.location.origin}/quote/${shortcode}/${q.id}`;
+  };
+
+  const previewQuote = (q: PlatformQuote) => {
+    window.open(getQuoteUrl(q), "_blank");
   };
 
   const copyQuoteLink = (q: PlatformQuote) => {
@@ -189,24 +193,36 @@ export default function PlatformQuotes() {
                     </button>
                     <div className="flex flex-col items-end gap-1.5 shrink-0">
                       <QuoteStatusBadge status={q.status} />
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button className="text-muted-foreground hover:text-foreground"><MoreHorizontal className="w-4 h-4" /></button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-card border-border">
-                          <DropdownMenuItem onClick={() => copyQuoteLink(q)} className="text-xs gap-2">
-                            <Link2 className="w-3.5 h-3.5" /> Copy Link
-                          </DropdownMenuItem>
-                          {isApproved && (
-                            <DropdownMenuItem onClick={() => handleConvertToInvoice(q, businesses, refetch)} className="text-xs gap-2">
-                              <Receipt className="w-3.5 h-3.5" /> Convert to Invoice
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); previewQuote(q); }}
+                          className="text-muted-foreground hover:text-primary transition-colors p-1 rounded-md hover:bg-primary/10"
+                          title="Preview Quote"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="text-muted-foreground hover:text-foreground p-1"><MoreHorizontal className="w-4 h-4" /></button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-card border-border">
+                            <DropdownMenuItem onClick={() => previewQuote(q)} className="text-xs gap-2">
+                              <Eye className="w-3.5 h-3.5" /> Preview Quote
                             </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem onClick={() => deleteQuote(q)} className="text-xs gap-2 text-destructive">
-                            <Trash2 className="w-3.5 h-3.5" /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                            <DropdownMenuItem onClick={() => copyQuoteLink(q)} className="text-xs gap-2">
+                              <Link2 className="w-3.5 h-3.5" /> Copy Link
+                            </DropdownMenuItem>
+                            {isApproved && (
+                              <DropdownMenuItem onClick={() => handleConvertToInvoice(q, businesses, refetch)} className="text-xs gap-2">
+                                <Receipt className="w-3.5 h-3.5" /> Convert to Invoice
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem onClick={() => deleteQuote(q)} className="text-xs gap-2 text-destructive">
+                              <Trash2 className="w-3.5 h-3.5" /> Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -329,6 +345,11 @@ function QuoteDetail({ quote, biz, businesses, onUpdate, onClose }: {
 
   const isApproved = quote.status === "approved" || quote.status === "accepted" || quote.status === "won";
 
+  const previewUrl = (() => {
+    const sc = quote.quote_number?.split("-")[0]?.toLowerCase() || "gcp";
+    return `${window.location.origin}/quote/${sc}/${quote.id}`;
+  })();
+
   return (
     <div className="space-y-6 pt-2">
       <SheetHeader>
@@ -338,6 +359,11 @@ function QuoteDetail({ quote, biz, businesses, onUpdate, onClose }: {
         </div>
         <p className="font-body text-sm text-muted-foreground">{quote.customer_name}</p>
       </SheetHeader>
+
+      {/* Preview Quote button */}
+      <Button size="sm" variant="outline" className="w-full gap-2 border-primary/30 text-primary text-xs mb-2" onClick={() => window.open(previewUrl, "_blank")}>
+        <Eye className="w-3.5 h-3.5" /> Preview Quote (Customer View)
+      </Button>
 
       <div className="flex items-center gap-2 flex-wrap">
         <QuoteStatusBadge status={quote.status} />
