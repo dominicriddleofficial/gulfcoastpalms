@@ -16,7 +16,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import {
   Search, Plus, Receipt, DollarSign, Clock, User,
   AlertTriangle, Send, Link2, ExternalLink, Trash2, Edit, Copy, Download,
-  MoreHorizontal, MessageSquare,
+  MoreHorizontal, MessageSquare, Eye,
 } from "lucide-react";
 import { format, formatDistanceToNow, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -199,13 +199,21 @@ export default function PlatformInvoices() {
                         )}
                       </div>
                     </button>
-                    <div className="flex items-start gap-2 shrink-0">
+                      <div className="flex items-start gap-2 shrink-0">
                       <div className="text-right">
                         <p className="font-body text-base font-bold text-foreground">${Number(inv.total || 0).toLocaleString()}</p>
                         {dueNow > 0 && dueNow !== Number(inv.total) && (
                           <p className="font-body text-[11px] font-semibold text-[#f59e0b]">${dueNow.toLocaleString()} due</p>
                         )}
                       </div>
+                      {/* Preview icon */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); window.open(getPaymentUrl(inv), "_blank"); }}
+                        className="text-muted-foreground hover:text-primary transition-colors p-1 rounded-md hover:bg-primary/10"
+                        title="Preview Invoice"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
                       {/* Quick actions */}
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -214,6 +222,9 @@ export default function PlatformInvoices() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-card border-border">
+                          <DropdownMenuItem className="font-body text-xs" onClick={() => window.open(getPaymentUrl(inv), "_blank")}>
+                            <Eye className="w-3.5 h-3.5 mr-2" /> Preview Invoice
+                          </DropdownMenuItem>
                           {["draft", "sent"].includes(inv.status) && (
                             <DropdownMenuItem className="font-body text-xs" onClick={() => markSent(inv)}>
                               <Send className="w-3.5 h-3.5 mr-2" /> Send
@@ -229,9 +240,6 @@ export default function PlatformInvoices() {
                           </DropdownMenuItem>
                           <DropdownMenuItem className="font-body text-xs" onClick={() => copyPaymentLink(inv)}>
                             <Copy className="w-3.5 h-3.5 mr-2" /> Copy Payment Link
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="font-body text-xs" onClick={() => window.open(getPaymentUrl(inv), "_blank")}>
-                            <ExternalLink className="w-3.5 h-3.5 mr-2" /> Open Invoice Page
                           </DropdownMenuItem>
                           <DropdownMenuItem className="font-body text-xs text-destructive" onClick={() => deleteInvoice(inv)}>
                             <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete
