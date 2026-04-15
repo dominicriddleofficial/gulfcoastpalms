@@ -119,6 +119,7 @@ const PlatformAnalytics = lazy(() => import("./pages/platform/PlatformAnalytics"
 const PlatformComms = lazy(() => import("./pages/platform/PlatformComms"));
 const PlatformTasks = lazy(() => import("./pages/platform/PlatformTasks"));
 const PlatformSettings = lazy(() => import("./pages/platform/PlatformSettings"));
+const PlatformQuoteDisplay = lazy(() => import("./pages/platform/PlatformQuoteDisplay"));
 
 // Payment pages — lazy
 const PalmTreeMaintenancePlans = lazy(() => import("./pages/PalmTreeMaintenancePlans"));
@@ -252,6 +253,7 @@ const App = () => (
                   <Route path="/platform/communications" element={<PlatformComms />} />
                   <Route path="/platform/tasks" element={<PlatformTasks />} />
                   <Route path="/platform/settings" element={<PlatformSettings />} />
+                  <Route path="/platform/quote-display" element={<PlatformQuoteDisplay />} />
 
                   {/* Payment & Quote public pages */}
                   <Route path="/pay/:shortcode/:invoiceId" element={<PayInvoice />} />
