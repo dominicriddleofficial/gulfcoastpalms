@@ -28,7 +28,6 @@ const NAV_SECTIONS = [
     label: "Operations",
     items: [
       { label: "Quotes", path: "/platform/quotes", icon: FileText },
-      { label: "Quote Display", path: "/platform/quote-display", icon: FileText },
       { label: "Jobs", path: "/platform/jobs", icon: Briefcase },
       { label: "Schedule", path: "/platform/schedule", icon: CalendarDays },
     ],

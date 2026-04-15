@@ -4,7 +4,7 @@ const ROUTE_IMPORTS: Record<string, () => Promise<any>> = {
   "/platform/leads": () => import("../pages/platform/PlatformLeads"),
   "/platform/customers": () => import("../pages/platform/PlatformCustomers"),
   "/platform/quotes": () => import("../pages/platform/PlatformQuotes"),
-  "/platform/quote-display": () => import("../pages/platform/PlatformQuoteDisplay"),
+  
   "/platform/jobs": () => import("../pages/platform/PlatformJobs"),
   "/platform/schedule": () => import("../pages/platform/PlatformSchedule"),
   "/platform/invoices": () => import("../pages/platform/PlatformInvoices"),
