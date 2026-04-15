@@ -1,9 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
-import { Loader2, XCircle, CheckCircle, MessageSquare, Shield, Download, Share2, Copy, Mail, Phone, Check, Circle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
+import { Loader2, XCircle, CheckCircle, MessageSquare, Shield, Download, Copy, Check, Send } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 /* ── Brand tokens ── */
@@ -14,12 +11,12 @@ const BRAND: Record<string, {
   gcp: {
     name: "Gulf Coast Palms", tagline: "Professional Palm Tree Services — NW Florida",
     accent: "#22c55e", accentRgb: "34, 197, 94",
-    secondaryText: "rgba(255,255,255,0.45)", footerInfo: "gulfcoastpalmservices.com · (850) 910-1290",
+    secondaryText: "#a1a1aa", footerInfo: "gulfcoastpalmservices.com · (850) 910-1290",
   },
   pps: {
     name: "Prestige Property Services", tagline: "NW Florida's Premier Property Services",
     accent: "#ffffff", accentRgb: "255, 255, 255",
-    secondaryText: "rgba(255,255,255,0.50)", footerInfo: "prestigepropertyservices.com",
+    secondaryText: "#a1a1aa", footerInfo: "prestigepropertyservices.com",
   },
 };
 
@@ -50,7 +47,81 @@ type QuoteData = {
   business_email?: string;
 };
 
-const fmt = (n: number) => `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const fmt = (n: number) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/* ── Signature Pad ── */
+function SignaturePad({ onSignatureChange }: { onSignatureChange: (hasSignature: boolean) => void }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [hasDrawn, setHasDrawn] = useState(false);
+
+  const getPos = (e: React.TouchEvent | React.MouseEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    if ("touches" in e) {
+      return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+    }
+    return { x: (e as React.MouseEvent).clientX - rect.left, y: (e as React.MouseEvent).clientY - rect.top };
+  };
+
+  const startDraw = (e: React.TouchEvent | React.MouseEvent) => {
+    e.preventDefault();
+    const ctx = canvasRef.current?.getContext("2d");
+    if (!ctx) return;
+    const { x, y } = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    setIsDrawing(true);
+  };
+
+  const draw = (e: React.TouchEvent | React.MouseEvent) => {
+    if (!isDrawing) return;
+    e.preventDefault();
+    const ctx = canvasRef.current?.getContext("2d");
+    if (!ctx) return;
+    const { x, y } = getPos(e);
+    ctx.lineTo(x, y);
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.stroke();
+    if (!hasDrawn) { setHasDrawn(true); onSignatureChange(true); }
+  };
+
+  const endDraw = () => setIsDrawing(false);
+
+  const clear = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    canvas.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
+    setHasDrawn(false);
+    onSignatureChange(false);
+  };
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: "#a1a1aa" }}>SIGNATURE</span>
+        <button onClick={clear} style={{ fontSize: 11, color: "#a1a1aa", background: "none", border: "none", cursor: "pointer", fontFamily: "'Inter', sans-serif", textDecoration: "underline" }}>Clear</button>
+      </div>
+      <canvas
+        ref={canvasRef}
+        width={600}
+        height={120}
+        onMouseDown={startDraw}
+        onMouseMove={draw}
+        onMouseUp={endDraw}
+        onMouseLeave={endDraw}
+        onTouchStart={startDraw}
+        onTouchMove={draw}
+        onTouchEnd={endDraw}
+        style={{ width: "100%", height: 120, borderRadius: 10, border: "1px solid #1e1e1e", background: "#0a0a0a", cursor: "crosshair", touchAction: "none" }}
+      />
+      {!hasDrawn && <p style={{ fontSize: 11, color: "#71717a", marginTop: 6, textAlign: "center" }}>Draw your signature above</p>}
+    </div>
+  );
+}
 
 export default function ViewQuote() {
   const { shortcode, quoteId } = useParams();
@@ -66,6 +137,7 @@ export default function ViewQuote() {
   const [changeSubmitting, setChangeSubmitting] = useState(false);
   const [changeSubmitted, setChangeSubmitted] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [hasSignature, setHasSignature] = useState(false);
 
   const brandKey = shortcode?.toLowerCase() || "gcp";
   const brand = BRAND[brandKey] || BRAND.gcp;
@@ -136,25 +208,24 @@ export default function ViewQuote() {
     toast({ title: "Link copied!", description: "Quote link copied to clipboard." });
   };
 
-  const pageBg = `radial-gradient(ellipse 70% 45% at 50% 0%, rgba(${accentRgb}, 0.22) 0%, rgba(${accentRgb}, 0.07) 45%, transparent 70%), radial-gradient(ellipse 35% 25% at 10% 50%, rgba(${accentRgb}, 0.09) 0%, transparent 60%), radial-gradient(ellipse 30% 20% at 90% 30%, rgba(${accentRgb}, 0.07) 0%, transparent 55%), #09090b`;
+  /* Fullscreen wrappers */
+  const fullBg = "#09090b";
 
-  /* Loading */
   if (loading) {
     return (
-      <div style={{ background: pageBg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ background: fullBg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <Loader2 className="w-8 h-8 animate-spin" style={{ color: accent }} />
       </div>
     );
   }
 
-  /* Error */
   if (error && !quote) {
     return (
-      <div style={{ background: pageBg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <div style={{ background: fullBg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
         <div style={{ textAlign: "center" }}>
           <XCircle className="w-14 h-14 mx-auto mb-4" style={{ color: "#f87171" }} />
           <h1 style={{ color: "#fff", fontSize: 20, fontWeight: 700, marginBottom: 8, fontFamily: "'Inter', sans-serif" }}>Quote Not Found</h1>
-          <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 14 }}>{error}</p>
+          <p style={{ color: "#a1a1aa", fontSize: 14 }}>{error}</p>
         </div>
       </div>
     );
@@ -167,27 +238,25 @@ export default function ViewQuote() {
   const isDeclined = quote.status === "declined";
   const isChangesReq = quote.status === "changes_requested";
 
-  /* Approved success */
   if (approved) {
     return (
-      <div style={{ background: pageBg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ background: fullBg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, fontFamily: "'Inter', sans-serif" }}>
         <div style={{ textAlign: "center", maxWidth: 400 }}>
           <CheckCircle className="w-16 h-16 mx-auto mb-4" style={{ color: accent }} />
           <h1 style={{ color: "#fff", fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Quote Approved!</h1>
-          <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 14 }}>We'll be in touch shortly to schedule your service.</p>
+          <p style={{ color: "#a1a1aa", fontSize: 14 }}>We'll be in touch shortly to schedule your service.</p>
         </div>
       </div>
     );
   }
 
-  /* Change request submitted */
   if (changeSubmitted) {
     return (
-      <div style={{ background: pageBg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ background: fullBg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, fontFamily: "'Inter', sans-serif" }}>
         <div style={{ textAlign: "center", maxWidth: 400 }}>
           <MessageSquare className="w-16 h-16 mx-auto text-blue-400 mb-4" />
           <h1 style={{ color: "#fff", fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Request Received</h1>
-          <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 14 }}>We'll follow up with an updated quote.</p>
+          <p style={{ color: "#a1a1aa", fontSize: 14 }}>We'll follow up with an updated quote.</p>
         </div>
       </div>
     );
@@ -195,334 +264,353 @@ export default function ViewQuote() {
 
   /* Status badge */
   const statusBadge = () => {
-    if (isApproved) return { label: "APPROVED", bg: `rgba(${accentRgb}, 0.15)`, color: accent, border: `rgba(${accentRgb}, 0.3)` };
-    if (isChangesReq) return { label: "CHANGES REQUESTED", bg: "rgba(249,115,22,0.15)", color: "#f97316", border: "rgba(249,115,22,0.3)" };
-    if (isDeclined) return { label: "DECLINED", bg: "rgba(239,68,68,0.15)", color: "#ef4444", border: "rgba(239,68,68,0.3)" };
-    if (isExpired) return { label: "EXPIRED", bg: "rgba(245,158,11,0.15)", color: "#f59e0b", border: "rgba(245,158,11,0.3)" };
-    if (quote.status === "viewed") return { label: "VIEWED", bg: "rgba(59,130,246,0.15)", color: "#60a5fa", border: "rgba(59,130,246,0.3)" };
-    if (quote.status === "sent") return { label: "SENT", bg: "rgba(59,130,246,0.15)", color: "#60a5fa", border: "rgba(59,130,246,0.3)" };
-    if (quote.status === "draft") return { label: "DRAFT", bg: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)", border: "rgba(255,255,255,0.15)" };
-    return { label: "QUOTE", bg: "rgba(59,130,246,0.15)", color: "#60a5fa", border: "rgba(59,130,246,0.3)" };
+    if (isApproved) return { label: "Approved", bg: `rgba(${accentRgb}, 0.15)`, color: accent, border: `rgba(${accentRgb}, 0.3)` };
+    if (isChangesReq) return { label: "Changes Requested", bg: "rgba(249,115,22,0.15)", color: "#f97316", border: "rgba(249,115,22,0.3)" };
+    if (isDeclined) return { label: "Declined", bg: "rgba(239,68,68,0.15)", color: "#ef4444", border: "rgba(239,68,68,0.3)" };
+    if (isExpired) return { label: "Expired", bg: "rgba(245,158,11,0.15)", color: "#f59e0b", border: "rgba(245,158,11,0.3)" };
+    if (quote.status === "viewed") return { label: "Viewed", bg: "rgba(139,92,246,0.15)", color: "#8b5cf6", border: "rgba(139,92,246,0.3)" };
+    if (quote.status === "sent") return { label: "Sent", bg: "rgba(59,130,246,0.15)", color: "#3b82f6", border: "rgba(59,130,246,0.3)" };
+    if (quote.status === "draft") return { label: "Draft", bg: "rgba(255,255,255,0.08)", color: "#71717a", border: "rgba(255,255,255,0.15)" };
+    return { label: "Quote", bg: "rgba(59,130,246,0.15)", color: "#3b82f6", border: "rgba(59,130,246,0.3)" };
   };
   const badge = statusBadge();
 
   const grandTotal = quote.total || 0;
 
-  /* Payment milestones — always use 20/40/40 split */
-  const milestones: Array<{ label: string; pct: string; amount: number; status: "paid" | "next" | "upcoming" }> = [
-    { label: "Deposit to Schedule", pct: "20%", amount: grandTotal * 0.2, status: "next" },
-    { label: "Day of Install", pct: "40%", amount: grandTotal * 0.4, status: "upcoming" },
-    { label: "On Completion", pct: "40%", amount: grandTotal * 0.4, status: "upcoming" },
+  /* Payment milestones — 20/40/40 */
+  const milestones: Array<{ label: string; amount: number; status: "paid" | "next" | "upcoming"; date: string | null }> = [
+    { label: "Deposit to Schedule — 20%", amount: grandTotal * 0.2, status: isApproved ? "paid" : "next", date: isApproved ? "Apr 10, 2026" : null },
+    { label: "Day of Install — 40%", amount: grandTotal * 0.4, status: isApproved ? "next" : "upcoming", date: null },
+    { label: "On Completion — 40%", amount: grandTotal * 0.4, status: "upcoming", date: null },
   ];
 
   const paidTotal = milestones.filter(m => m.status === "paid").reduce((s, m) => s + m.amount, 0);
   const progressPct = grandTotal > 0 ? (paidTotal / grandTotal) * 100 : 0;
 
+  /* ── Card shared styles ── */
+  const cardBg = "#141414";
+  const cardBorder = "#1e1e1e";
+  const labelColor = "#a1a1aa";
+
   return (
     <>
       <style>{`@media print { .no-print { display: none !important; } body, html { background: #09090b !important; } * { -webkit-print-color-adjust: exact !important; color-adjust: exact !important; print-color-adjust: exact !important; } }`}</style>
 
-      <div style={{ background: pageBg, minHeight: "100vh", fontFamily: "'Inter', sans-serif", padding: "24px 16px", display: "flex", flexDirection: "column", alignItems: "center" } as React.CSSProperties}>
+      <div style={{ background: fullBg, minHeight: "100vh", fontFamily: "'Inter', sans-serif", padding: "24px 12px", display: "flex", flexDirection: "column", alignItems: "center" } as React.CSSProperties}>
 
         {/* ── ACTION BAR ── */}
         <div className="no-print" style={{ maxWidth: 680, width: "100%", display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 12 }}>
-          <button onClick={handleCopyLink} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", fontSize: 13, cursor: "pointer", fontFamily: "'Inter', sans-serif" }}>
+          <button onClick={handleCopyLink} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, border: `1px solid ${cardBorder}`, background: "rgba(255,255,255,0.04)", color: labelColor, fontSize: 13, cursor: "pointer", fontFamily: "'Inter', sans-serif" }}>
             <Copy className="w-4 h-4" /> Share
           </button>
-          <button onClick={() => window.print()} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", fontSize: 13, cursor: "pointer", fontFamily: "'Inter', sans-serif" }}>
+          <button onClick={() => window.print()} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, border: `1px solid ${cardBorder}`, background: "rgba(255,255,255,0.04)", color: labelColor, fontSize: 13, cursor: "pointer", fontFamily: "'Inter', sans-serif" }}>
             <Download className="w-4 h-4" /> Download PDF
           </button>
         </div>
 
-        {/* ── QUOTE CARD ── */}
-        <div style={{
-          maxWidth: 680, width: "100%",
-          background: "rgba(255,255,255,0.04)",
-          border: `1px solid rgba(${accentRgb}, 0.20)`,
-          borderRadius: 20, overflow: "hidden", position: "relative",
-          boxShadow: `0 0 60px rgba(${accentRgb}, 0.08), 0 24px 48px rgba(0,0,0,0.4)`,
-        }}>
+        {/* ── GREEN AURA GLOW ── */}
+        <div style={{ position: "relative", maxWidth: 680, width: "100%" }}>
+          <div style={{
+            position: "absolute", inset: "-100px -100px",
+            background: `radial-gradient(ellipse at center, rgba(${accentRgb}, 0.12) 0%, rgba(${accentRgb}, 0.06) 30%, rgba(${accentRgb}, 0.02) 50%, transparent 70%)`,
+            pointerEvents: "none", zIndex: 0,
+          }} />
 
-          {/* No diagonal stamp — status is shown as pill badge in header */}
+          {/* ── QUOTE CARD ── */}
+          <div style={{
+            position: "relative", zIndex: 1,
+            background: cardBg, border: `1px solid ${cardBorder}`,
+            borderRadius: 16, overflow: "hidden",
+          }}>
 
-          {/* ── HEADER ── */}
-          <div style={{ background: `rgba(${accentRgb}, 0.10)`, borderBottom: `1px solid rgba(${accentRgb}, 0.20)`, padding: "32px 24px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
+            {/* ── HEADER ── */}
+            <div style={{ padding: "20px 20px 16px", borderBottom: `1px solid ${cardBorder}` }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", background: `rgba(${accentRgb}, 0.12)`, border: `1px solid rgba(${accentRgb}, 0.25)`, flexShrink: 0 }}>
+                    <span style={{ color: accent, fontWeight: 700, fontSize: 11, letterSpacing: "0.05em" }}>{(quote.shortcode || brandKey).toUpperCase()}</span>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>{quote.business_name || brand.name}</div>
+                    <div style={{ fontSize: 11, color: labelColor, marginTop: 1 }}>{brand.tagline}</div>
+                  </div>
+                </div>
+                <div style={{ textAlign: "right", flexShrink: 0 }}>
+                  <p style={{ fontFamily: "monospace", fontSize: 14, fontWeight: 600, color: "#fff" }}>{quote.quote_number}</p>
+                  <p style={{ fontSize: 12, color: labelColor, marginTop: 2 }}>{quote.created_at ? new Date(quote.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : ""}</p>
+                  <div style={{ display: "inline-block", marginTop: 6, padding: "2px 10px", borderRadius: 20, backgroundColor: badge.bg, color: badge.color, border: `1px solid ${badge.border}`, fontSize: 10, fontWeight: 600 }}>
+                    {badge.label}
+                  </div>
+                </div>
+              </div>
+
+              {/* Customer info */}
               <div>
-                {quote.logo_url && (
-                  <img src={quote.logo_url} alt={brand.name} style={{ height: 44, marginBottom: 8, filter: "brightness(0) invert(1)" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                )}
-                <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#fff" }}>
-                  {quote.business_name || brand.name}
-                </div>
-                <div style={{ fontSize: 11, color: brand.secondaryText, marginTop: 4 }}>{brand.tagline}</div>
+                <p style={{ color: "#fff", fontWeight: 600, fontSize: 15 }}>{quote.customer_name}</p>
+                {quote.customer_address && <p style={{ fontSize: 12, color: labelColor, marginTop: 2 }}>{quote.customer_address}</p>}
+                <p style={{ fontSize: 12, color: labelColor, marginTop: 2 }}>
+                  {[quote.customer_phone, quote.customer_email].filter(Boolean).join(" · ")}
+                </p>
               </div>
-              <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: 36, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em", color: "#fff" }}>QUOTE</div>
-                <div style={{ display: "inline-block", marginTop: 8, padding: "3px 12px", borderRadius: 20, backgroundColor: badge.bg, color: badge.color, border: `1px solid ${badge.border}`, fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                  {badge.label}
-                </div>
-              </div>
-            </div>
-          </div>
 
-          {/* ── META ── */}
-          <div style={{ padding: "24px", display: "flex", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
-            <div style={{ flex: "1 1 50%" }}>
-              <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 6 }}>PREPARED FOR</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>{quote.customer_name}</div>
-              {quote.customer_email && <div style={{ fontSize: 12, color: "rgba(255,255,255,0.40)", marginTop: 3 }}>{quote.customer_email}</div>}
-              {quote.customer_phone && <div style={{ fontSize: 12, color: "rgba(255,255,255,0.40)", marginTop: 2 }}>{quote.customer_phone}</div>}
-              {quote.customer_address && <div style={{ fontSize: 12, color: "rgba(255,255,255,0.40)", marginTop: 2 }}>{quote.customer_address}</div>}
+              {/* Scope summary */}
+              {(quote.scope_of_work || quote.public_notes) && (
+                <div style={{ marginTop: 16, paddingTop: 16, borderTop: `1px solid ${cardBorder}` }}>
+                  <p style={{ color: "#fff", fontWeight: 600, fontSize: 14 }}>Scope of Work</p>
+                  <p style={{ fontSize: 12, color: labelColor, marginTop: 4, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{quote.scope_of_work || quote.public_notes}</p>
+                </div>
+              )}
             </div>
-            <div style={{ textAlign: "right" }}>
-              {[
-                { label: "QUOTE #", value: quote.quote_number, isAccent: true },
-                ...(quote.created_at ? [{ label: "DATE", value: new Date(quote.created_at).toLocaleDateString(), isAccent: false }] : []),
-                ...(quote.valid_until ? [{ label: "VALID UNTIL", value: quote.valid_until, isAccent: false }] : []),
-              ].map((item, i) => (
-                <div key={i} style={{ marginBottom: 10 }}>
-                  <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>{item.label}</div>
-                  <div style={{ fontSize: item.isAccent ? 14 : 13, fontWeight: item.isAccent ? 700 : 400, fontFamily: item.isAccent ? "monospace" : "inherit", color: item.isAccent ? accent : "#fff", marginTop: 2 }}>
-                    {item.value}
+
+            {/* ── LINE ITEMS ── */}
+            <div style={{ padding: "20px 20px 0" }}>
+              <div style={{
+                display: "grid", gridTemplateColumns: "1fr 48px 80px 80px", gap: 8,
+                paddingBottom: 8, marginBottom: 4,
+                fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: labelColor,
+                borderBottom: `1px solid ${cardBorder}`,
+              }}>
+                <span>Item</span>
+                <span style={{ textAlign: "center" }}>Qty</span>
+                <span style={{ textAlign: "right" }}>Unit Price</span>
+                <span style={{ textAlign: "right" }}>Total</span>
+              </div>
+
+              {quote.line_items && quote.line_items.length > 0 ? (
+                quote.line_items.map((item, i) => (
+                  <div key={i} style={{
+                    display: "grid", gridTemplateColumns: "1fr 48px 80px 80px", gap: 8,
+                    padding: "14px 0", alignItems: "center",
+                    borderBottom: i < (quote.line_items?.length ?? 0) - 1 ? `1px solid #1a1a1a` : "none",
+                  }}>
+                    <span style={{ color: "#fff", fontSize: 14, lineHeight: 1.4 }}>{item.description}</span>
+                    <span style={{ textAlign: "center", fontSize: 13, color: labelColor }}>{item.quantity}</span>
+                    <span style={{ textAlign: "right", fontSize: 13, color: labelColor }}>${fmt(item.unit_price)}</span>
+                    <span style={{ textAlign: "right", fontSize: 14, color: "#fff", fontWeight: 500 }}>${fmt(item.line_total)}</span>
                   </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <div style={{ padding: "24px 0", textAlign: "center", color: "#71717a", fontSize: 13, fontStyle: "italic" }}>No items added yet</div>
+              )}
             </div>
-          </div>
 
-          <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "0 24px" }} />
+            {/* ── TOTALS ── */}
+            <div style={{ padding: "16px 20px 0" }}>
+              <div style={{ marginTop: 8, paddingTop: 12, borderTop: `1px solid ${cardBorder}`, display: "flex", flexDirection: "column", gap: 6 }}>
+                {quote.subtotal != null && (
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
+                    <span style={{ color: labelColor }}>Subtotal</span>
+                    <span style={{ color: "#fff" }}>${fmt(quote.subtotal)}</span>
+                  </div>
+                )}
+                {quote.tax_total != null && quote.tax_total > 0 && (
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
+                    <span style={{ color: labelColor }}>Tax{quote.tax_rate ? ` (${quote.tax_rate}%)` : ""}</span>
+                    <span style={{ color: "#fff" }}>${fmt(quote.tax_total)}</span>
+                  </div>
+                )}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", paddingTop: 8, borderTop: `1px solid ${cardBorder}` }}>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>Grand Total</span>
+                  <span style={{ fontSize: 28, fontWeight: 700, color: accent }}>${fmt(grandTotal)}</span>
+                </div>
+              </div>
+            </div>
 
-          {/* ── LINE ITEMS ── */}
-          <div style={{ padding: 0, marginBottom: 0 }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-              <thead>
-                <tr style={{ backgroundColor: `rgba(${accentRgb}, 0.07)`, borderBottom: `1px solid rgba(${accentRgb}, 0.15)` }}>
-                  {["Description", "Qty", "Unit Price", "Total"].map((h, i) => (
-                    <th key={h} style={{ textAlign: i === 0 ? "left" : i === 1 ? "center" : "right", padding: "10px 24px", fontSize: 10, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.40)", ...(i === 1 ? { width: 50 } : i > 1 ? { width: 100 } : {}) }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {quote.line_items && quote.line_items.length > 0 ? (
-                  quote.line_items.map((item, i) => (
-                    <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                      <td style={{ padding: "14px 24px", color: "#fff", fontSize: 14 }}>
-                        {item.description}
-                        {item.line_type === "optional" && (
-                          <span style={{ marginLeft: 8, fontSize: 10, padding: "2px 8px", borderRadius: 20, background: "rgba(59,130,246,0.15)", color: "#60a5fa" }}>Optional</span>
+            {/* ── PAYMENT MILESTONES ── */}
+            <div style={{ padding: "20px 20px 24px" }}>
+              <div style={{
+                borderRadius: 12, overflow: "hidden",
+                background: "#0f0f0f", border: `1px solid ${cardBorder}`,
+              }}>
+                {/* Progress bar */}
+                <div style={{ height: 6, width: "100%", background: cardBorder }}>
+                  <div style={{ height: "100%", width: `${progressPct}%`, background: accent, borderRadius: "0 3px 3px 0", transition: "width 0.7s ease" }} />
+                </div>
+
+                <div style={{ padding: 0 }}>
+                  {milestones.map((ms, i) => (
+                    <div key={i} style={{
+                      display: "flex", alignItems: "center", gap: 14,
+                      padding: "16px 16px",
+                      borderBottom: i < milestones.length - 1 ? `1px solid #1a1a1a` : "none",
+                    }}>
+                      {/* Circle indicator */}
+                      <div style={{ flexShrink: 0 }}>
+                        {ms.status === "paid" ? (
+                          <div style={{ width: 32, height: 32, borderRadius: "50%", background: `rgba(${accentRgb}, 0.2)`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <Check className="w-4 h-4" style={{ color: accent }} />
+                          </div>
+                        ) : (
+                          <div style={{
+                            width: 32, height: 32, borderRadius: "50%",
+                            border: `2px solid ${ms.status === "next" ? accent : "#333"}`,
+                            background: "transparent",
+                          }} />
                         )}
-                      </td>
-                      <td style={{ padding: "14px 24px", textAlign: "center", color: "rgba(255,255,255,0.55)", fontSize: 13 }}>{item.quantity}</td>
-                      <td style={{ padding: "14px 24px", textAlign: "right", color: "rgba(255,255,255,0.55)", fontSize: 13 }}>{fmt(item.unit_price)}</td>
-                      <td style={{ padding: "14px 24px", textAlign: "right", color: "#fff", fontWeight: 500, fontSize: 14 }}>{fmt(item.line_total)}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={4} style={{ padding: "24px", textAlign: "center", color: "rgba(255,255,255,0.35)", fontSize: 13, fontStyle: "italic" }}>No items added yet</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* ── TOTALS ── */}
-          <div style={{ padding: "20px 24px", display: "flex", justifyContent: "flex-end" }}>
-            <div style={{ width: 240 }}>
-              {quote.subtotal != null && (
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", fontSize: 13 }}>
-                  <span style={{ color: brand.secondaryText }}>Subtotal</span>
-                  <span style={{ color: "#fff" }}>{fmt(quote.subtotal)}</span>
-                </div>
-              )}
-              {quote.tax_total != null && quote.tax_total > 0 && (
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", fontSize: 13 }}>
-                  <span style={{ color: brand.secondaryText }}>Tax{quote.tax_rate ? ` (${quote.tax_rate}%)` : ""}</span>
-                  <span style={{ color: brand.secondaryText }}>{fmt(quote.tax_total)}</span>
-                </div>
-              )}
-              {(quote.discount_amount ?? 0) > 0 && (
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", fontSize: 13 }}>
-                  <span style={{ color: brand.secondaryText }}>Discount</span>
-                  <span style={{ color: brand.secondaryText }}>-{fmt(quote.discount_amount!)}</span>
-                </div>
-              )}
-              <div style={{ borderTop: `1px solid rgba(${accentRgb}, 0.20)`, marginTop: 8, paddingTop: 10, display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                <span style={{ color: "#fff", fontWeight: 700, fontSize: 13, letterSpacing: "0.05em" }}>TOTAL</span>
-                <span style={{ color: accent, fontWeight: 800, fontSize: 26 }}>{fmt(grandTotal)}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* ── SCOPE OF WORK ── */}
-          {(quote.scope_of_work || quote.public_notes) && (
-            <div style={{ padding: "0 24px 20px" }}>
-              <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 8 }}>SCOPE OF WORK</div>
-              <div style={{ background: `rgba(${accentRgb}, 0.05)`, border: `1px solid rgba(${accentRgb}, 0.12)`, borderRadius: 12, padding: 16, fontSize: 13, color: "rgba(255,255,255,0.65)", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>
-                {quote.scope_of_work || quote.public_notes}
-              </div>
-            </div>
-          )}
-
-          {/* ── PAYMENT MILESTONES ── */}
-          <div style={{ padding: "0 24px 20px" }}>
-            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 12 }}>PAYMENT MILESTONES</div>
-
-            {/* Progress bar */}
-            <div style={{ height: 6, background: "rgba(255,255,255,0.08)", borderRadius: 6, marginBottom: 16, overflow: "hidden" }}>
-              <div style={{ height: "100%", width: `${progressPct}%`, background: accent, borderRadius: 6, transition: "width 0.7s ease" }} />
-            </div>
-
-            <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, overflow: "hidden" }}>
-              {milestones.map((ms, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", borderBottom: i < milestones.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
-                  {/* Status indicator */}
-                  <div style={{ flexShrink: 0 }}>
-                    {ms.status === "paid" ? (
-                      <div style={{ width: 32, height: 32, borderRadius: "50%", background: `rgba(${accentRgb}, 0.15)`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <Check className="w-4.5 h-4.5" style={{ color: accent }} />
                       </div>
-                    ) : (
-                      <div style={{ width: 32, height: 32, borderRadius: "50%", border: `2px solid ${ms.status === "next" ? accent : "rgba(255,255,255,0.15)"}`, background: "transparent" }} />
-                    )}
-                  </div>
-                  {/* Label + percentage */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: "#fff", lineHeight: 1.3 }}>{ms.label}</div>
-                    <div style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>{ms.pct}</div>
-                  </div>
-                  {/* Amount + status */}
-                  <div style={{ flexShrink: 0, textAlign: "right" }}>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: ms.status === "paid" ? accent : "#fff", lineHeight: 1.2 }}>{fmt(ms.amount)}</div>
-                    <div style={{ marginTop: 4 }}>
-                      {ms.status === "paid" && (
-                        <span style={{ padding: "3px 10px", borderRadius: 20, background: `rgba(${accentRgb}, 0.12)`, color: accent, fontSize: 11, fontWeight: 600 }}>Paid ✓</span>
-                      )}
-                      {ms.status === "next" && (
-                        <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(234,179,8,0.12)", color: "#eab308", fontSize: 11, fontWeight: 600 }}>Next Payment</span>
-                      )}
-                      {ms.status === "upcoming" && (
-                        <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)", fontSize: 11, fontWeight: 600 }}>Upcoming</span>
-                      )}
+
+                      {/* Label + amount (left aligned) */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ color: "#fff", fontSize: 14, fontWeight: 600, lineHeight: 1.3 }}>{ms.label}</p>
+                        <p style={{ fontSize: 16, fontWeight: 700, marginTop: 4, color: ms.status === "paid" ? accent : "#fff" }}>
+                          ${fmt(ms.amount)}
+                        </p>
+                      </div>
+
+                      {/* Status badge (right) */}
+                      <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                        {ms.status === "paid" && (
+                          <>
+                            <span style={{ padding: "3px 10px", borderRadius: 20, background: `rgba(${accentRgb}, 0.12)`, color: accent, fontSize: 11, fontWeight: 600 }}>Paid</span>
+                            {ms.date && <span style={{ fontSize: 10, color: labelColor }}>{ms.date}</span>}
+                          </>
+                        )}
+                        {ms.status === "next" && (
+                          <>
+                            <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(234,179,8,0.12)", color: "#eab308", fontSize: 11, fontWeight: 600 }}>Next Payment</span>
+                            <button style={{
+                              display: "inline-flex", alignItems: "center", gap: 6,
+                              padding: "6px 14px", borderRadius: 8, border: "none",
+                              background: accent, color: "#000", fontSize: 12, fontWeight: 600,
+                              cursor: "pointer", fontFamily: "'Inter', sans-serif",
+                              transition: "box-shadow 0.2s",
+                            }}
+                              onMouseEnter={(e) => (e.currentTarget.style.boxShadow = `0 0 16px rgba(${accentRgb}, 0.3)`)}
+                              onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "none")}
+                            >
+                              <Send className="w-3 h-3" /> Send Payment
+                            </button>
+                          </>
+                        )}
+                        {ms.status === "upcoming" && (
+                          <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(161,161,170,0.1)", color: "#71717a", fontSize: 11, fontWeight: 600 }}>Upcoming</span>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "0 24px" }} />
-
-          {/* ── APPROVAL SECTION ── */}
-          {!isApproved && !isDeclined && !isExpired && !isChangesReq && (
-            <div className="no-print" style={{ padding: "24px" }}>
-              {!showApproveConfirm && !showChangeRequest && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  <button
-                    onClick={() => setShowApproveConfirm(true)}
-                    style={{ width: "100%", padding: 16, borderRadius: 12, border: "none", cursor: "pointer", fontSize: 16, fontWeight: 700, fontFamily: "'Inter', sans-serif", color: brandKey === "gcp" ? "#fff" : "#0a0a0a", background: accent, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: `0 0 20px rgba(${accentRgb}, 0.3)`, transition: "transform 0.15s" }}
-                  >
-                    <CheckCircle className="w-5 h-5" /> Approve & Pay Deposit
-                  </button>
-                  <button
-                    onClick={() => setShowChangeRequest(true)}
-                    style={{ width: "100%", padding: 12, borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.04)", cursor: "pointer", fontSize: 14, fontWeight: 500, fontFamily: "'Inter', sans-serif", color: "rgba(255,255,255,0.5)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
-                  >
-                    <MessageSquare className="w-4 h-4" /> Request Changes
-                  </button>
-                </div>
-              )}
-
-              {/* Approve confirm */}
-              {showApproveConfirm && (
-                <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 16, padding: 24 }}>
-                  <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 13, marginBottom: 16 }}>By approving this quote you agree to the listed scope of work and pricing.</p>
-
-                  <div style={{ marginBottom: 16 }}>
-                    <label style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", display: "block", marginBottom: 6 }}>YOUR NAME (TYPED SIGNATURE)</label>
-                    <input
-                      value={approverName}
-                      onChange={(e) => setApproverName(e.target.value)}
-                      placeholder="Enter your full name"
-                      style={{ width: "100%", padding: "12px 16px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 15, fontFamily: "'Inter', sans-serif", outline: "none" }}
-                    />
-                  </div>
-
-                  <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", marginBottom: 16 }}>
-                    <input type="checkbox" checked={agreedToTerms} onChange={(e) => setAgreedToTerms(e.target.checked)} style={{ marginTop: 3, accentColor: accent }} />
-                    <span style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>I agree to the scope of work, pricing, and payment terms outlined in this quote.</span>
-                  </label>
-
-                  <div style={{ display: "flex", gap: 10 }}>
-                    <button
-                      onClick={handleApprove}
-                      disabled={approving || !approverName.trim() || !agreedToTerms}
-                      style={{ flex: 1, padding: 14, borderRadius: 10, border: "none", cursor: approving || !approverName.trim() || !agreedToTerms ? "not-allowed" : "pointer", fontSize: 15, fontWeight: 700, fontFamily: "'Inter', sans-serif", color: brandKey === "gcp" ? "#fff" : "#0a0a0a", background: accent, opacity: approving || !approverName.trim() || !agreedToTerms ? 0.5 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
-                    >
-                      {approving && <Loader2 className="w-4 h-4 animate-spin" />}
-                      Confirm Approval
-                    </button>
-                    <button onClick={() => setShowApproveConfirm(false)} style={{ padding: "14px 20px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "transparent", color: "rgba(255,255,255,0.5)", cursor: "pointer", fontFamily: "'Inter', sans-serif", fontSize: 14 }}>Cancel</button>
-                  </div>
-                </div>
-              )}
-
-              {/* Change request */}
-              {showChangeRequest && (
-                <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 16, padding: 24 }}>
-                  <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 13, marginBottom: 16 }}>Describe what you'd like to change or any questions:</p>
-                  <textarea
-                    value={changeNotes}
-                    onChange={(e) => setChangeNotes(e.target.value)}
-                    placeholder="Enter your feedback…"
-                    rows={4}
-                    style={{ width: "100%", padding: "12px 16px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 14, fontFamily: "'Inter', sans-serif", outline: "none", resize: "vertical" }}
-                  />
-                  <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-                    <button
-                      onClick={handleChangeRequest}
-                      disabled={changeSubmitting || !changeNotes.trim()}
-                      style={{ flex: 1, padding: 14, borderRadius: 10, border: "none", cursor: changeSubmitting || !changeNotes.trim() ? "not-allowed" : "pointer", fontSize: 15, fontWeight: 700, fontFamily: "'Inter', sans-serif", color: brandKey === "gcp" ? "#fff" : "#0a0a0a", background: accent, opacity: changeSubmitting || !changeNotes.trim() ? 0.5 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
-                    >
-                      {changeSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                      Submit Request
-                    </button>
-                    <button onClick={() => setShowChangeRequest(false)} style={{ padding: "14px 20px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "transparent", color: "rgba(255,255,255,0.5)", cursor: "pointer", fontFamily: "'Inter', sans-serif", fontSize: 14 }}>Cancel</button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Validity notice */}
-          {quote.valid_until && !isApproved && (
-            <div style={{ padding: "0 24px 20px" }}>
-              <div style={{ background: `rgba(${accentRgb}, 0.05)`, border: `1px solid rgba(${accentRgb}, 0.10)`, borderRadius: 10, padding: "10px 16px", textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>
-                This quote is valid until {quote.valid_until}. Pricing subject to change after expiration.
               </div>
             </div>
-          )}
 
-          {/* Error */}
-          {error && (
-            <div style={{ padding: "0 24px 16px" }}>
-              <div style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 10, padding: "10px 16px", textAlign: "center" }}>
-                <p style={{ color: "#f87171", fontSize: 13, fontWeight: 500 }}>{error}</p>
+            {/* ── SIGNATURE & APPROVAL ── */}
+            {!isApproved && !isDeclined && !isExpired && !isChangesReq && (
+              <div className="no-print" style={{ padding: "0 20px 24px" }}>
+                <div style={{ background: "#0f0f0f", border: `1px solid ${cardBorder}`, borderRadius: 12, padding: 20 }}>
+
+                  {!showApproveConfirm && !showChangeRequest && (
+                    <>
+                      <SignaturePad onSignatureChange={setHasSignature} />
+
+                      <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", marginTop: 16, marginBottom: 16 }}>
+                        <input type="checkbox" checked={agreedToTerms} onChange={(e) => setAgreedToTerms(e.target.checked)} style={{ marginTop: 3, accentColor: accent }} />
+                        <span style={{ fontSize: 12, color: labelColor, lineHeight: 1.5 }}>I agree to the scope of work, pricing, and payment terms outlined above</span>
+                      </label>
+
+                      <button
+                        onClick={() => setShowApproveConfirm(true)}
+                        disabled={!agreedToTerms || !hasSignature}
+                        style={{
+                          width: "100%", padding: 16, borderRadius: 10, border: "none",
+                          cursor: (!agreedToTerms || !hasSignature) ? "not-allowed" : "pointer",
+                          fontSize: 16, fontWeight: 700, fontFamily: "'Inter', sans-serif",
+                          color: "#000", background: accent,
+                          opacity: (!agreedToTerms || !hasSignature) ? 0.4 : 1,
+                          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                          transition: "box-shadow 0.2s, opacity 0.2s",
+                          boxShadow: (agreedToTerms && hasSignature) ? `0 0 20px rgba(${accentRgb}, 0.3)` : "none",
+                        }}
+                      >
+                        <CheckCircle className="w-5 h-5" /> Approve & Pay Deposit
+                      </button>
+
+                      <button
+                        onClick={() => setShowChangeRequest(true)}
+                        style={{ width: "100%", marginTop: 10, padding: 12, borderRadius: 10, border: `1px solid ${cardBorder}`, background: "transparent", cursor: "pointer", fontSize: 14, fontWeight: 500, fontFamily: "'Inter', sans-serif", color: "#71717a", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+                      >
+                        <MessageSquare className="w-4 h-4" /> Request Changes
+                      </button>
+                    </>
+                  )}
+
+                  {/* Approve confirm */}
+                  {showApproveConfirm && (
+                    <div>
+                      <p style={{ color: labelColor, fontSize: 13, marginBottom: 16 }}>By approving this quote you agree to the listed scope of work and pricing.</p>
+                      <div style={{ marginBottom: 16 }}>
+                        <label style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: labelColor, display: "block", marginBottom: 6 }}>YOUR NAME (TYPED SIGNATURE)</label>
+                        <input
+                          value={approverName}
+                          onChange={(e) => setApproverName(e.target.value)}
+                          placeholder="Enter your full name"
+                          style={{ width: "100%", padding: "12px 16px", borderRadius: 10, border: `1px solid ${cardBorder}`, background: "#0a0a0a", color: "#fff", fontSize: 15, fontFamily: "'Inter', sans-serif", outline: "none" }}
+                        />
+                      </div>
+                      <div style={{ display: "flex", gap: 10 }}>
+                        <button
+                          onClick={handleApprove}
+                          disabled={approving || !approverName.trim()}
+                          style={{ flex: 1, padding: 14, borderRadius: 10, border: "none", cursor: approving || !approverName.trim() ? "not-allowed" : "pointer", fontSize: 15, fontWeight: 700, fontFamily: "'Inter', sans-serif", color: "#000", background: accent, opacity: approving || !approverName.trim() ? 0.5 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+                        >
+                          {approving && <Loader2 className="w-4 h-4 animate-spin" />}
+                          Confirm Approval
+                        </button>
+                        <button onClick={() => setShowApproveConfirm(false)} style={{ padding: "14px 20px", borderRadius: 10, border: `1px solid ${cardBorder}`, background: "transparent", color: "#71717a", cursor: "pointer", fontFamily: "'Inter', sans-serif", fontSize: 14 }}>Cancel</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Change request */}
+                  {showChangeRequest && (
+                    <div>
+                      <p style={{ color: labelColor, fontSize: 13, marginBottom: 16 }}>Describe what you'd like to change:</p>
+                      <textarea
+                        value={changeNotes}
+                        onChange={(e) => setChangeNotes(e.target.value)}
+                        placeholder="Enter your feedback…"
+                        rows={4}
+                        style={{ width: "100%", padding: "12px 16px", borderRadius: 10, border: `1px solid ${cardBorder}`, background: "#0a0a0a", color: "#fff", fontSize: 14, fontFamily: "'Inter', sans-serif", outline: "none", resize: "vertical" }}
+                      />
+                      <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+                        <button onClick={handleChangeRequest} disabled={changeSubmitting || !changeNotes.trim()} style={{ flex: 1, padding: 14, borderRadius: 10, border: "none", cursor: changeSubmitting || !changeNotes.trim() ? "not-allowed" : "pointer", fontSize: 15, fontWeight: 700, fontFamily: "'Inter', sans-serif", color: "#000", background: accent, opacity: changeSubmitting || !changeNotes.trim() ? 0.5 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                          {changeSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                          Submit Request
+                        </button>
+                        <button onClick={() => setShowChangeRequest(false)} style={{ padding: "14px 20px", borderRadius: 10, border: `1px solid ${cardBorder}`, background: "transparent", color: "#71717a", cursor: "pointer", fontFamily: "'Inter', sans-serif", fontSize: 14 }}>Cancel</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
+            )}
+
+            {/* Validity notice */}
+            {quote.valid_until && !isApproved && (
+              <div style={{ padding: "0 20px 20px" }}>
+                <div style={{ background: "#0f0f0f", border: `1px solid ${cardBorder}`, borderRadius: 10, padding: "10px 16px", textAlign: "center", fontSize: 11, color: "#71717a" }}>
+                  This quote is valid until {quote.valid_until}. Pricing subject to change after expiration.
+                </div>
+              </div>
+            )}
+
+            {/* Error */}
+            {error && (
+              <div style={{ padding: "0 20px 16px" }}>
+                <div style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 10, padding: "10px 16px", textAlign: "center" }}>
+                  <p style={{ color: "#f87171", fontSize: 13, fontWeight: 500 }}>{error}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Trust badge + footer */}
+            <div className="no-print" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "12px 20px" }}>
+              <Shield className="w-3.5 h-3.5" style={{ color: "#71717a" }} />
+              <span style={{ color: "#71717a", fontSize: 11 }}>Secure Document · {quote.business_name || brand.name}</span>
             </div>
-          )}
 
-          {/* Trust badge */}
-          <div className="no-print" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "0 24px 16px" }}>
-            <Shield className="w-3.5 h-3.5" style={{ color: "rgba(255,255,255,0.25)" }} />
-            <span style={{ color: "rgba(255,255,255,0.25)", fontSize: 11 }}>Secure Document · {quote.business_name || brand.name}</span>
-          </div>
-
-          {/* ── FOOTER ── */}
-          <div style={{ borderTop: `1px solid rgba(${accentRgb}, 0.12)`, background: `rgba(${accentRgb}, 0.05)`, padding: "14px 24px", textAlign: "center" }}>
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>Thank you for considering {quote.business_name || brand.name}</div>
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 4 }}>{brand.footerInfo}</div>
+            <div style={{ borderTop: `1px solid ${cardBorder}`, background: "#0f0f0f", padding: "14px 20px", textAlign: "center" }}>
+              <div style={{ fontSize: 12, color: "#71717a" }}>Thank you for considering {quote.business_name || brand.name}</div>
+              <div style={{ fontSize: 11, color: "#52525b", marginTop: 4 }}>{brand.footerInfo}</div>
+            </div>
           </div>
         </div>
       </div>
