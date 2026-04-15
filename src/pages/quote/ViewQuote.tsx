@@ -247,12 +247,7 @@ export default function ViewQuote() {
           boxShadow: `0 0 60px rgba(${accentRgb}, 0.08), 0 24px 48px rgba(0,0,0,0.4)`,
         }}>
 
-          {/* Approved stamp watermark */}
-          {isApproved && (
-            <div style={{ position: "absolute", top: 80, right: 40, transform: "rotate(-15deg)", fontSize: 52, fontWeight: 900, color: `rgba(${accentRgb}, 0.80)`, border: `4px solid rgba(${accentRgb}, 0.60)`, borderRadius: 8, padding: "4px 16px", pointerEvents: "none", zIndex: 10, userSelect: "none", whiteSpace: "nowrap" }}>
-              APPROVED ✓
-            </div>
-          )}
+          {/* No diagonal stamp — status is shown as pill badge in header */}
 
           {/* ── HEADER ── */}
           <div style={{ background: `rgba(${accentRgb}, 0.10)`, borderBottom: `1px solid rgba(${accentRgb}, 0.20)`, padding: "32px 24px" }}>
