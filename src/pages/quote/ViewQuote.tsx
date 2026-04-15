@@ -208,16 +208,12 @@ export default function ViewQuote() {
 
   const grandTotal = quote.total || 0;
 
-  /* Payment milestones */
-  const milestones: Array<{ label: string; amount: number; status: "paid" | "next" | "upcoming" }> = quote.deposit_required && quote.deposit_amount && quote.deposit_amount > 0
-    ? [
-        { label: "Deposit to Schedule — 20%", amount: grandTotal * 0.2, status: "next" },
-        { label: "Day of Install — 40%", amount: grandTotal * 0.4, status: "upcoming" },
-        { label: "On Completion — 40%", amount: grandTotal * 0.4, status: "upcoming" },
-      ]
-    : [
-        { label: "Full Payment on Completion", amount: grandTotal, status: "next" },
-      ];
+  /* Payment milestones — always use 20/40/40 split */
+  const milestones: Array<{ label: string; pct: string; amount: number; status: "paid" | "next" | "upcoming" }> = [
+    { label: "Deposit to Schedule", pct: "20%", amount: grandTotal * 0.2, status: "next" },
+    { label: "Day of Install", pct: "40%", amount: grandTotal * 0.4, status: "upcoming" },
+    { label: "On Completion", pct: "40%", amount: grandTotal * 0.4, status: "upcoming" },
+  ];
 
   const paidTotal = milestones.filter(m => m.status === "paid").reduce((s, m) => s + m.amount, 0);
   const progressPct = grandTotal > 0 ? (paidTotal / grandTotal) * 100 : 0;
@@ -298,18 +294,18 @@ export default function ViewQuote() {
           <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "0 24px" }} />
 
           {/* ── LINE ITEMS ── */}
-          {quote.line_items && quote.line_items.length > 0 && (
-            <div style={{ padding: 0, marginBottom: 0 }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                <thead>
-                  <tr style={{ backgroundColor: `rgba(${accentRgb}, 0.07)`, borderBottom: `1px solid rgba(${accentRgb}, 0.15)` }}>
-                    {["Description", "Qty", "Unit Price", "Total"].map((h, i) => (
-                      <th key={h} style={{ textAlign: i === 0 ? "left" : i === 1 ? "center" : "right", padding: "10px 24px", fontSize: 10, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.40)", ...(i === 1 ? { width: 50 } : i > 1 ? { width: 100 } : {}) }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {quote.line_items.map((item, i) => (
+          <div style={{ padding: 0, marginBottom: 0 }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+              <thead>
+                <tr style={{ backgroundColor: `rgba(${accentRgb}, 0.07)`, borderBottom: `1px solid rgba(${accentRgb}, 0.15)` }}>
+                  {["Description", "Qty", "Unit Price", "Total"].map((h, i) => (
+                    <th key={h} style={{ textAlign: i === 0 ? "left" : i === 1 ? "center" : "right", padding: "10px 24px", fontSize: 10, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.40)", ...(i === 1 ? { width: 50 } : i > 1 ? { width: 100 } : {}) }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {quote.line_items && quote.line_items.length > 0 ? (
+                  quote.line_items.map((item, i) => (
                     <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                       <td style={{ padding: "14px 24px", color: "#fff", fontSize: 14 }}>
                         {item.description}
@@ -321,11 +317,15 @@ export default function ViewQuote() {
                       <td style={{ padding: "14px 24px", textAlign: "right", color: "rgba(255,255,255,0.55)", fontSize: 13 }}>{fmt(item.unit_price)}</td>
                       <td style={{ padding: "14px 24px", textAlign: "right", color: "#fff", fontWeight: 500, fontSize: 14 }}>{fmt(item.line_total)}</td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} style={{ padding: "24px", textAlign: "center", color: "rgba(255,255,255,0.35)", fontSize: 13, fontStyle: "italic" }}>No items added yet</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
 
           {/* ── TOTALS ── */}
           <div style={{ padding: "20px 24px", display: "flex", justifyContent: "flex-end" }}>
@@ -366,50 +366,51 @@ export default function ViewQuote() {
           )}
 
           {/* ── PAYMENT MILESTONES ── */}
-          {milestones.length > 1 && (
-            <div style={{ padding: "0 24px 20px" }}>
-              <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 12 }}>PAYMENT MILESTONES</div>
+          <div style={{ padding: "0 24px 20px" }}>
+            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 12 }}>PAYMENT MILESTONES</div>
 
-              {/* Progress bar */}
-              <div style={{ height: 4, background: "rgba(255,255,255,0.08)", borderRadius: 4, marginBottom: 12, overflow: "hidden" }}>
-                <div style={{ height: "100%", width: `${progressPct}%`, background: accent, borderRadius: 4, transition: "width 0.5s ease" }} />
-              </div>
+            {/* Progress bar */}
+            <div style={{ height: 6, background: "rgba(255,255,255,0.08)", borderRadius: 6, marginBottom: 16, overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${progressPct}%`, background: accent, borderRadius: 6, transition: "width 0.7s ease" }} />
+            </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {milestones.map((ms, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12 }}>
-                    {/* Status indicator */}
-                    <div style={{ flexShrink: 0 }}>
-                      {ms.status === "paid" ? (
-                        <div style={{ width: 28, height: 28, borderRadius: "50%", background: accent, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <Check className="w-4 h-4" style={{ color: "#000" }} />
-                        </div>
-                      ) : (
-                        <div style={{ width: 28, height: 28, borderRadius: "50%", border: `2px solid ${ms.status === "next" ? accent : "rgba(255,255,255,0.15)"}`, background: "transparent" }} />
-                      )}
-                    </div>
-                    {/* Label + amount */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>{ms.label}</div>
-                      <div style={{ fontSize: 13, color: brand.secondaryText, marginTop: 2 }}>{fmt(ms.amount)}</div>
-                    </div>
-                    {/* Status badge */}
-                    <div style={{ flexShrink: 0 }}>
+            <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, overflow: "hidden" }}>
+              {milestones.map((ms, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", borderBottom: i < milestones.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
+                  {/* Status indicator */}
+                  <div style={{ flexShrink: 0 }}>
+                    {ms.status === "paid" ? (
+                      <div style={{ width: 32, height: 32, borderRadius: "50%", background: `rgba(${accentRgb}, 0.15)`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Check className="w-4.5 h-4.5" style={{ color: accent }} />
+                      </div>
+                    ) : (
+                      <div style={{ width: 32, height: 32, borderRadius: "50%", border: `2px solid ${ms.status === "next" ? accent : "rgba(255,255,255,0.15)"}`, background: "transparent" }} />
+                    )}
+                  </div>
+                  {/* Label + percentage */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: "#fff", lineHeight: 1.3 }}>{ms.label}</div>
+                    <div style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>{ms.pct}</div>
+                  </div>
+                  {/* Amount + status */}
+                  <div style={{ flexShrink: 0, textAlign: "right" }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: ms.status === "paid" ? accent : "#fff", lineHeight: 1.2 }}>{fmt(ms.amount)}</div>
+                    <div style={{ marginTop: 4 }}>
                       {ms.status === "paid" && (
-                        <span style={{ padding: "4px 12px", borderRadius: 20, background: `rgba(${accentRgb}, 0.15)`, color: accent, fontSize: 11, fontWeight: 600 }}>Paid</span>
+                        <span style={{ padding: "3px 10px", borderRadius: 20, background: `rgba(${accentRgb}, 0.12)`, color: accent, fontSize: 11, fontWeight: 600 }}>Paid ✓</span>
                       )}
                       {ms.status === "next" && (
-                        <span style={{ padding: "4px 12px", borderRadius: 20, background: "rgba(245,158,11,0.15)", color: "#fbbf24", fontSize: 11, fontWeight: 600 }}>Next Payment</span>
+                        <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(234,179,8,0.12)", color: "#eab308", fontSize: 11, fontWeight: 600 }}>Next Payment</span>
                       )}
                       {ms.status === "upcoming" && (
-                        <span style={{ padding: "4px 12px", borderRadius: 20, background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)", fontSize: 11, fontWeight: 600 }}>Upcoming</span>
+                        <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)", fontSize: 11, fontWeight: 600 }}>Upcoming</span>
                       )}
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
-          )}
+          </div>
 
           <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "0 24px" }} />
 
