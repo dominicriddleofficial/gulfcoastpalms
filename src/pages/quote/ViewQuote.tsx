@@ -209,14 +209,14 @@ export default function ViewQuote() {
   const grandTotal = quote.total || 0;
 
   /* Payment milestones */
-  const milestones = quote.deposit_required && quote.deposit_amount && quote.deposit_amount > 0
+  const milestones: Array<{ label: string; amount: number; status: "paid" | "next" | "upcoming" }> = quote.deposit_required && quote.deposit_amount && quote.deposit_amount > 0
     ? [
-        { label: "Deposit to Schedule — 20%", amount: grandTotal * 0.2, status: "next" as const },
-        { label: "Day of Install — 40%", amount: grandTotal * 0.4, status: "upcoming" as const },
-        { label: "On Completion — 40%", amount: grandTotal * 0.4, status: "upcoming" as const },
+        { label: "Deposit to Schedule — 20%", amount: grandTotal * 0.2, status: "next" },
+        { label: "Day of Install — 40%", amount: grandTotal * 0.4, status: "upcoming" },
+        { label: "On Completion — 40%", amount: grandTotal * 0.4, status: "upcoming" },
       ]
     : [
-        { label: "Full Payment on Completion", amount: grandTotal, status: "next" as const },
+        { label: "Full Payment on Completion", amount: grandTotal, status: "next" },
       ];
 
   const paidTotal = milestones.filter(m => m.status === "paid").reduce((s, m) => s + m.amount, 0);
