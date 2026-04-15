@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
     // Fetch quote
     const { data: quote, error: qErr } = await supabase
       .from("platform_quotes")
-      .select("id, quote_number, total, subtotal, tax_total, status, valid_until, public_notes, customer_id, business_id")
+      .select("id, quote_number, total, subtotal, tax_rate, tax_total, status, valid_until, public_notes, scope_of_work, created_at, customer_id, property_id, business_id, deposit_required_flag, deposit_amount_calculated")
       .eq("id", quote_id)
       .single();
 
@@ -39,13 +39,32 @@ Deno.serve(async (req) => {
 
     // Fetch customer
     let customerName = "Customer";
+    let customerEmail: string | null = null;
+    let customerPhone: string | null = null;
     if (quote.customer_id) {
       const { data: cust } = await supabase
         .from("platform_customers")
-        .select("display_name")
+        .select("display_name, email, phone")
         .eq("id", quote.customer_id)
         .single();
-      if (cust) customerName = cust.display_name;
+      if (cust) {
+        customerName = cust.display_name;
+        customerEmail = cust.email;
+        customerPhone = cust.phone;
+      }
+    }
+
+    let customerAddress: string | null = null;
+    if (quote.property_id) {
+      const { data: property } = await supabase
+        .from("platform_properties")
+        .select("address_1, city, state, zip")
+        .eq("id", quote.property_id)
+        .single();
+
+      if (property) {
+        customerAddress = [property.address_1, property.city, property.state, property.zip].filter(Boolean).join(", ");
+      }
     }
 
     // Fetch line items
@@ -65,16 +84,24 @@ Deno.serve(async (req) => {
       quote_number: quote.quote_number,
       total: quote.total || 0,
       subtotal: quote.subtotal || 0,
+      tax_rate: quote.tax_rate || 0,
       tax_total: quote.tax_total || 0,
       status: quote.status,
       valid_until: quote.valid_until,
+      created_at: quote.created_at,
       public_notes: quote.public_notes,
+      scope_of_work: quote.scope_of_work,
       customer_name: customerName,
+      customer_email: customerEmail,
+      customer_phone: customerPhone,
+      customer_address: customerAddress,
       business_name: biz?.public_brand_name || "",
       shortcode: biz?.shortcode || "",
       logo_url: biz?.logo_url,
       business_phone: biz?.support_phone,
       business_email: biz?.support_email,
+      deposit_required: quote.deposit_required_flag || false,
+      deposit_amount: quote.deposit_amount_calculated || 0,
       line_items: lineItems || [],
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
