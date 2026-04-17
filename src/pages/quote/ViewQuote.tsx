@@ -179,10 +179,50 @@ export default function ViewQuote() {
       const data = await resp.json();
       if (!resp.ok || data.error) throw new Error(data.error || "Approval failed");
       setApproved(true);
+
+      // Immediately kick off Stripe Checkout for the 20% deposit
+      try {
+        const checkoutResp = await fetch(`${baseUrl}/create-checkout`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ quote_id: quote.id, origin_url: window.location.origin }),
+        });
+        const checkoutData = await checkoutResp.json();
+        if (checkoutResp.ok && checkoutData.url) {
+          window.location.href = checkoutData.url;
+        } else {
+          toast({
+            title: "Approved — payment link unavailable",
+            description: checkoutData.message || "We'll follow up with a payment link shortly.",
+          });
+        }
+      } catch {
+        toast({ title: "Approved", description: "We'll follow up with a payment link shortly." });
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Approval failed");
     }
     setApproving(false);
+  };
+
+  // Direct "Send Payment" button on the deposit milestone — skips approval flow
+  const handlePayDeposit = async () => {
+    if (!quote) return;
+    try {
+      const resp = await fetch(`${baseUrl}/create-checkout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quote_id: quote.id, origin_url: window.location.origin }),
+      });
+      const data = await resp.json();
+      if (resp.ok && data.url) {
+        window.location.href = data.url;
+      } else {
+        toast({ title: "Payment unavailable", description: data.message || "Could not start checkout.", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Payment unavailable", description: "Could not start checkout.", variant: "destructive" });
+    }
   };
 
   const handleChangeRequest = async () => {
@@ -294,7 +334,13 @@ export default function ViewQuote() {
 
   return (
     <>
-      <style>{`@media print { .no-print { display: none !important; } body, html { background: #09090b !important; } * { -webkit-print-color-adjust: exact !important; color-adjust: exact !important; print-color-adjust: exact !important; } }`}</style>
+      <style>{`
+        @media print { .no-print { display: none !important; } body, html { background: #09090b !important; } * { -webkit-print-color-adjust: exact !important; color-adjust: exact !important; print-color-adjust: exact !important; } }
+        @keyframes auraPulse {
+          0%, 100% { opacity: 0.85; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.04); }
+        }
+      `}</style>
 
       <div style={{ background: fullBg, minHeight: "100vh", fontFamily: "'Inter', sans-serif", padding: "24px 12px", display: "flex", flexDirection: "column", alignItems: "center" } as React.CSSProperties}>
 
