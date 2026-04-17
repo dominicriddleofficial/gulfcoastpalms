@@ -354,12 +354,14 @@ export default function ViewQuote() {
           </button>
         </div>
 
-        {/* ── GREEN AURA GLOW ── */}
+        {/* ── GREEN AURA GLOW (fades bottom → top, gentle pulse) ── */}
         <div style={{ position: "relative", maxWidth: 680, width: "100%" }}>
           <div style={{
-            position: "absolute", inset: "-100px -100px",
-            background: `radial-gradient(ellipse at center, rgba(${accentRgb}, 0.12) 0%, rgba(${accentRgb}, 0.06) 30%, rgba(${accentRgb}, 0.02) 50%, transparent 70%)`,
+            position: "absolute", inset: "-120px -120px -40px -120px",
+            background: `radial-gradient(ellipse 80% 70% at 50% 100%, rgba(${accentRgb}, 0.22) 0%, rgba(${accentRgb}, 0.12) 25%, rgba(${accentRgb}, 0.05) 50%, transparent 75%)`,
             pointerEvents: "none", zIndex: 0,
+            animation: "auraPulse 6s ease-in-out infinite",
+            transformOrigin: "center bottom",
           }} />
 
           {/* ── QUOTE CARD ── */}
