@@ -54,12 +54,12 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Look up business by shortcode
+    // Look up business by shortcode (case-insensitive)
     const { data: biz, error: bizErr } = await supabase
       .from("businesses")
       .select("id")
-      .eq("shortcode", lead.business_shortcode)
-      .single();
+      .ilike("shortcode", lead.business_shortcode)
+      .maybeSingle();
 
     if (bizErr || !biz) {
       return new Response(
