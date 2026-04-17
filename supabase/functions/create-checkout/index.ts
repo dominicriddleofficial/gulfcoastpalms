@@ -49,6 +49,94 @@ async function checkRateLimit(supabase: any, identifier: string, endpoint: strin
   return true;
 }
 
+/**
+ * Auto-create a deposit invoice from an approved/sent quote.
+ * Returns the invoice ID, ready to be checked out.
+ */
+async function createInvoiceFromQuote(supabaseAdmin: any, quoteId: string): Promise<string> {
+  // Pull quote with line items + customer + business
+  const { data: quote, error: qErr } = await supabaseAdmin
+    .from("platform_quotes")
+    .select("*, platform_customers(id, display_name, email, phone), businesses(id, shortcode)")
+    .eq("id", quoteId)
+    .single();
+
+  if (qErr || !quote) throw new Error(`Quote not found: ${qErr?.message}`);
+
+  // If a deposit invoice already exists for this quote, reuse it
+  const { data: existing } = await supabaseAdmin
+    .from("platform_invoices")
+    .select("id, status")
+    .eq("quote_id", quoteId)
+    .eq("deposit_required", true)
+    .not("status", "in", "(paid,void)")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existing?.id) {
+    log("Reusing existing deposit invoice", { invoice_id: existing.id });
+    return existing.id;
+  }
+
+  const grandTotal = Number(quote.total) || 0;
+  if (grandTotal <= 0) throw new Error("Quote has no total amount");
+
+  // 20% deposit (matches the milestone ladder shown in ViewQuote.tsx)
+  const depositAmount = Number((grandTotal * 0.2).toFixed(2));
+
+  // Generate invoice number
+  const { data: numData, error: numErr } = await supabaseAdmin.rpc("generate_next_number", {
+    _business_id: quote.business_id,
+    _record_type: "invoice",
+  });
+  if (numErr || !numData) throw new Error(`Failed to generate invoice number: ${numErr?.message}`);
+
+  const invoiceNumber = numData as string;
+
+  // Create the deposit invoice
+  const { data: newInvoice, error: insErr } = await supabaseAdmin
+    .from("platform_invoices")
+    .insert({
+      business_id: quote.business_id,
+      customer_id: quote.customer_id,
+      quote_id: quote.id,
+      invoice_number: invoiceNumber,
+      status: "sent",
+      issue_date: new Date().toISOString().split("T")[0],
+      subtotal: depositAmount,
+      tax_total: 0,
+      tax_rate: 0,
+      total: depositAmount,
+      balance_due: depositAmount,
+      amount_paid: 0,
+      deposit_required: true,
+      deposit_amount: depositAmount,
+      deposit_paid: false,
+      public_notes: `Deposit (20%) for quote ${quote.quote_number}`,
+      sent_at: new Date().toISOString(),
+    })
+    .select("id")
+    .single();
+
+  if (insErr || !newInvoice) throw new Error(`Failed to create deposit invoice: ${insErr?.message}`);
+
+  // Add a single line item
+  await supabaseAdmin.from("platform_invoice_line_items").insert({
+    business_id: quote.business_id,
+    invoice_id: newInvoice.id,
+    description: `Deposit (20%) — Quote ${quote.quote_number}`,
+    quantity: 1,
+    unit_price: depositAmount,
+    line_total: depositAmount,
+    sort_order: 0,
+    taxable_flag: false,
+  });
+
+  log("Created deposit invoice from quote", { invoice_id: newInvoice.id, amount: depositAmount });
+  return newInvoice.id;
+}
+
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
   if (req.method === "OPTIONS") {
@@ -66,7 +154,24 @@ serve(async (req) => {
     );
 
     const body = await req.json();
-    const { invoice_id, origin_url } = body;
+    let { invoice_id, quote_id, origin_url } = body;
+
+    // ── Quote-based checkout: create deposit invoice on the fly ──
+    if (!invoice_id && quote_id) {
+      if (typeof quote_id !== "string" || !UUID_RE.test(quote_id)) {
+        return new Response(JSON.stringify({ error: true, message: "Invalid quote_id format", code: "VALIDATION_ERROR" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // Rate-limit by quote
+      const allowed = await checkRateLimit(supabaseAdmin, quote_id, "create-checkout-quote", 5, 60);
+      if (!allowed) {
+        return new Response(JSON.stringify({ error: true, message: "Too many payment attempts. Please wait before trying again.", code: "RATE_LIMITED" }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      invoice_id = await createInvoiceFromQuote(supabaseAdmin, quote_id);
+    }
 
     // Server-side validation
     if (!invoice_id || typeof invoice_id !== "string" || !UUID_RE.test(invoice_id)) {
@@ -83,7 +188,7 @@ serve(async (req) => {
       });
     }
 
-    log("Request received", { invoice_id });
+    log("Request received", { invoice_id, from_quote: !!quote_id });
 
     // Fetch invoice with customer and business info — ALWAYS use server-side amount
     const { data: invoice, error: invErr } = await supabaseAdmin
@@ -141,6 +246,7 @@ serve(async (req) => {
         invoice_number: invoice.invoice_number,
         shortcode: shortcode,
         payment_type: invoice.deposit_required && !invoice.deposit_paid ? "deposit" : "balance",
+        quote_id: invoice.quote_id || quote_id || "",
         platform_environment: "production",
       },
       success_url: `${baseUrl}/pay/${shortcode.toLowerCase()}/success?session_id={CHECKOUT_SESSION_ID}`,
@@ -162,13 +268,13 @@ serve(async (req) => {
       metadata_json: session.metadata,
     });
 
-    return new Response(JSON.stringify({ url: session.url, session_id: session.id }), {
+    return new Response(JSON.stringify({ url: session.url, session_id: session.id, invoice_id: invoice.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
     log("ERROR", { message: (error as Error).message });
-    return new Response(JSON.stringify({ error: true, message: "Payment processing failed. Please try again.", code: "SERVER_ERROR" }), {
+    return new Response(JSON.stringify({ error: true, message: (error as Error).message || "Payment processing failed. Please try again.", code: "SERVER_ERROR" }), {
       headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       status: 400,
     });
