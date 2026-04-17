@@ -516,7 +516,9 @@ export default function ViewQuote() {
                         {ms.status === "next" && (
                           <>
                             <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(234,179,8,0.12)", color: "#eab308", fontSize: 11, fontWeight: 600 }}>Next Payment</span>
-                            <button style={{
+                            <button
+                              onClick={handlePayDeposit}
+                              style={{
                               display: "inline-flex", alignItems: "center", gap: 6,
                               padding: "6px 14px", borderRadius: 8, border: "none",
                               background: accent, color: "#000", fontSize: 12, fontWeight: 600,
@@ -526,7 +528,7 @@ export default function ViewQuote() {
                               onMouseEnter={(e) => (e.currentTarget.style.boxShadow = `0 0 16px rgba(${accentRgb}, 0.3)`)}
                               onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "none")}
                             >
-                              <Send className="w-3 h-3" /> Send Payment
+                              <Send className="w-3 h-3" /> Pay Now
                             </button>
                           </>
                         )}
