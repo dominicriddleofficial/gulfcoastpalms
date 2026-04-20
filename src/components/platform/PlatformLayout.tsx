@@ -189,8 +189,12 @@ export default function PlatformLayout({ children }: Props) {
     );
   }
 
+  const accentColor = selectedBiz?.default_business_color || (selectedBiz?.shortcode === "PPS" ? "#141414" : "#22c55e");
+
   return (
-    <div className="ops-theme min-h-screen bg-background flex">
+    <div className="ops-theme min-h-screen bg-background flex relative">
+      <PlatformAuraBackground accentColor={accentColor} />
+
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
