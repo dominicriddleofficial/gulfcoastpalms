@@ -15,6 +15,38 @@ import {
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
+function PlatformAuraBackground({ accentColor }: { accentColor: string }) {
+  const rgb = (() => {
+    const hex = accentColor.replace("#", "");
+    const r = parseInt(hex.substring(0, 2), 16) || 34;
+    const g = parseInt(hex.substring(2, 4), 16) || 197;
+    const b = parseInt(hex.substring(4, 6), 16) || 94;
+    return `${r}, ${g}, ${b}`;
+  })();
+  return (
+    <>
+      <style>{`@keyframes platformAuraPulse { 0%,100% { opacity: 0.85; } 50% { opacity: 1; } }`}</style>
+      {/* Strong bottom-anchored radial glow */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-x-0 bottom-0 h-[70vh] z-0"
+        style={{
+          background: `radial-gradient(ellipse 80% 60% at 50% 100%, rgba(${rgb}, 0.22), rgba(${rgb}, 0.08) 40%, transparent 70%)`,
+          animation: "platformAuraPulse 6s ease-in-out infinite",
+        }}
+      />
+      {/* Soft linear fade bottom → top */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 z-0"
+        style={{
+          background: `linear-gradient(to top, rgba(${rgb}, 0.06) 0%, transparent 50%)`,
+        }}
+      />
+    </>
+  );
+}
+
 const NAV_SECTIONS = [
   {
     label: "Core",
@@ -157,8 +189,12 @@ export default function PlatformLayout({ children }: Props) {
     );
   }
 
+  const accentColor = selectedBiz?.default_business_color || (selectedBiz?.shortcode === "PPS" ? "#141414" : "#22c55e");
+
   return (
-    <div className="ops-theme min-h-screen bg-background flex">
+    <div className="ops-theme min-h-screen bg-background flex relative">
+      <PlatformAuraBackground accentColor={accentColor} />
+
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
@@ -279,7 +315,7 @@ export default function PlatformLayout({ children }: Props) {
       </div>
 
       {/* Quick Action FAB */}
-      <QuickActionFAB brandColor={selectedBiz?.default_business_color || (selectedBiz?.shortcode === "PPS" ? "#141414" : "#22c55e")} />
+      <QuickActionFAB brandColor={accentColor} />
     </div>
   );
 }
