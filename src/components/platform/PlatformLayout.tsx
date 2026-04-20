@@ -315,7 +315,7 @@ export default function PlatformLayout({ children }: Props) {
       </div>
 
       {/* Quick Action FAB */}
-      <QuickActionFAB brandColor={selectedBiz?.default_business_color || (selectedBiz?.shortcode === "PPS" ? "#141414" : "#22c55e")} />
+      <QuickActionFAB brandColor={accentColor} />
     </div>
   );
 }
