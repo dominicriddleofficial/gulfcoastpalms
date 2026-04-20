@@ -138,7 +138,7 @@ export default function PlatformCustomers() {
                       <User className="w-4 h-4 text-muted-foreground/60 shrink-0" />
                       <span className="font-display font-medium text-foreground truncate">{customer.display_name}</span>
                       {customer.source === "jobber" ? (
-                        <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-accent/40 text-accent-foreground border border-accent">
                           Jobber
                         </span>
                       ) : (
@@ -319,7 +319,7 @@ function CustomerDetail({ customer }: { customer: UnifiedCustomer }) {
         <SheetTitle className="font-display flex items-center gap-2 flex-wrap">
           {customer.display_name}
           {customer.source === "jobber" ? (
-            <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">Jobber</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-accent/40 text-accent-foreground border border-accent">Jobber</span>
           ) : (
             <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">Manual</span>
           )}
