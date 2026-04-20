@@ -1,25 +1,17 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState } from "react";
 import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
+  Sheet, SheetContent, SheetHeader, SheetTitle,
 } from "@/components/ui/sheet";
 import {
-  Search,
-  Phone,
-  Mail,
-  Home,
-  User,
-  MapPin,
-  Plus,
-  Loader2,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
+  Search, Phone, Mail, Home, User, MapPin, Plus,
 } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,7 +22,6 @@ import { toast } from "@/hooks/use-toast";
 type UnifiedCustomer = {
   id: string;
   source: "jobber" | "platform";
-  jobber_id?: string | null;
   display_name: string;
   first_name: string | null;
   last_name: string | null;
@@ -38,7 +29,10 @@ type UnifiedCustomer = {
   email: string | null;
   phone: string | null;
   secondary_phone: string | null;
+  jobber_id?: string;
+  business_id?: string;
   created_at: string;
+  synced_at?: string;
 };
 
 type JobberProperty = {
@@ -57,66 +51,27 @@ export default function PlatformCustomers() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<UnifiedCustomer | null>(null);
-  const [showNewForm, setShowNewForm] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
-  const fetchCustomers = useCallback(async () => {
+  const fetchCustomers = async () => {
     setLoading(true);
-
-    // Pull both Jobber-synced + manually-added customers in parallel
-    const [{ data: jobberData }, { data: platformData }] = await Promise.all([
-      supabase
-        .from("jobber_clients")
-        .select("id, jobber_id, display_name, first_name, last_name, company_name, email, phone, secondary_phone, created_at")
+    const [jobberRes, platformRes] = await Promise.all([
+      supabase.from("jobber_clients")
+        .select("id, jobber_id, display_name, first_name, last_name, company_name, email, phone, secondary_phone, created_at, synced_at")
         .order("display_name", { ascending: true }),
-      (() => {
-        let q = supabase
-          .from("platform_customers")
-          .select("id, display_name, first_name, last_name, company_name, email, phone, secondary_phone, created_at, business_id")
-          .order("display_name", { ascending: true });
-        if (selectedBusinessId) q = q.eq("business_id", selectedBusinessId);
-        return q;
-      })(),
+      supabase.from("platform_customers")
+        .select("id, business_id, display_name, first_name, last_name, company_name, email, phone, secondary_phone, created_at")
+        .order("display_name", { ascending: true }),
     ]);
-
-    const jobber: UnifiedCustomer[] = (jobberData || []).map((c: any) => ({
-      id: c.id,
-      source: "jobber",
-      jobber_id: c.jobber_id,
-      display_name: c.display_name,
-      first_name: c.first_name,
-      last_name: c.last_name,
-      company_name: c.company_name,
-      email: c.email,
-      phone: c.phone,
-      secondary_phone: c.secondary_phone,
-      created_at: c.created_at,
-    }));
-
-    const platform: UnifiedCustomer[] = (platformData || []).map((c: any) => ({
-      id: c.id,
-      source: "platform",
-      display_name: c.display_name,
-      first_name: c.first_name,
-      last_name: c.last_name,
-      company_name: c.company_name,
-      email: c.email,
-      phone: c.phone,
-      secondary_phone: c.secondary_phone,
-      created_at: c.created_at,
-    }));
-
-    // Merge & sort alphabetically
-    const merged = [...platform, ...jobber].sort((a, b) =>
-      a.display_name.localeCompare(b.display_name)
-    );
-
-    setCustomers(merged);
+    const jobberCustomers: UnifiedCustomer[] = (jobberRes.data || []).map((c: any) => ({ ...c, source: "jobber" as const }));
+    const platformCustomers: UnifiedCustomer[] = (platformRes.data || []).map((c: any) => ({ ...c, source: "platform" as const }));
+    setCustomers([...platformCustomers, ...jobberCustomers]);
     setLoading(false);
-  }, [selectedBusinessId]);
+  };
 
   useEffect(() => {
     fetchCustomers();
-  }, [fetchCustomers]);
+  }, [selectedBusinessId]);
 
   const filteredCustomers = useMemo(() => {
     const search = searchQuery.trim().toLowerCase();
@@ -128,30 +83,24 @@ export default function PlatformCustomers() {
     );
   }, [customers, searchQuery]);
 
-  const selectedBiz = businesses.find((business) => business.id === selectedBusinessId);
-
-  const jobberCount = customers.filter((c) => c.source === "jobber").length;
-  const platformCount = customers.filter((c) => c.source === "platform").length;
+  const selectedBiz = businesses.find((b) => b.id === selectedBusinessId);
+  const platformCount = customers.filter(c => c.source === "platform").length;
+  const jobberCount = customers.filter(c => c.source === "jobber").length;
 
   return (
     <PlatformLayout>
-      <div className="space-y-4">
-        <div className="flex items-center justify-between gap-3">
+      <div className="space-y-5">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="font-display text-2xl font-bold text-foreground">Customers</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">Customers</h1>
               {selectedBiz && <InlineBadge shortcode={selectedBiz.shortcode} color={selectedBiz.default_business_color} />}
             </div>
-            <p className="font-body text-sm text-muted-foreground">
-              {customers.length} total · {jobberCount} from Jobber · {platformCount} added on platform
+            <p className="text-sm text-muted-foreground mt-1">
+              {platformCount} added · {jobberCount} synced from Jobber
             </p>
           </div>
-          <Button
-            onClick={() => setShowNewForm(true)}
-            disabled={!selectedBusinessId}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
-            size="sm"
-          >
+          <Button onClick={() => setShowCreateForm(true)} className="gap-2">
             <Plus className="w-4 h-4" /> New Customer
           </Button>
         </div>
@@ -159,9 +108,9 @@ export default function PlatformCustomers() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Search by name, phone, or email..."
+            placeholder="Search by name, phone, email, or company..."
             value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 bg-card border-border h-10"
           />
         </div>
@@ -171,11 +120,9 @@ export default function PlatformCustomers() {
             <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         ) : filteredCustomers.length === 0 ? (
-          <div className="bg-card border border-border rounded-xl p-8 text-center">
-            <p className="font-body text-muted-foreground">No customers found</p>
-            <p className="font-body text-xs text-muted-foreground/70 mt-1">
-              Click "New Customer" above to add your first one.
-            </p>
+          <div className="text-center py-12 bg-card/40 border border-border rounded-xl">
+            <User className="w-10 h-10 mx-auto mb-3 text-muted-foreground/40" />
+            <p className="text-sm text-muted-foreground">No customers found</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -186,24 +133,24 @@ export default function PlatformCustomers() {
                 className="w-full bg-card border border-border rounded-xl p-4 hover:border-primary/30 transition-all text-left"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0 space-y-1.5">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <User className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-body text-sm font-medium text-foreground truncate">{customer.display_name}</span>
+                      <User className="w-4 h-4 text-muted-foreground/60 shrink-0" />
+                      <span className="font-display font-medium text-foreground truncate">{customer.display_name}</span>
                       {customer.source === "jobber" ? (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-body font-bold tracking-tight bg-primary/10 text-primary border border-primary/20">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-accent/40 text-accent-foreground border border-accent">
                           Jobber
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-body font-bold tracking-tight bg-accent/30 text-foreground border border-border">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
                           Manual
                         </span>
                       )}
                     </div>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground font-body">
+                    <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground flex-wrap">
                       {customer.phone && <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{customer.phone}</span>}
-                      {customer.email && <span className="flex items-center gap-1 truncate"><Mail className="w-3 h-3" />{customer.email}</span>}
-                      {customer.company_name && <span>{customer.company_name}</span>}
+                      {customer.email && <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{customer.email}</span>}
+                      {customer.company_name && <span className="flex items-center gap-1"><Home className="w-3 h-3" />{customer.company_name}</span>}
                     </div>
                   </div>
                 </div>
@@ -213,123 +160,125 @@ export default function PlatformCustomers() {
         )}
       </div>
 
-      {/* New Customer form */}
-      <Sheet open={showNewForm} onOpenChange={setShowNewForm}>
-        <SheetContent className="ops-theme bg-card border-border w-full sm:max-w-lg overflow-y-auto">
-          <NewCustomerForm
-            businessId={selectedBusinessId}
-            onCreated={() => {
-              setShowNewForm(false);
-              fetchCustomers();
-            }}
-          />
+      {/* Detail drawer */}
+      <Sheet open={!!selectedCustomer} onOpenChange={(open) => !open && setSelectedCustomer(null)}>
+        <SheetContent className="w-full sm:max-w-lg bg-card border-border overflow-y-auto">
+          {selectedCustomer && <CustomerDetail customer={selectedCustomer} />}
         </SheetContent>
       </Sheet>
 
-      {/* Detail */}
-      <Sheet open={!!selectedCustomer} onOpenChange={() => setSelectedCustomer(null)}>
-        <SheetContent className="ops-theme bg-card border-border w-full sm:max-w-lg overflow-y-auto">
-          {selectedCustomer && <CustomerDetail customer={selectedCustomer} />}
+      {/* New customer drawer */}
+      <Sheet open={showCreateForm} onOpenChange={setShowCreateForm}>
+        <SheetContent className="w-full sm:max-w-lg bg-card border-border overflow-y-auto">
+          <CreateCustomerForm
+            businesses={businesses}
+            selectedBusinessId={selectedBusinessId}
+            onCreated={() => { setShowCreateForm(false); fetchCustomers(); }}
+          />
         </SheetContent>
       </Sheet>
     </PlatformLayout>
   );
 }
 
-function NewCustomerForm({ businessId, onCreated }: { businessId: string | null; onCreated: () => void }) {
+function CreateCustomerForm({ businesses, selectedBusinessId, onCreated }: {
+  businesses: any[];
+  selectedBusinessId: string | null;
+  onCreated: () => void;
+}) {
+  const [submitting, setSubmitting] = useState(false);
+  const [bizId, setBizId] = useState<string>(selectedBusinessId || businesses[0]?.id || "");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [companyName, setCompanyName] = useState("");
-  const [phone, setPhone] = useState("");
+  const [company, setCompany] = useState("");
   const [email, setEmail] = useState("");
-  const [notes, setNotes] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [contactMethod, setContactMethod] = useState("phone");
 
-  const handleSave = async () => {
-    if (!businessId) {
-      toast({ title: "No business selected", description: "Pick a business first." });
-      return;
-    }
-    const display = [firstName.trim(), lastName.trim()].filter(Boolean).join(" ") || companyName.trim();
-    if (!display) {
-      toast({ title: "Name required", description: "Enter a first/last name or company name." });
-      return;
-    }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bizId) { toast({ title: "Select a business first", variant: "destructive" }); return; }
+    const displayName = company.trim() || [firstName, lastName].filter(Boolean).join(" ").trim();
+    if (!displayName) { toast({ title: "Name or company required", variant: "destructive" }); return; }
 
-    setSaving(true);
+    setSubmitting(true);
     const { error } = await supabase.from("platform_customers").insert({
-      business_id: businessId,
-      display_name: display,
+      business_id: bizId,
+      display_name: displayName,
       first_name: firstName.trim() || null,
       last_name: lastName.trim() || null,
-      company_name: companyName.trim() || null,
-      phone: phone.trim() || null,
+      company_name: company.trim() || null,
       email: email.trim() || null,
-      internal_notes: notes.trim() || null,
-      source: "manual_entry",
+      phone: phone.trim() || null,
+      preferred_contact_method: contactMethod,
       customer_status: "active",
+      source: "manual",
     });
-    setSaving(false);
+    setSubmitting(false);
 
     if (error) {
-      toast({ title: "Could not create customer", description: error.message, variant: "destructive" });
+      toast({ title: "Failed to create", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Customer added", description: `${display} is now in your customer list.` });
+    toast({ title: "Customer created" });
     onCreated();
   };
 
   return (
-    <div className="space-y-5 pt-2">
+    <>
       <SheetHeader>
-        <SheetTitle className="font-display text-lg text-foreground">Add New Customer</SheetTitle>
-        <p className="text-xs text-muted-foreground font-body">
-          Manually create a customer record on this business. They'll show up alongside Jobber-synced customers.
-        </p>
+        <SheetTitle className="font-display">New Customer</SheetTitle>
       </SheetHeader>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">First name</Label>
-          <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="John" className="bg-secondary border-border" />
+      <form onSubmit={handleSubmit} className="space-y-4 mt-6">
+        {businesses.length > 1 && (
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Business</label>
+            <Select value={bizId} onValueChange={setBizId}>
+              <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {businesses.map((b) => <SelectItem key={b.id} value={b.id}>{b.public_brand_name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1.5 block">First Name</label>
+            <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} className="bg-secondary border-border" />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Last Name</label>
+            <Input value={lastName} onChange={(e) => setLastName(e.target.value)} className="bg-secondary border-border" />
+          </div>
         </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">Last name</Label>
-          <Input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Doe" className="bg-secondary border-border" />
+        <div>
+          <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Company (optional)</label>
+          <Input value={company} onChange={(e) => setCompany(e.target.value)} className="bg-secondary border-border" />
         </div>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label className="text-xs text-muted-foreground">Company (optional)</Label>
-        <Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Acme HOA" className="bg-secondary border-border" />
-      </div>
-
-      <div className="space-y-1.5">
-        <Label className="text-xs text-muted-foreground">Phone</Label>
-        <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(850) 555-0123" className="bg-secondary border-border" />
-      </div>
-
-      <div className="space-y-1.5">
-        <Label className="text-xs text-muted-foreground">Email</Label>
-        <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="customer@example.com" className="bg-secondary border-border" />
-      </div>
-
-      <div className="space-y-1.5">
-        <Label className="text-xs text-muted-foreground">Internal notes</Label>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          rows={3}
-          placeholder="Any context for the team…"
-          className="w-full rounded-md border border-border bg-secondary px-3 py-2 text-sm font-body text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
-        />
-      </div>
-
-      <Button onClick={handleSave} disabled={saving} className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
-        {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-        {saving ? "Saving…" : "Create Customer"}
-      </Button>
-    </div>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Phone</label>
+          <Input value={phone} onChange={(e) => setPhone(e.target.value)} className="bg-secondary border-border" />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Email</label>
+          <Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="bg-secondary border-border" />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Preferred Contact</label>
+          <Select value={contactMethod} onValueChange={setContactMethod}>
+            <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="phone">Phone</SelectItem>
+              <SelectItem value="email">Email</SelectItem>
+              <SelectItem value="sms">Text</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <Button type="submit" disabled={submitting} className="w-full">
+          {submitting ? "Creating..." : "Create Customer"}
+        </Button>
+      </form>
+    </>
   );
 }
 
@@ -351,110 +300,76 @@ function CustomerDetail({ customer }: { customer: UnifiedCustomer }) {
       } else {
         const { data } = await supabase
           .from("platform_properties")
-          .select("id, address_1, address_2, city, state, zip")
+          .select("id, address_1, address_2, city, state, zip, country")
           .eq("customer_id", customer.id)
           .order("created_at", { ascending: false });
-        setProperties(
-          ((data as any[]) || []).map((p) => ({
-            id: p.id,
-            street1: p.address_1,
-            street2: p.address_2,
-            city: p.city,
-            state: p.state,
-            zip: p.zip,
-            country: null,
-          }))
-        );
+        setProperties(((data || []) as any[]).map(p => ({
+          id: p.id, street1: p.address_1, street2: p.address_2,
+          city: p.city, state: p.state, zip: p.zip, country: p.country,
+        })));
       }
       setLoading(false);
     };
-
     fetchProperties();
   }, [customer.id, customer.source]);
 
   return (
-    <div className="space-y-6 pt-2">
+    <>
       <SheetHeader>
-        <div className="flex items-center gap-2 flex-wrap">
-          <SheetTitle className="font-display text-lg text-foreground">{customer.display_name}</SheetTitle>
+        <SheetTitle className="font-display flex items-center gap-2 flex-wrap">
+          {customer.display_name}
           {customer.source === "jobber" ? (
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-body font-bold tracking-tight bg-primary/10 text-primary border border-primary/20">
-              Jobber
-            </span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-accent/40 text-accent-foreground border border-accent">Jobber</span>
           ) : (
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-body font-bold tracking-tight bg-accent/30 text-foreground border border-border">
-              Manual
-            </span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">Manual</span>
           )}
-        </div>
+        </SheetTitle>
       </SheetHeader>
 
-      <div className="space-y-3">
-        <p className="font-body text-xs text-muted-foreground uppercase tracking-wider">Contact</p>
-        {customer.phone && (
-          <a href={`tel:${customer.phone}`} className="flex items-center gap-2 text-sm text-primary font-body hover:underline">
-            <Phone className="w-4 h-4" /> {customer.phone}
-          </a>
-        )}
-        {customer.secondary_phone && (
-          <p className="flex items-center gap-2 text-sm text-foreground font-body">
-            <Phone className="w-4 h-4 text-muted-foreground" /> {customer.secondary_phone}
-          </p>
-        )}
-        {customer.email && (
-          <a href={`mailto:${customer.email}`} className="flex items-center gap-2 text-sm text-primary font-body hover:underline">
-            <Mail className="w-4 h-4" /> {customer.email}
-          </a>
-        )}
-      </div>
+      <div className="mt-6 space-y-6">
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Contact</h3>
+          {customer.phone && <p className="text-sm flex items-center gap-2"><Phone className="w-4 h-4 text-muted-foreground" /> {customer.phone}</p>}
+          {customer.secondary_phone && <p className="text-sm flex items-center gap-2"><Phone className="w-4 h-4 text-muted-foreground" /> {customer.secondary_phone}</p>}
+          {customer.email && <p className="text-sm flex items-center gap-2"><Mail className="w-4 h-4 text-muted-foreground" /> {customer.email}</p>}
+        </div>
 
-      <div className="space-y-3">
-        <p className="font-body text-xs text-muted-foreground uppercase tracking-wider">Properties ({properties.length})</p>
-        {loading ? (
-          <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-        ) : properties.length === 0 ? (
-          <p className="font-body text-sm text-muted-foreground/60">No properties yet</p>
-        ) : (
-          <div className="space-y-2">
-            {properties.map((property) => (
-              <div key={property.id} className="bg-secondary rounded-lg p-3 space-y-1">
-                <div className="flex items-start gap-2">
-                  <Home className="w-4 h-4 text-muted-foreground mt-0.5" />
-                  <div>
-                    <p className="font-body text-sm text-foreground">{property.street1 || "No street"}</p>
-                    {(property.city || property.state || property.zip) && (
-                      <p className="font-body text-xs text-muted-foreground">
-                        {[property.city, property.state, property.zip].filter(Boolean).join(", ")}
-                      </p>
-                    )}
-                    {property.country && <p className="font-body text-[10px] text-muted-foreground mt-1">{property.country}</p>}
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Properties ({properties.length})</h3>
+          {loading ? (
+            <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          ) : properties.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No properties yet</p>
+          ) : (
+            <div className="space-y-2">
+              {properties.map((p) => (
+                <div key={p.id} className="bg-secondary/40 border border-border rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <MapPin className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm text-foreground">{p.street1 || "No street"}</p>
+                      {(p.city || p.state || p.zip) && <p className="text-xs text-muted-foreground">{[p.city, p.state, p.zip].filter(Boolean).join(", ")}</p>}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-2 pt-4 border-t border-border">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Details</h3>
+          {customer.jobber_id && <p className="text-xs text-muted-foreground">Jobber ID: {customer.jobber_id}</p>}
+          <p className="text-xs text-muted-foreground">Created {format(new Date(customer.created_at), "MMM d, yyyy")}</p>
+        </div>
+
+        {selectedBusinessId && customer.source === "jobber" && (
+          <>
+            <PropertyNotesForm customerId={customer.id} businessId={selectedBusinessId} />
+            <RecurringContractForm customerId={customer.id} businessId={selectedBusinessId} />
+          </>
         )}
       </div>
-
-      {customer.source === "jobber" && customer.jobber_id && (
-        <div className="space-y-2">
-          <p className="font-body text-xs text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-            <MapPin className="w-3 h-3" /> Sync Details
-          </p>
-          <p className="font-body text-xs text-muted-foreground/70">Jobber ID: {customer.jobber_id}</p>
-          <p className="font-body text-xs text-muted-foreground/70">First synced {format(new Date(customer.created_at), "MMM d, yyyy")}</p>
-        </div>
-      )}
-
-      {/* Property Notes */}
-      {selectedBusinessId && (
-        <PropertyNotesForm customerId={customer.id} businessId={selectedBusinessId} />
-      )}
-
-      {/* Recurring Contracts */}
-      {selectedBusinessId && (
-        <RecurringContractForm customerId={customer.id} businessId={selectedBusinessId} />
-      )}
-    </div>
+    </>
   );
 }
