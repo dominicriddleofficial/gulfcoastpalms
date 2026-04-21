@@ -196,19 +196,14 @@ export default function PayInvoice() {
           </button>
         </div>
 
-        {/* ── GREEN AURA GLOW ── */}
+        {/* ── INVOICE WRAPPER ── */}
         <div style={{ position: "relative", maxWidth: 680, width: "100%" }}>
-          <div style={{
-            position: "absolute", inset: "-100px -100px",
-            background: `radial-gradient(ellipse at center, rgba(${accentRgb}, 0.12) 0%, rgba(${accentRgb}, 0.06) 30%, rgba(${accentRgb}, 0.02) 50%, transparent 70%)`,
-            pointerEvents: "none", zIndex: 0,
-          }} />
-
           {/* ── INVOICE CARD ── */}
           <div style={{
             position: "relative", zIndex: 1,
             background: cardBg, border: `1px solid ${cardBorder}`,
             borderRadius: 16, overflow: "hidden",
+            boxShadow: `0 20px 60px -20px rgba(${accentRgb}, 0.25), 0 0 0 1px rgba(255,255,255,0.02)`,
           }}>
 
             {/* ── HEADER ── */}
@@ -312,7 +307,7 @@ export default function PayInvoice() {
             </div>
 
             {/* ── PAY NOW ── */}
-            {!isPaid && !isDraft && (
+            {!isPaid && (
               <div className="no-print" style={{ padding: "20px 20px 24px" }}>
                 <div style={{ background: "#0f0f0f", border: `1px solid ${cardBorder}`, borderRadius: 12, padding: 20, textAlign: "center" }}>
                   <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: accent, marginBottom: 4 }}>SECURE ONLINE PAYMENT</div>
@@ -373,6 +368,7 @@ export default function PayInvoice() {
               <div style={{ fontSize: 11, color: "#52525b", marginTop: 4 }}>{brand.footer}</div>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </>
