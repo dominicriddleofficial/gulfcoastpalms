@@ -41,7 +41,7 @@ serve(async (req) => {
 
     const { data, error } = await supabaseAdmin
       .from("platform_invoices")
-      .select("id, invoice_number, total, balance_due, status, deposit_required, deposit_amount, deposit_paid, business_id, customer_id, platform_customers(display_name), businesses(shortcode, public_brand_name)")
+      .select("id, invoice_number, total, balance_due, status, deposit_required, deposit_amount, deposit_paid, business_id, customer_id, property_id, issue_date, due_date, subtotal, tax_total, tax_rate, public_notes, platform_customers(display_name, email, phone), platform_properties(address_1, address_2, city, state, zip), businesses(shortcode, public_brand_name, support_phone, support_email, website_url, logo_url)")
       .eq("id", invoice_id)
       .single();
 
@@ -62,6 +62,22 @@ serve(async (req) => {
       });
     }
 
+    // Fetch line items
+    const { data: lineItems } = await supabaseAdmin
+      .from("platform_invoice_line_items")
+      .select("description, quantity, unit_price, line_total")
+      .eq("invoice_id", invoice_id)
+      .order("sort_order", { ascending: true });
+
+    const cust = (data as any).platform_customers;
+    const prop = (data as any).platform_properties;
+    const biz = (data as any).businesses;
+    const customerAddress = prop
+      ? [prop.address_1, prop.address_2, [prop.city, prop.state, prop.zip].filter(Boolean).join(", ")]
+          .filter(Boolean)
+          .join(", ")
+      : null;
+
     // Return only safe public-facing fields — no internal notes, cost margins, or employee data
     return new Response(JSON.stringify({
       id: data.id,
@@ -72,8 +88,22 @@ serve(async (req) => {
       deposit_required: data.deposit_required,
       deposit_amount: data.deposit_amount,
       deposit_paid: data.deposit_paid,
-      customer_name: (data as any).platform_customers?.display_name || "Customer",
-      business_name: (data as any).businesses?.public_brand_name || "",
+      issue_date: data.issue_date,
+      due_date: data.due_date,
+      subtotal: data.subtotal,
+      tax_total: data.tax_total,
+      tax_rate: data.tax_rate,
+      public_notes: data.public_notes,
+      line_items: lineItems || [],
+      customer_name: cust?.display_name || "Customer",
+      customer_email: cust?.email || null,
+      customer_phone: cust?.phone || null,
+      customer_address: customerAddress,
+      business_name: biz?.public_brand_name || "",
+      business_phone: biz?.support_phone || null,
+      business_email: biz?.support_email || null,
+      business_website: biz?.website_url || null,
+      logo_url: biz?.logo_url || null,
       shortcode: invoiceShortcode,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
