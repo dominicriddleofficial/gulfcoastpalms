@@ -206,6 +206,18 @@ export default function PayInvoice() {
             borderRadius: 16, overflow: "hidden",
             boxShadow: `0 20px 60px -20px rgba(${accentRgb}, 0.25), 0 0 0 1px rgba(255,255,255,0.02)`,
           }}>
+            {/* ── GREEN GLOW OVERLAY (sits ON TOP of card, fades from bottom) ── */}
+            <div
+              aria-hidden
+              className="no-print"
+              style={{
+                position: "absolute", inset: 0, pointerEvents: "none", zIndex: 5,
+                background: `radial-gradient(ellipse 90% 55% at 50% 110%, rgba(${accentRgb}, 0.22), rgba(${accentRgb}, 0.08) 40%, transparent 70%)`,
+                mixBlendMode: "screen",
+                animation: "payAuraPulse 6s ease-in-out infinite",
+                borderRadius: 16,
+              }}
+            />
 
             {/* ── HEADER ── */}
             <div style={{ padding: "20px 20px 16px", borderBottom: `1px solid ${cardBorder}` }}>
