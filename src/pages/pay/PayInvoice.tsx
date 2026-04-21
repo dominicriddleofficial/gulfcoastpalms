@@ -151,8 +151,31 @@ export default function PayInvoice() {
   return (
     <>
       <style>{`@media print { .no-print { display: none !important; } body, html { background: #09090b !important; } * { -webkit-print-color-adjust: exact !important; color-adjust: exact !important; print-color-adjust: exact !important; } }`}</style>
+      <style>{`@keyframes payAuraPulse { 0%,100% { opacity: 0.85; } 50% { opacity: 1; } }`}</style>
 
-      <div style={{ background: fullBg, minHeight: "100vh", fontFamily: "'Inter', sans-serif", padding: "24px 12px", display: "flex", flexDirection: "column", alignItems: "center" } as React.CSSProperties}>
+      <div style={{ background: fullBg, minHeight: "100vh", fontFamily: "'Inter', sans-serif", padding: "24px 12px", display: "flex", flexDirection: "column", alignItems: "center", position: "relative", overflow: "hidden" } as React.CSSProperties}>
+
+        {/* ── PLATFORM-STYLE GREEN AURA (bottom-anchored radial + soft fade) ── */}
+        <div
+          aria-hidden
+          className="no-print"
+          style={{
+            position: "fixed", left: 0, right: 0, bottom: 0, height: "70vh",
+            pointerEvents: "none", zIndex: 0,
+            background: `radial-gradient(ellipse 80% 60% at 50% 100%, rgba(${accentRgb}, 0.22), rgba(${accentRgb}, 0.08) 40%, transparent 70%)`,
+            animation: "payAuraPulse 6s ease-in-out infinite",
+          }}
+        />
+        <div
+          aria-hidden
+          className="no-print"
+          style={{
+            position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
+            background: `linear-gradient(to top, rgba(${accentRgb}, 0.06) 0%, transparent 50%)`,
+          }}
+        />
+
+        <div style={{ position: "relative", zIndex: 1, width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
 
         {/* Cancelled notice */}
         {cancelled && (
@@ -173,19 +196,14 @@ export default function PayInvoice() {
           </button>
         </div>
 
-        {/* ── GREEN AURA GLOW ── */}
+        {/* ── INVOICE WRAPPER ── */}
         <div style={{ position: "relative", maxWidth: 680, width: "100%" }}>
-          <div style={{
-            position: "absolute", inset: "-100px -100px",
-            background: `radial-gradient(ellipse at center, rgba(${accentRgb}, 0.12) 0%, rgba(${accentRgb}, 0.06) 30%, rgba(${accentRgb}, 0.02) 50%, transparent 70%)`,
-            pointerEvents: "none", zIndex: 0,
-          }} />
-
           {/* ── INVOICE CARD ── */}
           <div style={{
             position: "relative", zIndex: 1,
             background: cardBg, border: `1px solid ${cardBorder}`,
             borderRadius: 16, overflow: "hidden",
+            boxShadow: `0 20px 60px -20px rgba(${accentRgb}, 0.25), 0 0 0 1px rgba(255,255,255,0.02)`,
           }}>
 
             {/* ── HEADER ── */}
@@ -289,7 +307,7 @@ export default function PayInvoice() {
             </div>
 
             {/* ── PAY NOW ── */}
-            {!isPaid && !isDraft && (
+            {!isPaid && (
               <div className="no-print" style={{ padding: "20px 20px 24px" }}>
                 <div style={{ background: "#0f0f0f", border: `1px solid ${cardBorder}`, borderRadius: 12, padding: 20, textAlign: "center" }}>
                   <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: accent, marginBottom: 4 }}>SECURE ONLINE PAYMENT</div>
@@ -350,6 +368,7 @@ export default function PayInvoice() {
               <div style={{ fontSize: 11, color: "#52525b", marginTop: 4 }}>{brand.footer}</div>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </>
