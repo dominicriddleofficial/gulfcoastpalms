@@ -151,8 +151,31 @@ export default function PayInvoice() {
   return (
     <>
       <style>{`@media print { .no-print { display: none !important; } body, html { background: #09090b !important; } * { -webkit-print-color-adjust: exact !important; color-adjust: exact !important; print-color-adjust: exact !important; } }`}</style>
+      <style>{`@keyframes payAuraPulse { 0%,100% { opacity: 0.85; } 50% { opacity: 1; } }`}</style>
 
-      <div style={{ background: fullBg, minHeight: "100vh", fontFamily: "'Inter', sans-serif", padding: "24px 12px", display: "flex", flexDirection: "column", alignItems: "center" } as React.CSSProperties}>
+      <div style={{ background: fullBg, minHeight: "100vh", fontFamily: "'Inter', sans-serif", padding: "24px 12px", display: "flex", flexDirection: "column", alignItems: "center", position: "relative", overflow: "hidden" } as React.CSSProperties}>
+
+        {/* ── PLATFORM-STYLE GREEN AURA (bottom-anchored radial + soft fade) ── */}
+        <div
+          aria-hidden
+          className="no-print"
+          style={{
+            position: "fixed", left: 0, right: 0, bottom: 0, height: "70vh",
+            pointerEvents: "none", zIndex: 0,
+            background: `radial-gradient(ellipse 80% 60% at 50% 100%, rgba(${accentRgb}, 0.22), rgba(${accentRgb}, 0.08) 40%, transparent 70%)`,
+            animation: "payAuraPulse 6s ease-in-out infinite",
+          }}
+        />
+        <div
+          aria-hidden
+          className="no-print"
+          style={{
+            position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
+            background: `linear-gradient(to top, rgba(${accentRgb}, 0.06) 0%, transparent 50%)`,
+          }}
+        />
+
+        <div style={{ position: "relative", zIndex: 1, width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
 
         {/* Cancelled notice */}
         {cancelled && (
