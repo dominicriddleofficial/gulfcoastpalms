@@ -155,14 +155,13 @@ export default function PayInvoice() {
 
       <div style={{ background: fullBg, minHeight: "100vh", fontFamily: "'Inter', sans-serif", padding: "24px 12px", display: "flex", flexDirection: "column", alignItems: "center", position: "relative", overflow: "hidden" } as React.CSSProperties}>
 
-        {/* ── PLATFORM-STYLE GREEN AURA (bottom-anchored radial + soft fade) ── */}
+        {/* ── PLATFORM-STYLE GREEN AURA (matches platform tabs) ── */}
         <div
           aria-hidden
           className="no-print"
           style={{
-            position: "fixed", left: 0, right: 0, bottom: 0, height: "70vh",
-            pointerEvents: "none", zIndex: 0,
-            background: `radial-gradient(ellipse 80% 60% at 50% 100%, rgba(${accentRgb}, 0.22), rgba(${accentRgb}, 0.08) 40%, transparent 70%)`,
+            position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
+            background: `radial-gradient(ellipse 90% 70% at 50% 110%, rgba(${accentRgb}, 0.38), rgba(${accentRgb}, 0.14) 35%, rgba(${accentRgb}, 0.04) 60%, transparent 80%)`,
             animation: "payAuraPulse 6s ease-in-out infinite",
           }}
         />
@@ -170,8 +169,10 @@ export default function PayInvoice() {
           aria-hidden
           className="no-print"
           style={{
-            position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
-            background: `linear-gradient(to top, rgba(${accentRgb}, 0.06) 0%, transparent 50%)`,
+            position: "fixed", left: "10%", right: "10%", bottom: "-10%", height: "60vh",
+            pointerEvents: "none", zIndex: 0,
+            background: `radial-gradient(ellipse 60% 50% at 50% 100%, rgba(${accentRgb}, 0.25), transparent 70%)`,
+            filter: "blur(40px)",
           }}
         />
 
