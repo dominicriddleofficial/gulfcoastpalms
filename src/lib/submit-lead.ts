@@ -11,6 +11,10 @@ export interface LeadData {
   location?: string;
   message?: string;
   sqft?: number;
+  /** Honeypot field — must be empty. If filled, treat as spam. */
+  website?: string;
+  /** Time (ms) the form was rendered. Submissions <2s are likely bots. */
+  formRenderTime?: number;
 }
 
 function detectLeadSource(sourcePage?: string): string {
@@ -52,6 +56,17 @@ storeUtmParams();
 
 export async function submitLead(data: LeadData): Promise<{ success: boolean; error?: string }> {
   try {
+    // Honeypot anti-spam: silently succeed if filled
+    if (data.website && data.website.trim().length > 0) {
+      if (import.meta.env.DEV) console.warn("[spam blocked] honeypot triggered");
+      return { success: true };
+    }
+    // Render-time anti-spam: reject submissions in under 2s
+    if (data.formRenderTime && Date.now() - data.formRenderTime < 2000) {
+      if (import.meta.env.DEV) console.warn("[spam blocked] form submitted too fast");
+      return { success: true };
+    }
+
     // Validate and sanitize input
     const parsed = leadFormSchema.safeParse(data);
     if (!parsed.success) {
