@@ -31,9 +31,14 @@ export default function HolidayLighting() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", phone: "", email: "", address: "", propertyType: "", roofline: "", notes: "" });
   const [submitting, setSubmitting] = useState(false);
+  const [honeypot, setHoneypot] = useState("");
+  const [formRenderTime] = useState(() => Date.now());
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Honeypot anti-spam
+    if (honeypot) { navigate("/thank-you"); return; }
+    if (Date.now() - formRenderTime < 2000) { navigate("/thank-you"); return; }
     const parsed = holidayLightingSchema.safeParse(form);
     if (!parsed.success) {
       toast.error(parsed.error.errors[0]?.message || "Please check the form");
@@ -48,6 +53,8 @@ export default function HolidayLighting() {
       source: "holiday-lighting",
       message: `Property: ${parsed.data.propertyType} | Roofline: ${parsed.data.roofline} | Address: ${parsed.data.address} | ${parsed.data.notes}`,
       location: parsed.data.address || undefined,
+      website: honeypot,
+      formRenderTime,
     });
     setSubmitting(false);
     if (result.success) {
