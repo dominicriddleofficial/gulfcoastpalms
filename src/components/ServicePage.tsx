@@ -3,9 +3,11 @@ import { Phone, Check, ArrowRight, Shield, Package } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
+import { ServiceJsonLd, BreadcrumbJsonLd } from "@/components/JsonLd";
+import { GCP_BUSINESS, TEL_HREF } from "@/lib/business-info";
 import type { ServiceData } from "@/data/services";
 
-const BASE_URL = "https://gulfcoastpalms.lovable.app";
+const BASE_URL = GCP_BUSINESS.url;
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -31,47 +33,21 @@ const ServicePage = ({ service }: ServicePageProps) => {
         canonicalUrl={canonicalUrl}
       />
 
-      {/* JSON-LD: Service */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Service",
-            name: service.title,
-            description: service.metaDescription,
-            provider: {
-              "@type": "LocalBusiness",
-              name: "Gulf Coast Palms",
-              telephone: "+18509101290",
-              areaServed: "NW Florida",
-            },
-            offers: {
-              "@type": "Offer",
-              priceSpecification: {
-                "@type": "PriceSpecification",
-                priceCurrency: "USD",
-                description: "Starting from $45 per palm — free estimates available",
-              },
-            },
-          }),
+      <ServiceJsonLd
+        service={{
+          name: service.title,
+          description: service.metaDescription,
+          serviceType: service.title,
+          areaServed: "NW Florida",
+          url: `${BASE_URL}${canonicalUrl}`,
         }}
       />
-
-      {/* JSON-LD: BreadcrumbList */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "BreadcrumbList",
-            itemListElement: [
-              { "@type": "ListItem", position: 1, name: "Home", item: BASE_URL },
-              { "@type": "ListItem", position: 2, name: "Services", item: `${BASE_URL}/services` },
-              { "@type": "ListItem", position: 3, name: service.title, item: `${BASE_URL}${canonicalUrl}` },
-            ],
-          }),
-        }}
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: BASE_URL },
+          { name: "Services", url: `${BASE_URL}/services` },
+          { name: service.title, url: `${BASE_URL}${canonicalUrl}` },
+        ]}
       />
 
       {/* Hero */}
@@ -196,8 +172,8 @@ const ServicePage = ({ service }: ServicePageProps) => {
         <div className="container mx-auto">
           <h2 className="font-display text-4xl md:text-5xl font-bold text-primary-foreground mb-4">{service.ctaHeading}</h2>
           <p className="font-body text-lg text-primary-foreground/80 mb-8 max-w-xl mx-auto">{service.ctaText}</p>
-          <a href="tel:8509101290" className="inline-flex items-center gap-3 px-10 py-5 rounded-xl bg-primary-foreground text-primary font-body font-bold text-xl hover:scale-105 transition-transform shadow-xl">
-            <Phone className="w-6 h-6" /> (850) 910-1290
+          <a href={TEL_HREF} className="inline-flex items-center gap-3 px-10 py-5 rounded-xl bg-primary-foreground text-primary font-body font-bold text-xl hover:scale-105 transition-transform shadow-xl">
+            <Phone className="w-6 h-6" /> {GCP_BUSINESS.phoneDisplay}
           </a>
         </div>
       </section>
