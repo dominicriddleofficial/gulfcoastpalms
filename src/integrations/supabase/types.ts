@@ -3538,6 +3538,50 @@ export type Database = {
         }
         Relationships: []
       }
+      sync_schedules: {
+        Row: {
+          business_id: string | null
+          created_at: string
+          enabled: boolean
+          id: string
+          interval_minutes: number
+          last_run_at: string | null
+          next_run_at: string | null
+          schedule_type: string
+          updated_at: string
+        }
+        Insert: {
+          business_id?: string | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          interval_minutes?: number
+          last_run_at?: string | null
+          next_run_at?: string | null
+          schedule_type?: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          interval_minutes?: number
+          last_run_at?: string | null
+          next_run_at?: string | null
+          schedule_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sync_schedules_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tap_to_pay_transactions: {
         Row: {
           amount: number
@@ -3998,6 +4042,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      run_jobber_auto_sync: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role:
