@@ -1,16 +1,12 @@
 /// <reference types="vite/client" />
-/// <reference types="vite-imagetools/client" />
 
-// Allow imports of image assets with vite-imagetools query strings (?format=webp&w=...)
-declare module "*.jpeg?*" {
+// vite-imagetools: allow imports with query strings like ?format=webp&w=800
+// TS module patterns only support one wildcard, so we match the full suffix.
+declare module "*&format=webp*" {
   const src: string;
   export default src;
 }
-declare module "*.jpg?*" {
-  const src: string;
-  export default src;
-}
-declare module "*.png?*" {
+declare module "*?format=webp*" {
   const src: string;
   export default src;
 }
