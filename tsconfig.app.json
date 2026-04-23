@@ -19,6 +19,9 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@img/*": [
+        "./src/assets/*"
       ]
     },
     "skipLibCheck": true,
