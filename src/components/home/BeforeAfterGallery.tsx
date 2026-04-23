@@ -2,12 +2,12 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import job1 from "@/assets/gallery/job-1.jpeg?format=webp&quality=78&w=900";
-import job2 from "@/assets/gallery/job-2.jpeg?format=webp&quality=78&w=900";
-import job3 from "@/assets/gallery/job-3.jpeg?format=webp&quality=78&w=900";
-import job4 from "@/assets/gallery/job-4.jpeg?format=webp&quality=78&w=900";
-import job5 from "@/assets/gallery/job-5.jpeg?format=webp&quality=78&w=900";
-import job6 from "@/assets/gallery/job-6.jpeg?format=webp&quality=78&w=900";
+import job1 from "@img/gallery/job-1.jpeg?format=webp&quality=78&w=900";
+import job2 from "@img/gallery/job-2.jpeg?format=webp&quality=78&w=900";
+import job3 from "@img/gallery/job-3.jpeg?format=webp&quality=78&w=900";
+import job4 from "@img/gallery/job-4.jpeg?format=webp&quality=78&w=900";
+import job5 from "@img/gallery/job-5.jpeg?format=webp&quality=78&w=900";
+import job6 from "@img/gallery/job-6.jpeg?format=webp&quality=78&w=900";
 
 /**
  * Before & After gallery — placeholder structure.

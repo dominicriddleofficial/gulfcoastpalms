@@ -1,13 +1,13 @@
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import job1 from "@/assets/gallery/job-1.jpeg?format=webp&quality=75&w=800";
-import job2 from "@/assets/gallery/job-2.jpeg?format=webp&quality=75&w=800";
-import job3 from "@/assets/gallery/job-3.jpeg?format=webp&quality=75&w=800";
-import job4 from "@/assets/gallery/job-4.jpeg?format=webp&quality=75&w=800";
-import job5 from "@/assets/gallery/job-5.jpeg?format=webp&quality=75&w=800";
-import job6 from "@/assets/gallery/job-6.jpeg?format=webp&quality=75&w=800";
-import job11 from "@/assets/gallery/job-11.jpeg?format=webp&quality=80&w=1200";
+import job1 from "@img/gallery/job-1.jpeg?format=webp&quality=75&w=800";
+import job2 from "@img/gallery/job-2.jpeg?format=webp&quality=75&w=800";
+import job3 from "@img/gallery/job-3.jpeg?format=webp&quality=75&w=800";
+import job4 from "@img/gallery/job-4.jpeg?format=webp&quality=75&w=800";
+import job5 from "@img/gallery/job-5.jpeg?format=webp&quality=75&w=800";
+import job6 from "@img/gallery/job-6.jpeg?format=webp&quality=75&w=800";
+import job11 from "@img/gallery/job-11.jpeg?format=webp&quality=80&w=1200";
 
 const previewImages = [
   { src: job11, alt: "Luxury condo with trimmed palms lit up at night in Destin FL" },

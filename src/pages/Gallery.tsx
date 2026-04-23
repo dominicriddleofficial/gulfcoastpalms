@@ -4,17 +4,17 @@ import { ArrowRight, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
-import job1 from "@/assets/gallery/job-1.jpeg?format=webp&quality=78&w=1000";
-import job2 from "@/assets/gallery/job-2.jpeg?format=webp&quality=78&w=1000";
-import job3 from "@/assets/gallery/job-3.jpeg?format=webp&quality=78&w=1000";
-import job4 from "@/assets/gallery/job-4.jpeg?format=webp&quality=78&w=1000";
-import job5 from "@/assets/gallery/job-5.jpeg?format=webp&quality=78&w=1000";
-import job6 from "@/assets/gallery/job-6.jpeg?format=webp&quality=78&w=1000";
-import job7 from "@/assets/gallery/job-7.jpeg?format=webp&quality=78&w=1000";
-import job8 from "@/assets/gallery/job-8.jpeg?format=webp&quality=78&w=1000";
-import job9 from "@/assets/gallery/job-9.jpeg?format=webp&quality=78&w=1000";
-import job10 from "@/assets/gallery/job-10.jpeg?format=webp&quality=78&w=1000";
-import job11 from "@/assets/gallery/job-11.jpeg?format=webp&quality=78&w=1000";
+import job1 from "@img/gallery/job-1.jpeg?format=webp&quality=78&w=1000";
+import job2 from "@img/gallery/job-2.jpeg?format=webp&quality=78&w=1000";
+import job3 from "@img/gallery/job-3.jpeg?format=webp&quality=78&w=1000";
+import job4 from "@img/gallery/job-4.jpeg?format=webp&quality=78&w=1000";
+import job5 from "@img/gallery/job-5.jpeg?format=webp&quality=78&w=1000";
+import job6 from "@img/gallery/job-6.jpeg?format=webp&quality=78&w=1000";
+import job7 from "@img/gallery/job-7.jpeg?format=webp&quality=78&w=1000";
+import job8 from "@img/gallery/job-8.jpeg?format=webp&quality=78&w=1000";
+import job9 from "@img/gallery/job-9.jpeg?format=webp&quality=78&w=1000";
+import job10 from "@img/gallery/job-10.jpeg?format=webp&quality=78&w=1000";
+import job11 from "@img/gallery/job-11.jpeg?format=webp&quality=78&w=1000";
 import { GCP_BUSINESS, TEL_HREF } from "@/lib/business-info";
 
 /**
