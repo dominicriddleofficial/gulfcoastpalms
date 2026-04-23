@@ -51,7 +51,7 @@ const Services = () => {
                 <Link to={`/services/${service.slug}`} className="group block rounded-2xl overflow-hidden bg-card shadow-lg hover:shadow-xl transition-shadow h-full">
                   {serviceImages[service.slug] ? (
                     <div className="relative h-48 overflow-hidden">
-                      <img src={serviceImages[service.slug]} alt={`${service.title} service by Gulf Coast Palms on the Emerald Coast Florida`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                      <img src={serviceImages[service.slug]} alt={`${service.title} service by Gulf Coast Palms on the Emerald Coast Florida`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" decoding="async" width={800} height={600} />
                     </div>
                   ) : (
                     <div className="h-48 bg-secondary flex items-center justify-center">

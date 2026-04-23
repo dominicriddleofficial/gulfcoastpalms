@@ -168,7 +168,7 @@ const PalmTypePage = () => {
             {otherPalms.map((p) => (
               <Link key={p.slug} to={`/palm-trees/${p.slug}`} className="block p-4 rounded-xl border border-border bg-card hover:shadow-lg transition-all text-center group overflow-hidden">
                 <div className="w-full aspect-square rounded-lg overflow-hidden bg-secondary mb-2">
-                  <img src={p.image} alt={p.imageAlt} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                  <img src={p.image} alt={p.imageAlt} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" decoding="async" width={400} height={400} />
                 </div>
                 <p className="font-display text-sm font-bold text-foreground group-hover:text-primary transition-colors">{p.name}</p>
                 <p className="font-display text-sm font-bold text-foreground group-hover:text-primary transition-colors">{p.name}</p>

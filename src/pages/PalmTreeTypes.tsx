@@ -59,7 +59,7 @@ const PalmTreeTypes = () => {
                 >
                   <div className="p-4">
                     <div className="w-full aspect-[3/4] rounded-xl overflow-hidden bg-secondary">
-                      <img src={palm.image} alt={palm.imageAlt} className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                      <img src={palm.image} alt={palm.imageAlt} className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500" loading="lazy" decoding="async" width={600} height={800} />
                     </div>
                   </div>
                   <div className="px-6 pb-6">

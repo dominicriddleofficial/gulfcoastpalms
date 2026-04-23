@@ -182,7 +182,7 @@ const AdminSOPAcknowledgments = () => {
                       <div>
                         <p className="text-neutral-500 text-sm mb-2">Signature</p>
                         <div className="bg-white rounded-lg p-2 inline-block">
-                          <img src={ack.signature_data} alt="Signature" className="h-20" />
+                          <img src={ack.signature_data} alt="Employee signature for SOP acknowledgment" className="h-20" loading="lazy" decoding="async" width={400} height={80} />
                         </div>
                       </div>
                     </div>
