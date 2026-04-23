@@ -1,7 +1,8 @@
 import { Helmet } from "react-helmet-async";
+import { GCP_BUSINESS } from "@/lib/business-info";
 
-const BASE_URL = "https://gulfcoastpalms.lovable.app";
-const DEFAULT_OG_IMAGE = "https://storage.googleapis.com/gpt-engineer-file-uploads/bQe7KQonMqfJK9wkbrZiQYYGahH2/social-images/social-1773449403816-E861DEBB-BF46-45BC-ADB4-112C2DB70741.webp";
+const BASE_URL = GCP_BUSINESS.url;
+const DEFAULT_OG_IMAGE = GCP_BUSINESS.ogImage;
 
 interface SEOHeadProps {
   title: string;
@@ -36,6 +37,8 @@ const SEOHead = ({
       <meta property="og:description" content={description} />
       <meta property="og:type" content={ogType} />
       <meta property="og:image" content={ogImage} />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
       {fullCanonical && <meta property="og:url" content={fullCanonical} />}
 
       {/* Twitter */}
