@@ -26,7 +26,7 @@ const About = () => {
       {/* Hero */}
       <section className="relative py-24 md:py-32 overflow-hidden">
         <div className="absolute inset-0">
-          <img src={heroImage} alt="Gulf Coast palm trees" className="w-full h-full object-cover" loading="eager" />
+          <img src={heroImage} alt="Gulf Coast palm trees lining the Emerald Coast skyline" className="w-full h-full object-cover" loading="eager" fetchPriority="high" decoding="async" width={1920} height={1080} />
           <div className="absolute inset-0 bg-palm-dark/80" />
         </div>
         <div className="relative z-10 container mx-auto px-4 text-center">

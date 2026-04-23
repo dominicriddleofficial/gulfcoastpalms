@@ -37,7 +37,13 @@ serve(async (req) => {
     const body = await req.json();
 
     // Server-side validation
-    const { name, phone, email, service, location, message } = body;
+    const { name, phone, email, service, location, message, website } = body;
+    // Honeypot: silently succeed if filled
+    if (website && typeof website === "string" && website.trim().length > 0) {
+      return new Response(JSON.stringify({ success: true, sid: "honeypot_blocked" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     if (!name || typeof name !== "string" || name.trim().length === 0 || name.trim().length > 100) {
       return new Response(JSON.stringify({ error: true, message: "Name is required", code: "VALIDATION_ERROR" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },

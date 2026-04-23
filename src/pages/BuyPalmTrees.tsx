@@ -61,7 +61,7 @@ const BuyPalmTrees = () => {
               >
                 <div className="p-4">
                   <div className="w-full aspect-[3/4] rounded-xl overflow-hidden bg-secondary">
-                    <img src={palm.image} alt={palm.imageAlt} className="w-full h-full object-cover object-top" loading="lazy" />
+                    <img src={palm.image} alt={palm.imageAlt} className="w-full h-full object-cover object-top" loading="lazy" decoding="async" width={600} height={800} />
                   </div>
                 </div>
                 <div className="px-6 pb-6 flex flex-col flex-1">

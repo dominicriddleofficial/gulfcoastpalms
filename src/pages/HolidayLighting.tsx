@@ -31,9 +31,14 @@ export default function HolidayLighting() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", phone: "", email: "", address: "", propertyType: "", roofline: "", notes: "" });
   const [submitting, setSubmitting] = useState(false);
+  const [honeypot, setHoneypot] = useState("");
+  const [formRenderTime] = useState(() => Date.now());
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Honeypot anti-spam
+    if (honeypot) { navigate("/thank-you"); return; }
+    if (Date.now() - formRenderTime < 2000) { navigate("/thank-you"); return; }
     const parsed = holidayLightingSchema.safeParse(form);
     if (!parsed.success) {
       toast.error(parsed.error.errors[0]?.message || "Please check the form");
@@ -48,6 +53,8 @@ export default function HolidayLighting() {
       source: "holiday-lighting",
       message: `Property: ${parsed.data.propertyType} | Roofline: ${parsed.data.roofline} | Address: ${parsed.data.address} | ${parsed.data.notes}`,
       location: parsed.data.address || undefined,
+      website: honeypot,
+      formRenderTime,
     });
     setSubmitting(false);
     if (result.success) {
@@ -181,6 +188,11 @@ export default function HolidayLighting() {
         <div className="container mx-auto px-4 max-w-lg">
           <h2 className="text-2xl font-bold text-foreground text-center mb-6">Get Your Free Holiday Lighting Estimate</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Honeypot anti-spam field — hidden from real users, bots tend to fill it */}
+            <div style={{ position: "absolute", left: "-10000px", top: "auto", width: "1px", height: "1px", overflow: "hidden" }} aria-hidden="true">
+              <label htmlFor="website-hp">Website (leave blank)</label>
+              <input type="text" id="website-hp" name="website" tabIndex={-1} autoComplete="off" value={honeypot} onChange={(e) => setHoneypot(e.target.value)} />
+            </div>
             <Input placeholder="Full Name *" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
             <Input placeholder="Phone *" type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} required />
             <Input placeholder="Email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />

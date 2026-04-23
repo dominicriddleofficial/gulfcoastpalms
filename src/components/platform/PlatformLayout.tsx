@@ -167,7 +167,9 @@ export default function PlatformLayout({ children }: Props) {
         const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
 
         if (!lastSyncTime || lastSyncTime < thirtyMinutesAgo) {
-          console.log("[AutoSync] Triggering Jobber sync (last sync:", lastSyncTime?.toISOString() || "never", ")");
+          if (import.meta.env.DEV) {
+            console.log("[AutoSync] Triggering Jobber sync (last sync:", lastSyncTime?.toISOString() || "never", ")");
+          }
           supabase.functions.invoke("jobber-sync", {
             body: { businessId: auth.selectedBusinessId },
           }).catch(console.error);

@@ -2,12 +2,12 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import job1 from "@/assets/gallery/job-1.jpeg";
-import job2 from "@/assets/gallery/job-2.jpeg";
-import job3 from "@/assets/gallery/job-3.jpeg";
-import job4 from "@/assets/gallery/job-4.jpeg";
-import job5 from "@/assets/gallery/job-5.jpeg";
-import job6 from "@/assets/gallery/job-6.jpeg";
+import job1 from "@img/gallery/job-1.jpeg?format=webp&quality=78&w=900";
+import job2 from "@img/gallery/job-2.jpeg?format=webp&quality=78&w=900";
+import job3 from "@img/gallery/job-3.jpeg?format=webp&quality=78&w=900";
+import job4 from "@img/gallery/job-4.jpeg?format=webp&quality=78&w=900";
+import job5 from "@img/gallery/job-5.jpeg?format=webp&quality=78&w=900";
+import job6 from "@img/gallery/job-6.jpeg?format=webp&quality=78&w=900";
 
 /**
  * Before & After gallery — placeholder structure.
@@ -97,6 +97,9 @@ function BeforeAfterCard({ pair }: { pair: typeof galleryPairs[0] }) {
           animate={{ opacity: showAfter ? 0 : 1 }}
           transition={{ duration: 0.4 }}
           loading="lazy"
+          decoding="async"
+          width={800}
+          height={600}
         />
         <motion.img
           src={pair.after}
@@ -105,6 +108,9 @@ function BeforeAfterCard({ pair }: { pair: typeof galleryPairs[0] }) {
           animate={{ opacity: showAfter ? 1 : 0 }}
           transition={{ duration: 0.4 }}
           loading="lazy"
+          decoding="async"
+          width={800}
+          height={600}
         />
       </div>
 
