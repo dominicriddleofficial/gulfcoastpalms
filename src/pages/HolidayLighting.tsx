@@ -188,6 +188,11 @@ export default function HolidayLighting() {
         <div className="container mx-auto px-4 max-w-lg">
           <h2 className="text-2xl font-bold text-foreground text-center mb-6">Get Your Free Holiday Lighting Estimate</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Honeypot anti-spam field — hidden from real users, bots tend to fill it */}
+            <div style={{ position: "absolute", left: "-10000px", top: "auto", width: "1px", height: "1px", overflow: "hidden" }} aria-hidden="true">
+              <label htmlFor="website-hp">Website (leave blank)</label>
+              <input type="text" id="website-hp" name="website" tabIndex={-1} autoComplete="off" value={honeypot} onChange={(e) => setHoneypot(e.target.value)} />
+            </div>
             <Input placeholder="Full Name *" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
             <Input placeholder="Phone *" type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} required />
             <Input placeholder="Email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
