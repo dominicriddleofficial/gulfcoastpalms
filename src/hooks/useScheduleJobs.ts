@@ -54,7 +54,9 @@ export function useScheduleJobs(selectedDate: Date) {
     const dayStart = startOfDay(selectedDate).toISOString();
     const dayEnd = endOfDay(selectedDate).toISOString();
 
-    console.log(`[Schedule] Fetching jobs for ${format(selectedDate, "yyyy-MM-dd")} | range: ${dayStart} → ${dayEnd} | fetchId: ${currentFetchId}`);
+    if (import.meta.env.DEV) {
+      console.log(`[Schedule] Fetching jobs for ${format(selectedDate, "yyyy-MM-dd")} | range: ${dayStart} → ${dayEnd} | fetchId: ${currentFetchId}`);
+    }
 
     const { data, error } = await supabase
       .from("jobber_jobs")
@@ -65,7 +67,9 @@ export function useScheduleJobs(selectedDate: Date) {
 
     // Stale response guard
     if (currentFetchId !== fetchIdRef.current) {
-      console.log(`[Schedule] Discarding stale response fetchId=${currentFetchId}, current=${fetchIdRef.current}`);
+      if (import.meta.env.DEV) {
+        console.log(`[Schedule] Discarding stale response fetchId=${currentFetchId}, current=${fetchIdRef.current}`);
+      }
       return;
     }
 
@@ -77,7 +81,9 @@ export function useScheduleJobs(selectedDate: Date) {
     }
 
     const rawCount = data?.length ?? 0;
-    console.log(`[Schedule] Got ${rawCount} jobs from DB for ${format(selectedDate, "yyyy-MM-dd")}`);
+    if (import.meta.env.DEV) {
+      console.log(`[Schedule] Got ${rawCount} jobs from DB for ${format(selectedDate, "yyyy-MM-dd")}`);
+    }
 
     if (!data || data.length === 0) {
       setJobs([]);
@@ -186,7 +192,9 @@ export function useScheduleJobs(selectedDate: Date) {
     if (currentFetchId !== fetchIdRef.current) return;
 
     const geocoded = enriched.filter(j => j.lat && j.lng).length;
-    console.log(`[Schedule] Setting ${enriched.length} jobs (${geocoded} geocoded) for ${format(selectedDate, "yyyy-MM-dd")}`);
+    if (import.meta.env.DEV) {
+      console.log(`[Schedule] Setting ${enriched.length} jobs (${geocoded} geocoded) for ${format(selectedDate, "yyyy-MM-dd")}`);
+    }
 
     setJobs(enriched);
     setDiagnostics({

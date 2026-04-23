@@ -22,6 +22,8 @@ const LeadSchema = z.object({
   utm_source: z.string().max(200).optional().default(""),
   utm_medium: z.string().max(200).optional().default(""),
   utm_campaign: z.string().max(200).optional().default(""),
+  /** Honeypot anti-spam — must be empty. */
+  website: z.string().max(500).optional().default(""),
 });
 
 Deno.serve(async (req) => {
@@ -40,6 +42,14 @@ Deno.serve(async (req) => {
     }
 
     const lead = parsed.data;
+
+    // Honeypot: silently succeed if filled (don't tip off the bot)
+    if (lead.website && lead.website.trim().length > 0) {
+      return new Response(
+        JSON.stringify({ success: true, id: "honeypot_blocked" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Verify API key
     const expectedKey = Deno.env.get("EXTERNAL_LEAD_API_KEY");
