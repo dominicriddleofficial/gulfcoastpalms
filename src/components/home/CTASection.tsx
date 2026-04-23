@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Phone } from "lucide-react";
+import { GCP_BUSINESS, TEL_HREF } from "@/lib/business-info";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -23,11 +24,11 @@ const CTASection = () => (
         <motion.a
           variants={fadeUp}
           custom={2}
-          href="tel:8509101290"
+          href={TEL_HREF}
           className="inline-flex items-center gap-3 px-10 py-5 rounded-xl bg-primary-foreground text-primary font-body font-bold text-xl hover:scale-105 transition-transform shadow-xl"
         >
           <Phone className="w-6 h-6" />
-          (850) 910-1290
+          {GCP_BUSINESS.phoneDisplay}
         </motion.a>
       </motion.div>
     </div>
