@@ -1,13 +1,13 @@
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import job1 from "@/assets/gallery/job-1.jpeg";
-import job2 from "@/assets/gallery/job-2.jpeg";
-import job3 from "@/assets/gallery/job-3.jpeg";
-import job4 from "@/assets/gallery/job-4.jpeg";
-import job5 from "@/assets/gallery/job-5.jpeg";
-import job6 from "@/assets/gallery/job-6.jpeg";
-import job11 from "@/assets/gallery/job-11.jpeg";
+import job1 from "@/assets/gallery/job-1.jpeg?format=webp&quality=75&w=800";
+import job2 from "@/assets/gallery/job-2.jpeg?format=webp&quality=75&w=800";
+import job3 from "@/assets/gallery/job-3.jpeg?format=webp&quality=75&w=800";
+import job4 from "@/assets/gallery/job-4.jpeg?format=webp&quality=75&w=800";
+import job5 from "@/assets/gallery/job-5.jpeg?format=webp&quality=75&w=800";
+import job6 from "@/assets/gallery/job-6.jpeg?format=webp&quality=75&w=800";
+import job11 from "@/assets/gallery/job-11.jpeg?format=webp&quality=80&w=1200";
 
 const previewImages = [
   { src: job11, alt: "Luxury condo with trimmed palms lit up at night in Destin FL" },
@@ -64,6 +64,9 @@ const GalleryPreview = () => (
               alt={img.alt}
               className="w-full h-full object-cover aspect-[3/4] group-hover:scale-105 transition-transform duration-700"
               loading="lazy"
+              decoding="async"
+              width={600}
+              height={800}
             />
             <div className="absolute inset-0 bg-palm-dark/0 group-hover:bg-palm-dark/30 transition-colors duration-300" />
           </motion.div>
@@ -87,6 +90,9 @@ const GalleryPreview = () => (
               alt={img.alt}
               className="w-full h-full object-cover aspect-square group-hover:scale-105 transition-transform duration-700"
               loading="lazy"
+              decoding="async"
+              width={600}
+              height={600}
             />
             <div className="absolute inset-0 bg-palm-dark/0 group-hover:bg-palm-dark/30 transition-colors duration-300" />
           </motion.div>

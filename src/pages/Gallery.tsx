@@ -4,17 +4,18 @@ import { ArrowRight, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
-import job1 from "@/assets/gallery/job-1.jpeg";
-import job2 from "@/assets/gallery/job-2.jpeg";
-import job3 from "@/assets/gallery/job-3.jpeg";
-import job4 from "@/assets/gallery/job-4.jpeg";
-import job5 from "@/assets/gallery/job-5.jpeg";
-import job6 from "@/assets/gallery/job-6.jpeg";
-import job7 from "@/assets/gallery/job-7.jpeg";
-import job8 from "@/assets/gallery/job-8.jpeg";
-import job9 from "@/assets/gallery/job-9.jpeg";
-import job10 from "@/assets/gallery/job-10.jpeg";
-import job11 from "@/assets/gallery/job-11.jpeg";
+import job1 from "@/assets/gallery/job-1.jpeg?format=webp&quality=78&w=1000";
+import job2 from "@/assets/gallery/job-2.jpeg?format=webp&quality=78&w=1000";
+import job3 from "@/assets/gallery/job-3.jpeg?format=webp&quality=78&w=1000";
+import job4 from "@/assets/gallery/job-4.jpeg?format=webp&quality=78&w=1000";
+import job5 from "@/assets/gallery/job-5.jpeg?format=webp&quality=78&w=1000";
+import job6 from "@/assets/gallery/job-6.jpeg?format=webp&quality=78&w=1000";
+import job7 from "@/assets/gallery/job-7.jpeg?format=webp&quality=78&w=1000";
+import job8 from "@/assets/gallery/job-8.jpeg?format=webp&quality=78&w=1000";
+import job9 from "@/assets/gallery/job-9.jpeg?format=webp&quality=78&w=1000";
+import job10 from "@/assets/gallery/job-10.jpeg?format=webp&quality=78&w=1000";
+import job11 from "@/assets/gallery/job-11.jpeg?format=webp&quality=78&w=1000";
+import { GCP_BUSINESS, TEL_HREF } from "@/lib/business-info";
 
 /**
  * TODO: Replace with real before/after image pairs when available.
@@ -98,11 +99,11 @@ const GalleryPage = () => {
             Text us a photo of your palms for an instant quote.
           </p>
           <a
-            href="tel:8509101290"
+            href={TEL_HREF}
             className="inline-flex items-center gap-3 px-10 py-5 rounded-xl bg-primary-foreground text-primary font-body font-bold text-xl hover:scale-105 transition-transform shadow-xl"
           >
             <Phone className="w-6 h-6" />
-            (850) 910-1290
+            {GCP_BUSINESS.phoneDisplay}
           </a>
         </div>
       </section>
@@ -128,6 +129,9 @@ function GalleryCard({ item }: { item: typeof galleryItems[0] }) {
           animate={{ opacity: showAfter ? 0 : 1 }}
           transition={{ duration: 0.4 }}
           loading="lazy"
+          decoding="async"
+          width={800}
+          height={600}
         />
         <motion.img
           src={item.after}
@@ -136,6 +140,9 @@ function GalleryCard({ item }: { item: typeof galleryItems[0] }) {
           animate={{ opacity: showAfter ? 1 : 0 }}
           transition={{ duration: 0.4 }}
           loading="lazy"
+          decoding="async"
+          width={800}
+          height={600}
         />
       </div>
       <div className="absolute top-3 left-3">
