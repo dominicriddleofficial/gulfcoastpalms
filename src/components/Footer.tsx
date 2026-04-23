@@ -4,6 +4,7 @@ import { locations } from "@/data/locations";
 import { serviceNavLinks } from "@/data/services";
 import { GOOGLE_REVIEW_URL } from "@/data/reviews";
 import { trackEvent } from "@/lib/analytics";
+import { GCP_BUSINESS, TEL_HREF, SMS_HREF } from "@/lib/business-info";
 
 const Footer = () => {
   return (
@@ -68,13 +69,13 @@ const Footer = () => {
             <h4 className="font-display font-bold text-lg mb-4">Contact Us</h4>
             <div className="flex flex-col gap-3">
               <a
-                href="tel:8509101290"
+                href={TEL_HREF}
                 onClick={() => trackEvent("call_now_click", { source: "footer", click_location: "footer" })}
                 className="inline-flex items-center gap-2 font-body text-palm-sand/70 hover:text-palm-light transition-colors"
               >
-                <Phone className="w-4 h-4" /> (850) 910-1290
+                <Phone className="w-4 h-4" /> {GCP_BUSINESS.phoneDisplay}
               </a>
-              <a href="sms:8509101290" className="inline-flex items-center gap-2 font-body text-palm-sand/70 hover:text-palm-light transition-colors">
+              <a href={SMS_HREF} className="inline-flex items-center gap-2 font-body text-palm-sand/70 hover:text-palm-light transition-colors">
                 <MessageSquare className="w-4 h-4" /> Text Us a Photo
               </a>
               <p className="inline-flex items-start gap-2 font-body text-palm-sand/70">

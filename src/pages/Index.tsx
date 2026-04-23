@@ -1,5 +1,6 @@
 import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
+import { LocalBusinessJsonLd } from "@/components/JsonLd";
 import HeroSection from "@/components/home/HeroSection";
 import TrustBadges from "@/components/home/TrustBadges";
 import WhyChooseUs from "@/components/home/WhyChooseUs";
@@ -11,8 +12,6 @@ import GoogleReviews from "@/components/home/GoogleReviews";
 import VideoTestimonials from "@/components/home/VideoTestimonials";
 import FAQ from "@/components/home/FAQ";
 import CTASection from "@/components/home/CTASection";
-import { aggregateRating } from "@/data/reviews";
-
 const Index = () => {
   return (
     <Layout>
@@ -23,34 +22,7 @@ const Index = () => {
       />
 
       {/* JSON-LD for Local Business SEO */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "LocalBusiness",
-            name: "Gulf Coast Palms",
-            description: "NW Florida's palm tree trimming, removal, and hurricane preparation specialist.",
-            telephone: "(850) 910-1290",
-            url: "https://gulfcoastpalms.lovable.app",
-            priceRange: "$$",
-            areaServed: [
-              "Navarre", "Gulf Breeze", "Pensacola", "Fort Walton Beach", "Destin",
-              "30A", "Perdido Key", "Niceville", "Milton", "Mary Esther", "Santa Rosa Beach", "Pace"
-            ].map((a) => ({
-              "@type": "City",
-              name: a,
-              containedInPlace: { "@type": "State", name: "Florida" },
-            })),
-            serviceType: ["Palm Trimming", "Diamond Cutting", "Trunk Skinning", "Palm Tree Installation", "Palm Tree Removal"],
-            aggregateRating: {
-              "@type": "AggregateRating",
-              ratingValue: aggregateRating.score,
-              reviewCount: aggregateRating.count,
-            },
-          }),
-        }}
-      />
+      <LocalBusinessJsonLd />
 
       <HeroSection />
       <TrustBadges />

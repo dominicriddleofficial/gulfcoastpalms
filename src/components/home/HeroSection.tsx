@@ -3,6 +3,7 @@ import { Phone, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { HERO_IMAGE_URL } from "@/data/assets";
 import HeroReviewBadge from "@/components/home/HeroReviewBadge";
+import { GCP_BUSINESS, TEL_HREF } from "@/lib/business-info";
 
 const HeroSection = () => {
   return (
@@ -64,13 +65,13 @@ const HeroSection = () => {
           className="flex flex-col sm:flex-row gap-4 justify-center"
         >
           <a
-            href="tel:8509101290"
+            href={TEL_HREF}
             className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-body font-bold text-lg hover:bg-palm-light transition-all shadow-lg shadow-primary/30 whitespace-nowrap"
           >
             <Phone className="w-5 h-5 shrink-0" />
             <span className="flex flex-col sm:flex-row sm:gap-2 items-center leading-tight">
               <span>Call for a Free Quote</span>
-              <span>(850) 910-1290</span>
+              <span>{GCP_BUSINESS.phoneDisplay}</span>
             </span>
           </a>
           <Link

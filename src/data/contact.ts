@@ -1,7 +1,11 @@
 /**
- * Central contact info — update here to change across the entire site.
+ * Central contact info — re-exports from the canonical business-info
+ * module so legacy imports continue to work while new code can pull
+ * directly from `@/lib/business-info`.
  */
-export const PHONE_NUMBER = "8509101290";
-export const PHONE_NUMBER_DISPLAY = "(850) 910-1290";
-export const PHONE_NUMBER_TEL = "tel:8509101290";
-export const SMS_NUMBER = "sms:8509101290";
+import { GCP_BUSINESS, TEL_HREF, SMS_HREF } from "@/lib/business-info";
+
+export const PHONE_NUMBER = GCP_BUSINESS.phoneDigits;
+export const PHONE_NUMBER_DISPLAY = GCP_BUSINESS.phoneDisplay;
+export const PHONE_NUMBER_TEL = TEL_HREF;
+export const SMS_NUMBER = SMS_HREF;

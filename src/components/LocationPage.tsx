@@ -3,9 +3,11 @@ import { Phone, Star, CheckCircle, MapPin, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
+import { ServiceJsonLd, BreadcrumbJsonLd } from "@/components/JsonLd";
+import { GCP_BUSINESS, TEL_HREF, SMS_HREF } from "@/lib/business-info";
 import { LocationData, locations } from "@/data/locations";
 
-const BASE_URL = "https://gulfcoastpalms.lovable.app";
+const BASE_URL = GCP_BUSINESS.url;
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -35,40 +37,20 @@ const LocationPage = ({ location }: Props) => {
         canonicalUrl={canonicalUrl}
       />
 
-      {/* JSON-LD: Service */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Service",
-            name: `Palm Tree Trimming in ${location.city}, ${location.state}`,
-            provider: {
-              "@type": "LocalBusiness",
-              name: "Gulf Coast Palms",
-              telephone: "(850) 910-1290",
-              url: "https://gulfcoastpalms.lovable.app",
-            },
-            areaServed: { "@type": "City", name: `${location.city}, ${location.state}` },
-            serviceType: ["Palm Trimming", "Diamond Cutting", "Trunk Skinning", "Palm Installation", "Palm Removal"],
-          }),
+      <ServiceJsonLd
+        service={{
+          name: `Palm Tree Trimming in ${location.city}, ${location.state}`,
+          description: location.metaDescription,
+          areaServed: `${location.city}, ${location.state}`,
+          url: `${BASE_URL}${canonicalUrl}`,
         }}
       />
-
-      {/* JSON-LD: BreadcrumbList */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "BreadcrumbList",
-            itemListElement: [
-              { "@type": "ListItem", position: 1, name: "Home", item: BASE_URL },
-              { "@type": "ListItem", position: 2, name: "Service Areas", item: `${BASE_URL}/service-areas` },
-              { "@type": "ListItem", position: 3, name: `${location.city} Palm Tree Trimming`, item: `${BASE_URL}${canonicalUrl}` },
-            ],
-          }),
-        }}
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: BASE_URL },
+          { name: "Service Areas", url: `${BASE_URL}/service-areas` },
+          { name: `${location.city} Palm Tree Trimming`, url: `${BASE_URL}${canonicalUrl}` },
+        ]}
       />
 
       {/* Hero */}
@@ -97,14 +79,14 @@ const LocationPage = ({ location }: Props) => {
             </motion.p>
             <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-4">
               <a
-                href="tel:8509101290"
+                href={TEL_HREF}
                 className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-body font-bold text-lg hover:bg-palm-light transition-all shadow-lg shadow-primary/30"
               >
                 <Phone className="w-5 h-5" />
-                Call (850) 910-1290
+                Call {GCP_BUSINESS.phoneDisplay}
               </a>
               <a
-                href="sms:8509101290"
+                href={SMS_HREF}
                 className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl border-2 border-primary-foreground/30 text-primary-foreground font-body font-semibold text-lg hover:bg-primary-foreground/10 transition-all"
               >
                 Text for Free Quote
@@ -231,8 +213,8 @@ const LocationPage = ({ location }: Props) => {
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }}>
             <motion.h2 variants={fadeUp} custom={0} className="font-display text-3xl md:text-5xl font-bold text-primary-foreground mb-4">{location.ctaHeading}</motion.h2>
             <motion.p variants={fadeUp} custom={1} className="font-body text-lg text-primary-foreground/80 mb-8 max-w-xl mx-auto">{location.ctaText}</motion.p>
-            <motion.a variants={fadeUp} custom={2} href="tel:8509101290" className="inline-flex items-center gap-3 px-10 py-5 rounded-xl bg-primary-foreground text-primary font-body font-bold text-xl hover:scale-105 transition-transform shadow-xl">
-              <Phone className="w-6 h-6" /> (850) 910-1290
+            <motion.a variants={fadeUp} custom={2} href={TEL_HREF} className="inline-flex items-center gap-3 px-10 py-5 rounded-xl bg-primary-foreground text-primary font-body font-bold text-xl hover:scale-105 transition-transform shadow-xl">
+              <Phone className="w-6 h-6" /> {GCP_BUSINESS.phoneDisplay}
             </motion.a>
           </motion.div>
         </div>
