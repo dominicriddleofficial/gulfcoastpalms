@@ -5,6 +5,7 @@ import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 import BusinessSwitcher from "./BusinessSwitcher";
 import QuickActionFAB from "./QuickActionFAB";
 import UniversalSearch from "./UniversalSearch";
+import PlatformBottomNav from "./PlatformBottomNav";
 import { Button } from "@/components/ui/button";
 import { prefetchRoute } from "@/lib/route-prefetch";
 import {
