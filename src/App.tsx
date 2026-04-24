@@ -134,6 +134,26 @@ const RouteTracker = () => {
   useEffect(() => {
     trackPageView(location.pathname);
   }, [location.pathname]);
+  useEffect(() => {
+    const path = location.pathname;
+    let manifestHref = "/manifest.json";
+    let appleTitle = "GCP Ops";
+    if (path.startsWith("/platform")) {
+      manifestHref = "/platform-manifest.json";
+      appleTitle = "GCP Platform";
+    } else if (path.startsWith("/ops")) {
+      manifestHref = "/manifest.json";
+      appleTitle = "GCP Ops";
+    }
+    const link = document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
+    if (link && link.getAttribute("href") !== manifestHref) {
+      link.setAttribute("href", manifestHref);
+    }
+    const apple = document.querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-title"]');
+    if (apple && apple.getAttribute("content") !== appleTitle) {
+      apple.setAttribute("content", appleTitle);
+    }
+  }, [location.pathname]);
   return null;
 };
 
