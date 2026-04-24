@@ -45,6 +45,7 @@ type QuoteData = {
   logo_url?: string;
   business_phone?: string;
   business_email?: string;
+  approval_token?: string;
 };
 
 const fmt = (n: number) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -174,7 +175,7 @@ export default function ViewQuote() {
       const resp = await fetch(`${baseUrl}/approve-quote`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quote_id: quote.id, approved_by: approverName.trim() }),
+        body: JSON.stringify({ quote_id: quote.id, approved_by: approverName.trim(), approval_token: quote.approval_token }),
       });
       const data = await resp.json();
       if (!resp.ok || data.error) throw new Error(data.error || "Approval failed");
@@ -232,7 +233,7 @@ export default function ViewQuote() {
       const resp = await fetch(`${baseUrl}/approve-quote`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quote_id: quote.id, action: "request_changes", change_notes: changeNotes.trim() }),
+        body: JSON.stringify({ quote_id: quote.id, action: "request_changes", change_notes: changeNotes.trim(), approval_token: quote.approval_token }),
       });
       const data = await resp.json();
       if (!resp.ok || data.error) throw new Error(data.error || "Request failed");

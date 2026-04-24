@@ -34,9 +34,8 @@ serve(async (req) => {
     const { data: { user }, error: authErr } = await supabaseAdmin.auth.getUser(token);
     if (authErr || !user) throw new Error("Invalid authorization");
 
-    const { business_id, invoice_id, amount, customer_id } = await req.json();
+    const { business_id, invoice_id, amount: clientAmount, customer_id } = await req.json();
     if (!business_id) throw new Error("business_id is required");
-    if (!amount || amount <= 0) throw new Error("Valid amount is required");
 
     // Verify business access
     const { data: hasAccess } = await supabaseAdmin.rpc("has_business_access", {
@@ -60,11 +59,26 @@ serve(async (req) => {
       invoiceData = inv;
     }
 
+    // SECURITY: When invoice is linked, ALWAYS use server-side authoritative amount
+    // (deposit_amount if deposit owed, else balance_due). Never trust client amount on linked invoices.
+    let amount: number;
+    const isDeposit = invoiceData?.deposit_required && !invoiceData?.deposit_paid;
+    if (invoiceData) {
+      amount = isDeposit
+        ? Number(invoiceData.deposit_amount ?? 0)
+        : Number(invoiceData.balance_due ?? 0);
+      if (!amount || amount <= 0) throw new Error("Invoice has no balance due");
+    } else {
+      // Free-form charge — validate client-supplied amount with reasonable cap
+      const parsed = Number(clientAmount);
+      if (!parsed || parsed <= 0) throw new Error("Valid amount is required");
+      if (parsed > 100000) throw new Error("Amount exceeds maximum allowed");
+      amount = parsed;
+    }
+
     log("Creating terminal payment intent", { business_id, invoice_id, amount });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-
-    const isDeposit = invoiceData?.deposit_required && !invoiceData?.deposit_paid;
 
     // Create a PaymentIntent for terminal collection
     const paymentIntent = await stripe.paymentIntents.create({
