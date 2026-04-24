@@ -407,8 +407,8 @@ const BuyPalmTrees = () => {
                     </div>
                   </div>
                   <div className="flex flex-1 flex-col px-6 pb-6">
-                    <h3 className="mb-1 font-display text-xl font-bold text-foreground">{palm.name}</h3>
-                    <p className="mb-3 font-body text-xs italic text-muted-foreground">{palm.scientificName}</p>
+                    <h3 className="mb-1 font-display text-xl font-bold text-foreground">{meta?.nameOverride ?? palm.name}</h3>
+                    <p className="mb-3 font-body text-xs italic text-muted-foreground">{meta?.scientificNameOverride ?? palm.scientificName}</p>
 
                     {meta && (
                       <p className="mb-3 font-body text-xs">
@@ -448,9 +448,11 @@ const BuyPalmTrees = () => {
                       </a>
                     </div>
 
-                    <Link to={`/palm-trees/${palm.slug}`} className="mt-3 text-center font-body text-xs text-primary hover:underline">
-                      Learn more about {palm.name} →
-                    </Link>
+                    {!meta?.hideLearnMore && (
+                      <Link to={`/palm-trees/${palm.slug}`} className="mt-3 text-center font-body text-xs text-primary hover:underline">
+                        Learn more about {palm.name} →
+                      </Link>
+                    )}
                   </div>
                 </motion.div>
               );
