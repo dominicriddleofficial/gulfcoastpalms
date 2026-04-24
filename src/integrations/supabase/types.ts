@@ -111,6 +111,44 @@ export type Database = {
           },
         ]
       }
+      business_phone_numbers: {
+        Row: {
+          active: boolean
+          business_id: string
+          created_at: string
+          id: string
+          label: string | null
+          phone_number: string
+          provider: string
+        }
+        Insert: {
+          active?: boolean
+          business_id: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          phone_number: string
+          provider?: string
+        }
+        Update: {
+          active?: boolean
+          business_id?: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          phone_number?: string
+          provider?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_phone_numbers_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_settings: {
         Row: {
           automation_enabled: boolean | null
@@ -315,6 +353,41 @@ export type Database = {
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      canned_sms_replies: {
+        Row: {
+          body: string
+          business_id: string
+          created_at: string
+          id: string
+          label: string
+          sort_order: number
+        }
+        Insert: {
+          body: string
+          business_id: string
+          created_at?: string
+          id?: string
+          label: string
+          sort_order?: number
+        }
+        Update: {
+          body?: string
+          business_id?: string
+          created_at?: string
+          id?: string
+          label?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canned_sms_replies_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
         ]
@@ -3537,6 +3610,153 @@ export type Database = {
           },
         ]
       }
+      sms_conversations: {
+        Row: {
+          assigned_to_user_id: string | null
+          business_id: string
+          created_at: string
+          customer_display_name: string | null
+          customer_id: string | null
+          customer_phone: string
+          id: string
+          is_archived: boolean
+          last_message_at: string
+          last_message_direction: string | null
+          last_message_preview: string | null
+          related_entity_id: string | null
+          related_entity_type: string | null
+          unread_count: number
+          updated_at: string
+        }
+        Insert: {
+          assigned_to_user_id?: string | null
+          business_id: string
+          created_at?: string
+          customer_display_name?: string | null
+          customer_id?: string | null
+          customer_phone: string
+          id?: string
+          is_archived?: boolean
+          last_message_at?: string
+          last_message_direction?: string | null
+          last_message_preview?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          unread_count?: number
+          updated_at?: string
+        }
+        Update: {
+          assigned_to_user_id?: string | null
+          business_id?: string
+          created_at?: string
+          customer_display_name?: string | null
+          customer_id?: string | null
+          customer_phone?: string
+          id?: string
+          is_archived?: boolean
+          last_message_at?: string
+          last_message_direction?: string | null
+          last_message_preview?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          unread_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_conversations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_messages: {
+        Row: {
+          body: string
+          conversation_id: string
+          created_at: string
+          delivered_at: string | null
+          direction: string
+          error_message: string | null
+          id: string
+          media_urls: string[] | null
+          read_at: string | null
+          sent_by_user_id: string | null
+          status: string | null
+          twilio_sid: string | null
+        }
+        Insert: {
+          body: string
+          conversation_id: string
+          created_at?: string
+          delivered_at?: string | null
+          direction: string
+          error_message?: string | null
+          id?: string
+          media_urls?: string[] | null
+          read_at?: string | null
+          sent_by_user_id?: string | null
+          status?: string | null
+          twilio_sid?: string | null
+        }
+        Update: {
+          body?: string
+          conversation_id?: string
+          created_at?: string
+          delivered_at?: string | null
+          direction?: string
+          error_message?: string | null
+          id?: string
+          media_urls?: string[] | null
+          read_at?: string | null
+          sent_by_user_id?: string | null
+          status?: string | null
+          twilio_sid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "sms_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_opt_outs: {
+        Row: {
+          business_id: string | null
+          id: string
+          opted_out_at: string
+          phone: string
+          reason: string | null
+        }
+        Insert: {
+          business_id?: string | null
+          id?: string
+          opted_out_at?: string
+          phone: string
+          reason?: string | null
+        }
+        Update: {
+          business_id?: string | null
+          id?: string
+          opted_out_at?: string
+          phone?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_opt_outs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sop_acknowledgments: {
         Row: {
           created_at: string
@@ -4150,6 +4370,18 @@ export type Database = {
         }[]
       }
       run_jobber_auto_sync: { Args: never; Returns: undefined }
+      sms_upsert_conversation: {
+        Args: {
+          _business_id: string
+          _customer_display_name?: string
+          _customer_id?: string
+          _customer_phone: string
+          _direction: string
+          _increment_unread?: boolean
+          _preview: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role:
