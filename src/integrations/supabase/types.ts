@@ -2592,6 +2592,95 @@ export type Database = {
           },
         ]
       }
+      platform_notification_preferences: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          notification_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          notification_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          notification_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      platform_notifications: {
+        Row: {
+          body: string | null
+          business_id: string | null
+          created_at: string
+          icon: string | null
+          id: string
+          is_archived: boolean
+          is_read: boolean
+          link_url: string | null
+          priority: string
+          read_at: string | null
+          recipient_user_id: string
+          related_entity_id: string | null
+          related_entity_type: string | null
+          title: string
+          type: string
+        }
+        Insert: {
+          body?: string | null
+          business_id?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_archived?: boolean
+          is_read?: boolean
+          link_url?: string | null
+          priority?: string
+          read_at?: string | null
+          recipient_user_id: string
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          title: string
+          type: string
+        }
+        Update: {
+          body?: string | null
+          business_id?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_archived?: boolean
+          is_read?: boolean
+          link_url?: string | null
+          priority?: string
+          read_at?: string | null
+          recipient_user_id?: string
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_notifications_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_payments: {
         Row: {
           amount: number
@@ -3922,6 +4011,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_business_notification: {
+        Args: {
+          _body: string
+          _business_id: string
+          _icon: string
+          _link_url: string
+          _priority: string
+          _related_entity_id: string
+          _related_entity_type: string
+          _title: string
+          _type: string
+        }
+        Returns: undefined
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -4011,6 +4114,10 @@ export type Database = {
       generate_next_number: {
         Args: { _business_id: string; _record_type: string }
         Returns: string
+      }
+      get_business_recipient_user_ids: {
+        Args: { _business_id: string }
+        Returns: string[]
       }
       get_user_business_ids: { Args: { _user_id: string }; Returns: string[] }
       has_business_access: {
