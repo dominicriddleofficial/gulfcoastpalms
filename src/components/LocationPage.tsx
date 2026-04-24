@@ -10,6 +10,53 @@ import { LocationData, locations } from "@/data/locations";
 
 const BASE_URL = GCP_BUSINESS.url;
 
+const SERVICE_LINK_MAP: { match: RegExp; href: string }[] = [
+  { match: /diamond[\s-]?cut(ting)?/gi, href: "/services/palm-diamond-cutting" },
+  { match: /trunk[\s-]?skinning/gi, href: "/services/palm-tree-trunk-skinning" },
+  { match: /palm[\s-]?installations?/gi, href: "/services/palm-tree-installation" },
+  { match: /palm[\s-]?removals?/gi, href: "/services/palm-tree-removal" },
+  { match: /(hurricane|storm)[\s-]?prep(aration)?/gi, href: "/emergency-palm-service" },
+  { match: /maintenance[\s-]?plans?/gi, href: "/palm-tree-maintenance-plans" },
+];
+
+/**
+ * Convert a paragraph string to React nodes, replacing the first occurrence of
+ * each service phrase with an internal link in the brand color.
+ */
+const linkifyParagraph = (text: string): React.ReactNode => {
+  type Match = { start: number; end: number; href: string; label: string };
+  const matches: Match[] = [];
+  for (const { match, href } of SERVICE_LINK_MAP) {
+    match.lastIndex = 0;
+    const m = match.exec(text);
+    if (m) matches.push({ start: m.index, end: m.index + m[0].length, href, label: m[0] });
+  }
+  if (matches.length === 0) return text;
+  matches.sort((a, b) => a.start - b.start);
+  // Drop overlaps
+  const filtered: Match[] = [];
+  for (const m of matches) {
+    if (filtered.length === 0 || m.start >= filtered[filtered.length - 1].end) filtered.push(m);
+  }
+  const out: React.ReactNode[] = [];
+  let cursor = 0;
+  filtered.forEach((m, i) => {
+    if (m.start > cursor) out.push(text.slice(cursor, m.start));
+    out.push(
+      <Link
+        key={`l-${i}`}
+        to={m.href}
+        className="text-primary underline decoration-primary/40 underline-offset-2 hover:decoration-primary transition-colors"
+      >
+        {m.label}
+      </Link>,
+    );
+    cursor = m.end;
+  });
+  if (cursor < text.length) out.push(text.slice(cursor));
+  return out;
+};
+
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
   visible: (i: number) => ({
