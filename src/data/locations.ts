@@ -180,7 +180,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Gulf Breeze Trusts Us",
     whyChoosePoints: [
-      "500+ jobs completed in 2025",
+      "500+ palms serviced across the Emerald Coast",
       "Trusted by property managers & HOAs",
       "Licensed & insured professionals",
       "5-star rated locally",
@@ -195,8 +195,82 @@ export const locations: LocationData[] = [
       { src: job9, alt: "Palm trimming at Gulf Breeze residential property" },
     ],
     metaTitle: "Palm Tree Trimming Gulf Breeze FL | Gulf Coast Palms",
-    metaDescription: "Expert palm tree trimming in Gulf Breeze, FL. Resort-quality diamond cutting, trunk skinning & palm care. 500+ jobs completed. Call (850) 910-1290.",
+    metaDescription: "Expert palm tree trimming in Gulf Breeze, FL. Resort-quality diamond cutting, trunk skinning & coastal palm care. 5.0★ · 46 reviews. Call (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-pensacola-fl", "palm-tree-trimming-navarre-fl", "palm-tree-trimming-fort-walton-beach-fl"],
+    geo: { latitude: 30.3574, longitude: -87.1639 },
+    neighborhoods: [
+      "Gulf Breeze",
+      "Gulf Breeze Proper",
+      "Tiger Point",
+      "Villa Venyce",
+      "Oriole Beach",
+      "Pensacola Beach",
+      "Santa Rosa Sound",
+      "Pensacola Bay",
+    ],
+    pricingTiers: [
+      {
+        name: "Standard Palm Trimming",
+        price: "As low as $25 per palm",
+        bestFor: "Gulf Breeze Proper and Tiger Point homes with 1–6 palms. Routine maintenance and clean residential look.",
+      },
+      {
+        name: "Premium Diamond Cutting",
+        price: "Up to $250 per palm",
+        bestFor: "Sound-front and bay-front estates wanting a polished resort-style finish on Canary Island Date Palms and similar species.",
+      },
+      {
+        name: "HOA & Coastal Estate Maintenance",
+        price: "Custom pricing",
+        bestFor: "HOAs and large waterfront properties with 20+ palms. Scheduled service, multi-palm discounts, and consolidated billing.",
+      },
+    ],
+    pricingNote:
+      "Pricing depends on palm height, species, density, and access — sound-front and bay-front lots often require sectional rigging. Free on-site quotes available.",
+    testimonial: {
+      quote:
+        "Our HOA on the Sound has nearly 80 palms and Gulf Coast Palms keeps every one of them looking sharp. Reliable scheduling, professional crew, and the diamond cuts are flawless. Best palm company in Gulf Breeze.",
+      author: "Jennifer K., Gulf Breeze HOA board member",
+      rating: 5,
+    },
+    ctaSubtext:
+      "No hard sell. No upsell. Just an honest estimate from Gulf Breeze's trusted palm specialists.",
+    ctaPrimaryLabel: "Text a Photo to (850) 910-1290",
+    ctaSecondaryLabel: "or call us directly",
+    faqs: [
+      {
+        q: "How much does palm tree trimming cost in Gulf Breeze?",
+        a: "Gulf Breeze palm trimming typically runs $25 to $250 per palm. Sound-front estates with 10+ mature Canary Island Date Palms generally fall between $800 and $1,800 for a complete service with diamond cutting and full cleanup. Free, detailed on-site estimates with no hidden fees.",
+      },
+      {
+        q: "Do you work with Gulf Breeze HOAs and condo associations?",
+        a: "Yes — Gulf Breeze HOAs and condo communities along Santa Rosa Sound and Pensacola Bay are a core part of our client base. We handle scheduled trimming, single-invoice billing, board reporting, and consistent service quality across every palm in the community.",
+      },
+      {
+        q: "When should I schedule palm trimming in Gulf Breeze before hurricane season?",
+        a: "April through early June is the ideal window. Removing storm-vulnerable dead fronds before June 1 reduces wind-projectile risk and gives palms time to stabilize. Same-day storm-prep visits are available when a named storm enters the Gulf.",
+      },
+      {
+        q: "Do waterfront palms in Gulf Breeze need different care?",
+        a: "Yes — sound-front and bay-front palms face heavier salt spray and stronger winds than inland palms. We avoid overcutting (which weakens storm resistance), thin the canopy properly, and recommend salt-tolerant species like Sabal, Canary Island Date, and Pindo Palms for the most exposed lots.",
+      },
+      {
+        q: "Can you diamond-cut Canary Island Date Palms in Gulf Breeze?",
+        a: "Yes — diamond cutting is one of our specialties and a popular choice for Gulf Breeze waterfront homes. The signature cross-hatch finish gives Canary Island Date Palms a polished, resort-quality look that matches the high standards of the Sound and bay-front communities.",
+      },
+      {
+        q: "Do you handle storm cleanup in Gulf Breeze after hurricanes?",
+        a: "Yes — Gulf Breeze is one of our priority response areas after tropical storms and hurricanes. We handle limb removal, full palm removals, hazard correction, and complete haul-away. We accept insurance-direct billing when authorized.",
+      },
+      {
+        q: "How fast can you get to my Gulf Breeze property?",
+        a: "Routine trimming in Gulf Breeze is typically booked within 3–7 days. Peak season (April–June, October–November) runs 1–2 weeks. Storm and emergency calls are same-day or next-day. Texting a photo of your palms is the fastest path to a quote.",
+      },
+      {
+        q: "Do you offer maintenance plans for Gulf Breeze homeowners?",
+        a: "Yes — quarterly, biannual, and annual maintenance plans are available for individual Gulf Breeze homeowners, HOAs, and waterfront estates. Plans include scheduled trimming, health checks, fertilization, and priority storm response, plus 10% off non-included services.",
+      },
+    ],
   },
   {
     slug: "palm-tree-trimming-navarre-fl",
