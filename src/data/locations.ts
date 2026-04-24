@@ -66,7 +66,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Pensacola Homeowners & Property Managers Choose Us",
     whyChoosePoints: [
-      "500+ palm jobs completed in 2025",
+      "500+ palms serviced across the Emerald Coast",
       "Experienced with large properties and HOA communities",
       "Licensed & insured",
       "5-star rated across the Emerald Coast",
@@ -81,8 +81,82 @@ export const locations: LocationData[] = [
       { src: job8, alt: "Diamond cut palms at Pensacola property" },
     ],
     metaTitle: "Palm Tree Trimming Pensacola FL | Gulf Coast Palms",
-    metaDescription: "Professional palm tree trimming in Pensacola, FL. Diamond cutting, trunk skinning, installations & removals. 500+ jobs completed. Call (850) 910-1290.",
+    metaDescription: "Professional palm tree trimming in Pensacola, FL. Diamond cutting, trunk skinning, installations & removals. 5.0★ · 46 reviews · Free estimates. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-gulf-breeze-fl", "palm-tree-trimming-perdido-key-fl", "palm-tree-trimming-navarre-fl"],
+    geo: { latitude: 30.4213, longitude: -87.2169 },
+    neighborhoods: [
+      "Pensacola",
+      "East Hill",
+      "North Hill",
+      "Downtown Pensacola",
+      "Cordova Park",
+      "Scenic Heights",
+      "Bayou Texar",
+      "Perdido Key",
+    ],
+    pricingTiers: [
+      {
+        name: "Standard Palm Trimming",
+        price: "As low as $25 per palm",
+        bestFor: "East Hill, Cordova Park, and Scenic Heights homes with 1–6 palms. Routine pruning, dead frond removal, clean residential look.",
+      },
+      {
+        name: "Premium Diamond Cutting",
+        price: "Up to $250 per palm",
+        bestFor: "Historic district estates and bayfront properties wanting the signature cross-hatch finish on Canary Island Date Palms.",
+      },
+      {
+        name: "HOA & Commercial Maintenance",
+        price: "Custom pricing",
+        bestFor: "Downtown businesses, condo associations, and large neighborhoods. Scheduled service with multi-palm discounts and single-invoice billing.",
+      },
+    ],
+    pricingNote:
+      "Actual pricing depends on palm height, species, density/overgrowth, and property access. Request a free on-site estimate for accurate Pensacola pricing.",
+    testimonial: {
+      quote:
+        "We had three other companies butcher our palms over the years. Gulf Coast Palms is the first crew that actually knew what they were doing — clean cuts, no overcutting, and they hauled everything away. Finally found our forever palm guys.",
+      author: "Michael R., East Hill homeowner",
+      rating: 5,
+    },
+    ctaSubtext:
+      "No hard sell. No upsell. Just an honest estimate from Pensacola's trusted palm specialists.",
+    ctaPrimaryLabel: "Text a Photo to (850) 910-1290",
+    ctaSecondaryLabel: "or call us directly",
+    faqs: [
+      {
+        q: "How much does palm tree trimming cost in Pensacola?",
+        a: "Palm trimming in Pensacola typically ranges from $25 to $250 per palm, depending on tree height, species, density, and access. Most East Hill or Cordova Park homes with 3–5 mature palms run $150–$600 for a full service. We provide free, no-obligation on-site estimates.",
+      },
+      {
+        q: "When is the best time to trim palms in Pensacola?",
+        a: "We recommend trimming Pensacola palms between April and early June — well before Atlantic hurricane season ramps up. A pre-season cleanup removes loose, dead fronds that become projectiles in high winds and gives the canopy time to stabilize before storms arrive.",
+      },
+      {
+        q: "Do you service historic district properties in Pensacola?",
+        a: "Yes — we regularly maintain palms in North Hill, East Hill, and Downtown Pensacola's historic districts. We're careful around mature landscaping, brick walkways, wrought iron fencing, and tight side yards. We carry full insurance for working on historic and high-value properties.",
+      },
+      {
+        q: "What palms grow best in Pensacola's climate?",
+        a: "Pensacola's coastal climate supports Sabal Palms (the Florida state tree), Canary Island Date Palms, Mediterranean Fan Palms, Pindo Palms, and Washingtonia Palms. Coconut Palms are too cold-sensitive for this latitude and rarely thrive long-term. We're happy to advise on the right species for your yard.",
+      },
+      {
+        q: "Can you remove a tall palm safely from a tight Pensacola yard?",
+        a: "Yes — many Pensacola lots, especially in the historic districts, have tight access and overhead power lines. We use sectional rigging to lower palms in pieces rather than felling them whole, protecting your home, fences, and neighbors' property. Free quotes always include access notes and a clear plan.",
+      },
+      {
+        q: "Do you handle storm-damaged palms after hurricanes?",
+        a: "Yes — Pensacola is one of our priority emergency response areas after named storms. We handle limb removal, full palm removals, hazardous lean correction, and complete cleanup. We also accept insurance-direct billing when authorized by your carrier.",
+      },
+      {
+        q: "How quickly can you get to my Pensacola property?",
+        a: "Routine trimming in Pensacola is typically scheduled within 3–7 days. During peak season (April–June and October–November), expect 1–2 weeks. Emergency and storm-response calls are handled same-day or next-day. Texting us a photo of your palms is the fastest way to get a quote.",
+      },
+      {
+        q: "Do you offer maintenance plans for Pensacola HOAs?",
+        a: "Yes — quarterly, biannual, and annual plans are available for Pensacola HOAs, condo associations, and commercial properties. Plans include scheduled trimming, health inspections, fertilization, and priority storm response. Plan customers also receive 10% off non-included services.",
+      },
+    ],
   },
   {
     slug: "palm-tree-trimming-gulf-breeze-fl",
