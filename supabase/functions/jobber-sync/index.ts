@@ -1035,6 +1035,39 @@ Deno.serve(async (req) => {
       error: errorMessage,
     });
 
+    // Fire notification for sync result
+    if (context.businessId) {
+      try {
+        if (status === "success" || status === "partial") {
+          await supabase.rpc("create_business_notification", {
+            _business_id: context.businessId,
+            _type: "sync_completed",
+            _title: status === "success" ? "Jobber sync complete" : "Jobber sync partial",
+            _body: `${recordsSynced} record${recordsSynced === 1 ? "" : "s"} synced${errorMessage ? ` — ${errorMessage}` : ""}`,
+            _link_url: "/platform/settings",
+            _icon: "RefreshCw",
+            _priority: status === "partial" ? "normal" : "low",
+            _related_entity_type: null,
+            _related_entity_id: null,
+          });
+        } else {
+          await supabase.rpc("create_business_notification", {
+            _business_id: context.businessId,
+            _type: "sync_failed",
+            _title: "Jobber sync failed",
+            _body: errorMessage || "Sync failed with no details",
+            _link_url: "/platform/settings",
+            _icon: "AlertTriangle",
+            _priority: "urgent",
+            _related_entity_type: null,
+            _related_entity_id: null,
+          });
+        }
+      } catch (notifyErr) {
+        console.error("Failed to create sync notification:", notifyErr);
+      }
+    }
+
     return jsonResponse({
       success: status === "success",
       status,
