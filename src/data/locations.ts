@@ -409,7 +409,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Fort Walton Beach Property Owners Trust Us",
     whyChoosePoints: [
-      "500+ palm jobs completed in 2025",
+      "500+ palms serviced across the Emerald Coast",
       "Trusted by condo associations & commercial properties",
       "Licensed & insured professionals",
       "5-star rated across the Emerald Coast",
@@ -424,8 +424,82 @@ export const locations: LocationData[] = [
       { src: job10, alt: "Professional palm services in Fort Walton Beach" },
     ],
     metaTitle: "Palm Tree Trimming Fort Walton Beach FL | Gulf Coast Palms",
-    metaDescription: "Professional palm tree trimming in Fort Walton Beach, FL. Diamond cutting, trunk skinning & condo palm care. 500+ jobs completed. Call (850) 910-1290.",
+    metaDescription: "Professional palm tree trimming in Fort Walton Beach, FL. Diamond cutting, trunk skinning & condo palm care. 5.0★ · 46 reviews. Call (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-navarre-fl", "palm-tree-trimming-destin-fl", "palm-tree-trimming-gulf-breeze-fl"],
+    geo: { latitude: 30.4058, longitude: -86.6187 },
+    neighborhoods: [
+      "Fort Walton Beach",
+      "Okaloosa Island",
+      "Cinco Bayou",
+      "Ocean City",
+      "Wright",
+      "Shalimar",
+      "Choctawhatchee Bay",
+      "Mary Esther",
+    ],
+    pricingTiers: [
+      {
+        name: "Standard Palm Trimming",
+        price: "As low as $25 per palm",
+        bestFor: "Wright, Cinco Bayou, and Ocean City homes with 1–6 palms. Routine pruning and a clean residential appearance.",
+      },
+      {
+        name: "Premium Diamond Cutting",
+        price: "Up to $250 per palm",
+        bestFor: "Bay-front estates and Okaloosa Island properties wanting a polished, resort-grade Canary Island Date Palm finish.",
+      },
+      {
+        name: "Condo & Commercial Maintenance",
+        price: "Custom pricing",
+        bestFor: "Okaloosa Island condo associations, commercial properties on Miracle Strip Parkway, and HOAs. Scheduled service with single-invoice billing.",
+      },
+    ],
+    pricingNote:
+      "Pricing varies by palm height, species, density, and access — high-rise condo work and bay-front lots may require additional rigging. Free on-site quotes.",
+    testimonial: {
+      quote:
+        "Our condo board on Okaloosa Island had been frustrated with our previous palm company for years. Gulf Coast Palms came in, did a walk-through, gave us a clear quote, and the result was a noticeable upgrade. Owners actually commented on how good the palms look.",
+      author: "Patricia W., Okaloosa Island condo board member",
+      rating: 5,
+    },
+    ctaSubtext:
+      "No hard sell. No upsell. Just an honest estimate from Fort Walton Beach's trusted palm specialists.",
+    ctaPrimaryLabel: "Text a Photo to (850) 910-1290",
+    ctaSecondaryLabel: "or call us directly",
+    faqs: [
+      {
+        q: "How much does palm tree trimming cost in Fort Walton Beach?",
+        a: "Fort Walton Beach palm trimming generally runs $25 to $250 per palm. Bay-front and Okaloosa Island properties with 8–15 mature palms typically fall between $400 and $1,500. Free, detailed on-site estimates — no hidden fees.",
+      },
+      {
+        q: "Do you service Okaloosa Island condo associations?",
+        a: "Yes — Okaloosa Island condos are a regular part of our route. We coordinate around guest schedules, deliver consistent quality across high-rise property landscapes, and provide single-invoice billing and board reporting.",
+      },
+      {
+        q: "When should Fort Walton Beach palms be trimmed before storms?",
+        a: "We recommend trimming Fort Walton Beach palms between April and early June, ahead of hurricane season. A pre-season cleanup removes loose, dead fronds that become wind projectiles — critical for Okaloosa Island and bay-front properties.",
+      },
+      {
+        q: "What palm species thrive in Fort Walton Beach?",
+        a: "Sabal Palms, Canary Island Date Palms, Mediterranean Fan Palms, Pindo Palms, and Washingtonia Palms all do well in Fort Walton Beach's coastal climate. Coconut Palms typically struggle through cold snaps and aren't recommended for long-term planting.",
+      },
+      {
+        q: "Can you diamond-cut palms at Fort Walton Beach properties?",
+        a: "Yes — diamond cutting is one of our most-requested services for bay-front estates and high-end Okaloosa Island properties. The signature cross-hatch finish on Canary Island Date Palms creates a polished, resort-quality appearance.",
+      },
+      {
+        q: "Do you handle storm and hurricane palm cleanup in Fort Walton Beach?",
+        a: "Yes — Fort Walton Beach is one of our priority emergency response areas. We handle limb removal, full removals, hazardous lean correction, and complete haul-away. Insurance-direct billing is available when authorized.",
+      },
+      {
+        q: "How quickly can you schedule palm service in Fort Walton Beach?",
+        a: "Routine trimming in Fort Walton Beach is typically booked within 3–7 days. Peak season (April–June, October–November) runs 1–2 weeks. Storm calls get same-day or next-day response. Texting a photo is the fastest way to get a quote.",
+      },
+      {
+        q: "Do you offer recurring maintenance plans for Fort Walton Beach properties?",
+        a: "Yes — quarterly, biannual, and annual maintenance plans are available for homeowners, HOAs, condo associations, and commercial properties. Plans include scheduled trimming, health inspections, fertilization, and priority storm response.",
+      },
+    ],
   },
   {
     slug: "palm-tree-trimming-destin-fl",
