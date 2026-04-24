@@ -67,6 +67,9 @@ const PalmTypePage = () => {
               </motion.div>
             ))}
           </div>
+          <p className="font-body text-xs text-muted-foreground italic text-center mt-6 max-w-2xl mx-auto">
+            Final installation pricing depends on palm height, delivery distance, and site access.
+          </p>
         </div>
       </section>
 

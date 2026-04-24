@@ -84,6 +84,10 @@ const BuyPalmTrees = () => {
                     </div>
                   </div>
 
+                  <p className="font-body text-[11px] text-muted-foreground italic mb-4 leading-snug">
+                    Final pricing depends on palm height, delivery distance, and site access.
+                  </p>
+
                   <div className="flex gap-2">
                     <a
                       href="tel:8509101290"
