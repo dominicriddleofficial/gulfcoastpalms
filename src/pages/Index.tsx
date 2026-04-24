@@ -5,7 +5,6 @@ import HeroSection from "@/components/home/HeroSection";
 import TrustBadges from "@/components/home/TrustBadges";
 import WhyChooseUs from "@/components/home/WhyChooseUs";
 import ServicesPreview from "@/components/home/ServicesPreview";
-import BeforeAfterGallery from "@/components/home/BeforeAfterGallery";
 import ServiceAreasSection from "@/components/home/ServiceAreasSection";
 import GalleryPreview from "@/components/home/GalleryPreview";
 import GoogleReviews from "@/components/home/GoogleReviews";
@@ -28,7 +27,6 @@ const Index = () => {
       <TrustBadges />
       <WhyChooseUs />
       <ServicesPreview />
-      <BeforeAfterGallery />
       <ServiceAreasSection />
       <GalleryPreview />
       <GoogleReviews />

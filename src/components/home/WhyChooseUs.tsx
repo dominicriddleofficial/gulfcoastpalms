@@ -11,12 +11,12 @@ const fadeUp = {
 };
 
 const points = [
-  "500+ Palm Jobs Completed in 2025 Alone",
+  "Trusted by 500+ Emerald Coast Homeowners",
   "5-Star Rated Across the Emerald Coast",
   "Licensed & Insured Professionals",
-  "Specialists in Diamond Cutting & Coastal Palm Care",
-  "Experienced with Large Properties Featuring 100+ Palm Trees",
-  "Trusted by HOAs, Property Managers & Waterfront Estates",
+  "Diamond Cutting & Coastal Palm Specialists",
+  "Large Properties with 100+ Palms",
+  "Trusted by HOAs & Waterfront Estates",
 ];
 
 const WhyChooseUs = () => (
@@ -34,7 +34,7 @@ const WhyChooseUs = () => (
         <motion.p variants={fadeUp} custom={1} className="font-body text-sm uppercase tracking-[0.2em] text-palm-gold font-semibold mb-3">
           Why Choose Us
         </motion.p>
-        <motion.h2 variants={fadeUp} custom={2} className="font-display text-4xl md:text-5xl font-bold text-primary-foreground">
+        <motion.h2 variants={fadeUp} custom={2} className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-primary-foreground">
           Why Homeowners & Property Managers Choose Gulf Coast Palms
         </motion.h2>
       </motion.div>
@@ -64,7 +64,7 @@ const WhyChooseUs = () => (
         custom={0}
         className="font-body text-palm-sand/80 max-w-3xl mx-auto text-center leading-relaxed"
       >
-        We don't just trim palms — we specialize in them. Our team maintains large-scale properties with 100+ palms and understands proper cutting techniques that protect long-term palm health. We frequently correct damage caused by improper trimming from other companies, ensuring cleaner cuts, stronger crowns, and healthier trees built to withstand Florida storms.
+        Our certified team corrects damage from improper trimming and ensures cleaner cuts, stronger crowns, and healthier trees built to withstand Florida storms.
       </motion.p>
     </div>
   </section>

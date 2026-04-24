@@ -17,7 +17,7 @@ const Footer = () => {
             </h3>
             <p className="font-body text-palm-sand/70 leading-relaxed">
               Professional palm tree services for Florida's Gulf Coast.
-              Over 500 jobs completed in the summer of 2025 alone — with 5-star quality.
+              Trusted by 500+ homeowners with consistent 5-star quality.
             </p>
           </div>
 
