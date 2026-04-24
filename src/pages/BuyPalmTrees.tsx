@@ -139,8 +139,8 @@ const BuyPalmTrees = () => {
         position: 2,
         item: {
           "@type": "Product",
-          name: "Canary Island Date Palm — Installed",
-          description: "Luxury statement palm with thick trunk. Installed at 8-15ft.",
+          name: "Sylvester Date Palm — Installed",
+          description: "Luxury statement palm with diamond-cut trunk and silvery-green fronds. Installed at 8-15ft.",
           offers: { "@type": "AggregateOffer", lowPrice: "1200", highPrice: "1500", priceCurrency: "USD", availability: "https://schema.org/InStock" },
         },
       },
@@ -181,7 +181,7 @@ const BuyPalmTrees = () => {
     <Layout>
       <SEOHead
         title="Palm Trees Delivered & Installed — Emerald Coast FL | Gulf Coast Palms"
-        description="Buy palm trees sourced, delivered & professionally installed across Pensacola, Navarre, Destin & the Emerald Coast. Sabal Palms from $350 installed. Canary Island Date Palms from $1,200. Free estimates. Call (850) 910-1290."
+        description="Buy palm trees sourced, delivered & professionally installed across Pensacola, Navarre, Destin & the Emerald Coast. Sabal Palms from $350 installed. Sylvester Date Palms from $1,200. Free estimates. Call (850) 910-1290."
         canonicalUrl="/palm-trees/buy"
       />
       <JsonLd data={itemListSchema} />
