@@ -1328,7 +1328,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Milton Property Owners Trust Gulf Coast Palms",
     whyChoosePoints: [
-      "500+ palm jobs completed in 2025",
+      "500+ palms serviced across the Emerald Coast",
       "Familiar with Santa Rosa County's inland conditions",
       "Licensed & insured professionals",
       "5-star rated across NW Florida",
@@ -1343,8 +1343,82 @@ export const locations: LocationData[] = [
       { src: job3, alt: "Palm maintenance in Milton Santa Rosa County" },
     ],
     metaTitle: "Palm Tree Trimming Milton FL | Gulf Coast Palms",
-    metaDescription: "Professional palm tree care in Milton, FL. Trimming, removal, and maintenance for Santa Rosa County homeowners. Free estimates.",
+    metaDescription: "Professional palm tree trimming in Milton, FL. Serving Santa Rosa County's seat from Blackwater River to Highway 90. 5.0★ · 46 reviews. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-pace-fl", "palm-tree-trimming-pensacola-fl", "palm-tree-trimming-navarre-fl"],
+    geo: { latitude: 30.6327, longitude: -87.0397 },
+    neighborhoods: [
+      "Milton",
+      "Downtown Milton",
+      "Blackwater River",
+      "Avalon Boulevard",
+      "Highway 90",
+      "Highway 87",
+      "East Milton",
+      "Bagdad",
+    ],
+    pricingTiers: [
+      {
+        name: "Standard Palm Trimming",
+        price: "As low as $25 per palm",
+        bestFor: "Single-family Milton homes with 1–6 palms. Routine maintenance and a clean residential appearance.",
+      },
+      {
+        name: "Premium Diamond Cutting",
+        price: "Up to $250 per palm",
+        bestFor: "Established Milton estates wanting a polished, resort-grade Canary Island Date Palm finish.",
+      },
+      {
+        name: "Commercial & Residential Maintenance",
+        price: "Custom pricing",
+        bestFor: "Downtown Milton businesses, Highway 90 commercial properties, and HOAs. Scheduled service with single-invoice billing.",
+      },
+    ],
+    pricingNote:
+      "Pricing reflects palm height, species, density, and access. Free on-site quotes for any Milton or East Milton address.",
+    testimonial: {
+      quote:
+        "Our shop on Highway 90 needed the palms out front cleaned up before a busy weekend. Gulf Coast Palms came out next day, did a beautiful job, and the price was very fair. Customers immediately noticed.",
+      author: "Tom R., Milton business owner",
+      rating: 5,
+    },
+    ctaSubtext:
+      "No hard sell. No upsell. Just an honest estimate from Milton's trusted palm specialists.",
+    ctaPrimaryLabel: "Text a Photo to (850) 910-1290",
+    ctaSecondaryLabel: "or call us directly",
+    faqs: [
+      {
+        q: "How much does palm tree trimming cost in Milton?",
+        a: "Milton palm trimming generally runs $25 to $250 per palm depending on height, species, density, and access. Most Milton homes and small commercial properties run $100–$600 for a complete service. Free, detailed on-site estimates with no hidden fees.",
+      },
+      {
+        q: "Do you service commercial properties in Milton?",
+        a: "Yes — downtown Milton businesses, shopping centers along Highway 90, and offices on Stewart Street are all part of our regular Milton route. We provide scheduled trimming, single-invoice billing, and after-hours work when needed.",
+      },
+      {
+        q: "How does Milton's inland climate affect palm care?",
+        a: "Milton palms face less salt exposure than coastal palms but deal with cooler winters, different soil composition, and occasional flooding near the Blackwater River. We adjust our trimming, fertilization, and species recommendations accordingly.",
+      },
+      {
+        q: "What palm species do best in Milton?",
+        a: "Sabal Palms, Mediterranean Fan Palms, Pindo Palms, and Windmill Palms all handle Milton's slightly cooler inland climate well. Cold-sensitive species like Coconut Palms aren't a good fit here long-term.",
+      },
+      {
+        q: "When should Milton palms be trimmed?",
+        a: "April through early June is ideal. Even inland palms benefit from a pre-summer cleanup that removes dead fronds and reduces wind-projectile risk during summer thunderstorms and any tropical systems that reach Santa Rosa County.",
+      },
+      {
+        q: "Can you diamond-cut palms in Milton?",
+        a: "Yes — diamond cutting is available across Milton and is a popular choice for established estates wanting a polished, resort-grade finish on their Canary Island Date Palms.",
+      },
+      {
+        q: "Do you handle storm-damaged palm removal in Milton?",
+        a: "Yes — we provide priority emergency response across Milton and Santa Rosa County. We handle limb removal, full palm removals, lean correction, and complete cleanup, with insurance-direct billing available when authorized.",
+      },
+      {
+        q: "How quickly can you schedule palm service in Milton?",
+        a: "Routine trimming in Milton is typically scheduled within 3–7 days. Peak season runs 1–2 weeks. Storm and emergency calls get same-day or next-day response. Texting a photo of your palms is the fastest way to get a quote.",
+      },
+    ],
   },
 ];
 
