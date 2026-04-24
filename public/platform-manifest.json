@@ -1,0 +1,17 @@
+{
+  "name": "Gulf Coast Palms Platform",
+  "short_name": "GCP Platform",
+  "description": "Gulf Coast Palms business platform",
+  "start_url": "/platform",
+  "display": "standalone",
+  "background_color": "#0f2617",
+  "theme_color": "#1a5c38",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ]
+}
