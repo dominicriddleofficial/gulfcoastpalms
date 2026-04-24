@@ -5,9 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import {
   Settings, Palette, Hash, CreditCard, RefreshCw, CheckCircle, XCircle,
-  AlertTriangle, Zap, Globe, Smartphone, Package, Plus, Trash2, Edit,
+  AlertTriangle, Zap, Globe, Smartphone, Package, Plus, Trash2, Edit, Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -114,6 +115,9 @@ export default function PlatformSettings() {
             {/* Numbering */}
             <NumberingSection businessId={selectedBusinessId} />
 
+            {/* Notification Preferences */}
+            <NotificationPreferencesSection />
+
             {/* Integrations */}
             <SettingsSection title="Integrations" icon={Zap}>
               <JobberConnectionStatus businessId={selectedBusinessId} />
@@ -202,6 +206,77 @@ function SettingItem({ label, value }: { label: string; value: string }) {
       <p className="font-body text-[10px] text-muted-foreground">{label}</p>
       <p className="font-body text-sm text-foreground">{value}</p>
     </div>
+  );
+}
+
+const NOTIFICATION_TYPES = [
+  { type: "new_lead", label: "New leads", description: "When a new lead form is submitted" },
+  { type: "quote_approved", label: "Quote approved", description: "When a customer approves a quote" },
+  { type: "payment_received", label: "Payment received", description: "When an invoice is paid" },
+  { type: "invoice_overdue", label: "Invoice overdue", description: "When an invoice passes its due date" },
+  { type: "sync_completed", label: "Jobber sync complete", description: "Daily sync confirmations" },
+  { type: "sync_failed", label: "Jobber sync failed", description: "Sync errors that need attention" },
+  { type: "review_received", label: "New Google reviews", description: "When a new review is posted" },
+];
+
+function NotificationPreferencesSection() {
+  const [prefs, setPrefs] = useState<Record<string, boolean>>({});
+  const [userId, setUserId] = useState<string | null>(null);
+  const [loadingPrefs, setLoadingPrefs] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const { data: u } = await supabase.auth.getUser();
+      const uid = u.user?.id;
+      if (!uid) { setLoadingPrefs(false); return; }
+      setUserId(uid);
+      const { data } = await supabase
+        .from("platform_notification_preferences" as any)
+        .select("notification_type, enabled")
+        .eq("user_id", uid);
+      const map: Record<string, boolean> = {};
+      NOTIFICATION_TYPES.forEach(t => { map[t.type] = true; });
+      (data as any[] | null)?.forEach((row: any) => { map[row.notification_type] = row.enabled; });
+      setPrefs(map);
+      setLoadingPrefs(false);
+    })();
+  }, []);
+
+  const toggle = async (type: string, enabled: boolean) => {
+    if (!userId) return;
+    setPrefs(p => ({ ...p, [type]: enabled }));
+    const { error } = await supabase
+      .from("platform_notification_preferences" as any)
+      .upsert({ user_id: userId, notification_type: type, enabled, updated_at: new Date().toISOString() }, { onConflict: "user_id,notification_type" });
+    if (error) {
+      sonnerToast.error("Couldn't save preference");
+      setPrefs(p => ({ ...p, [type]: !enabled }));
+    }
+  };
+
+  return (
+    <SettingsSection title="Notifications" icon={Bell}>
+      {loadingPrefs ? (
+        <div className="py-4 text-center">
+          <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {NOTIFICATION_TYPES.map(t => (
+            <div key={t.type} className="flex items-start justify-between gap-3 bg-secondary/50 rounded-lg p-3">
+              <div className="min-w-0 flex-1">
+                <p className="font-body text-sm text-foreground font-medium">{t.label}</p>
+                <p className="font-body text-[11px] text-muted-foreground">{t.description}</p>
+              </div>
+              <Switch
+                checked={prefs[t.type] ?? true}
+                onCheckedChange={(v) => toggle(t.type, v)}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+    </SettingsSection>
   );
 }
 

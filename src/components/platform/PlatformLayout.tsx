@@ -6,12 +6,13 @@ import BusinessSwitcher from "./BusinessSwitcher";
 import QuickActionFAB from "./QuickActionFAB";
 import UniversalSearch from "./UniversalSearch";
 import PlatformBottomNav from "./PlatformBottomNav";
+import NotificationPanel from "./NotificationPanel";
 import { Button } from "@/components/ui/button";
 import { prefetchRoute } from "@/lib/route-prefetch";
 import {
   LayoutDashboard, Users, FileText, Briefcase, CalendarDays, Receipt,
   CreditCard, MessageSquare, ClipboardList, Settings, LogOut, Menu, X,
-  Bell, TrendingUp, Target, ChevronRight,
+  TrendingUp, Target, ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -308,10 +309,7 @@ export default function PlatformLayout({ children }: Props) {
           <div className="flex-1 flex justify-center">
             <UniversalSearch businessId={auth.selectedBusinessId} />
           </div>
-          <button className="text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-lg hover:bg-secondary/50 relative">
-            <Bell className="w-4 h-4" />
-            <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-primary" />
-          </button>
+          <NotificationPanel />
         </header>
 
         <main className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full pb-20 lg:pb-6">{children}</main>
