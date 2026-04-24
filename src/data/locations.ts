@@ -872,7 +872,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Niceville Homeowners Choose Gulf Coast Palms",
     whyChoosePoints: [
-      "500+ palm jobs completed in 2025",
+      "500+ palms serviced across the Emerald Coast",
       "Experienced with Bluewater Bay & Rocky Bayou properties",
       "Licensed & insured professionals",
       "5-star rated across Okaloosa County",
@@ -887,8 +887,82 @@ export const locations: LocationData[] = [
       { src: job11, alt: "Diamond cut palms at Bluewater Bay Niceville" },
     ],
     metaTitle: "Palm Tree Trimming Niceville FL | Gulf Coast Palms",
-    metaDescription: "Professional palm tree trimming and removal in Niceville, FL. Licensed & insured. Serving Niceville and the Okaloosa County area. Free estimates.",
+    metaDescription: "Professional palm tree trimming in Niceville, FL. Bluewater Bay, Rocky Bayou & Twin Cities. 5.0★ · 46 reviews · Free estimates. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-fort-walton-beach-fl", "palm-tree-trimming-destin-fl", "palm-tree-trimming-navarre-fl"],
+    geo: { latitude: 30.5169, longitude: -86.4823 },
+    neighborhoods: [
+      "Niceville",
+      "Bluewater Bay",
+      "Rocky Bayou",
+      "Swift Creek",
+      "Boggy Bayou",
+      "Valparaiso",
+      "Deer Moss Creek",
+      "Twin Cities",
+    ],
+    pricingTiers: [
+      {
+        name: "Standard Palm Trimming",
+        price: "As low as $25 per palm",
+        bestFor: "Bluewater Bay and Rocky Bayou homes with 1–6 palms. Routine maintenance, dead frond removal, and a clean residential look.",
+      },
+      {
+        name: "Premium Diamond Cutting",
+        price: "Up to $250 per palm",
+        bestFor: "Established estates and Bluewater Bay homes wanting a polished, resort-grade Canary Island Date Palm finish.",
+      },
+      {
+        name: "HOA & Commercial Maintenance",
+        price: "Custom pricing",
+        bestFor: "Bluewater Bay, Swift Creek HOAs, and commercial properties along John Sims Parkway. Scheduled service with single-invoice billing.",
+      },
+    ],
+    pricingNote:
+      "Niceville pricing reflects palm height, species, density, and access. Free on-site quotes for any Niceville address.",
+    testimonial: {
+      quote:
+        "We've used Gulf Coast Palms for our Bluewater Bay home for the past few years. Always on time, fair pricing, and the palms have never looked better. They actually care about the long-term health of the trees, not just the cut.",
+      author: "Susan B., Bluewater Bay homeowner",
+      rating: 5,
+    },
+    ctaSubtext:
+      "No hard sell. No upsell. Just an honest estimate from Niceville's trusted palm specialists.",
+    ctaPrimaryLabel: "Text a Photo to (850) 910-1290",
+    ctaSecondaryLabel: "or call us directly",
+    faqs: [
+      {
+        q: "How much does palm tree trimming cost in Niceville?",
+        a: "Niceville palm trimming generally runs $25 to $250 per palm depending on height, species, density, and access. Most Bluewater Bay or Rocky Bayou homes with 3–6 mature palms run $150–$700 for a complete service. Free, detailed on-site estimates.",
+      },
+      {
+        q: "Do you service Bluewater Bay HOAs and communities?",
+        a: "Yes — Bluewater Bay and surrounding HOA communities are a regular part of our Niceville route. We provide scheduled trimming, single-invoice billing, board reporting, and consistent quality across every palm in the community.",
+      },
+      {
+        q: "When should Niceville palms be trimmed before storms?",
+        a: "April through early June is ideal — even though Niceville's bayou setting offers some shelter, palms here still benefit from a pre-season cleanup. Removing dead fronds before June 1 reduces wind-projectile risk during summer storms.",
+      },
+      {
+        q: "What palm species grow best in Niceville?",
+        a: "Niceville's sheltered bayou microclimate supports Sabal Palms, Canary Island Date Palms, Mediterranean Fan Palms, Pindo Palms, and Washingtonia Palms. We can recommend the right species for your sun exposure, soil, and design goals.",
+      },
+      {
+        q: "Can you diamond-cut Canary Island Date Palms in Niceville?",
+        a: "Yes — diamond cutting is one of our specialties and a popular choice for Bluewater Bay estates. The signature cross-hatch finish creates a polished look that matches the community's high landscape standards.",
+      },
+      {
+        q: "Do you handle storm-damaged palm removal in Niceville?",
+        a: "Yes — Niceville is part of our priority emergency response area. After tropical storms and hurricanes we handle limb removal, full palm removals, lean correction, and complete cleanup, with insurance-direct billing when authorized.",
+      },
+      {
+        q: "How quickly can you schedule palm service in Niceville?",
+        a: "Routine trimming in Niceville is typically scheduled within 3–7 days. Peak season runs 1–2 weeks. Emergency calls get same-day or next-day response. Texting a photo of your palms is the fastest way to get a quote.",
+      },
+      {
+        q: "Do you offer recurring maintenance plans for Niceville properties?",
+        a: "Yes — quarterly, biannual, and annual plans are available for Niceville homeowners, HOAs, and commercial properties. Plans include scheduled trimming, health inspections, fertilization, and priority storm response.",
+      },
+    ],
   },
   {
     slug: "palm-tree-trimming-mary-esther-fl",
