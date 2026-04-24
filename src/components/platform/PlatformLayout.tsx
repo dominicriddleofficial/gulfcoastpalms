@@ -5,6 +5,7 @@ import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 import BusinessSwitcher from "./BusinessSwitcher";
 import QuickActionFAB from "./QuickActionFAB";
 import UniversalSearch from "./UniversalSearch";
+import PlatformBottomNav from "./PlatformBottomNav";
 import { Button } from "@/components/ui/button";
 import { prefetchRoute } from "@/lib/route-prefetch";
 import {
@@ -313,7 +314,10 @@ export default function PlatformLayout({ children }: Props) {
           </button>
         </header>
 
-        <main className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full">{children}</main>
+        <main className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full pb-20 lg:pb-6">{children}</main>
+
+        {/* Mobile bottom navigation */}
+        <PlatformBottomNav businessId={auth.selectedBusinessId} onSignOut={auth.signOut} />
       </div>
 
       {/* Quick Action FAB */}
