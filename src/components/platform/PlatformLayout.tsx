@@ -315,6 +315,9 @@ export default function PlatformLayout({ children }: Props) {
         </header>
 
         <main className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full">{children}</main>
+
+        {/* Mobile bottom navigation */}
+        <PlatformBottomNav businessId={auth.selectedBusinessId} onSignOut={auth.signOut} />
       </div>
 
       {/* Quick Action FAB */}
