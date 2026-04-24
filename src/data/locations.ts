@@ -758,7 +758,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Perdido Key Property Owners Choose Us",
     whyChoosePoints: [
-      "500+ palm jobs completed in 2025",
+      "500+ palms serviced across the Emerald Coast",
       "Experienced with barrier island properties",
       "Licensed & insured professionals",
       "5-star rated across the Gulf Coast",
@@ -773,8 +773,82 @@ export const locations: LocationData[] = [
       { src: job4, alt: "Waterfront palm maintenance at Perdido Key property" },
     ],
     metaTitle: "Palm Tree Trimming Perdido Key FL | Gulf Coast Palms",
-    metaDescription: "Professional palm tree trimming on Perdido Key, FL. Diamond cutting, trunk skinning & condo palm care for barrier island properties. Call (850) 910-1290.",
+    metaDescription: "Professional palm tree trimming on Perdido Key, FL. Diamond cutting & condo palm care for barrier island properties. 5.0★ · 46 reviews. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-pensacola-fl", "palm-tree-trimming-gulf-breeze-fl", "palm-tree-trimming-navarre-fl"],
+    geo: { latitude: 30.3127, longitude: -87.4361 },
+    neighborhoods: [
+      "Perdido Key",
+      "Old River",
+      "Innerarity Point",
+      "Ono Island",
+      "Bahia Grande",
+      "Lost Key",
+      "Sandy Key",
+      "Pensacola",
+    ],
+    pricingTiers: [
+      {
+        name: "Standard Palm Trimming",
+        price: "As low as $25 per palm",
+        bestFor: "Innerarity Point and Old River homes with 1–6 palms. Salt-tolerant pruning and clean coastal appearance.",
+      },
+      {
+        name: "Premium Diamond Cutting",
+        price: "Up to $250 per palm",
+        bestFor: "Beachfront and waterfront estates wanting a polished, resort-grade Canary Island Date Palm finish.",
+      },
+      {
+        name: "Condo & Multi-Property Maintenance",
+        price: "Custom pricing",
+        bestFor: "Beachfront condo associations and barrier island portfolios. Scheduled service with single-invoice billing.",
+      },
+    ],
+    pricingNote:
+      "Barrier island work often requires sectional rigging due to high winds and limited access — pricing reflects that. Free on-site quotes for any Perdido Key address.",
+    testimonial: {
+      quote:
+        "Our beachfront condo had palms that hadn't been touched properly in years — they looked exhausted. Gulf Coast Palms restored them in a single visit and put us on a maintenance schedule. Best decision our board has made.",
+      author: "Robert H., Perdido Key condo association",
+      rating: 5,
+    },
+    ctaSubtext:
+      "No hard sell. No upsell. Just an honest estimate from Perdido Key's trusted palm specialists.",
+    ctaPrimaryLabel: "Text a Photo to (850) 910-1290",
+    ctaSecondaryLabel: "or call us directly",
+    faqs: [
+      {
+        q: "How much does palm tree trimming cost on Perdido Key?",
+        a: "Perdido Key palm trimming typically runs $25 to $250 per palm. Beachfront condos and high-rise properties can require sectional rigging which affects pricing. Free, detailed on-site estimates with no hidden fees.",
+      },
+      {
+        q: "Do you service Perdido Key beachfront condos?",
+        a: "Yes — beachfront and Old River condo associations are a regular part of our route. We coordinate around guest schedules, deliver consistent appearance across the property, and provide single-invoice billing and board reporting.",
+      },
+      {
+        q: "How does barrier island salt exposure affect palm care?",
+        a: "Perdido Key palms face heavier salt spray, sandy soil, and stronger winds than mainland palms. We avoid overcutting (which weakens storm resistance), thin canopies properly, and recommend salt-tolerant species like Sabal, Canary Island Date, and Pindo Palms.",
+      },
+      {
+        q: "When should Perdido Key palms be trimmed before hurricane season?",
+        a: "April through early June is ideal — barrier island palms are among the most exposed in the region, so removing wind-projectile dead fronds before June 1 is especially important. Same-day storm-prep visits available when a named storm enters the Gulf.",
+      },
+      {
+        q: "Can you diamond-cut Canary Island Date Palms on Perdido Key?",
+        a: "Yes — diamond cutting is a popular request for Perdido Key beachfront and waterfront estates. The signature cross-hatch finish on Canary Island Date Palms gives properties a polished, resort-quality appearance.",
+      },
+      {
+        q: "Do you handle storm cleanup on Perdido Key after hurricanes?",
+        a: "Yes — Perdido Key is a priority emergency response area for us. We handle limb removal, full palm removal, hazardous lean correction, and complete cleanup, with insurance-direct billing available when authorized.",
+      },
+      {
+        q: "How quickly can you schedule a Perdido Key palm job?",
+        a: "Routine trimming on Perdido Key is typically scheduled within 3–7 days. Peak season (April–June, October–November) runs 1–2 weeks. Storm calls get same-day or next-day response.",
+      },
+      {
+        q: "Do you offer maintenance plans for Perdido Key condo associations?",
+        a: "Yes — quarterly, biannual, and annual maintenance plans are available for Perdido Key HOAs, condo associations, and individual property owners. Plans include scheduled trimming, health inspections, fertilization, and priority storm response.",
+      },
+    ],
   },
   {
     slug: "palm-tree-trimming-niceville-fl",
