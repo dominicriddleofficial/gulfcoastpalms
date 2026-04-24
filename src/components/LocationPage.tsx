@@ -1,13 +1,62 @@
+import type { ReactNode } from "react";
 import { motion } from "framer-motion";
-import { Phone, Star, CheckCircle, MapPin, ArrowRight } from "lucide-react";
+import { Phone, Star, CheckCircle, MapPin, ArrowRight, ShieldCheck, Clock, MessageSquare, HelpCircle, Tag } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
-import { ServiceJsonLd, BreadcrumbJsonLd } from "@/components/JsonLd";
+import { ServiceJsonLd, BreadcrumbJsonLd, FAQPageJsonLd, JsonLd } from "@/components/JsonLd";
+import HeroReviewBadge from "@/components/home/HeroReviewBadge";
 import { GCP_BUSINESS, TEL_HREF, SMS_HREF } from "@/lib/business-info";
 import { LocationData, locations } from "@/data/locations";
 
 const BASE_URL = GCP_BUSINESS.url;
+
+const SERVICE_LINK_MAP: { match: RegExp; href: string }[] = [
+  { match: /diamond[\s-]?cut(ting)?/gi, href: "/services/palm-diamond-cutting" },
+  { match: /trunk[\s-]?skinning/gi, href: "/services/palm-tree-trunk-skinning" },
+  { match: /palm[\s-]?installations?/gi, href: "/services/palm-tree-installation" },
+  { match: /palm[\s-]?removals?/gi, href: "/services/palm-tree-removal" },
+  { match: /(hurricane|storm)[\s-]?prep(aration)?/gi, href: "/emergency-palm-service" },
+  { match: /maintenance[\s-]?plans?/gi, href: "/palm-tree-maintenance-plans" },
+];
+
+/**
+ * Convert a paragraph string to React nodes, replacing the first occurrence of
+ * each service phrase with an internal link in the brand color.
+ */
+const linkifyParagraph = (text: string): ReactNode => {
+  type Match = { start: number; end: number; href: string; label: string };
+  const matches: Match[] = [];
+  for (const { match, href } of SERVICE_LINK_MAP) {
+    match.lastIndex = 0;
+    const m = match.exec(text);
+    if (m) matches.push({ start: m.index, end: m.index + m[0].length, href, label: m[0] });
+  }
+  if (matches.length === 0) return text;
+  matches.sort((a, b) => a.start - b.start);
+  // Drop overlaps
+  const filtered: Match[] = [];
+  for (const m of matches) {
+    if (filtered.length === 0 || m.start >= filtered[filtered.length - 1].end) filtered.push(m);
+  }
+  const out: ReactNode[] = [];
+  let cursor = 0;
+  filtered.forEach((m, i) => {
+    if (m.start > cursor) out.push(text.slice(cursor, m.start));
+    out.push(
+      <Link
+        key={`l-${i}`}
+        to={m.href}
+        className="text-primary underline decoration-primary/40 underline-offset-2 hover:decoration-primary transition-colors"
+      >
+        {m.label}
+      </Link>,
+    );
+    cursor = m.end;
+  });
+  if (cursor < text.length) out.push(text.slice(cursor));
+  return out;
+};
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -41,17 +90,50 @@ const LocationPage = ({ location }: Props) => {
         service={{
           name: `Palm Tree Trimming in ${location.city}, ${location.state}`,
           description: location.metaDescription,
-          areaServed: `${location.city}, ${location.state}`,
+          areaServed: location.neighborhoods ?? `${location.city}, ${location.state}`,
           url: `${BASE_URL}${canonicalUrl}`,
         }}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: BASE_URL },
-          { name: "Service Areas", url: `${BASE_URL}/service-areas` },
-          { name: `${location.city} Palm Tree Trimming`, url: `${BASE_URL}${canonicalUrl}` },
+          { name: "Services", url: `${BASE_URL}/services` },
+          { name: "Palm Tree Trimming", url: `${BASE_URL}/services/palm-tree-trimming` },
+          { name: `${location.city}, ${location.state}`, url: `${BASE_URL}${canonicalUrl}` },
         ]}
       />
+      {location.faqs && location.faqs.length > 0 && (
+        <FAQPageJsonLd questions={location.faqs} />
+      )}
+      {location.geo && (
+        <JsonLd
+          data={{
+            "@context": "https://schema.org",
+            "@type": "LocalBusiness",
+            name: `${GCP_BUSINESS.name} — ${location.city}, ${location.state}`,
+            telephone: GCP_BUSINESS.phone,
+            url: `${BASE_URL}${canonicalUrl}`,
+            image: GCP_BUSINESS.ogImage,
+            priceRange: GCP_BUSINESS.priceRange,
+            geo: {
+              "@type": "GeoCoordinates",
+              latitude: location.geo.latitude,
+              longitude: location.geo.longitude,
+            },
+            areaServed: (location.neighborhoods ?? [location.city]).map((n) => ({
+              "@type": "City",
+              name: n,
+              containedInPlace: { "@type": "State", name: "Florida" },
+            })),
+            aggregateRating: {
+              "@type": "AggregateRating",
+              ratingValue: GCP_BUSINESS.aggregateRating.ratingValue,
+              reviewCount: GCP_BUSINESS.aggregateRating.reviewCount,
+            },
+            dateModified: new Date().toISOString().split("T")[0],
+          }}
+        />
+      )}
 
       {/* Hero */}
       <section className="relative py-20 md:py-28 overflow-hidden bg-palm-dark">
@@ -62,7 +144,7 @@ const LocationPage = ({ location }: Props) => {
             className="w-full h-full object-cover opacity-30"
             loading="eager"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-palm-dark/80 via-palm-dark/70 to-palm-dark" />
+          <div className="absolute inset-0 bg-gradient-to-b from-palm-dark/70 via-palm-dark/75 to-palm-dark" />
         </div>
 
         <div className="relative z-10 container mx-auto px-4">
@@ -74,10 +156,24 @@ const LocationPage = ({ location }: Props) => {
             <motion.h1 variants={fadeUp} custom={1} className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-primary-foreground leading-tight mb-4">
               {location.h1}
             </motion.h1>
-            <motion.p variants={fadeUp} custom={2} className="font-body text-lg md:text-xl text-palm-sand/80 max-w-3xl mb-8">
+            <motion.p variants={fadeUp} custom={2} className="font-body text-lg md:text-xl text-palm-sand/80 max-w-3xl mb-5">
               {location.subheading}
             </motion.p>
-            <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-4">
+            <motion.div variants={fadeUp} custom={3} className="mb-4">
+              <HeroReviewBadge />
+            </motion.div>
+            <motion.div variants={fadeUp} custom={4} className="flex flex-wrap gap-2 mb-8">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-primary-foreground/20 bg-primary-foreground/5 px-3 py-1 text-xs font-body font-medium text-primary-foreground/90">
+                <ShieldCheck className="w-3.5 h-3.5 text-primary" /> Licensed &amp; Insured
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-primary-foreground/20 bg-primary-foreground/5 px-3 py-1 text-xs font-body font-medium text-primary-foreground/90">
+                <Clock className="w-3.5 h-3.5 text-primary" /> Same-Day Estimates
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-primary-foreground/20 bg-primary-foreground/5 px-3 py-1 text-xs font-body font-medium text-primary-foreground/90">
+                <MapPin className="w-3.5 h-3.5 text-primary" /> Locally Owned &amp; Operated
+              </span>
+            </motion.div>
+            <motion.div variants={fadeUp} custom={5} className="flex flex-col sm:flex-row gap-4">
               <a
                 href={TEL_HREF}
                 className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-body font-bold text-lg hover:bg-palm-light transition-all shadow-lg shadow-primary/30"
@@ -104,7 +200,7 @@ const LocationPage = ({ location }: Props) => {
               <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }}>
                 {location.introParagraphs.map((p, i) => (
                   <motion.p key={i} variants={fadeUp} custom={i} className="font-body text-muted-foreground leading-relaxed mb-6 text-lg">
-                    {p}
+                    {linkifyParagraph(p)}
                   </motion.p>
                 ))}
               </motion.div>
@@ -142,6 +238,111 @@ const LocationPage = ({ location }: Props) => {
           </div>
         </div>
       </section>
+
+      {/* FAQ */}
+      {location.faqs && location.faqs.length > 0 && (
+        <section className="section-padding bg-background">
+          <div className="container mx-auto max-w-4xl">
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-12">
+              <motion.p variants={fadeUp} custom={0} className="font-body text-sm uppercase tracking-[0.2em] text-palm-gold font-semibold mb-3">
+                <HelpCircle className="inline w-4 h-4 mr-1.5 -mt-0.5" />
+                {location.city} Palm Care FAQs
+              </motion.p>
+              <motion.h2 variants={fadeUp} custom={1} className="font-display text-3xl md:text-5xl font-bold text-foreground">
+                Frequently Asked Questions
+              </motion.h2>
+            </motion.div>
+            <div className="space-y-4">
+              {location.faqs.map((faq, i) => (
+                <motion.details
+                  key={faq.q}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  variants={fadeUp}
+                  custom={i}
+                  className="group rounded-xl border border-border bg-card p-5 open:border-primary/40 open:shadow-md transition-all"
+                >
+                  <summary className="cursor-pointer list-none flex items-start justify-between gap-4 font-display text-lg font-semibold text-foreground">
+                    <span>{faq.q}</span>
+                    <span className="text-primary shrink-0 mt-1 transition-transform group-open:rotate-45">+</span>
+                  </summary>
+                  <p className="font-body text-muted-foreground leading-relaxed mt-3">{faq.a}</p>
+                </motion.details>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Pricing */}
+      {location.pricingTiers && location.pricingTiers.length > 0 && (
+        <section className="section-padding bg-secondary/40">
+          <div className="container mx-auto max-w-5xl">
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-12">
+              <motion.p variants={fadeUp} custom={0} className="font-body text-sm uppercase tracking-[0.2em] text-palm-gold font-semibold mb-3">
+                <Tag className="inline w-4 h-4 mr-1.5 -mt-0.5" />
+                Transparent Pricing
+              </motion.p>
+              <motion.h2 variants={fadeUp} custom={1} className="font-display text-3xl md:text-5xl font-bold text-foreground">
+                {location.city} Palm Care Pricing
+              </motion.h2>
+            </motion.div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {location.pricingTiers.map((tier, i) => (
+                <motion.div
+                  key={tier.name}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  variants={fadeUp}
+                  custom={i}
+                  className="rounded-2xl border border-border bg-card p-6 hover:border-primary/40 hover:shadow-lg transition-all"
+                >
+                  <h3 className="font-display text-xl font-bold text-foreground mb-2">{tier.name}</h3>
+                  <p className="font-display text-2xl font-bold text-primary mb-4">{tier.price}</p>
+                  <p className="font-body text-sm text-muted-foreground leading-relaxed">
+                    <span className="font-semibold text-foreground">Best for:</span> {tier.bestFor}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
+            {location.pricingNote && (
+              <p className="font-body text-xs text-muted-foreground text-center mt-6 max-w-2xl mx-auto italic">
+                {location.pricingNote}
+              </p>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Testimonial */}
+      {location.testimonial && (
+        <section className="section-padding bg-palm-dark">
+          <div className="container mx-auto max-w-3xl">
+            <motion.figure
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fadeUp}
+              custom={0}
+              className="rounded-2xl border border-palm-gold/30 bg-palm-dark/50 p-8 md:p-10 text-center"
+            >
+              <div className="flex justify-center gap-1 mb-4">
+                {Array.from({ length: location.testimonial.rating ?? 5 }).map((_, i) => (
+                  <Star key={i} className="w-5 h-5 fill-palm-gold text-palm-gold" />
+                ))}
+              </div>
+              <blockquote className="font-display text-xl md:text-2xl text-primary-foreground italic leading-relaxed mb-5">
+                "{location.testimonial.quote}"
+              </blockquote>
+              <figcaption className="font-body text-sm text-palm-sand/80 font-medium">
+                — {location.testimonial.author}
+              </figcaption>
+            </motion.figure>
+          </div>
+        </section>
+      )}
 
       {/* Why Choose Us */}
       <section className="section-padding bg-background">
@@ -211,14 +412,35 @@ const LocationPage = ({ location }: Props) => {
       <section className="section-padding bg-primary">
         <div className="container mx-auto text-center">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            <motion.h2 variants={fadeUp} custom={0} className="font-display text-3xl md:text-5xl font-bold text-primary-foreground mb-4">{location.ctaHeading}</motion.h2>
-            <motion.p variants={fadeUp} custom={1} className="font-body text-lg text-primary-foreground/80 mb-8 max-w-xl mx-auto">{location.ctaText}</motion.p>
-            <motion.a variants={fadeUp} custom={2} href={TEL_HREF} className="inline-flex items-center gap-3 px-10 py-5 rounded-xl bg-primary-foreground text-primary font-body font-bold text-xl hover:scale-105 transition-transform shadow-xl">
-              <Phone className="w-6 h-6" /> {GCP_BUSINESS.phoneDisplay}
-            </motion.a>
+            <motion.h2 variants={fadeUp} custom={0} className="font-display text-3xl md:text-5xl font-bold text-primary-foreground mb-4">
+              {location.ctaHeading}
+            </motion.h2>
+            <motion.p variants={fadeUp} custom={1} className="font-body text-lg text-primary-foreground/80 mb-8 max-w-xl mx-auto">
+              {location.ctaSubtext ?? location.ctaText}
+            </motion.p>
+            <motion.div variants={fadeUp} custom={2} className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <a
+                href={SMS_HREF}
+                className="inline-flex items-center gap-3 px-8 py-5 rounded-xl bg-primary-foreground text-primary font-body font-bold text-lg hover:scale-105 transition-transform shadow-xl"
+              >
+                <MessageSquare className="w-5 h-5" />
+                {location.ctaPrimaryLabel ?? `Text a Photo to ${GCP_BUSINESS.phoneDisplay}`}
+              </a>
+              <a
+                href={TEL_HREF}
+                className="inline-flex items-center gap-2 text-primary-foreground/90 hover:text-primary-foreground font-body font-semibold underline underline-offset-4 decoration-primary-foreground/40 hover:decoration-primary-foreground"
+              >
+                {location.ctaSecondaryLabel ?? "or call us directly"} <ArrowRight className="w-4 h-4" />
+              </a>
+            </motion.div>
           </motion.div>
         </div>
       </section>
+
+      <p className="text-xs text-muted-foreground text-center py-6">
+        Page last updated:{" "}
+        {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+      </p>
     </Layout>
   );
 };

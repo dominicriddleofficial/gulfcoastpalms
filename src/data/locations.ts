@@ -28,6 +28,19 @@ export interface LocationData {
   metaTitle: string;
   metaDescription: string;
   nearbyLinks: string[]; // slugs of nearby cities
+  /** Optional best-in-market upgrades. When present, LocationPage renders extra sections. */
+  faqs?: { q: string; a: string }[];
+  pricingTiers?: { name: string; price: string; bestFor: string }[];
+  pricingNote?: string;
+  testimonial?: { quote: string; author: string; rating?: number };
+  /** Centroid coordinates for the city, used in LocalBusiness JSON-LD. */
+  geo?: { latitude: number; longitude: number };
+  /** Specific neighborhoods/sub-areas served, used in JSON-LD areaServed. */
+  neighborhoods?: string[];
+  /** Optional CTA banner overrides for a stronger conversion message. */
+  ctaSubtext?: string;
+  ctaPrimaryLabel?: string;
+  ctaSecondaryLabel?: string;
 }
 
 export const locations: LocationData[] = [
@@ -214,7 +227,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Destin Properties Choose Gulf Coast Palms",
     whyChoosePoints: [
-      "500+ palm jobs completed in 2025",
+      "500+ palms serviced across the Emerald Coast",
       "Trusted by luxury homeowners & vacation rental managers",
       "Diamond cutting specialists",
       "Licensed & insured",
@@ -228,9 +241,90 @@ export const locations: LocationData[] = [
       { src: job2, alt: "Resort-quality palm care in Destin FL" },
       { src: job1, alt: "Diamond cut palms at Destin waterfront estate" },
     ],
-    metaTitle: "Palm Tree Trimming Destin FL | Gulf Coast Palms",
-    metaDescription: "Premium palm tree trimming in Destin, FL. Diamond cutting, trunk skinning & luxury palm care for vacation rentals & estates. Call (850) 910-1290.",
-    nearbyLinks: ["palm-tree-trimming-fort-walton-beach-fl", "palm-tree-trimming-30a-fl", "palm-tree-trimming-navarre-fl"],
+    metaTitle: "Palm Tree Trimming Destin FL | Diamond Cutting | Gulf Coast Palms",
+    metaDescription: "Professional palm tree trimming in Destin, FL. Diamond cutting specialists for luxury homes, HOAs & vacation rentals. 5.0★ · 46 reviews · Free estimates. (850) 910-1290.",
+    nearbyLinks: [
+      "palm-tree-trimming-fort-walton-beach-fl",
+      "palm-tree-trimming-30a-fl",
+      "palm-tree-trimming-navarre-fl",
+      "palm-tree-trimming-santa-rosa-beach-fl",
+      "palm-tree-trimming-niceville-fl",
+      "palm-tree-trimming-mary-esther-fl",
+    ],
+    geo: { latitude: 30.3935, longitude: -86.4958 },
+    neighborhoods: [
+      "Destin",
+      "Scenic Highway 98",
+      "Crystal Beach",
+      "Holiday Isle",
+      "Sandestin",
+      "Miramar Beach",
+      "Kelly Plantation",
+      "Regatta Bay",
+    ],
+    pricingTiers: [
+      {
+        name: "Standard Palm Trimming",
+        price: "As low as $25 per palm",
+        bestFor: "Single-family homes with 1–5 palms. Routine maintenance, dead frond removal, and a clean, manicured appearance.",
+      },
+      {
+        name: "Premium Diamond Cutting",
+        price: "Up to $250 per palm",
+        bestFor: "Luxury properties wanting a resort-quality aesthetic. Signature cross-hatch pattern on Canary Island Date Palms and similar species.",
+      },
+      {
+        name: "HOA & Commercial Maintenance",
+        price: "Custom pricing",
+        bestFor: "Communities, vacation rental portfolios, and waterfront estates. Scheduled service, multi-palm discounts, and single-invoice billing.",
+      },
+    ],
+    pricingNote:
+      "Actual pricing depends on palm height, species, density/overgrowth, and property access. Request a free on-site estimate for accurate pricing tailored to your property.",
+    testimonial: {
+      quote:
+        "Gulf Coast Palms transformed our Scenic Highway home. The diamond cut on our Canary Island palms looks exactly like the resort properties down the road. Worth every penny.",
+      author: "Sarah M., Destin waterfront homeowner",
+      rating: 5,
+    },
+    ctaSubtext:
+      "No hard sell. No upsell. Just an honest estimate from Destin's trusted palm specialists.",
+    ctaPrimaryLabel: "Text a Photo to (850) 910-1290",
+    ctaSecondaryLabel: "or call us directly",
+    faqs: [
+      {
+        q: "How much does palm tree trimming cost in Destin?",
+        a: "Palm trimming in Destin typically ranges from $25 to $250 per palm, depending on tree height, species, density, and access. Waterfront estates with 10+ mature Canary Island Date Palms typically run $800–$1,800 for a complete service. We provide free, detailed on-site estimates with no hidden fees.",
+      },
+      {
+        q: "When should Destin palms be trimmed before hurricane season?",
+        a: "We recommend scheduling Destin palm maintenance between April and early June — before the June 1 start of Atlantic hurricane season. This gives palms time to stabilize fronds and removes storm-vulnerable dead material. Same-day emergency pruning is also available if a named storm is approaching.",
+      },
+      {
+        q: "Do you service vacation rentals and HOAs in Destin?",
+        a: "Yes — vacation rentals and HOAs make up a large portion of our Destin client base. We work around guest check-ins and check-outs, maintain consistent standards across multi-property portfolios, and provide single-invoice billing for property management companies. Ask us about HOA maintenance plan pricing.",
+      },
+      {
+        q: "What palm species thrive in Destin's coastal climate?",
+        a: "The palms that do best in Destin's salt-air environment are Sabal Palms (Florida's state tree), Canary Island Date Palms, Mediterranean Fan Palms, and Pindo Palms. Coconut Palms survive but struggle during occasional cold snaps. We can recommend species appropriate for your property's sun exposure, soil, and proximity to the Gulf.",
+      },
+      {
+        q: "Can you diamond-cut Canary Island Date Palms in Destin?",
+        a: "Yes — diamond cutting on Canary Island Date Palms is one of our most-requested Destin services. The signature cross-hatch pattern is popular at beachfront estates along Scenic Highway 98 and in Crystal Beach. We specialize in this technique, and it's what many luxury homeowners specifically hire us for.",
+      },
+      {
+        q: "Do you remove storm-damaged palms in Destin after hurricanes?",
+        a: "Yes — we provide priority emergency response across Destin after tropical storms and hurricanes. We handle everything from limb removal to complete palm removal with full cleanup and haul-away. We accept insurance-direct billing for storm damage when authorized by your carrier.",
+      },
+      {
+        q: "How far in advance do I need to book palm service in Destin?",
+        a: "For routine trimming, we can typically schedule within 3–7 days during the off-season and 1–2 weeks during peak season (April–June, October–November). Emergency and storm-response calls are handled same-day or next-day. Text us a photo of your property for the fastest quote.",
+      },
+      {
+        q: "Do you offer recurring maintenance plans for Destin properties?",
+        a: "Yes — we offer quarterly, biannual, and annual palm maintenance plans for Destin homeowners, HOAs, and vacation rental managers. Plans include scheduled trimming, health inspections, fertilization, and priority storm response. Plan customers also receive 10% off non-included services.",
+      },
+    ],
   },
   {
     slug: "palm-tree-trimming-30a-fl",
