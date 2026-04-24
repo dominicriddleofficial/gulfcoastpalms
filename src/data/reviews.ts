@@ -27,7 +27,7 @@ export const GOOGLE_REVIEW_URL =
 
 /**
  * ⚠️ ACTION REQUIRED: Update aggregateRating regularly
- * Current: 5.0 rating, 37 reviews (as of April 2026)
+ * Current: 5.0 rating, 46 reviews (as of April 2026)
  *
  * How to update:
  * 1. Check your Google Business Profile for current review count
@@ -36,7 +36,7 @@ export const GOOGLE_REVIEW_URL =
  */
 export const aggregateRating = {
   score: 5.0,
-  count: 37,
+  count: 46,
 };
 
 export const reviews: GoogleReview[] = [

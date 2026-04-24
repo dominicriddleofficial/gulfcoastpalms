@@ -76,7 +76,7 @@ const ServicesPreview = () => (
           Professional Palm Tree Services
         </motion.h2>
         <motion.p variants={fadeUp} custom={2} className="font-body text-muted-foreground max-w-3xl mx-auto text-base md:text-lg leading-relaxed">
-          From routine trimming to precision diamond cutting and full palm installations, we deliver expert palm care tailored to Florida's coastal climate. Every job is handled with precision, safety, and attention to detail.
+          From routine trimming to precision pruning and full palm installations, we deliver expert palm care tailored to Florida's coastal climate. Every job is handled with precision, safety, and attention to detail.
         </motion.p>
       </motion.div>
 
