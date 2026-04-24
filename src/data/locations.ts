@@ -644,7 +644,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why 30A Communities Trust Gulf Coast Palms",
     whyChoosePoints: [
-      "500+ palm jobs completed in 2025",
+      "500+ palms serviced across the Emerald Coast",
       "Experienced with 30A's distinctive communities",
       "Diamond cutting specialists",
       "Licensed & insured",
@@ -661,6 +661,80 @@ export const locations: LocationData[] = [
     metaTitle: "Palm Tree Trimming 30A Florida | Gulf Coast Palms",
     metaDescription: "Premium palm tree trimming along 30A, FL. Serving Rosemary Beach, Alys Beach, WaterColor & Seaside. Diamond cutting & professional palm care. Call (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-destin-fl", "palm-tree-trimming-fort-walton-beach-fl", "palm-tree-trimming-navarre-fl"],
+    geo: { latitude: 30.3290, longitude: -86.1647 },
+    neighborhoods: [
+      "Scenic Highway 30A",
+      "Rosemary Beach",
+      "Alys Beach",
+      "Seaside",
+      "WaterColor",
+      "WaterSound",
+      "Grayton Beach",
+      "Seacrest Beach",
+    ],
+    pricingTiers: [
+      {
+        name: "Boutique Palm Trimming",
+        price: "As low as $25 per palm",
+        bestFor: "Cottages and smaller residences in Grayton, Seaside, and Seacrest Beach with 1–6 palms. Natural shaping and clean appearance.",
+      },
+      {
+        name: "Premium Diamond Cutting",
+        price: "Up to $250 per palm",
+        bestFor: "Architecturally distinctive homes in Alys Beach, Rosemary Beach, and WaterSound wanting precise, resort-grade Canary Island Date Palm finishes.",
+      },
+      {
+        name: "30A Community & Rental Programs",
+        price: "Custom pricing",
+        bestFor: "Vacation rental portfolios, HOAs, and luxury developments. Scheduled service designed to keep properties guest-ready year-round.",
+      },
+    ],
+    pricingNote:
+      "30A pricing reflects the precision and finish quality these communities expect. Free on-site quotes — request one for any 30A property.",
+    testimonial: {
+      quote:
+        "We manage a portfolio of WaterColor and Seaside rentals and Gulf Coast Palms keeps every property looking listing-photo ready. They understand 30A's design standards and never miss a scheduled visit. Highest recommendation.",
+      author: "Rachel T., 30A vacation rental manager",
+      rating: 5,
+    },
+    ctaSubtext:
+      "No hard sell. No upsell. Just an honest estimate from 30A's trusted palm specialists.",
+    ctaPrimaryLabel: "Text a Photo to (850) 910-1290",
+    ctaSecondaryLabel: "or call us directly",
+    faqs: [
+      {
+        q: "How much does palm tree trimming cost along 30A?",
+        a: "30A palm trimming generally runs $25 to $250 per palm depending on height, species, density, and access. Luxury homes in Alys Beach or WaterSound with 8–12 mature palms typically run $600–$1,800 for a full diamond-cut service. Free on-site quotes for any 30A address.",
+      },
+      {
+        q: "Do you work with 30A vacation rental property managers?",
+        a: "Yes — vacation rentals are a large portion of our 30A work. We schedule around guest turnovers, maintain consistent appearance for listing photos, deliver multi-property single-invoice billing, and coordinate with on-site teams.",
+      },
+      {
+        q: "Can you match the design standards of Alys Beach and Rosemary Beach?",
+        a: "Yes — Alys Beach, Rosemary Beach, and similar communities have exacting design standards. Our diamond cutting and precision pruning techniques deliver the polished, intentional look these neighborhoods are known for, while complying with HOA architectural guidelines.",
+      },
+      {
+        q: "When should 30A palms be trimmed before hurricane season?",
+        a: "April through early June is the ideal window — well before the June 1 start of Atlantic hurricane season. A pre-season trim removes wind-projectile fronds and is especially critical for Gulf-front 30A properties.",
+      },
+      {
+        q: "What palm species do best along 30A?",
+        a: "30A's coastal sun and salt favor Sabal Palms, Canary Island Date Palms, Mediterranean Fan Palms, and Pindo Palms. Coconut Palms struggle here long-term. We can recommend species that match your community's design standards and your property's exposure.",
+      },
+      {
+        q: "Do you handle storm cleanup along 30A after hurricanes?",
+        a: "Yes — 30A is a priority response area for us after named storms. We handle limb removal, full palm removal, hazard correction, and complete cleanup, with insurance-direct billing available when authorized by your carrier.",
+      },
+      {
+        q: "How quickly can you schedule a 30A palm job?",
+        a: "Routine trimming along 30A is typically booked within 3–7 days. During peak season (April–June, October–November), expect 1–2 weeks. Storm and emergency calls get same-day or next-day response. Texting a photo is the fastest way to get a quote.",
+      },
+      {
+        q: "Do you offer ongoing programs for 30A communities?",
+        a: "Yes — quarterly, biannual, and annual maintenance programs are available for 30A HOAs, vacation rental portfolios, and luxury homeowners. Programs include scheduled trimming, health inspections, fertilization, priority storm response, and 10% off non-included services.",
+      },
+    ],
   },
   {
     slug: "palm-tree-trimming-perdido-key-fl",
