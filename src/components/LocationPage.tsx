@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
-import { Phone, Star, CheckCircle, MapPin, ArrowRight } from "lucide-react";
+import { Phone, Star, CheckCircle, MapPin, ArrowRight, ShieldCheck, Clock, MessageSquare, HelpCircle, Tag } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
-import { ServiceJsonLd, BreadcrumbJsonLd } from "@/components/JsonLd";
+import { ServiceJsonLd, BreadcrumbJsonLd, FAQPageJsonLd, JsonLd } from "@/components/JsonLd";
+import HeroReviewBadge from "@/components/home/HeroReviewBadge";
 import { GCP_BUSINESS, TEL_HREF, SMS_HREF } from "@/lib/business-info";
 import { LocationData, locations } from "@/data/locations";
 
