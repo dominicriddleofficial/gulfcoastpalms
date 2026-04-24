@@ -200,7 +200,7 @@ const LocationPage = ({ location }: Props) => {
               <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }}>
                 {location.introParagraphs.map((p, i) => (
                   <motion.p key={i} variants={fadeUp} custom={i} className="font-body text-muted-foreground leading-relaxed mb-6 text-lg">
-                    {p}
+                    {linkifyParagraph(p)}
                   </motion.p>
                 ))}
               </motion.div>
