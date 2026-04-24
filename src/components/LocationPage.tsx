@@ -24,7 +24,7 @@ const SERVICE_LINK_MAP: { match: RegExp; href: string }[] = [
  * Convert a paragraph string to React nodes, replacing the first occurrence of
  * each service phrase with an internal link in the brand color.
  */
-const linkifyParagraph = (text: string): React.ReactNode => {
+const linkifyParagraph = (text: string): ReactNode => {
   type Match = { start: number; end: number; href: string; label: string };
   const matches: Match[] = [];
   for (const { match, href } of SERVICE_LINK_MAP) {
@@ -39,7 +39,7 @@ const linkifyParagraph = (text: string): React.ReactNode => {
   for (const m of matches) {
     if (filtered.length === 0 || m.start >= filtered[filtered.length - 1].end) filtered.push(m);
   }
-  const out: React.ReactNode[] = [];
+  const out: ReactNode[] = [];
   let cursor = 0;
   filtered.forEach((m, i) => {
     if (m.start > cursor) out.push(text.slice(cursor, m.start));
