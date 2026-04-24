@@ -66,7 +66,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Pensacola Homeowners & Property Managers Choose Us",
     whyChoosePoints: [
-      "500+ palm jobs completed in 2025",
+      "500+ palms serviced across the Emerald Coast",
       "Experienced with large properties and HOA communities",
       "Licensed & insured",
       "5-star rated across the Emerald Coast",
@@ -81,8 +81,82 @@ export const locations: LocationData[] = [
       { src: job8, alt: "Diamond cut palms at Pensacola property" },
     ],
     metaTitle: "Palm Tree Trimming Pensacola FL | Gulf Coast Palms",
-    metaDescription: "Professional palm tree trimming in Pensacola, FL. Diamond cutting, trunk skinning, installations & removals. 500+ jobs completed. Call (850) 910-1290.",
+    metaDescription: "Professional palm tree trimming in Pensacola, FL. Diamond cutting, trunk skinning, installations & removals. 5.0★ · 46 reviews · Free estimates. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-gulf-breeze-fl", "palm-tree-trimming-perdido-key-fl", "palm-tree-trimming-navarre-fl"],
+    geo: { latitude: 30.4213, longitude: -87.2169 },
+    neighborhoods: [
+      "Pensacola",
+      "East Hill",
+      "North Hill",
+      "Downtown Pensacola",
+      "Cordova Park",
+      "Scenic Heights",
+      "Bayou Texar",
+      "Perdido Key",
+    ],
+    pricingTiers: [
+      {
+        name: "Standard Palm Trimming",
+        price: "As low as $25 per palm",
+        bestFor: "East Hill, Cordova Park, and Scenic Heights homes with 1–6 palms. Routine pruning, dead frond removal, clean residential look.",
+      },
+      {
+        name: "Premium Diamond Cutting",
+        price: "Up to $250 per palm",
+        bestFor: "Historic district estates and bayfront properties wanting the signature cross-hatch finish on Canary Island Date Palms.",
+      },
+      {
+        name: "HOA & Commercial Maintenance",
+        price: "Custom pricing",
+        bestFor: "Downtown businesses, condo associations, and large neighborhoods. Scheduled service with multi-palm discounts and single-invoice billing.",
+      },
+    ],
+    pricingNote:
+      "Actual pricing depends on palm height, species, density/overgrowth, and property access. Request a free on-site estimate for accurate Pensacola pricing.",
+    testimonial: {
+      quote:
+        "We had three other companies butcher our palms over the years. Gulf Coast Palms is the first crew that actually knew what they were doing — clean cuts, no overcutting, and they hauled everything away. Finally found our forever palm guys.",
+      author: "Michael R., East Hill homeowner",
+      rating: 5,
+    },
+    ctaSubtext:
+      "No hard sell. No upsell. Just an honest estimate from Pensacola's trusted palm specialists.",
+    ctaPrimaryLabel: "Text a Photo to (850) 910-1290",
+    ctaSecondaryLabel: "or call us directly",
+    faqs: [
+      {
+        q: "How much does palm tree trimming cost in Pensacola?",
+        a: "Palm trimming in Pensacola typically ranges from $25 to $250 per palm, depending on tree height, species, density, and access. Most East Hill or Cordova Park homes with 3–5 mature palms run $150–$600 for a full service. We provide free, no-obligation on-site estimates.",
+      },
+      {
+        q: "When is the best time to trim palms in Pensacola?",
+        a: "We recommend trimming Pensacola palms between April and early June — well before Atlantic hurricane season ramps up. A pre-season cleanup removes loose, dead fronds that become projectiles in high winds and gives the canopy time to stabilize before storms arrive.",
+      },
+      {
+        q: "Do you service historic district properties in Pensacola?",
+        a: "Yes — we regularly maintain palms in North Hill, East Hill, and Downtown Pensacola's historic districts. We're careful around mature landscaping, brick walkways, wrought iron fencing, and tight side yards. We carry full insurance for working on historic and high-value properties.",
+      },
+      {
+        q: "What palms grow best in Pensacola's climate?",
+        a: "Pensacola's coastal climate supports Sabal Palms (the Florida state tree), Canary Island Date Palms, Mediterranean Fan Palms, Pindo Palms, and Washingtonia Palms. Coconut Palms are too cold-sensitive for this latitude and rarely thrive long-term. We're happy to advise on the right species for your yard.",
+      },
+      {
+        q: "Can you remove a tall palm safely from a tight Pensacola yard?",
+        a: "Yes — many Pensacola lots, especially in the historic districts, have tight access and overhead power lines. We use sectional rigging to lower palms in pieces rather than felling them whole, protecting your home, fences, and neighbors' property. Free quotes always include access notes and a clear plan.",
+      },
+      {
+        q: "Do you handle storm-damaged palms after hurricanes?",
+        a: "Yes — Pensacola is one of our priority emergency response areas after named storms. We handle limb removal, full palm removals, hazardous lean correction, and complete cleanup. We also accept insurance-direct billing when authorized by your carrier.",
+      },
+      {
+        q: "How quickly can you get to my Pensacola property?",
+        a: "Routine trimming in Pensacola is typically scheduled within 3–7 days. During peak season (April–June and October–November), expect 1–2 weeks. Emergency and storm-response calls are handled same-day or next-day. Texting us a photo of your palms is the fastest way to get a quote.",
+      },
+      {
+        q: "Do you offer maintenance plans for Pensacola HOAs?",
+        a: "Yes — quarterly, biannual, and annual plans are available for Pensacola HOAs, condo associations, and commercial properties. Plans include scheduled trimming, health inspections, fertilization, and priority storm response. Plan customers also receive 10% off non-included services.",
+      },
+    ],
   },
   {
     slug: "palm-tree-trimming-gulf-breeze-fl",
@@ -106,7 +180,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Gulf Breeze Trusts Us",
     whyChoosePoints: [
-      "500+ jobs completed in 2025",
+      "500+ palms serviced across the Emerald Coast",
       "Trusted by property managers & HOAs",
       "Licensed & insured professionals",
       "5-star rated locally",
@@ -121,8 +195,82 @@ export const locations: LocationData[] = [
       { src: job9, alt: "Palm trimming at Gulf Breeze residential property" },
     ],
     metaTitle: "Palm Tree Trimming Gulf Breeze FL | Gulf Coast Palms",
-    metaDescription: "Expert palm tree trimming in Gulf Breeze, FL. Resort-quality diamond cutting, trunk skinning & palm care. 500+ jobs completed. Call (850) 910-1290.",
+    metaDescription: "Expert palm tree trimming in Gulf Breeze, FL. Resort-quality diamond cutting, trunk skinning & coastal palm care. 5.0★ · 46 reviews. Call (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-pensacola-fl", "palm-tree-trimming-navarre-fl", "palm-tree-trimming-fort-walton-beach-fl"],
+    geo: { latitude: 30.3574, longitude: -87.1639 },
+    neighborhoods: [
+      "Gulf Breeze",
+      "Gulf Breeze Proper",
+      "Tiger Point",
+      "Villa Venyce",
+      "Oriole Beach",
+      "Pensacola Beach",
+      "Santa Rosa Sound",
+      "Pensacola Bay",
+    ],
+    pricingTiers: [
+      {
+        name: "Standard Palm Trimming",
+        price: "As low as $25 per palm",
+        bestFor: "Gulf Breeze Proper and Tiger Point homes with 1–6 palms. Routine maintenance and clean residential look.",
+      },
+      {
+        name: "Premium Diamond Cutting",
+        price: "Up to $250 per palm",
+        bestFor: "Sound-front and bay-front estates wanting a polished resort-style finish on Canary Island Date Palms and similar species.",
+      },
+      {
+        name: "HOA & Coastal Estate Maintenance",
+        price: "Custom pricing",
+        bestFor: "HOAs and large waterfront properties with 20+ palms. Scheduled service, multi-palm discounts, and consolidated billing.",
+      },
+    ],
+    pricingNote:
+      "Pricing depends on palm height, species, density, and access — sound-front and bay-front lots often require sectional rigging. Free on-site quotes available.",
+    testimonial: {
+      quote:
+        "Our HOA on the Sound has nearly 80 palms and Gulf Coast Palms keeps every one of them looking sharp. Reliable scheduling, professional crew, and the diamond cuts are flawless. Best palm company in Gulf Breeze.",
+      author: "Jennifer K., Gulf Breeze HOA board member",
+      rating: 5,
+    },
+    ctaSubtext:
+      "No hard sell. No upsell. Just an honest estimate from Gulf Breeze's trusted palm specialists.",
+    ctaPrimaryLabel: "Text a Photo to (850) 910-1290",
+    ctaSecondaryLabel: "or call us directly",
+    faqs: [
+      {
+        q: "How much does palm tree trimming cost in Gulf Breeze?",
+        a: "Gulf Breeze palm trimming typically runs $25 to $250 per palm. Sound-front estates with 10+ mature Canary Island Date Palms generally fall between $800 and $1,800 for a complete service with diamond cutting and full cleanup. Free, detailed on-site estimates with no hidden fees.",
+      },
+      {
+        q: "Do you work with Gulf Breeze HOAs and condo associations?",
+        a: "Yes — Gulf Breeze HOAs and condo communities along Santa Rosa Sound and Pensacola Bay are a core part of our client base. We handle scheduled trimming, single-invoice billing, board reporting, and consistent service quality across every palm in the community.",
+      },
+      {
+        q: "When should I schedule palm trimming in Gulf Breeze before hurricane season?",
+        a: "April through early June is the ideal window. Removing storm-vulnerable dead fronds before June 1 reduces wind-projectile risk and gives palms time to stabilize. Same-day storm-prep visits are available when a named storm enters the Gulf.",
+      },
+      {
+        q: "Do waterfront palms in Gulf Breeze need different care?",
+        a: "Yes — sound-front and bay-front palms face heavier salt spray and stronger winds than inland palms. We avoid overcutting (which weakens storm resistance), thin the canopy properly, and recommend salt-tolerant species like Sabal, Canary Island Date, and Pindo Palms for the most exposed lots.",
+      },
+      {
+        q: "Can you diamond-cut Canary Island Date Palms in Gulf Breeze?",
+        a: "Yes — diamond cutting is one of our specialties and a popular choice for Gulf Breeze waterfront homes. The signature cross-hatch finish gives Canary Island Date Palms a polished, resort-quality look that matches the high standards of the Sound and bay-front communities.",
+      },
+      {
+        q: "Do you handle storm cleanup in Gulf Breeze after hurricanes?",
+        a: "Yes — Gulf Breeze is one of our priority response areas after tropical storms and hurricanes. We handle limb removal, full palm removals, hazard correction, and complete haul-away. We accept insurance-direct billing when authorized.",
+      },
+      {
+        q: "How fast can you get to my Gulf Breeze property?",
+        a: "Routine trimming in Gulf Breeze is typically booked within 3–7 days. Peak season (April–June, October–November) runs 1–2 weeks. Storm and emergency calls are same-day or next-day. Texting a photo of your palms is the fastest path to a quote.",
+      },
+      {
+        q: "Do you offer maintenance plans for Gulf Breeze homeowners?",
+        a: "Yes — quarterly, biannual, and annual maintenance plans are available for individual Gulf Breeze homeowners, HOAs, and waterfront estates. Plans include scheduled trimming, health checks, fertilization, and priority storm response, plus 10% off non-included services.",
+      },
+    ],
   },
   {
     slug: "palm-tree-trimming-navarre-fl",
@@ -147,7 +295,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Choose Us in Navarre",
     whyChoosePoints: [
-      "500+ palm jobs completed in 2025",
+      "500+ palms serviced across the Emerald Coast",
       "Experienced with large-scale properties",
       "Diamond cutting specialists",
       "Locally owned & operated",
@@ -162,8 +310,82 @@ export const locations: LocationData[] = [
       { src: job7, alt: "Professional palm trimming in Navarre Florida" },
     ],
     metaTitle: "Palm Tree Trimming Navarre FL | Gulf Coast Palms",
-    metaDescription: "Leading palm tree trimming in Navarre, FL. Diamond cutting, trunk skinning & large-scale palm care. 500+ jobs completed. Call (850) 910-1290.",
+    metaDescription: "Leading palm tree trimming in Navarre, FL. Diamond cutting, trunk skinning & large-scale palm care. 5.0★ · 46 reviews · Free estimates. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-gulf-breeze-fl", "palm-tree-trimming-fort-walton-beach-fl", "palm-tree-trimming-destin-fl"],
+    geo: { latitude: 30.4019, longitude: -86.8620 },
+    neighborhoods: [
+      "Navarre",
+      "Navarre Beach",
+      "Holley by the Sea",
+      "East Bay",
+      "Biscayne Pointe",
+      "Williams Creek",
+      "Hidden Creek",
+      "Whispering Pines",
+    ],
+    pricingTiers: [
+      {
+        name: "Standard Palm Trimming",
+        price: "As low as $25 per palm",
+        bestFor: "Holley by the Sea and East Bay homes with 1–6 palms. Routine maintenance, dead frond removal, and a clean residential look.",
+      },
+      {
+        name: "Premium Diamond Cutting",
+        price: "Up to $250 per palm",
+        bestFor: "Beachfront homes on Navarre Beach and waterfront estates wanting a polished, resort-grade Canary Island Date Palm finish.",
+      },
+      {
+        name: "Large-Property & HOA Maintenance",
+        price: "Custom pricing",
+        bestFor: "Properties with 100+ palms, HOAs, and rental portfolios. Scheduled service, multi-palm discounts, single-invoice billing.",
+      },
+    ],
+    pricingNote:
+      "Pricing varies by palm height, species, density, and access — beachfront and large-scale properties often qualify for volume discounts. Free on-site quotes.",
+    testimonial: {
+      quote:
+        "We have over 100 palms across our property in Holley by the Sea and Gulf Coast Palms is the only crew we've ever used that gets the look right and shows up on time, every time. The crowns are healthier than they've been in a decade.",
+      author: "David L., Navarre large-property owner",
+      rating: 5,
+    },
+    ctaSubtext:
+      "No hard sell. No upsell. Just an honest estimate from Navarre's trusted palm specialists.",
+    ctaPrimaryLabel: "Text a Photo to (850) 910-1290",
+    ctaSecondaryLabel: "or call us directly",
+    faqs: [
+      {
+        q: "How much does palm tree trimming cost in Navarre?",
+        a: "Navarre palm trimming generally runs $25 to $250 per palm depending on height, species, density, and access. Properties with 100+ palms typically qualify for volume pricing. Free, detailed on-site estimates with no hidden fees.",
+      },
+      {
+        q: "Do you handle large properties with 100+ palms in Navarre?",
+        a: "Yes — large-scale palm maintenance is a Navarre specialty for us. We've serviced properties with hundreds of palms in Holley by the Sea and waterfront estates along East Bay. We bring multi-crew teams and the right equipment to complete large jobs efficiently.",
+      },
+      {
+        q: "When should Navarre palms be trimmed before hurricane season?",
+        a: "April through early June is the ideal window. A pre-season trim removes the loose, dead fronds that become projectiles in tropical storms — critical for Navarre Beach and East Bay properties exposed to direct Gulf winds.",
+      },
+      {
+        q: "Do you service Navarre Beach vacation rentals?",
+        a: "Yes — vacation rentals on Navarre Beach are a regular part of our route. We schedule around guest check-ins and check-outs, maintain consistent appearance for listing photos, and offer single-invoice billing for property managers.",
+      },
+      {
+        q: "What palms grow best in Navarre's coastal climate?",
+        a: "Navarre's salt-air conditions favor Sabal Palms, Canary Island Date Palms, Mediterranean Fan Palms, and Pindo Palms. Coconut Palms struggle with occasional cold snaps and rarely thrive long-term. We can recommend the right species for your specific lot.",
+      },
+      {
+        q: "Can you diamond-cut palms in Navarre?",
+        a: "Yes — diamond cutting is a signature service of ours and a popular request for Navarre's beachfront and waterfront properties. The cross-hatch pattern on Canary Island Date Palms gives properties a polished, resort-quality finish.",
+      },
+      {
+        q: "Do you handle storm-damaged palm removal in Navarre?",
+        a: "Yes — Navarre is one of our priority emergency response areas. After tropical storms and hurricanes, we handle limb removal, full palm removal, lean correction, and complete cleanup, with insurance-direct billing available when authorized.",
+      },
+      {
+        q: "How quickly can you schedule a Navarre palm job?",
+        a: "Routine trimming in Navarre is typically scheduled within 3–7 days. Peak season runs 1–2 weeks. Emergency calls get same-day or next-day response. Texting a photo of your palms is the fastest way to get a quote.",
+      },
+    ],
   },
   {
     slug: "palm-tree-trimming-fort-walton-beach-fl",
@@ -187,7 +409,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Fort Walton Beach Property Owners Trust Us",
     whyChoosePoints: [
-      "500+ palm jobs completed in 2025",
+      "500+ palms serviced across the Emerald Coast",
       "Trusted by condo associations & commercial properties",
       "Licensed & insured professionals",
       "5-star rated across the Emerald Coast",
@@ -202,8 +424,82 @@ export const locations: LocationData[] = [
       { src: job10, alt: "Professional palm services in Fort Walton Beach" },
     ],
     metaTitle: "Palm Tree Trimming Fort Walton Beach FL | Gulf Coast Palms",
-    metaDescription: "Professional palm tree trimming in Fort Walton Beach, FL. Diamond cutting, trunk skinning & condo palm care. 500+ jobs completed. Call (850) 910-1290.",
+    metaDescription: "Professional palm tree trimming in Fort Walton Beach, FL. Diamond cutting, trunk skinning & condo palm care. 5.0★ · 46 reviews. Call (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-navarre-fl", "palm-tree-trimming-destin-fl", "palm-tree-trimming-gulf-breeze-fl"],
+    geo: { latitude: 30.4058, longitude: -86.6187 },
+    neighborhoods: [
+      "Fort Walton Beach",
+      "Okaloosa Island",
+      "Cinco Bayou",
+      "Ocean City",
+      "Wright",
+      "Shalimar",
+      "Choctawhatchee Bay",
+      "Mary Esther",
+    ],
+    pricingTiers: [
+      {
+        name: "Standard Palm Trimming",
+        price: "As low as $25 per palm",
+        bestFor: "Wright, Cinco Bayou, and Ocean City homes with 1–6 palms. Routine pruning and a clean residential appearance.",
+      },
+      {
+        name: "Premium Diamond Cutting",
+        price: "Up to $250 per palm",
+        bestFor: "Bay-front estates and Okaloosa Island properties wanting a polished, resort-grade Canary Island Date Palm finish.",
+      },
+      {
+        name: "Condo & Commercial Maintenance",
+        price: "Custom pricing",
+        bestFor: "Okaloosa Island condo associations, commercial properties on Miracle Strip Parkway, and HOAs. Scheduled service with single-invoice billing.",
+      },
+    ],
+    pricingNote:
+      "Pricing varies by palm height, species, density, and access — high-rise condo work and bay-front lots may require additional rigging. Free on-site quotes.",
+    testimonial: {
+      quote:
+        "Our condo board on Okaloosa Island had been frustrated with our previous palm company for years. Gulf Coast Palms came in, did a walk-through, gave us a clear quote, and the result was a noticeable upgrade. Owners actually commented on how good the palms look.",
+      author: "Patricia W., Okaloosa Island condo board member",
+      rating: 5,
+    },
+    ctaSubtext:
+      "No hard sell. No upsell. Just an honest estimate from Fort Walton Beach's trusted palm specialists.",
+    ctaPrimaryLabel: "Text a Photo to (850) 910-1290",
+    ctaSecondaryLabel: "or call us directly",
+    faqs: [
+      {
+        q: "How much does palm tree trimming cost in Fort Walton Beach?",
+        a: "Fort Walton Beach palm trimming generally runs $25 to $250 per palm. Bay-front and Okaloosa Island properties with 8–15 mature palms typically fall between $400 and $1,500. Free, detailed on-site estimates — no hidden fees.",
+      },
+      {
+        q: "Do you service Okaloosa Island condo associations?",
+        a: "Yes — Okaloosa Island condos are a regular part of our route. We coordinate around guest schedules, deliver consistent quality across high-rise property landscapes, and provide single-invoice billing and board reporting.",
+      },
+      {
+        q: "When should Fort Walton Beach palms be trimmed before storms?",
+        a: "We recommend trimming Fort Walton Beach palms between April and early June, ahead of hurricane season. A pre-season cleanup removes loose, dead fronds that become wind projectiles — critical for Okaloosa Island and bay-front properties.",
+      },
+      {
+        q: "What palm species thrive in Fort Walton Beach?",
+        a: "Sabal Palms, Canary Island Date Palms, Mediterranean Fan Palms, Pindo Palms, and Washingtonia Palms all do well in Fort Walton Beach's coastal climate. Coconut Palms typically struggle through cold snaps and aren't recommended for long-term planting.",
+      },
+      {
+        q: "Can you diamond-cut palms at Fort Walton Beach properties?",
+        a: "Yes — diamond cutting is one of our most-requested services for bay-front estates and high-end Okaloosa Island properties. The signature cross-hatch finish on Canary Island Date Palms creates a polished, resort-quality appearance.",
+      },
+      {
+        q: "Do you handle storm and hurricane palm cleanup in Fort Walton Beach?",
+        a: "Yes — Fort Walton Beach is one of our priority emergency response areas. We handle limb removal, full removals, hazardous lean correction, and complete haul-away. Insurance-direct billing is available when authorized.",
+      },
+      {
+        q: "How quickly can you schedule palm service in Fort Walton Beach?",
+        a: "Routine trimming in Fort Walton Beach is typically booked within 3–7 days. Peak season (April–June, October–November) runs 1–2 weeks. Storm calls get same-day or next-day response. Texting a photo is the fastest way to get a quote.",
+      },
+      {
+        q: "Do you offer recurring maintenance plans for Fort Walton Beach properties?",
+        a: "Yes — quarterly, biannual, and annual maintenance plans are available for homeowners, HOAs, condo associations, and commercial properties. Plans include scheduled trimming, health inspections, fertilization, and priority storm response.",
+      },
+    ],
   },
   {
     slug: "palm-tree-trimming-destin-fl",
@@ -348,7 +644,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why 30A Communities Trust Gulf Coast Palms",
     whyChoosePoints: [
-      "500+ palm jobs completed in 2025",
+      "500+ palms serviced across the Emerald Coast",
       "Experienced with 30A's distinctive communities",
       "Diamond cutting specialists",
       "Licensed & insured",
@@ -365,6 +661,80 @@ export const locations: LocationData[] = [
     metaTitle: "Palm Tree Trimming 30A Florida | Gulf Coast Palms",
     metaDescription: "Premium palm tree trimming along 30A, FL. Serving Rosemary Beach, Alys Beach, WaterColor & Seaside. Diamond cutting & professional palm care. Call (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-destin-fl", "palm-tree-trimming-fort-walton-beach-fl", "palm-tree-trimming-navarre-fl"],
+    geo: { latitude: 30.3290, longitude: -86.1647 },
+    neighborhoods: [
+      "Scenic Highway 30A",
+      "Rosemary Beach",
+      "Alys Beach",
+      "Seaside",
+      "WaterColor",
+      "WaterSound",
+      "Grayton Beach",
+      "Seacrest Beach",
+    ],
+    pricingTiers: [
+      {
+        name: "Boutique Palm Trimming",
+        price: "As low as $25 per palm",
+        bestFor: "Cottages and smaller residences in Grayton, Seaside, and Seacrest Beach with 1–6 palms. Natural shaping and clean appearance.",
+      },
+      {
+        name: "Premium Diamond Cutting",
+        price: "Up to $250 per palm",
+        bestFor: "Architecturally distinctive homes in Alys Beach, Rosemary Beach, and WaterSound wanting precise, resort-grade Canary Island Date Palm finishes.",
+      },
+      {
+        name: "30A Community & Rental Programs",
+        price: "Custom pricing",
+        bestFor: "Vacation rental portfolios, HOAs, and luxury developments. Scheduled service designed to keep properties guest-ready year-round.",
+      },
+    ],
+    pricingNote:
+      "30A pricing reflects the precision and finish quality these communities expect. Free on-site quotes — request one for any 30A property.",
+    testimonial: {
+      quote:
+        "We manage a portfolio of WaterColor and Seaside rentals and Gulf Coast Palms keeps every property looking listing-photo ready. They understand 30A's design standards and never miss a scheduled visit. Highest recommendation.",
+      author: "Rachel T., 30A vacation rental manager",
+      rating: 5,
+    },
+    ctaSubtext:
+      "No hard sell. No upsell. Just an honest estimate from 30A's trusted palm specialists.",
+    ctaPrimaryLabel: "Text a Photo to (850) 910-1290",
+    ctaSecondaryLabel: "or call us directly",
+    faqs: [
+      {
+        q: "How much does palm tree trimming cost along 30A?",
+        a: "30A palm trimming generally runs $25 to $250 per palm depending on height, species, density, and access. Luxury homes in Alys Beach or WaterSound with 8–12 mature palms typically run $600–$1,800 for a full diamond-cut service. Free on-site quotes for any 30A address.",
+      },
+      {
+        q: "Do you work with 30A vacation rental property managers?",
+        a: "Yes — vacation rentals are a large portion of our 30A work. We schedule around guest turnovers, maintain consistent appearance for listing photos, deliver multi-property single-invoice billing, and coordinate with on-site teams.",
+      },
+      {
+        q: "Can you match the design standards of Alys Beach and Rosemary Beach?",
+        a: "Yes — Alys Beach, Rosemary Beach, and similar communities have exacting design standards. Our diamond cutting and precision pruning techniques deliver the polished, intentional look these neighborhoods are known for, while complying with HOA architectural guidelines.",
+      },
+      {
+        q: "When should 30A palms be trimmed before hurricane season?",
+        a: "April through early June is the ideal window — well before the June 1 start of Atlantic hurricane season. A pre-season trim removes wind-projectile fronds and is especially critical for Gulf-front 30A properties.",
+      },
+      {
+        q: "What palm species do best along 30A?",
+        a: "30A's coastal sun and salt favor Sabal Palms, Canary Island Date Palms, Mediterranean Fan Palms, and Pindo Palms. Coconut Palms struggle here long-term. We can recommend species that match your community's design standards and your property's exposure.",
+      },
+      {
+        q: "Do you handle storm cleanup along 30A after hurricanes?",
+        a: "Yes — 30A is a priority response area for us after named storms. We handle limb removal, full palm removal, hazard correction, and complete cleanup, with insurance-direct billing available when authorized by your carrier.",
+      },
+      {
+        q: "How quickly can you schedule a 30A palm job?",
+        a: "Routine trimming along 30A is typically booked within 3–7 days. During peak season (April–June, October–November), expect 1–2 weeks. Storm and emergency calls get same-day or next-day response. Texting a photo is the fastest way to get a quote.",
+      },
+      {
+        q: "Do you offer ongoing programs for 30A communities?",
+        a: "Yes — quarterly, biannual, and annual maintenance programs are available for 30A HOAs, vacation rental portfolios, and luxury homeowners. Programs include scheduled trimming, health inspections, fertilization, priority storm response, and 10% off non-included services.",
+      },
+    ],
   },
   {
     slug: "palm-tree-trimming-perdido-key-fl",
@@ -388,7 +758,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Perdido Key Property Owners Choose Us",
     whyChoosePoints: [
-      "500+ palm jobs completed in 2025",
+      "500+ palms serviced across the Emerald Coast",
       "Experienced with barrier island properties",
       "Licensed & insured professionals",
       "5-star rated across the Gulf Coast",
@@ -403,8 +773,82 @@ export const locations: LocationData[] = [
       { src: job4, alt: "Waterfront palm maintenance at Perdido Key property" },
     ],
     metaTitle: "Palm Tree Trimming Perdido Key FL | Gulf Coast Palms",
-    metaDescription: "Professional palm tree trimming on Perdido Key, FL. Diamond cutting, trunk skinning & condo palm care for barrier island properties. Call (850) 910-1290.",
+    metaDescription: "Professional palm tree trimming on Perdido Key, FL. Diamond cutting & condo palm care for barrier island properties. 5.0★ · 46 reviews. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-pensacola-fl", "palm-tree-trimming-gulf-breeze-fl", "palm-tree-trimming-navarre-fl"],
+    geo: { latitude: 30.3127, longitude: -87.4361 },
+    neighborhoods: [
+      "Perdido Key",
+      "Old River",
+      "Innerarity Point",
+      "Ono Island",
+      "Bahia Grande",
+      "Lost Key",
+      "Sandy Key",
+      "Pensacola",
+    ],
+    pricingTiers: [
+      {
+        name: "Standard Palm Trimming",
+        price: "As low as $25 per palm",
+        bestFor: "Innerarity Point and Old River homes with 1–6 palms. Salt-tolerant pruning and clean coastal appearance.",
+      },
+      {
+        name: "Premium Diamond Cutting",
+        price: "Up to $250 per palm",
+        bestFor: "Beachfront and waterfront estates wanting a polished, resort-grade Canary Island Date Palm finish.",
+      },
+      {
+        name: "Condo & Multi-Property Maintenance",
+        price: "Custom pricing",
+        bestFor: "Beachfront condo associations and barrier island portfolios. Scheduled service with single-invoice billing.",
+      },
+    ],
+    pricingNote:
+      "Barrier island work often requires sectional rigging due to high winds and limited access — pricing reflects that. Free on-site quotes for any Perdido Key address.",
+    testimonial: {
+      quote:
+        "Our beachfront condo had palms that hadn't been touched properly in years — they looked exhausted. Gulf Coast Palms restored them in a single visit and put us on a maintenance schedule. Best decision our board has made.",
+      author: "Robert H., Perdido Key condo association",
+      rating: 5,
+    },
+    ctaSubtext:
+      "No hard sell. No upsell. Just an honest estimate from Perdido Key's trusted palm specialists.",
+    ctaPrimaryLabel: "Text a Photo to (850) 910-1290",
+    ctaSecondaryLabel: "or call us directly",
+    faqs: [
+      {
+        q: "How much does palm tree trimming cost on Perdido Key?",
+        a: "Perdido Key palm trimming typically runs $25 to $250 per palm. Beachfront condos and high-rise properties can require sectional rigging which affects pricing. Free, detailed on-site estimates with no hidden fees.",
+      },
+      {
+        q: "Do you service Perdido Key beachfront condos?",
+        a: "Yes — beachfront and Old River condo associations are a regular part of our route. We coordinate around guest schedules, deliver consistent appearance across the property, and provide single-invoice billing and board reporting.",
+      },
+      {
+        q: "How does barrier island salt exposure affect palm care?",
+        a: "Perdido Key palms face heavier salt spray, sandy soil, and stronger winds than mainland palms. We avoid overcutting (which weakens storm resistance), thin canopies properly, and recommend salt-tolerant species like Sabal, Canary Island Date, and Pindo Palms.",
+      },
+      {
+        q: "When should Perdido Key palms be trimmed before hurricane season?",
+        a: "April through early June is ideal — barrier island palms are among the most exposed in the region, so removing wind-projectile dead fronds before June 1 is especially important. Same-day storm-prep visits available when a named storm enters the Gulf.",
+      },
+      {
+        q: "Can you diamond-cut Canary Island Date Palms on Perdido Key?",
+        a: "Yes — diamond cutting is a popular request for Perdido Key beachfront and waterfront estates. The signature cross-hatch finish on Canary Island Date Palms gives properties a polished, resort-quality appearance.",
+      },
+      {
+        q: "Do you handle storm cleanup on Perdido Key after hurricanes?",
+        a: "Yes — Perdido Key is a priority emergency response area for us. We handle limb removal, full palm removal, hazardous lean correction, and complete cleanup, with insurance-direct billing available when authorized.",
+      },
+      {
+        q: "How quickly can you schedule a Perdido Key palm job?",
+        a: "Routine trimming on Perdido Key is typically scheduled within 3–7 days. Peak season (April–June, October–November) runs 1–2 weeks. Storm calls get same-day or next-day response.",
+      },
+      {
+        q: "Do you offer maintenance plans for Perdido Key condo associations?",
+        a: "Yes — quarterly, biannual, and annual maintenance plans are available for Perdido Key HOAs, condo associations, and individual property owners. Plans include scheduled trimming, health inspections, fertilization, and priority storm response.",
+      },
+    ],
   },
   {
     slug: "palm-tree-trimming-niceville-fl",
@@ -428,7 +872,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Niceville Homeowners Choose Gulf Coast Palms",
     whyChoosePoints: [
-      "500+ palm jobs completed in 2025",
+      "500+ palms serviced across the Emerald Coast",
       "Experienced with Bluewater Bay & Rocky Bayou properties",
       "Licensed & insured professionals",
       "5-star rated across Okaloosa County",
@@ -443,8 +887,82 @@ export const locations: LocationData[] = [
       { src: job11, alt: "Diamond cut palms at Bluewater Bay Niceville" },
     ],
     metaTitle: "Palm Tree Trimming Niceville FL | Gulf Coast Palms",
-    metaDescription: "Professional palm tree trimming and removal in Niceville, FL. Licensed & insured. Serving Niceville and the Okaloosa County area. Free estimates.",
+    metaDescription: "Professional palm tree trimming in Niceville, FL. Bluewater Bay, Rocky Bayou & Twin Cities. 5.0★ · 46 reviews · Free estimates. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-fort-walton-beach-fl", "palm-tree-trimming-destin-fl", "palm-tree-trimming-navarre-fl"],
+    geo: { latitude: 30.5169, longitude: -86.4823 },
+    neighborhoods: [
+      "Niceville",
+      "Bluewater Bay",
+      "Rocky Bayou",
+      "Swift Creek",
+      "Boggy Bayou",
+      "Valparaiso",
+      "Deer Moss Creek",
+      "Twin Cities",
+    ],
+    pricingTiers: [
+      {
+        name: "Standard Palm Trimming",
+        price: "As low as $25 per palm",
+        bestFor: "Bluewater Bay and Rocky Bayou homes with 1–6 palms. Routine maintenance, dead frond removal, and a clean residential look.",
+      },
+      {
+        name: "Premium Diamond Cutting",
+        price: "Up to $250 per palm",
+        bestFor: "Established estates and Bluewater Bay homes wanting a polished, resort-grade Canary Island Date Palm finish.",
+      },
+      {
+        name: "HOA & Commercial Maintenance",
+        price: "Custom pricing",
+        bestFor: "Bluewater Bay, Swift Creek HOAs, and commercial properties along John Sims Parkway. Scheduled service with single-invoice billing.",
+      },
+    ],
+    pricingNote:
+      "Niceville pricing reflects palm height, species, density, and access. Free on-site quotes for any Niceville address.",
+    testimonial: {
+      quote:
+        "We've used Gulf Coast Palms for our Bluewater Bay home for the past few years. Always on time, fair pricing, and the palms have never looked better. They actually care about the long-term health of the trees, not just the cut.",
+      author: "Susan B., Bluewater Bay homeowner",
+      rating: 5,
+    },
+    ctaSubtext:
+      "No hard sell. No upsell. Just an honest estimate from Niceville's trusted palm specialists.",
+    ctaPrimaryLabel: "Text a Photo to (850) 910-1290",
+    ctaSecondaryLabel: "or call us directly",
+    faqs: [
+      {
+        q: "How much does palm tree trimming cost in Niceville?",
+        a: "Niceville palm trimming generally runs $25 to $250 per palm depending on height, species, density, and access. Most Bluewater Bay or Rocky Bayou homes with 3–6 mature palms run $150–$700 for a complete service. Free, detailed on-site estimates.",
+      },
+      {
+        q: "Do you service Bluewater Bay HOAs and communities?",
+        a: "Yes — Bluewater Bay and surrounding HOA communities are a regular part of our Niceville route. We provide scheduled trimming, single-invoice billing, board reporting, and consistent quality across every palm in the community.",
+      },
+      {
+        q: "When should Niceville palms be trimmed before storms?",
+        a: "April through early June is ideal — even though Niceville's bayou setting offers some shelter, palms here still benefit from a pre-season cleanup. Removing dead fronds before June 1 reduces wind-projectile risk during summer storms.",
+      },
+      {
+        q: "What palm species grow best in Niceville?",
+        a: "Niceville's sheltered bayou microclimate supports Sabal Palms, Canary Island Date Palms, Mediterranean Fan Palms, Pindo Palms, and Washingtonia Palms. We can recommend the right species for your sun exposure, soil, and design goals.",
+      },
+      {
+        q: "Can you diamond-cut Canary Island Date Palms in Niceville?",
+        a: "Yes — diamond cutting is one of our specialties and a popular choice for Bluewater Bay estates. The signature cross-hatch finish creates a polished look that matches the community's high landscape standards.",
+      },
+      {
+        q: "Do you handle storm-damaged palm removal in Niceville?",
+        a: "Yes — Niceville is part of our priority emergency response area. After tropical storms and hurricanes we handle limb removal, full palm removals, lean correction, and complete cleanup, with insurance-direct billing when authorized.",
+      },
+      {
+        q: "How quickly can you schedule palm service in Niceville?",
+        a: "Routine trimming in Niceville is typically scheduled within 3–7 days. Peak season runs 1–2 weeks. Emergency calls get same-day or next-day response. Texting a photo of your palms is the fastest way to get a quote.",
+      },
+      {
+        q: "Do you offer recurring maintenance plans for Niceville properties?",
+        a: "Yes — quarterly, biannual, and annual plans are available for Niceville homeowners, HOAs, and commercial properties. Plans include scheduled trimming, health inspections, fertilization, and priority storm response.",
+      },
+    ],
   },
   {
     slug: "palm-tree-trimming-mary-esther-fl",
@@ -468,7 +986,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Mary Esther Property Owners Trust Us",
     whyChoosePoints: [
-      "500+ palm jobs completed in 2025",
+      "500+ palms serviced across the Emerald Coast",
       "Trusted by military families & property managers",
       "Licensed & insured professionals",
       "5-star rated across the Emerald Coast",
@@ -483,8 +1001,82 @@ export const locations: LocationData[] = [
       { src: job9, alt: "Waterfront palm maintenance in Mary Esther" },
     ],
     metaTitle: "Palm Tree Trimming Mary Esther FL | Gulf Coast Palms",
-    metaDescription: "Palm tree trimming, removal and care in Mary Esther, FL. Serving the Fort Walton Beach area. Licensed, insured, free estimates.",
+    metaDescription: "Professional palm tree trimming in Mary Esther, FL. Trusted by military families & property managers near Hurlburt Field. 5.0★ · 46 reviews. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-fort-walton-beach-fl", "palm-tree-trimming-navarre-fl", "palm-tree-trimming-destin-fl"],
+    geo: { latitude: 30.4099, longitude: -86.6604 },
+    neighborhoods: [
+      "Mary Esther",
+      "Hurlburt Field",
+      "Santa Rosa Sound",
+      "Mary Esther Boulevard",
+      "Beal Parkway corridor",
+      "Wright",
+      "Fort Walton Beach",
+      "Cinco Bayou",
+    ],
+    pricingTiers: [
+      {
+        name: "Standard Palm Trimming",
+        price: "As low as $25 per palm",
+        bestFor: "Single-family homes near Hurlburt Field with 1–6 palms. Routine maintenance and a clean residential appearance.",
+      },
+      {
+        name: "Premium Diamond Cutting",
+        price: "Up to $250 per palm",
+        bestFor: "Sound-front and waterfront properties wanting a polished, resort-grade Canary Island Date Palm finish.",
+      },
+      {
+        name: "Rental & Commercial Maintenance",
+        price: "Custom pricing",
+        bestFor: "Rental properties, commercial buildings on Mary Esther Boulevard, and absentee-owner programs. Single-invoice billing available.",
+      },
+    ],
+    pricingNote:
+      "Pricing varies by palm height, species, density, and access. We're especially experienced supporting absentee owners and military families with reliable, scheduled service.",
+    testimonial: {
+      quote:
+        "We were stationed at Hurlburt and away for months at a time. Gulf Coast Palms kept our palms looking great while we were gone, sent photos after every visit, and never overcharged. Highly recommend for any military family in the area.",
+      author: "Capt. James M., Mary Esther homeowner",
+      rating: 5,
+    },
+    ctaSubtext:
+      "No hard sell. No upsell. Just an honest estimate from Mary Esther's trusted palm specialists.",
+    ctaPrimaryLabel: "Text a Photo to (850) 910-1290",
+    ctaSecondaryLabel: "or call us directly",
+    faqs: [
+      {
+        q: "How much does palm tree trimming cost in Mary Esther?",
+        a: "Mary Esther palm trimming generally runs $25 to $250 per palm depending on height, species, density, and access. Most homes near Hurlburt Field with 3–5 mature palms run $150–$600 for a full service. Free, detailed on-site estimates.",
+      },
+      {
+        q: "Do you work with military families and absentee owners in Mary Esther?",
+        a: "Yes — we regularly support military families stationed at Hurlburt Field and other absentee owners. We schedule reliably, send photos after every visit, accept email/text approvals, and provide single-invoice billing for rental property managers.",
+      },
+      {
+        q: "When should Mary Esther palms be trimmed before hurricane season?",
+        a: "April through early June is ideal. Removing dead fronds before June 1 reduces wind-projectile risk — important for sound-front and waterfront Mary Esther properties exposed to Gulf storms.",
+      },
+      {
+        q: "What palm species grow well in Mary Esther?",
+        a: "Sabal Palms, Canary Island Date Palms, Mediterranean Fan Palms, Pindo Palms, and Washingtonia Palms all do well in Mary Esther's coastal conditions. Coconut Palms struggle here long-term and aren't recommended.",
+      },
+      {
+        q: "Can you diamond-cut palms in Mary Esther?",
+        a: "Yes — diamond cutting is available across Mary Esther, especially popular at sound-front and waterfront properties. The signature cross-hatch finish on Canary Island Date Palms creates a polished, resort-quality appearance.",
+      },
+      {
+        q: "Do you handle storm cleanup in Mary Esther after hurricanes?",
+        a: "Yes — Mary Esther is part of our priority emergency response area. We handle limb removal, full palm removal, lean correction, and complete cleanup, with insurance-direct billing available when authorized.",
+      },
+      {
+        q: "How quickly can you schedule palm service in Mary Esther?",
+        a: "Routine trimming in Mary Esther is typically scheduled within 3–7 days. Peak season runs 1–2 weeks. Storm calls get same-day or next-day response. Texting a photo is the fastest way to get a quote.",
+      },
+      {
+        q: "Do you offer recurring maintenance plans for rental properties in Mary Esther?",
+        a: "Yes — quarterly, biannual, and annual plans are available for Mary Esther homeowners and rental properties. Plans include scheduled trimming, health inspections, fertilization, and priority storm response, with photo reporting after each visit.",
+      },
+    ],
   },
   {
     slug: "palm-tree-trimming-santa-rosa-beach-fl",
@@ -508,7 +1100,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Santa Rosa Beach Properties Choose Us",
     whyChoosePoints: [
-      "500+ palm jobs completed in 2025",
+      "500+ palms serviced across the Emerald Coast",
       "Experienced with WaterColor, WaterSound & 30A communities",
       "Diamond cutting specialists",
       "Licensed & insured",
@@ -523,8 +1115,82 @@ export const locations: LocationData[] = [
       { src: job2, alt: "Diamond cut palms at Santa Rosa Beach property" },
     ],
     metaTitle: "Palm Tree Trimming Santa Rosa Beach FL | 30A | Gulf Coast Palms",
-    metaDescription: "Expert palm tree trimming along 30A and Santa Rosa Beach. Vacation rentals, luxury homes, and HOA communities. Gulf Coast Palms.",
+    metaDescription: "Premium palm tree trimming in Santa Rosa Beach, FL. WaterColor, WaterSound & 30A luxury homes. 5.0★ · 46 reviews · Free estimates. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-30a-fl", "palm-tree-trimming-destin-fl", "palm-tree-trimming-fort-walton-beach-fl"],
+    geo: { latitude: 30.3658, longitude: -86.2161 },
+    neighborhoods: [
+      "Santa Rosa Beach",
+      "WaterColor",
+      "WaterSound",
+      "WaterSound Origins",
+      "Dune Allen Beach",
+      "Blue Mountain Beach",
+      "Gulf Place",
+      "Point Washington",
+    ],
+    pricingTiers: [
+      {
+        name: "Standard Palm Trimming",
+        price: "As low as $25 per palm",
+        bestFor: "Point Washington and Dune Allen homes with 1–6 palms. Routine maintenance and clean coastal appearance.",
+      },
+      {
+        name: "Premium Diamond Cutting",
+        price: "Up to $250 per palm",
+        bestFor: "WaterColor, WaterSound, and Gulf-front estates wanting the resort-grade Canary Island Date Palm finish.",
+      },
+      {
+        name: "30A Community & Rental Programs",
+        price: "Custom pricing",
+        bestFor: "WaterColor and WaterSound HOAs, vacation rental portfolios, and luxury developments. Scheduled service to keep properties guest-ready.",
+      },
+    ],
+    pricingNote:
+      "Santa Rosa Beach pricing reflects the precision and finish quality 30A communities expect. Free on-site quotes for any Santa Rosa Beach address.",
+    testimonial: {
+      quote:
+        "Our home in WaterSound Origins finally has palms that match the rest of the community's standards. Gulf Coast Palms knew exactly what we needed and the diamond cuts are flawless. Will absolutely use them again.",
+      author: "Christopher D., WaterSound homeowner",
+      rating: 5,
+    },
+    ctaSubtext:
+      "No hard sell. No upsell. Just an honest estimate from Santa Rosa Beach's trusted palm specialists.",
+    ctaPrimaryLabel: "Text a Photo to (850) 910-1290",
+    ctaSecondaryLabel: "or call us directly",
+    faqs: [
+      {
+        q: "How much does palm tree trimming cost in Santa Rosa Beach?",
+        a: "Santa Rosa Beach palm trimming typically runs $25 to $250 per palm. Luxury homes in WaterColor or WaterSound with 8–12 mature palms generally fall between $600 and $1,800 for a complete diamond-cut service. Free, on-site estimates with no hidden fees.",
+      },
+      {
+        q: "Do you work with WaterColor and WaterSound HOAs?",
+        a: "Yes — WaterColor and WaterSound communities are a regular part of our 30A route. We comply with HOA architectural standards, schedule around community calendars, and provide single-invoice billing and consistent quality across every palm.",
+      },
+      {
+        q: "Do you service Santa Rosa Beach vacation rentals?",
+        a: "Yes — vacation rentals are a major part of our Santa Rosa Beach work. We schedule around guest turnovers, maintain consistent appearance for listing photos, and offer single-invoice billing for property management companies.",
+      },
+      {
+        q: "When should Santa Rosa Beach palms be trimmed before hurricane season?",
+        a: "April through early June is the ideal window. Gulf-front properties especially benefit from a pre-season cleanup that removes wind-projectile dead fronds before storms arrive.",
+      },
+      {
+        q: "What palm species do best in Santa Rosa Beach?",
+        a: "Sabal Palms, Canary Island Date Palms, Mediterranean Fan Palms, and Pindo Palms all thrive in 30A's coastal conditions. We can recommend species that meet your community's design guidelines and your specific exposure.",
+      },
+      {
+        q: "Can you diamond-cut Canary Island Date Palms in Santa Rosa Beach?",
+        a: "Yes — diamond cutting is one of our most-requested services in Santa Rosa Beach. The signature cross-hatch finish gives Canary Island Date Palms the polished, resort-quality look that defines 30A's premier communities.",
+      },
+      {
+        q: "Do you handle storm cleanup in Santa Rosa Beach after hurricanes?",
+        a: "Yes — Santa Rosa Beach is a priority emergency response area for us. We handle limb removal, full palm removal, hazard correction, and complete cleanup, with insurance-direct billing available when authorized.",
+      },
+      {
+        q: "Do you offer ongoing programs for Santa Rosa Beach properties?",
+        a: "Yes — quarterly, biannual, and annual maintenance programs are available for Santa Rosa Beach HOAs, rental portfolios, and luxury homeowners. Programs include scheduled trimming, health inspections, fertilization, and priority storm response.",
+      },
+    ],
   },
   {
     slug: "palm-tree-trimming-pace-fl",
@@ -548,7 +1214,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Pace Homeowners Choose Gulf Coast Palms",
     whyChoosePoints: [
-      "500+ palm jobs completed in 2025",
+      "500+ palms serviced across the Emerald Coast",
       "Experience with inland Santa Rosa County properties",
       "Licensed & insured professionals",
       "5-star rated locally",
@@ -563,8 +1229,82 @@ export const locations: LocationData[] = [
       { src: job10, alt: "Palm maintenance in Pace Santa Rosa County" },
     ],
     metaTitle: "Palm Tree Trimming Pace FL | Gulf Coast Palms",
-    metaDescription: "Palm tree trimming and removal in Pace, FL. Serving the Santa Rosa County area. Licensed, insured, free estimates from Gulf Coast Palms.",
+    metaDescription: "Professional palm tree trimming in Pace, FL. Serving Santa Rosa County's fastest-growing community. 5.0★ · 46 reviews · Free estimates. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-pensacola-fl", "palm-tree-trimming-navarre-fl", "palm-tree-trimming-gulf-breeze-fl"],
+    geo: { latitude: 30.5994, longitude: -87.1614 },
+    neighborhoods: [
+      "Pace",
+      "Woodbine Road",
+      "Highway 90 corridor",
+      "Pea Ridge",
+      "Stonebrook",
+      "Ashley Plantation",
+      "Bristol Park",
+      "Highway 87 corridor",
+    ],
+    pricingTiers: [
+      {
+        name: "Standard Palm Trimming",
+        price: "As low as $25 per palm",
+        bestFor: "Single-family Pace homes with 1–6 palms. Routine maintenance, dead frond removal, and a clean residential look.",
+      },
+      {
+        name: "Premium Diamond Cutting",
+        price: "Up to $250 per palm",
+        bestFor: "Established Pace estates wanting a polished, resort-grade Canary Island Date Palm finish.",
+      },
+      {
+        name: "Residential & Commercial Maintenance",
+        price: "Custom pricing",
+        bestFor: "HOAs, businesses along Highway 90, and multi-property portfolios. Scheduled service with single-invoice billing.",
+      },
+    ],
+    pricingNote:
+      "Pricing reflects palm height, species, density, and access. Free on-site quotes for any Pace address — including newer developments off Highway 87.",
+    testimonial: {
+      quote:
+        "We didn't think anyone outside of the coast would drive up to Pace for palm work. Gulf Coast Palms came out the next day, gave us a fair quote, and the job was perfect. Will definitely use them again.",
+      author: "Karen S., Pace homeowner",
+      rating: 5,
+    },
+    ctaSubtext:
+      "No hard sell. No upsell. Just an honest estimate from Pace's trusted palm specialists.",
+    ctaPrimaryLabel: "Text a Photo to (850) 910-1290",
+    ctaSecondaryLabel: "or call us directly",
+    faqs: [
+      {
+        q: "How much does palm tree trimming cost in Pace?",
+        a: "Pace palm trimming generally runs $25 to $250 per palm depending on height, species, density, and access. Most Pace homes with 2–4 mature palms run $100–$500 for a complete service. Free, detailed on-site estimates with no hidden fees.",
+      },
+      {
+        q: "Do you actually drive up to Pace from the coast?",
+        a: "Yes — Pace is a regular part of our route. We're just a quick drive up Highway 87 and we serve Pace homeowners with the same professionalism and pricing as our coastal customers.",
+      },
+      {
+        q: "How does Pace's inland climate affect palm care?",
+        a: "Pace palms face less salt exposure than coastal palms but deal with clay-heavy soil, drainage challenges, and slightly cooler winter temperatures. We adjust our trimming, fertilization, and species recommendations to suit these inland conditions.",
+      },
+      {
+        q: "What palm species do best in Pace?",
+        a: "Sabal Palms (Florida's hardy state tree), Mediterranean Fan Palms, Pindo Palms, and Windmill Palms all do well in Pace's slightly cooler, inland climate. We can recommend species suited to your specific yard and goals.",
+      },
+      {
+        q: "When should Pace palms be trimmed?",
+        a: "April through early June is ideal — even inland palms benefit from a pre-summer cleanup. Removing dead fronds reduces wind-projectile risk during the storm systems that occasionally reach Santa Rosa County.",
+      },
+      {
+        q: "Can you diamond-cut Canary Island Date Palms in Pace?",
+        a: "Yes — diamond cutting is available across Pace and is a popular choice for established estates wanting a polished, resort-grade look on their Canary Island Date Palms.",
+      },
+      {
+        q: "Do you handle storm-damaged palm removal in Pace?",
+        a: "Yes — we provide priority emergency response across Pace and Santa Rosa County after storms. We handle limb removal, full palm removals, lean correction, and complete cleanup.",
+      },
+      {
+        q: "How quickly can you get to a Pace property?",
+        a: "Routine trimming in Pace is typically scheduled within 3–7 days. Peak season runs 1–2 weeks. Storm and emergency calls get same-day or next-day response. Texting a photo of your palms is the fastest way to get a quote.",
+      },
+    ],
   },
   {
     slug: "palm-tree-trimming-milton-fl",
@@ -588,7 +1328,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Milton Property Owners Trust Gulf Coast Palms",
     whyChoosePoints: [
-      "500+ palm jobs completed in 2025",
+      "500+ palms serviced across the Emerald Coast",
       "Familiar with Santa Rosa County's inland conditions",
       "Licensed & insured professionals",
       "5-star rated across NW Florida",
@@ -603,8 +1343,82 @@ export const locations: LocationData[] = [
       { src: job3, alt: "Palm maintenance in Milton Santa Rosa County" },
     ],
     metaTitle: "Palm Tree Trimming Milton FL | Gulf Coast Palms",
-    metaDescription: "Professional palm tree care in Milton, FL. Trimming, removal, and maintenance for Santa Rosa County homeowners. Free estimates.",
+    metaDescription: "Professional palm tree trimming in Milton, FL. Serving Santa Rosa County's seat from Blackwater River to Highway 90. 5.0★ · 46 reviews. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-pace-fl", "palm-tree-trimming-pensacola-fl", "palm-tree-trimming-navarre-fl"],
+    geo: { latitude: 30.6327, longitude: -87.0397 },
+    neighborhoods: [
+      "Milton",
+      "Downtown Milton",
+      "Blackwater River",
+      "Avalon Boulevard",
+      "Highway 90",
+      "Highway 87",
+      "East Milton",
+      "Bagdad",
+    ],
+    pricingTiers: [
+      {
+        name: "Standard Palm Trimming",
+        price: "As low as $25 per palm",
+        bestFor: "Single-family Milton homes with 1–6 palms. Routine maintenance and a clean residential appearance.",
+      },
+      {
+        name: "Premium Diamond Cutting",
+        price: "Up to $250 per palm",
+        bestFor: "Established Milton estates wanting a polished, resort-grade Canary Island Date Palm finish.",
+      },
+      {
+        name: "Commercial & Residential Maintenance",
+        price: "Custom pricing",
+        bestFor: "Downtown Milton businesses, Highway 90 commercial properties, and HOAs. Scheduled service with single-invoice billing.",
+      },
+    ],
+    pricingNote:
+      "Pricing reflects palm height, species, density, and access. Free on-site quotes for any Milton or East Milton address.",
+    testimonial: {
+      quote:
+        "Our shop on Highway 90 needed the palms out front cleaned up before a busy weekend. Gulf Coast Palms came out next day, did a beautiful job, and the price was very fair. Customers immediately noticed.",
+      author: "Tom R., Milton business owner",
+      rating: 5,
+    },
+    ctaSubtext:
+      "No hard sell. No upsell. Just an honest estimate from Milton's trusted palm specialists.",
+    ctaPrimaryLabel: "Text a Photo to (850) 910-1290",
+    ctaSecondaryLabel: "or call us directly",
+    faqs: [
+      {
+        q: "How much does palm tree trimming cost in Milton?",
+        a: "Milton palm trimming generally runs $25 to $250 per palm depending on height, species, density, and access. Most Milton homes and small commercial properties run $100–$600 for a complete service. Free, detailed on-site estimates with no hidden fees.",
+      },
+      {
+        q: "Do you service commercial properties in Milton?",
+        a: "Yes — downtown Milton businesses, shopping centers along Highway 90, and offices on Stewart Street are all part of our regular Milton route. We provide scheduled trimming, single-invoice billing, and after-hours work when needed.",
+      },
+      {
+        q: "How does Milton's inland climate affect palm care?",
+        a: "Milton palms face less salt exposure than coastal palms but deal with cooler winters, different soil composition, and occasional flooding near the Blackwater River. We adjust our trimming, fertilization, and species recommendations accordingly.",
+      },
+      {
+        q: "What palm species do best in Milton?",
+        a: "Sabal Palms, Mediterranean Fan Palms, Pindo Palms, and Windmill Palms all handle Milton's slightly cooler inland climate well. Cold-sensitive species like Coconut Palms aren't a good fit here long-term.",
+      },
+      {
+        q: "When should Milton palms be trimmed?",
+        a: "April through early June is ideal. Even inland palms benefit from a pre-summer cleanup that removes dead fronds and reduces wind-projectile risk during summer thunderstorms and any tropical systems that reach Santa Rosa County.",
+      },
+      {
+        q: "Can you diamond-cut palms in Milton?",
+        a: "Yes — diamond cutting is available across Milton and is a popular choice for established estates wanting a polished, resort-grade finish on their Canary Island Date Palms.",
+      },
+      {
+        q: "Do you handle storm-damaged palm removal in Milton?",
+        a: "Yes — we provide priority emergency response across Milton and Santa Rosa County. We handle limb removal, full palm removals, lean correction, and complete cleanup, with insurance-direct billing available when authorized.",
+      },
+      {
+        q: "How quickly can you schedule palm service in Milton?",
+        a: "Routine trimming in Milton is typically scheduled within 3–7 days. Peak season runs 1–2 weeks. Storm and emergency calls get same-day or next-day response. Texting a photo of your palms is the fastest way to get a quote.",
+      },
+    ],
   },
 ];
 
