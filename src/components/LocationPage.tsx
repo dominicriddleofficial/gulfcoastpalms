@@ -239,6 +239,111 @@ const LocationPage = ({ location }: Props) => {
         </div>
       </section>
 
+      {/* FAQ */}
+      {location.faqs && location.faqs.length > 0 && (
+        <section className="section-padding bg-background">
+          <div className="container mx-auto max-w-4xl">
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-12">
+              <motion.p variants={fadeUp} custom={0} className="font-body text-sm uppercase tracking-[0.2em] text-palm-gold font-semibold mb-3">
+                <HelpCircle className="inline w-4 h-4 mr-1.5 -mt-0.5" />
+                {location.city} Palm Care FAQs
+              </motion.p>
+              <motion.h2 variants={fadeUp} custom={1} className="font-display text-3xl md:text-5xl font-bold text-foreground">
+                Frequently Asked Questions
+              </motion.h2>
+            </motion.div>
+            <div className="space-y-4">
+              {location.faqs.map((faq, i) => (
+                <motion.details
+                  key={faq.q}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  variants={fadeUp}
+                  custom={i}
+                  className="group rounded-xl border border-border bg-card p-5 open:border-primary/40 open:shadow-md transition-all"
+                >
+                  <summary className="cursor-pointer list-none flex items-start justify-between gap-4 font-display text-lg font-semibold text-foreground">
+                    <span>{faq.q}</span>
+                    <span className="text-primary shrink-0 mt-1 transition-transform group-open:rotate-45">+</span>
+                  </summary>
+                  <p className="font-body text-muted-foreground leading-relaxed mt-3">{faq.a}</p>
+                </motion.details>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Pricing */}
+      {location.pricingTiers && location.pricingTiers.length > 0 && (
+        <section className="section-padding bg-secondary/40">
+          <div className="container mx-auto max-w-5xl">
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-12">
+              <motion.p variants={fadeUp} custom={0} className="font-body text-sm uppercase tracking-[0.2em] text-palm-gold font-semibold mb-3">
+                <Tag className="inline w-4 h-4 mr-1.5 -mt-0.5" />
+                Transparent Pricing
+              </motion.p>
+              <motion.h2 variants={fadeUp} custom={1} className="font-display text-3xl md:text-5xl font-bold text-foreground">
+                {location.city} Palm Care Pricing
+              </motion.h2>
+            </motion.div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {location.pricingTiers.map((tier, i) => (
+                <motion.div
+                  key={tier.name}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  variants={fadeUp}
+                  custom={i}
+                  className="rounded-2xl border border-border bg-card p-6 hover:border-primary/40 hover:shadow-lg transition-all"
+                >
+                  <h3 className="font-display text-xl font-bold text-foreground mb-2">{tier.name}</h3>
+                  <p className="font-display text-2xl font-bold text-primary mb-4">{tier.price}</p>
+                  <p className="font-body text-sm text-muted-foreground leading-relaxed">
+                    <span className="font-semibold text-foreground">Best for:</span> {tier.bestFor}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
+            {location.pricingNote && (
+              <p className="font-body text-xs text-muted-foreground text-center mt-6 max-w-2xl mx-auto italic">
+                {location.pricingNote}
+              </p>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Testimonial */}
+      {location.testimonial && (
+        <section className="section-padding bg-palm-dark">
+          <div className="container mx-auto max-w-3xl">
+            <motion.figure
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fadeUp}
+              custom={0}
+              className="rounded-2xl border border-palm-gold/30 bg-palm-dark/50 p-8 md:p-10 text-center"
+            >
+              <div className="flex justify-center gap-1 mb-4">
+                {Array.from({ length: location.testimonial.rating ?? 5 }).map((_, i) => (
+                  <Star key={i} className="w-5 h-5 fill-palm-gold text-palm-gold" />
+                ))}
+              </div>
+              <blockquote className="font-display text-xl md:text-2xl text-primary-foreground italic leading-relaxed mb-5">
+                "{location.testimonial.quote}"
+              </blockquote>
+              <figcaption className="font-body text-sm text-palm-sand/80 font-medium">
+                — {location.testimonial.author}
+              </figcaption>
+            </motion.figure>
+          </div>
+        </section>
+      )}
+
       {/* Why Choose Us */}
       <section className="section-padding bg-background">
         <div className="container mx-auto">
