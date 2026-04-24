@@ -1214,7 +1214,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Pace Homeowners Choose Gulf Coast Palms",
     whyChoosePoints: [
-      "500+ palm jobs completed in 2025",
+      "500+ palms serviced across the Emerald Coast",
       "Experience with inland Santa Rosa County properties",
       "Licensed & insured professionals",
       "5-star rated locally",
@@ -1229,8 +1229,82 @@ export const locations: LocationData[] = [
       { src: job10, alt: "Palm maintenance in Pace Santa Rosa County" },
     ],
     metaTitle: "Palm Tree Trimming Pace FL | Gulf Coast Palms",
-    metaDescription: "Palm tree trimming and removal in Pace, FL. Serving the Santa Rosa County area. Licensed, insured, free estimates from Gulf Coast Palms.",
+    metaDescription: "Professional palm tree trimming in Pace, FL. Serving Santa Rosa County's fastest-growing community. 5.0★ · 46 reviews · Free estimates. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-pensacola-fl", "palm-tree-trimming-navarre-fl", "palm-tree-trimming-gulf-breeze-fl"],
+    geo: { latitude: 30.5994, longitude: -87.1614 },
+    neighborhoods: [
+      "Pace",
+      "Woodbine Road",
+      "Highway 90 corridor",
+      "Pea Ridge",
+      "Stonebrook",
+      "Ashley Plantation",
+      "Bristol Park",
+      "Highway 87 corridor",
+    ],
+    pricingTiers: [
+      {
+        name: "Standard Palm Trimming",
+        price: "As low as $25 per palm",
+        bestFor: "Single-family Pace homes with 1–6 palms. Routine maintenance, dead frond removal, and a clean residential look.",
+      },
+      {
+        name: "Premium Diamond Cutting",
+        price: "Up to $250 per palm",
+        bestFor: "Established Pace estates wanting a polished, resort-grade Canary Island Date Palm finish.",
+      },
+      {
+        name: "Residential & Commercial Maintenance",
+        price: "Custom pricing",
+        bestFor: "HOAs, businesses along Highway 90, and multi-property portfolios. Scheduled service with single-invoice billing.",
+      },
+    ],
+    pricingNote:
+      "Pricing reflects palm height, species, density, and access. Free on-site quotes for any Pace address — including newer developments off Highway 87.",
+    testimonial: {
+      quote:
+        "We didn't think anyone outside of the coast would drive up to Pace for palm work. Gulf Coast Palms came out the next day, gave us a fair quote, and the job was perfect. Will definitely use them again.",
+      author: "Karen S., Pace homeowner",
+      rating: 5,
+    },
+    ctaSubtext:
+      "No hard sell. No upsell. Just an honest estimate from Pace's trusted palm specialists.",
+    ctaPrimaryLabel: "Text a Photo to (850) 910-1290",
+    ctaSecondaryLabel: "or call us directly",
+    faqs: [
+      {
+        q: "How much does palm tree trimming cost in Pace?",
+        a: "Pace palm trimming generally runs $25 to $250 per palm depending on height, species, density, and access. Most Pace homes with 2–4 mature palms run $100–$500 for a complete service. Free, detailed on-site estimates with no hidden fees.",
+      },
+      {
+        q: "Do you actually drive up to Pace from the coast?",
+        a: "Yes — Pace is a regular part of our route. We're just a quick drive up Highway 87 and we serve Pace homeowners with the same professionalism and pricing as our coastal customers.",
+      },
+      {
+        q: "How does Pace's inland climate affect palm care?",
+        a: "Pace palms face less salt exposure than coastal palms but deal with clay-heavy soil, drainage challenges, and slightly cooler winter temperatures. We adjust our trimming, fertilization, and species recommendations to suit these inland conditions.",
+      },
+      {
+        q: "What palm species do best in Pace?",
+        a: "Sabal Palms (Florida's hardy state tree), Mediterranean Fan Palms, Pindo Palms, and Windmill Palms all do well in Pace's slightly cooler, inland climate. We can recommend species suited to your specific yard and goals.",
+      },
+      {
+        q: "When should Pace palms be trimmed?",
+        a: "April through early June is ideal — even inland palms benefit from a pre-summer cleanup. Removing dead fronds reduces wind-projectile risk during the storm systems that occasionally reach Santa Rosa County.",
+      },
+      {
+        q: "Can you diamond-cut Canary Island Date Palms in Pace?",
+        a: "Yes — diamond cutting is available across Pace and is a popular choice for established estates wanting a polished, resort-grade look on their Canary Island Date Palms.",
+      },
+      {
+        q: "Do you handle storm-damaged palm removal in Pace?",
+        a: "Yes — we provide priority emergency response across Pace and Santa Rosa County after storms. We handle limb removal, full palm removals, lean correction, and complete cleanup.",
+      },
+      {
+        q: "How quickly can you get to a Pace property?",
+        a: "Routine trimming in Pace is typically scheduled within 3–7 days. Peak season runs 1–2 weeks. Storm and emergency calls get same-day or next-day response. Texting a photo of your palms is the fastest way to get a quote.",
+      },
+    ],
   },
   {
     slug: "palm-tree-trimming-milton-fl",
