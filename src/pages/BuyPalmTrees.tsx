@@ -18,10 +18,22 @@ const fadeUp = {
 };
 
 // Per-species enrichment used only on this commercial page.
-const SPECIES_META: Record<string, { bestFor: string; installTime: { label: string; icon: "fast" | "scheduled" | "equipment" } }> = {
+const SPECIES_META: Record<
+  string,
+  {
+    bestFor: string;
+    installTime: { label: string; icon: "fast" | "scheduled" | "equipment" };
+    nameOverride?: string;
+    scientificNameOverride?: string;
+    hideLearnMore?: boolean;
+  }
+> = {
   "canary-island-date-palm": {
+    nameOverride: "Sylvester Date Palm",
+    scientificNameOverride: "Phoenix sylvestris",
     bestFor: "Luxury estates, resort-quality landscaping",
     installTime: { label: "Equipment required — quoted separately", icon: "equipment" },
+    hideLearnMore: true,
   },
   "sabal-palm": {
     bestFor: "Hurricane-resistant, native Florida look",
