@@ -5,12 +5,39 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Validate an HMAC approval token issued by get-quote-public.
+async function verifyApprovalToken(quoteId: string, token: string, secret: string): Promise<boolean> {
+  if (!token || typeof token !== "string") return false;
+  try {
+    const enc = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      "raw",
+      enc.encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
+    const sig = await crypto.subtle.sign("HMAC", key, enc.encode(`approve:${quoteId}`));
+    const bytes = new Uint8Array(sig);
+    let bin = "";
+    for (const b of bytes) bin += String.fromCharCode(b);
+    const expected = btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    // Constant-time comparison
+    if (expected.length !== token.length) return false;
+    let diff = 0;
+    for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ token.charCodeAt(i);
+    return diff === 0;
+  } catch {
+    return false;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
     const body = await req.json();
-    const { quote_id, action, approved_by, change_notes } = body;
+    const { quote_id, action, approved_by, change_notes, approval_token } = body;
 
     if (!quote_id || typeof quote_id !== "string") {
       return new Response(JSON.stringify({ error: "quote_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -19,6 +46,15 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
+
+    // Require a valid HMAC approval token tied to this quote_id.
+    // Tokens are issued by get-quote-public when the customer loads the quote page.
+    const tokenValid = await verifyApprovalToken(quote_id, approval_token, serviceKey);
+    if (!tokenValid) {
+      return new Response(JSON.stringify({ error: "Invalid or missing approval token" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Fetch full quote details
     const { data: quote } = await supabase

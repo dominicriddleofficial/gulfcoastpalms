@@ -5,6 +5,25 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Generate an HMAC-SHA256 approval token tied to a quote_id.
+// Uses the service role key as the signing secret (already available, never leaves the server).
+async function signApprovalToken(quoteId: string, secret: string): Promise<string> {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(`approve:${quoteId}`));
+  // base64url encode
+  const bytes = new Uint8Array(sig);
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -14,9 +33,10 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "quote_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      serviceKey
     );
 
     // Fetch quote
@@ -79,6 +99,8 @@ Deno.serve(async (req) => {
       await supabase.from("platform_quotes").update({ status: "viewed", first_viewed_at: new Date().toISOString() }).eq("id", quote.id);
     }
 
+    const approvalToken = await signApprovalToken(quote.id, serviceKey);
+
     return new Response(JSON.stringify({
       id: quote.id,
       quote_number: quote.quote_number,
@@ -103,6 +125,7 @@ Deno.serve(async (req) => {
       deposit_required: quote.deposit_required_flag || false,
       deposit_amount: quote.deposit_amount_calculated || 0,
       line_items: lineItems || [],
+      approval_token: approvalToken,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (err) {
