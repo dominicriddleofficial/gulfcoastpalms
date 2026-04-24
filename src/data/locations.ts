@@ -986,7 +986,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Mary Esther Property Owners Trust Us",
     whyChoosePoints: [
-      "500+ palm jobs completed in 2025",
+      "500+ palms serviced across the Emerald Coast",
       "Trusted by military families & property managers",
       "Licensed & insured professionals",
       "5-star rated across the Emerald Coast",
@@ -1001,8 +1001,82 @@ export const locations: LocationData[] = [
       { src: job9, alt: "Waterfront palm maintenance in Mary Esther" },
     ],
     metaTitle: "Palm Tree Trimming Mary Esther FL | Gulf Coast Palms",
-    metaDescription: "Palm tree trimming, removal and care in Mary Esther, FL. Serving the Fort Walton Beach area. Licensed, insured, free estimates.",
+    metaDescription: "Professional palm tree trimming in Mary Esther, FL. Trusted by military families & property managers near Hurlburt Field. 5.0★ · 46 reviews. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-fort-walton-beach-fl", "palm-tree-trimming-navarre-fl", "palm-tree-trimming-destin-fl"],
+    geo: { latitude: 30.4099, longitude: -86.6604 },
+    neighborhoods: [
+      "Mary Esther",
+      "Hurlburt Field",
+      "Santa Rosa Sound",
+      "Mary Esther Boulevard",
+      "Beal Parkway corridor",
+      "Wright",
+      "Fort Walton Beach",
+      "Cinco Bayou",
+    ],
+    pricingTiers: [
+      {
+        name: "Standard Palm Trimming",
+        price: "As low as $25 per palm",
+        bestFor: "Single-family homes near Hurlburt Field with 1–6 palms. Routine maintenance and a clean residential appearance.",
+      },
+      {
+        name: "Premium Diamond Cutting",
+        price: "Up to $250 per palm",
+        bestFor: "Sound-front and waterfront properties wanting a polished, resort-grade Canary Island Date Palm finish.",
+      },
+      {
+        name: "Rental & Commercial Maintenance",
+        price: "Custom pricing",
+        bestFor: "Rental properties, commercial buildings on Mary Esther Boulevard, and absentee-owner programs. Single-invoice billing available.",
+      },
+    ],
+    pricingNote:
+      "Pricing varies by palm height, species, density, and access. We're especially experienced supporting absentee owners and military families with reliable, scheduled service.",
+    testimonial: {
+      quote:
+        "We were stationed at Hurlburt and away for months at a time. Gulf Coast Palms kept our palms looking great while we were gone, sent photos after every visit, and never overcharged. Highly recommend for any military family in the area.",
+      author: "Capt. James M., Mary Esther homeowner",
+      rating: 5,
+    },
+    ctaSubtext:
+      "No hard sell. No upsell. Just an honest estimate from Mary Esther's trusted palm specialists.",
+    ctaPrimaryLabel: "Text a Photo to (850) 910-1290",
+    ctaSecondaryLabel: "or call us directly",
+    faqs: [
+      {
+        q: "How much does palm tree trimming cost in Mary Esther?",
+        a: "Mary Esther palm trimming generally runs $25 to $250 per palm depending on height, species, density, and access. Most homes near Hurlburt Field with 3–5 mature palms run $150–$600 for a full service. Free, detailed on-site estimates.",
+      },
+      {
+        q: "Do you work with military families and absentee owners in Mary Esther?",
+        a: "Yes — we regularly support military families stationed at Hurlburt Field and other absentee owners. We schedule reliably, send photos after every visit, accept email/text approvals, and provide single-invoice billing for rental property managers.",
+      },
+      {
+        q: "When should Mary Esther palms be trimmed before hurricane season?",
+        a: "April through early June is ideal. Removing dead fronds before June 1 reduces wind-projectile risk — important for sound-front and waterfront Mary Esther properties exposed to Gulf storms.",
+      },
+      {
+        q: "What palm species grow well in Mary Esther?",
+        a: "Sabal Palms, Canary Island Date Palms, Mediterranean Fan Palms, Pindo Palms, and Washingtonia Palms all do well in Mary Esther's coastal conditions. Coconut Palms struggle here long-term and aren't recommended.",
+      },
+      {
+        q: "Can you diamond-cut palms in Mary Esther?",
+        a: "Yes — diamond cutting is available across Mary Esther, especially popular at sound-front and waterfront properties. The signature cross-hatch finish on Canary Island Date Palms creates a polished, resort-quality appearance.",
+      },
+      {
+        q: "Do you handle storm cleanup in Mary Esther after hurricanes?",
+        a: "Yes — Mary Esther is part of our priority emergency response area. We handle limb removal, full palm removal, lean correction, and complete cleanup, with insurance-direct billing available when authorized.",
+      },
+      {
+        q: "How quickly can you schedule palm service in Mary Esther?",
+        a: "Routine trimming in Mary Esther is typically scheduled within 3–7 days. Peak season runs 1–2 weeks. Storm calls get same-day or next-day response. Texting a photo is the fastest way to get a quote.",
+      },
+      {
+        q: "Do you offer recurring maintenance plans for rental properties in Mary Esther?",
+        a: "Yes — quarterly, biannual, and annual plans are available for Mary Esther homeowners and rental properties. Plans include scheduled trimming, health inspections, fertilization, and priority storm response, with photo reporting after each visit.",
+      },
+    ],
   },
   {
     slug: "palm-tree-trimming-santa-rosa-beach-fl",
