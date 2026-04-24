@@ -102,7 +102,7 @@ export const palmTypes: PalmType[] = [
       "Established Sabals require very little supplemental irrigation",
       "Gulf Coast Palms sources healthy, well-rooted specimens for all installations"
     ],
-    priceRange: "$600 – $800 installed",
+    priceRange: "$350 – $500 installed",
     shortDescription: "Florida's native state palm. Extremely hurricane-resistant and ideal for coastal landscapes. Final price depends on palm height, delivery distance, and access to the installation area."
   },
   {
@@ -142,7 +142,7 @@ export const palmTypes: PalmType[] = [
       "Regular watering during the first growing season ensures strong root development",
       "Gulf Coast Palms handles complete installation including site preparation and aftercare guidance"
     ],
-    priceRange: "$500 – $700 installed",
+    priceRange: "$550 – $1,200 installed",
     shortDescription: "Compact cold-hardy palm with blue-green fronds perfect for residential landscapes. Final price depends on palm height, delivery distance, and access to the installation area."
   },
   {
