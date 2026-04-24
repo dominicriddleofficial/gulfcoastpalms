@@ -24,9 +24,9 @@ const ServiceAreasSection = () => (
         <motion.p variants={fadeUp} custom={2} className="font-body text-muted-foreground max-w-2xl mx-auto mb-8">
           We proudly provide palm tree trimming and professional palm services throughout:
         </motion.p>
-        <motion.div variants={fadeUp} custom={3} className="flex flex-wrap justify-center gap-3 mb-6">
+        <motion.div variants={fadeUp} custom={3} className="flex flex-wrap justify-center gap-3 max-w-md mx-auto mb-6">
           {areas.map((area) => (
-            <span key={area} className="px-6 py-3 rounded-full bg-secondary text-secondary-foreground font-body font-medium">
+            <span key={area} className="px-5 py-2.5 rounded-full bg-secondary text-secondary-foreground font-body font-medium text-sm whitespace-nowrap">
               {area}, FL
             </span>
           ))}

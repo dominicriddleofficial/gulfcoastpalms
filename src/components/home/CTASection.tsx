@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Phone } from "lucide-react";
 import { GCP_BUSINESS, TEL_HREF } from "@/lib/business-info";
+import { trackEvent } from "@/lib/analytics";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -25,6 +26,10 @@ const CTASection = () => (
           variants={fadeUp}
           custom={2}
           href={TEL_HREF}
+          onClick={() => {
+            trackEvent("phone_click", { source: "bottom_cta" });
+            window.gtag?.("event", "phone_click", { source: "bottom_cta" });
+          }}
           className="inline-flex items-center gap-3 px-10 py-5 rounded-xl bg-primary-foreground text-primary font-body font-bold text-xl hover:scale-105 transition-transform shadow-xl"
         >
           <Phone className="w-6 h-6" />
