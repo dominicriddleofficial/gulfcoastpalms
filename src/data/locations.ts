@@ -295,7 +295,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Choose Us in Navarre",
     whyChoosePoints: [
-      "500+ palm jobs completed in 2025",
+      "500+ palms serviced across the Emerald Coast",
       "Experienced with large-scale properties",
       "Diamond cutting specialists",
       "Locally owned & operated",
@@ -310,8 +310,82 @@ export const locations: LocationData[] = [
       { src: job7, alt: "Professional palm trimming in Navarre Florida" },
     ],
     metaTitle: "Palm Tree Trimming Navarre FL | Gulf Coast Palms",
-    metaDescription: "Leading palm tree trimming in Navarre, FL. Diamond cutting, trunk skinning & large-scale palm care. 500+ jobs completed. Call (850) 910-1290.",
+    metaDescription: "Leading palm tree trimming in Navarre, FL. Diamond cutting, trunk skinning & large-scale palm care. 5.0★ · 46 reviews · Free estimates. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-gulf-breeze-fl", "palm-tree-trimming-fort-walton-beach-fl", "palm-tree-trimming-destin-fl"],
+    geo: { latitude: 30.4019, longitude: -86.8620 },
+    neighborhoods: [
+      "Navarre",
+      "Navarre Beach",
+      "Holley by the Sea",
+      "East Bay",
+      "Biscayne Pointe",
+      "Williams Creek",
+      "Hidden Creek",
+      "Whispering Pines",
+    ],
+    pricingTiers: [
+      {
+        name: "Standard Palm Trimming",
+        price: "As low as $25 per palm",
+        bestFor: "Holley by the Sea and East Bay homes with 1–6 palms. Routine maintenance, dead frond removal, and a clean residential look.",
+      },
+      {
+        name: "Premium Diamond Cutting",
+        price: "Up to $250 per palm",
+        bestFor: "Beachfront homes on Navarre Beach and waterfront estates wanting a polished, resort-grade Canary Island Date Palm finish.",
+      },
+      {
+        name: "Large-Property & HOA Maintenance",
+        price: "Custom pricing",
+        bestFor: "Properties with 100+ palms, HOAs, and rental portfolios. Scheduled service, multi-palm discounts, single-invoice billing.",
+      },
+    ],
+    pricingNote:
+      "Pricing varies by palm height, species, density, and access — beachfront and large-scale properties often qualify for volume discounts. Free on-site quotes.",
+    testimonial: {
+      quote:
+        "We have over 100 palms across our property in Holley by the Sea and Gulf Coast Palms is the only crew we've ever used that gets the look right and shows up on time, every time. The crowns are healthier than they've been in a decade.",
+      author: "David L., Navarre large-property owner",
+      rating: 5,
+    },
+    ctaSubtext:
+      "No hard sell. No upsell. Just an honest estimate from Navarre's trusted palm specialists.",
+    ctaPrimaryLabel: "Text a Photo to (850) 910-1290",
+    ctaSecondaryLabel: "or call us directly",
+    faqs: [
+      {
+        q: "How much does palm tree trimming cost in Navarre?",
+        a: "Navarre palm trimming generally runs $25 to $250 per palm depending on height, species, density, and access. Properties with 100+ palms typically qualify for volume pricing. Free, detailed on-site estimates with no hidden fees.",
+      },
+      {
+        q: "Do you handle large properties with 100+ palms in Navarre?",
+        a: "Yes — large-scale palm maintenance is a Navarre specialty for us. We've serviced properties with hundreds of palms in Holley by the Sea and waterfront estates along East Bay. We bring multi-crew teams and the right equipment to complete large jobs efficiently.",
+      },
+      {
+        q: "When should Navarre palms be trimmed before hurricane season?",
+        a: "April through early June is the ideal window. A pre-season trim removes the loose, dead fronds that become projectiles in tropical storms — critical for Navarre Beach and East Bay properties exposed to direct Gulf winds.",
+      },
+      {
+        q: "Do you service Navarre Beach vacation rentals?",
+        a: "Yes — vacation rentals on Navarre Beach are a regular part of our route. We schedule around guest check-ins and check-outs, maintain consistent appearance for listing photos, and offer single-invoice billing for property managers.",
+      },
+      {
+        q: "What palms grow best in Navarre's coastal climate?",
+        a: "Navarre's salt-air conditions favor Sabal Palms, Canary Island Date Palms, Mediterranean Fan Palms, and Pindo Palms. Coconut Palms struggle with occasional cold snaps and rarely thrive long-term. We can recommend the right species for your specific lot.",
+      },
+      {
+        q: "Can you diamond-cut palms in Navarre?",
+        a: "Yes — diamond cutting is a signature service of ours and a popular request for Navarre's beachfront and waterfront properties. The cross-hatch pattern on Canary Island Date Palms gives properties a polished, resort-quality finish.",
+      },
+      {
+        q: "Do you handle storm-damaged palm removal in Navarre?",
+        a: "Yes — Navarre is one of our priority emergency response areas. After tropical storms and hurricanes, we handle limb removal, full palm removal, lean correction, and complete cleanup, with insurance-direct billing available when authorized.",
+      },
+      {
+        q: "How quickly can you schedule a Navarre palm job?",
+        a: "Routine trimming in Navarre is typically scheduled within 3–7 days. Peak season runs 1–2 weeks. Emergency calls get same-day or next-day response. Texting a photo of your palms is the fastest way to get a quote.",
+      },
+    ],
   },
   {
     slug: "palm-tree-trimming-fort-walton-beach-fl",
