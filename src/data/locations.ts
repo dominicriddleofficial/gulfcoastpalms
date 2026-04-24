@@ -1100,7 +1100,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Santa Rosa Beach Properties Choose Us",
     whyChoosePoints: [
-      "500+ palm jobs completed in 2025",
+      "500+ palms serviced across the Emerald Coast",
       "Experienced with WaterColor, WaterSound & 30A communities",
       "Diamond cutting specialists",
       "Licensed & insured",
@@ -1115,8 +1115,82 @@ export const locations: LocationData[] = [
       { src: job2, alt: "Diamond cut palms at Santa Rosa Beach property" },
     ],
     metaTitle: "Palm Tree Trimming Santa Rosa Beach FL | 30A | Gulf Coast Palms",
-    metaDescription: "Expert palm tree trimming along 30A and Santa Rosa Beach. Vacation rentals, luxury homes, and HOA communities. Gulf Coast Palms.",
+    metaDescription: "Premium palm tree trimming in Santa Rosa Beach, FL. WaterColor, WaterSound & 30A luxury homes. 5.0★ · 46 reviews · Free estimates. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-30a-fl", "palm-tree-trimming-destin-fl", "palm-tree-trimming-fort-walton-beach-fl"],
+    geo: { latitude: 30.3658, longitude: -86.2161 },
+    neighborhoods: [
+      "Santa Rosa Beach",
+      "WaterColor",
+      "WaterSound",
+      "WaterSound Origins",
+      "Dune Allen Beach",
+      "Blue Mountain Beach",
+      "Gulf Place",
+      "Point Washington",
+    ],
+    pricingTiers: [
+      {
+        name: "Standard Palm Trimming",
+        price: "As low as $25 per palm",
+        bestFor: "Point Washington and Dune Allen homes with 1–6 palms. Routine maintenance and clean coastal appearance.",
+      },
+      {
+        name: "Premium Diamond Cutting",
+        price: "Up to $250 per palm",
+        bestFor: "WaterColor, WaterSound, and Gulf-front estates wanting the resort-grade Canary Island Date Palm finish.",
+      },
+      {
+        name: "30A Community & Rental Programs",
+        price: "Custom pricing",
+        bestFor: "WaterColor and WaterSound HOAs, vacation rental portfolios, and luxury developments. Scheduled service to keep properties guest-ready.",
+      },
+    ],
+    pricingNote:
+      "Santa Rosa Beach pricing reflects the precision and finish quality 30A communities expect. Free on-site quotes for any Santa Rosa Beach address.",
+    testimonial: {
+      quote:
+        "Our home in WaterSound Origins finally has palms that match the rest of the community's standards. Gulf Coast Palms knew exactly what we needed and the diamond cuts are flawless. Will absolutely use them again.",
+      author: "Christopher D., WaterSound homeowner",
+      rating: 5,
+    },
+    ctaSubtext:
+      "No hard sell. No upsell. Just an honest estimate from Santa Rosa Beach's trusted palm specialists.",
+    ctaPrimaryLabel: "Text a Photo to (850) 910-1290",
+    ctaSecondaryLabel: "or call us directly",
+    faqs: [
+      {
+        q: "How much does palm tree trimming cost in Santa Rosa Beach?",
+        a: "Santa Rosa Beach palm trimming typically runs $25 to $250 per palm. Luxury homes in WaterColor or WaterSound with 8–12 mature palms generally fall between $600 and $1,800 for a complete diamond-cut service. Free, on-site estimates with no hidden fees.",
+      },
+      {
+        q: "Do you work with WaterColor and WaterSound HOAs?",
+        a: "Yes — WaterColor and WaterSound communities are a regular part of our 30A route. We comply with HOA architectural standards, schedule around community calendars, and provide single-invoice billing and consistent quality across every palm.",
+      },
+      {
+        q: "Do you service Santa Rosa Beach vacation rentals?",
+        a: "Yes — vacation rentals are a major part of our Santa Rosa Beach work. We schedule around guest turnovers, maintain consistent appearance for listing photos, and offer single-invoice billing for property management companies.",
+      },
+      {
+        q: "When should Santa Rosa Beach palms be trimmed before hurricane season?",
+        a: "April through early June is the ideal window. Gulf-front properties especially benefit from a pre-season cleanup that removes wind-projectile dead fronds before storms arrive.",
+      },
+      {
+        q: "What palm species do best in Santa Rosa Beach?",
+        a: "Sabal Palms, Canary Island Date Palms, Mediterranean Fan Palms, and Pindo Palms all thrive in 30A's coastal conditions. We can recommend species that meet your community's design guidelines and your specific exposure.",
+      },
+      {
+        q: "Can you diamond-cut Canary Island Date Palms in Santa Rosa Beach?",
+        a: "Yes — diamond cutting is one of our most-requested services in Santa Rosa Beach. The signature cross-hatch finish gives Canary Island Date Palms the polished, resort-quality look that defines 30A's premier communities.",
+      },
+      {
+        q: "Do you handle storm cleanup in Santa Rosa Beach after hurricanes?",
+        a: "Yes — Santa Rosa Beach is a priority emergency response area for us. We handle limb removal, full palm removal, hazard correction, and complete cleanup, with insurance-direct billing available when authorized.",
+      },
+      {
+        q: "Do you offer ongoing programs for Santa Rosa Beach properties?",
+        a: "Yes — quarterly, biannual, and annual maintenance programs are available for Santa Rosa Beach HOAs, rental portfolios, and luxury homeowners. Programs include scheduled trimming, health inspections, fertilization, and priority storm response.",
+      },
+    ],
   },
   {
     slug: "palm-tree-trimming-pace-fl",
