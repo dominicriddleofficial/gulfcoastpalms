@@ -48,23 +48,43 @@ serve(async (req) => {
 
   log("Event received", { type: event.type, id: event.id });
 
-  // Check for duplicate
-  const { data: existing } = await supabaseAdmin
-    .from("payment_webhook_events")
-    .select("id")
-    .eq("event_id", event.id)
-    .eq("processed", true)
-    .limit(1);
-
-  if (existing && existing.length > 0) {
-    log("Duplicate event, skipping", { eventId: event.id });
-    return new Response(JSON.stringify({ received: true, duplicate: true }), { status: 200 });
-  }
-
-  // Log the webhook event
   const metadata = (event.data.object as any)?.metadata || {};
   const businessId = metadata.business_id || null;
 
+  // ─── IDEMPOTENCY GATE ──────────────────────────────────────────────
+  // Insert into stripe_events FIRST, in its own transaction, before any
+  // business logic. Stripe's event.id is the primary key, so a duplicate
+  // delivery hits a unique-violation (23505) and we short-circuit with 200
+  // so Stripe stops retrying. This MUST happen before invoice/payment writes.
+  const { error: dedupeError } = await supabaseAdmin
+    .from("stripe_events")
+    .insert({
+      id: event.id,
+      event_type: event.type,
+      business_id: businessId,
+      payload: event as any,
+      livemode: event.livemode ?? false,
+      processing_status: "processing",
+    });
+
+  if (dedupeError) {
+    // 23505 = unique_violation → already processed (or in flight)
+    if ((dedupeError as any).code === "23505") {
+      log("Duplicate event, skipping", { eventId: event.id });
+      return new Response(
+        JSON.stringify({ received: true, duplicate: true }),
+        { headers: { "Content-Type": "application/json" }, status: 200 },
+      );
+    }
+    // Any other error: log and continue. We still want to process the event,
+    // but flag it so we know the dedupe row is in a weird state.
+    log("WARNING: stripe_events insert failed, continuing", {
+      code: (dedupeError as any).code,
+      message: dedupeError.message,
+    });
+  }
+
+  // Legacy mirror (kept so existing payment_webhook_events admin views still work)
   await supabaseAdmin.from("payment_webhook_events").insert({
     event_id: event.id,
     event_type: event.type,
@@ -73,6 +93,9 @@ serve(async (req) => {
     payload_json: event.data.object,
     processed: false,
   });
+
+  let relatedEntityType: string | null = null;
+  let relatedEntityId: string | null = null;
 
   try {
     switch (event.type) {
@@ -85,6 +108,8 @@ serve(async (req) => {
           log("Missing metadata, skipping reconciliation");
           break;
         }
+        relatedEntityType = "invoice";
+        relatedEntityId = meta.invoice_id;
 
         const amountPaid = (session.amount_total || 0) / 100;
         const isDeposit = meta.payment_type === "deposit";
@@ -178,12 +203,33 @@ serve(async (req) => {
       .update({ processed: true, processed_at: new Date().toISOString() })
       .eq("event_id", event.id);
 
+    // Mark stripe_events success
+    await supabaseAdmin
+      .from("stripe_events")
+      .update({
+        processing_status: "success",
+        related_entity_type: relatedEntityType,
+        related_entity_id: relatedEntityId,
+      })
+      .eq("id", event.id);
+
   } catch (err) {
     log("ERROR processing event", { message: err.message });
     await supabaseAdmin
       .from("payment_webhook_events")
       .update({ error_message: err.message })
       .eq("event_id", event.id);
+    await supabaseAdmin
+      .from("stripe_events")
+      .update({ processing_status: "failed", error_message: err.message })
+      .eq("id", event.id);
+    // Re-throw via 500 so Stripe retries; the dedupe row stays so we can
+    // inspect it, and the next retry will land in the duplicate path above
+    // unless someone manually flips processing_status back to allow replay.
+    return new Response(
+      JSON.stringify({ received: false, error: err.message }),
+      { headers: { "Content-Type": "application/json" }, status: 500 },
+    );
   }
 
   return new Response(JSON.stringify({ received: true }), {

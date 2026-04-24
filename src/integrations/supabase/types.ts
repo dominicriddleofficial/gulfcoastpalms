@@ -3790,6 +3790,53 @@ export type Database = {
         }
         Relationships: []
       }
+      stripe_events: {
+        Row: {
+          business_id: string | null
+          error_message: string | null
+          event_type: string
+          id: string
+          livemode: boolean
+          payload: Json
+          processed_at: string
+          processing_status: string
+          related_entity_id: string | null
+          related_entity_type: string | null
+        }
+        Insert: {
+          business_id?: string | null
+          error_message?: string | null
+          event_type: string
+          id: string
+          livemode?: boolean
+          payload: Json
+          processed_at?: string
+          processing_status?: string
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+        }
+        Update: {
+          business_id?: string | null
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          livemode?: boolean
+          payload?: Json
+          processed_at?: string
+          processing_status?: string
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stripe_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppressed_emails: {
         Row: {
           created_at: string
