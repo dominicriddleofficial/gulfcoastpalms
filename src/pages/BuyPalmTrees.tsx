@@ -18,10 +18,22 @@ const fadeUp = {
 };
 
 // Per-species enrichment used only on this commercial page.
-const SPECIES_META: Record<string, { bestFor: string; installTime: { label: string; icon: "fast" | "scheduled" | "equipment" } }> = {
+const SPECIES_META: Record<
+  string,
+  {
+    bestFor: string;
+    installTime: { label: string; icon: "fast" | "scheduled" | "equipment" };
+    nameOverride?: string;
+    scientificNameOverride?: string;
+    hideLearnMore?: boolean;
+  }
+> = {
   "canary-island-date-palm": {
+    nameOverride: "Sylvester Date Palm",
+    scientificNameOverride: "Phoenix sylvestris",
     bestFor: "Luxury estates, resort-quality landscaping",
     installTime: { label: "Equipment required — quoted separately", icon: "equipment" },
+    hideLearnMore: true,
   },
   "sabal-palm": {
     bestFor: "Hurricane-resistant, native Florida look",
@@ -44,7 +56,7 @@ const SPECIES_META: Record<string, { bestFor: string; installTime: { label: stri
 const FAQS = [
   {
     q: "How much does it cost to have a palm tree planted in Pensacola?",
-    a: "Gulf Coast Palms charges $350–$1,500 installed depending on species and size. Sabal Palms (Florida's state tree) typically install for $350–$500. Canary Island Date Palms run $1,200–$1,500. These prices include sourcing, delivery, planting, bracing, and aftercare guidance — not just the tree itself.",
+    a: "Gulf Coast Palms charges $350–$1,500 installed depending on species and size. Sabal Palms (Florida's state tree) typically install for $350–$500. Sylvester Date Palms run $1,200–$1,500. These prices include sourcing, delivery, planting, bracing, and aftercare guidance — not just the tree itself.",
   },
   {
     q: "Do you deliver and install palm trees on the Emerald Coast?",
@@ -52,11 +64,11 @@ const FAQS = [
   },
   {
     q: "What palm trees grow best in NW Florida's climate?",
-    a: "Sabal Palms (Florida's native state tree) are the most hurricane-resistant and lowest maintenance. Canary Island Date Palms are the luxury choice for high-end properties. Pindo and Mule Palms are the best options if you want cold hardiness. We help every customer match the right species to their property's sun exposure, soil, and budget.",
+    a: "Sabal Palms (Florida's native state tree) are the most hurricane-resistant and lowest maintenance. Sylvester Date Palms are the luxury choice for high-end properties. Pindo and Mule Palms are the best options if you want cold hardiness. We help every customer match the right species to their property's sun exposure, soil, and budget.",
   },
   {
     q: "How long does palm tree installation take?",
-    a: "Small palms (Sabal, Pindo, 8–12ft range) typically take 45–90 minutes per tree including planting, bracing, and cleanup. Large Canary Island Date Palms may require a skid steer and a half-day. We provide a time estimate when we quote your project.",
+    a: "Small palms (Sabal, Pindo, 8–12ft range) typically take 45–90 minutes per tree including planting, bracing, and cleanup. Large Sylvester Date Palms may require a skid steer and a half-day. We provide a time estimate when we quote your project.",
   },
   {
     q: "Do I need a permit to plant a palm tree in Pensacola or Navarre?",
@@ -71,8 +83,8 @@ const FAQS = [
     a: "Yes — multi-palm installs are our specialty and our most cost-effective service. HOA communities, new construction developments, and vacation rental properties with 5–20+ palms get priority scheduling and package pricing. Text us a photo of your property for a same-day bulk quote.",
   },
   {
-    q: "What's the difference between a Sabal Palm and a Canary Island Date Palm?",
-    a: "Sabal Palms are Florida's native state tree — extremely hurricane-resistant, lower maintenance, and ideal for natural Florida landscapes. They cost $350–$500 installed. Canary Island Date Palms are imported luxury statement palms with thick trunks and full canopies, popular at beachfront estates. They're higher maintenance and cost $1,200–$1,500 installed. We can show you examples of both in NW Florida during your free estimate.",
+    q: "What's the difference between a Sabal Palm and a Sylvester Date Palm?",
+    a: "Sabal Palms are Florida's native state tree — extremely hurricane-resistant, lower maintenance, and ideal for natural Florida landscapes. They cost $350–$500 installed. Sylvester Date Palms (Phoenix sylvestris) are imported statement palms prized for their diamond-cut trunks and full silvery-green canopies, popular at beachfront estates. They're higher maintenance and cost $1,200–$1,500 installed. We can show you examples of both in NW Florida during your free estimate.",
   },
 ];
 
@@ -127,8 +139,8 @@ const BuyPalmTrees = () => {
         position: 2,
         item: {
           "@type": "Product",
-          name: "Canary Island Date Palm — Installed",
-          description: "Luxury statement palm with thick trunk. Installed at 8-15ft.",
+          name: "Sylvester Date Palm — Installed",
+          description: "Luxury statement palm with diamond-cut trunk and silvery-green fronds. Installed at 8-15ft.",
           offers: { "@type": "AggregateOffer", lowPrice: "1200", highPrice: "1500", priceCurrency: "USD", availability: "https://schema.org/InStock" },
         },
       },
@@ -169,7 +181,7 @@ const BuyPalmTrees = () => {
     <Layout>
       <SEOHead
         title="Palm Trees Delivered & Installed — Emerald Coast FL | Gulf Coast Palms"
-        description="Buy palm trees sourced, delivered & professionally installed across Pensacola, Navarre, Destin & the Emerald Coast. Sabal Palms from $350 installed. Canary Island Date Palms from $1,200. Free estimates. Call (850) 910-1290."
+        description="Buy palm trees sourced, delivered & professionally installed across Pensacola, Navarre, Destin & the Emerald Coast. Sabal Palms from $350 installed. Sylvester Date Palms from $1,200. Free estimates. Call (850) 910-1290."
         canonicalUrl="/palm-trees/buy"
       />
       <JsonLd data={itemListSchema} />
@@ -395,8 +407,8 @@ const BuyPalmTrees = () => {
                     </div>
                   </div>
                   <div className="flex flex-1 flex-col px-6 pb-6">
-                    <h3 className="mb-1 font-display text-xl font-bold text-foreground">{palm.name}</h3>
-                    <p className="mb-3 font-body text-xs italic text-muted-foreground">{palm.scientificName}</p>
+                    <h3 className="mb-1 font-display text-xl font-bold text-foreground">{meta?.nameOverride ?? palm.name}</h3>
+                    <p className="mb-3 font-body text-xs italic text-muted-foreground">{meta?.scientificNameOverride ?? palm.scientificName}</p>
 
                     {meta && (
                       <p className="mb-3 font-body text-xs">
@@ -436,9 +448,11 @@ const BuyPalmTrees = () => {
                       </a>
                     </div>
 
-                    <Link to={`/palm-trees/${palm.slug}`} className="mt-3 text-center font-body text-xs text-primary hover:underline">
-                      Learn more about {palm.name} →
-                    </Link>
+                    {!meta?.hideLearnMore && (
+                      <Link to={`/palm-trees/${palm.slug}`} className="mt-3 text-center font-body text-xs text-primary hover:underline">
+                        Learn more about {palm.name} →
+                      </Link>
+                    )}
                   </div>
                 </motion.div>
               );
