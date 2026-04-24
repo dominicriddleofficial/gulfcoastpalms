@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Settings, Palette, Hash, CreditCard, RefreshCw, CheckCircle, XCircle,
-  AlertTriangle, Zap, Globe, Smartphone, Package, Plus, Trash2, Edit,
+  AlertTriangle, Zap, Globe, Smartphone, Package, Plus, Trash2, Edit, Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -113,6 +113,9 @@ export default function PlatformSettings() {
 
             {/* Numbering */}
             <NumberingSection businessId={selectedBusinessId} />
+
+            {/* Notification Preferences */}
+            <NotificationPreferencesSection />
 
             {/* Integrations */}
             <SettingsSection title="Integrations" icon={Zap}>
