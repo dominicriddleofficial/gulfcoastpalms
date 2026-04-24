@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import gcpLogo from "@/assets/logo.png";
+import ppsLogo from "@/assets/logo-pps.png";
 
 export default function PlatformLogin() {
   const [email, setEmail] = useState("");
@@ -33,8 +35,30 @@ export default function PlatformLogin() {
       <div className="w-full max-w-sm space-y-6">
         <Card className="border-border bg-card shadow-2xl shadow-primary/5">
           <CardHeader className="text-center pb-2">
-            <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center mx-auto mb-3">
-              <span className="text-primary-foreground font-display text-xl font-bold">FS</span>
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <div className="w-14 h-14 rounded-xl bg-white border border-border flex items-center justify-center overflow-hidden p-1.5">
+                <img
+                  src={gcpLogo}
+                  alt="Gulf Coast Palms logo"
+                  className="w-full h-full object-contain"
+                  width={56}
+                  height={56}
+                  fetchPriority="high"
+                  decoding="async"
+                />
+              </div>
+              <div className="h-8 w-px bg-border" aria-hidden="true" />
+              <div className="w-14 h-14 rounded-xl bg-white border border-border flex items-center justify-center overflow-hidden p-1.5">
+                <img
+                  src={ppsLogo}
+                  alt="Prestige Property Services logo"
+                  className="w-full h-full object-contain"
+                  width={56}
+                  height={56}
+                  fetchPriority="high"
+                  decoding="async"
+                />
+              </div>
             </div>
             <CardTitle className="font-display text-xl text-foreground">Field Ops Platform</CardTitle>
             <p className="font-body text-sm text-primary/70">Multi-Business Operations</p>
