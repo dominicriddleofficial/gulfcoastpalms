@@ -412,14 +412,35 @@ const LocationPage = ({ location }: Props) => {
       <section className="section-padding bg-primary">
         <div className="container mx-auto text-center">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            <motion.h2 variants={fadeUp} custom={0} className="font-display text-3xl md:text-5xl font-bold text-primary-foreground mb-4">{location.ctaHeading}</motion.h2>
-            <motion.p variants={fadeUp} custom={1} className="font-body text-lg text-primary-foreground/80 mb-8 max-w-xl mx-auto">{location.ctaText}</motion.p>
-            <motion.a variants={fadeUp} custom={2} href={TEL_HREF} className="inline-flex items-center gap-3 px-10 py-5 rounded-xl bg-primary-foreground text-primary font-body font-bold text-xl hover:scale-105 transition-transform shadow-xl">
-              <Phone className="w-6 h-6" /> {GCP_BUSINESS.phoneDisplay}
-            </motion.a>
+            <motion.h2 variants={fadeUp} custom={0} className="font-display text-3xl md:text-5xl font-bold text-primary-foreground mb-4">
+              {location.ctaHeading}
+            </motion.h2>
+            <motion.p variants={fadeUp} custom={1} className="font-body text-lg text-primary-foreground/80 mb-8 max-w-xl mx-auto">
+              {location.ctaSubtext ?? location.ctaText}
+            </motion.p>
+            <motion.div variants={fadeUp} custom={2} className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <a
+                href={SMS_HREF}
+                className="inline-flex items-center gap-3 px-8 py-5 rounded-xl bg-primary-foreground text-primary font-body font-bold text-lg hover:scale-105 transition-transform shadow-xl"
+              >
+                <MessageSquare className="w-5 h-5" />
+                {location.ctaPrimaryLabel ?? `Text a Photo to ${GCP_BUSINESS.phoneDisplay}`}
+              </a>
+              <a
+                href={TEL_HREF}
+                className="inline-flex items-center gap-2 text-primary-foreground/90 hover:text-primary-foreground font-body font-semibold underline underline-offset-4 decoration-primary-foreground/40 hover:decoration-primary-foreground"
+              >
+                {location.ctaSecondaryLabel ?? "or call us directly"} <ArrowRight className="w-4 h-4" />
+              </a>
+            </motion.div>
           </motion.div>
         </div>
       </section>
+
+      <p className="text-xs text-muted-foreground text-center py-6">
+        Page last updated:{" "}
+        {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+      </p>
     </Layout>
   );
 };
