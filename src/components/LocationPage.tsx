@@ -90,17 +90,50 @@ const LocationPage = ({ location }: Props) => {
         service={{
           name: `Palm Tree Trimming in ${location.city}, ${location.state}`,
           description: location.metaDescription,
-          areaServed: `${location.city}, ${location.state}`,
+          areaServed: location.neighborhoods ?? `${location.city}, ${location.state}`,
           url: `${BASE_URL}${canonicalUrl}`,
         }}
       />
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: BASE_URL },
-          { name: "Service Areas", url: `${BASE_URL}/service-areas` },
-          { name: `${location.city} Palm Tree Trimming`, url: `${BASE_URL}${canonicalUrl}` },
+          { name: "Services", url: `${BASE_URL}/services` },
+          { name: "Palm Tree Trimming", url: `${BASE_URL}/services/palm-tree-trimming` },
+          { name: `${location.city}, ${location.state}`, url: `${BASE_URL}${canonicalUrl}` },
         ]}
       />
+      {location.faqs && location.faqs.length > 0 && (
+        <FAQPageJsonLd questions={location.faqs} />
+      )}
+      {location.geo && (
+        <JsonLd
+          data={{
+            "@context": "https://schema.org",
+            "@type": "LocalBusiness",
+            name: `${GCP_BUSINESS.name} — ${location.city}, ${location.state}`,
+            telephone: GCP_BUSINESS.phone,
+            url: `${BASE_URL}${canonicalUrl}`,
+            image: GCP_BUSINESS.ogImage,
+            priceRange: GCP_BUSINESS.priceRange,
+            geo: {
+              "@type": "GeoCoordinates",
+              latitude: location.geo.latitude,
+              longitude: location.geo.longitude,
+            },
+            areaServed: (location.neighborhoods ?? [location.city]).map((n) => ({
+              "@type": "City",
+              name: n,
+              containedInPlace: { "@type": "State", name: "Florida" },
+            })),
+            aggregateRating: {
+              "@type": "AggregateRating",
+              ratingValue: GCP_BUSINESS.aggregateRating.ratingValue,
+              reviewCount: GCP_BUSINESS.aggregateRating.reviewCount,
+            },
+            dateModified: new Date().toISOString().split("T")[0],
+          }}
+        />
+      )}
 
       {/* Hero */}
       <section className="relative py-20 md:py-28 overflow-hidden bg-palm-dark">
@@ -111,7 +144,7 @@ const LocationPage = ({ location }: Props) => {
             className="w-full h-full object-cover opacity-30"
             loading="eager"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-palm-dark/80 via-palm-dark/70 to-palm-dark" />
+          <div className="absolute inset-0 bg-gradient-to-b from-palm-dark/70 via-palm-dark/75 to-palm-dark" />
         </div>
 
         <div className="relative z-10 container mx-auto px-4">
@@ -123,10 +156,24 @@ const LocationPage = ({ location }: Props) => {
             <motion.h1 variants={fadeUp} custom={1} className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-primary-foreground leading-tight mb-4">
               {location.h1}
             </motion.h1>
-            <motion.p variants={fadeUp} custom={2} className="font-body text-lg md:text-xl text-palm-sand/80 max-w-3xl mb-8">
+            <motion.p variants={fadeUp} custom={2} className="font-body text-lg md:text-xl text-palm-sand/80 max-w-3xl mb-5">
               {location.subheading}
             </motion.p>
-            <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-4">
+            <motion.div variants={fadeUp} custom={3} className="mb-4">
+              <HeroReviewBadge />
+            </motion.div>
+            <motion.div variants={fadeUp} custom={4} className="flex flex-wrap gap-2 mb-8">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-primary-foreground/20 bg-primary-foreground/5 px-3 py-1 text-xs font-body font-medium text-primary-foreground/90">
+                <ShieldCheck className="w-3.5 h-3.5 text-primary" /> Licensed &amp; Insured
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-primary-foreground/20 bg-primary-foreground/5 px-3 py-1 text-xs font-body font-medium text-primary-foreground/90">
+                <Clock className="w-3.5 h-3.5 text-primary" /> Same-Day Estimates
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-primary-foreground/20 bg-primary-foreground/5 px-3 py-1 text-xs font-body font-medium text-primary-foreground/90">
+                <MapPin className="w-3.5 h-3.5 text-primary" /> Locally Owned &amp; Operated
+              </span>
+            </motion.div>
+            <motion.div variants={fadeUp} custom={5} className="flex flex-col sm:flex-row gap-4">
               <a
                 href={TEL_HREF}
                 className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-body font-bold text-lg hover:bg-palm-light transition-all shadow-lg shadow-primary/30"
