@@ -10,9 +10,17 @@ const LOGO_MAP: Record<string, string> = {
   PPS: ppsLogo,
 };
 
+function normalizeShortcode(shortcode: string): string {
+  return shortcode.trim().toUpperCase();
+}
+
+export function getFallbackBusinessLogo(shortcode: string): string | null {
+  return LOGO_MAP[normalizeShortcode(shortcode)] ?? null;
+}
+
 export function getBusinessLogo(shortcode: string, dbLogoUrl?: string | null): string | null {
-  if (dbLogoUrl) return dbLogoUrl;
-  return LOGO_MAP[shortcode] ?? null;
+  if (dbLogoUrl?.trim()) return dbLogoUrl;
+  return getFallbackBusinessLogo(shortcode);
 }
 
 export const BUSINESS_LOGOS = LOGO_MAP;

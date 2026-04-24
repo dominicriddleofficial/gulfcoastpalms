@@ -1,10 +1,11 @@
+import { useEffect, useState } from "react";
 import { Building2, ChevronDown, Globe, Check } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { getBusinessLogo } from "@/lib/business-logos";
+import { getBusinessLogo, getFallbackBusinessLogo } from "@/lib/business-logos";
 
 interface Business {
   id: string;
@@ -84,7 +85,13 @@ export function BusinessBadge({ biz, size = "sm" }: { biz: Business; size?: "xs"
   const iconSize = size === "xs" ? "w-5 h-5" : "w-7 h-7";
   const textSize = size === "xs" ? "text-[11px]" : "text-[12px]";
   const codeSize = size === "xs" ? "text-[8px]" : "text-[9px]";
-  const logoSrc = getBusinessLogo(biz.shortcode, biz.logo_url);
+  const initialLogoSrc = getBusinessLogo(biz.shortcode, biz.logo_url);
+  const fallbackLogoSrc = getFallbackBusinessLogo(biz.shortcode);
+  const [logoSrc, setLogoSrc] = useState<string | null>(initialLogoSrc);
+
+  useEffect(() => {
+    setLogoSrc(initialLogoSrc);
+  }, [initialLogoSrc]);
 
   return (
     <div className="flex items-center gap-2">
@@ -105,6 +112,14 @@ export function BusinessBadge({ biz, size = "sm" }: { biz: Business; size?: "xs"
             height={28}
             loading="lazy"
             decoding="async"
+            onError={() => {
+              if (fallbackLogoSrc && logoSrc !== fallbackLogoSrc) {
+                setLogoSrc(fallbackLogoSrc);
+                return;
+              }
+
+              setLogoSrc(null);
+            }}
           />
         ) : (
           <span className={cn("font-display font-bold tracking-tight", codeSize)}>{biz.shortcode}</span>
