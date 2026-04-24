@@ -28,6 +28,19 @@ export interface LocationData {
   metaTitle: string;
   metaDescription: string;
   nearbyLinks: string[]; // slugs of nearby cities
+  /** Optional best-in-market upgrades. When present, LocationPage renders extra sections. */
+  faqs?: { q: string; a: string }[];
+  pricingTiers?: { name: string; price: string; bestFor: string }[];
+  pricingNote?: string;
+  testimonial?: { quote: string; author: string; rating?: number };
+  /** Centroid coordinates for the city, used in LocalBusiness JSON-LD. */
+  geo?: { latitude: number; longitude: number };
+  /** Specific neighborhoods/sub-areas served, used in JSON-LD areaServed. */
+  neighborhoods?: string[];
+  /** Optional CTA banner overrides for a stronger conversion message. */
+  ctaSubtext?: string;
+  ctaPrimaryLabel?: string;
+  ctaSecondaryLabel?: string;
 }
 
 export const locations: LocationData[] = [
