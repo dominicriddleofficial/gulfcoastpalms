@@ -43,7 +43,7 @@ export const GCP_BUSINESS = {
   ],
   sameAs: [] as string[],
   priceRange: "$$",
-  aggregateRating: { ratingValue: "5.0", reviewCount: "37" },
+  aggregateRating: { ratingValue: "5.0", reviewCount: "46" },
 } as const;
 
 /** Convenient href helpers */
