@@ -18,7 +18,6 @@ import {
   RefreshCw,
   CalendarDays,
   FileText,
-  AlertCircle,
   Map,
 } from "lucide-react";
 import {
@@ -35,7 +34,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 type ViewMode = "day" | "week";
-type ScheduleTab = "jobber" | "combined" | "map" | "route" | "unscheduled";
+type ScheduleTab = "jobber" | "combined" | "map" | "route";
 
 type JobberJob = {
   id: string;
