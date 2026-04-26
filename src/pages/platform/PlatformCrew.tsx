@@ -171,7 +171,7 @@ export default function PlatformCrew() {
   }, [jobs, tab, today]);
 
   async function updateStatus(job: CrewJob, status: string) {
-    const patch: Record<string, any> = { status };
+    const patch: { status: string; completed_at?: string } = { status };
     if (status === "completed" || status === "complete") {
       patch.completed_at = new Date().toISOString();
     }
