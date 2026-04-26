@@ -1129,6 +1129,41 @@ export type Database = {
           },
         ]
       }
+      jobber_job_assignments: {
+        Row: {
+          business_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          jobber_job_id: string
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          jobber_job_id: string
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          jobber_job_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobber_job_assignments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       jobber_jobs: {
         Row: {
           assigned_employee_ids: string[] | null
@@ -2310,6 +2345,7 @@ export type Database = {
       platform_jobs: {
         Row: {
           assigned_crew_member_id: string | null
+          assigned_to: string[]
           business_id: string
           client_notes: string | null
           completed_at: string | null
@@ -2344,6 +2380,7 @@ export type Database = {
         }
         Insert: {
           assigned_crew_member_id?: string | null
+          assigned_to?: string[]
           business_id: string
           client_notes?: string | null
           completed_at?: string | null
@@ -2378,6 +2415,7 @@ export type Database = {
         }
         Update: {
           assigned_crew_member_id?: string | null
+          assigned_to?: string[]
           business_id?: string
           client_notes?: string | null
           completed_at?: string | null
@@ -4387,6 +4425,10 @@ export type Database = {
         Returns: string[]
       }
       get_user_business_ids: { Args: { _user_id: string }; Returns: string[] }
+      get_user_role: {
+        Args: { _business_id: string; _user_id: string }
+        Returns: string
+      }
       has_business_access: {
         Args: { _business_id: string; _user_id: string }
         Returns: boolean
@@ -4428,6 +4470,14 @@ export type Database = {
           _preview: string
         }
         Returns: string
+      }
+      user_has_any_role: {
+        Args: { _business_id: string; _roles: string[]; _user_id: string }
+        Returns: boolean
+      }
+      user_has_role: {
+        Args: { _business_id: string; _role: string; _user_id: string }
+        Returns: boolean
       }
     }
     Enums: {
