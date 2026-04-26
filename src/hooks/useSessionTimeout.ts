@@ -1,7 +1,9 @@
 import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-const TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 hours
+// 30 days — effectively "remember this device". Supabase refreshes the token
+// automatically (autoRefreshToken: true), so users stay signed in across visits.
+const TIMEOUT_MS = 30 * 24 * 60 * 60 * 1000;
 
 export function useSessionTimeout() {
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
