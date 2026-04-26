@@ -57,6 +57,20 @@ type MappedJob = JobberJob & { position: google.maps.LatLngLiteral };
 const mapContainerStyle = { width: "100%", height: "100%" };
 const defaultMapCenter = { lat: 30.4016, lng: -86.8636 };
 
+function getFallbackCoordinates(address: string | null): google.maps.LatLngLiteral | null {
+  if (!address) return null;
+  const value = address.toLowerCase();
+  if (value.includes("gulf breeze")) return { lat: 30.3571, lng: -87.1639 };
+  if (value.includes("pensacola")) return { lat: 30.4213, lng: -87.2169 };
+  if (value.includes("fort walton")) return { lat: 30.4201, lng: -86.617 };
+  if (value.includes("niceville")) return { lat: 30.5169, lng: -86.4822 };
+  if (value.includes("destin")) return { lat: 30.3935, lng: -86.4958 };
+  if (value.includes("mary esther")) return { lat: 30.4099, lng: -86.6652 };
+  if (value.includes("santa rosa beach")) return { lat: 30.396, lng: -86.2288 };
+  if (value.includes("navarre")) return { lat: 30.4016, lng: -86.8636 };
+  return defaultMapCenter;
+}
+
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
   late: { bg: "#ef444420", text: "#ef4444", label: "Late" },
   today: { bg: "#22c55e20", text: "#22c55e", label: "Today" },
