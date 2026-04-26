@@ -1129,6 +1129,41 @@ export type Database = {
           },
         ]
       }
+      jobber_job_assignments: {
+        Row: {
+          business_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          jobber_job_id: string
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          jobber_job_id: string
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          jobber_job_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobber_job_assignments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       jobber_jobs: {
         Row: {
           assigned_employee_ids: string[] | null
