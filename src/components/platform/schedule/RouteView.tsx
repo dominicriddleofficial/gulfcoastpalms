@@ -3,6 +3,7 @@ import { MapPin, Clock, Navigation, User } from "lucide-react";
 import { format } from "date-fns";
 import { GoogleMap, MarkerF, PolylineF, useJsApiLoader } from "@react-google-maps/api";
 import { useGeocodedAddresses, type GeocodedAddress } from "@/hooks/useGeocodedJobs";
+import { darkMapStyle, buildNumberedMarkerIcon, NUMBERED_MARKER_LABEL_STYLE } from "@/lib/map-styles";
 
 type JobberJob = {
   id: string;
@@ -208,19 +209,37 @@ function RouteGoogleMap({ googleMapsKey, routePoints, optimizedJobs, coords }: {
     map.fitBounds(bounds, 56);
   };
 
+  const markerIcon = buildNumberedMarkerIcon();
+
   return (
     <GoogleMap
       mapContainerStyle={mapContainerStyle}
       center={routePoints[0] ?? defaultMapCenter}
       zoom={10}
       onLoad={onMapLoad}
-      options={{ disableDefaultUI: true, zoomControl: true, mapTypeControl: false, streetViewControl: false, fullscreenControl: false }}
+      options={{
+        disableDefaultUI: true,
+        zoomControl: true,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+        styles: darkMapStyle,
+        clickableIcons: false,
+        backgroundColor: "#0f172a",
+      }}
     >
       {routePoints.length > 1 && <PolylineF path={routePoints} options={{ strokeColor: "#22c55e", strokeOpacity: 0.8, strokeWeight: 4 }} />}
       {optimizedJobs.map((job, idx) => {
         const position = job.property_address ? coords[job.property_address] : undefined;
         if (!position) return null;
-        return <MarkerF key={job.id} position={position} label={{ text: String(idx + 1), color: "#ffffff", fontSize: "12px", fontWeight: "700" }} />;
+        return (
+          <MarkerF
+            key={job.id}
+            position={position}
+            icon={markerIcon}
+            label={{ ...NUMBERED_MARKER_LABEL_STYLE, text: String(idx + 1) }}
+          />
+        );
       })}
     </GoogleMap>
   );

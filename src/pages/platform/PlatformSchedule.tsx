@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { GoogleMap, MarkerF, useJsApiLoader } from "@react-google-maps/api";
 import { useGeocodedAddresses } from "@/hooks/useGeocodedJobs";
+import { darkMapStyle, buildNumberedMarkerIcon, NUMBERED_MARKER_LABEL_STYLE } from "@/lib/map-styles";
 import {
   ChevronLeft,
   ChevronRight,
@@ -487,16 +488,33 @@ function PlatformScheduleGoogleMap({ mapsKey, mappedJobs, mapCenter, onJobSelect
   if (loadError) return <div className="h-full w-full bg-card flex items-center justify-center text-sm font-body text-muted-foreground">Map unavailable</div>;
   if (!isLoaded) return <div className="h-full w-full bg-card flex items-center justify-center text-sm font-body text-muted-foreground">Loading map…</div>;
 
+  const markerIcon = buildNumberedMarkerIcon();
+
   return (
     <GoogleMap
       mapContainerStyle={mapContainerStyle}
       center={mapCenter}
       zoom={11}
       onLoad={onMapLoad}
-      options={{ disableDefaultUI: true, zoomControl: true, mapTypeControl: false, streetViewControl: false, fullscreenControl: false }}
+      options={{
+        disableDefaultUI: true,
+        zoomControl: true,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+        styles: darkMapStyle,
+        clickableIcons: false,
+        backgroundColor: "#0f172a",
+      }}
     >
       {mappedJobs.map((job, i) => (
-        <MarkerF key={job.id} position={job.position} onClick={() => onJobSelect(job)} label={{ text: String(i + 1), color: "#ffffff", fontSize: "12px", fontWeight: "700" }} />
+        <MarkerF
+          key={job.id}
+          position={job.position}
+          onClick={() => onJobSelect(job)}
+          icon={markerIcon}
+          label={{ ...NUMBERED_MARKER_LABEL_STYLE, text: String(i + 1) }}
+        />
       ))}
     </GoogleMap>
   );
