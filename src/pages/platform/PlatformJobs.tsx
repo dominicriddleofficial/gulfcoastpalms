@@ -330,9 +330,14 @@ function JobDetailPanel({ job }: { job: JobberJob }) {
         </div>
       )}
 
+      {/* Platform-managed crew assignment (drives /platform/crew visibility) */}
+      {job.business_id && (
+        <AssignedCrewPicker jobberJobId={job.id} businessId={job.business_id} />
+      )}
+
       {job.assigned_employee_names && job.assigned_employee_names.length > 0 && (
         <div className="bg-card border border-border rounded-lg p-3">
-          <p className="font-body text-xs text-muted-foreground mb-1">Assigned Crew</p>
+          <p className="font-body text-xs text-muted-foreground mb-1">Jobber Crew (synced)</p>
           <p className="font-body text-sm text-foreground">{job.assigned_employee_names.join(", ")}</p>
         </div>
       )}
