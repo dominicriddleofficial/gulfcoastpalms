@@ -1,9 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { MapPin, Clock, Navigation, User } from "lucide-react";
 import { format } from "date-fns";
 import { GoogleMap, MarkerF, PolylineF, useJsApiLoader } from "@react-google-maps/api";
 import { useGeocodedAddresses, type GeocodedAddress } from "@/hooks/useGeocodedJobs";
 import { darkMapStyle, buildNumberedMarkerIcon, NUMBERED_MARKER_LABEL_STYLE } from "@/lib/map-styles";
+import { cn } from "@/lib/utils";
 
 type JobberJob = {
   id: string;
@@ -118,6 +119,18 @@ export default function RouteView({ jobs, googleMapsKey }: RouteViewProps) {
   const geocodedCount = routePoints.length;
   const ungeocodedCount = optimizedJobs.length - geocodedCount;
 
+  // Track which stop is selected so we can highlight it on the map + in the list.
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+
+  // Reset selection whenever the underlying job set changes (e.g. date switch).
+  const routeSignature = useMemo(
+    () => optimizedJobs.map((j) => j.id).join("|"),
+    [optimizedJobs]
+  );
+  useEffect(() => {
+    setSelectedJobId(null);
+  }, [routeSignature]);
+
   if (jobs.length === 0) {
     return (
       <div className="text-center py-12">
@@ -145,18 +158,45 @@ export default function RouteView({ jobs, googleMapsKey }: RouteViewProps) {
       {/* Map */}
       {googleMapsKey && (
         <div className="w-full rounded-lg overflow-hidden border border-border" style={{ height: "50vh", minHeight: 280 }}>
-          <RouteGoogleMap googleMapsKey={googleMapsKey} routePoints={routePoints} optimizedJobs={optimizedJobs} coords={coords} />
+          <RouteGoogleMap
+            googleMapsKey={googleMapsKey}
+            routePoints={routePoints}
+            optimizedJobs={optimizedJobs}
+            coords={coords}
+            selectedJobId={selectedJobId}
+            onSelectJob={setSelectedJobId}
+            routeSignature={routeSignature}
+          />
         </div>
       )}
 
       {/* Optimized job list */}
       <div className="space-y-1.5">
         {optimizedJobs.map((job, idx) => (
-          <div key={job.id} className="flex gap-2 items-start">
-            <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shrink-0 mt-2.5 font-mono">
+          <button
+            key={job.id}
+            type="button"
+            onClick={() => setSelectedJobId((id) => (id === job.id ? null : job.id))}
+            className="w-full flex gap-2 items-start text-left"
+          >
+            <div
+              className={cn(
+                "w-7 h-7 rounded-full text-xs font-bold flex items-center justify-center shrink-0 mt-2.5 font-mono transition-all duration-300",
+                selectedJobId === job.id
+                  ? "bg-primary text-primary-foreground scale-110 shadow-[0_0_0_4px_hsl(var(--primary)/0.25)]"
+                  : "bg-primary/80 text-primary-foreground"
+              )}
+            >
               {idx + 1}
             </div>
-            <div className="flex-1 bg-card border border-border rounded-lg p-3">
+            <div
+              className={cn(
+                "flex-1 bg-card border rounded-lg p-3 transition-all duration-300",
+                selectedJobId === job.id
+                  ? "border-primary/60 shadow-[0_0_0_1px_hsl(var(--primary)/0.4),0_8px_24px_-12px_hsl(var(--primary)/0.5)]"
+                  : "border-border"
+              )}
+            >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 mb-0.5 flex-wrap">
@@ -179,37 +219,111 @@ export default function RouteView({ jobs, googleMapsKey }: RouteViewProps) {
                     <span className="font-body text-sm font-semibold text-foreground">${Number(job.total_amount).toLocaleString()}</span>
                   )}
                   {job.property_address && (
-                    <button
-                      onClick={() => openNavigation(job.property_address!)}
-                      className="flex items-center gap-1 px-2 py-1 rounded-md bg-primary/15 text-primary text-[10px] font-body font-medium hover:bg-primary/25 transition-colors"
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => { e.stopPropagation(); openNavigation(job.property_address!); }}
+                      onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); openNavigation(job.property_address!); } }}
+                      className="flex items-center gap-1 px-2 py-1 rounded-md bg-primary/15 text-primary text-[10px] font-body font-medium hover:bg-primary/25 transition-colors cursor-pointer"
                     >
                       <Navigation className="w-3 h-3" /> Navigate
-                    </button>
+                    </span>
                   )}
                 </div>
               </div>
             </div>
-          </div>
+          </button>
         ))}
       </div>
     </div>
   );
 }
 
-function RouteGoogleMap({ googleMapsKey, routePoints, optimizedJobs, coords }: { googleMapsKey: string; routePoints: google.maps.LatLngLiteral[]; optimizedJobs: JobberJob[]; coords: Record<string, GeocodedAddress> }) {
+function RouteGoogleMap({
+  googleMapsKey,
+  routePoints,
+  optimizedJobs,
+  coords,
+  selectedJobId,
+  onSelectJob,
+  routeSignature,
+}: {
+  googleMapsKey: string;
+  routePoints: google.maps.LatLngLiteral[];
+  optimizedJobs: JobberJob[];
+  coords: Record<string, GeocodedAddress>;
+  selectedJobId: string | null;
+  onSelectJob: (id: string) => void;
+  routeSignature: string;
+}) {
   const { isLoaded, loadError } = useJsApiLoader({ googleMapsApiKey: googleMapsKey, id: "platform-schedule-map" });
+  const mapRef = useRef<google.maps.Map | null>(null);
+
+  // Progressive polyline reveal: re-runs whenever the route signature changes
+  // (date switch, sort order, geocode completes). We interpolate between
+  // consecutive points so the line "draws itself" along the route.
+  const [animatedPath, setAnimatedPath] = useState<google.maps.LatLngLiteral[]>([]);
+  useEffect(() => {
+    if (routePoints.length < 2) {
+      setAnimatedPath(routePoints);
+      return;
+    }
+    let cancelled = false;
+    setAnimatedPath([routePoints[0]]);
+    const SEGMENT_STEPS = 14;
+    const STEP_MS = 16;
+    let segmentIndex = 0;
+    let stepIndex = 1;
+
+    const tick = () => {
+      if (cancelled) return;
+      const a = routePoints[segmentIndex];
+      const b = routePoints[segmentIndex + 1];
+      const t = stepIndex / SEGMENT_STEPS;
+      const next: google.maps.LatLngLiteral = {
+        lat: a.lat + (b.lat - a.lat) * t,
+        lng: a.lng + (b.lng - a.lng) * t,
+      };
+      setAnimatedPath((prev) => {
+        // Replace the last point with the interpolated one for smooth growth.
+        const head = prev.slice(0, segmentIndex + 1);
+        return [...head, next];
+      });
+      stepIndex += 1;
+      if (stepIndex > SEGMENT_STEPS) {
+        segmentIndex += 1;
+        stepIndex = 1;
+        if (segmentIndex >= routePoints.length - 1) {
+          setAnimatedPath(routePoints);
+          return;
+        }
+      }
+      window.setTimeout(tick, STEP_MS);
+    };
+    const handle = window.setTimeout(tick, STEP_MS);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(handle);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeSignature]);
 
   if (loadError) return <div className="h-full w-full bg-card flex items-center justify-center text-sm font-body text-muted-foreground">Map unavailable</div>;
   if (!isLoaded) return <div className="h-full w-full bg-card flex items-center justify-center text-sm font-body text-muted-foreground">Loading map…</div>;
 
   const onMapLoad = (map: google.maps.Map) => {
+    mapRef.current = map;
     if (routePoints.length === 0) return;
     const bounds = new google.maps.LatLngBounds();
     routePoints.forEach((p) => bounds.extend(p));
     map.fitBounds(bounds, 56);
   };
 
-  const markerIcon = buildNumberedMarkerIcon();
+  // Pan/zoom to the selected stop.
+  useEffectPanToSelected(mapRef, optimizedJobs, coords, selectedJobId);
+
+  const baseIcon = buildNumberedMarkerIcon();
+  const selectedIcon = buildNumberedMarkerIcon({ scale: 18, fillColor: "#f59e0b", strokeColor: "#ffffff", strokeWeight: 3 });
 
   return (
     <GoogleMap
@@ -228,19 +342,54 @@ function RouteGoogleMap({ googleMapsKey, routePoints, optimizedJobs, coords }: {
         backgroundColor: "#0f172a",
       }}
     >
-      {routePoints.length > 1 && <PolylineF path={routePoints} options={{ strokeColor: "#22c55e", strokeOpacity: 0.8, strokeWeight: 4 }} />}
+      {/* Faint full route as a guide */}
+      {routePoints.length > 1 && (
+        <PolylineF
+          path={routePoints}
+          options={{ strokeColor: "#22c55e", strokeOpacity: 0.18, strokeWeight: 3 }}
+        />
+      )}
+      {/* Animated drawing route on top */}
+      {animatedPath.length > 1 && (
+        <PolylineF
+          path={animatedPath}
+          options={{ strokeColor: "#22c55e", strokeOpacity: 0.95, strokeWeight: 5 }}
+        />
+      )}
       {optimizedJobs.map((job, idx) => {
         const position = job.property_address ? coords[job.property_address] : undefined;
         if (!position) return null;
+        const isSelected = job.id === selectedJobId;
         return (
           <MarkerF
             key={job.id}
             position={position}
-            icon={markerIcon}
+            icon={isSelected ? selectedIcon : baseIcon}
             label={{ ...NUMBERED_MARKER_LABEL_STYLE, text: String(idx + 1) }}
+            zIndex={isSelected ? 999 : idx}
+            onClick={() => onSelectJob(job.id)}
           />
         );
       })}
     </GoogleMap>
   );
+}
+
+/** Side-effect hook that pans/zooms the map when the selected stop changes. */
+function useEffectPanToSelected(
+  mapRef: React.MutableRefObject<google.maps.Map | null>,
+  optimizedJobs: JobberJob[],
+  coords: Record<string, GeocodedAddress>,
+  selectedJobId: string | null
+) {
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !selectedJobId) return;
+    const job = optimizedJobs.find((j) => j.id === selectedJobId);
+    const pos = job?.property_address ? coords[job.property_address] : undefined;
+    if (!pos) return;
+    map.panTo(pos);
+    if ((map.getZoom() ?? 0) < 13) map.setZoom(13);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedJobId]);
 }

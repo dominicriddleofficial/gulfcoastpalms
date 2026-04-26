@@ -25,10 +25,13 @@ export const darkMapStyle: google.maps.MapTypeStyle[] = [
 ];
 
 /**
- * Builds a circular green numbered marker. Uses a Google Maps Symbol so it
- * renders crisp at any zoom and respects the marker `label`.
+ * Builds a circular numbered marker. Uses a Google Maps Symbol so it renders
+ * crisp at any zoom and respects the marker `label`. Pass overrides to switch
+ * to e.g. a larger amber icon for the selected stop.
  */
-export function buildNumberedMarkerIcon(): google.maps.Symbol {
+export function buildNumberedMarkerIcon(
+  overrides: Partial<google.maps.Symbol> = {}
+): google.maps.Symbol {
   return {
     path: google.maps.SymbolPath.CIRCLE,
     scale: 14,
@@ -36,6 +39,7 @@ export function buildNumberedMarkerIcon(): google.maps.Symbol {
     fillOpacity: 1,
     strokeColor: "#ffffff",
     strokeWeight: 2.5,
+    ...overrides,
   };
 }
 
