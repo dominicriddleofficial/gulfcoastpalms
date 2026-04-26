@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import RouteView from "@/components/platform/schedule/RouteView";
 import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { GoogleMap, MarkerF, useJsApiLoader } from "@react-google-maps/api";
 import {
   ChevronLeft,
   ChevronRight,
@@ -50,6 +51,11 @@ type JobberJob = {
   assigned_employee_names: string[] | null;
   business_id: string | null;
 };
+
+type MappedJob = JobberJob & { position: google.maps.LatLngLiteral };
+
+const mapContainerStyle = { width: "100%", height: "100%" };
+const defaultMapCenter = { lat: 30.4016, lng: -86.8636 };
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
   late: { bg: "#ef444420", text: "#ef4444", label: "Late" },
