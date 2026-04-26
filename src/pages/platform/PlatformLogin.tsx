@@ -13,19 +13,35 @@ export default function PlatformLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   // If a remembered session exists, skip the login screen.
+  // Use onAuthStateChange first so we react correctly to fresh sign-out events
+  // (otherwise a stale session can briefly bounce the user back to /platform).
   useEffect(() => {
     let cancelled = false;
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!cancelled && session) {
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (cancelled) return;
+      if (event === "SIGNED_IN" && session) {
         navigate("/platform", { replace: true });
       }
     });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (cancelled) return;
+      if (session) {
+        navigate("/platform", { replace: true });
+      } else {
+        setCheckingSession(false);
+      }
+    });
+
     return () => {
       cancelled = true;
+      subscription.unsubscribe();
     };
   }, [navigate]);
 
@@ -42,6 +58,14 @@ export default function PlatformLogin() {
 
     navigate("/platform");
   };
+
+  if (checkingSession) {
+    return (
+      <div className="ops-theme min-h-screen flex items-center justify-center bg-background px-4">
+        <p className="font-body text-sm text-muted-foreground">Loading…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="ops-theme min-h-screen flex items-center justify-center bg-background px-4">
