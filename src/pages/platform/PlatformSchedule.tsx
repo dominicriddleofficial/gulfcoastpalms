@@ -456,7 +456,6 @@ export default function PlatformSchedule() {
 }
 
 function PlatformScheduleMap({ jobs, mapsKey, onJobSelect }: { jobs: JobberJob[]; mapsKey: string | null; onJobSelect: (job: JobberJob) => void }) {
-  const { isLoaded, loadError } = useJsApiLoader({ googleMapsApiKey: mapsKey || "", id: "platform-schedule-map" });
   const sorted = [...jobs].sort((a, b) => {
     if (!a.scheduled_start) return 1;
     if (!b.scheduled_start) return -1;
@@ -472,14 +471,7 @@ function PlatformScheduleMap({ jobs, mapsKey, onJobSelect }: { jobs: JobberJob[]
       .filter((job): job is MappedJob => Boolean(job));
   }, [sorted]);
 
-  const onMapLoad = useCallback((map: google.maps.Map) => {
-    if (mappedJobs.length === 0) return;
-    const bounds = new google.maps.LatLngBounds();
-    mappedJobs.forEach((job) => bounds.extend(job.position));
-    map.fitBounds(bounds, 56);
-  }, [mappedJobs]);
-
-  if (!mapsKey || loadError) {
+  if (!mapsKey) {
     // Fallback: list view
     return (
       <div className="space-y-3">
@@ -511,32 +503,7 @@ function PlatformScheduleMap({ jobs, mapsKey, onJobSelect }: { jobs: JobberJob[]
     <div className="space-y-3">
       {/* Map */}
       <div className="rounded-xl overflow-hidden border border-border" style={{ height: "45vh", minHeight: 280 }}>
-        {!isLoaded ? (
-          <div className="h-full w-full bg-card flex items-center justify-center text-sm font-body text-muted-foreground">Loading map…</div>
-        ) : (
-          <GoogleMap
-            mapContainerStyle={mapContainerStyle}
-            center={mapCenter}
-            zoom={11}
-            onLoad={onMapLoad}
-            options={{
-              disableDefaultUI: true,
-              zoomControl: true,
-              mapTypeControl: false,
-              streetViewControl: false,
-              fullscreenControl: false,
-            }}
-          >
-            {mappedJobs.map((job, i) => (
-              <MarkerF
-                key={job.id}
-                position={job.position}
-                onClick={() => onJobSelect(job)}
-                label={{ text: String(i + 1), color: "#ffffff", fontSize: "12px", fontWeight: "700" }}
-              />
-            ))}
-          </GoogleMap>
-        )}
+        <PlatformScheduleGoogleMap mapsKey={mapsKey} mappedJobs={mappedJobs} mapCenter={mapCenter} onJobSelect={onJobSelect} />
       </div>
 
       {sorted.length === 0 ? (
