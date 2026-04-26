@@ -540,6 +540,33 @@ function PlatformScheduleMap({ jobs, mapsKey, onJobSelect }: { jobs: JobberJob[]
   );
 }
 
+function PlatformScheduleGoogleMap({ mapsKey, mappedJobs, mapCenter, onJobSelect }: { mapsKey: string; mappedJobs: MappedJob[]; mapCenter: google.maps.LatLngLiteral; onJobSelect: (job: JobberJob) => void }) {
+  const { isLoaded, loadError } = useJsApiLoader({ googleMapsApiKey: mapsKey, id: "platform-schedule-map" });
+  const onMapLoad = useCallback((map: google.maps.Map) => {
+    if (mappedJobs.length === 0) return;
+    const bounds = new google.maps.LatLngBounds();
+    mappedJobs.forEach((job) => bounds.extend(job.position));
+    map.fitBounds(bounds, 56);
+  }, [mappedJobs]);
+
+  if (loadError) return <div className="h-full w-full bg-card flex items-center justify-center text-sm font-body text-muted-foreground">Map unavailable</div>;
+  if (!isLoaded) return <div className="h-full w-full bg-card flex items-center justify-center text-sm font-body text-muted-foreground">Loading map…</div>;
+
+  return (
+    <GoogleMap
+      mapContainerStyle={mapContainerStyle}
+      center={mapCenter}
+      zoom={11}
+      onLoad={onMapLoad}
+      options={{ disableDefaultUI: true, zoomControl: true, mapTypeControl: false, streetViewControl: false, fullscreenControl: false }}
+    >
+      {mappedJobs.map((job, i) => (
+        <MarkerF key={job.id} position={job.position} onClick={() => onJobSelect(job)} label={{ text: String(i + 1), color: "#ffffff", fontSize: "12px", fontWeight: "700" }} />
+      ))}
+    </GoogleMap>
+  );
+}
+
 function JobDetail({ job }: { job: JobberJob }) {
   return (
     <div className="space-y-5 pt-4">
