@@ -1,32 +1,37 @@
+## Goal
+Replace the existing `GOOGLE_MAPS_API_KEY` backend secret with the new key you provided so the schedule map (`/platform/schedule` and `/ops/schedule`) loads without the "account not in good standing" error.
 
-## Phase A: Schema & Backend (Migration)
-1. **Payment infrastructure tables**: `payment_provider_accounts`, `payment_intents`, `tap_to_pay_transactions`, `payment_webhook_events`
-2. **Source tracking columns**: Add `source_system`, `source_record_id`, `source_last_synced_at` to key platform tables that lack them
-3. **Sync log table**: `sync_logs` for Jobber import diagnostics
+## What I'll do
 
-## Phase B: Stripe Integration
-1. Enable Stripe via the Stripe tool
-2. Create `create-checkout` edge function for invoice payment links
-3. Create `stripe-webhook` edge function for payment status updates
-4. Create customer-facing payment page route `/pay/:businessShortcode/:invoiceId`
+1. **Update the `GOOGLE_MAPS_API_KEY` secret** in Lovable Cloud to the new value:
+   `AIzaSyBgYyW_y18lVGVVQ2R1NeCw7REibtMsAaY`
+   - This secret is read by the `maps-config` edge function and returned to the client via the `useGoogleMapsKey` hook.
+   - No code changes are required — just rotating the secret value.
 
-## Phase C: Replace All Placeholders with Real Pages
-1. **Analytics page** — live queries for revenue trends, lead sources, quote conversion, jobs by status
-2. **Tasks page** — create/list tasks linked to leads/jobs/invoices with status and due dates
-3. **Comms page** — communication timeline/log with manual entry support
-4. **Settings page** — business settings, numbering, integrations panel, Jobber sync diagnostics, payment config
-5. **Remove "Phase 2+"** from PlatformModule.tsx
-6. **Remove "Coming Soon"** from Dashboard section cards — replace with live Recent Activity and pipeline data
-7. **Remove "Phase 3+"** from Customer detail — wire real quote/job/invoice counts
+2. **Verify the key works** by calling the `maps-config` edge function and confirming it returns the new key, then checking edge function logs for any errors.
 
-## Phase D: Dashboard Live Data
-1. Replace static "Coming Soon" sections with real queries
-2. Business comparison cards with per-business metrics
-3. Recent activity timeline from actual records
+3. **Tell you to hard-refresh** the schedule page (Cmd/Ctrl + Shift + R) since the key is cached client-side in `useGoogleMapsKey.ts` (module-level `cachedKey` variable).
 
-## Phase E: Quote Detail Cleanup
-1. Remove "(Phase 4)" label from convert-to-job button (it already works)
+## Important notes about this key
 
-## Deferred (separate message):
-- Full Jobber sync improvements (edge function work)
-- Prestige lead normalization (data insertion)
+- The key starts with `AIzaSy...` which is a valid Google API key format.
+- For this to actually work in production, the Google Cloud project that owns this key must have:
+  - **Billing enabled and in good standing** (this was the previous blocker)
+  - **Maps JavaScript API**, **Places API**, and **Geocoding API** enabled
+  - **HTTP referrer restrictions** that allow your domains:
+    - `https://gulfcoastpalms.lovable.app/*`
+    - `https://*.lovable.app/*`
+    - `https://gulfcoastpalmservices.com/*`
+    - `https://www.gulfcoastpalmservices.com/*`
+- If this new key is from a **different Google Cloud project** with active billing, the error will go away.
+- If it's from the same suspended billing account, it will still fail with the same error — the key isn't the problem, the billing is.
+
+## Security note
+
+You just shared this API key in plain chat. Anyone reading this conversation can use it. After we install it, I recommend you:
+- Lock it down with HTTP referrer restrictions in Google Cloud Console (so only your domains can use it)
+- Restrict it to only the APIs you need (Maps JS, Places, Geocoding)
+- Consider rotating it later once everything is stable
+
+## No code changes needed
+All the wiring (`maps-config` edge function → `useGoogleMapsKey` hook → `ScheduleMap` / `RouteView`) is already in place. Only the secret value needs updating.
