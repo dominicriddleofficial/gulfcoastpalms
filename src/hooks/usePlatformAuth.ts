@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useBusinessContext } from "@/contexts/BusinessContext";
+import type { User } from "@supabase/supabase-js";
 
 export interface BusinessAccess {
   id: string;
@@ -32,25 +33,34 @@ export interface BusinessAccess {
 
 export function usePlatformAuth() {
   const [loading, setLoading] = useState(true);
+  const [initialSessionChecked, setInitialSessionChecked] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState("");
   const [isOwner, setIsOwner] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [businessAccess, setBusinessAccess] = useState<BusinessAccess[]>([]);
   const { selectedBusinessId, setSelectedBusinessId } = useBusinessContext();
   const navigate = useNavigate();
+  const hadSessionRef = useRef(false);
+  const initialSessionLoadedRef = useRef(false);
 
-  useEffect(() => {
-    checkAuth();
+  const clearAuthState = useCallback(() => {
+    setUserId(null);
+    setUserEmail("");
+    setIsOwner(false);
+    setAccessDenied(false);
+    setBusinessAccess([]);
   }, []);
 
-  const checkAuth = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { navigate("/platform/login"); return; }
+  const loadPlatformAccess = useCallback(async (user: User, isCancelled: () => boolean) => {
+    setLoading(true);
+    setAccessDenied(false);
 
     const { data: workspaces } = await supabase
       .from("workspaces")
       .select("id")
       .eq("owner_user_id", user.id);
+    if (isCancelled()) return;
 
     const owner = !!(workspaces && workspaces.length > 0);
 
@@ -58,6 +68,7 @@ export function usePlatformAuth() {
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id);
+    if (isCancelled()) return;
 
     const isAdmin = roles?.some(r => r.role === "admin") || false;
 
@@ -73,9 +84,15 @@ export function usePlatformAuth() {
       `)
       .eq("user_id", user.id)
       .eq("active_status", "active");
+    if (isCancelled()) return;
 
     if (!owner && !isAdmin && (!access || access.length === 0)) {
-      navigate("/platform/login");
+      setUserId(user.id);
+      setUserEmail(user.email || "");
+      setIsOwner(false);
+      setBusinessAccess([]);
+      setAccessDenied(true);
+      setLoading(false);
       return;
     }
 
@@ -86,11 +103,13 @@ export function usePlatformAuth() {
         .from("businesses")
         .select("id, public_brand_name, shortcode, logo_url")
         .in("id", bizIds);
+      if (isCancelled()) return;
 
       const { data: settings } = await supabase
         .from("business_settings")
         .select("business_id, default_business_color")
         .in("business_id", bizIds);
+      if (isCancelled()) return;
 
       const bizMap = new Map(businesses?.map(b => [b.id, b]) || []);
       const settingsMap = new Map(settings?.map(s => [s.business_id, s]) || []);
@@ -106,10 +125,12 @@ export function usePlatformAuth() {
       const { data: allBiz } = await supabase
         .from("businesses")
         .select("id, public_brand_name, shortcode, logo_url");
+      if (isCancelled()) return;
       
       const { data: settings } = await supabase
         .from("business_settings")
         .select("business_id, default_business_color");
+      if (isCancelled()) return;
 
       const settingsMap = new Map(settings?.map(s => [s.business_id, s]) || []);
 
@@ -141,6 +162,7 @@ export function usePlatformAuth() {
     setUserId(user.id);
     setUserEmail(user.email || "");
     setIsOwner(owner || isAdmin);
+    setAccessDenied(false);
     setBusinessAccess(enrichedAccess);
 
     // Only set default business if nothing is persisted yet
@@ -160,7 +182,57 @@ export function usePlatformAuth() {
     }
     
     setLoading(false);
-  };
+  }, [selectedBusinessId, setSelectedBusinessId]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (cancelled) return;
+
+      if (event === "INITIAL_SESSION") {
+        initialSessionLoadedRef.current = true;
+        setInitialSessionChecked(true);
+
+        if (session?.user) {
+          hadSessionRef.current = true;
+          void loadPlatformAccess(session.user, () => cancelled);
+        } else {
+          hadSessionRef.current = false;
+          clearAuthState();
+          setLoading(false);
+        }
+        return;
+      }
+
+      if (event === "SIGNED_IN" && session?.user) {
+        hadSessionRef.current = true;
+        setInitialSessionChecked(true);
+        void loadPlatformAccess(session.user, () => cancelled);
+        return;
+      }
+
+      if (event === "SIGNED_OUT") {
+        const shouldRedirect = initialSessionLoadedRef.current && hadSessionRef.current;
+        hadSessionRef.current = false;
+        setInitialSessionChecked(true);
+        clearAuthState();
+        setLoading(false);
+        if (shouldRedirect) navigate("/platform/login", { replace: true });
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, [clearAuthState, loadPlatformAccess, navigate]);
+
+  useEffect(() => {
+    if (initialSessionChecked && !loading && !userId && !accessDenied) {
+      navigate("/platform/login", { replace: true });
+    }
+  }, [initialSessionChecked, loading, userId, accessDenied, navigate]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -176,6 +248,7 @@ export function usePlatformAuth() {
     userId,
     userEmail,
     isOwner,
+    accessDenied,
     businessAccess,
     businesses,
     selectedBusinessId,
