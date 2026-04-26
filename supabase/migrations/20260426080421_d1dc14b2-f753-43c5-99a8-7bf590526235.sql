@@ -1,0 +1,1 @@
+DELETE FROM public.geocode_cache WHERE status = 'failed';
