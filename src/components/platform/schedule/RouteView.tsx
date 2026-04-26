@@ -308,6 +308,11 @@ function RouteGoogleMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routeSignature]);
 
+  // IMPORTANT: All hooks must be called before any early returns to satisfy
+  // the Rules of Hooks. Pan-to-selected runs even before the map is loaded
+  // (it no-ops until mapRef is populated).
+  useEffectPanToSelected(mapRef, optimizedJobs, coords, selectedJobId);
+
   if (loadError) return <div className="h-full w-full bg-card flex items-center justify-center text-sm font-body text-muted-foreground">Map unavailable</div>;
   if (!isLoaded) return <div className="h-full w-full bg-card flex items-center justify-center text-sm font-body text-muted-foreground">Loading map…</div>;
 
@@ -318,9 +323,6 @@ function RouteGoogleMap({
     routePoints.forEach((p) => bounds.extend(p));
     map.fitBounds(bounds, 56);
   };
-
-  // Pan/zoom to the selected stop.
-  useEffectPanToSelected(mapRef, optimizedJobs, coords, selectedJobId);
 
   const baseIcon = buildNumberedMarkerIcon();
   const selectedIcon = buildNumberedMarkerIcon({ scale: 18, fillColor: "#f59e0b", strokeColor: "#ffffff", strokeWeight: 3 });
