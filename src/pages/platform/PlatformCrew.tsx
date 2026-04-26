@@ -95,7 +95,8 @@ export default function PlatformCrew() {
       const start = format(today, "yyyy-MM-dd");
       const end = format(addDays(today, 7), "yyyy-MM-dd");
 
-      let query = supabase
+      // 1. Native platform_jobs
+      const { data: platformData } = await supabase
         .from("platform_jobs")
         .select(`
           id, business_id, job_number, title, job_type, status,
@@ -108,21 +109,78 @@ export default function PlatformCrew() {
         .lte("scheduled_start", end)
         .order("scheduled_start", { ascending: true });
 
-      // For crew: belt-and-suspenders client filter (RLS already enforces this).
-      // Owner / manager see all jobs in the date range so they can preview crew view.
-      const { data, error } = await query;
-      if (cancelled) return;
-      if (error) {
-        console.error("[PlatformCrew] load error", error);
-        setJobs([]);
-        setLoading(false);
-        return;
+      const native = (platformData || []) as CrewJob[];
+      const nativeFiltered = role === "crew"
+        ? native.filter(j => (j.assigned_to || []).includes(userId!) || j.assigned_crew_member_id === userId)
+        : native;
+
+      // 2. Jobber-synced jobs (via jobber_job_assignments)
+      let jobberAssignedIds: string[] | null = null;
+      if (role === "crew") {
+        const { data: assignments } = await supabase
+          .from("jobber_job_assignments")
+          .select("jobber_job_id")
+          .eq("business_id", businessId)
+          .eq("user_id", userId!);
+        jobberAssignedIds = (assignments || []).map(a => a.jobber_job_id);
+        if (jobberAssignedIds.length === 0) jobberAssignedIds = null;
       }
 
-      const raw = (data || []) as CrewJob[];
-      const filtered = role === "crew"
-        ? raw.filter(j => (j.assigned_to || []).includes(userId!) || j.assigned_crew_member_id === userId)
-        : raw;
+      let jobberQuery = supabase
+        .from("jobber_jobs")
+        .select("id, title, status, visit_status, scheduled_start, scheduled_end, client_name, client_phone, property_address, internal_notes, job_number, business_id")
+        .eq("business_id", businessId)
+        .gte("scheduled_start", new Date(start).toISOString())
+        .lte("scheduled_start", new Date(end).toISOString() + "T23:59:59")
+        .order("scheduled_start", { ascending: true });
+      if (role === "crew") {
+        if (!jobberAssignedIds) {
+          jobberQuery = jobberQuery.eq("id", "00000000-0000-0000-0000-000000000000"); // none
+        } else {
+          jobberQuery = jobberQuery.in("id", jobberAssignedIds);
+        }
+      }
+      const { data: jobberData } = await jobberQuery;
+
+      // Get assignment counts per jobber job (for "X crew" chip)
+      const jobberIds = (jobberData || []).map(j => j.id);
+      let jobberAssignmentCounts = new Map<string, number>();
+      if (jobberIds.length) {
+        const { data: counts } = await supabase
+          .from("jobber_job_assignments")
+          .select("jobber_job_id")
+          .in("jobber_job_id", jobberIds);
+        (counts || []).forEach((c: any) => {
+          jobberAssignmentCounts.set(c.jobber_job_id, (jobberAssignmentCounts.get(c.jobber_job_id) || 0) + 1);
+        });
+      }
+
+      const jobberConverted: CrewJob[] = (jobberData || []).map((j: any) => ({
+        id: j.id,
+        business_id: j.business_id,
+        job_number: j.job_number || "",
+        title: j.title,
+        job_type: null,
+        status: (j.visit_status || j.status || "scheduled").toLowerCase(),
+        scheduled_start: j.scheduled_start,
+        scheduled_end: j.scheduled_end,
+        estimated_duration_minutes: null,
+        internal_notes: j.internal_notes,
+        client_notes: null,
+        assigned_to: Array.from({ length: jobberAssignmentCounts.get(j.id) || 0 }, () => ""),
+        assigned_crew_member_id: null,
+        customer_id: null,
+        property_id: null,
+        completed_at: null,
+        customer: { display_name: j.client_name, phone: j.client_phone },
+        property: j.property_address ? {
+          address_1: j.property_address, city: null, state: null, zip: null,
+          gate_code: null, access_notes: null, latitude: null, longitude: null,
+        } : null,
+      }));
+
+      const filtered = [...nativeFiltered, ...jobberConverted];
+      if (cancelled) return;
 
       // Hydrate customer + property
       const customerIds = [...new Set(filtered.map(j => j.customer_id).filter(Boolean) as string[])];
