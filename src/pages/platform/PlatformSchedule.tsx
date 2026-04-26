@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import RouteView from "@/components/platform/schedule/RouteView";
 import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { GoogleMap, MarkerF, useJsApiLoader } from "@react-google-maps/api";
 import {
   ChevronLeft,
   ChevronRight,
@@ -50,6 +51,25 @@ type JobberJob = {
   assigned_employee_names: string[] | null;
   business_id: string | null;
 };
+
+type MappedJob = JobberJob & { position: google.maps.LatLngLiteral };
+
+const mapContainerStyle = { width: "100%", height: "100%" };
+const defaultMapCenter = { lat: 30.4016, lng: -86.8636 };
+
+function getFallbackCoordinates(address: string | null): google.maps.LatLngLiteral | null {
+  if (!address) return null;
+  const value = address.toLowerCase();
+  if (value.includes("gulf breeze")) return { lat: 30.3571, lng: -87.1639 };
+  if (value.includes("pensacola")) return { lat: 30.4213, lng: -87.2169 };
+  if (value.includes("fort walton")) return { lat: 30.4201, lng: -86.617 };
+  if (value.includes("niceville")) return { lat: 30.5169, lng: -86.4822 };
+  if (value.includes("destin")) return { lat: 30.3935, lng: -86.4958 };
+  if (value.includes("mary esther")) return { lat: 30.4099, lng: -86.6652 };
+  if (value.includes("santa rosa beach")) return { lat: 30.396, lng: -86.2288 };
+  if (value.includes("navarre")) return { lat: 30.4016, lng: -86.8636 };
+  return defaultMapCenter;
+}
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
   late: { bg: "#ef444420", text: "#ef4444", label: "Late" },
@@ -319,7 +339,7 @@ export default function PlatformSchedule() {
 
         {/* Route tab content */}
         {scheduleTab === "map" ? (
-          <PlatformScheduleMap jobs={scheduledJobs} mapsKey={mapsKey ?? null} />
+          <PlatformScheduleMap jobs={scheduledJobs} mapsKey={mapsKey ?? null} onJobSelect={setSelectedJob} />
         ) : scheduleTab === "route" ? (
           <RouteView jobs={scheduledJobs} googleMapsKey={mapsKey ?? null} />
         ) : scheduleTab === "unscheduled" ? (
@@ -435,12 +455,21 @@ export default function PlatformSchedule() {
   );
 }
 
-function PlatformScheduleMap({ jobs, mapsKey }: { jobs: JobberJob[]; mapsKey: string | null }) {
+function PlatformScheduleMap({ jobs, mapsKey, onJobSelect }: { jobs: JobberJob[]; mapsKey: string | null; onJobSelect: (job: JobberJob) => void }) {
   const sorted = [...jobs].sort((a, b) => {
     if (!a.scheduled_start) return 1;
     if (!b.scheduled_start) return -1;
     return new Date(a.scheduled_start).getTime() - new Date(b.scheduled_start).getTime();
   });
+
+  const mappedJobs = useMemo<MappedJob[]>(() => {
+    return sorted
+      .map((job) => {
+        const coordinates = getFallbackCoordinates(job.property_address);
+        return coordinates ? { ...job, position: coordinates } : null;
+      })
+      .filter((job): job is MappedJob => Boolean(job));
+  }, [sorted]);
 
   if (!mapsKey) {
     // Fallback: list view
@@ -468,29 +497,13 @@ function PlatformScheduleMap({ jobs, mapsKey }: { jobs: JobberJob[]; mapsKey: st
     );
   }
 
-  // Build Static Maps URL with numbered markers
-  const buildMapUrl = () => {
-    if (sorted.length === 0) {
-      return `https://www.google.com/maps/embed/v1/place?key=${mapsKey}&q=${encodeURIComponent("Navarre Beach, FL")}&zoom=12`;
-    }
-    // Use first job address as center
-    const firstAddr = sorted[0].property_address;
-    const center = firstAddr ? encodeURIComponent(firstAddr) : encodeURIComponent("Navarre Beach, FL");
-    return `https://www.google.com/maps/embed/v1/place?key=${mapsKey}&q=${center}&zoom=11`;
-  };
+  const mapCenter = mappedJobs[0]?.position ?? defaultMapCenter;
 
   return (
     <div className="space-y-3">
-      {/* Map embed */}
+      {/* Map */}
       <div className="rounded-xl overflow-hidden border border-border" style={{ height: "45vh", minHeight: 280 }}>
-        <iframe
-          title="Job Map"
-          src={buildMapUrl()}
-          className="w-full h-full border-0"
-          allowFullScreen
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-        />
+        <PlatformScheduleGoogleMap mapsKey={mapsKey} mappedJobs={mappedJobs} mapCenter={mapCenter} onJobSelect={onJobSelect} />
       </div>
 
       {sorted.length === 0 ? (
@@ -524,6 +537,33 @@ function PlatformScheduleMap({ jobs, mapsKey }: { jobs: JobberJob[]; mapsKey: st
         </div>
       )}
     </div>
+  );
+}
+
+function PlatformScheduleGoogleMap({ mapsKey, mappedJobs, mapCenter, onJobSelect }: { mapsKey: string; mappedJobs: MappedJob[]; mapCenter: google.maps.LatLngLiteral; onJobSelect: (job: JobberJob) => void }) {
+  const { isLoaded, loadError } = useJsApiLoader({ googleMapsApiKey: mapsKey, id: "platform-schedule-map" });
+  const onMapLoad = useCallback((map: google.maps.Map) => {
+    if (mappedJobs.length === 0) return;
+    const bounds = new google.maps.LatLngBounds();
+    mappedJobs.forEach((job) => bounds.extend(job.position));
+    map.fitBounds(bounds, 56);
+  }, [mappedJobs]);
+
+  if (loadError) return <div className="h-full w-full bg-card flex items-center justify-center text-sm font-body text-muted-foreground">Map unavailable</div>;
+  if (!isLoaded) return <div className="h-full w-full bg-card flex items-center justify-center text-sm font-body text-muted-foreground">Loading map…</div>;
+
+  return (
+    <GoogleMap
+      mapContainerStyle={mapContainerStyle}
+      center={mapCenter}
+      zoom={11}
+      onLoad={onMapLoad}
+      options={{ disableDefaultUI: true, zoomControl: true, mapTypeControl: false, streetViewControl: false, fullscreenControl: false }}
+    >
+      {mappedJobs.map((job, i) => (
+        <MarkerF key={job.id} position={job.position} onClick={() => onJobSelect(job)} label={{ text: String(i + 1), color: "#ffffff", fontSize: "12px", fontWeight: "700" }} />
+      ))}
+    </GoogleMap>
   );
 }
 
