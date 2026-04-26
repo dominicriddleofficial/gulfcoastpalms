@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import JobStatusProgress from "@/components/platform/jobs/JobStatusProgress";
+import AssignedCrewPicker from "@/components/platform/jobs/AssignedCrewPicker";
 
 type JobberJob = {
   id: string;
