@@ -15,8 +15,8 @@ const Index = () => {
   return (
     <Layout>
       <SEOHead
-        title="Gulf Coast Palms | Palm Tree Trimming & Removal — NW Florida"
-        description="Gulf Coast Palms is Northwest Florida's palm tree specialist. Expert trimming, removal, and hurricane prep across Navarre, Pensacola, Destin, and the Emerald Coast."
+        title="Gulf Coast Palms | Palm Tree Services in Navarre, FL"
+        description="Professional palm tree trimming, removal, and hurricane prep across Navarre, Gulf Breeze, and Pensacola. Free quotes — call (850) 910-1290."
         canonicalUrl="/"
       />
 
