@@ -127,22 +127,6 @@ export default function PlatformSchedule() {
     enabled: scheduleTab === "combined",
   });
 
-  // Unscheduled tab — jobs with no scheduled_start
-  const { data: unscheduledJobs = [], isLoading: unscheduledLoading } = useQuery({
-    queryKey: ["schedule-unscheduled", selectedBusinessId],
-    queryFn: async () => {
-      let q = supabase
-        .from("jobber_jobs")
-        .select("id, title, client_name, property_address, status, visit_status, scheduled_start, scheduled_end, total_amount, job_number, internal_notes, assigned_employee_names, business_id")
-        .is("scheduled_start", null)
-        .order("created_at", { ascending: false });
-      if (selectedBusinessId) q = q.eq("business_id", selectedBusinessId);
-      const { data } = await q;
-      return (data as JobberJob[]) ?? [];
-    },
-    enabled: scheduleTab === "unscheduled" || true, // always fetch for badge count
-  });
-
   const { data: lastSyncTime, refetch: refetchSync } = useQuery({
     queryKey: ["schedule-last-sync"],
     queryFn: async () => {
@@ -159,7 +143,7 @@ export default function PlatformSchedule() {
   });
 
   const activeJobs = scheduleTab === "combined" ? combinedJobs : jobberJobs;
-  const isLoading = scheduleTab === "combined" ? combinedLoading : scheduleTab === "unscheduled" ? unscheduledLoading : loading;
+  const isLoading = scheduleTab === "combined" ? combinedLoading : loading;
 
   const handleSync = async () => {
     setSyncing(true);
