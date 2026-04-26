@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { MapPin, Clock, Navigation, User } from "lucide-react";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { GoogleMap, MarkerF, PolylineF, useJsApiLoader } from "@react-google-maps/api";
 
 type JobberJob = {
   id: string;
@@ -25,6 +25,22 @@ interface RouteViewProps {
 }
 
 const CITY_ORDER = ["Navarre", "Gulf Breeze", "Pensacola", "Fort Walton Beach", "Niceville", "Destin", "Mary Esther", "Santa Rosa Beach"];
+const mapContainerStyle = { width: "100%", height: "100%" };
+const defaultMapCenter = { lat: 30.4016, lng: -86.8636 };
+
+function getFallbackCoordinates(address: string | null): google.maps.LatLngLiteral | null {
+  if (!address) return null;
+  const value = address.toLowerCase();
+  if (value.includes("gulf breeze")) return { lat: 30.3571, lng: -87.1639 };
+  if (value.includes("pensacola")) return { lat: 30.4213, lng: -87.2169 };
+  if (value.includes("fort walton")) return { lat: 30.4201, lng: -86.617 };
+  if (value.includes("niceville")) return { lat: 30.5169, lng: -86.4822 };
+  if (value.includes("destin")) return { lat: 30.3935, lng: -86.4958 };
+  if (value.includes("mary esther")) return { lat: 30.4099, lng: -86.6652 };
+  if (value.includes("santa rosa beach")) return { lat: 30.396, lng: -86.2288 };
+  if (value.includes("navarre")) return { lat: 30.4016, lng: -86.8636 };
+  return defaultMapCenter;
+}
 
 function extractCity(address: string | null): string {
   if (!address) return "Unknown";
@@ -54,26 +70,13 @@ function optimizeRoute(jobs: JobberJob[]): JobberJob[] {
   return optimized;
 }
 
-function buildMapUrl(jobs: JobberJob[], apiKey: string): string {
-  const addresses = jobs.filter(j => j.property_address).map(j => j.property_address!);
-  if (addresses.length === 0) return "";
-
-  const origin = encodeURIComponent("Navarre Beach, FL 32566");
-  const destination = encodeURIComponent(addresses[addresses.length - 1]);
-  const waypoints = addresses.slice(0, -1).map(a => encodeURIComponent(a)).join("|");
-
-  let url = `https://www.google.com/maps/embed/v1/directions?key=${apiKey}&origin=${origin}&destination=${destination}&mode=driving`;
-  if (waypoints) url += `&waypoints=${waypoints}`;
-  return url;
-}
-
 export default function RouteView({ jobs, googleMapsKey }: RouteViewProps) {
+  const { isLoaded, loadError } = useJsApiLoader({ googleMapsApiKey: googleMapsKey || "", id: "platform-schedule-map" });
   const optimizedJobs = useMemo(() => optimizeRoute(jobs), [jobs]);
 
-  const mapUrl = useMemo(() => {
-    if (!googleMapsKey || optimizedJobs.length === 0) return "";
-    return buildMapUrl(optimizedJobs, googleMapsKey);
-  }, [optimizedJobs, googleMapsKey]);
+  const routePoints = useMemo(() => optimizedJobs
+    .map((job) => getFallbackCoordinates(job.property_address))
+    .filter((point): point is google.maps.LatLngLiteral => Boolean(point)), [optimizedJobs]);
 
   if (jobs.length === 0) {
     return (
