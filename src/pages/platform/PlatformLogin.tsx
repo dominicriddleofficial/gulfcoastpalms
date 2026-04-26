@@ -19,24 +19,36 @@ export default function PlatformLogin() {
   const { toast } = useToast();
 
   // If a remembered session exists, skip the login screen.
-  // Use onAuthStateChange first so we react correctly to fresh sign-out events
-  // (otherwise a stale session can briefly bounce the user back to /platform).
+  // Wait for INITIAL_SESSION before deciding whether to show the form.
   useEffect(() => {
     let cancelled = false;
+    let initialSessionLoaded = false;
+    let hadSession = false;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (cancelled) return;
-      if (event === "SIGNED_IN" && session) {
-        navigate("/platform", { replace: true });
-      }
-    });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (cancelled) return;
-      if (session) {
+      if (event === "INITIAL_SESSION") {
+        initialSessionLoaded = true;
+        hadSession = !!session;
+        if (session) {
+          navigate("/platform", { replace: true });
+        } else {
+          setCheckingSession(false);
+        }
+        return;
+      }
+
+      if (event === "SIGNED_IN" && session) {
+        hadSession = true;
         navigate("/platform", { replace: true });
-      } else {
-        setCheckingSession(false);
+        return;
+      }
+
+      if (event === "SIGNED_OUT") {
+        const activeLogout = initialSessionLoaded && hadSession;
+        hadSession = false;
+        if (activeLogout) setCheckingSession(false);
       }
     });
 
