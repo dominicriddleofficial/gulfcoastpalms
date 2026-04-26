@@ -96,16 +96,6 @@ const SOPTeamLeader = lazy(() => import("./pages/employee/SOPTeamLeader"));
 const SOPGroundsman = lazy(() => import("./pages/employee/SOPGroundsman"));
 const SOPSalesOperations = lazy(() => import("./pages/employee/SOPSalesOperations"));
 
-// Ops — lazy
-const OpsLogin = lazy(() => import("./pages/ops/OpsLogin"));
-const OpsDashboard = lazy(() => import("./pages/ops/OpsDashboard"));
-const OpsToday = lazy(() => import("./pages/ops/OpsToday"));
-const OpsWeek = lazy(() => import("./pages/ops/OpsWeek"));
-const OpsJobDetail = lazy(() => import("./pages/ops/OpsJobDetail"));
-const OpsCrew = lazy(() => import("./pages/ops/OpsCrew"));
-const OpsSettings = lazy(() => import("./pages/ops/OpsSettings"));
-const OpsSchedule = lazy(() => import("./pages/ops/OpsSchedule"));
-
 // Platform — lazy
 const PlatformLogin = lazy(() => import("./pages/platform/PlatformLogin"));
 const PlatformDashboard = lazy(() => import("./pages/platform/PlatformDashboard"));
@@ -140,13 +130,10 @@ const RouteTracker = () => {
   useEffect(() => {
     const path = location.pathname;
     let manifestHref = "/manifest.json";
-    let appleTitle = "GCP Ops";
+    let appleTitle = "Gulf Coast Palms";
     if (path.startsWith("/platform")) {
       manifestHref = "/platform-manifest.json";
       appleTitle = "GCP Platform";
-    } else if (path.startsWith("/ops")) {
-      manifestHref = "/manifest.json";
-      appleTitle = "GCP Ops";
     }
     const link = document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
     if (link && link.getAttribute("href") !== manifestHref) {
@@ -252,16 +239,6 @@ const App = () => (
                   <Route path="/employee/gulf-coast-palms/sop/team-leader" element={<SOPTeamLeader />} />
                   <Route path="/employee/gulf-coast-palms/sop/groundsman" element={<SOPGroundsman />} />
                   <Route path="/employee/gulf-coast-palms/sop/sales-operations" element={<SOPSalesOperations />} />
-
-                  {/* Ops */}
-                  <Route path="/ops/login" element={<OpsLogin />} />
-                  <Route path="/ops" element={<OpsDashboard />} />
-                  <Route path="/ops/today" element={<OpsToday />} />
-                  <Route path="/ops/week" element={<OpsWeek />} />
-                  <Route path="/ops/job/:jobId" element={<OpsJobDetail />} />
-                  <Route path="/ops/crew" element={<OpsCrew />} />
-                  <Route path="/ops/schedule" element={<OpsSchedule />} />
-                  <Route path="/ops/settings" element={<OpsSettings />} />
 
                   {/* Platform */}
                   <Route path="/platform/login" element={<PlatformLogin />} />

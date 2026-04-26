@@ -1,13 +1,8 @@
-// Gulf Coast Palms — Ops Dashboard Service Worker
-// Provides basic offline caching for field crew usage
+// Gulf Coast Palms — Service Worker
+// Static asset caching only. The /ops dashboard has been retired.
 
-const CACHE_NAME = 'gcp-ops-v1';
-const SHELL_URLS = [
-  '/ops',
-  '/ops/today',
-  '/ops/week',
-  '/ops/schedule',
-];
+const CACHE_NAME = 'gcp-static-v2';
+const SHELL_URLS = [];
 
 // Install: pre-cache the ops shell
 self.addEventListener('install', (event) => {
@@ -37,20 +32,6 @@ self.addEventListener('fetch', (event) => {
 
   // Skip non-GET and cross-origin
   if (event.request.method !== 'GET' || url.origin !== self.location.origin) return;
-
-  // For ops routes: network first, fall back to cache
-  if (url.pathname.startsWith('/ops')) {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          return response;
-        })
-        .catch(() => caches.match(event.request).then((r) => r || offlineFallback()))
-    );
-    return;
-  }
 
   // For static assets (JS, CSS): cache first
   if (url.pathname.match(/\.(js|css|woff2?|png|jpg|jpeg|svg|ico)$/)) {
