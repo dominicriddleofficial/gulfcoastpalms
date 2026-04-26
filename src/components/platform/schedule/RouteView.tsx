@@ -154,3 +154,26 @@ export default function RouteView({ jobs, googleMapsKey }: RouteViewProps) {
     </div>
   );
 }
+
+function RouteGoogleMap({ googleMapsKey, routePoints, optimizedJobs }: { googleMapsKey: string; routePoints: google.maps.LatLngLiteral[]; optimizedJobs: JobberJob[] }) {
+  const { isLoaded, loadError } = useJsApiLoader({ googleMapsApiKey: googleMapsKey, id: "platform-schedule-map" });
+
+  if (loadError) return <div className="h-full w-full bg-card flex items-center justify-center text-sm font-body text-muted-foreground">Map unavailable</div>;
+  if (!isLoaded) return <div className="h-full w-full bg-card flex items-center justify-center text-sm font-body text-muted-foreground">Loading map…</div>;
+
+  return (
+    <GoogleMap
+      mapContainerStyle={mapContainerStyle}
+      center={routePoints[0] ?? defaultMapCenter}
+      zoom={10}
+      options={{ disableDefaultUI: true, zoomControl: true, mapTypeControl: false, streetViewControl: false, fullscreenControl: false }}
+    >
+      {routePoints.length > 1 && <PolylineF path={routePoints} options={{ strokeColor: "#22c55e", strokeOpacity: 0.8, strokeWeight: 4 }} />}
+      {optimizedJobs.map((job, idx) => {
+        const position = getFallbackCoordinates(job.property_address);
+        if (!position) return null;
+        return <MarkerF key={job.id} position={position} label={{ text: String(idx + 1), color: "#ffffff", fontSize: "12px", fontWeight: "700" }} />;
+      })}
+    </GoogleMap>
+  );
+}
