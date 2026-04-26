@@ -18,7 +18,6 @@ import {
   RefreshCw,
   CalendarDays,
   FileText,
-  AlertCircle,
   Map,
 } from "lucide-react";
 import {
@@ -35,7 +34,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 type ViewMode = "day" | "week";
-type ScheduleTab = "jobber" | "combined" | "map" | "route" | "unscheduled";
+type ScheduleTab = "jobber" | "combined" | "map" | "route";
 
 type JobberJob = {
   id: string;
@@ -128,22 +127,6 @@ export default function PlatformSchedule() {
     enabled: scheduleTab === "combined",
   });
 
-  // Unscheduled tab — jobs with no scheduled_start
-  const { data: unscheduledJobs = [], isLoading: unscheduledLoading } = useQuery({
-    queryKey: ["schedule-unscheduled", selectedBusinessId],
-    queryFn: async () => {
-      let q = supabase
-        .from("jobber_jobs")
-        .select("id, title, client_name, property_address, status, visit_status, scheduled_start, scheduled_end, total_amount, job_number, internal_notes, assigned_employee_names, business_id")
-        .is("scheduled_start", null)
-        .order("created_at", { ascending: false });
-      if (selectedBusinessId) q = q.eq("business_id", selectedBusinessId);
-      const { data } = await q;
-      return (data as JobberJob[]) ?? [];
-    },
-    enabled: scheduleTab === "unscheduled" || true, // always fetch for badge count
-  });
-
   const { data: lastSyncTime, refetch: refetchSync } = useQuery({
     queryKey: ["schedule-last-sync"],
     queryFn: async () => {
@@ -160,7 +143,7 @@ export default function PlatformSchedule() {
   });
 
   const activeJobs = scheduleTab === "combined" ? combinedJobs : jobberJobs;
-  const isLoading = scheduleTab === "combined" ? combinedLoading : scheduleTab === "unscheduled" ? unscheduledLoading : loading;
+  const isLoading = scheduleTab === "combined" ? combinedLoading : loading;
 
   const handleSync = async () => {
     setSyncing(true);
@@ -283,7 +266,7 @@ export default function PlatformSchedule() {
 
         {/* Schedule tab selector */}
         <div className="flex items-center gap-0.5 bg-card border border-border rounded-lg p-0.5 w-fit flex-wrap">
-          {(["jobber", "combined", "map", "route", "unscheduled"] as const).map((tab) => (
+          {(["jobber", "combined", "map", "route"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setScheduleTab(tab)}
@@ -292,12 +275,7 @@ export default function PlatformSchedule() {
                 scheduleTab === tab ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
               )}
             >
-              {tab === "jobber" ? "Jobber" : tab === "combined" ? "Combined" : tab === "map" ? "Map" : tab === "route" ? "Route" : "Unscheduled"}
-              {tab === "unscheduled" && unscheduledJobs.length > 0 && (
-                <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-medium leading-none">
-                  {unscheduledJobs.length}
-                </span>
-              )}
+              {tab === "jobber" ? "Jobber" : tab === "combined" ? "Combined" : tab === "map" ? "Map" : "Route"}
             </button>
           ))}
         </div>
@@ -329,49 +307,6 @@ export default function PlatformSchedule() {
           <PlatformScheduleMap jobs={scheduledJobs} mapsKey={mapsKey ?? null} onJobSelect={setSelectedJob} />
         ) : scheduleTab === "route" ? (
           <RouteView jobs={scheduledJobs} googleMapsKey={mapsKey ?? null} />
-        ) : scheduleTab === "unscheduled" ? (
-          <div className="space-y-4">
-            {unscheduledLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((item) => <div key={item} className="h-20 bg-card rounded-lg animate-pulse border border-border" />)}
-              </div>
-            ) : unscheduledJobs.length === 0 ? (
-              <div className="text-center py-12">
-                <CalendarDays className="w-10 h-10 mx-auto text-muted-foreground/40 mb-2" />
-                <p className="font-body text-sm text-muted-foreground">All jobs are scheduled — nothing here!</p>
-              </div>
-            ) : (
-              <div className="space-y-1.5">
-                {unscheduledJobs.map((job) => (
-                  <button
-                    key={job.id}
-                    onClick={() => setSelectedJob(job)}
-                    className="w-full bg-card border border-border rounded-lg p-3 hover:border-primary/20 transition-colors text-left"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                          {job.job_number && <span className="font-body text-[10px] text-muted-foreground font-mono">{job.job_number}</span>}
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 text-[10px] font-body font-medium">
-                            <AlertCircle className="w-3 h-3" />
-                            Unscheduled
-                          </span>
-                        </div>
-                        <p className="font-body text-sm font-medium text-foreground truncate">{job.title || job.client_name || "Jobber Job"}</p>
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5 text-[11px] text-muted-foreground font-body">
-                          {job.client_name && <span className="flex items-center gap-1"><User className="w-3 h-3" />{job.client_name}</span>}
-                          {job.property_address && <span className="flex items-center gap-1 truncate"><MapPin className="w-3 h-3 shrink-0" />{job.property_address}</span>}
-                        </div>
-                      </div>
-                      {job.total_amount != null && job.total_amount > 0 && (
-                        <span className="font-body text-sm font-semibold text-foreground shrink-0">${Number(job.total_amount).toLocaleString()}</span>
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
         ) : (
           <>
             {/* Date nav */}
