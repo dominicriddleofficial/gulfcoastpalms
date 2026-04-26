@@ -71,7 +71,6 @@ function optimizeRoute(jobs: JobberJob[]): JobberJob[] {
 }
 
 export default function RouteView({ jobs, googleMapsKey }: RouteViewProps) {
-  const { isLoaded, loadError } = useJsApiLoader({ googleMapsApiKey: googleMapsKey || "", id: "platform-schedule-map" });
   const optimizedJobs = useMemo(() => optimizeRoute(jobs), [jobs]);
 
   const routePoints = useMemo(() => optimizedJobs
@@ -103,25 +102,9 @@ export default function RouteView({ jobs, googleMapsKey }: RouteViewProps) {
       </div>
 
       {/* Map */}
-      {googleMapsKey && !loadError && (
+      {googleMapsKey && (
         <div className="w-full rounded-lg overflow-hidden border border-border" style={{ height: "50vh", minHeight: 280 }}>
-          {!isLoaded ? (
-            <div className="h-full w-full bg-card flex items-center justify-center text-sm font-body text-muted-foreground">Loading map…</div>
-          ) : (
-            <GoogleMap
-              mapContainerStyle={mapContainerStyle}
-              center={routePoints[0] ?? defaultMapCenter}
-              zoom={10}
-              options={{ disableDefaultUI: true, zoomControl: true, mapTypeControl: false, streetViewControl: false, fullscreenControl: false }}
-            >
-              {routePoints.length > 1 && <PolylineF path={routePoints} options={{ strokeColor: "#22c55e", strokeOpacity: 0.8, strokeWeight: 4 }} />}
-              {optimizedJobs.map((job, idx) => {
-                const position = getFallbackCoordinates(job.property_address);
-                if (!position) return null;
-                return <MarkerF key={job.id} position={position} label={{ text: String(idx + 1), color: "#ffffff", fontSize: "12px", fontWeight: "700" }} />;
-              })}
-            </GoogleMap>
-          )}
+          <RouteGoogleMap googleMapsKey={googleMapsKey} routePoints={routePoints} optimizedJobs={optimizedJobs} />
         </div>
       )}
 
