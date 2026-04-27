@@ -131,9 +131,11 @@ const RouteTracker = () => {
     const path = location.pathname;
     let manifestHref = "/manifest.json";
     let appleTitle = "Gulf Coast Palms";
+    let themeColor = "#1a5c38";
     if (path.startsWith("/platform")) {
       manifestHref = "/platform-manifest.json";
-      appleTitle = "GCP Platform";
+      appleTitle = "Field Ops";
+      themeColor = "#1B5E20";
     }
     const link = document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
     if (link && link.getAttribute("href") !== manifestHref) {
@@ -142,6 +144,10 @@ const RouteTracker = () => {
     const apple = document.querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-title"]');
     if (apple && apple.getAttribute("content") !== appleTitle) {
       apple.setAttribute("content", appleTitle);
+    }
+    const theme = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (theme && theme.getAttribute("content") !== themeColor) {
+      theme.setAttribute("content", themeColor);
     }
   }, [location.pathname]);
   return null;
