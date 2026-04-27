@@ -31,16 +31,32 @@ window.addEventListener("unhandledrejection", (event) => {
   logErrorToSupabase(message, stack);
 });
 
-// Register service worker for ops PWA (production only)
-if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+// Register the Field Ops service worker ONLY when the user is on the /platform
+// section of the app. The public website must remain a normal website with no
+// service-worker caching.
+if ('serviceWorker' in navigator) {
   const isInIframe = (() => { try { return window.self !== window.top; } catch { return true; } })();
-  const isPreviewHost = window.location.hostname.includes("id-preview--") || window.location.hostname.includes("lovableproject.com");
-  if (!isInIframe && !isPreviewHost) {
+  const isPreviewHost =
+    window.location.hostname.includes("id-preview--") ||
+    window.location.hostname.includes("lovableproject.com");
+  const isPlatformRoute = window.location.pathname.startsWith("/platform");
+
+  if (import.meta.env.PROD && isPlatformRoute && !isInIframe && !isPreviewHost) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').catch((err) => {
-        console.error('Service worker registration failed:', err);
-      });
+      navigator.serviceWorker
+        .register('/sw.js', { scope: '/platform' })
+        .catch((err) => {
+          console.error('Field Ops service worker registration failed:', err);
+        });
     });
+  } else {
+    // Outside /platform (or in preview/iframe): make sure no stale SW is
+    // intercepting public-website navigations.
+    navigator.serviceWorker.getRegistrations().then((regs) => {
+      regs.forEach((r) => {
+        if (!isPlatformRoute) r.unregister();
+      });
+    }).catch(() => {});
   }
 }
 
