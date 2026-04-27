@@ -7,6 +7,7 @@ import QuickActionFAB from "./QuickActionFAB";
 import UniversalSearch from "./UniversalSearch";
 import PlatformBottomNav from "./PlatformBottomNav";
 import NotificationPanel from "./NotificationPanel";
+import InstallPrompt from "./InstallPrompt";
 import { Button } from "@/components/ui/button";
 import { prefetchRoute } from "@/lib/route-prefetch";
 import {
@@ -320,6 +321,9 @@ export default function PlatformLayout({ children }: Props) {
 
       {/* Quick Action FAB */}
       <QuickActionFAB brandColor={accentColor} />
+
+      {/* PWA install banner (mobile only, /platform scope) */}
+      <InstallPrompt />
     </div>
   );
 }
