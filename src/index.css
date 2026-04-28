@@ -102,25 +102,36 @@
 
 /* Platform dark tech theme — premium SaaS feel */
 .ops-theme {
-  --background: 220 16% 4%;
+  --background: 0 0% 10%;
   --foreground: 220 10% 92%;
-  --card: 220 14% 7%;
+  --card: 0 0% 16%;
   --card-foreground: 220 10% 92%;
   --popover: 220 14% 9%;
   --popover-foreground: 220 10% 92%;
-  --primary: 142 71% 45%;
-  --primary-foreground: 220 16% 4%;
+  --primary: 138 100% 39%;
+  --primary-foreground: 0 0% 100%;
   --secondary: 220 12% 12%;
   --secondary-foreground: 220 10% 85%;
   --muted: 220 12% 11%;
   --muted-foreground: 220 8% 50%;
-  --accent: 142 71% 45%;
+  --accent: 138 100% 39%;
   --accent-foreground: 220 16% 4%;
   --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 100%;
   --border: 220 12% 14%;
   --input: 220 12% 14%;
   --ring: 142 71% 45%;
+  --accent-color: #00C853;
+  --accent-glow: rgba(0, 200, 83, 0.35);
+  --primary-color: #1B5E20;
+  --badge-color: #00C853;
+  --button-bg: #00C853;
+  --button-text: #FFFFFF;
+  --biz-primary-hex: #1B5E20;
+  --biz-accent-hex: #00C853;
+  --biz-accent-rgb: 0, 200, 83;
+  --biz-background-hex: #1A1A1A;
+  --biz-card-hex: #2A2A2A;
   --font-display: 'Inter', sans-serif;
   --font-body: 'Outfit', sans-serif;
 }
