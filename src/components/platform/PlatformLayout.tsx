@@ -13,7 +13,8 @@ import { prefetchRoute } from "@/lib/route-prefetch";
 import {
   LayoutDashboard, Users, FileText, Briefcase, CalendarDays, Receipt,
   CreditCard, MessageSquare, ClipboardList, Settings, LogOut, Menu, X,
-  TrendingUp, Target, ChevronRight,
+  TrendingUp, Target, ChevronRight, UserPlus, FileCheck2, Upload as UploadIcon,
+  GraduationCap, BookOpen, ShieldCheck, FileSpreadsheet, Files,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,7 +51,23 @@ function PlatformAuraBackground({ accentColor }: { accentColor: string }) {
   );
 }
 
-const NAV_SECTIONS = [
+interface NavItem {
+  label: string;
+  path: string;
+  icon: typeof LayoutDashboard;
+  external?: boolean;
+}
+interface NavSubgroup {
+  label?: string;
+  items: NavItem[];
+}
+interface NavSection {
+  label: string;
+  items?: NavItem[];
+  subgroups?: NavSubgroup[];
+}
+
+const NAV_SECTIONS: NavSection[] = [
   {
     label: "Core",
     items: [
@@ -76,14 +93,45 @@ const NAV_SECTIONS = [
   },
   {
     label: "More",
-    items: [
-      { label: "Analytics", path: "/platform/analytics", icon: TrendingUp },
-      { label: "Comms", path: "/platform/communications", icon: MessageSquare },
-      { label: "Tasks", path: "/platform/tasks", icon: ClipboardList },
-      { label: "Settings", path: "/platform/settings", icon: Settings },
+    subgroups: [
+      {
+        items: [
+          { label: "Analytics", path: "/platform/analytics", icon: TrendingUp },
+          { label: "Comms", path: "/platform/communications", icon: MessageSquare },
+          { label: "Tasks", path: "/platform/tasks", icon: ClipboardList },
+          { label: "Settings", path: "/platform/settings", icon: Settings },
+        ],
+      },
+      {
+        label: "Team & HR",
+        items: [
+          { label: "Applicants", path: "/admin/applicants", icon: UserPlus, external: true },
+          { label: "SOP Acknowledgements", path: "/admin/sop-acknowledgments", icon: FileCheck2, external: true },
+          { label: "Uploads", path: "/admin/uploads", icon: UploadIcon, external: true },
+          { label: "Job Listings", path: "/careers/gulf-coast-palms", icon: GraduationCap, external: true },
+          { label: "Team SOPs", path: "/employee/gulf-coast-palms/sop/team-leader", icon: BookOpen, external: true },
+        ],
+      },
+      {
+        label: "Documents",
+        items: [
+          { label: "Insurance", path: "/platform/documents/insurance", icon: ShieldCheck },
+          { label: "Tax Info", path: "/platform/documents/tax", icon: FileSpreadsheet },
+          { label: "Forms", path: "/platform/documents/forms", icon: Files },
+        ],
+      },
     ],
   },
 ];
+
+function flattenNavItems(sections: NavSection[]): NavItem[] {
+  const out: NavItem[] = [];
+  for (const s of sections) {
+    if (s.items) out.push(...s.items);
+    if (s.subgroups) for (const g of s.subgroups) out.push(...g.items);
+  }
+  return out;
+}
 
 interface Props {
   children: React.ReactNode;
@@ -144,7 +192,7 @@ export default function PlatformLayout({ children }: Props) {
   const location = useLocation();
   const autoSyncTriggered = useRef(false);
 
-  const currentPage = NAV_SECTIONS.flatMap(s => s.items).find(i => i.path === location.pathname);
+  const currentPage = flattenNavItems(NAV_SECTIONS).find(i => i.path === location.pathname);
   const pageTitle = currentPage?.label || "Platform";
 
   const selectedBiz = auth.businesses.find(b => b.id === auth.selectedBusinessId);
@@ -235,39 +283,79 @@ export default function PlatformLayout({ children }: Props) {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-3 px-2.5 space-y-5">
-          {NAV_SECTIONS.map(section => (
-            <div key={section.label}>
-              <p className="px-3 mb-1.5 font-display text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/50">
-                {section.label}
-              </p>
-              <div className="space-y-0.5">
-                {section.items.map(item => {
-                  const isActive = location.pathname === item.path;
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      onClick={() => setSidebarOpen(false)}
-                      onMouseEnter={() => prefetchRoute(item.path)}
-                      className={cn(
-                        "group flex items-center gap-2.5 px-3 py-2 rounded-lg font-body text-[13px] font-medium transition-all duration-150",
-                        isActive
-                          ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
-                          : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
-                      )}
-                    >
-                      <item.icon className={cn(
-                        "w-[18px] h-[18px] transition-colors",
-                        isActive ? "text-primary" : "text-muted-foreground/70 group-hover:text-foreground"
-                      )} />
-                      <span className="flex-1">{item.label}</span>
-                      {isActive && <ChevronRight className="w-3 h-3 text-primary/40" />}
-                    </Link>
-                  );
-                })}
+          {NAV_SECTIONS.map(section => {
+            const renderItem = (item: NavItem) => {
+              const isActive = location.pathname === item.path;
+              const className = cn(
+                "group flex items-center gap-2.5 px-3 py-2 min-h-[44px] rounded-lg font-body text-[13px] font-medium transition-all duration-150",
+                isActive
+                  ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
+                  : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+              );
+              const inner = (
+                <>
+                  <item.icon className={cn(
+                    "w-[18px] h-[18px] transition-colors",
+                    isActive ? "text-primary" : "text-muted-foreground/70 group-hover:text-foreground"
+                  )} />
+                  <span className="flex-1">{item.label}</span>
+                  {isActive && <ChevronRight className="w-3 h-3 text-primary/40" />}
+                </>
+              );
+              if (item.external) {
+                return (
+                  <a
+                    key={item.path}
+                    href={item.path}
+                    onClick={() => setSidebarOpen(false)}
+                    className={className}
+                  >
+                    {inner}
+                  </a>
+                );
+              }
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setSidebarOpen(false)}
+                  onMouseEnter={() => prefetchRoute(item.path)}
+                  className={className}
+                >
+                  {inner}
+                </Link>
+              );
+            };
+
+            return (
+              <div key={section.label}>
+                <p className="px-3 mb-1.5 font-display text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/50">
+                  {section.label}
+                </p>
+                {section.items && (
+                  <div className="space-y-0.5">
+                    {section.items.map(renderItem)}
+                  </div>
+                )}
+                {section.subgroups && (
+                  <div className="space-y-3">
+                    {section.subgroups.map((sg, idx) => (
+                      <div key={sg.label || `sg-${idx}`}>
+                        {sg.label && (
+                          <p className="px-3 mt-2 mb-1 font-display text-[9px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/40">
+                            {sg.label}
+                          </p>
+                        )}
+                        <div className="space-y-0.5">
+                          {sg.items.map(renderItem)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </nav>
 
         {/* User footer */}
