@@ -1016,6 +1016,51 @@ export type Database = {
         }
         Relationships: []
       }
+      job_checklists: {
+        Row: {
+          business_id: string
+          completed: boolean
+          created_at: string
+          created_by: string | null
+          customer: string | null
+          id: string
+          items: Json
+          job_date: string | null
+          job_name: string | null
+          square_footage: number | null
+          system_type: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          completed?: boolean
+          created_at?: string
+          created_by?: string | null
+          customer?: string | null
+          id?: string
+          items?: Json
+          job_date?: string | null
+          job_name?: string | null
+          square_footage?: number | null
+          system_type: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          completed?: boolean
+          created_at?: string
+          created_by?: string | null
+          customer?: string | null
+          id?: string
+          items?: Json
+          job_date?: string | null
+          job_name?: string | null
+          square_footage?: number | null
+          system_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       job_issues: {
         Row: {
           client_id: string | null

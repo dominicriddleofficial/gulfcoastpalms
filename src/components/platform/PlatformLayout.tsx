@@ -15,6 +15,7 @@ import {
   CreditCard, MessageSquare, ClipboardList, Settings, LogOut, Menu, X,
   TrendingUp, Target, ChevronRight, UserPlus, FileCheck2, Upload as UploadIcon,
   GraduationCap, BookOpen, ShieldCheck, FileSpreadsheet, Files,
+  ClipboardCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -61,7 +62,7 @@ interface NavSection {
   subgroups?: NavSubgroup[];
 }
 
-const NAV_SECTIONS: NavSection[] = [
+const buildNavSections = (shortcode: string | undefined): NavSection[] => [
   {
     label: "Core",
     items: [
@@ -93,6 +94,9 @@ const NAV_SECTIONS: NavSection[] = [
           { label: "Analytics", path: "/platform/analytics", icon: TrendingUp },
           { label: "Comms", path: "/platform/communications", icon: MessageSquare },
           { label: "Tasks", path: "/platform/tasks", icon: ClipboardList },
+          ...(shortcode === "PPS"
+            ? [{ label: "Job Checklists", path: "/platform/job-checklists", icon: ClipboardCheck } as NavItem]
+            : []),
           { label: "Settings", path: "/platform/settings", icon: Settings },
         ],
       },
@@ -186,11 +190,12 @@ export default function PlatformLayout({ children }: Props) {
   const location = useLocation();
   const autoSyncTriggered = useRef(false);
 
-  const currentPage = flattenNavItems(NAV_SECTIONS).find(i => i.path === location.pathname);
-  const pageTitle = currentPage?.label || "Platform";
-
   const selectedBiz = auth.businesses.find(b => b.id === auth.selectedBusinessId);
   const contextLabel = selectedBiz ? selectedBiz.public_brand_name : "All Businesses";
+  const navSections = buildNavSections(selectedBiz?.shortcode);
+
+  const currentPage = flattenNavItems(navSections).find(i => i.path === location.pathname);
+  const pageTitle = currentPage?.label || "Platform";
 
   // Auto-sync Jobber if last sync > 30 minutes ago
   useEffect(() => {
@@ -278,7 +283,7 @@ export default function PlatformLayout({ children }: Props) {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-3 px-2.5 space-y-5">
-          {NAV_SECTIONS.map(section => {
+          {navSections.map(section => {
             const renderItem = (item: NavItem) => {
               const isActive = location.pathname === item.path;
               const className = cn(
@@ -399,7 +404,7 @@ export default function PlatformLayout({ children }: Props) {
         <main className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full pb-20 lg:pb-6">{children}</main>
 
         {/* Mobile bottom navigation */}
-        <PlatformBottomNav businessId={auth.selectedBusinessId} onSignOut={auth.signOut} />
+        <PlatformBottomNav businessId={auth.selectedBusinessId} onSignOut={auth.signOut} workspaceShortcode={selectedBiz?.shortcode} />
       </div>
 
       {/* Quick Action FAB */}
