@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { getBusinessLogo, getFallbackBusinessLogo } from "@/lib/business-logos";
+import { getWorkspaceThemeFromBusiness } from "@/contexts/WorkspaceThemeContext";
 
 interface Business {
   id: string;
@@ -81,7 +82,7 @@ export default function BusinessSwitcher({ businesses, selectedBusinessId, onSel
 }
 
 export function BusinessBadge({ biz, size = "sm" }: { biz: Business; size?: "xs" | "sm" }) {
-  const color = biz.default_business_color || "#22c55e";
+  const color = getWorkspaceThemeFromBusiness(biz).accentHex;
   const iconSize = size === "xs" ? "w-5 h-5" : "w-7 h-7";
   const textSize = size === "xs" ? "text-[11px]" : "text-[12px]";
   const codeSize = size === "xs" ? "text-[8px]" : "text-[9px]";
@@ -133,7 +134,7 @@ export function BusinessBadge({ biz, size = "sm" }: { biz: Business; size?: "xs"
 }
 
 export function InlineBadge({ shortcode, color }: { shortcode: string; color?: string }) {
-  const c = color || "#22c55e";
+  const c = color || getWorkspaceThemeFromBusiness({ shortcode }).accentHex;
   return (
     <span
       className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-display font-bold tracking-tight"
