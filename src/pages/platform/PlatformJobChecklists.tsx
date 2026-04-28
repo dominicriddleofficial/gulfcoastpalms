@@ -431,18 +431,6 @@ function ChecklistDetail({
   );
 }
 
-function ChecklistRow({
-  item,
-  onChange,
-}: {
-  item: ChecklistItemState;
-  onChange: (patch: Partial<ChecklistItemState>) => void;
-}) {
-  void item;
-  void onChange;
-  return null;
-}
-
 function labelForAutoKey(k: string): string {
   switch (k) {
     case "xpsKits": return "XPS Polyaspartic kits";
