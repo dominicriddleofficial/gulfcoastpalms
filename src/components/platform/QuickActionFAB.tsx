@@ -55,7 +55,10 @@ export default function QuickActionFAB({ brandColor = "var(--button-bg)" }: Prop
   };
 
   return (
-    <div ref={ref} className="fixed bottom-6 right-6 z-[60] flex flex-col-reverse items-end gap-2">
+    <div
+      ref={ref}
+      className="fixed right-4 z-[60] flex flex-col-reverse items-end gap-2 bottom-[calc(env(safe-area-inset-bottom)+84px)] lg:bottom-6"
+    >
       {open && (
         <div className="flex flex-col gap-1.5 mb-2 animate-in fade-in slide-in-from-bottom-4 duration-200">
           {ACTIONS.map((action) => (
@@ -76,16 +79,16 @@ export default function QuickActionFAB({ brandColor = "var(--button-bg)" }: Prop
       <button
         onClick={() => setOpen(!open)}
         className={cn(
-          "w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95",
+          "w-12 h-12 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95",
           open && "rotate-45"
         )}
         style={{ backgroundColor: brandColor }}
         aria-label={open ? "Close quick actions" : "Open quick actions"}
       >
         {open ? (
-          <X className="w-6 h-6" style={{ color: "var(--button-text)" }} />
+          <X className="w-5 h-5" style={{ color: "var(--button-text)" }} />
         ) : (
-          <Plus className="w-6 h-6" style={{ color: "var(--button-text)" }} />
+          <Plus className="w-5 h-5" style={{ color: "var(--button-text)" }} />
         )}
       </button>
     </div>
