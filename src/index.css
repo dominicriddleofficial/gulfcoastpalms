@@ -146,6 +146,31 @@
   box-shadow: 0 0 0 1px hsl(var(--border)), 0 4px 24px -4px hsl(0 0% 0% / 0.4);
 }
 
+/* Workspace accent safety net for older platform classes that still use fixed green utilities. */
+.ops-theme [class~="text-[#22c55e]"],
+.ops-theme [class*="text-green-"],
+.ops-theme [class*="text-emerald-"] {
+  color: var(--accent-color) !important;
+}
+
+.ops-theme [class~="bg-[#22c55e]"],
+.ops-theme [class*="bg-green-"],
+.ops-theme [class*="bg-emerald-"] {
+  background-color: var(--accent-color) !important;
+}
+
+.ops-theme [class~="bg-[#22c55e]/15"],
+.ops-theme [class*="bg-green-"][class*="/15"],
+.ops-theme [class*="bg-emerald-"][class*="/15"] {
+  background-color: rgba(var(--biz-accent-rgb), 0.15) !important;
+}
+
+.ops-theme [class~="border-[#22c55e]/25"],
+.ops-theme [class*="border-green-"],
+.ops-theme [class*="border-emerald-"] {
+  border-color: rgba(var(--biz-accent-rgb), 0.25) !important;
+}
+
 @keyframes glow-pulse {
   0%, 100% { opacity: 0.8; }
   50% { opacity: 1; }
