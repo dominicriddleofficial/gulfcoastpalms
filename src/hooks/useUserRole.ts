@@ -31,7 +31,10 @@ export function useUserRole() {
       setUserId(user.id);
 
       // No business selected → owner-style "All Businesses" view.
-      // Treat as owner only if they actually own a workspace.
+      // Treat as owner only if they actually own a workspace. Otherwise,
+      // fall back to the user's highest role across any business so non-owner
+      // accounts (office_manager / manager / crew) don't render as role=null
+      // and trigger blank-screen redirect loops.
       if (!selectedBusinessId) {
         const { data: ws } = await supabase
           .from("workspaces")
@@ -39,7 +42,30 @@ export function useUserRole() {
           .eq("owner_user_id", user.id)
           .limit(1);
         if (cancelled) return;
-        setRole(ws && ws.length > 0 ? "owner" : null);
+        if (ws && ws.length > 0) {
+          setRole("owner");
+          setIsLoading(false);
+          return;
+        }
+
+        const { data: anyAccess } = await supabase
+          .from("user_business_access")
+          .select("role_name")
+          .eq("user_id", user.id)
+          .eq("active_status", "active");
+        if (cancelled) return;
+
+        const priority: Record<string, number> = {
+          owner: 1,
+          office_manager: 2,
+          manager: 3,
+          crew: 4,
+        };
+        const best = (anyAccess ?? [])
+          .map((a) => a.role_name as Exclude<PlatformRole, null>)
+          .sort((a, b) => (priority[a] ?? 99) - (priority[b] ?? 99))[0] ?? null;
+        console.log("[useUserRole] No business selected — fallback role:", best);
+        setRole(best);
         setIsLoading(false);
         return;
       }
@@ -57,9 +83,23 @@ export function useUserRole() {
       });
       if (cancelled) return;
 
+      if (error) {
+        console.error("[useUserRole] get_user_role error:", error, {
+          userId: user.id,
+          businessId: selectedBusinessId,
+        });
+      }
+
       const resolved: PlatformRole = error
         ? null
         : (data as PlatformRole) ?? null;
+
+      if (!resolved) {
+        console.warn("[useUserRole] Resolved role is null", {
+          userId: user.id,
+          businessId: selectedBusinessId,
+        });
+      }
 
       roleCache.set(cacheKey, resolved);
       setRole(resolved);
