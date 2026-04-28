@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
+import { useUserRole } from "@/hooks/useUserRole";
 import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 import BusinessSwitcher from "./BusinessSwitcher";
 import QuickActionFAB from "./QuickActionFAB";
@@ -62,7 +63,11 @@ interface NavSection {
   subgroups?: NavSubgroup[];
 }
 
-const buildNavSections = (shortcode: string | undefined): NavSection[] => [
+const buildNavSections = (
+  shortcode: string | undefined,
+  hideAnalytics: boolean,
+  hideTeamMembers: boolean,
+): NavSection[] => [
   {
     label: "Core",
     items: [
@@ -91,12 +96,17 @@ const buildNavSections = (shortcode: string | undefined): NavSection[] => [
     subgroups: [
       {
         items: [
-          { label: "Analytics", path: "/platform/analytics", icon: TrendingUp },
+          ...(hideAnalytics
+            ? []
+            : [{ label: "Analytics", path: "/platform/analytics", icon: TrendingUp } as NavItem]),
           { label: "Comms", path: "/platform/communications", icon: MessageSquare },
           { label: "Tasks", path: "/platform/tasks", icon: ClipboardList },
           ...(shortcode === "PPS"
             ? [{ label: "Job Checklists", path: "/platform/job-checklists", icon: ClipboardCheck } as NavItem]
             : []),
+          ...(hideTeamMembers
+            ? []
+            : [{ label: "Team Members", path: "/platform/team", icon: UserPlus } as NavItem]),
           { label: "Settings", path: "/platform/settings", icon: Settings },
         ],
       },
@@ -185,14 +195,36 @@ function SidebarBizLogo({ business }: { business: { id: string; shortcode: strin
 
 export default function PlatformLayout({ children }: Props) {
   const auth = usePlatformAuth();
+  const { isOwner: roleIsOwner, role } = useUserRole();
   useSessionTimeout();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const autoSyncTriggered = useRef(false);
 
   const selectedBiz = auth.businesses.find(b => b.id === auth.selectedBusinessId);
   const contextLabel = selectedBiz ? selectedBiz.public_brand_name : "All Businesses";
-  const navSections = buildNavSections(selectedBiz?.shortcode);
+  const hideAnalytics = !!role && role !== "owner";
+  const hideTeamMembers = !roleIsOwner;
+  const navSections = buildNavSections(selectedBiz?.shortcode, hideAnalytics, hideTeamMembers);
+
+  // Force-password-change gate
+  useEffect(() => {
+    if (!auth.userId || location.pathname === "/platform/change-password") return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("platform_user_profiles")
+        .select("must_change_password")
+        .eq("user_id", auth.userId)
+        .maybeSingle();
+      if (cancelled) return;
+      if (data?.must_change_password) {
+        navigate("/platform/change-password", { replace: true });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [auth.userId, location.pathname, navigate]);
 
   const currentPage = flattenNavItems(navSections).find(i => i.path === location.pathname);
   const pageTitle = currentPage?.label || "Platform";

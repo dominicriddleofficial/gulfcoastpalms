@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useBusinessContext } from "@/contexts/BusinessContext";
 
-export type PlatformRole = "owner" | "manager" | "crew" | null;
+export type PlatformRole = "owner" | "office_manager" | "manager" | "crew" | null;
 
 // Module-level cache: key = `${userId}:${businessId}` → role
 const roleCache = new Map<string, PlatformRole>();
@@ -74,10 +74,11 @@ export function useUserRole() {
     userId,
     role,
     isOwner: role === "owner",
+    isOfficeManager: role === "office_manager",
     isManager: role === "manager",
     isCrew: role === "crew",
     /** Owner OR manager — i.e. has full operational access (not crew). */
-    isStaff: role === "owner" || role === "manager",
+    isStaff: role === "owner" || role === "office_manager" || role === "manager",
     isLoading,
   };
 }

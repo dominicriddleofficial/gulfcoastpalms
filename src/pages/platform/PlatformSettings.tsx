@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { toast as sonnerToast } from "sonner";
 import { format } from "date-fns";
+import TeamMembersSection from "@/components/platform/settings/TeamMembersSection";
 
 interface BizSettings {
   id: string;
@@ -117,6 +118,9 @@ export default function PlatformSettings() {
 
             {/* Notification Preferences */}
             <NotificationPreferencesSection />
+
+            {/* Team Members (owner-only — handled inside the component) */}
+            <TeamMembersSection />
 
             {/* Integrations */}
             <SettingsSection title="Integrations" icon={Zap}>

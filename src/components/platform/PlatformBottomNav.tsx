@@ -11,6 +11,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import UniversalSearch from "./UniversalSearch";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface MoreItem {
   label: string;
@@ -20,13 +21,13 @@ interface MoreItem {
   group?: string;
 }
 
-const buildMoreItems = (shortcode: string | undefined): MoreItem[] => [
+const buildMoreItems = (shortcode: string | undefined, hideAnalytics: boolean): MoreItem[] => [
   { label: "Leads", path: "/platform/leads", icon: Target },
   { label: "Customers", path: "/platform/customers", icon: Users },
   { label: "Quotes", path: "/platform/quotes", icon: FileText },
   { label: "Jobs", path: "/platform/jobs", icon: Briefcase },
   { label: "Payments", path: "/platform/payments", icon: CreditCard },
-  { label: "Analytics", path: "/platform/analytics", icon: TrendingUp },
+  ...(hideAnalytics ? [] : [{ label: "Analytics", path: "/platform/analytics", icon: TrendingUp } as MoreItem]),
   { label: "Comms", path: "/platform/communications", icon: MessageSquare },
   { label: "Tasks", path: "/platform/tasks", icon: ClipboardList },
   ...(shortcode === "PPS"
@@ -52,10 +53,12 @@ interface Props {
 export default function PlatformBottomNav({ businessId, onSignOut, workspaceShortcode }: Props) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { role } = useUserRole();
   const [moreOpen, setMoreOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
-  const moreItems = buildMoreItems(workspaceShortcode);
+  const hideAnalytics = !!role && role !== "owner";
+  const moreItems = buildMoreItems(workspaceShortcode, hideAnalytics);
   const morePaths = moreItems.map(i => i.path);
 
   const path = location.pathname;
