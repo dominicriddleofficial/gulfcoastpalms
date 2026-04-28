@@ -470,8 +470,10 @@ function DocumentsContent({ category }: ContentProps) {
 
 export default function PlatformDocuments() {
   const params = useParams<{ category?: string }>();
-  const cat = (params.category as Category) || "insurance";
-  const valid: Category = cat === "tax" || cat === "form" ? cat : "insurance";
+  const raw = params.category || "insurance";
+  const normalized = raw === "forms" ? "form" : raw;
+  const valid: Category =
+    normalized === "tax" || normalized === "form" ? normalized : "insurance";
   return (
     <PlatformLayout>
       <DocumentsContent category={valid} />
