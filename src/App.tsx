@@ -114,6 +114,7 @@ const PlatformSettings = lazy(() => import("./pages/platform/PlatformSettings"))
 const PlatformCrew = lazy(() => import("./pages/platform/PlatformCrew"));
 const PlatformTeam = lazy(() => import("./pages/platform/PlatformTeam"));
 const PlatformDocuments = lazy(() => import("./pages/platform/PlatformDocuments"));
+const PlatformJobChecklists = lazy(() => import("./pages/platform/PlatformJobChecklists"));
 
 
 // Payment pages — lazy
@@ -266,6 +267,7 @@ const App = () => (
                   <Route path="/platform/team" element={<RoleRoute allow={["owner"]}><PlatformTeam /></RoleRoute>} />
                   <Route path="/platform/crew" element={<RoleRoute allow={["owner","manager","crew"]}><PlatformCrew /></RoleRoute>} />
                   <Route path="/platform/documents/:category" element={<RoleRoute allow={["owner","manager"]}><PlatformDocuments /></RoleRoute>} />
+                  <Route path="/platform/job-checklists" element={<RoleRoute allow={["owner","manager"]}><PlatformJobChecklists /></RoleRoute>} />
                   
 
                   {/* Payment & Quote public pages */}
