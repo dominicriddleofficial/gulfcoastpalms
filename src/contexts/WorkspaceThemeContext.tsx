@@ -104,6 +104,26 @@ export function getWorkspaceTheme(shortcode: string | null | undefined): Workspa
   return THEME_REGISTRY[shortcode.toUpperCase()] ?? GCP_THEME;
 }
 
+export function hexToRgbTriplet(hexColor: string): string {
+  const hex = hexColor.replace("#", "");
+  if (hex.length !== 6) return "0, 200, 83";
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  return `${r}, ${g}, ${b}`;
+}
+
+export function getWorkspaceThemeFromBusiness(
+  business: { shortcode?: string | null; public_brand_name?: string | null } | null | undefined
+): WorkspaceTheme {
+  const shortcode = business?.shortcode?.toUpperCase();
+  if (shortcode) return getWorkspaceTheme(shortcode);
+
+  const name = business?.public_brand_name?.toLowerCase() ?? "";
+  if (name.includes("prestige") || name.includes("pps")) return PPS_THEME;
+  return GCP_THEME;
+}
+
 interface WorkspaceThemeContextValue {
   theme: WorkspaceTheme;
 }
@@ -132,6 +152,12 @@ export function WorkspaceThemeProvider({ shortcode, applyGlobally = true, childr
     root.style.setProperty("--biz-accent-rgb", theme.accentRgb);
     root.style.setProperty("--biz-background-hex", theme.backgroundHex);
     root.style.setProperty("--biz-card-hex", theme.cardHex);
+    root.style.setProperty("--accent-color", theme.accentHex);
+    root.style.setProperty("--accent-glow", `rgba(${theme.accentRgb}, ${theme.shortcode === "PPS" ? "0.22" : "0.35"})`);
+    root.style.setProperty("--primary-color", theme.primaryHex);
+    root.style.setProperty("--badge-color", theme.accentHex);
+    root.style.setProperty("--button-bg", theme.accentHex);
+    root.style.setProperty("--button-text", theme.buttonTextHex);
     root.dataset.workspaceTheme = theme.shortcode;
 
     // PWA / mobile status bar
