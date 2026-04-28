@@ -4,12 +4,22 @@ import {
   LayoutDashboard, CalendarDays, Receipt, Search, MoreHorizontal,
   Target, Users, FileText, Briefcase, CreditCard, TrendingUp,
   MessageSquare, ClipboardList, Settings, LogOut, X,
+  UserPlus, FileCheck2, Upload as UploadIcon, GraduationCap, BookOpen,
+  ShieldCheck, FileSpreadsheet, Files,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import UniversalSearch from "./UniversalSearch";
 
-const MORE_ITEMS = [
+interface MoreItem {
+  label: string;
+  path: string;
+  icon: typeof Target;
+  external?: boolean;
+  group?: string;
+}
+
+const MORE_ITEMS: MoreItem[] = [
   { label: "Leads", path: "/platform/leads", icon: Target },
   { label: "Customers", path: "/platform/customers", icon: Users },
   { label: "Quotes", path: "/platform/quotes", icon: FileText },
@@ -19,6 +29,14 @@ const MORE_ITEMS = [
   { label: "Comms", path: "/platform/communications", icon: MessageSquare },
   { label: "Tasks", path: "/platform/tasks", icon: ClipboardList },
   { label: "Settings", path: "/platform/settings", icon: Settings },
+  { label: "Applicants", path: "/admin/applicants", icon: UserPlus, external: true, group: "Team & HR" },
+  { label: "SOP Acknowledgements", path: "/admin/sop-acknowledgments", icon: FileCheck2, external: true, group: "Team & HR" },
+  { label: "Uploads", path: "/admin/uploads", icon: UploadIcon, external: true, group: "Team & HR" },
+  { label: "Job Listings", path: "/careers/gulf-coast-palms", icon: GraduationCap, external: true, group: "Team & HR" },
+  { label: "Team SOPs", path: "/employee/gulf-coast-palms/sop/team-leader", icon: BookOpen, external: true, group: "Team & HR" },
+  { label: "Insurance", path: "/platform/documents/insurance", icon: ShieldCheck, group: "Documents" },
+  { label: "Tax Info", path: "/platform/documents/tax", icon: FileSpreadsheet, group: "Documents" },
+  { label: "Forms", path: "/platform/documents/forms", icon: Files, group: "Documents" },
 ];
 
 const MORE_PATHS = MORE_ITEMS.map(i => i.path);
@@ -125,28 +143,69 @@ export default function PlatformBottomNav({ businessId, onSignOut }: Props) {
             <h3 className="font-display text-sm font-semibold text-foreground tracking-tight">Menu</h3>
           </div>
           <div className="p-2">
-            {MORE_ITEMS.map((item) => {
-              const Icon = item.icon;
-              const isActive = path === item.path;
+            {(() => {
+              const groups = new Map<string, MoreItem[]>();
+              const ungrouped: MoreItem[] = [];
+              for (const it of MORE_ITEMS) {
+                if (it.group) {
+                  const arr = groups.get(it.group) ?? [];
+                  arr.push(it);
+                  groups.set(it.group, arr);
+                } else {
+                  ungrouped.push(it);
+                }
+              }
+              const renderItem = (item: MoreItem) => {
+                const Icon = item.icon;
+                const isActive = path === item.path;
+                const className = cn(
+                  "w-full flex items-center gap-3 px-3 py-3 min-h-[48px] rounded-lg font-body text-[14px] font-medium transition-colors text-left",
+                  isActive
+                    ? "bg-primary/10 text-primary"
+                    : "text-foreground hover:bg-secondary/60"
+                );
+                const inner = (
+                  <>
+                    <Icon className={cn("w-[20px] h-[20px]", isActive ? "text-primary" : "text-muted-foreground/70")} />
+                    <span className="flex-1">{item.label}</span>
+                  </>
+                );
+                if (item.external) {
+                  return (
+                    <a
+                      key={item.path}
+                      href={item.path}
+                      onClick={() => setMoreOpen(false)}
+                      className={className}
+                    >
+                      {inner}
+                    </a>
+                  );
+                }
+                return (
+                  <button
+                    key={item.path}
+                    onClick={() => { navigate(item.path); setMoreOpen(false); }}
+                    className={className}
+                  >
+                    {inner}
+                  </button>
+                );
+              };
               return (
-                <button
-                  key={item.path}
-                  onClick={() => { navigate(item.path); setMoreOpen(false); }}
-                  className={cn(
-                    "w-full flex items-center gap-3 px-3 py-3 rounded-lg font-body text-[14px] font-medium transition-colors text-left",
-                    isActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-foreground hover:bg-secondary/60"
-                  )}
-                >
-                  <Icon className={cn(
-                    "w-[20px] h-[20px]",
-                    isActive ? "text-primary" : "text-muted-foreground/70"
-                  )} />
-                  <span className="flex-1">{item.label}</span>
-                </button>
+                <>
+                  {ungrouped.map(renderItem)}
+                  {Array.from(groups.entries()).map(([g, items]) => (
+                    <div key={g} className="mt-2">
+                      <p className="px-3 mt-2 mb-1 font-display text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/50">
+                        {g}
+                      </p>
+                      {items.map(renderItem)}
+                    </div>
+                  ))}
+                </>
               );
-            })}
+            })()}
             <div className="my-2 border-t border-border" />
             <button
               onClick={() => { setMoreOpen(false); onSignOut(); }}
