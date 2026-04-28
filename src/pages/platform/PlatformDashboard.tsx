@@ -60,7 +60,7 @@ function KPICard({
       className="rounded-[14px] p-5 space-y-3 transition-all duration-200 cursor-default"
       style={{
         background: "rgba(255,255,255,0.04)",
-        border: "1px solid rgba(34,197,94,0.18)",
+        border: "1px solid rgba(var(--biz-accent-rgb),0.18)",
         borderRadius: "14px",
       }}
     >
@@ -78,9 +78,9 @@ function KPICard({
         </span>
         <div
           className="w-8 h-8 rounded-lg flex items-center justify-center"
-          style={{ background: "rgba(34,197,94,0.08)" }}
+          style={{ background: "rgba(var(--biz-accent-rgb),0.08)" }}
         >
-          <Icon className="w-4 h-4" style={{ color: "rgba(34,197,94,0.7)" }} />
+          <Icon className="w-4 h-4" style={{ color: "rgba(var(--biz-accent-rgb),0.7)" }} />
         </div>
       </div>
       <span
@@ -100,9 +100,9 @@ function KPICard({
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
   late: { bg: "#ef444420", text: "#ef4444", label: "Late" },
-  today: { bg: "#22c55e20", text: "#22c55e", label: "Today" },
+  today: { bg: "rgba(var(--biz-accent-rgb),0.13)", text: "var(--accent-color)", label: "Today" },
   scheduled: { bg: "#2563eb20", text: "#2563eb", label: "Scheduled" },
-  completed: { bg: "#22c55e20", text: "#22c55e", label: "Completed" },
+  completed: { bg: "rgba(var(--biz-accent-rgb),0.13)", text: "var(--accent-color)", label: "Completed" },
   upcoming: { bg: "#8b5cf620", text: "#8b5cf6", label: "Upcoming" },
 };
 
