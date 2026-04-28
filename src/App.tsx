@@ -115,6 +115,7 @@ const PlatformCrew = lazy(() => import("./pages/platform/PlatformCrew"));
 const PlatformTeam = lazy(() => import("./pages/platform/PlatformTeam"));
 const PlatformDocuments = lazy(() => import("./pages/platform/PlatformDocuments"));
 const PlatformJobChecklists = lazy(() => import("./pages/platform/PlatformJobChecklists"));
+const PlatformChangePassword = lazy(() => import("./pages/platform/PlatformChangePassword"));
 
 
 // Payment pages — lazy
