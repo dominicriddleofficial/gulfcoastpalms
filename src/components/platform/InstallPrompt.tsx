@@ -7,6 +7,7 @@ type BeforeInstallPromptEvent = Event & {
 };
 
 const DISMISS_KEY = "field-ops-install-dismissed";
+const INSTALLED_KEY = "field-ops-installed";
 
 /**
  * Mobile-only install banner shown inside the /platform shell.
@@ -26,7 +27,13 @@ export default function InstallPrompt() {
       // iOS-specific
       // @ts-expect-error legacy iOS Safari property
       window.navigator.standalone === true;
-    if (standalone) return;
+    if (standalone) {
+      localStorage.setItem(INSTALLED_KEY, "1");
+      return;
+    }
+
+    // Previously installed — never show again.
+    if (localStorage.getItem(INSTALLED_KEY) === "1") return;
 
     // Respect a recent dismissal.
     const dismissedAt = Number(localStorage.getItem(DISMISS_KEY) || 0);
@@ -52,7 +59,18 @@ export default function InstallPrompt() {
       setVisible(true);
     };
     window.addEventListener("beforeinstallprompt", onBip);
-    return () => window.removeEventListener("beforeinstallprompt", onBip);
+
+    const onInstalled = () => {
+      localStorage.setItem(INSTALLED_KEY, "1");
+      setDeferredPrompt(null);
+      setVisible(false);
+    };
+    window.addEventListener("appinstalled", onInstalled);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onBip);
+      window.removeEventListener("appinstalled", onInstalled);
+    };
   }, []);
 
   if (!visible) return null;
@@ -62,6 +80,11 @@ export default function InstallPrompt() {
     await deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === "accepted") {
+      localStorage.setItem(INSTALLED_KEY, "1");
+      setVisible(false);
+    } else {
+      // User dismissed the native prompt — respect that for 14 days.
+      localStorage.setItem(DISMISS_KEY, String(Date.now()));
       setVisible(false);
     }
     setDeferredPrompt(null);
