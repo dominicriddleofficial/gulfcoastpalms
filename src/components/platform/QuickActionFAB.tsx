@@ -21,7 +21,7 @@ interface Props {
   brandColor?: string;
 }
 
-export default function QuickActionFAB({ brandColor = "#22c55e" }: Props) {
+export default function QuickActionFAB({ brandColor = "var(--button-bg)" }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -83,9 +83,9 @@ export default function QuickActionFAB({ brandColor = "#22c55e" }: Props) {
         aria-label={open ? "Close quick actions" : "Open quick actions"}
       >
         {open ? (
-          <X className="w-6 h-6 text-white" />
+          <X className="w-6 h-6" style={{ color: "var(--button-text)" }} />
         ) : (
-          <Plus className="w-6 h-6 text-white" />
+          <Plus className="w-6 h-6" style={{ color: "var(--button-text)" }} />
         )}
       </button>
     </div>
