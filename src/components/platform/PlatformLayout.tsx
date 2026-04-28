@@ -166,7 +166,7 @@ function SidebarBizLogo({ business }: { business: { id: string; shortcode: strin
     );
   }
 
-  const color = business.default_business_color || "#22c55e";
+  const color = getWorkspaceThemeFromBusiness(business).accentHex;
   return (
     <div
       className="w-7 h-7 rounded-md flex items-center justify-center border"
