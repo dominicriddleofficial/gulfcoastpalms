@@ -236,11 +236,12 @@ export default function PlatformLayout({ children }: Props) {
     );
   }
 
-  const accentColor = selectedBiz?.default_business_color || (selectedBiz?.shortcode === "PPS" ? "#141414" : "#22c55e");
+  const workspaceTheme = getWorkspaceThemeFromBusiness(selectedBiz);
 
   return (
-    <div className="ops-theme min-h-screen bg-background flex relative">
-      <PlatformAuraBackground accentColor="#22c55e" />
+    <WorkspaceThemeProvider shortcode={workspaceTheme.shortcode}>
+    <div className="ops-theme min-h-screen bg-background flex relative" style={workspaceThemeVars(workspaceTheme)}>
+      <PlatformAuraBackground />
 
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
@@ -402,10 +403,11 @@ export default function PlatformLayout({ children }: Props) {
       </div>
 
       {/* Quick Action FAB */}
-      <QuickActionFAB brandColor={accentColor} />
+      <QuickActionFAB />
 
       {/* PWA install banner (mobile only, /platform scope) */}
       <InstallPrompt />
     </div>
+    </WorkspaceThemeProvider>
   );
 }
