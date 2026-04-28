@@ -265,9 +265,7 @@ const App = () => (
                   <Route path="/platform/settings" element={<RoleRoute allow={["owner"]}><PlatformSettings /></RoleRoute>} />
                   <Route path="/platform/team" element={<RoleRoute allow={["owner"]}><PlatformTeam /></RoleRoute>} />
                   <Route path="/platform/crew" element={<RoleRoute allow={["owner","manager","crew"]}><PlatformCrew /></RoleRoute>} />
-                  <Route path="/platform/documents/insurance" element={<RoleRoute allow={["owner","manager"]}><PlatformDocuments /></RoleRoute>} />
-                  <Route path="/platform/documents/tax" element={<RoleRoute allow={["owner","manager"]}><PlatformDocuments /></RoleRoute>} />
-                  <Route path="/platform/documents/forms" element={<RoleRoute allow={["owner","manager"]}><PlatformDocuments /></RoleRoute>} />
+                  <Route path="/platform/documents/:category" element={<RoleRoute allow={["owner","manager"]}><PlatformDocuments /></RoleRoute>} />
                   
 
                   {/* Payment & Quote public pages */}
