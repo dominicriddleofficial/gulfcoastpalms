@@ -147,6 +147,7 @@ export function WorkspaceThemeProvider({ shortcode, applyGlobally = true, childr
   useEffect(() => {
     if (!applyGlobally || typeof document === "undefined") return;
     const root = document.documentElement;
+    const previous = root.dataset.workspaceTheme;
     root.style.setProperty("--biz-primary-hex", theme.primaryHex);
     root.style.setProperty("--biz-accent-hex", theme.accentHex);
     root.style.setProperty("--biz-accent-rgb", theme.accentRgb);
@@ -164,6 +165,38 @@ export function WorkspaceThemeProvider({ shortcode, applyGlobally = true, childr
     const themeMeta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
     if (themeMeta && themeMeta.getAttribute("content") !== theme.statusBarHex) {
       themeMeta.setAttribute("content", theme.statusBarHex);
+    }
+
+    // Cache-bust on workspace switch: clear SW caches + bump a version
+    // param so stale themed assets don't linger across tenants. Only fires
+    // on an actual change (not initial mount).
+    if (previous && previous !== theme.shortcode) {
+      const STORAGE_KEY = "workspace-theme-version";
+      const nextVersion = Date.now().toString();
+      try {
+        localStorage.setItem(STORAGE_KEY, nextVersion);
+      } catch { /* ignore */ }
+
+      const bust = async () => {
+        try {
+          if ("caches" in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map((k) => caches.delete(k)));
+          }
+          if ("serviceWorker" in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(regs.map((r) => r.update().catch(() => undefined)));
+          }
+        } catch { /* ignore */ }
+
+        // Reload once with a versioned query param so any cached CSS/JS
+        // (and the inlined HSL vars) are re-fetched fresh.
+        const url = new URL(window.location.href);
+        url.searchParams.set("ws", theme.shortcode.toLowerCase());
+        url.searchParams.set("v", nextVersion);
+        window.location.replace(url.toString());
+      };
+      void bust();
     }
   }, [theme, applyGlobally]);
 
