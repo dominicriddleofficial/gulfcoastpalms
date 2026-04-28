@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, type CSSProperties, type ReactNode } from "react";
 
 /**
  * Per-workspace theme tokens. Applied as CSS variables on the active
@@ -11,10 +11,12 @@ export interface WorkspaceTheme {
   shortcode: string;
   /** Brand label, used for accessibility / debugging */
   label: string;
-  /** Primary brand hex (used for buttons, active states, badges) */
+  /** Primary brand hex (dark company colour, exposed as --primary-color) */
   primaryHex: string;
   /** Bright accent hex (used for highlights, charts, progress bars) */
   accentHex: string;
+  /** Button text colour for the workspace accent button */
+  buttonTextHex: string;
   /** RGB triplet "r, g, b" for the accent — drives rgba(...) gradients */
   accentRgb: string;
   /** Background hex for the platform shell */
@@ -45,15 +47,16 @@ const GCP_THEME: WorkspaceTheme = {
   label: "Gulf Coast Palms",
   primaryHex: "#1B5E20",
   accentHex: "#00C853",
+  buttonTextHex: "#FFFFFF",
   accentRgb: "0, 200, 83",
   backgroundHex: "#1A1A1A",
   cardHex: "#2A2A2A",
   statusBarHex: "#1B5E20",
   hsl: {
-    background: "0 0% 6%",
-    card: "0 0% 10%",
+    background: "0 0% 10%",
+    card: "0 0% 16%",
     popover: "0 0% 12%",
-    primary: "123 46% 24%",          // #1B5E20
+    primary: "138 100% 39%",         // #00C853 as active UI accent
     primaryForeground: "0 0% 100%",
     secondary: "0 0% 14%",
     muted: "0 0% 13%",
@@ -68,15 +71,16 @@ const GCP_THEME: WorkspaceTheme = {
 const PPS_THEME: WorkspaceTheme = {
   shortcode: "PPS",
   label: "Prestige Property Services",
-  primaryHex: "#1A1A1A",
+  primaryHex: "#2A2A2A",
   accentHex: "#F0F0F0",
+  buttonTextHex: "#0A0A0A",
   accentRgb: "240, 240, 240",
   backgroundHex: "#1A1A1A",
   cardHex: "#2A2A2A",
-  statusBarHex: "#1A1A1A",
+  statusBarHex: "#2A2A2A",
   hsl: {
-    background: "0 0% 6%",
-    card: "0 0% 10%",
+    background: "0 0% 10%",
+    card: "0 0% 16%",
     popover: "0 0% 12%",
     primary: "0 0% 100%",            // neon white
     primaryForeground: "0 0% 6%",
