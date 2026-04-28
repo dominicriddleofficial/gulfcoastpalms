@@ -6,6 +6,7 @@ import {
   MessageSquare, ClipboardList, Settings, LogOut, X,
   UserPlus, FileCheck2, Upload as UploadIcon, GraduationCap, BookOpen,
   ShieldCheck, FileSpreadsheet, Files,
+  ClipboardCheck,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -19,7 +20,7 @@ interface MoreItem {
   group?: string;
 }
 
-const MORE_ITEMS: MoreItem[] = [
+const buildMoreItems = (shortcode: string | undefined): MoreItem[] => [
   { label: "Leads", path: "/platform/leads", icon: Target },
   { label: "Customers", path: "/platform/customers", icon: Users },
   { label: "Quotes", path: "/platform/quotes", icon: FileText },
@@ -28,6 +29,9 @@ const MORE_ITEMS: MoreItem[] = [
   { label: "Analytics", path: "/platform/analytics", icon: TrendingUp },
   { label: "Comms", path: "/platform/communications", icon: MessageSquare },
   { label: "Tasks", path: "/platform/tasks", icon: ClipboardList },
+  ...(shortcode === "PPS"
+    ? [{ label: "Job Checklists", path: "/platform/job-checklists", icon: ClipboardCheck } as MoreItem]
+    : []),
   { label: "Settings", path: "/platform/settings", icon: Settings },
   { label: "Applicants", path: "/admin/applicants", icon: UserPlus, external: true, group: "Team & HR" },
   { label: "SOP Acknowledgements", path: "/admin/sop-acknowledgments", icon: FileCheck2, external: true, group: "Team & HR" },
@@ -39,24 +43,26 @@ const MORE_ITEMS: MoreItem[] = [
   { label: "Forms", path: "/platform/documents/forms", icon: Files, group: "Documents" },
 ];
 
-const MORE_PATHS = MORE_ITEMS.map(i => i.path);
-
 interface Props {
   businessId: string | null;
   onSignOut: () => void;
+  workspaceShortcode?: string;
 }
 
-export default function PlatformBottomNav({ businessId, onSignOut }: Props) {
+export default function PlatformBottomNav({ businessId, onSignOut, workspaceShortcode }: Props) {
   const location = useLocation();
   const navigate = useNavigate();
   const [moreOpen, setMoreOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
+  const moreItems = buildMoreItems(workspaceShortcode);
+  const morePaths = moreItems.map(i => i.path);
+
   const path = location.pathname;
   const isDashboard = path === "/platform";
   const isSchedule = path === "/platform/schedule";
   const isInvoices = path === "/platform/invoices";
-  const isMore = MORE_PATHS.includes(path);
+  const isMore = morePaths.includes(path);
 
   const navItems = [
     { key: "dashboard", label: "Home", icon: LayoutDashboard, active: isDashboard, to: "/platform" as const, type: "link" as const },
@@ -146,7 +152,7 @@ export default function PlatformBottomNav({ businessId, onSignOut }: Props) {
             {(() => {
               const groups = new Map<string, MoreItem[]>();
               const ungrouped: MoreItem[] = [];
-              for (const it of MORE_ITEMS) {
+              for (const it of moreItems) {
                 if (it.group) {
                   const arr = groups.get(it.group) ?? [];
                   arr.push(it);
