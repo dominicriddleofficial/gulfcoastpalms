@@ -2047,6 +2047,78 @@ export type Database = {
           },
         ]
       }
+      platform_documents: {
+        Row: {
+          business_id: string
+          created_at: string
+          document_category: string
+          document_name: string
+          document_subtype: string | null
+          expiration_date: string | null
+          file_mime_type: string | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          notes: string | null
+          related_employee_id: string | null
+          related_employee_name: string | null
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          document_category: string
+          document_name: string
+          document_subtype?: string | null
+          expiration_date?: string | null
+          file_mime_type?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          notes?: string | null
+          related_employee_id?: string | null
+          related_employee_name?: string | null
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          document_category?: string
+          document_name?: string
+          document_subtype?: string | null
+          expiration_date?: string | null
+          file_mime_type?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          notes?: string | null
+          related_employee_id?: string | null
+          related_employee_name?: string | null
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_documents_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_documents_related_employee_id_fkey"
+            columns: ["related_employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_invoice_line_items: {
         Row: {
           business_id: string
