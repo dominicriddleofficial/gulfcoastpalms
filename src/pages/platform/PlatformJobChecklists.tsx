@@ -438,54 +438,9 @@ function ChecklistRow({
   item: ChecklistItemState;
   onChange: (patch: Partial<ChecklistItemState>) => void;
 }) {
-  return (
-    <div className={cn(
-      "flex items-center gap-3 px-2 py-2 rounded-lg transition-all duration-150",
-      item.checked ? "opacity-50" : "hover:bg-secondary/40"
-    )}>
-      <Checkbox
-        checked={item.checked}
-        onCheckedChange={(v) => onChange({ checked: v === true })}
-        className="h-5 w-5"
-      />
-      <label
-        className={cn(
-          "flex-1 text-sm text-foreground cursor-pointer select-none transition-all",
-          item.checked && "line-through text-muted-foreground"
-        )}
-        onClick={() => onChange({ checked: !item.checked })}
-      >
-        {item.label}
-        {item.autoKey && (
-          <span className="ml-1.5 text-[10px] uppercase tracking-wide text-primary/70">auto</span>
-        )}
-      </label>
-      {item.hasQuantity && (
-        <Input
-          type="number"
-          min={0}
-          inputMode="numeric"
-          value={item.quantity ?? ""}
-          onChange={(e) =>
-            onChange({ quantity: e.target.value === "" ? null : Number(e.target.value) })
-          }
-          onClick={(e) => e.stopPropagation()}
-          className="w-16 h-8 text-center text-sm"
-          placeholder="#"
-        />
-      )}
-      {item.hasColorField && (
-        <Input
-          type="text"
-          value={item.colorValue ?? ""}
-          onChange={(e) => onChange({ colorValue: e.target.value })}
-          onClick={(e) => e.stopPropagation()}
-          className="w-28 h-8 text-sm"
-          placeholder="Color"
-        />
-      )}
-    </div>
-  );
+  void item;
+  void onChange;
+  return null;
 }
 
 function labelForAutoKey(k: string): string {
