@@ -182,7 +182,8 @@ export function useWorkspaceTheme() {
  * Returns the inline style object that overrides the .ops-theme CSS variables
  * for the active workspace. Apply to the platform shell element.
  */
-export function workspaceThemeVars(theme: WorkspaceTheme): React.CSSProperties {
+export function workspaceThemeVars(theme: WorkspaceTheme): CSSProperties {
+  const subtleGlowOpacity = theme.shortcode === "PPS" ? "0.22" : "0.35";
   return {
     ["--background" as string]: theme.hsl.background,
     ["--card" as string]: theme.hsl.card,
@@ -201,5 +202,11 @@ export function workspaceThemeVars(theme: WorkspaceTheme): React.CSSProperties {
     ["--biz-accent-rgb" as string]: theme.accentRgb,
     ["--biz-background-hex" as string]: theme.backgroundHex,
     ["--biz-card-hex" as string]: theme.cardHex,
+    ["--accent-color" as string]: theme.accentHex,
+    ["--accent-glow" as string]: `rgba(${theme.accentRgb}, ${subtleGlowOpacity})`,
+    ["--primary-color" as string]: theme.primaryHex,
+    ["--badge-color" as string]: theme.accentHex,
+    ["--button-bg" as string]: theme.accentHex,
+    ["--button-text" as string]: theme.buttonTextHex,
   };
 }
