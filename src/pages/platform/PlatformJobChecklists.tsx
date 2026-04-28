@@ -304,16 +304,18 @@ function ChecklistDetail({
 
   const save = async (markCompleted: boolean) => {
     setSaving(true);
-    const { error } = await supabase.from("job_checklists").insert({
-      business_id: businessId,
-      system_type: system,
-      job_name: jobName || null,
-      customer: customer || null,
-      job_date: jobDate || null,
-      square_footage: sqft || null,
-      items: items as unknown as object,
-      completed: markCompleted,
-    });
+    const { error } = await supabase.from("job_checklists").insert([
+      {
+        business_id: businessId,
+        system_type: system,
+        job_name: jobName || null,
+        customer: customer || null,
+        job_date: jobDate || null,
+        square_footage: sqft || null,
+        items: items as unknown as never,
+        completed: markCompleted,
+      },
+    ]);
     setSaving(false);
     if (error) {
       toast({ title: "Could not save", description: error.message, variant: "destructive" });
@@ -386,7 +388,7 @@ function ChecklistDetail({
               Recommended kits for {sqft} sq ft
             </p>
             <ul className="text-xs text-foreground/90 space-y-0.5">
-              {Object.entries(auto).map(([k, v]) => (
+              {(Object.entries(auto) as Array<[string, number]>).map(([k, v]) => (
                 <li key={k} className="flex justify-between">
                   <span className="text-muted-foreground">{labelForAutoKey(k)}</span>
                   <span className="font-semibold text-primary">{v}</span>
