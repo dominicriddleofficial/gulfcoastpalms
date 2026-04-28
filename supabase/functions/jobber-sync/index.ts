@@ -366,45 +366,20 @@ async function getLastModuleSuccessAt(supabase: any, module: ModuleName) {
 }
 
 async function resolveTargetBusinessId(supabase: any, requestedBusinessId?: string | null) {
-  if (requestedBusinessId) {
-    const { data, error } = await supabase
-      .from("businesses")
-      .select("id")
-      .eq("id", requestedBusinessId)
-      .maybeSingle();
-
-    if (error) throw new Error(`Failed to verify business: ${error.message}`);
-    if (data?.id) return data.id as string;
-  }
-
-  const scopedSources: Array<{ table: string; orderColumn: string }> = [
-    { table: "jobber_clients", orderColumn: "synced_at" },
-    { table: "jobber_properties", orderColumn: "synced_at" },
-    { table: "jobber_jobs", orderColumn: "synced_at" },
-  ];
-
-  for (const source of scopedSources) {
-    const { data, error } = await supabase
-      .from(source.table)
-      .select("business_id")
-      .not("business_id", "is", null)
-      .order(source.orderColumn, { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (error) throw new Error(`Failed to resolve business from ${source.table}: ${error.message}`);
-    if (data?.business_id) return data.business_id as string;
-  }
-
-  const { data: businesses, error: businessError } = await supabase
+  // SAFETY GUARD: There is only one connected Jobber account and it belongs to
+  // Gulf Coast Palms (GCP). All synced jobber_* records MUST be tagged GCP,
+  // regardless of which workspace was active when the sync was triggered.
+  // Ignoring `requestedBusinessId` is intentional — it prevents the data-bleed
+  // bug where syncing from PPS would incorrectly tag GCP jobs as PPS.
+  const { data, error } = await supabase
     .from("businesses")
     .select("id")
-    .order("created_at", { ascending: true });
+    .eq("shortcode", "GCP")
+    .maybeSingle();
 
-  if (businessError) throw new Error(`Failed to load businesses: ${businessError.message}`);
-  if ((businesses || []).length === 1) return businesses[0].id as string;
-
-  return null;
+  if (error) throw new Error(`Failed to resolve GCP business: ${error.message}`);
+  if (!data?.id) throw new Error("GCP business not found — Jobber sync requires a business with shortcode 'GCP'");
+  return data.id as string;
 }
 
 function buildClientsFilter(lastSuccessAt: string | null) {
