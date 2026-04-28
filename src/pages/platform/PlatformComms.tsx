@@ -36,7 +36,7 @@ const CHANNEL_ICONS: Record<string, any> = {
 const CHANNEL_COLORS: Record<string, string> = {
   email: "#2563eb",
   sms: "#8b5cf6",
-  call: "#22c55e",
+  call: "var(--accent-color)",
   note: "#6b7280",
 };
 

@@ -60,7 +60,7 @@ function KPICard({
       className="rounded-[14px] p-5 space-y-3 transition-all duration-200 cursor-default"
       style={{
         background: "rgba(255,255,255,0.04)",
-        border: "1px solid rgba(34,197,94,0.18)",
+        border: "1px solid rgba(var(--biz-accent-rgb),0.18)",
         borderRadius: "14px",
       }}
     >
@@ -78,9 +78,9 @@ function KPICard({
         </span>
         <div
           className="w-8 h-8 rounded-lg flex items-center justify-center"
-          style={{ background: "rgba(34,197,94,0.08)" }}
+          style={{ background: "rgba(var(--biz-accent-rgb),0.08)" }}
         >
-          <Icon className="w-4 h-4" style={{ color: "rgba(34,197,94,0.7)" }} />
+          <Icon className="w-4 h-4" style={{ color: "rgba(var(--biz-accent-rgb),0.7)" }} />
         </div>
       </div>
       <span
@@ -100,9 +100,9 @@ function KPICard({
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
   late: { bg: "#ef444420", text: "#ef4444", label: "Late" },
-  today: { bg: "#22c55e20", text: "#22c55e", label: "Today" },
+  today: { bg: "rgba(var(--biz-accent-rgb),0.13)", text: "var(--accent-color)", label: "Today" },
   scheduled: { bg: "#2563eb20", text: "#2563eb", label: "Scheduled" },
-  completed: { bg: "#22c55e20", text: "#22c55e", label: "Completed" },
+  completed: { bg: "rgba(var(--biz-accent-rgb),0.13)", text: "var(--accent-color)", label: "Completed" },
   upcoming: { bg: "#8b5cf620", text: "#8b5cf6", label: "Upcoming" },
 };
 
@@ -239,10 +239,10 @@ export default function PlatformDashboard() {
         className="platform-dashboard-bg -m-4 md:-m-6 p-4 md:p-6"
         style={{
           background: `
-            radial-gradient(ellipse 70% 50% at 50% 0%, rgba(34, 197, 94, 0.28) 0%, rgba(34, 197, 94, 0.08) 45%, transparent 70%),
-            radial-gradient(ellipse 40% 30% at 15% 40%, rgba(34, 197, 94, 0.12) 0%, transparent 60%),
-            radial-gradient(ellipse 35% 25% at 85% 20%, rgba(34, 197, 94, 0.10) 0%, transparent 55%),
-            #080d08
+            radial-gradient(ellipse 70% 50% at 50% 0%, rgba(var(--biz-accent-rgb), 0.28) 0%, rgba(var(--biz-accent-rgb), 0.08) 45%, transparent 70%),
+            radial-gradient(ellipse 40% 30% at 15% 40%, rgba(var(--biz-accent-rgb), 0.12) 0%, transparent 60%),
+            radial-gradient(ellipse 35% 25% at 85% 20%, rgba(var(--biz-accent-rgb), 0.10) 0%, transparent 55%),
+            var(--biz-background-hex)
           `,
         }}
       >
@@ -271,7 +271,7 @@ export default function PlatformDashboard() {
           {/* Chart */}
           <div
             className="rounded-2xl p-5 space-y-3"
-            style={{ background: "rgba(34,197,94,0.04)", border: "1px solid rgba(34,197,94,0.10)", borderRadius: "16px" }}
+            style={{ background: "rgba(var(--biz-accent-rgb),0.04)", border: "1px solid rgba(var(--biz-accent-rgb),0.10)", borderRadius: "16px" }}
           >
             <div>
               <h3 className="font-display text-sm font-semibold tracking-tight" style={{ color: "#fff" }}>Scheduled Job Value</h3>
@@ -283,19 +283,19 @@ export default function PlatformDashboard() {
                   <AreaChart data={trendData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                     <defs>
                       <linearGradient id="jobberTrendGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#22c55e" stopOpacity={0.4} />
-                        <stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
+                        <stop offset="0%" stopColor="var(--accent-color)" stopOpacity={0.4} />
+                        <stop offset="100%" stopColor="var(--accent-color)" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                     <XAxis dataKey="day" tick={{ fill: "hsl(220 8% 50%)", fontSize: 11, fontFamily: "Outfit" }} axisLine={{ stroke: "rgba(255,255,255,0.06)" }} tickLine={false} />
                     <YAxis tick={{ fill: "hsl(220 8% 50%)", fontSize: 11, fontFamily: "Outfit" }} axisLine={false} tickLine={false} tickFormatter={(value) => `$${Number(value).toLocaleString()}`} />
                     <Tooltip
-                      contentStyle={{ backgroundColor: "#111811", border: "1px solid rgba(34,197,94,0.15)", borderRadius: "8px", fontFamily: "Outfit", fontSize: "12px", color: "#fff" }}
+                      contentStyle={{ backgroundColor: "var(--biz-background-hex)", border: "1px solid rgba(var(--biz-accent-rgb),0.15)", borderRadius: "8px", fontFamily: "Outfit", fontSize: "12px", color: "#fff" }}
                       formatter={(value: number) => [`$${Number(value).toLocaleString()}`, "Scheduled value"]}
                       labelStyle={{ color: "hsl(220 8% 50%)", marginBottom: 4 }}
                     />
-                    <Area type="monotone" dataKey="value" stroke="#22c55e" strokeWidth={2} fill="url(#jobberTrendGradient)" />
+                    <Area type="monotone" dataKey="value" stroke="var(--accent-color)" strokeWidth={2} fill="url(#jobberTrendGradient)" />
                   </AreaChart>
                 </ResponsiveContainer>
               ) : (
@@ -310,20 +310,20 @@ export default function PlatformDashboard() {
           {/* Today's schedule */}
           <div
             className="rounded-2xl p-5 space-y-3"
-            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(34,197,94,0.10)", borderRadius: "16px" }}
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(var(--biz-accent-rgb),0.10)", borderRadius: "16px" }}
           >
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-display text-sm font-semibold tracking-tight" style={{ color: "#fff" }}>Today's Jobber Schedule</h3>
                 <p className="font-body" style={{ fontSize: "11px", color: "hsl(220 8% 50%)" }}>{format(new Date(), "EEEE, MMMM d, yyyy")}</p>
               </div>
-              <span className="font-body font-medium" style={{ fontSize: "11px", color: "#22c55e" }}>{todayJobs.length} job{todayJobs.length !== 1 ? "s" : ""}</span>
+              <span className="font-body font-medium" style={{ fontSize: "11px", color: "var(--accent-color)" }}>{todayJobs.length} job{todayJobs.length !== 1 ? "s" : ""}</span>
             </div>
 
             {loading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((item) => (
-                  <div key={item} className="h-20 rounded-lg animate-pulse" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(34,197,94,0.08)" }} />
+                  <div key={item} className="h-20 rounded-lg animate-pulse" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(var(--biz-accent-rgb),0.08)" }} />
                 ))}
               </div>
             ) : todayJobs.length === 0 ? (
@@ -342,7 +342,7 @@ export default function PlatformDashboard() {
                     <div
                       key={job.id}
                       className="flex-shrink-0 w-56 rounded-lg p-3"
-                      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(34,197,94,0.08)" }}
+                      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(var(--biz-accent-rgb),0.08)" }}
                     >
                       <div className="flex items-center justify-between mb-1.5 gap-2">
                         {job.scheduled_start && (

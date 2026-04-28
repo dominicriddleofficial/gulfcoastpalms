@@ -121,7 +121,7 @@ export default function PlatformInvoices() {
 
         {/* KPI cards */}
         <div className="grid grid-cols-3 gap-2">
-          <KPICard icon={DollarSign} label="Collected" value={`$${totals.totalCollected.toLocaleString()}`} color="text-[#22c55e]" />
+          <KPICard icon={DollarSign} label="Collected" value={`$${totals.totalCollected.toLocaleString()}`} color="text-primary" />
           <KPICard icon={Clock} label="Outstanding" value={`$${totals.totalOutstanding.toLocaleString()}`} color="text-[#f59e0b]" />
           <KPICard icon={AlertTriangle} label="Overdue" value={String(totals.overdueCount)} color="text-destructive" />
         </div>
@@ -372,7 +372,7 @@ function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayme
         body: {
           to: email,
           subject: `Pay your invoice ${invoice.invoice_number} — $${amount}`,
-          html: `<p>Hi ${invoice.customer_name || "there"},</p><p>Here's your payment link from ${bizName} for <strong>$${amount}</strong>:</p><p><a href="${payUrl}" style="color:#22c55e;font-weight:bold;">${payUrl}</a></p><p>Thank you for your business!</p>`,
+          html: `<p>Hi ${invoice.customer_name || "there"},</p><p>Here's your payment link from ${bizName} for <strong>$${amount}</strong>:</p><p><a href="${payUrl}" style="color:var(--accent-color);font-weight:bold;">${payUrl}</a></p><p>Thank you for your business!</p>`,
           text: `Hi ${invoice.customer_name || "there"}, here's your payment link from ${bizName} for $${amount}: ${payUrl}`,
         },
       });

@@ -8,7 +8,7 @@ const EXTENDED_STATES: Record<string, { label: string; color: string; bg: string
   deposit_due: { label: "Deposit Due", color: "text-[#f59e0b]", bg: "bg-[#f59e0b]/15 border-[#f59e0b]/25" },
   deposit_paid: { label: "Deposit Paid", color: "text-[#06b6d4]", bg: "bg-[#06b6d4]/15 border-[#06b6d4]/25" },
   partial: { label: "Partially Paid", color: "text-[#f59e0b]", bg: "bg-[#f59e0b]/15 border-[#f59e0b]/25" },
-  paid: { label: "Paid in Full", color: "text-[#22c55e]", bg: "bg-[#22c55e]/15 border-[#22c55e]/25" },
+  paid: { label: "Paid in Full", color: "text-primary", bg: "bg-primary/15 border-primary/25" },
   overdue: { label: "Overdue", color: "text-[#ef4444]", bg: "bg-[#ef4444]/15 border-[#ef4444]/25" },
   void: { label: "Void", color: "text-[#64748b]", bg: "bg-[#64748b]/15 border-[#64748b]/25" },
 };

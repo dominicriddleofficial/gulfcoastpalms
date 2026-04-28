@@ -348,14 +348,14 @@ function RouteGoogleMap({
       {routePoints.length > 1 && (
         <PolylineF
           path={routePoints}
-          options={{ strokeColor: "#22c55e", strokeOpacity: 0.18, strokeWeight: 3 }}
+          options={{ strokeColor: "var(--accent-color)", strokeOpacity: 0.18, strokeWeight: 3 }}
         />
       )}
       {/* Animated drawing route on top */}
       {animatedPath.length > 1 && (
         <PolylineF
           path={animatedPath}
-          options={{ strokeColor: "#22c55e", strokeOpacity: 0.95, strokeWeight: 5 }}
+          options={{ strokeColor: "var(--accent-color)", strokeOpacity: 0.95, strokeWeight: 5 }}
         />
       )}
       {optimizedJobs.map((job, idx) => {

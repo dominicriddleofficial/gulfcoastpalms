@@ -6,7 +6,7 @@ export const INVOICE_STATUSES = [
   { value: "sent", label: "Sent", color: "#2563eb" },
   { value: "viewed", label: "Viewed", color: "#8b5cf6" },
   { value: "partial", label: "Partial", color: "#f59e0b" },
-  { value: "paid", label: "Paid", color: "#22c55e" },
+  { value: "paid", label: "Paid", color: "var(--accent-color)" },
   { value: "overdue", label: "Overdue", color: "#ef4444" },
   { value: "void", label: "Void", color: "#64748b" },
 ] as const;

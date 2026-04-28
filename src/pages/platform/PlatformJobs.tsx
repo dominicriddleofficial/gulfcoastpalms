@@ -43,9 +43,9 @@ type JobberJob = {
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
   late: { bg: "#ef444420", text: "#ef4444", label: "Late" },
-  today: { bg: "#22c55e20", text: "#22c55e", label: "Today" },
+  today: { bg: "rgba(var(--biz-accent-rgb),0.13)", text: "var(--accent-color)", label: "Today" },
   scheduled: { bg: "#2563eb20", text: "#2563eb", label: "Scheduled" },
-  completed: { bg: "#22c55e20", text: "#22c55e", label: "Completed" },
+  completed: { bg: "rgba(var(--biz-accent-rgb),0.13)", text: "var(--accent-color)", label: "Completed" },
   upcoming: { bg: "#8b5cf620", text: "#8b5cf6", label: "Upcoming" },
 };
 

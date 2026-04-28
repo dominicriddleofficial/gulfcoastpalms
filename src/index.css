@@ -102,37 +102,73 @@
 
 /* Platform dark tech theme — premium SaaS feel */
 .ops-theme {
-  --background: 220 16% 4%;
+  --background: 0 0% 10%;
   --foreground: 220 10% 92%;
-  --card: 220 14% 7%;
+  --card: 0 0% 16%;
   --card-foreground: 220 10% 92%;
   --popover: 220 14% 9%;
   --popover-foreground: 220 10% 92%;
-  --primary: 142 71% 45%;
-  --primary-foreground: 220 16% 4%;
+  --primary: 138 100% 39%;
+  --primary-foreground: 0 0% 100%;
   --secondary: 220 12% 12%;
   --secondary-foreground: 220 10% 85%;
   --muted: 220 12% 11%;
   --muted-foreground: 220 8% 50%;
-  --accent: 142 71% 45%;
+  --accent: 138 100% 39%;
   --accent-foreground: 220 16% 4%;
   --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 100%;
   --border: 220 12% 14%;
   --input: 220 12% 14%;
   --ring: 142 71% 45%;
+  --accent-color: #00C853;
+  --accent-glow: rgba(0, 200, 83, 0.35);
+  --primary-color: #1B5E20;
+  --badge-color: #00C853;
+  --button-bg: #00C853;
+  --button-text: #FFFFFF;
+  --biz-primary-hex: #1B5E20;
+  --biz-accent-hex: #00C853;
+  --biz-accent-rgb: 0, 200, 83;
+  --biz-background-hex: #1A1A1A;
+  --biz-card-hex: #2A2A2A;
   --font-display: 'Inter', sans-serif;
   --font-body: 'Outfit', sans-serif;
 }
 
 /* Platform-specific refinements */
 .ops-theme .platform-card {
-  background: linear-gradient(145deg, hsl(220 14% 8%), hsl(220 14% 6%));
-  border: 1px solid hsl(220 12% 15%);
+  background: linear-gradient(145deg, hsl(var(--card)), hsl(var(--background)));
+  border: 1px solid hsl(var(--border));
 }
 
 .ops-theme .platform-card-glow {
-  box-shadow: 0 0 0 1px hsl(220 12% 15%), 0 4px 24px -4px hsl(0 0% 0% / 0.4);
+  box-shadow: 0 0 0 1px hsl(var(--border)), 0 4px 24px -4px hsl(0 0% 0% / 0.4);
+}
+
+/* Workspace accent safety net for older platform classes that still use fixed green utilities. */
+.ops-theme [class~="text-[#22c55e]"],
+.ops-theme [class*="text-green-"],
+.ops-theme [class*="text-emerald-"] {
+  color: var(--accent-color) !important;
+}
+
+.ops-theme [class~="bg-[#22c55e]"],
+.ops-theme [class*="bg-green-"],
+.ops-theme [class*="bg-emerald-"] {
+  background-color: var(--accent-color) !important;
+}
+
+.ops-theme [class~="bg-[#22c55e]/15"],
+.ops-theme [class*="bg-green-"][class*="/15"],
+.ops-theme [class*="bg-emerald-"][class*="/15"] {
+  background-color: rgba(var(--biz-accent-rgb), 0.15) !important;
+}
+
+.ops-theme [class~="border-[#22c55e]/25"],
+.ops-theme [class*="border-green-"],
+.ops-theme [class*="border-emerald-"] {
+  border-color: rgba(var(--biz-accent-rgb), 0.25) !important;
 }
 
 @keyframes glow-pulse {
@@ -162,7 +198,7 @@
 .invoice-form select,
 .invoice-form [role="combobox"] {
   color: #ffffff !important;
-  caret-color: #22c55e !important;
+  caret-color: var(--accent-color) !important;
 }
 .invoice-form input::placeholder,
 .invoice-form textarea::placeholder {
@@ -170,16 +206,16 @@
 }
 .invoice-form input:focus,
 .invoice-form textarea:focus {
-  border-color: rgba(34, 197, 94, 0.60) !important;
-  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.12) !important;
+  border-color: rgba(var(--biz-accent-rgb), 0.60) !important;
+  box-shadow: 0 0 0 2px rgba(var(--biz-accent-rgb), 0.12) !important;
 }
 
 .platform-dashboard-bg {
   background:
-    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(34, 197, 94, 0.28) 0%, rgba(34, 197, 94, 0.08) 45%, transparent 70%),
-    radial-gradient(ellipse 40% 30% at 15% 40%, rgba(34, 197, 94, 0.12) 0%, transparent 60%),
-    radial-gradient(ellipse 35% 25% at 85% 20%, rgba(34, 197, 94, 0.10) 0%, transparent 55%),
-    #080d08 !important;
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(var(--biz-accent-rgb), 0.28) 0%, rgba(var(--biz-accent-rgb), 0.08) 45%, transparent 70%),
+    radial-gradient(ellipse 40% 30% at 15% 40%, rgba(var(--biz-accent-rgb), 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 35% 25% at 85% 20%, rgba(var(--biz-accent-rgb), 0.10) 0%, transparent 55%),
+    var(--biz-background-hex) !important;
   min-height: 100vh;
   animation: glow-breathe 12s ease-in-out infinite;
 }

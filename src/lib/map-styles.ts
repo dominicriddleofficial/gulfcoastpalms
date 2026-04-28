@@ -35,7 +35,7 @@ export function buildNumberedMarkerIcon(
   return {
     path: google.maps.SymbolPath.CIRCLE,
     scale: 14,
-    fillColor: "#22c55e",
+    fillColor: "#00C853",
     fillOpacity: 1,
     strokeColor: "#ffffff",
     strokeWeight: 2.5,

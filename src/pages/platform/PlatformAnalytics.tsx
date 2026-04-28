@@ -12,11 +12,11 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const GREEN = "#22c55e";
-const GREEN_DIM = "rgba(34,197,94,0.5)";
-const GREEN_FAINT = "rgba(34,197,94,0.25)";
+const GREEN = "var(--accent-color)";
+const GREEN_DIM = "rgba(var(--biz-accent-rgb),0.5)";
+const GREEN_FAINT = "rgba(var(--biz-accent-rgb),0.25)";
 const RED = "#f87171";
-const CARD_BORDER = "rgba(34,197,94,0.15)";
+const CARD_BORDER = "rgba(var(--biz-accent-rgb),0.15)";
 
 function extractCity(addr: string | null): string {
   if (!addr) return "Unknown";
@@ -210,7 +210,7 @@ function StatCard({ label, value, sub, icon: Icon, highlight }: {
         <span className="font-body text-[10px] text-muted-foreground uppercase tracking-wider">{label}</span>
         <Icon className="w-4 h-4" style={{ color: GREEN_DIM }} />
       </div>
-      <p className={cn("font-display text-2xl font-bold tracking-tight", highlight ? "text-[#22c55e]" : "text-foreground")}>{value}</p>
+      <p className={cn("font-display text-2xl font-bold tracking-tight", highlight ? "text-primary" : "text-foreground")}>{value}</p>
       {sub && <p className="font-body text-[10px] text-muted-foreground">{sub}</p>}
     </div>
   );
@@ -383,7 +383,7 @@ export default function PlatformAnalytics() {
               disabled={syncing}
               className={cn(
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-body text-[11px] font-medium transition-all border",
-                "text-muted-foreground border-[rgba(34,197,94,0.2)] hover:text-foreground hover:border-[rgba(34,197,94,0.4)] hover:bg-[rgba(34,197,94,0.05)]",
+                "text-muted-foreground border-[rgba(var(--biz-accent-rgb),0.2)] hover:text-foreground hover:border-[rgba(var(--biz-accent-rgb),0.4)] hover:bg-[rgba(var(--biz-accent-rgb),0.05)]",
                 syncing && "opacity-60 pointer-events-none"
               )}
             >
@@ -398,7 +398,7 @@ export default function PlatformAnalytics() {
                   className={cn(
                     "px-3 py-1.5 rounded-lg font-body text-xs font-medium transition-all",
                     y === selectedYear
-                      ? "text-[#22c55e] border border-[rgba(34,197,94,0.4)] bg-[rgba(34,197,94,0.1)]"
+                      ? "text-primary border border-[rgba(var(--biz-accent-rgb),0.4)] bg-[rgba(var(--biz-accent-rgb),0.1)]"
                       : "text-muted-foreground border border-transparent hover:text-foreground"
                   )}
                 >
@@ -411,18 +411,18 @@ export default function PlatformAnalytics() {
 
         {/* SECTION 1 — Hero Revenue */}
         <div className="rounded-xl p-6 text-center" style={{
-          background: "rgba(34,197,94,0.05)",
+          background: "rgba(var(--biz-accent-rgb),0.05)",
           border: `1px solid ${CARD_BORDER}`,
         }}>
           <p className="font-body text-[10px] uppercase tracking-widest text-muted-foreground mb-2">{selectedYear} Revenue to Date</p>
-          <p className="font-display text-4xl md:text-5xl font-bold text-[#22c55e] tracking-tight">
+          <p className="font-display text-4xl md:text-5xl font-bold text-primary tracking-tight">
             ${curRevenue.toLocaleString()}
           </p>
           {prevSamePeriodRev > 0 && (
             <p className="font-body text-xs text-muted-foreground mt-2 flex items-center justify-center gap-1">
               vs {selectedYear - 1} same period: ${prevSamePeriodRev.toLocaleString()}
               {yoyPositive
-                ? <span className="text-[#22c55e] flex items-center gap-0.5"><TrendingUp className="w-3 h-3" /> {yoyPct}%</span>
+                ? <span className="text-primary flex items-center gap-0.5"><TrendingUp className="w-3 h-3" /> {yoyPct}%</span>
                 : <span className="text-[#f87171] flex items-center gap-0.5"><TrendingDown className="w-3 h-3" /> {Math.abs(yoyPct)}%</span>
               }
             </p>

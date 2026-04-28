@@ -18,15 +18,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { WorkspaceThemeProvider, getWorkspaceThemeFromBusiness, workspaceThemeVars } from "@/contexts/WorkspaceThemeContext";
 
-function PlatformAuraBackground({ accentColor }: { accentColor: string }) {
-  const rgb = (() => {
-    const hex = accentColor.replace("#", "");
-    const r = parseInt(hex.substring(0, 2), 16) || 34;
-    const g = parseInt(hex.substring(2, 4), 16) || 197;
-    const b = parseInt(hex.substring(4, 6), 16) || 94;
-    return `${r}, ${g}, ${b}`;
-  })();
+function PlatformAuraBackground() {
   return (
     <>
       <style>{`@keyframes platformAuraPulse { 0%,100% { opacity: 0.85; } 50% { opacity: 1; } }`}</style>
@@ -35,7 +29,7 @@ function PlatformAuraBackground({ accentColor }: { accentColor: string }) {
         aria-hidden
         className="pointer-events-none fixed inset-x-0 bottom-0 h-[70vh] z-0"
         style={{
-          background: `radial-gradient(ellipse 80% 60% at 50% 100%, rgba(${rgb}, 0.22), rgba(${rgb}, 0.08) 40%, transparent 70%)`,
+          background: "radial-gradient(ellipse 80% 60% at 50% 100%, rgba(var(--biz-accent-rgb), 0.22), rgba(var(--biz-accent-rgb), 0.08) 40%, transparent 70%)",
           animation: "platformAuraPulse 6s ease-in-out infinite",
         }}
       />
@@ -44,7 +38,7 @@ function PlatformAuraBackground({ accentColor }: { accentColor: string }) {
         aria-hidden
         className="pointer-events-none fixed inset-0 z-0"
         style={{
-          background: `linear-gradient(to top, rgba(${rgb}, 0.06) 0%, transparent 50%)`,
+          background: "linear-gradient(to top, rgba(var(--biz-accent-rgb), 0.06) 0%, transparent 50%)",
         }}
       />
     </>
@@ -172,7 +166,7 @@ function SidebarBizLogo({ business }: { business: { id: string; shortcode: strin
     );
   }
 
-  const color = business.default_business_color || "#22c55e";
+  const color = getWorkspaceThemeFromBusiness(business).accentHex;
   return (
     <div
       className="w-7 h-7 rounded-md flex items-center justify-center border"
@@ -242,11 +236,12 @@ export default function PlatformLayout({ children }: Props) {
     );
   }
 
-  const accentColor = selectedBiz?.default_business_color || (selectedBiz?.shortcode === "PPS" ? "#141414" : "#22c55e");
+  const workspaceTheme = getWorkspaceThemeFromBusiness(selectedBiz);
 
   return (
-    <div className="ops-theme min-h-screen bg-background flex relative">
-      <PlatformAuraBackground accentColor="#22c55e" />
+    <WorkspaceThemeProvider shortcode={workspaceTheme.shortcode}>
+    <div className="ops-theme min-h-screen bg-background flex relative" style={workspaceThemeVars(workspaceTheme)}>
+      <PlatformAuraBackground />
 
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
@@ -408,10 +403,11 @@ export default function PlatformLayout({ children }: Props) {
       </div>
 
       {/* Quick Action FAB */}
-      <QuickActionFAB brandColor={accentColor} />
+      <QuickActionFAB />
 
       {/* PWA install banner (mobile only, /platform scope) */}
       <InstallPrompt />
     </div>
+    </WorkspaceThemeProvider>
   );
 }
