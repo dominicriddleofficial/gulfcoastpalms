@@ -134,7 +134,8 @@ export function BusinessBadge({ biz, size = "sm" }: { biz: Business; size?: "xs"
 }
 
 export function InlineBadge({ shortcode, color }: { shortcode: string; color?: string }) {
-  const c = color || getWorkspaceThemeFromBusiness({ shortcode }).accentHex;
+  const themeColor = getWorkspaceThemeFromBusiness({ shortcode }).accentHex;
+  const c = shortcode ? themeColor : color || themeColor;
   return (
     <span
       className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-display font-bold tracking-tight"
