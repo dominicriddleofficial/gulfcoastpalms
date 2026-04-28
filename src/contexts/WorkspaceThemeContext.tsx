@@ -68,25 +68,25 @@ const GCP_THEME: WorkspaceTheme = {
 const PPS_THEME: WorkspaceTheme = {
   shortcode: "PPS",
   label: "Prestige Property Services",
-  primaryHex: "#1A237E",
-  accentHex: "#2979FF",
-  accentRgb: "41, 121, 255",
+  primaryHex: "#1A1A1A",
+  accentHex: "#F0F0F0",
+  accentRgb: "240, 240, 240",
   backgroundHex: "#1A1A1A",
   cardHex: "#2A2A2A",
-  statusBarHex: "#1A237E",
+  statusBarHex: "#1A1A1A",
   hsl: {
     background: "0 0% 6%",
     card: "0 0% 10%",
     popover: "0 0% 12%",
-    primary: "232 65% 30%",          // #1A237E
-    primaryForeground: "0 0% 100%",
+    primary: "0 0% 100%",            // neon white
+    primaryForeground: "0 0% 6%",
     secondary: "0 0% 14%",
     muted: "0 0% 13%",
-    accent: "217 100% 58%",          // #2979FF
-    accentForeground: "0 0% 100%",
-    border: "0 0% 18%",
-    input: "0 0% 18%",
-    ring: "217 100% 58%",
+    accent: "0 0% 94%",              // #F0F0F0
+    accentForeground: "0 0% 6%",
+    border: "0 0% 30%",
+    input: "0 0% 22%",
+    ring: "0 0% 100%",
   },
 };
 
