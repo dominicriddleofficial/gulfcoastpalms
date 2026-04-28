@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 const STORAGE_KEY = "platform_selected_business";
 
@@ -10,6 +11,7 @@ interface BusinessContextValue {
 const BusinessContext = createContext<BusinessContextValue | null>(null);
 
 export function BusinessProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [selectedBusinessId, setSelectedBusinessIdRaw] = useState<string | null>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
@@ -20,7 +22,17 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   });
 
   const setSelectedBusinessId = useCallback((id: string | null) => {
-    setSelectedBusinessIdRaw(id);
+    setSelectedBusinessIdRaw((prev) => {
+      // Workspace actually changed — wipe ALL cached query data so no
+      // dashboard/list/detail can leak data from the previous workspace.
+      // React Query will refetch every active query against the new business_id.
+      if (prev !== id) {
+        try {
+          queryClient.clear();
+        } catch {}
+      }
+      return id;
+    });
     try {
       if (id === null) {
         localStorage.removeItem(STORAGE_KEY);
@@ -28,7 +40,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(id));
       }
     } catch {}
-  }, []);
+  }, [queryClient]);
 
   return (
     <BusinessContext.Provider value={{ selectedBusinessId, setSelectedBusinessId }}>
