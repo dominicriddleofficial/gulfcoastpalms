@@ -52,7 +52,7 @@ export default function PlatformPayments() {
         <div className="grid grid-cols-2 gap-2">
           <div className="bg-card border border-border rounded-xl p-4">
             <div className="flex items-center gap-1.5 mb-1.5">
-              <ArrowDownLeft className="w-4 h-4 text-[#22c55e]" />
+              <ArrowDownLeft className="w-4 h-4 text-primary" />
               <span className="font-body text-[11px] font-medium text-muted-foreground">Total Received</span>
             </div>
             <p className="font-display text-2xl font-bold text-foreground">${totals.totalReceived.toLocaleString()}</p>
@@ -129,7 +129,7 @@ export default function PlatformPayments() {
                         </div>
                       </div>
                     </div>
-                    <p className={cn("font-display text-base font-bold shrink-0", pay.is_refund ? "text-destructive" : "text-[#22c55e]")}>
+                    <p className={cn("font-display text-base font-bold shrink-0", pay.is_refund ? "text-destructive" : "text-primary")}>
                       {pay.is_refund ? "-" : "+"}${Number(pay.amount).toLocaleString()}
                     </p>
                   </div>
@@ -163,7 +163,7 @@ function PaymentDetail({ payment, businesses }: { payment: PlatformPayment; busi
       {/* Amount */}
       <div className="bg-card border border-border rounded-xl p-5 text-center">
         <p className="font-body text-xs font-medium text-muted-foreground mb-1">Amount</p>
-        <p className={cn("font-display text-4xl font-extrabold tracking-tight", payment.is_refund ? "text-destructive" : "text-[#22c55e]")}>
+        <p className={cn("font-display text-4xl font-extrabold tracking-tight", payment.is_refund ? "text-destructive" : "text-primary")}>
           {payment.is_refund ? "-" : ""}${Number(payment.amount).toLocaleString()}
         </p>
         <div className="flex items-center justify-center gap-2 mt-2">
@@ -171,7 +171,7 @@ function PaymentDetail({ payment, businesses }: { payment: PlatformPayment; busi
           <span className={cn(
             "px-2 py-0.5 rounded-full text-[11px] font-body font-semibold border",
             payment.status === "completed"
-              ? "bg-[#22c55e]/15 text-[#22c55e] border-[#22c55e]/25"
+              ? "bg-primary/15 text-primary border-primary/25"
               : "bg-muted text-muted-foreground border-border"
           )}>
             {payment.status}

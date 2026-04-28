@@ -60,9 +60,9 @@ const defaultMapCenter = { lat: 30.4016, lng: -86.8636 };
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
   late: { bg: "#ef444420", text: "#ef4444", label: "Late" },
-  today: { bg: "#22c55e20", text: "#22c55e", label: "Today" },
+  today: { bg: "rgba(var(--biz-accent-rgb),0.13)", text: "var(--accent-color)", label: "Today" },
   scheduled: { bg: "#2563eb20", text: "#2563eb", label: "Scheduled" },
-  completed: { bg: "#22c55e20", text: "#22c55e", label: "Completed" },
+  completed: { bg: "rgba(var(--biz-accent-rgb),0.13)", text: "var(--accent-color)", label: "Completed" },
   upcoming: { bg: "#8b5cf620", text: "#8b5cf6", label: "Upcoming" },
 };
 
@@ -72,7 +72,7 @@ function getStatusKey(job: JobberJob) {
 }
 
 const BIZ_COLORS: Record<string, { border: string; badge: string; badgeText: string; label: string }> = {
-  "b0000000-0000-0000-0000-000000000001": { border: "#22c55e", badge: "rgba(34,197,94,0.15)", badgeText: "#22c55e", label: "GCP" },
+  "b0000000-0000-0000-0000-000000000001": { border: "var(--accent-color)", badge: "rgba(var(--biz-accent-rgb),0.15)", badgeText: "var(--accent-color)", label: "GCP" },
   "b0000000-0000-0000-0000-000000000002": { border: "#ffffff", badge: "rgba(255,255,255,0.12)", badgeText: "#ffffff", label: "PPS" },
 };
 
@@ -285,7 +285,7 @@ export default function PlatformSchedule() {
         {scheduleTab === "combined" && (
           <div className="flex items-center gap-4 font-body text-[11px] text-muted-foreground">
             <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#22c55e" }} />
+              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "var(--accent-color)" }} />
               Gulf Coast Palms
             </span>
             <span className="flex items-center gap-1.5">

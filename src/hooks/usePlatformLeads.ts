@@ -4,12 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 export type LeadStatus = "new" | "attempted_contact" | "contacted" | "estimate_scheduled" | "quoted" | "won" | "lost" | "dormant";
 
 export const LEAD_STATUSES: { value: LeadStatus; label: string; color: string }[] = [
-  { value: "new", label: "New", color: "#22c55e" },
+  { value: "new", label: "New", color: "var(--accent-color)" },
   { value: "attempted_contact", label: "Attempted", color: "#f59e0b" },
   { value: "contacted", label: "Contacted", color: "#3b82f6" },
   { value: "estimate_scheduled", label: "Estimate Scheduled", color: "#8b5cf6" },
   { value: "quoted", label: "Quoted", color: "#06b6d4" },
-  { value: "won", label: "Won", color: "#10b981" },
+  { value: "won", label: "Won", color: "var(--accent-color)" },
   { value: "lost", label: "Lost", color: "#ef4444" },
   { value: "dormant", label: "Dormant", color: "#6b7280" },
 ];

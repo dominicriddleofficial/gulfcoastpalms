@@ -5,7 +5,7 @@ export const JOB_STATUSES = [
   { value: "draft", label: "Draft", color: "#6b7280" },
   { value: "scheduled", label: "Scheduled", color: "#2563eb" },
   { value: "in_progress", label: "In Progress", color: "#f59e0b" },
-  { value: "completed", label: "Completed", color: "#22c55e" },
+  { value: "completed", label: "Completed", color: "var(--accent-color)" },
   { value: "invoiced", label: "Invoiced", color: "#8b5cf6" },
   { value: "closed", label: "Closed", color: "#64748b" },
   { value: "cancelled", label: "Cancelled", color: "#ef4444" },
