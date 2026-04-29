@@ -237,7 +237,10 @@ export default function PlatformLayout({ children }: Props) {
     return () => { cancelled = true; };
   }, [auth.userId, location.pathname, navigate]);
 
-  const currentPage = flattenNavItems(navSections).find(i => i.path === location.pathname);
+  const currentPage = flattenNavItems(navSections).find(i =>
+    i.path === location.pathname ||
+    (i.path !== "/platform" && location.pathname.startsWith(i.path + "/")),
+  );
   const pageTitle = currentPage?.label || "Platform";
 
   // Auto-sync Jobber if last sync > 30 minutes ago
@@ -327,7 +330,9 @@ export default function PlatformLayout({ children }: Props) {
         <nav className="flex-1 overflow-y-auto py-3 px-2.5 space-y-5">
           {navSections.map(section => {
             const renderItem = (item: NavItem) => {
-              const isActive = location.pathname === item.path;
+              const isActive =
+                location.pathname === item.path ||
+                (item.path !== "/platform" && location.pathname.startsWith(item.path + "/"));
               const className = cn(
                 "group flex items-center gap-2.5 px-3 py-2 min-h-[44px] rounded-lg font-body text-[13px] font-medium transition-all duration-150",
                 isActive
