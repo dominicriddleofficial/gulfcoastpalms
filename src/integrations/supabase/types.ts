@@ -878,6 +878,386 @@ export type Database = {
         }
         Relationships: []
       }
+      finance_expenses: {
+        Row: {
+          amount: number
+          business_id: string | null
+          category: string
+          created_at: string
+          expense_date: string
+          id: string
+          is_shared: boolean
+          notes: string | null
+          payment_method: string | null
+          receipt_url: string | null
+          recurring: boolean
+          recurring_frequency: string | null
+          subcategory: string | null
+          updated_at: string
+          vendor: string | null
+          workspace_id: string | null
+        }
+        Insert: {
+          amount?: number
+          business_id?: string | null
+          category?: string
+          created_at?: string
+          expense_date?: string
+          id?: string
+          is_shared?: boolean
+          notes?: string | null
+          payment_method?: string | null
+          receipt_url?: string | null
+          recurring?: boolean
+          recurring_frequency?: string | null
+          subcategory?: string | null
+          updated_at?: string
+          vendor?: string | null
+          workspace_id?: string | null
+        }
+        Update: {
+          amount?: number
+          business_id?: string | null
+          category?: string
+          created_at?: string
+          expense_date?: string
+          id?: string
+          is_shared?: boolean
+          notes?: string | null
+          payment_method?: string | null
+          receipt_url?: string | null
+          recurring?: boolean
+          recurring_frequency?: string | null
+          subcategory?: string | null
+          updated_at?: string
+          vendor?: string | null
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_expenses_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_expenses_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_income: {
+        Row: {
+          amount: number
+          business_id: string
+          created_at: string
+          customer_name: string | null
+          id: string
+          income_date: string
+          notes: string | null
+          service_type: string | null
+          source: string
+        }
+        Insert: {
+          amount?: number
+          business_id: string
+          created_at?: string
+          customer_name?: string | null
+          id?: string
+          income_date?: string
+          notes?: string | null
+          service_type?: string | null
+          source?: string
+        }
+        Update: {
+          amount?: number
+          business_id?: string
+          created_at?: string
+          customer_name?: string | null
+          id?: string
+          income_date?: string
+          notes?: string | null
+          service_type?: string | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_income_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_payroll_hours: {
+        Row: {
+          business_id: string
+          created_at: string
+          flat_amount: number | null
+          hours: number | null
+          id: string
+          member_id: string
+          notes: string | null
+          paid: boolean
+          paid_at: string | null
+          work_date: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          flat_amount?: number | null
+          hours?: number | null
+          id?: string
+          member_id: string
+          notes?: string | null
+          paid?: boolean
+          paid_at?: string | null
+          work_date: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          flat_amount?: number | null
+          hours?: number | null
+          id?: string
+          member_id?: string
+          notes?: string | null
+          paid?: boolean
+          paid_at?: string | null
+          work_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_payroll_hours_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_payroll_hours_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "finance_payroll_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_payroll_members: {
+        Row: {
+          active: boolean
+          business_id: string
+          classification: string
+          created_at: string
+          email: string | null
+          flat_rate: number | null
+          full_name: string
+          hourly_rate: number | null
+          id: string
+          notes: string | null
+          pay_type: string
+          phone: string | null
+          role: string | null
+          start_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          business_id: string
+          classification?: string
+          created_at?: string
+          email?: string | null
+          flat_rate?: number | null
+          full_name: string
+          hourly_rate?: number | null
+          id?: string
+          notes?: string | null
+          pay_type?: string
+          phone?: string | null
+          role?: string | null
+          start_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          business_id?: string
+          classification?: string
+          created_at?: string
+          email?: string | null
+          flat_rate?: number | null
+          full_name?: string
+          hourly_rate?: number | null
+          id?: string
+          notes?: string | null
+          pay_type?: string
+          phone?: string | null
+          role?: string | null
+          start_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_payroll_members_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_payroll_payments: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          member_id: string
+          notes: string | null
+          pay_date: string
+          pay_type: string
+          payment_method: string | null
+          period_end: string | null
+          period_start: string | null
+          rate_used: number | null
+          total_amount: number
+          total_hours: number | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          member_id: string
+          notes?: string | null
+          pay_date?: string
+          pay_type?: string
+          payment_method?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          rate_used?: number | null
+          total_amount?: number
+          total_hours?: number | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          member_id?: string
+          notes?: string | null
+          pay_date?: string
+          pay_type?: string
+          payment_method?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          rate_used?: number | null
+          total_amount?: number
+          total_hours?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_payroll_payments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_payroll_payments_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "finance_payroll_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_quarterly_taxes: {
+        Row: {
+          amount_paid: number
+          business_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          paid_on: string | null
+          quarter: number
+          tax_year: number
+        }
+        Insert: {
+          amount_paid?: number
+          business_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          paid_on?: string | null
+          quarter: number
+          tax_year: number
+        }
+        Update: {
+          amount_paid?: number
+          business_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          paid_on?: string | null
+          quarter?: number
+          tax_year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_quarterly_taxes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_tax_documents: {
+        Row: {
+          business_id: string
+          created_at: string
+          document_type: string
+          file_name: string | null
+          file_url: string
+          id: string
+          notes: string | null
+          person_name: string | null
+          tax_year: number
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          document_type: string
+          file_name?: string | null
+          file_url: string
+          id?: string
+          notes?: string | null
+          person_name?: string | null
+          tax_year: number
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          document_type?: string
+          file_name?: string | null
+          file_url?: string
+          id?: string
+          notes?: string | null
+          person_name?: string | null
+          tax_year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_tax_documents_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       geocode_cache: {
         Row: {
           address: string
