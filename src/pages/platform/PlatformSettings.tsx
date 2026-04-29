@@ -342,12 +342,13 @@ function JobberConnectionStatus({ businessId }: { businessId: string | null }) {
 
     // Data counts — scoped to active business so the diagnostic numbers
     // match what the rest of the platform shows for that workspace.
-    const filterBiz = <T extends { eq: (k: string, v: string) => T }>(q: T) =>
-      businessId ? q.eq("business_id", businessId) : q;
+    const clientsQ = supabase.from("jobber_clients").select("id", { count: "exact", head: true });
+    const jobsQ = supabase.from("jobber_jobs").select("id", { count: "exact", head: true });
+    const propsQ = supabase.from("jobber_properties").select("id", { count: "exact", head: true });
     const [{ count: c1 }, { count: c2 }, { count: c3 }] = await Promise.all([
-      filterBiz(supabase.from("jobber_clients").select("id", { count: "exact", head: true })),
-      filterBiz(supabase.from("jobber_jobs").select("id", { count: "exact", head: true })),
-      filterBiz(supabase.from("jobber_properties").select("id", { count: "exact", head: true })),
+      businessId ? clientsQ.eq("business_id", businessId) : clientsQ,
+      businessId ? jobsQ.eq("business_id", businessId) : jobsQ,
+      businessId ? propsQ.eq("business_id", businessId) : propsQ,
     ]);
     setDataCounts({ clients: c1 || 0, jobs: c2 || 0, properties: c3 || 0 });
   };
