@@ -13,7 +13,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Download, FileText, Upload, ExternalLink } from "lucide-react";
 import {
-  fmtUSD, downloadCSV, TAX_DOC_TYPES, DIRECT_COST_CATEGORIES, loadWorkspaceBusinesses,
+  fmtUSD, downloadCSV, TAX_DOC_TYPES, loadWorkspaceBusinesses,
 } from "@/lib/finance";
 
 interface TaxDoc {
@@ -373,8 +373,6 @@ function UploadDocForm({
       <Button onClick={submit} disabled={saving} className="w-full">
         {saving ? "Uploading…" : "Upload document"}
       </Button>
-      {/* Reference deductible categories so the import isn't dropped if used later */}
-      <p className="hidden">{Array.from(DIRECT_COST_CATEGORIES).join(",")}</p>
     </div>
   );
 }
