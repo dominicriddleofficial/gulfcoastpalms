@@ -169,15 +169,10 @@ export function usePlatformAuth() {
     if (selectedBusinessId === null) {
       const defaultBiz = enrichedAccess.find(a => a.default_business);
       if (defaultBiz) {
-        console.log("[usePlatformAuth] Selecting flagged default business:", defaultBiz.business_id);
         setSelectedBusinessId(defaultBiz.business_id);
       } else if (!owner && !isAdmin && enrichedAccess.length > 0) {
         // Non-owner/non-admin users MUST have a workspace selected, otherwise
         // useUserRole returns null → RoleRoute redirects → blank page loop.
-        console.log(
-          "[usePlatformAuth] Non-owner with no flagged default — auto-selecting first accessible business:",
-          enrichedAccess[0].business_id,
-        );
         setSelectedBusinessId(enrichedAccess[0].business_id);
       }
       // If owner and no default, leave as null (= "All Businesses")
@@ -187,10 +182,12 @@ export function usePlatformAuth() {
       if (!isValid && !owner && !isAdmin) {
         const defaultBiz = enrichedAccess.find(a => a.default_business);
         const fallback = defaultBiz?.business_id || enrichedAccess[0]?.business_id || null;
-        console.warn(
-          "[usePlatformAuth] Persisted business not accessible — falling back to:",
-          fallback,
-        );
+        if (import.meta.env.DEV) {
+          console.warn(
+            "[usePlatformAuth] Persisted business not accessible — falling back to:",
+            fallback,
+          );
+        }
         setSelectedBusinessId(fallback);
       }
     }

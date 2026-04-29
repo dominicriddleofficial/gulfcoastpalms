@@ -340,16 +340,20 @@ function JobberConnectionStatus({ businessId }: { businessId: string | null }) {
       .order("started_at", { ascending: false }).limit(1);
     setLastSyncLog(logs?.[0] || null);
 
-    // Data counts
+    // Data counts — scoped to active business so the diagnostic numbers
+    // match what the rest of the platform shows for that workspace.
+    const clientsQ = supabase.from("jobber_clients").select("id", { count: "exact", head: true });
+    const jobsQ = supabase.from("jobber_jobs").select("id", { count: "exact", head: true });
+    const propsQ = supabase.from("jobber_properties").select("id", { count: "exact", head: true });
     const [{ count: c1 }, { count: c2 }, { count: c3 }] = await Promise.all([
-      supabase.from("jobber_clients").select("id", { count: "exact", head: true }),
-      supabase.from("jobber_jobs").select("id", { count: "exact", head: true }),
-      supabase.from("jobber_properties").select("id", { count: "exact", head: true }),
+      businessId ? clientsQ.eq("business_id", businessId) : clientsQ,
+      businessId ? jobsQ.eq("business_id", businessId) : jobsQ,
+      businessId ? propsQ.eq("business_id", businessId) : propsQ,
     ]);
     setDataCounts({ clients: c1 || 0, jobs: c2 || 0, properties: c3 || 0 });
   };
 
-  useEffect(() => { loadDiagnostics(); }, []);
+  useEffect(() => { loadDiagnostics(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [businessId]);
 
   const handleSyncNow = async () => {
     setSyncing(true);

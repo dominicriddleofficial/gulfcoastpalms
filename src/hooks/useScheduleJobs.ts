@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfDay, endOfDay, format } from "date-fns";
+import { useBusinessContext } from "@/contexts/BusinessContext";
 
 export type ScheduleJob = {
   id: string;
@@ -38,6 +39,7 @@ export type ScheduleDiagnostics = {
 };
 
 export function useScheduleJobs(selectedDate: Date) {
+  const { selectedBusinessId } = useBusinessContext();
   const [jobs, setJobs] = useState<ScheduleJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [geocoding, setGeocoding] = useState(false);
@@ -55,15 +57,18 @@ export function useScheduleJobs(selectedDate: Date) {
     const dayEnd = endOfDay(selectedDate).toISOString();
 
     if (import.meta.env.DEV) {
-      console.log(`[Schedule] Fetching jobs for ${format(selectedDate, "yyyy-MM-dd")} | range: ${dayStart} → ${dayEnd} | fetchId: ${currentFetchId}`);
+      console.log(`[Schedule] Fetching jobs for ${format(selectedDate, "yyyy-MM-dd")} | range: ${dayStart} → ${dayEnd} | fetchId: ${currentFetchId} | biz: ${selectedBusinessId ?? "ALL"}`);
     }
 
-    const { data, error } = await supabase
+    let q = supabase
       .from("jobber_jobs")
       .select("*")
       .gte("scheduled_start", dayStart)
       .lte("scheduled_start", dayEnd)
       .order("scheduled_start", { ascending: true });
+    // CRITICAL: filter by active workspace so GCP/PPS data never bleeds.
+    if (selectedBusinessId) q = q.eq("business_id", selectedBusinessId);
+    const { data, error } = await q;
 
     // Stale response guard
     if (currentFetchId !== fetchIdRef.current) {
@@ -209,7 +214,7 @@ export function useScheduleJobs(selectedDate: Date) {
       lastFetchAt: new Date().toISOString(),
     });
     setLoading(false);
-  }, [selectedDate]);
+  }, [selectedDate, selectedBusinessId]);
 
   useEffect(() => {
     fetchJobs();

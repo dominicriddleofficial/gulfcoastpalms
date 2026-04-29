@@ -77,16 +77,19 @@ export default function PlatformJobs() {
   useEffect(() => {
     const fetchJobs = async () => {
       setLoading(true);
-      const { data } = await supabase
+      let q = supabase
         .from("jobber_jobs")
         .select("id, jobber_id, title, status, visit_status, scheduled_start, scheduled_end, client_name, client_phone, property_address, assigned_employee_names, internal_notes, job_number, total_amount, business_id")
         .order("scheduled_start", { ascending: false, nullsFirst: false });
+      // CRITICAL: filter by active workspace to prevent GCP/PPS data bleed.
+      if (selectedBusinessId) q = q.eq("business_id", selectedBusinessId);
+      const { data } = await q;
       setJobs((data as JobberJob[]) || []);
       setLoading(false);
     };
 
     fetchJobs();
-  }, []);
+  }, [selectedBusinessId]);
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = { all: jobs.length };
