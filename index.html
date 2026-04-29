@@ -7,6 +7,9 @@
     <meta name="description" content="Professional palm tree trimming, removal, and hurricane prep across Navarre, Gulf Breeze, and Pensacola. Free quotes — call (850) 910-1290.">
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Preconnect to backend (Supabase) — saves ~150-300ms on first API call -->
+    <link rel="preconnect" href="https://qczcwyqpnxknqbmwpvna.supabase.co" crossorigin />
+    <link rel="dns-prefetch" href="https://qczcwyqpnxknqbmwpvna.supabase.co" />
     <!-- Preload hero image for fast LCP -->
     <link rel="preload" as="image" href="https://qczcwyqpnxknqbmwpvna.supabase.co/storage/v1/object/public/site-assets/hero.jpg" />
     <!-- Non-render-blocking fonts -->
@@ -43,13 +46,36 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="GCP Ops">
   <!-- Google Analytics 4 + Google Ads -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-8FNKZVRWGY"></script>
   <script>
+    // Defer GA until the browser is idle so it doesn't compete with hero render.
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
     gtag('config', 'G-8FNKZVRWGY');
     gtag('config', 'AW-11356668550');
+    (function loadGA(){
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-8FNKZVRWGY';
+      document.head.appendChild(s);
+    });
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(function(){
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=G-8FNKZVRWGY';
+        document.head.appendChild(s);
+      }, { timeout: 3000 });
+    } else {
+      window.addEventListener('load', function(){
+        setTimeout(function(){
+          var s = document.createElement('script');
+          s.async = true;
+          s.src = 'https://www.googletagmanager.com/gtag/js?id=G-8FNKZVRWGY';
+          document.head.appendChild(s);
+        }, 1500);
+      });
+    }
   </script>
 </head>
 

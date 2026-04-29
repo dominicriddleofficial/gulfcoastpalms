@@ -27,6 +27,8 @@ export default defineConfig(({ mode }) => ({
           "vendor-react": ["react", "react-dom", "react-router-dom"],
           "vendor-query": ["@tanstack/react-query"],
           "vendor-motion": ["framer-motion"],
+          "vendor-icons": ["lucide-react"],
+          "vendor-supabase": ["@supabase/supabase-js"],
           "vendor-ui": [
             "@radix-ui/react-dialog",
             "@radix-ui/react-popover",
@@ -40,5 +42,19 @@ export default defineConfig(({ mode }) => ({
     },
     target: "es2020",
     cssCodeSplit: true,
+    minify: "esbuild",
+    cssMinify: true,
+    reportCompressedSize: false,
+    chunkSizeWarningLimit: 1000,
+  },
+  optimizeDeps: {
+    include: [
+      "react",
+      "react-dom",
+      "react-router-dom",
+      "@tanstack/react-query",
+      "lucide-react",
+      "@supabase/supabase-js",
+    ],
   },
 }));
