@@ -10,7 +10,7 @@ import PlatformBottomNav from "./PlatformBottomNav";
 import NotificationPanel from "./NotificationPanel";
 import InstallPrompt from "./InstallPrompt";
 import { Button } from "@/components/ui/button";
-import { prefetchRoute } from "@/lib/route-prefetch";
+import { prefetchRoute, prefetchAllPlatformRoutes } from "@/lib/route-prefetch";
 import {
   LayoutDashboard, Users, FileText, Briefcase, CalendarDays, Receipt,
   CreditCard, MessageSquare, ClipboardList, Settings, LogOut, Menu, X,
@@ -207,6 +207,13 @@ export default function PlatformLayout({ children }: Props) {
   const hideAnalytics = !!role && role !== "owner";
   const hideTeamMembers = !roleIsOwner;
   const navSections = buildNavSections(selectedBiz?.shortcode, hideAnalytics, hideTeamMembers);
+
+  // Once the platform shell is up, idle-prefetch every other platform route
+  // chunk so subsequent tab taps are instant.
+  useEffect(() => {
+    if (auth.loading) return;
+    prefetchAllPlatformRoutes();
+  }, [auth.loading]);
 
   // Force-password-change gate
   useEffect(() => {
