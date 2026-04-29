@@ -6,7 +6,7 @@ import {
   MessageSquare, ClipboardList, Settings, LogOut, X,
   UserPlus, FileCheck2, Upload as UploadIcon, GraduationCap, BookOpen,
   ShieldCheck, FileSpreadsheet, Files,
-  ClipboardCheck,
+  ClipboardCheck, Calculator,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -31,7 +31,10 @@ const buildMoreItems = (shortcode: string | undefined, hideAnalytics: boolean): 
   { label: "Comms", path: "/platform/communications", icon: MessageSquare },
   { label: "Tasks", path: "/platform/tasks", icon: ClipboardList },
   ...(shortcode === "PPS"
-    ? [{ label: "Job Checklists", path: "/platform/job-checklists", icon: ClipboardCheck } as MoreItem]
+    ? [
+        { label: "Job Checklists", path: "/platform/job-checklists", icon: ClipboardCheck } as MoreItem,
+        { label: "Job Pricing", path: "/platform/job-pricing", icon: Calculator } as MoreItem,
+      ]
     : []),
   { label: "Settings", path: "/platform/settings", icon: Settings },
   { label: "Applicants", path: "/admin/applicants", icon: UserPlus, external: true, group: "Team & HR" },

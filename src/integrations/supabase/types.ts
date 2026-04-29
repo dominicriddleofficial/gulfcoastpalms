@@ -3508,6 +3508,71 @@ export type Database = {
           },
         ]
       }
+      pps_job_estimates: {
+        Row: {
+          business_id: string
+          created_at: string
+          created_by: string | null
+          customer_name: string | null
+          id: string
+          job_date: string | null
+          line_items: Json
+          notes: string | null
+          options: Json
+          square_footage: number
+          suggested_min_price: number
+          suggested_premium_price: number
+          suggested_standard_price: number
+          system_type: string
+          total_cost: number
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          created_by?: string | null
+          customer_name?: string | null
+          id?: string
+          job_date?: string | null
+          line_items?: Json
+          notes?: string | null
+          options?: Json
+          square_footage?: number
+          suggested_min_price?: number
+          suggested_premium_price?: number
+          suggested_standard_price?: number
+          system_type: string
+          total_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          created_by?: string | null
+          customer_name?: string | null
+          id?: string
+          job_date?: string | null
+          line_items?: Json
+          notes?: string | null
+          options?: Json
+          square_footage?: number
+          suggested_min_price?: number
+          suggested_premium_price?: number
+          suggested_standard_price?: number
+          system_type?: string
+          total_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pps_job_estimates_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rate_limit_counters: {
         Row: {
           endpoint: string

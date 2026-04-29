@@ -115,6 +115,7 @@ const PlatformCrew = lazy(() => import("./pages/platform/PlatformCrew"));
 const PlatformTeam = lazy(() => import("./pages/platform/PlatformTeam"));
 const PlatformDocuments = lazy(() => import("./pages/platform/PlatformDocuments"));
 const PlatformJobChecklists = lazy(() => import("./pages/platform/PlatformJobChecklists"));
+const PlatformJobPricing = lazy(() => import("./pages/platform/PlatformJobPricing"));
 const PlatformChangePassword = lazy(() => import("./pages/platform/PlatformChangePassword"));
 
 
@@ -269,6 +270,7 @@ const App = () => (
                   <Route path="/platform/crew" element={<RoleRoute allow={["owner","manager","crew"]}><PlatformCrew /></RoleRoute>} />
                   <Route path="/platform/documents/:category" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformDocuments /></RoleRoute>} />
                   <Route path="/platform/job-checklists" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformJobChecklists /></RoleRoute>} />
+                  <Route path="/platform/job-pricing" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformJobPricing /></RoleRoute>} />
                   <Route path="/platform/change-password" element={<PlatformChangePassword />} />
                   
 
