@@ -64,7 +64,6 @@ export function useUserRole() {
         const best = (anyAccess ?? [])
           .map((a) => a.role_name as Exclude<PlatformRole, null>)
           .sort((a, b) => (priority[a] ?? 99) - (priority[b] ?? 99))[0] ?? null;
-        console.log("[useUserRole] No business selected — fallback role:", best);
         setRole(best);
         setIsLoading(false);
         return;
@@ -84,17 +83,19 @@ export function useUserRole() {
       if (cancelled) return;
 
       if (error) {
-        console.error("[useUserRole] get_user_role error:", error, {
-          userId: user.id,
-          businessId: selectedBusinessId,
-        });
+        if (import.meta.env.DEV) {
+          console.error("[useUserRole] get_user_role error:", error, {
+            userId: user.id,
+            businessId: selectedBusinessId,
+          });
+        }
       }
 
       const resolved: PlatformRole = error
         ? null
         : (data as PlatformRole) ?? null;
 
-      if (!resolved) {
+      if (!resolved && import.meta.env.DEV) {
         console.warn("[useUserRole] Resolved role is null", {
           userId: user.id,
           businessId: selectedBusinessId,

@@ -31,14 +31,18 @@ export default function RoleRoute({ allow, redirectTo = "/platform/crew", childr
   // Signed in but explicitly no access at all → show a clear error so the
   // user never sees a blank screen.
   if (accessDenied || (businessAccess.length === 0 && !role)) {
-    console.warn("[RoleRoute] Access denied — no business access for user");
+    if (import.meta.env.DEV) {
+      console.warn("[RoleRoute] Access denied — no business access for user");
+    }
     return <AccessDeniedScreen reason="no-access" />;
   }
 
   // No role resolved (extreme edge case — workspace exists but role lookup
   // returned null). Don't bounce into a redirect loop, surface the problem.
   if (!role) {
-    console.warn("[RoleRoute] Role resolved as null with allow =", allow);
+    if (import.meta.env.DEV) {
+      console.warn("[RoleRoute] Role resolved as null with allow =", allow);
+    }
     return <AccessDeniedScreen reason="no-role" />;
   }
 
@@ -51,10 +55,12 @@ export default function RoleRoute({ allow, redirectTo = "/platform/crew", childr
     };
     const allowed = safeRedirects[redirectTo];
     if (allowed && !allowed.includes(role)) {
-      console.warn(
-        "[RoleRoute] Role not allowed and redirect target also not allowed",
-        { role, allow, redirectTo },
-      );
+      if (import.meta.env.DEV) {
+        console.warn(
+          "[RoleRoute] Role not allowed and redirect target also not allowed",
+          { role, allow, redirectTo },
+        );
+      }
       return <AccessDeniedScreen reason="wrong-role" />;
     }
     return <Navigate to={redirectTo} replace />;
