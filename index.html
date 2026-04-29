@@ -53,28 +53,16 @@
     gtag('js', new Date());
     gtag('config', 'G-8FNKZVRWGY');
     gtag('config', 'AW-11356668550');
-    (function loadGA(){
+    function loadGA(){
       var s = document.createElement('script');
       s.async = true;
       s.src = 'https://www.googletagmanager.com/gtag/js?id=G-8FNKZVRWGY';
       document.head.appendChild(s);
-    });
+    }
     if ('requestIdleCallback' in window) {
-      requestIdleCallback(function(){
-        var s = document.createElement('script');
-        s.async = true;
-        s.src = 'https://www.googletagmanager.com/gtag/js?id=G-8FNKZVRWGY';
-        document.head.appendChild(s);
-      }, { timeout: 3000 });
+      requestIdleCallback(loadGA, { timeout: 3000 });
     } else {
-      window.addEventListener('load', function(){
-        setTimeout(function(){
-          var s = document.createElement('script');
-          s.async = true;
-          s.src = 'https://www.googletagmanager.com/gtag/js?id=G-8FNKZVRWGY';
-          document.head.appendChild(s);
-        }, 1500);
-      });
+      window.addEventListener('load', function(){ setTimeout(loadGA, 1500); });
     }
   </script>
 </head>
