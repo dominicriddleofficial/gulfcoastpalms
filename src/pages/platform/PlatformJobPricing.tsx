@@ -299,7 +299,7 @@ function EstimatorView({
       setSaving(false);
       return;
     }
-    const { error } = await supabase.from("pps_job_estimates").insert({
+    const { error } = await supabase.from("pps_job_estimates").insert([{
       business_id: businessId,
       created_by: userId,
       system_type: system,
@@ -312,7 +312,7 @@ function EstimatorView({
       suggested_min_price: result.minPrice,
       suggested_standard_price: result.standardPrice,
       suggested_premium_price: result.premiumPrice,
-    });
+    }]);
     setSaving(false);
     if (error) {
       toast({ title: "Save failed", description: error.message, variant: "destructive" });
