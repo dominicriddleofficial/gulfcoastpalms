@@ -340,16 +340,19 @@ function JobberConnectionStatus({ businessId }: { businessId: string | null }) {
       .order("started_at", { ascending: false }).limit(1);
     setLastSyncLog(logs?.[0] || null);
 
-    // Data counts
+    // Data counts — scoped to active business so the diagnostic numbers
+    // match what the rest of the platform shows for that workspace.
+    const filterBiz = <T extends { eq: (k: string, v: string) => T }>(q: T) =>
+      businessId ? q.eq("business_id", businessId) : q;
     const [{ count: c1 }, { count: c2 }, { count: c3 }] = await Promise.all([
-      supabase.from("jobber_clients").select("id", { count: "exact", head: true }),
-      supabase.from("jobber_jobs").select("id", { count: "exact", head: true }),
-      supabase.from("jobber_properties").select("id", { count: "exact", head: true }),
+      filterBiz(supabase.from("jobber_clients").select("id", { count: "exact", head: true })),
+      filterBiz(supabase.from("jobber_jobs").select("id", { count: "exact", head: true })),
+      filterBiz(supabase.from("jobber_properties").select("id", { count: "exact", head: true })),
     ]);
     setDataCounts({ clients: c1 || 0, jobs: c2 || 0, properties: c3 || 0 });
   };
 
-  useEffect(() => { loadDiagnostics(); }, []);
+  useEffect(() => { loadDiagnostics(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [businessId]);
 
   const handleSyncNow = async () => {
     setSyncing(true);
