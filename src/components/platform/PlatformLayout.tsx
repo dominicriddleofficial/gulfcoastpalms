@@ -16,7 +16,7 @@ import {
   CreditCard, MessageSquare, ClipboardList, Settings, LogOut, Menu, X,
   TrendingUp, Target, ChevronRight, UserPlus, FileCheck2, Upload as UploadIcon,
   GraduationCap, BookOpen, ShieldCheck, FileSpreadsheet, Files,
-  ClipboardCheck,
+  ClipboardCheck, Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -67,6 +67,7 @@ const buildNavSections = (
   shortcode: string | undefined,
   hideAnalytics: boolean,
   hideTeamMembers: boolean,
+  isOwner: boolean,
 ): NavSection[] => [
   {
     label: "Core",
@@ -89,6 +90,9 @@ const buildNavSections = (
     items: [
       { label: "Invoices", path: "/platform/invoices", icon: Receipt },
       { label: "Payments", path: "/platform/payments", icon: CreditCard },
+      ...(isOwner
+        ? [{ label: "Books", path: "/platform/finance", icon: Wallet } as NavItem]
+        : []),
     ],
   },
   {
@@ -206,7 +210,7 @@ export default function PlatformLayout({ children }: Props) {
   const contextLabel = selectedBiz ? selectedBiz.public_brand_name : "All Businesses";
   const hideAnalytics = !!role && role !== "owner";
   const hideTeamMembers = !roleIsOwner;
-  const navSections = buildNavSections(selectedBiz?.shortcode, hideAnalytics, hideTeamMembers);
+  const navSections = buildNavSections(selectedBiz?.shortcode, hideAnalytics, hideTeamMembers, roleIsOwner);
 
   // Once the platform shell is up, idle-prefetch every other platform route
   // chunk so subsequent tab taps are instant.
