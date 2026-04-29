@@ -443,7 +443,7 @@ function AddMemberForm({
   const submit = async () => {
     if (!full_name.trim()) return;
     setSaving(true);
-    const payload: Record<string, unknown> = {
+    const { error } = await supabase.from("finance_payroll_members").insert({
       business_id: businessId,
       full_name: full_name.trim(),
       role: role || null,
@@ -452,10 +452,9 @@ function AddMemberForm({
       start_date: start_date || null,
       phone: phone || null,
       email: email || null,
-    };
-    if (pay_type === "hourly") payload.hourly_rate = Number(rate) || 0;
-    else payload.flat_rate = Number(rate) || 0;
-    const { error } = await supabase.from("finance_payroll_members").insert(payload);
+      hourly_rate: pay_type === "hourly" ? Number(rate) || 0 : 0,
+      flat_rate: pay_type === "flat" ? Number(rate) || 0 : 0,
+    });
     setSaving(false);
     if (!error) onSaved();
   };
@@ -533,18 +532,17 @@ function AddHoursForm({
 
   const submit = async () => {
     setSaving(true);
-    const payload: Record<string, unknown> = {
+    const { error } = await supabase.from("finance_payroll_hours").insert({
       business_id: businessId,
       member_id: member.id,
       work_date,
       notes: notes || null,
-    };
-    if (member.pay_type === "flat") {
-      payload.flat_amount = Number(flatStr) || Number(member.flat_rate) || 0;
-    } else {
-      payload.hours = Number(hoursStr) || 0;
-    }
-    const { error } = await supabase.from("finance_payroll_hours").insert(payload);
+      hours: member.pay_type === "hourly" ? Number(hoursStr) || 0 : null,
+      flat_amount:
+        member.pay_type === "flat"
+          ? Number(flatStr) || Number(member.flat_rate) || 0
+          : null,
+    });
     setSaving(false);
     if (!error) onSaved();
   };
