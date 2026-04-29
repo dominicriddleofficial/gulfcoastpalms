@@ -307,7 +307,7 @@ function EstimatorView({
       job_date: date || null,
       square_footage: sqft,
       options: system === "metallic" ? { white_base_coat: whiteBase } : {},
-      line_items: result.lineItems as unknown as object,
+        line_items: result.lineItems as unknown as never,
       total_cost: result.totalCost,
       suggested_min_price: result.minPrice,
       suggested_standard_price: result.standardPrice,
