@@ -1,5 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 
 const STORAGE_KEY = "platform_selected_business";
 
@@ -11,7 +10,6 @@ interface BusinessContextValue {
 const BusinessContext = createContext<BusinessContextValue | null>(null);
 
 export function BusinessProvider({ children }: { children: ReactNode }) {
-  const queryClient = useQueryClient();
   const [selectedBusinessId, setSelectedBusinessIdRaw] = useState<string | null>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
@@ -22,17 +20,12 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   });
 
   const setSelectedBusinessId = useCallback((id: string | null) => {
-    setSelectedBusinessIdRaw((prev) => {
-      // Workspace actually changed — wipe ALL cached query data so no
-      // dashboard/list/detail can leak data from the previous workspace.
-      // React Query will refetch every active query against the new business_id.
-      if (prev !== id) {
-        try {
-          queryClient.clear();
-        } catch {}
-      }
-      return id;
-    });
+    // Do NOT clear the query cache on switch. Every workspace-scoped query
+    // already includes `selectedBusinessId` in its queryKey, so swapping the
+    // ID just causes React Query to read the OTHER workspace's cached slice
+    // instantly (or refetch in background if stale). Clearing the cache makes
+    // every switch feel like a cold load.
+    setSelectedBusinessIdRaw(id);
     try {
       if (id === null) {
         localStorage.removeItem(STORAGE_KEY);
@@ -40,7 +33,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(id));
       }
     } catch {}
-  }, [queryClient]);
+  }, []);
 
   return (
     <BusinessContext.Provider value={{ selectedBusinessId, setSelectedBusinessId }}>

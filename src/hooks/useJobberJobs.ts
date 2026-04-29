@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfDay, endOfDay, startOfWeek, endOfWeek, addDays } from "date-fns";
+import { startOfDay, endOfDay, addDays } from "date-fns";
+import { useBusinessContext } from "@/contexts/BusinessContext";
 
 export type JobberJob = {
   id: string;
@@ -22,25 +24,28 @@ export type JobberJob = {
 };
 
 export function useJobberJobs() {
-  const [jobs, setJobs] = useState<JobberJob[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { selectedBusinessId } = useBusinessContext();
+  const queryClient = useQueryClient();
 
-  const fetchJobs = useCallback(async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("jobber_jobs")
-      .select("*")
-      .order("scheduled_start", { ascending: true });
+  // Workspace-scoped + cached. Switching workspaces swaps to the other slice
+  // instantly; React Query refetches in the background if data is stale.
+  const { data: jobs = [], isLoading: loading } = useQuery({
+    queryKey: ["jobber-jobs", selectedBusinessId],
+    queryFn: async (): Promise<JobberJob[]> => {
+      let q = supabase
+        .from("jobber_jobs")
+        .select("*")
+        .order("scheduled_start", { ascending: true });
+      if (selectedBusinessId) q = q.eq("business_id", selectedBusinessId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data ?? []) as unknown as JobberJob[];
+    },
+  });
 
-    if (!error && data) {
-      setJobs(data as unknown as JobberJob[]);
-    }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    fetchJobs();
-  }, [fetchJobs]);
+  const fetchJobs = useCallback(() => {
+    return queryClient.invalidateQueries({ queryKey: ["jobber-jobs", selectedBusinessId] });
+  }, [queryClient, selectedBusinessId]);
 
   const getJobsForDate = useCallback(
     (date: Date) => {

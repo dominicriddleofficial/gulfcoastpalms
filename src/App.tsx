@@ -157,7 +157,45 @@ const RouteTracker = () => {
   return null;
 };
 
-const queryClient = new QueryClient();
+// Tuned for "stale-while-revalidate" feel:
+// - Cached data stays fresh for 5 minutes → instant tab/workspace switches
+// - Kept in memory for 30 minutes → coming back to a screen never shows a spinner
+// - No refetch on window focus / mount when fresh → no surprise reloads
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      retry: 1,
+    },
+  },
+});
+
+// Lightweight fallback used while a lazy route chunk is loading.
+// Platform routes show a thin progress bar instead of a full-page spinner so
+// the layout shell appears instantly and the tab feels native.
+function PlatformRouteFallback() {
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="h-0.5 w-full bg-primary/20 overflow-hidden">
+        <div className="h-full w-1/3 bg-primary animate-[loading_1s_ease-in-out_infinite]" />
+      </div>
+      <style>{`@keyframes loading { 0% { transform: translateX(-100%); } 100% { transform: translateX(400%); } }`}</style>
+    </div>
+  );
+}
+
+function RouteSuspenseFallback() {
+  const { pathname } = useLocation();
+  if (pathname.startsWith("/platform")) return <PlatformRouteFallback />;
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
 
 const App = () => (
   <HelmetProvider>
@@ -169,7 +207,7 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <RouteTracker />
-              <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>}>
+              <Suspense fallback={<RouteSuspenseFallback />}>
                 <Routes>
                   {/* Eagerly loaded public routes */}
                   <Route path="/" element={<Index />} />
