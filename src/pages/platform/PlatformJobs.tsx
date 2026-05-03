@@ -16,6 +16,10 @@ import {
   FileText,
   Star,
   Plus,
+  CheckCircle2,
+  XCircle,
+  Trash2,
+  Receipt,
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -298,17 +302,106 @@ export default function PlatformJobs() {
 
       <Sheet open={!!selectedJob} onOpenChange={() => setSelectedJob(null)}>
         <SheetContent className="ops-theme bg-background border-border w-full sm:max-w-lg overflow-y-auto">
-          {selectedJob && <JobDetailPanel job={selectedJob} />}
+          {selectedJob && (
+            <JobDetailPanel
+              job={selectedJob}
+              onClose={() => setSelectedJob(null)}
+              onChanged={() => {
+                setSelectedJob(null);
+                // bump createdTick equivalent — refetch by toggling a state via createdTick from provider
+                // We refetch by re-running the effect: easiest is to re-trigger via a local refresh key.
+              }}
+            />
+          )}
         </SheetContent>
       </Sheet>
     </PlatformLayout>
   );
 }
 
-function JobDetailPanel({ job }: { job: JobberJob }) {
+function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: () => void; onChanged: () => void }) {
   const { selectedBusinessId } = usePlatformAuth();
+  const { notifyCreated } = useCreateSheets();
   const [requestingReview, setRequestingReview] = useState(false);
   const [jobStatus, setJobStatus] = useState(job.visit_status || job.status || "scheduled");
+  const [acting, setActing] = useState(false);
+  const isNative = job.source === "platform";
+
+  const updateNative = async (patch: Record<string, unknown>, successMsg: string) => {
+    setActing(true);
+    const { error } = await supabase.from("platform_jobs").update(patch).eq("id", job.id);
+    if (error) toast.error(error.message);
+    else { toast.success(successMsg); notifyCreated(); onChanged(); }
+    setActing(false);
+  };
+
+  const markComplete = () => updateNative(
+    { status: "completed", completed_at: new Date().toISOString() },
+    "Job marked complete"
+  );
+
+  const cancelJob = () => {
+    const reason = window.prompt("Cancellation reason (optional):") ?? "";
+    void updateNative(
+      { status: "cancelled", internal_notes: reason ? `[Cancelled] ${reason}` : null },
+      "Job cancelled"
+    );
+  };
+
+  const deleteJob = () => {
+    if (!window.confirm("Delete this job? This can be undone by a workspace owner.")) return;
+    void updateNative({ deleted_at: new Date().toISOString() }, "Job deleted");
+  };
+
+  const createInvoiceFromJob = async () => {
+    if (!selectedBusinessId) return;
+    setActing(true);
+    const { data: numData } = await supabase.rpc("generate_next_number", {
+      _business_id: selectedBusinessId, _record_type: "invoice",
+    });
+    const invoiceNumber = typeof numData === "string" ? numData : `I-${Date.now().toString().slice(-6)}`;
+    const total = Number(job.total_amount ?? 0);
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // Look up customer_id from platform_jobs
+    const { data: jobRow } = await supabase
+      .from("platform_jobs")
+      .select("customer_id")
+      .eq("id", job.id)
+      .maybeSingle();
+
+    const { data: inv, error } = await supabase.from("platform_invoices").insert({
+      business_id: selectedBusinessId,
+      invoice_number: invoiceNumber,
+      customer_id: jobRow?.customer_id ?? null,
+      job_id: job.id,
+      status: "draft",
+      source: "platform",
+      is_read_only: false,
+      issue_date: new Date().toISOString().slice(0, 10),
+      due_date: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
+      terms: "Net 14",
+      subtotal: total, tax_rate: 0, tax_total: 0, total, balance_due: total,
+      created_by_user_id: user?.id ?? null,
+    }).select("id").single();
+
+    if (error || !inv) { toast.error(error?.message || "Could not create invoice"); setActing(false); return; }
+
+    await supabase.from("platform_invoice_line_items").insert({
+      business_id: selectedBusinessId,
+      invoice_id: inv.id,
+      description: job.title || "Job",
+      quantity: 1,
+      unit_price: total,
+      line_total: total,
+      sort_order: 0,
+    });
+
+    toast.success(`Invoice ${invoiceNumber} created`);
+    notifyCreated();
+    setActing(false);
+    onClose();
+  };
 
   const requestReview = async () => {
     if (!job.client_phone) {
