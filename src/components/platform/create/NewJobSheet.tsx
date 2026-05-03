@@ -94,6 +94,7 @@ export default function NewJobSheet({ open, onClose, prefill }: Props) {
       business_id: selectedBusinessId,
       job_number: jobNumber,
       customer_id: customer.id,
+      quote_id: prefill?.fromQuoteId ?? null,
       title: title.trim(),
       description: description || null,
       status: "scheduled",
