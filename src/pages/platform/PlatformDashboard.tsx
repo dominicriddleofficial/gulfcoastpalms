@@ -126,7 +126,7 @@ export default function PlatformDashboard() {
   const monthEnd = endOfMonth(now).toISOString();
 
   // Card 1 — Revenue This Week
-  const { data: revenueThisWeek = 0 } = useQuery({
+  const { data: revenueThisWeek, isPending: revWeekPending } = useQuery({
     queryKey: ["dashboard-rev-week", selectedBusinessId],
     enabled: queriesReady,
     queryFn: async () => {
@@ -142,7 +142,7 @@ export default function PlatformDashboard() {
   });
 
   // Card 2 — Revenue This Month
-  const { data: revenueThisMonth = 0 } = useQuery({
+  const { data: revenueThisMonth, isPending: revMonthPending } = useQuery({
     queryKey: ["dashboard-rev-month", selectedBusinessId],
     enabled: queriesReady,
     queryFn: async () => {
@@ -158,7 +158,7 @@ export default function PlatformDashboard() {
   });
 
   // Card 3 — Jobs This Week
-  const { data: jobsThisWeek = 0 } = useQuery({
+  const { data: jobsThisWeek, isPending: jobsWeekPending } = useQuery({
     queryKey: ["dashboard-jobs-week", selectedBusinessId],
     enabled: queriesReady,
     queryFn: async () => {
@@ -174,7 +174,7 @@ export default function PlatformDashboard() {
   });
 
   // Card 4 — Jobs This Month
-  const { data: jobsThisMonth = 0 } = useQuery({
+  const { data: jobsThisMonth, isPending: jobsMonthPending } = useQuery({
     queryKey: ["jobs-this-month", selectedBusinessId],
     enabled: queriesReady,
     queryFn: async () => {
@@ -273,10 +273,10 @@ export default function PlatformDashboard() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <KPICard label="Revenue This Week" value={`$${Math.round(revenueThisWeek).toLocaleString()}`} icon={TrendingUp} />
-            <KPICard label="Revenue This Month" value={`$${Math.round(revenueThisMonth).toLocaleString()}`} icon={DollarSign} />
-            <KPICard label="Jobs This Week" value={jobsThisWeek.toString()} icon={Briefcase} />
-            <KPICard label="Jobs This Month" value={jobsThisMonth.toString()} icon={Calendar} />
+            <KPICard label="Revenue This Week" value={revWeekPending || revenueThisWeek === undefined ? "—" : `$${Math.round(revenueThisWeek).toLocaleString()}`} icon={TrendingUp} />
+            <KPICard label="Revenue This Month" value={revMonthPending || revenueThisMonth === undefined ? "—" : `$${Math.round(revenueThisMonth).toLocaleString()}`} icon={DollarSign} />
+            <KPICard label="Jobs This Week" value={jobsWeekPending || jobsThisWeek === undefined ? "—" : jobsThisWeek.toString()} icon={Briefcase} />
+            <KPICard label="Jobs This Month" value={jobsMonthPending || jobsThisMonth === undefined ? "—" : jobsThisMonth.toString()} icon={Calendar} />
           </div>
 
           {/* Chart */}
