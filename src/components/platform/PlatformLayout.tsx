@@ -5,7 +5,6 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 import BusinessSwitcher from "./BusinessSwitcher";
 import QuickActionFAB from "./QuickActionFAB";
-import { CreateSheetsProvider } from "./CreateSheetsProvider";
 import UniversalSearch from "./UniversalSearch";
 import PlatformBottomNav from "./PlatformBottomNav";
 import NotificationPanel from "./NotificationPanel";
@@ -297,7 +296,6 @@ export default function PlatformLayout({ children }: Props) {
 
   return (
     <WorkspaceThemeProvider shortcode={workspaceTheme.shortcode}>
-    <CreateSheetsProvider>
     <div className="ops-theme min-h-screen bg-background flex relative" style={workspaceThemeVars(workspaceTheme)}>
       <PlatformAuraBackground />
 
@@ -468,7 +466,6 @@ export default function PlatformLayout({ children }: Props) {
       {/* PWA install banner (mobile only, /platform scope) */}
       <InstallPrompt />
     </div>
-    </CreateSheetsProvider>
     </WorkspaceThemeProvider>
   );
 }
