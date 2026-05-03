@@ -136,7 +136,7 @@ export default function PlatformJobNew() {
         <section className="bg-card/40 border border-border rounded-xl p-4 mb-4 space-y-3">
           <SectionHeader icon={Briefcase} label="Job Details" />
           <div><Label>Title *</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Palm trim — 8 palms" /></div>
-          <div><Label>Description</Label><Textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} /></div>
+          <div><Label>Description</Label><Textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional — describe the work, materials, special considerations…" /></div>
           <div>
             <Label>Address</Label>
             <Input
