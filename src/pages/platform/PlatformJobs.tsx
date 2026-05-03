@@ -367,10 +367,13 @@ function JobDetailPanel({ job }: { job: JobberJob }) {
 
       <div>
         <h3 className="font-body text-lg font-semibold text-foreground">{job.title || "Untitled Job"}</h3>
-        <p className="font-body text-xs text-muted-foreground mt-1">Managed in Jobber</p>
+        <p className="font-body text-xs text-muted-foreground mt-1">
+          {job.source === "platform" ? "Native job — created in platform" : "Synced from Jobber — edit in Jobber until migration"}
+        </p>
       </div>
 
-      {/* Job Status Progress */}
+      {/* Job Status Progress (Jobber-synced flow uses jobber_jobs table) */}
+      {job.source !== "platform" && (
       <JobStatusProgress
         jobId={job.id}
         businessId={job.business_id}
@@ -379,6 +382,7 @@ function JobDetailPanel({ job }: { job: JobberJob }) {
         currentStatus={jobStatus}
         onStatusChange={(s) => setJobStatus(s)}
       />
+      )}
 
       {isCompleted && job.client_phone && (
         <div className="flex gap-2">
@@ -406,7 +410,7 @@ function JobDetailPanel({ job }: { job: JobberJob }) {
       )}
 
       {/* Platform-managed crew assignment (drives /platform/crew visibility) */}
-      {job.business_id && (
+      {job.business_id && job.source !== "platform" && (
         <AssignedCrewPicker jobberJobId={job.id} businessId={job.business_id} />
       )}
 
