@@ -12,13 +12,14 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import {
   Search, Plus, FileText, DollarSign, Clock, Hash, Trash2,
   Send, CheckCircle, XCircle, History, ChevronRight, Receipt,
-  Link2, MoreHorizontal, Copy, TrendingUp, Eye,
+  Link2, MoreHorizontal, Copy, TrendingUp, Eye, Briefcase,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import QuoteBuilder from "@/components/platform/billing/QuoteBuilder";
+import { useCreateSheets } from "@/components/platform/CreateSheetsProvider";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
