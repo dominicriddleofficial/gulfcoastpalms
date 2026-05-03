@@ -260,6 +260,14 @@ export default function PlatformJobs() {
                       <Hash className="w-3 h-3 text-primary" />
                       <span className="font-body text-[11px] text-muted-foreground font-mono">{job.job_number || "No #"}</span>
                       <JobStatusBadge job={job} />
+                      <span className={cn(
+                        "inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-body font-medium",
+                        job.source === "platform"
+                          ? "bg-primary/15 text-primary border border-primary/20"
+                          : "bg-muted text-muted-foreground border border-border"
+                      )}>
+                        {job.source === "platform" ? "Native" : "Jobber"}
+                      </span>
                     </div>
                     <p className="font-body text-sm font-medium text-foreground truncate">
                       {job.title || job.client_name || "Untitled Job"}
