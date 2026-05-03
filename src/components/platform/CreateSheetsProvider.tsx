@@ -1,22 +1,30 @@
+/**
+ * Lightweight provider — modal sheets removed. Creation flows now navigate to
+ * full-page editors at /platform/{entity}s/new. We keep `notifyCreated` /
+ * `createdTick` so list pages can refresh after a save, and a `navigateToCreate`
+ * helper so call sites still pass prefill via router state.
+ */
 import { createContext, useContext, useState, ReactNode, useCallback } from "react";
-import NewJobSheet, { JobPrefill } from "./create/NewJobSheet";
-import NewCustomerSheet from "./create/NewCustomerSheet";
-import NewQuoteSheet from "./create/NewQuoteSheet";
-import NewInvoiceSheet, { InvoicePrefill } from "./create/NewInvoiceSheet";
-import NewLeadSheet from "./create/NewLeadSheet";
+import { useNavigate } from "react-router-dom";
 
-export type CreateSheetKind = "job" | "customer" | "quote" | "invoice" | "lead" | null;
+export type CreateKind = "job" | "customer" | "quote" | "invoice" | "lead";
 
-export interface CreateSheetPrefill {
-  job?: JobPrefill;
-  invoice?: InvoicePrefill;
+export interface JobPrefillState {
+  customer?: { id: string; display_name: string; phone: string | null; email: string | null } | null;
+  title?: string;
+  description?: string;
+  total?: number | null;
+  fromQuoteId?: string;
+}
+export interface InvoicePrefillState {
+  customer?: { id: string; display_name: string; phone: string | null; email: string | null } | null;
+  items?: Array<{ description: string; quantity: number; unit_price: number }>;
+  fromJobId?: string;
 }
 
 interface CreateSheetsContextValue {
-  open: (kind: Exclude<CreateSheetKind, null>, prefill?: CreateSheetPrefill[keyof CreateSheetPrefill]) => void;
-  close: () => void;
-  current: CreateSheetKind;
-  prefill: CreateSheetPrefill;
+  /** Navigates to /platform/{kind}s/new, optionally with prefill in router state */
+  open: (kind: CreateKind, prefill?: JobPrefillState | InvoicePrefillState) => void;
   /** Bumps every time a record is created so list pages can refetch */
   createdTick: number;
   notifyCreated: () => void;
@@ -30,26 +38,26 @@ export function useCreateSheets() {
   return v;
 }
 
-export function CreateSheetsProvider({ children }: { children: ReactNode }) {
-  const [current, setCurrent] = useState<CreateSheetKind>(null);
-  const [prefill, setPrefill] = useState<CreateSheetPrefill>({});
-  const [createdTick, setCreatedTick] = useState(0);
+const ROUTE_FOR: Record<CreateKind, string> = {
+  job: "/platform/jobs/new",
+  customer: "/platform/customers/new",
+  quote: "/platform/quotes/new",
+  invoice: "/platform/invoices/new",
+  lead: "/platform/leads/new",
+};
 
-  const open = useCallback((kind: Exclude<CreateSheetKind, null>, data?: CreateSheetPrefill[keyof CreateSheetPrefill]) => {
-    setPrefill(data ? { [kind]: data } as CreateSheetPrefill : {});
-    setCurrent(kind);
-  }, []);
-  const close = useCallback(() => { setCurrent(null); setPrefill({}); }, []);
+export function CreateSheetsProvider({ children }: { children: ReactNode }) {
+  const [createdTick, setCreatedTick] = useState(0);
+  const navigate = useNavigate();
+
+  const open = useCallback((kind: CreateKind, prefill?: JobPrefillState | InvoicePrefillState) => {
+    navigate(ROUTE_FOR[kind], prefill ? { state: { prefill } } : undefined);
+  }, [navigate]);
   const notifyCreated = useCallback(() => setCreatedTick((t) => t + 1), []);
 
   return (
-    <Ctx.Provider value={{ open, close, current, prefill, createdTick, notifyCreated }}>
+    <Ctx.Provider value={{ open, createdTick, notifyCreated }}>
       {children}
-      <NewJobSheet open={current === "job"} onClose={close} prefill={prefill.job} />
-      <NewCustomerSheet open={current === "customer"} onClose={close} />
-      <NewQuoteSheet open={current === "quote"} onClose={close} />
-      <NewInvoiceSheet open={current === "invoice"} onClose={close} prefill={prefill.invoice} />
-      <NewLeadSheet open={current === "lead"} onClose={close} />
     </Ctx.Provider>
   );
 }
