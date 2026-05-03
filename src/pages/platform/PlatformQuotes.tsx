@@ -12,13 +12,14 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import {
   Search, Plus, FileText, DollarSign, Clock, Hash, Trash2,
   Send, CheckCircle, XCircle, History, ChevronRight, Receipt,
-  Link2, MoreHorizontal, Copy, TrendingUp, Eye,
+  Link2, MoreHorizontal, Copy, TrendingUp, Eye, Briefcase,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import QuoteBuilder from "@/components/platform/billing/QuoteBuilder";
+import { useCreateSheets } from "@/components/platform/CreateSheetsProvider";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -320,6 +321,7 @@ function QuoteDetail({ quote, biz, businesses, onUpdate, onClose }: {
   businesses: Array<Record<string, unknown>>;
   onUpdate: () => void; onClose: () => void;
 }) {
+  const { open: openSheet } = useCreateSheets();
   const [lineItems, setLineItems] = useState<QuoteLineItem[]>([]);
   const [versions, setVersions] = useState<Array<Record<string, unknown>>>([]);
   const [showVersions, setShowVersions] = useState(false);
@@ -388,6 +390,7 @@ function QuoteDetail({ quote, biz, businesses, onUpdate, onClose }: {
           </>
         )}
         {isApproved && (
+          <>
           <Button size="sm" className="gap-1 text-xs" disabled={converting}
             onClick={async () => {
               setConverting(true);
@@ -397,6 +400,25 @@ function QuoteDetail({ quote, biz, businesses, onUpdate, onClose }: {
             }}>
             <Receipt className="w-3 h-3" /> {converting ? "Converting..." : "Convert to Invoice"}
           </Button>
+          <Button size="sm" variant="outline" className="gap-1 text-xs"
+            onClick={() => {
+              openSheet("job", {
+                customer: quote.customer_id ? {
+                  id: quote.customer_id,
+                  display_name: quote.customer_name || "Customer",
+                  phone: null,
+                  email: null,
+                } : null,
+                title: `Quote ${quote.quote_number}`,
+                description: lineItems.map(li => `• ${li.description} (${li.quantity} ${li.unit})`).join("\n") || undefined,
+                total: quote.total ?? null,
+                fromQuoteId: quote.id,
+              });
+              onClose();
+            }}>
+            <Briefcase className="w-3 h-3" /> Convert to Job
+          </Button>
+          </>
         )}
       </div>
 

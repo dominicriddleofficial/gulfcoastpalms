@@ -321,7 +321,7 @@ export default function PlatformJobs() {
 
 function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: () => void; onChanged: () => void }) {
   const { selectedBusinessId } = usePlatformAuth();
-  const { notifyCreated } = useCreateSheets();
+  const { notifyCreated, open: openSheet } = useCreateSheets();
   const [requestingReview, setRequestingReview] = useState(false);
   const [jobStatus, setJobStatus] = useState(job.visit_status || job.status || "scheduled");
   const [acting, setActing] = useState(false);
@@ -361,52 +361,24 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
 
   const createInvoiceFromJob = async () => {
     if (!selectedBusinessId) return;
-    setActing(true);
-    const { data: numData } = await supabase.rpc("generate_next_number", {
-      _business_id: selectedBusinessId, _record_type: "invoice",
-    });
-    const invoiceNumber = typeof numData === "string" ? numData : `I-${Date.now().toString().slice(-6)}`;
-    const total = Number(job.total_amount ?? 0);
-    const { data: { user } } = await supabase.auth.getUser();
-
-    // Look up customer_id from platform_jobs
+    // Look up customer_id so the sheet can preselect the customer
     const { data: jobRow } = await supabase
       .from("platform_jobs")
-      .select("customer_id")
+      .select("customer_id, platform_customers(display_name, phone, email)")
       .eq("id", job.id)
       .maybeSingle();
 
-    const { data: inv, error } = await supabase.from("platform_invoices").insert({
-      business_id: selectedBusinessId,
-      invoice_number: invoiceNumber,
-      customer_id: jobRow?.customer_id ?? null,
-      job_id: job.id,
-      status: "draft",
-      source: "platform",
-      is_read_only: false,
-      issue_date: new Date().toISOString().slice(0, 10),
-      due_date: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
-      terms: "Net 14",
-      subtotal: total, tax_rate: 0, tax_total: 0, total, balance_due: total,
-      created_by_user_id: user?.id ?? null,
-    }).select("id").single();
+    const total = Number(job.total_amount ?? 0);
+    const c = jobRow?.platform_customers as { display_name: string; phone: string | null; email: string | null } | null;
 
-    if (error || !inv) { toast.error(error?.message || "Could not create invoice"); setActing(false); return; }
-
-    await supabase.from("platform_invoice_line_items").insert({
-      business_id: selectedBusinessId,
-      invoice_id: inv.id,
-      description: job.title || "Job",
-      quantity: 1,
-      unit_price: total,
-      line_total: total,
-      sort_order: 0,
-    });
-
-    toast.success(`Invoice ${invoiceNumber} created`);
-    notifyCreated();
-    setActing(false);
     onClose();
+    openSheet("invoice", {
+      customer: jobRow?.customer_id
+        ? { id: jobRow.customer_id, display_name: c?.display_name || job.client_name || "Customer", phone: c?.phone ?? null, email: c?.email ?? null }
+        : null,
+      items: [{ description: job.title || "Job", quantity: 1, unit_price: total }],
+      fromJobId: job.id,
+    });
   };
 
   const requestReview = async () => {
