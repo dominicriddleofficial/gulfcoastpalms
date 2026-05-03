@@ -118,6 +118,11 @@ const PlatformJobChecklists = lazy(() => import("./pages/platform/PlatformJobChe
 const PlatformJobPricing = lazy(() => import("./pages/platform/PlatformJobPricing"));
 const PlatformChangePassword = lazy(() => import("./pages/platform/PlatformChangePassword"));
 const PlatformFinance = lazy(() => import("./pages/platform/PlatformFinance"));
+const PlatformJobNew = lazy(() => import("./pages/platform/PlatformJobNew"));
+const PlatformCustomerNew = lazy(() => import("./pages/platform/PlatformCustomerNew"));
+const PlatformLeadNew = lazy(() => import("./pages/platform/PlatformLeadNew"));
+const PlatformInvoiceNew = lazy(() => import("./pages/platform/PlatformInvoiceNew"));
+const PlatformQuoteNew = lazy(() => import("./pages/platform/PlatformQuoteNew"));
 
 
 // Payment pages — lazy
@@ -313,6 +318,13 @@ const App = () => (
                   <Route path="/platform/change-password" element={<PlatformChangePassword />} />
                   <Route path="/platform/finance" element={<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformFinance /></RoleRoute>} />
                   <Route path="/platform/finance/:section" element={<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformFinance /></RoleRoute>} />
+
+                  {/* Platform — full-page creation editors */}
+                  <Route path="/platform/jobs/new" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformJobNew /></RoleRoute>} />
+                  <Route path="/platform/customers/new" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformCustomerNew /></RoleRoute>} />
+                  <Route path="/platform/leads/new" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformLeadNew /></RoleRoute>} />
+                  <Route path="/platform/quotes/new" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformQuoteNew /></RoleRoute>} />
+                  <Route path="/platform/invoices/new" element={<RoleRoute allow={["owner","office_manager"]}><PlatformInvoiceNew /></RoleRoute>} />
                   
 
                   {/* Payment & Quote public pages */}
