@@ -291,6 +291,7 @@ export default function PlatformLayout({ children }: Props) {
 
   return (
     <WorkspaceThemeProvider shortcode={workspaceTheme.shortcode}>
+    <CreateSheetsProvider>
     <div className="ops-theme min-h-screen bg-background flex relative" style={workspaceThemeVars(workspaceTheme)}>
       <PlatformAuraBackground />
 
@@ -461,6 +462,7 @@ export default function PlatformLayout({ children }: Props) {
       {/* PWA install banner (mobile only, /platform scope) */}
       <InstallPrompt />
     </div>
+    </CreateSheetsProvider>
     </WorkspaceThemeProvider>
   );
 }
