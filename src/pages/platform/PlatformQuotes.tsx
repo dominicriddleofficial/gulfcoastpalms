@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import {
@@ -18,7 +19,6 @@ import { format, formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import QuoteBuilder from "@/components/platform/billing/QuoteBuilder";
 import { useCreateSheets } from "@/components/platform/CreateSheetsProvider";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -60,13 +60,15 @@ function KPICard({ icon: Icon, label, value, color }: { icon: React.ComponentTyp
 
 export default function PlatformQuotes() {
   const { selectedBusinessId, businesses, userId } = usePlatformAuth();
+  const navigate = useNavigate();
   const {
     quotes, loading, statusFilter, setStatusFilter,
     searchQuery, setSearchQuery, statusCounts, refetch,
   } = usePlatformQuotes(selectedBusinessId);
 
   const [selectedQuote, setSelectedQuote] = useState<PlatformQuote | null>(null);
-  const [showCreate, setShowCreate] = useState(false);
+  const { createdTick } = useCreateSheets();
+  useEffect(() => { refetch(); }, [createdTick, refetch]);
 
   const getBiz = (bizId: string) => businesses.find(b => b.id === bizId);
 
@@ -109,22 +111,6 @@ export default function PlatformQuotes() {
     toast.success("Quote deleted");
     refetch();
   };
-
-  if (showCreate && selectedBusinessId) {
-    return (
-      <QuoteBuilder
-        businessId={selectedBusinessId}
-        businesses={businesses.map(b => ({
-          id: b.id, public_brand_name: b.public_brand_name,
-          shortcode: b.shortcode, logo_url: b.logo_url || null,
-          default_business_color: (b as Record<string, unknown>).default_business_color as string | undefined,
-        }))}
-        userId={userId}
-        onClose={() => setShowCreate(false)}
-        onCreated={() => { setShowCreate(false); refetch(); }}
-      />
-    );
-  }
 
   return (
     <PlatformLayout>
