@@ -4,7 +4,7 @@ describe("Review Badge Data", () => {
   it("uses aggregateRating from data file, not hardcoded values", async () => {
     const { aggregateRating } = await import("@/data/reviews");
     expect(aggregateRating.score).toBe(5.0);
-    expect(aggregateRating.count).toBe(46);
+    expect(aggregateRating.count).toBe(54);
   });
 
   it("GOOGLE_REVIEW_URL is not a placeholder path", async () => {

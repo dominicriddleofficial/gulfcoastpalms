@@ -20,10 +20,10 @@ export const GCP_BUSINESS = {
   logo: "https://gulfcoastpalmservices.com/og-image.png",
   ogImage: "https://gulfcoastpalmservices.com/og-image.png",
   address: {
-    streetAddress: "",
-    addressLocality: "Gulf Breeze",
+    streetAddress: "7371 Grand Navarre Blvd",
+    addressLocality: "Navarre",
     addressRegion: "FL",
-    postalCode: "32561",
+    postalCode: "32566",
     addressCountry: "US",
   },
   geo: { latitude: 30.3577, longitude: -87.1636 },
@@ -41,9 +41,13 @@ export const GCP_BUSINESS = {
     "Mary Esther",
     "Santa Rosa Beach",
   ],
-  sameAs: [] as string[],
+  sameAs: [
+    "https://www.facebook.com/gulfcoastpalmtreetrimming/",
+    "https://g.page/r/CVI5xmZYC-NAEBM",
+    "https://www.instagram.com/gulfcoastpalms",
+  ] as string[],
   priceRange: "$$",
-  aggregateRating: { ratingValue: "5.0", reviewCount: "46" },
+  aggregateRating: { ratingValue: "5.0", reviewCount: "54" },
 } as const;
 
 /** Convenient href helpers */
