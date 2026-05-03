@@ -89,6 +89,27 @@ export default function PayInvoice() {
     load();
   }, [invoiceId, baseUrl]);
 
+  // Poll for invoice status changes so the page reflects webhook-driven updates
+  // (status flips to "paid" / balance_due drops to 0) without a manual refresh.
+  useEffect(() => {
+    if (!invoiceId) return;
+    if (invoice && (invoice.status === "paid" || invoice.status === "void")) return;
+    const interval = setInterval(async () => {
+      try {
+        const resp = await fetch(`${baseUrl}/get-invoice-public`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ invoice_id: invoiceId }),
+        });
+        const data = await resp.json();
+        if (resp.ok && !data.error) setInvoice(data);
+      } catch {
+        /* swallow polling errors */
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [invoiceId, baseUrl, invoice]);
+
   const handlePay = async () => {
     if (!invoice) return;
     setPaying(true);
