@@ -59,7 +59,7 @@ function KPICard({ icon: Icon, label, value, color }: { icon: React.ComponentTyp
 }
 
 export default function PlatformQuotes() {
-  const { selectedBusinessId, businesses, userId } = usePlatformAuth();
+  const { selectedBusinessId, businesses } = usePlatformAuth();
   const navigate = useNavigate();
   const {
     quotes, loading, statusFilter, setStatusFilter,
