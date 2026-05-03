@@ -15,6 +15,7 @@ import {
   MapPin,
   FileText,
   Star,
+  Plus,
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import JobStatusProgress from "@/components/platform/jobs/JobStatusProgress";
 import AssignedCrewPicker from "@/components/platform/jobs/AssignedCrewPicker";
+import { useCreateSheets } from "@/components/platform/CreateSheetsProvider";
+import { useUserRole } from "@/hooks/useUserRole";
 
 type JobberJob = {
   id: string;
@@ -39,6 +42,7 @@ type JobberJob = {
   job_number: string | null;
   total_amount: number | null;
   business_id: string | null;
+  source?: "jobber" | "platform";
 };
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
@@ -68,10 +72,13 @@ function JobStatusBadge({ job }: { job: JobberJob }) {
 
 export default function PlatformJobs() {
   const { selectedBusinessId, businesses } = usePlatformAuth();
+  const { open: openSheet, createdTick } = useCreateSheets();
+  const { isOwner } = useUserRole();
   const [jobs, setJobs] = useState<JobberJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sourceFilter, setSourceFilter] = useState<"all" | "platform" | "jobber">("all");
   const [selectedJob, setSelectedJob] = useState<JobberJob | null>(null);
 
   useEffect(() => {
@@ -83,13 +90,47 @@ export default function PlatformJobs() {
         .order("scheduled_start", { ascending: false, nullsFirst: false });
       // CRITICAL: filter by active workspace to prevent GCP/PPS data bleed.
       if (selectedBusinessId) q = q.eq("business_id", selectedBusinessId);
-      const { data } = await q;
-      setJobs((data as JobberJob[]) || []);
+      const { data: jobberData } = await q;
+      const jobberRows: JobberJob[] = (jobberData || []).map((j: any) => ({ ...j, source: "jobber" as const }));
+
+      // Native platform jobs
+      let pq = supabase
+        .from("platform_jobs")
+        .select("id, job_number, title, status, scheduled_start, scheduled_end, internal_notes, total, business_id, customer_id, platform_customers(display_name, phone), platform_properties(address_1, city)")
+        .is("deleted_at", null)
+        .order("scheduled_start", { ascending: false, nullsFirst: false });
+      if (selectedBusinessId) pq = pq.eq("business_id", selectedBusinessId);
+      const { data: platformData } = await pq;
+      const platformRows: JobberJob[] = (platformData || []).map((j: any) => ({
+        id: j.id,
+        jobber_id: "",
+        title: j.title,
+        status: j.status,
+        visit_status: null,
+        scheduled_start: j.scheduled_start,
+        scheduled_end: j.scheduled_end,
+        client_name: j.platform_customers?.display_name ?? null,
+        client_phone: j.platform_customers?.phone ?? null,
+        property_address: j.platform_properties ? `${j.platform_properties.address_1}, ${j.platform_properties.city}` : null,
+        assigned_employee_names: null,
+        internal_notes: j.internal_notes,
+        job_number: j.job_number,
+        total_amount: j.total,
+        business_id: j.business_id,
+        source: "platform" as const,
+      }));
+
+      const merged = [...platformRows, ...jobberRows].sort((a, b) => {
+        const ta = a.scheduled_start ? new Date(a.scheduled_start).getTime() : 0;
+        const tb = b.scheduled_start ? new Date(b.scheduled_start).getTime() : 0;
+        return tb - ta;
+      });
+      setJobs(merged);
       setLoading(false);
     };
 
     fetchJobs();
-  }, [selectedBusinessId]);
+  }, [selectedBusinessId, createdTick]);
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = { all: jobs.length };
@@ -109,13 +150,17 @@ export default function PlatformJobs() {
   const filteredJobs = useMemo(() => {
     return jobs.filter((job) => {
       const matchesStatus = statusFilter === "all" || getStatusKey(job) === statusFilter;
+      const matchesSource = sourceFilter === "all" || job.source === sourceFilter;
       const search = searchQuery.trim().toLowerCase();
       const matchesSearch = !search || [job.job_number, job.title, job.client_name, job.property_address]
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(search));
-      return matchesStatus && matchesSearch;
+      return matchesStatus && matchesSource && matchesSearch;
     });
-  }, [jobs, searchQuery, statusFilter]);
+  }, [jobs, searchQuery, statusFilter, sourceFilter]);
+
+  const jobberCount = useMemo(() => jobs.filter(j => j.source === "jobber").length, [jobs]);
+  const platformCount = useMemo(() => jobs.filter(j => j.source === "platform").length, [jobs]);
 
   const selectedBiz = businesses.find((business) => business.id === selectedBusinessId);
 
@@ -129,9 +174,27 @@ export default function PlatformJobs() {
               {selectedBiz && <InlineBadge shortcode={selectedBiz.shortcode} color={selectedBiz.default_business_color} />}
             </div>
             <p className="font-body text-xs text-muted-foreground">
-              {jobs.length} synced Jobber jobs · read only
+              {jobs.length} jobs · {jobberCount} synced from Jobber · {platformCount} created here
             </p>
           </div>
+          <Button size="sm" onClick={() => openSheet("job")} className="shrink-0">
+            <Plus className="w-4 h-4 mr-1" /> New Job
+          </Button>
+        </div>
+
+        <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+          {(["all","platform","jobber"] as const).map((s) => (
+            <button
+              key={s}
+              onClick={() => setSourceFilter(s)}
+              className={cn(
+                "px-3 py-1 rounded-full text-[11px] font-body font-medium whitespace-nowrap transition-all border",
+                sourceFilter === s ? "bg-primary/15 text-primary border-primary/30" : "bg-secondary text-muted-foreground border-border hover:text-foreground"
+              )}
+            >
+              {s === "all" ? `All (${jobs.length})` : s === "platform" ? `Native (${platformCount})` : `Synced (${jobberCount})`}
+            </button>
+          ))}
         </div>
 
         <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
@@ -197,6 +260,14 @@ export default function PlatformJobs() {
                       <Hash className="w-3 h-3 text-primary" />
                       <span className="font-body text-[11px] text-muted-foreground font-mono">{job.job_number || "No #"}</span>
                       <JobStatusBadge job={job} />
+                      <span className={cn(
+                        "inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-body font-medium",
+                        job.source === "platform"
+                          ? "bg-primary/15 text-primary border border-primary/20"
+                          : "bg-muted text-muted-foreground border border-border"
+                      )}>
+                        {job.source === "platform" ? "Native" : "Jobber"}
+                      </span>
                     </div>
                     <p className="font-body text-sm font-medium text-foreground truncate">
                       {job.title || job.client_name || "Untitled Job"}
@@ -296,10 +367,13 @@ function JobDetailPanel({ job }: { job: JobberJob }) {
 
       <div>
         <h3 className="font-body text-lg font-semibold text-foreground">{job.title || "Untitled Job"}</h3>
-        <p className="font-body text-xs text-muted-foreground mt-1">Managed in Jobber</p>
+        <p className="font-body text-xs text-muted-foreground mt-1">
+          {job.source === "platform" ? "Native job — created in platform" : "Synced from Jobber — edit in Jobber until migration"}
+        </p>
       </div>
 
-      {/* Job Status Progress */}
+      {/* Job Status Progress (Jobber-synced flow uses jobber_jobs table) */}
+      {job.source !== "platform" && (
       <JobStatusProgress
         jobId={job.id}
         businessId={job.business_id}
@@ -308,6 +382,7 @@ function JobDetailPanel({ job }: { job: JobberJob }) {
         currentStatus={jobStatus}
         onStatusChange={(s) => setJobStatus(s)}
       />
+      )}
 
       {isCompleted && job.client_phone && (
         <div className="flex gap-2">
@@ -335,7 +410,7 @@ function JobDetailPanel({ job }: { job: JobberJob }) {
       )}
 
       {/* Platform-managed crew assignment (drives /platform/crew visibility) */}
-      {job.business_id && (
+      {job.business_id && job.source !== "platform" && (
         <AssignedCrewPicker jobberJobId={job.id} businessId={job.business_id} />
       )}
 

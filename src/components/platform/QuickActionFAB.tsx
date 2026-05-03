@@ -1,20 +1,19 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { Plus, X, FileText, Briefcase, Users, Receipt, Phone } from "lucide-react";
+import { useLocation } from "react-router-dom";
+import { Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useCreateSheets, CreateSheetKind } from "./CreateSheetsProvider";
+import { useUserRole } from "@/hooks/useUserRole";
 
-interface QuickAction {
-  label: string;
-  path: string;
-  emoji: string;
-}
+type ActionKind = Exclude<CreateSheetKind, null>;
+interface QuickAction { label: string; kind: ActionKind; emoji: string; ownerOnly?: boolean; }
 
 const ACTIONS: QuickAction[] = [
-  { label: "New Quote", path: "/platform/quotes", emoji: "📋" },
-  { label: "New Job", path: "/platform/jobs", emoji: "🔧" },
-  { label: "New Customer", path: "/platform/customers", emoji: "👤" },
-  { label: "New Invoice", path: "/platform/invoices", emoji: "💵" },
-  { label: "Log a Lead", path: "/platform/leads", emoji: "📞" },
+  { label: "New Quote",   kind: "quote",    emoji: "📋" },
+  { label: "New Job",     kind: "job",      emoji: "🔧" },
+  { label: "New Customer",kind: "customer", emoji: "👤" },
+  { label: "New Invoice", kind: "invoice",  emoji: "💵", ownerOnly: true },
+  { label: "Log a Lead",  kind: "lead",     emoji: "📞" },
 ];
 
 interface Props {
@@ -24,8 +23,9 @@ interface Props {
 export default function QuickActionFAB({ brandColor = "var(--button-bg)" }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
   const location = useLocation();
+  const { open: openSheet } = useCreateSheets();
+  const { isOwner, isCrew } = useUserRole();
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -48,10 +48,14 @@ export default function QuickActionFAB({ brandColor = "var(--button-bg)" }: Prop
   const isPlatform = location.pathname.startsWith("/platform");
   const isAdmin = location.pathname.startsWith("/admin");
   if (!isPlatform && !isAdmin) return null;
+  // Crew can't create any of these
+  if (isCrew) return null;
 
-  const handleAction = (path: string) => {
+  const visibleActions = ACTIONS.filter(a => !a.ownerOnly || isOwner);
+
+  const handleAction = (kind: ActionKind) => {
     setOpen(false);
-    navigate(path);
+    openSheet(kind);
   };
 
   return (
@@ -61,10 +65,10 @@ export default function QuickActionFAB({ brandColor = "var(--button-bg)" }: Prop
     >
       {open && (
         <div className="flex flex-col gap-1.5 mb-2 animate-in fade-in slide-in-from-bottom-4 duration-200">
-          {ACTIONS.map((action) => (
+          {visibleActions.map((action) => (
             <button
               key={action.label}
-              onClick={() => handleAction(action.path)}
+              onClick={() => handleAction(action.kind)}
               className="flex items-center gap-2.5 pl-3 pr-4 py-2.5 rounded-xl bg-card border border-border shadow-lg hover:bg-secondary/60 transition-colors group"
             >
               <span className="text-base">{action.emoji}</span>

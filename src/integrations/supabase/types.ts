@@ -2612,6 +2612,7 @@ export type Database = {
           created_at: string
           created_by_user_id: string | null
           customer_id: string | null
+          deleted_at: string | null
           deposit_amount: number | null
           deposit_paid: boolean | null
           deposit_required: boolean | null
@@ -2620,6 +2621,7 @@ export type Database = {
           id: string
           internal_notes: string | null
           invoice_number: string
+          is_read_only: boolean
           issue_date: string | null
           job_id: string | null
           overdue_notified_at: string | null
@@ -2629,6 +2631,7 @@ export type Database = {
           public_notes: string | null
           quote_id: string | null
           sent_at: string | null
+          source: string
           source_last_synced_at: string | null
           source_record_id: string | null
           source_system: string | null
@@ -2649,6 +2652,7 @@ export type Database = {
           created_at?: string
           created_by_user_id?: string | null
           customer_id?: string | null
+          deleted_at?: string | null
           deposit_amount?: number | null
           deposit_paid?: boolean | null
           deposit_required?: boolean | null
@@ -2657,6 +2661,7 @@ export type Database = {
           id?: string
           internal_notes?: string | null
           invoice_number: string
+          is_read_only?: boolean
           issue_date?: string | null
           job_id?: string | null
           overdue_notified_at?: string | null
@@ -2666,6 +2671,7 @@ export type Database = {
           public_notes?: string | null
           quote_id?: string | null
           sent_at?: string | null
+          source?: string
           source_last_synced_at?: string | null
           source_record_id?: string | null
           source_system?: string | null
@@ -2686,6 +2692,7 @@ export type Database = {
           created_at?: string
           created_by_user_id?: string | null
           customer_id?: string | null
+          deleted_at?: string | null
           deposit_amount?: number | null
           deposit_paid?: boolean | null
           deposit_required?: boolean | null
@@ -2694,6 +2701,7 @@ export type Database = {
           id?: string
           internal_notes?: string | null
           invoice_number?: string
+          is_read_only?: boolean
           issue_date?: string | null
           job_id?: string | null
           overdue_notified_at?: string | null
@@ -2703,6 +2711,7 @@ export type Database = {
           public_notes?: string | null
           quote_id?: string | null
           sent_at?: string | null
+          source?: string
           source_last_synced_at?: string | null
           source_record_id?: string | null
           source_system?: string | null
@@ -2849,11 +2858,13 @@ export type Database = {
           created_at: string
           created_by_user_id: string | null
           customer_id: string | null
+          deleted_at: string | null
           deposit_collected: number | null
           description: string | null
           estimated_duration_minutes: number | null
           id: string
           internal_notes: string | null
+          is_read_only: boolean
           job_number: string
           job_type: string | null
           lead_id: string | null
@@ -2862,6 +2873,7 @@ export type Database = {
           quote_id: string | null
           scheduled_end: string | null
           scheduled_start: string | null
+          source: string
           source_last_synced_at: string | null
           source_record_id: string | null
           source_system: string | null
@@ -2884,11 +2896,13 @@ export type Database = {
           created_at?: string
           created_by_user_id?: string | null
           customer_id?: string | null
+          deleted_at?: string | null
           deposit_collected?: number | null
           description?: string | null
           estimated_duration_minutes?: number | null
           id?: string
           internal_notes?: string | null
+          is_read_only?: boolean
           job_number: string
           job_type?: string | null
           lead_id?: string | null
@@ -2897,6 +2911,7 @@ export type Database = {
           quote_id?: string | null
           scheduled_end?: string | null
           scheduled_start?: string | null
+          source?: string
           source_last_synced_at?: string | null
           source_record_id?: string | null
           source_system?: string | null
@@ -2919,11 +2934,13 @@ export type Database = {
           created_at?: string
           created_by_user_id?: string | null
           customer_id?: string | null
+          deleted_at?: string | null
           deposit_collected?: number | null
           description?: string | null
           estimated_duration_minutes?: number | null
           id?: string
           internal_notes?: string | null
+          is_read_only?: boolean
           job_number?: string
           job_type?: string | null
           lead_id?: string | null
@@ -2932,6 +2949,7 @@ export type Database = {
           quote_id?: string | null
           scheduled_end?: string | null
           scheduled_start?: string | null
+          source?: string
           source_last_synced_at?: string | null
           source_record_id?: string | null
           source_system?: string | null
@@ -3581,6 +3599,7 @@ export type Database = {
           created_by_user_id: string | null
           customer_id: string | null
           declined_at: string | null
+          deleted_at: string | null
           deposit_amount_calculated: number | null
           deposit_required_flag: boolean | null
           deposit_type: string | null
@@ -3590,6 +3609,7 @@ export type Database = {
           first_viewed_at: string | null
           id: string
           internal_notes: string | null
+          is_read_only: boolean
           last_modified_by_user_id: string | null
           lead_id: string | null
           lost_reason: string | null
@@ -3599,6 +3619,7 @@ export type Database = {
           quote_stage: string | null
           scope_of_work: string | null
           sent_at: string | null
+          source: string
           status: string
           subtotal: number | null
           tax_rate: number | null
@@ -3620,6 +3641,7 @@ export type Database = {
           created_by_user_id?: string | null
           customer_id?: string | null
           declined_at?: string | null
+          deleted_at?: string | null
           deposit_amount_calculated?: number | null
           deposit_required_flag?: boolean | null
           deposit_type?: string | null
@@ -3629,6 +3651,7 @@ export type Database = {
           first_viewed_at?: string | null
           id?: string
           internal_notes?: string | null
+          is_read_only?: boolean
           last_modified_by_user_id?: string | null
           lead_id?: string | null
           lost_reason?: string | null
@@ -3638,6 +3661,7 @@ export type Database = {
           quote_stage?: string | null
           scope_of_work?: string | null
           sent_at?: string | null
+          source?: string
           status?: string
           subtotal?: number | null
           tax_rate?: number | null
@@ -3659,6 +3683,7 @@ export type Database = {
           created_by_user_id?: string | null
           customer_id?: string | null
           declined_at?: string | null
+          deleted_at?: string | null
           deposit_amount_calculated?: number | null
           deposit_required_flag?: boolean | null
           deposit_type?: string | null
@@ -3668,6 +3693,7 @@ export type Database = {
           first_viewed_at?: string | null
           id?: string
           internal_notes?: string | null
+          is_read_only?: boolean
           last_modified_by_user_id?: string | null
           lead_id?: string | null
           lost_reason?: string | null
@@ -3677,6 +3703,7 @@ export type Database = {
           quote_stage?: string | null
           scope_of_work?: string | null
           sent_at?: string | null
+          source?: string
           status?: string
           subtotal?: number | null
           tax_rate?: number | null
