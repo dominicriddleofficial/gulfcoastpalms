@@ -415,10 +415,19 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
       <div className="fixed inset-0 z-50 bg-background flex flex-col invoice-form">
         {/* Top bar */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={onClose}><X className="w-5 h-5" /></Button>
-            <h1 className="font-display text-lg font-bold text-foreground">New Invoice</h1>
-            <span className="font-mono text-xs text-muted-foreground">{invoiceNumber}</span>
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close"
+              className="flex items-center justify-center w-10 h-10 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors -ml-2 shrink-0"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="flex-1 min-w-0">
+              <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground leading-tight">New Invoice</h1>
+              <p className="font-mono text-xs text-muted-foreground tracking-tight">{invoiceNumber}</p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" className="font-body text-xs hidden md:flex" onClick={() => setShowMobilePreview(true)}>
