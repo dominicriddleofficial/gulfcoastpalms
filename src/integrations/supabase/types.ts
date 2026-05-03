@@ -674,33 +674,66 @@ export type Database = {
       }
       email_drip_enrollments: {
         Row: {
+          business_id: string | null
           created_at: string
           current_step: number
+          customer_id: string | null
+          failure_reason: string | null
           id: string
-          lead_id: string
+          job_id: string | null
+          lead_id: string | null
           next_send_at: string | null
           sequence_type: string
           status: string
         }
         Insert: {
+          business_id?: string | null
           created_at?: string
           current_step?: number
+          customer_id?: string | null
+          failure_reason?: string | null
           id?: string
-          lead_id: string
+          job_id?: string | null
+          lead_id?: string | null
           next_send_at?: string | null
           sequence_type?: string
           status?: string
         }
         Update: {
+          business_id?: string | null
           created_at?: string
           current_step?: number
+          customer_id?: string | null
+          failure_reason?: string | null
           id?: string
-          lead_id?: string
+          job_id?: string | null
+          lead_id?: string | null
           next_send_at?: string | null
           sequence_type?: string
           status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "email_drip_enrollments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_drip_enrollments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "platform_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_drip_enrollments_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "platform_jobs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "email_drip_enrollments_lead_id_fkey"
             columns: ["lead_id"]
