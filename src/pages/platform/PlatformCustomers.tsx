@@ -54,13 +54,20 @@ export default function PlatformCustomers() {
   const [showCreateForm, setShowCreateForm] = useState(false);
 
   const fetchCustomers = async () => {
+    if (!selectedBusinessId) {
+      setCustomers([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const [jobberRes, platformRes] = await Promise.all([
       supabase.from("jobber_clients")
-        .select("id, jobber_id, display_name, first_name, last_name, company_name, email, phone, secondary_phone, created_at, synced_at")
+        .select("id, jobber_id, display_name, first_name, last_name, company_name, email, phone, secondary_phone, created_at, synced_at, business_id")
+        .eq("business_id", selectedBusinessId)
         .order("display_name", { ascending: true }),
       supabase.from("platform_customers")
         .select("id, business_id, display_name, first_name, last_name, company_name, email, phone, secondary_phone, created_at")
+        .eq("business_id", selectedBusinessId)
         .order("display_name", { ascending: true }),
     ]);
     const jobberCustomers: UnifiedCustomer[] = (jobberRes.data || []).map((c: any) => ({ ...c, source: "jobber" as const }));

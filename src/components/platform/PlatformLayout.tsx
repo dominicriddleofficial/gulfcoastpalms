@@ -245,6 +245,12 @@ export default function PlatformLayout({ children }: Props) {
   const pageTitle = currentPage?.label || "Platform";
 
   // Auto-sync Jobber if last sync > 30 minutes ago
+  // Reset auto-sync flag when workspace changes — otherwise PPS gets stale Jobber data
+  // after switching from GCP (the sync only fires once per session without this).
+  useEffect(() => {
+    autoSyncTriggered.current = false;
+  }, [auth.selectedBusinessId]);
+
   useEffect(() => {
     if (autoSyncTriggered.current || auth.loading || !auth.selectedBusinessId) return;
     autoSyncTriggered.current = true;
