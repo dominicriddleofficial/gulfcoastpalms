@@ -12,9 +12,18 @@ import { useCreateSheets } from "../CreateSheetsProvider";
 import CustomerPicker, { CustomerLite } from "./CustomerPicker";
 import NewCustomerSheet from "./NewCustomerSheet";
 
-interface Props { open: boolean; onClose: () => void; }
+export interface JobPrefill {
+  customer?: CustomerLite | null;
+  title?: string;
+  description?: string;
+  total?: number | null;
+  /** When set, after the new job is saved this quote will be marked converted and linked. */
+  fromQuoteId?: string;
+}
 
-export default function NewJobSheet({ open, onClose }: Props) {
+interface Props { open: boolean; onClose: () => void; prefill?: JobPrefill }
+
+export default function NewJobSheet({ open, onClose, prefill }: Props) {
   const { selectedBusinessId } = usePlatformAuth();
   const { isOwner } = useUserRole();
   const { notifyCreated } = useCreateSheets();
@@ -36,8 +45,13 @@ export default function NewJobSheet({ open, onClose }: Props) {
       setCustomer(null); setTitle(""); setDescription("");
       setDate(new Date().toISOString().slice(0, 10)); setTime("09:00");
       setDuration(60); setAddress(""); setTotal(""); setNotes("");
+    } else if (prefill) {
+      if (prefill.customer) setCustomer(prefill.customer);
+      if (prefill.title) setTitle(prefill.title);
+      if (prefill.description) setDescription(prefill.description);
+      if (prefill.total != null) setTotal(String(prefill.total));
     }
-  }, [open]);
+  }, [open, prefill]);
 
   // Pre-fill address from customer's primary property
   useEffect(() => {
@@ -98,6 +112,14 @@ export default function NewJobSheet({ open, onClose }: Props) {
       setSaving(false);
       return;
     }
+
+    // If converting from a quote, mark the quote as converted and link it
+    if (prefill?.fromQuoteId) {
+      await supabase.from("platform_quotes")
+        .update({ status: "converted" })
+        .eq("id", prefill.fromQuoteId);
+    }
+
     toast.success(`Job ${jobNumber} created`);
     notifyCreated();
     setSaving(false);
