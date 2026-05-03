@@ -35,3 +35,18 @@ verify_jwt = false
 
 [functions.receive-external-lead]
 verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.get-invoice-public]
+verify_jwt = false
+
+[functions.create-checkout]
+verify_jwt = false
+
+[functions.customer-portal-request]
+verify_jwt = false
+
+[functions.customer-portal-data]
+verify_jwt = false
