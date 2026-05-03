@@ -112,7 +112,12 @@ function normalizeStatus(status: string | null | undefined, visitStatus: string 
 }
 
 export default function PlatformDashboard() {
-  const { selectedBusinessId, businesses } = usePlatformAuth();
+  const { selectedBusinessId, businesses, userId, loading: authLoading } = usePlatformAuth();
+  // Gate every dashboard query on the session AND a selected business.
+  // Without this, queries fire before the persisted session is restored,
+  // RLS returns 0 rows, and the user sees a $0 / "waiting for first sync"
+  // flash that disappears on refresh.
+  const queriesReady = !authLoading && !!userId && !!selectedBusinessId;
 
   const now = new Date();
   const weekStart = startOfWeek(now, { weekStartsOn: 1 }).toISOString();
@@ -123,6 +128,7 @@ export default function PlatformDashboard() {
   // Card 1 — Revenue This Week
   const { data: revenueThisWeek = 0 } = useQuery({
     queryKey: ["dashboard-rev-week", selectedBusinessId],
+    enabled: queriesReady,
     queryFn: async () => {
       let q = supabase
         .from("jobber_jobs")
@@ -138,6 +144,7 @@ export default function PlatformDashboard() {
   // Card 2 — Revenue This Month
   const { data: revenueThisMonth = 0 } = useQuery({
     queryKey: ["dashboard-rev-month", selectedBusinessId],
+    enabled: queriesReady,
     queryFn: async () => {
       let q = supabase
         .from("jobber_jobs")
@@ -153,6 +160,7 @@ export default function PlatformDashboard() {
   // Card 3 — Jobs This Week
   const { data: jobsThisWeek = 0 } = useQuery({
     queryKey: ["dashboard-jobs-week", selectedBusinessId],
+    enabled: queriesReady,
     queryFn: async () => {
       let q = supabase
         .from("jobber_jobs")
@@ -168,6 +176,7 @@ export default function PlatformDashboard() {
   // Card 4 — Jobs This Month
   const { data: jobsThisMonth = 0 } = useQuery({
     queryKey: ["jobs-this-month", selectedBusinessId],
+    enabled: queriesReady,
     queryFn: async () => {
       let q = supabase
         .from("jobber_jobs")
@@ -183,6 +192,7 @@ export default function PlatformDashboard() {
   // Today's jobs for schedule strip
   const { data: jobs = [], isLoading: loading } = useQuery({
     queryKey: ["dashboard-jobs", selectedBusinessId],
+    enabled: queriesReady,
     queryFn: async () => {
       let q = supabase
         .from("jobber_jobs")
@@ -197,6 +207,7 @@ export default function PlatformDashboard() {
 
   const { data: lastSyncTime } = useQuery({
     queryKey: ["dashboard-last-sync"],
+    enabled: queriesReady,
     queryFn: async () => {
       const { data } = await supabase
         .from("sync_logs")
