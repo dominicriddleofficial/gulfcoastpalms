@@ -321,7 +321,7 @@ export default function PlatformJobs() {
 
 function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: () => void; onChanged: () => void }) {
   const { selectedBusinessId } = usePlatformAuth();
-  const { notifyCreated } = useCreateSheets();
+  const { notifyCreated, open: openSheet } = useCreateSheets();
   const [requestingReview, setRequestingReview] = useState(false);
   const [jobStatus, setJobStatus] = useState(job.visit_status || job.status || "scheduled");
   const [acting, setActing] = useState(false);
