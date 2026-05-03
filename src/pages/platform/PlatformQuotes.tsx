@@ -120,7 +120,7 @@ export default function PlatformQuotes() {
             <h1 className="font-display text-xl font-bold text-foreground tracking-tight">Quotes</h1>
             <p className="font-body text-xs text-muted-foreground">{quotes.length} total</p>
           </div>
-          <Button size="sm" className="font-body text-xs" onClick={() => setShowCreate(true)} disabled={!selectedBusinessId}>
+          <Button size="sm" className="font-body text-xs" onClick={() => navigate("/platform/quotes/new")} disabled={!selectedBusinessId}>
             <Plus className="w-3.5 h-3.5 mr-1" /> New Quote
           </Button>
         </div>
