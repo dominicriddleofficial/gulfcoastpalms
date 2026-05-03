@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
-import { useCreateSheets, CreateSheetsProvider } from "../CreateSheetsProvider";
+import { useCreateSheets } from "../CreateSheetsProvider";
 
 function formatPhone(raw: string) {
   const d = raw.replace(/\D/g, "").slice(0, 10);
@@ -123,5 +123,3 @@ export default function NewCustomerSheet({ open, onClose, onCreated }: Props) {
   );
 }
 
-// Re-export the provider here to satisfy circular import expectations
-export { CreateSheetsProvider };
