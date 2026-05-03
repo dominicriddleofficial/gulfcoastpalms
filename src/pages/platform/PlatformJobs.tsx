@@ -327,31 +327,36 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
   const [acting, setActing] = useState(false);
   const isNative = job.source === "platform";
 
-  type JobUpdate = Parameters<ReturnType<typeof supabase.from<"platform_jobs">>["update"]>[0];
-  const updateNative = async (patch: JobUpdate, successMsg: string) => {
-    setActing(true);
-    const { error } = await supabase.from("platform_jobs").update(patch).eq("id", job.id);
+  const finishUpdate = (error: { message: string } | null, successMsg: string) => {
     if (error) toast.error(error.message);
     else { toast.success(successMsg); notifyCreated(); onChanged(); }
     setActing(false);
   };
 
-  const markComplete = () => updateNative(
-    { status: "completed", completed_at: new Date().toISOString() },
-    "Job marked complete"
-  );
-
-  const cancelJob = () => {
-    const reason = window.prompt("Cancellation reason (optional):") ?? "";
-    void updateNative(
-      { status: "cancelled", internal_notes: reason ? `[Cancelled] ${reason}` : null },
-      "Job cancelled"
-    );
+  const markComplete = async () => {
+    setActing(true);
+    const { error } = await supabase.from("platform_jobs")
+      .update({ status: "completed", completed_at: new Date().toISOString() })
+      .eq("id", job.id);
+    finishUpdate(error, "Job marked complete");
   };
 
-  const deleteJob = () => {
+  const cancelJob = async () => {
+    const reason = window.prompt("Cancellation reason (optional):") ?? "";
+    setActing(true);
+    const { error } = await supabase.from("platform_jobs")
+      .update({ status: "cancelled", internal_notes: reason ? `[Cancelled] ${reason}` : null })
+      .eq("id", job.id);
+    finishUpdate(error, "Job cancelled");
+  };
+
+  const deleteJob = async () => {
     if (!window.confirm("Delete this job? This can be undone by a workspace owner.")) return;
-    void updateNative({ deleted_at: new Date().toISOString() }, "Job deleted");
+    setActing(true);
+    const { error } = await supabase.from("platform_jobs")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", job.id);
+    finishUpdate(error, "Job deleted");
   };
 
   const createInvoiceFromJob = async () => {
