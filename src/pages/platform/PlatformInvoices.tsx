@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import {
@@ -9,7 +10,6 @@ import { InlineBadge } from "@/components/platform/BusinessSwitcher";
 import { InvoiceStatusBadge, getInvoiceDisplayState, getAmountDueNow } from "@/components/platform/billing/InvoiceStatusBadge";
 import BillingSummaryCard from "@/components/platform/billing/BillingSummaryCard";
 import PaymentActionPanel from "@/components/platform/billing/PaymentActionPanel";
-import InvoiceBuilder from "@/components/platform/billing/InvoiceBuilder";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -36,7 +36,7 @@ export default function PlatformInvoices() {
     searchQuery, setSearchQuery, statusCounts, totals, refetch,
   } = usePlatformInvoices(selectedBusinessId);
   const [selectedInvoice, setSelectedInvoice] = useState<PlatformInvoice | null>(null);
-  const [showCreate, setShowCreate] = useState(false);
+  const navigate = useNavigate();
 
   const getBiz = (bizId: string) => businesses.find(b => b.id === bizId);
 
@@ -114,7 +114,7 @@ export default function PlatformInvoices() {
               {statusCounts.all} total · <span className="text-foreground font-medium">${totals.totalOutstanding.toLocaleString()}</span> outstanding
             </p>
           </div>
-          <Button size="sm" className="font-body text-xs" onClick={() => setShowCreate(true)} disabled={!canCreate}>
+          <Button size="sm" className="font-body text-xs" onClick={() => navigate("/platform/invoices/new")} disabled={!canCreate}>
             <Plus className="w-3.5 h-3.5 mr-1" /> New Invoice
           </Button>
         </div>
@@ -311,16 +311,6 @@ export default function PlatformInvoices() {
         </SheetContent>
       </Sheet>
 
-      {/* Create Invoice — Full Page Builder */}
-      {showCreate && selectedBusinessId && (
-        <InvoiceBuilder
-          businessId={selectedBusinessId}
-          businesses={businesses}
-          userId={userId}
-          onClose={() => setShowCreate(false)}
-          onCreated={() => { setShowCreate(false); refetch(); }}
-        />
-      )}
     </PlatformLayout>
   );
 }
