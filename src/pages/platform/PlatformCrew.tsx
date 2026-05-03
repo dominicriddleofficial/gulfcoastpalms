@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { enrollCompletedJobInDrip } from "@/lib/drip-enrollment";
 
 type CrewJob = {
   id: string;
@@ -237,6 +238,15 @@ export default function PlatformCrew() {
     if (error) {
       toast({ title: "Could not update job", description: error.message, variant: "destructive" });
       return;
+    }
+    if ((status === "completed" || status === "complete") && job.business_id && job.customer_id) {
+      enrollCompletedJobInDrip({
+        businessId: job.business_id,
+        customerId: job.customer_id,
+        jobId: job.id,
+      }).catch((err) => {
+        if (import.meta.env.DEV) console.error("[drip] enroll failed", err);
+      });
     }
     toast({ title: status === "in_progress" ? "Job started" : "Job marked complete" });
     setJobs(prev => prev.map(j => j.id === job.id ? { ...j, ...patch } : j));

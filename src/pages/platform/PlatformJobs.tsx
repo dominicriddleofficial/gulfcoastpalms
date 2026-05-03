@@ -29,6 +29,7 @@ import JobStatusProgress from "@/components/platform/jobs/JobStatusProgress";
 import AssignedCrewPicker from "@/components/platform/jobs/AssignedCrewPicker";
 import { useCreateSheets } from "@/components/platform/CreateSheetsProvider";
 import { useUserRole } from "@/hooks/useUserRole";
+import { enrollCompletedJobInDrip } from "@/lib/drip-enrollment";
 
 type JobberJob = {
   id: string;
@@ -335,9 +336,20 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
 
   const markComplete = async () => {
     setActing(true);
-    const { error } = await supabase.from("platform_jobs")
+    const { data: row, error } = await supabase.from("platform_jobs")
       .update({ status: "completed", completed_at: new Date().toISOString() })
-      .eq("id", job.id);
+      .eq("id", job.id)
+      .select("business_id, customer_id")
+      .maybeSingle();
+    if (!error && row?.business_id && row?.customer_id) {
+      enrollCompletedJobInDrip({
+        businessId: row.business_id,
+        customerId: row.customer_id,
+        jobId: job.id,
+      }).catch((err) => {
+        if (import.meta.env.DEV) console.error("[drip] enroll failed", err);
+      });
+    }
     finishUpdate(error, "Job marked complete");
   };
 
