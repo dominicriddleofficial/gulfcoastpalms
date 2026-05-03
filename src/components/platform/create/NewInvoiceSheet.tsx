@@ -12,7 +12,16 @@ import CustomerPicker, { CustomerLite } from "./CustomerPicker";
 import NewCustomerSheet from "./NewCustomerSheet";
 import LineItemsEditor, { LineItem } from "./LineItemsEditor";
 
-export default function NewInvoiceSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+export interface InvoicePrefill {
+  customer?: CustomerLite | null;
+  items?: LineItem[];
+  /** When set, the new invoice is linked to this job. */
+  fromJobId?: string;
+}
+
+interface Props { open: boolean; onClose: () => void; prefill?: InvoicePrefill }
+
+export default function NewInvoiceSheet({ open, onClose, prefill }: Props) {
   const { selectedBusinessId } = usePlatformAuth();
   const { notifyCreated } = useCreateSheets();
 
@@ -30,8 +39,11 @@ export default function NewInvoiceSheet({ open, onClose }: { open: boolean; onCl
       setCustomer(null); setItems([{ description: "", quantity: 1, unit_price: 0 }]);
       setTaxRate(0); setTerms("Net 14"); setNotes("");
       setDueDate(new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10));
+    } else if (prefill) {
+      if (prefill.customer) setCustomer(prefill.customer);
+      if (prefill.items?.length) setItems(prefill.items);
     }
-  }, [open]);
+  }, [open, prefill]);
 
   const subtotal = useMemo(() => items.reduce((s, it) => s + it.quantity * it.unit_price, 0), [items]);
   const tax = subtotal * (taxRate / 100);
@@ -54,6 +66,7 @@ export default function NewInvoiceSheet({ open, onClose }: { open: boolean; onCl
       business_id: selectedBusinessId,
       invoice_number: invoiceNumber,
       customer_id: customer.id,
+      job_id: prefill?.fromJobId ?? null,
       status: "draft",
       source: "platform",
       is_read_only: false,
