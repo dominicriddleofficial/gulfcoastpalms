@@ -32,7 +32,7 @@ serve(async (req) => {
     // Get active enrollments that are due
     const { data: enrollments, error: fetchError } = await supabase
       .from("email_drip_enrollments")
-      .select("*, leads(*)")
+      .select("*, leads(*), platform_customers(email, display_name, first_name, do_not_contact_flag)")
       .eq("status", "active")
       .lte("next_send_at", new Date().toISOString())
       .limit(50);
@@ -58,13 +58,30 @@ serve(async (req) => {
       }
 
       const step = sequence[currentStep];
-      const lead = enrollment.leads;
-      
-      if (!lead?.email) {
+      const isPostJob = enrollment.sequence_type === "post_job";
+      const recipientEmail = isPostJob
+        ? enrollment.platform_customers?.email
+        : enrollment.leads?.email;
+      const recipientName = isPostJob
+        ? (enrollment.platform_customers?.first_name || enrollment.platform_customers?.display_name)
+        : enrollment.leads?.name;
+      const dnc = isPostJob && enrollment.platform_customers?.do_not_contact_flag === true;
+
+      if (dnc) {
+        await supabase.from("email_drip_enrollments")
+          .update({ status: "cancelled", failure_reason: "do_not_contact" })
+          .eq("id", enrollment.id);
+        continue;
+      }
+
+      if (!recipientEmail) {
+        console.warn(`[drip] no email for enrollment ${enrollment.id} (${enrollment.sequence_type})`);
         // No email, skip but advance step
         const nextStep = currentStep + 1;
         if (nextStep >= sequence.length) {
-          await supabase.from("email_drip_enrollments").update({ status: "completed", current_step: nextStep }).eq("id", enrollment.id);
+          await supabase.from("email_drip_enrollments")
+            .update({ status: "failed", failure_reason: "no_email", current_step: nextStep })
+            .eq("id", enrollment.id);
         } else {
           const nextSend = new Date();
           nextSend.setHours(nextSend.getHours() + (sequence[nextStep]?.delay_hours || 24));
@@ -77,7 +94,7 @@ serve(async (req) => {
       }
 
       // Log the email that would be sent (actual sending will use Resend/SendGrid later)
-      console.log(`[DRIP] Would send "${step.subject}" to ${lead.email} (step ${currentStep}, type: ${step.type})`);
+      console.log(`[DRIP] Would send "${step.subject}" to ${recipientEmail} (${recipientName ?? "unknown"}, step ${currentStep}, type: ${step.type})`);
 
       // Advance to next step
       const nextStep = currentStep + 1;
