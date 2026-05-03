@@ -339,8 +339,9 @@ const App = () => (
                   <Route path="/app/tap-to-pay" element={<TapToPayLanding />} />
 
                   <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
+                  </Routes>
+                </Suspense>
+              </CreateSheetsProvider>
             </BrowserRouter>
           </ErrorBoundary>
         </BusinessProvider>
