@@ -10,6 +10,7 @@ import { trackPageView } from "@/lib/analytics";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import RoleRoute from "@/components/platform/RoleRoute";
+import { CreateSheetsProvider } from "@/components/platform/CreateSheetsProvider";
 
 // Eagerly loaded: only the homepage (highest traffic landing page)
 import Index from "./pages/Index";
@@ -213,9 +214,10 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <RouteTracker />
-              <Suspense fallback={<RouteSuspenseFallback />}>
-                <Routes>
+              <CreateSheetsProvider>
+                <RouteTracker />
+                <Suspense fallback={<RouteSuspenseFallback />}>
+                  <Routes>
                   {/* Eagerly loaded public routes */}
                   <Route path="/" element={<Index />} />
                   <Route path="/services" element={<Services />} />
