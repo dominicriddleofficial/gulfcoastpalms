@@ -471,6 +471,27 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
         </p>
       </div>
 
+      {isNative && (
+        <div className="grid grid-cols-2 gap-2">
+          {jobStatus !== "completed" && (
+            <Button size="sm" variant="outline" className="font-body text-xs" onClick={markComplete} disabled={acting}>
+              <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Mark Complete
+            </Button>
+          )}
+          <Button size="sm" variant="outline" className="font-body text-xs" onClick={createInvoiceFromJob} disabled={acting}>
+            <Receipt className="w-3.5 h-3.5 mr-1" /> Create Invoice
+          </Button>
+          {jobStatus !== "cancelled" && (
+            <Button size="sm" variant="outline" className="font-body text-xs" onClick={cancelJob} disabled={acting}>
+              <XCircle className="w-3.5 h-3.5 mr-1" /> Cancel
+            </Button>
+          )}
+          <Button size="sm" variant="outline" className="font-body text-xs text-destructive" onClick={deleteJob} disabled={acting}>
+            <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete
+          </Button>
+        </div>
+      )}
+
       {/* Job Status Progress (Jobber-synced flow uses jobber_jobs table) */}
       {job.source !== "platform" && (
       <JobStatusProgress
