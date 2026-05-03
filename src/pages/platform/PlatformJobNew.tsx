@@ -108,13 +108,18 @@ export default function PlatformJobNew() {
   return (
     <PlatformLayout>
       <div className="max-w-2xl mx-auto pb-32">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}><X className="w-5 h-5" /></Button>
-            <div>
-              <h1 className="font-display text-lg font-bold text-foreground">New Job</h1>
-              <p className="font-mono text-[11px] text-muted-foreground">{jobNumber}</p>
-            </div>
+        <div className="flex items-center gap-3 py-4 mb-2">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            aria-label="Close"
+            className="flex items-center justify-center w-10 h-10 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors -ml-2"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <div className="flex-1 min-w-0">
+            <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground leading-tight">New Job</h1>
+            <p className="font-mono text-xs text-muted-foreground tracking-tight">{jobNumber}</p>
           </div>
         </div>
 
@@ -132,9 +137,20 @@ export default function PlatformJobNew() {
           <SectionHeader icon={Briefcase} label="Job Details" />
           <div><Label>Title *</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Palm trim — 8 palms" /></div>
           <div><Label>Description</Label><Textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} /></div>
-          <div><Label>Address</Label><Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Auto-fills from customer" /></div>
+          <div>
+            <Label>Address</Label>
+            <Input
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder={customer ? "" : "Select a customer first to auto-fill"}
+              disabled={!customer && !address}
+            />
+            {customer && (
+              <p className="text-xs text-muted-foreground mt-1.5">Auto-filled from customer record. Edit to override.</p>
+            )}
+          </div>
           {isOwner && (
-            <div><Label>Total ($)</Label><Input type="number" min={0} step="0.01" value={total} onChange={(e) => setTotal(e.target.value)} /></div>
+            <div><Label>Total ($)</Label><Input type="number" min={0} step="0.01" value={total} onChange={(e) => setTotal(e.target.value)} placeholder="0.00" /></div>
           )}
         </section>
 
