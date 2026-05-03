@@ -78,9 +78,18 @@ export default function PlatformCustomerNew() {
   return (
     <PlatformLayout>
       <div className="max-w-2xl mx-auto pb-32">
-        <div className="flex items-center gap-3 mb-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}><X className="w-5 h-5" /></Button>
-          <h1 className="font-display text-lg font-bold text-foreground">New Customer</h1>
+        <div className="flex items-center gap-3 py-4 mb-2">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            aria-label="Close"
+            className="flex items-center justify-center w-10 h-10 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors -ml-2"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <div className="flex-1 min-w-0">
+            <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground leading-tight">New Customer</h1>
+          </div>
         </div>
 
         <section className="bg-card/40 border border-border rounded-xl p-4 mb-4 space-y-3">
