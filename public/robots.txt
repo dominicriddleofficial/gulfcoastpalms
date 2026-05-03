@@ -35,4 +35,4 @@ Disallow: /quote/
 Disallow: /app/
 Disallow: /employee/
 
-Sitemap: https://gulfcoastpalms.lovable.app/sitemap.xml
+Sitemap: https://gulfcoastpalmservices.com/sitemap.xml
