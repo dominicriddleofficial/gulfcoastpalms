@@ -1,19 +1,17 @@
 import { useState, useEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useCreateSheets, CreateSheetKind } from "./CreateSheetsProvider";
 import { useUserRole } from "@/hooks/useUserRole";
 
-type ActionKind = Exclude<CreateSheetKind, null>;
-interface QuickAction { label: string; kind: ActionKind; emoji: string; ownerOnly?: boolean; }
+interface QuickAction { label: string; path: string; emoji: string; ownerOnly?: boolean; }
 
 const ACTIONS: QuickAction[] = [
-  { label: "New Quote",   kind: "quote",    emoji: "📋" },
-  { label: "New Job",     kind: "job",      emoji: "🔧" },
-  { label: "New Customer",kind: "customer", emoji: "👤" },
-  { label: "New Invoice", kind: "invoice",  emoji: "💵", ownerOnly: true },
-  { label: "Log a Lead",  kind: "lead",     emoji: "📞" },
+  { label: "New Quote",   path: "/platform/quotes/new",    emoji: "📋" },
+  { label: "New Job",     path: "/platform/jobs/new",      emoji: "🔧" },
+  { label: "New Customer",path: "/platform/customers/new", emoji: "👤" },
+  { label: "New Invoice", path: "/platform/invoices/new",  emoji: "💵", ownerOnly: true },
+  { label: "Log a Lead",  path: "/platform/leads/new",     emoji: "📞" },
 ];
 
 interface Props {
@@ -24,7 +22,7 @@ export default function QuickActionFAB({ brandColor = "var(--button-bg)" }: Prop
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const location = useLocation();
-  const { open: openSheet } = useCreateSheets();
+  const navigate = useNavigate();
   const { isOwner, isCrew } = useUserRole();
 
   useEffect(() => {
@@ -50,12 +48,14 @@ export default function QuickActionFAB({ brandColor = "var(--button-bg)" }: Prop
   if (!isPlatform && !isAdmin) return null;
   // Crew can't create any of these
   if (isCrew) return null;
+  // Hide FAB on the creation pages themselves — no creating-while-creating
+  if (/\/platform\/(invoices|quotes|jobs|customers|leads)\/new$/.test(location.pathname)) return null;
 
   const visibleActions = ACTIONS.filter(a => !a.ownerOnly || isOwner);
 
-  const handleAction = (kind: ActionKind) => {
+  const handleAction = (path: string) => {
     setOpen(false);
-    openSheet(kind);
+    navigate(path);
   };
 
   return (
@@ -68,7 +68,7 @@ export default function QuickActionFAB({ brandColor = "var(--button-bg)" }: Prop
           {visibleActions.map((action) => (
             <button
               key={action.label}
-              onClick={() => handleAction(action.kind)}
+              onClick={() => handleAction(action.path)}
               className="flex items-center gap-2.5 pl-3 pr-4 py-2.5 rounded-xl bg-card border border-border shadow-lg hover:bg-secondary/60 transition-colors group"
             >
               <span className="text-base">{action.emoji}</span>
