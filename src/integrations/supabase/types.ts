@@ -624,6 +624,42 @@ export type Database = {
           },
         ]
       }
+      customer_portal_tokens: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          ip_address: string | null
+          token_hash: string
+          used_at: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          ip_address?: string | null
+          token_hash: string
+          used_at?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          token_hash?: string
+          used_at?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       customer_property_notes: {
         Row: {
           access_restrictions: string | null
