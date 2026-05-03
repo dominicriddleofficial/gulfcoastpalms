@@ -327,7 +327,8 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
   const [acting, setActing] = useState(false);
   const isNative = job.source === "platform";
 
-  const updateNative = async (patch: Record<string, unknown>, successMsg: string) => {
+  type JobUpdate = Parameters<ReturnType<typeof supabase.from<"platform_jobs">>["update"]>[0];
+  const updateNative = async (patch: JobUpdate, successMsg: string) => {
     setActing(true);
     const { error } = await supabase.from("platform_jobs").update(patch).eq("id", job.id);
     if (error) toast.error(error.message);
