@@ -95,7 +95,7 @@ export default function PlatformSchedule() {
       const { data } = await supabase.functions.invoke("maps-config");
       return data?.apiKey || null;
     },
-    enabled: scheduleTab === "route" || scheduleTab === "map",
+    // Prefetch immediately so switching to Map/Route is instant.
     staleTime: Infinity,
   });
 
