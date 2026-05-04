@@ -383,15 +383,22 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
               ownerEmail: "dominicriddleofficial@gmail.com",
             },
           });
-          const functionError = fnErr?.message || fnRes?.error;
-          if (functionError) {
-            console.error("send-invoice-email error:", fnErr);
-            toast.error(`Invoice created but email failed: ${functionError}`);
-          } else {
-            if (fnRes?.ownerNotificationWarning) {
-              console.warn("send-invoice-email owner notification warning:", fnRes.ownerNotificationWarning);
-            }
+          const deliveryStatus = fnRes?.deliveryStatus;
+          const deliveryError = fnRes?.deliveryError || fnErr?.message || fnRes?.error;
+          if (fnRes?.ownerNotificationWarning) {
+            console.warn("send-invoice-email owner notification warning:", fnRes.ownerNotificationWarning);
+          }
+          if (deliveryStatus === "sent") {
             toast.success(`Invoice sent to ${customerName} at ${sendData.email}`);
+          } else if (deliveryStatus === "pending" || (!deliveryStatus && !deliveryError)) {
+            toast.warning(
+              `Invoice queued — delivery is taking longer than usual. Check Email Activity in a few minutes.`,
+            );
+          } else {
+            console.error("send-invoice-email error:", fnErr || fnRes);
+            toast.error(
+              `Email failed: ${deliveryError || "Unknown error"}. Customer was NOT notified.`,
+            );
           }
         } catch (e: any) {
           console.error("send-invoice-email exception:", e);

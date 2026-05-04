@@ -271,6 +271,7 @@ export type Database = {
           currency: string | null
           description: string | null
           favicon_url: string | null
+          from_email: string | null
           id: string
           legal_name: string
           locale: string | null
@@ -278,6 +279,7 @@ export type Database = {
           primary_address_1: string | null
           primary_address_2: string | null
           public_brand_name: string
+          sender_domain: string | null
           shortcode: string
           state: string | null
           support_email: string | null
@@ -300,6 +302,7 @@ export type Database = {
           currency?: string | null
           description?: string | null
           favicon_url?: string | null
+          from_email?: string | null
           id?: string
           legal_name: string
           locale?: string | null
@@ -307,6 +310,7 @@ export type Database = {
           primary_address_1?: string | null
           primary_address_2?: string | null
           public_brand_name: string
+          sender_domain?: string | null
           shortcode: string
           state?: string | null
           support_email?: string | null
@@ -329,6 +333,7 @@ export type Database = {
           currency?: string | null
           description?: string | null
           favicon_url?: string | null
+          from_email?: string | null
           id?: string
           legal_name?: string
           locale?: string | null
@@ -336,6 +341,7 @@ export type Database = {
           primary_address_1?: string | null
           primary_address_2?: string | null
           public_brand_name?: string
+          sender_domain?: string | null
           shortcode?: string
           state?: string | null
           support_email?: string | null
