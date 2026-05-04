@@ -232,7 +232,7 @@ export default function PlatformSchedule() {
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="font-display text-xl font-bold text-foreground">Schedule</h1>
-              {scheduleTab !== "combined" && selectedBiz && <InlineBadge shortcode={selectedBiz.shortcode} color={selectedBiz.default_business_color} />}
+              {selectedBiz && <InlineBadge shortcode={selectedBiz.shortcode} color={selectedBiz.default_business_color} />}
             </div>
             <p className="font-body text-xs text-muted-foreground">
               {scheduledJobs.length} synced Jobber jobs · Last synced {syncLabel}
@@ -316,7 +316,7 @@ export default function PlatformSchedule() {
                       {format(new Date(dateKey), "EEEE, MMMM d, yyyy")}
                     </h3>
                     <div className="space-y-1.5">
-                      {dateJobs.map((job) => renderJobCard(job, scheduleTab === "combined"))}
+                      {dateJobs.map((job) => renderJobCard(job, false))}
                     </div>
                   </div>
                 ))}
@@ -459,9 +459,9 @@ function PlatformScheduleGoogleMap({ mapsKey, mappedJobs, mapCenter, onJobSelect
         mapTypeControl: false,
         streetViewControl: false,
         fullscreenControl: false,
-        styles: darkMapStyle,
+        styles: lightMapStyle,
         clickableIcons: false,
-        backgroundColor: "#0f172a",
+        backgroundColor: "#f5f5f5",
         gestureHandling: "greedy",
       }}
     >
