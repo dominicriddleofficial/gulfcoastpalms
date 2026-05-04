@@ -353,7 +353,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                       onChange={e => { setCustomerSearch(e.target.value); setShowCustomerSearch(true); }}
                       onFocus={() => setShowCustomerSearch(true)}
                       className="pl-8 bg-secondary/50 border-border font-body text-sm" />
-                    {showCustomerSearch && customerSearch.length >= 2 && (
+                    {showCustomerSearch && (
                       <div className="absolute z-20 left-0 right-0 top-full mt-1 bg-card border border-border rounded-lg shadow-lg max-h-48 overflow-y-auto">
                         {customerResults.length > 0 ? customerResults.map(c => (
                           <button key={c.id} className="w-full text-left px-3 py-2 hover:bg-secondary/50 transition-colors" onClick={() => selectCustomer(c)}>
