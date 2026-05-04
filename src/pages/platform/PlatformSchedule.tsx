@@ -20,6 +20,8 @@ import {
   CalendarDays,
   FileText,
   Map,
+  Phone,
+  Navigation,
 } from "lucide-react";
 import {
   addDays,
@@ -33,6 +35,7 @@ import {
 } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { ContactCustomerSheet } from "@/components/platform/ContactCustomerSheet";
 
 type ViewMode = "day" | "week";
 type ScheduleTab = "jobber" | "map" | "route";
@@ -41,6 +44,7 @@ type JobberJob = {
   id: string;
   title: string | null;
   client_name: string | null;
+  client_phone: string | null;
   property_address: string | null;
   status: string;
   visit_status: string | null;
@@ -87,6 +91,7 @@ export default function PlatformSchedule() {
   const [scheduleTab, setScheduleTab] = useState<ScheduleTab>("jobber");
   const [syncing, setSyncing] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobberJob | null>(null);
+  const [contactJob, setContactJob] = useState<JobberJob | null>(null);
 
   // Google Maps key for route view
   const { data: mapsKey } = useQuery({
@@ -105,7 +110,7 @@ export default function PlatformSchedule() {
     queryFn: async () => {
       let q = supabase
         .from("jobber_jobs")
-        .select("id, title, client_name, property_address, status, visit_status, scheduled_start, scheduled_end, total_amount, job_number, internal_notes, assigned_employee_names, business_id")
+        .select("id, title, client_name, client_phone, property_address, status, visit_status, scheduled_start, scheduled_end, total_amount, job_number, internal_notes, assigned_employee_names, business_id")
         .not("scheduled_start", "is", null)
         .order("scheduled_start", { ascending: true, nullsFirst: false });
       if (selectedBusinessId) q = q.eq("business_id", selectedBusinessId);
