@@ -533,7 +533,7 @@ function PlatformScheduleGoogleMap({ mapsKey, mappedJobs, mapCenter, onJobSelect
   );
 }
 
-function JobDetail({ job }: { job: JobberJob }) {
+function JobDetail({ job, onContact }: { job: JobberJob; onContact: () => void }) {
   return (
     <div className="space-y-5 pt-4">
       <SheetHeader>
@@ -588,6 +588,17 @@ function JobDetail({ job }: { job: JobberJob }) {
           </div>
           <p className="font-body text-sm text-foreground">{job.internal_notes}</p>
         </div>
+      )}
+
+      {(job.client_phone || job.client_name) && (
+        <button
+          type="button"
+          onClick={onContact}
+          className="w-full flex items-center justify-center gap-2 min-h-[56px] rounded-xl bg-primary text-primary-foreground font-body font-semibold text-base hover:bg-primary/90 transition-colors"
+        >
+          <Phone className="w-5 h-5" />
+          Contact Customer
+        </button>
       )}
     </div>
   );
