@@ -25,6 +25,27 @@ export const darkMapStyle: google.maps.MapTypeStyle[] = [
 ];
 
 /**
+ * Clean light map style — soft greys, hidden POIs, muted roads. Used by the
+ * platform schedule map/route views to keep the focus on numbered job pins.
+ */
+export const lightMapStyle: google.maps.MapTypeStyle[] = [
+  { elementType: "geometry", stylers: [{ color: "#f5f5f5" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#ffffff" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
+  { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#424242" }] },
+  { featureType: "poi", stylers: [{ visibility: "off" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
+  { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#9e9e9e" }] },
+  { featureType: "road.arterial", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
+  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#dadada" }] },
+  { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
+  { featureType: "transit", stylers: [{ visibility: "off" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#c9e7f5" }] },
+  { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#9e9e9e" }] },
+  { featureType: "landscape", elementType: "geometry", stylers: [{ color: "#f5f5f5" }] },
+];
+
+/**
  * Builds a circular numbered marker. Uses a Google Maps Symbol so it renders
  * crisp at any zoom and respects the marker `label`. Pass overrides to switch
  * to e.g. a larger amber icon for the selected stop.
