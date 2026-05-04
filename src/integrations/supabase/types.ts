@@ -1567,6 +1567,69 @@ export type Database = {
           },
         ]
       }
+      job_visit_events: {
+        Row: {
+          arrived_at: string | null
+          business_id: string
+          completed_at: string | null
+          created_at: string
+          created_by_user_id: string | null
+          drip_enrolled_at: string | null
+          id: string
+          jobber_job_id: string
+          on_my_way_at: string | null
+          on_my_way_sms_sent_at: string | null
+          review_queued_at: string | null
+          started_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          arrived_at?: string | null
+          business_id: string
+          completed_at?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          drip_enrolled_at?: string | null
+          id?: string
+          jobber_job_id: string
+          on_my_way_at?: string | null
+          on_my_way_sms_sent_at?: string | null
+          review_queued_at?: string | null
+          started_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          arrived_at?: string | null
+          business_id?: string
+          completed_at?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          drip_enrolled_at?: string | null
+          id?: string
+          jobber_job_id?: string
+          on_my_way_at?: string | null
+          on_my_way_sms_sent_at?: string | null
+          review_queued_at?: string | null
+          started_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_visit_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_visit_events_jobber_job_id_fkey"
+            columns: ["jobber_job_id"]
+            isOneToOne: true
+            referencedRelation: "jobber_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       jobber_clients: {
         Row: {
           business_id: string | null

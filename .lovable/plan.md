@@ -1,63 +1,86 @@
-## What I'm seeing
+## Schedule Upgrade — Pass 2 + Pass 3
 
-Your screenshot confirms:
-- You're in Google Cloud project **"My First Project"** under org **"dominicriddleofficial-org"**
-- **Maps JavaScript API**, **Places API**, **Geocoding API**, **Directions API** all show "Disable" (meaning they ARE enabled — that's the action button to disable them)
-- You said billing is activated
+Builds on Pass 1 (Contact sheet). Targets `/platform/schedule` (`PlatformSchedule.tsx`) and the `JobDetail` drawer. Schedule data lives in `jobber_jobs` (synced read-mostly), so visit lifecycle state is written back to `jobber_jobs.visit_status` plus a new lightweight `job_visit_events` table for timestamps + drip/review hooks. No changes to `platform_jobs` are needed for this pass.
 
-But the map still fails. There are only a few possible causes left:
+### 1. New table: `job_visit_events`
 
-### Most likely cause: The new key isn't actually loading yet
+Stores per-visit lifecycle timestamps and crew actions for Jobber-synced jobs (which don't have `platform_job_visits` rows).
 
-The frontend caches the Google Maps API key in a **module-level variable** (`cachedKey` in `useGoogleMapsKey.ts`). After I rotated the secret, that cache only clears with a **hard refresh**. A normal page reload won't do it.
+```text
+job_visit_events
+  id uuid pk
+  business_id uuid not null
+  jobber_job_id uuid not null  -> jobber_jobs.id
+  on_my_way_at timestamptz
+  arrived_at timestamptz
+  started_at timestamptz
+  completed_at timestamptz
+  on_my_way_sms_sent_at timestamptz
+  drip_enrolled_at timestamptz
+  review_queued_at timestamptz
+  created_by_user_id uuid
+  unique (jobber_job_id)
+```
 
-### Other possible causes
+RLS: `has_business_access(auth.uid(), business_id)` for select/insert/update.
 
-1. **Wrong project's key was pasted** — the key `AIzaSyBgYyW_y18lVGVVQ2R1NeCw7REibtMsAaY` might be from a *different* Google Cloud project than the one in your screenshot ("My First Project"). The screenshot project has APIs enabled and billing — but if the key belongs to a different project, that project might still be the one without billing.
+### 2. Visit lifecycle UI (Pass 2)
 
-2. **API key restrictions blocking the domain** — if the key has HTTP referrer restrictions that don't include `*.lovableproject.com`, `*.lovable.app`, or `gulfcoastpalmservices.com`, every request fails with "RefererNotAllowedMapError" which surfaces as account/key errors.
+In the `JobDetail` drawer (replaces today's single "Contact Customer" button area):
 
-3. **Billing account is linked but suspended/past-due** — billing being "activated" isn't the same as being in good standing. A suspended billing account on an enabled project still triggers "BillingNotEnabledMapError".
+- **Status pill** at top reflects `visit_status`: scheduled → on_my_way → on_site → in_progress → complete.
+- **Action button** (large, primary, min-h 56px) advances the next stage:
+  - `scheduled` → "On My Way" (also opens On My Way confirm sheet — see Pass 3)
+  - `on_my_way` / `on_site` → "Start Visit" (sets started_at, status=in_progress)
+  - `in_progress` → "Complete Visit" (sets completed_at, status=complete, fires drip + review)
+  - `complete` → shows "Completed [time]" muted, with "Reopen" secondary button
+- All transitions update `jobber_jobs.visit_status` AND upsert `job_visit_events` timestamps in a single mutation, then invalidate the `schedule-jobber` query.
+- "Contact Customer" button stays, moved to a secondary row alongside other actions.
 
-## Plan to fix
+On **Complete Visit**:
+1. Set `jobber_jobs.visit_status = 'complete'`, write `completed_at` to `job_visit_events`.
+2. Insert `review_requests` row scheduled for `now() + 2h` (matches `field-ops-status-workflow` memory + automated-review-collection-policy).
+3. If a matching `platform_jobs` row exists by source mapping, call `enrollCompletedJobInDrip` from `src/lib/drip-enrollment.ts`. Skip silently otherwise (jobber-only jobs don't have a platform customer record).
+4. Toast "Visit completed — review request queued for 2h".
 
-### Step 1 — Verify which key the backend is actually serving
-I'll call the `maps-config` edge function with your auth token and read back the first/last 6 characters of the key to confirm it matches `AIzaSyBg...MsAaY`. This rules out a stale secret.
+### 3. On My Way SMS (Pass 3)
 
-### Step 2 — Confirm the key matches the project in your screenshot
-You'll go to Google Cloud Console → **APIs & Services → Credentials** in "My First Project" and verify a key beginning with `AIzaSyBg` exists there. If it doesn't, the key belongs to a different project (likely the old suspended one) and we need a fresh key from "My First Project".
+When the user taps "On My Way":
 
-### Step 3 — Check & fix API key restrictions
-In Google Cloud Console, click the key and confirm:
-- **Application restrictions**: Either "None" (for testing) OR HTTP referrers including:
-  - `https://*.lovableproject.com/*`
-  - `https://*.lovable.app/*`
-  - `https://gulfcoastpalmservices.com/*`
-  - `https://www.gulfcoastpalmservices.com/*`
-- **API restrictions**: Either "Don't restrict key" OR explicitly include Maps JavaScript API, Places API, Geocoding API, Directions API
+- Open a small confirm sheet with editable message:
+  > "Hi {first}, this is {crew} with Gulf Coast Palms — on my way to your property now. See you in about {ETA} min."
+- ETA defaults to 30; user can pick 15 / 30 / 45 / 60.
+- Two buttons: "Send & Mark On My Way" (calls `send-sms` edge function, then advances status) and "Skip SMS" (just advances status).
+- Records `on_my_way_sms_sent_at` when sent. Disabled if `client_phone` is missing.
 
-### Step 4 — Verify billing account is active (not just "activated")
-In Google Cloud Console → **Billing**, confirm:
-- A billing account is linked to "My First Project"
-- The billing account status is **"Active"** (not "Past due", "Suspended", or "Closed")
-- Payment method is valid
+### 4. Status pills + completion counter (Pass 3)
 
-### Step 5 — Hard refresh the schedule page
-After confirming all the above:
-- Open `/platform/schedule` or `/ops/schedule`
-- Hard refresh: **Cmd+Shift+R** (Mac) or **Ctrl+Shift+F5** (Windows)
-- This clears the cached key in `useGoogleMapsKey.ts`
+- **Job cards in list view**: existing colored badge stays, but expand `STATUS_STYLES` to include `on_my_way` (amber), `on_site` (blue), `in_progress` (orange), `complete` (green/accent).
+- **Day header** ("EEEE, MMMM d, yyyy") gains a right-aligned counter: `{completedCount}/{totalCount} done` with a thin progress bar underneath. Computed from `dateJobs` filtering `visit_status === 'complete'`.
 
-### Step 6 — If still broken, capture the exact error
-Open browser DevTools → Console tab on the schedule page. The Google Maps loader will print a specific error like `BillingNotEnabledMapError`, `RefererNotAllowedMapError`, `ApiNotActivatedMapError`, or `InvalidKeyMapError`. That exact error tells us precisely what's wrong, and I can fix it in one shot.
+### 5. Files
 
-## What I'll do once approved
+**New**
+- `supabase/migrations/<timestamp>_job_visit_events.sql` — table + RLS.
+- `src/components/platform/schedule/VisitActionPanel.tsx` — status pill + primary action button + reopen, used inside `JobDetail`.
+- `src/components/platform/schedule/OnMyWaySheet.tsx` — confirm bottom-sheet with ETA + editable message.
+- `src/hooks/useVisitLifecycle.ts` — mutations for advance/reopen, drip + review side-effects.
 
-1. Call the `maps-config` edge function to verify the served key matches what you provided
-2. Check edge function logs for any errors
-3. Report back the first/last characters of the served key so you can compare against your Google Cloud project
-4. Wait for you to hard-refresh the schedule page and share the specific console error if it still fails
+**Edited**
+- `src/pages/platform/PlatformSchedule.tsx`
+  - Expand `STATUS_STYLES` (on_my_way, on_site, in_progress, complete).
+  - Day group header gets completion counter + progress bar.
+  - `JobDetail` uses `<VisitActionPanel>` and renders `<OnMyWaySheet>`.
+- (Read-only reuse) `src/lib/drip-enrollment.ts`, existing `send-sms` edge function, existing `review_requests` table.
 
-## What I can't do from here
+### 6. Out of scope (Pass 4 — later)
 
-I can't read your Google Cloud Console — only you can verify the key belongs to the project in your screenshot, that billing is truly active (not past-due), and that referrer restrictions are correct.
+Tabs on job detail, pull-to-refresh, "Today" line on Week view, Before/After photo prompts on complete.
+
+### Technical notes
+
+- All DB mutations use the typed Supabase client; no raw SQL strings.
+- Strict TS: typed `VisitStatus = 'scheduled' | 'on_my_way' | 'on_site' | 'in_progress' | 'complete'`, no `any`, no `!`.
+- Realtime not required — `useQuery` invalidation after each mutation is fast enough.
+- Idempotency: `review_requests` insert guarded by checking for existing pending row for same `job_id` (jobber id) within last 24h; drip enrollment is already idempotent per `enrollCompletedJobInDrip`.
+- Multi-tenant safety: every insert/update includes `business_id` from the active `selectedBusinessId`; RLS enforces.
