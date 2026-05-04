@@ -561,7 +561,7 @@ function PlatformScheduleGoogleMap({ mapsKey, mappedJobs, mapCenter, onJobSelect
   );
 }
 
-function JobDetail({ job, onContact }: { job: JobberJob; onContact: () => void }) {
+function JobDetail({ job, businessId, onContact }: { job: JobberJob; businessId: string | null; onContact: () => void }) {
   return (
     <div className="space-y-5 pt-4">
       <SheetHeader>
@@ -618,16 +618,14 @@ function JobDetail({ job, onContact }: { job: JobberJob; onContact: () => void }
         </div>
       )}
 
-      {(job.client_phone || job.client_name) && (
-        <button
-          type="button"
-          onClick={onContact}
-          className="w-full flex items-center justify-center gap-2 min-h-[56px] rounded-xl bg-primary text-primary-foreground font-body font-semibold text-base hover:bg-primary/90 transition-colors"
-        >
-          <Phone className="w-5 h-5" />
-          Contact Customer
-        </button>
-      )}
+      <VisitActionPanel
+        jobberJobId={job.id}
+        businessId={businessId}
+        visitStatus={job.visit_status}
+        customerName={job.client_name}
+        customerPhone={job.client_phone}
+        onContact={onContact}
+      />
     </div>
   );
 }
