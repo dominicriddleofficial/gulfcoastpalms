@@ -2,7 +2,6 @@ import { useNavigate } from "react-router-dom";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Phone, MessageSquare, History, Navigation, Mail, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { GCP_BUSINESS } from "@/lib/business-info";
 
 export interface ContactCustomerSheetProps {
   open: boolean;
@@ -45,7 +44,7 @@ export function ContactCustomerSheet({
 }: ContactCustomerSheetProps) {
   const navigate = useNavigate();
   const first = firstNameOf(customer.display_name);
-  const crewLabel = (crewFirstName ?? "").trim() || GCP_BUSINESS.ownerFirstName || "Dom";
+  const crewLabel = (crewFirstName ?? "").trim() || "Dom";
 
   const handleCall = () => {
     if (!customer.phone) return;
