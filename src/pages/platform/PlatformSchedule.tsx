@@ -505,6 +505,7 @@ function PlatformScheduleGoogleMap({ mapsKey, mappedJobs, mapCenter, onJobSelect
         styles: darkMapStyle,
         clickableIcons: false,
         backgroundColor: "#0f172a",
+        gestureHandling: "greedy",
       }}
     >
       {mappedJobs.map((job, i) => (
