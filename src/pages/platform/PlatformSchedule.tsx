@@ -434,6 +434,8 @@ function PlatformScheduleMap({ jobs, mapsKey, onJobSelect }: { jobs: JobberJob[]
 }
 
 function PlatformScheduleGoogleMap({ mapsKey, mappedJobs, mapCenter, onJobSelect }: { mapsKey: string; mappedJobs: MappedJob[]; mapCenter: google.maps.LatLngLiteral; onJobSelect: (job: JobberJob) => void }) {
+  // Share loader id with RouteView so the Google Maps script only loads once
+  // when the user switches between Map and Route tabs.
   const { isLoaded, loadError } = useJsApiLoader({ googleMapsApiKey: mapsKey, id: "platform-schedule-map" });
   const onMapLoad = useCallback((map: google.maps.Map) => {
     if (mappedJobs.length === 0) return;
