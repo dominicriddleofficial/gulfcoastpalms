@@ -29,7 +29,6 @@ interface RouteViewProps {
 
 const mapContainerStyle = { width: "100%", height: "100%" };
 const defaultMapCenter = { lat: 30.4016, lng: -86.8636 };
-const GOOGLE_MAPS_LIBRARIES: ("places" | "geometry" | "drawing")[] = [];
 
 function extractCity(address: string | null): string {
   if (!address) return "Unknown";
