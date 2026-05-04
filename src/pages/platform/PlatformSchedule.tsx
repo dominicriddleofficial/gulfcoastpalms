@@ -36,6 +36,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { ContactCustomerSheet } from "@/components/platform/ContactCustomerSheet";
+import VisitActionPanel from "@/components/platform/schedule/VisitActionPanel";
 
 type ViewMode = "day" | "week";
 type ScheduleTab = "jobber" | "map" | "route";
@@ -66,7 +67,11 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }>
   late: { bg: "#ef444420", text: "#ef4444", label: "Late" },
   today: { bg: "rgba(var(--biz-accent-rgb),0.13)", text: "var(--accent-color)", label: "Today" },
   scheduled: { bg: "#2563eb20", text: "#2563eb", label: "Scheduled" },
+  on_my_way: { bg: "#f59e0b20", text: "#f59e0b", label: "On My Way" },
+  on_site: { bg: "#0ea5e920", text: "#0ea5e9", label: "On Site" },
+  in_progress: { bg: "#fb923c20", text: "#fb923c", label: "In Progress" },
   completed: { bg: "rgba(var(--biz-accent-rgb),0.13)", text: "var(--accent-color)", label: "Completed" },
+  complete: { bg: "rgba(var(--biz-accent-rgb),0.13)", text: "var(--accent-color)", label: "Complete" },
   upcoming: { bg: "#8b5cf620", text: "#8b5cf6", label: "Upcoming" },
 };
 
