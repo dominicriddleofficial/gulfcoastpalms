@@ -293,7 +293,11 @@ Deno.serve(async (req) => {
 
     if (!customerResult || customerResult.status !== "sent") {
       return jsonResponse({
+        success: false,
+        deliveryStatus: customerResult?.status || "pending",
+        deliveryError: customerResult?.error_message || queueFlushError || null,
         error: customerResult?.error_message || queueFlushError || "Invoice email is still pending and was not confirmed as sent.",
+        messageId,
       }, 502);
     }
 
