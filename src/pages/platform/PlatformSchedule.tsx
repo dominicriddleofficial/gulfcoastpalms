@@ -391,6 +391,30 @@ export default function PlatformSchedule() {
   );
 }
 
+function DayHeader({ dateKey, jobs }: { dateKey: string; jobs: JobberJob[] }) {
+  const total = jobs.length;
+  const done = jobs.filter((j) => (j.visit_status ?? "").toLowerCase() === "complete").length;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="font-body text-xs text-muted-foreground uppercase tracking-wider">
+          {format(new Date(dateKey), "EEEE, MMMM d, yyyy")}
+        </h3>
+        <span className="font-body text-[11px] font-semibold text-foreground tabular-nums">
+          {done}/{total} done
+        </span>
+      </div>
+      <div className="h-1 w-full bg-secondary/40 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-primary transition-all"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 function PlatformScheduleMap({ jobs, mapsKey, onJobSelect }: { jobs: JobberJob[]; mapsKey: string | null; onJobSelect: (job: JobberJob) => void }) {
   const sorted = [...jobs].sort((a, b) => {
     if (!a.scheduled_start) return 1;
