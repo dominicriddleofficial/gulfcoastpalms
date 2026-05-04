@@ -5,8 +5,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SENDER_DOMAIN = "notify.prestigeflservices.com";
-const FROM_EMAIL = `invoices@prestigeflservices.com`;
+const DEFAULT_SENDER_DOMAIN = "notify.prestigeflservices.com";
+const DEFAULT_FROM_EMAIL = "invoices@prestigeflservices.com";
 const JSON_HEADERS = { ...corsHeaders, "Content-Type": "application/json" };
 
 function escapeHtml(value: string | null | undefined): string {
@@ -109,7 +109,31 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceKey);
     const queuedAt = new Date().toISOString();
 
-    const safeBusinessName = escapeHtml(businessName || "Invoice");
+    // Per-business sender lookup (falls back to default)
+    let SENDER_DOMAIN = DEFAULT_SENDER_DOMAIN;
+    let FROM_EMAIL = DEFAULT_FROM_EMAIL;
+    let resolvedBusinessName = businessName || "Invoice";
+    if (invoiceId) {
+      const { data: invRow } = await supabase
+        .from("platform_invoices")
+        .select("business_id")
+        .eq("id", invoiceId)
+        .maybeSingle();
+      if (invRow?.business_id) {
+        const { data: biz } = await supabase
+          .from("businesses")
+          .select("public_brand_name, legal_name, sender_domain, from_email")
+          .eq("id", invRow.business_id)
+          .maybeSingle();
+        if (biz) {
+          if (biz.sender_domain) SENDER_DOMAIN = biz.sender_domain;
+          if (biz.from_email) FROM_EMAIL = biz.from_email;
+          resolvedBusinessName = businessName || biz.public_brand_name || biz.legal_name || "Invoice";
+        }
+      }
+    }
+
+    const safeBusinessName = escapeHtml(resolvedBusinessName);
     const safeRecipientName = escapeHtml(recipientName || "there");
     const safeInvoiceNumber = escapeHtml(invoiceNumber);
     const safeDueDate = dueDate ? escapeHtml(dueDate) : "";
@@ -311,7 +335,9 @@ Deno.serve(async (req) => {
 
     return jsonResponse({
       success: true,
+      deliveryStatus: customerResult.status,
       message: `Invoice email sent to ${recipientEmail}`,
+      messageId,
       ownerNotificationWarning,
     });
 
