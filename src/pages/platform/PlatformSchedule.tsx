@@ -355,9 +355,7 @@ export default function PlatformSchedule() {
               <div className="space-y-4">
                 {Object.entries(groupedJobs).map(([dateKey, dateJobs]) => (
                   <div key={dateKey} className="space-y-2">
-                    <h3 className="font-body text-xs text-muted-foreground uppercase tracking-wider">
-                      {format(new Date(dateKey), "EEEE, MMMM d, yyyy")}
-                    </h3>
+                    <DayHeader dateKey={dateKey} jobs={dateJobs} />
                     <div className="space-y-1.5">
                       {dateJobs.map((job) => renderJobCard(job, false))}
                     </div>
