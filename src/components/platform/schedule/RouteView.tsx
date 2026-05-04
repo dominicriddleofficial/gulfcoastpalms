@@ -342,6 +342,7 @@ function RouteGoogleMap({
         styles: darkMapStyle,
         clickableIcons: false,
         backgroundColor: "#0f172a",
+        gestureHandling: "greedy",
       }}
     >
       {/* Faint full route as a guide */}
