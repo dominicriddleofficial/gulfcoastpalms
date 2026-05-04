@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { GoogleMap, MarkerF, useJsApiLoader } from "@react-google-maps/api";
 import { useGeocodedAddresses } from "@/hooks/useGeocodedJobs";
-import { darkMapStyle, buildNumberedMarkerIcon, NUMBERED_MARKER_LABEL_STYLE } from "@/lib/map-styles";
+import { lightMapStyle, buildNumberedMarkerIcon, NUMBERED_MARKER_LABEL_STYLE } from "@/lib/map-styles";
 import {
   ChevronLeft,
   ChevronRight,
@@ -35,7 +35,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 type ViewMode = "day" | "week";
-type ScheduleTab = "jobber" | "combined" | "map" | "route";
+type ScheduleTab = "jobber" | "map" | "route";
 
 type JobberJob = {
   id: string;
@@ -114,20 +114,6 @@ export default function PlatformSchedule() {
     },
   });
 
-  // Combined tab — all businesses, only scheduled jobs
-  const { data: combinedJobs = [], isLoading: combinedLoading } = useQuery({
-    queryKey: ["schedule-combined"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("jobber_jobs")
-        .select("id, title, client_name, property_address, status, visit_status, scheduled_start, scheduled_end, total_amount, job_number, internal_notes, assigned_employee_names, business_id")
-        .not("scheduled_start", "is", null)
-        .order("scheduled_start", { ascending: true, nullsFirst: false });
-      return (data as JobberJob[]) ?? [];
-    },
-    enabled: scheduleTab === "combined",
-  });
-
   const { data: lastSyncTime, refetch: refetchSync } = useQuery({
     queryKey: ["schedule-last-sync"],
     queryFn: async () => {
@@ -143,8 +129,8 @@ export default function PlatformSchedule() {
     },
   });
 
-  const activeJobs = scheduleTab === "combined" ? combinedJobs : jobberJobs;
-  const isLoading = scheduleTab === "combined" ? combinedLoading : loading;
+  const activeJobs = jobberJobs;
+  const isLoading = loading;
 
   const handleSync = async () => {
     setSyncing(true);
@@ -185,13 +171,6 @@ export default function PlatformSchedule() {
     });
     return groups;
   }, [scheduledJobs]);
-
-  const daySummary = useMemo(() => {
-    if (scheduleTab !== "combined") return null;
-    const gcpCount = scheduledJobs.filter((j) => j.business_id === "b0000000-0000-0000-0000-000000000001").length;
-    const ppsCount = scheduledJobs.filter((j) => j.business_id === "b0000000-0000-0000-0000-000000000002").length;
-    return { total: scheduledJobs.length, gcp: gcpCount, pps: ppsCount };
-  }, [scheduledJobs, scheduleTab]);
 
   const selectedBiz = businesses.find((b) => b.id === selectedBusinessId);
   const syncLabel = lastSyncTime
@@ -267,7 +246,7 @@ export default function PlatformSchedule() {
 
         {/* Schedule tab selector */}
         <div className="flex items-center gap-0.5 bg-card border border-border rounded-lg p-0.5 w-fit flex-wrap">
-          {(["jobber", "combined", "map", "route"] as const).map((tab) => (
+          {(["jobber", "map", "route"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setScheduleTab(tab)}
@@ -276,32 +255,10 @@ export default function PlatformSchedule() {
                 scheduleTab === tab ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
               )}
             >
-              {tab === "jobber" ? "Jobber" : tab === "combined" ? "Combined" : tab === "map" ? "Map" : "Route"}
+              {tab === "jobber" ? "Jobber" : tab === "map" ? "Map" : "Route"}
             </button>
           ))}
         </div>
-
-        {/* Combined legend */}
-        {scheduleTab === "combined" && (
-          <div className="flex items-center gap-4 font-body text-[11px] text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "var(--accent-color)" }} />
-              Gulf Coast Palms
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full border border-white/40" style={{ backgroundColor: "#ffffff" }} />
-              Prestige Property Services
-            </span>
-          </div>
-        )}
-
-        {/* Day summary for combined */}
-        {scheduleTab === "combined" && daySummary && (
-          <div className="font-body text-xs text-muted-foreground bg-card border border-border rounded-lg px-3 py-2">
-            {format(selectedDate, "EEEE, MMMM d")} — <span className="text-foreground font-medium">{daySummary.total} total jobs</span>
-            {" | "}GCP: {daySummary.gcp}{" | "}PPS: {daySummary.pps}
-          </div>
-        )}
 
         {/* Route tab content */}
         {scheduleTab === "map" ? (
