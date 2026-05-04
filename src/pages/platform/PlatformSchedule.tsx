@@ -36,6 +36,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { ContactCustomerSheet } from "@/components/platform/ContactCustomerSheet";
+import VisitActionPanel from "@/components/platform/schedule/VisitActionPanel";
 
 type ViewMode = "day" | "week";
 type ScheduleTab = "jobber" | "map" | "route";
@@ -66,7 +67,11 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }>
   late: { bg: "#ef444420", text: "#ef4444", label: "Late" },
   today: { bg: "rgba(var(--biz-accent-rgb),0.13)", text: "var(--accent-color)", label: "Today" },
   scheduled: { bg: "#2563eb20", text: "#2563eb", label: "Scheduled" },
+  on_my_way: { bg: "#f59e0b20", text: "#f59e0b", label: "On My Way" },
+  on_site: { bg: "#0ea5e920", text: "#0ea5e9", label: "On Site" },
+  in_progress: { bg: "#fb923c20", text: "#fb923c", label: "In Progress" },
   completed: { bg: "rgba(var(--biz-accent-rgb),0.13)", text: "var(--accent-color)", label: "Completed" },
+  complete: { bg: "rgba(var(--biz-accent-rgb),0.13)", text: "var(--accent-color)", label: "Complete" },
   upcoming: { bg: "#8b5cf620", text: "#8b5cf6", label: "Upcoming" },
 };
 
@@ -350,9 +355,7 @@ export default function PlatformSchedule() {
               <div className="space-y-4">
                 {Object.entries(groupedJobs).map(([dateKey, dateJobs]) => (
                   <div key={dateKey} className="space-y-2">
-                    <h3 className="font-body text-xs text-muted-foreground uppercase tracking-wider">
-                      {format(new Date(dateKey), "EEEE, MMMM d, yyyy")}
-                    </h3>
+                    <DayHeader dateKey={dateKey} jobs={dateJobs} />
                     <div className="space-y-1.5">
                       {dateJobs.map((job) => renderJobCard(job, false))}
                     </div>
@@ -369,6 +372,7 @@ export default function PlatformSchedule() {
           {selectedJob && (
             <JobDetail
               job={selectedJob}
+              businessId={selectedBusinessId}
               onContact={() => setContactJob(selectedJob)}
             />
           )}
@@ -385,6 +389,30 @@ export default function PlatformSchedule() {
         job={{ address: contactJob?.property_address ?? null }}
       />
     </PlatformLayout>
+  );
+}
+
+function DayHeader({ dateKey, jobs }: { dateKey: string; jobs: JobberJob[] }) {
+  const total = jobs.length;
+  const done = jobs.filter((j) => (j.visit_status ?? "").toLowerCase() === "complete").length;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="font-body text-xs text-muted-foreground uppercase tracking-wider">
+          {format(new Date(dateKey), "EEEE, MMMM d, yyyy")}
+        </h3>
+        <span className="font-body text-[11px] font-semibold text-foreground tabular-nums">
+          {done}/{total} done
+        </span>
+      </div>
+      <div className="h-1 w-full bg-secondary/40 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-primary transition-all"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -533,7 +561,7 @@ function PlatformScheduleGoogleMap({ mapsKey, mappedJobs, mapCenter, onJobSelect
   );
 }
 
-function JobDetail({ job, onContact }: { job: JobberJob; onContact: () => void }) {
+function JobDetail({ job, businessId, onContact }: { job: JobberJob; businessId: string | null; onContact: () => void }) {
   return (
     <div className="space-y-5 pt-4">
       <SheetHeader>
@@ -590,16 +618,14 @@ function JobDetail({ job, onContact }: { job: JobberJob; onContact: () => void }
         </div>
       )}
 
-      {(job.client_phone || job.client_name) && (
-        <button
-          type="button"
-          onClick={onContact}
-          className="w-full flex items-center justify-center gap-2 min-h-[56px] rounded-xl bg-primary text-primary-foreground font-body font-semibold text-base hover:bg-primary/90 transition-colors"
-        >
-          <Phone className="w-5 h-5" />
-          Contact Customer
-        </button>
-      )}
+      <VisitActionPanel
+        jobberJobId={job.id}
+        businessId={businessId}
+        visitStatus={job.visit_status}
+        customerName={job.client_name}
+        customerPhone={job.client_phone}
+        onContact={onContact}
+      />
     </div>
   );
 }
