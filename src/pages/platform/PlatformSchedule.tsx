@@ -188,14 +188,17 @@ export default function PlatformSchedule() {
     const bizStyle = isCombined ? getBizStyle(job.business_id) : null;
 
     return (
-      <button
+      <div
         key={job.id}
-        onClick={() => setSelectedJob(job)}
-        className="w-full bg-card border border-border rounded-lg p-3 hover:border-primary/20 transition-colors text-left"
+        className="w-full bg-card border border-border rounded-lg hover:border-primary/20 transition-colors text-left flex items-stretch overflow-hidden"
         style={isCombined ? { borderLeftWidth: "4px", borderLeftColor: bizStyle!.border } : undefined}
       >
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
+        <button
+          onClick={() => setSelectedJob(job)}
+          className="flex-1 min-w-0 p-3 text-left"
+        >
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-0.5 flex-wrap">
               {job.job_number && <span className="font-body text-[10px] text-muted-foreground font-mono">{job.job_number}</span>}
               <span
@@ -221,12 +224,42 @@ export default function PlatformSchedule() {
               )}
               {job.property_address && <span className="flex items-center gap-1 truncate"><MapPin className="w-3 h-3 shrink-0" />{job.property_address}</span>}
             </div>
+            </div>
+            {job.total_amount != null && job.total_amount > 0 && (
+              <span className="font-body text-sm font-semibold text-foreground shrink-0">${Number(job.total_amount).toLocaleString()}</span>
+            )}
           </div>
-          {job.total_amount != null && job.total_amount > 0 && (
-            <span className="font-body text-sm font-semibold text-foreground shrink-0">${Number(job.total_amount).toLocaleString()}</span>
+        </button>
+        <div className="flex flex-col border-l border-border">
+          {(job.client_phone || job.client_name) && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setContactJob(job); }}
+              aria-label={`Contact ${job.client_name ?? "customer"}`}
+              className="flex items-center justify-center w-12 flex-1 min-h-[44px] text-muted-foreground hover:text-primary hover:bg-secondary/40 transition-colors"
+            >
+              <Phone className="w-4 h-4" />
+            </button>
+          )}
+          {job.property_address && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(
+                  `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(job.property_address!)}`,
+                  "_blank",
+                  "noopener,noreferrer",
+                );
+              }}
+              aria-label="Get directions"
+              className="flex items-center justify-center w-12 flex-1 min-h-[44px] text-muted-foreground hover:text-primary hover:bg-secondary/40 transition-colors border-t border-border"
+            >
+              <Navigation className="w-4 h-4" />
+            </button>
           )}
         </div>
-      </button>
+      </div>
     );
   };
 
@@ -333,9 +366,24 @@ export default function PlatformSchedule() {
 
       <Sheet open={!!selectedJob} onOpenChange={() => setSelectedJob(null)}>
         <SheetContent className="ops-theme bg-background border-border w-full sm:max-w-lg overflow-y-auto">
-          {selectedJob && <JobDetail job={selectedJob} />}
+          {selectedJob && (
+            <JobDetail
+              job={selectedJob}
+              onContact={() => setContactJob(selectedJob)}
+            />
+          )}
         </SheetContent>
       </Sheet>
+
+      <ContactCustomerSheet
+        open={!!contactJob}
+        onClose={() => setContactJob(null)}
+        customer={{
+          display_name: contactJob?.client_name ?? "Customer",
+          phone: contactJob?.client_phone ?? null,
+        }}
+        job={{ address: contactJob?.property_address ?? null }}
+      />
     </PlatformLayout>
   );
 }
