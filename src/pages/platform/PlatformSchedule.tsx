@@ -372,6 +372,7 @@ export default function PlatformSchedule() {
           {selectedJob && (
             <JobDetail
               job={selectedJob}
+              businessId={selectedBusinessId}
               onContact={() => setContactJob(selectedJob)}
             />
           )}
