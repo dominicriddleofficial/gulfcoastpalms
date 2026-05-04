@@ -121,23 +121,29 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
     })();
   }, [bizId]);
 
-  // Customer search
+  // Customer search — show recent customers on focus, filter on type.
   useEffect(() => {
-    if (!customerSearch || customerSearch.length < 2) { setCustomerResults([]); return; }
     const timer = setTimeout(async () => {
+      const hasQuery = customerSearch && customerSearch.length >= 1;
       const like = `%${customerSearch}%`;
       const [jobberRes, platformRes] = await Promise.all([
-        supabase.from("jobber_clients").select("id, display_name, email, phone, company_name").eq("business_id", bizId)
-          .or(`display_name.ilike.${like},phone.ilike.${like},email.ilike.${like}`).limit(8),
-        supabase.from("platform_customers").select("id, display_name, email, phone, company_name").eq("business_id", bizId)
-          .or(`display_name.ilike.${like},phone.ilike.${like},email.ilike.${like}`).limit(4),
+        hasQuery
+          ? supabase.from("jobber_clients").select("id, display_name, email, phone, company_name").eq("business_id", bizId)
+              .or(`display_name.ilike.${like},phone.ilike.${like},email.ilike.${like}`).limit(20)
+          : supabase.from("jobber_clients").select("id, display_name, email, phone, company_name").eq("business_id", bizId)
+              .order("display_name", { ascending: true }).limit(20),
+        hasQuery
+          ? supabase.from("platform_customers").select("id, display_name, email, phone, company_name").eq("business_id", bizId)
+              .or(`display_name.ilike.${like},phone.ilike.${like},email.ilike.${like}`).limit(20)
+          : supabase.from("platform_customers").select("id, display_name, email, phone, company_name").eq("business_id", bizId)
+              .order("display_name", { ascending: true }).limit(20),
       ]);
       const seen = new Set<string>();
       const combined: CustomerResult[] = [];
       for (const c of (jobberRes.data || [])) { const k = c.display_name?.toLowerCase(); if (k && !seen.has(k)) { seen.add(k); combined.push({ ...c, source: "jobber" }); } }
       for (const c of (platformRes.data || [])) { const k = c.display_name?.toLowerCase(); if (k && !seen.has(k)) { seen.add(k); combined.push({ ...c, source: "platform" }); } }
-      setCustomerResults(combined.slice(0, 10));
-    }, 250);
+      setCustomerResults(combined.slice(0, 25));
+    }, 200);
     return () => clearTimeout(timer);
   }, [customerSearch, bizId]);
 
@@ -289,7 +295,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
 
   return (
     <>
-      <div className="fixed inset-0 z-50 bg-background flex flex-col">
+      <div className="ops-theme fixed inset-0 z-50 bg-background text-foreground flex flex-col invoice-form">
         {/* Top bar */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
           <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -347,7 +353,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                       onChange={e => { setCustomerSearch(e.target.value); setShowCustomerSearch(true); }}
                       onFocus={() => setShowCustomerSearch(true)}
                       className="pl-8 bg-secondary/50 border-border font-body text-sm" />
-                    {showCustomerSearch && customerSearch.length >= 2 && (
+                    {showCustomerSearch && (
                       <div className="absolute z-20 left-0 right-0 top-full mt-1 bg-card border border-border rounded-lg shadow-lg max-h-48 overflow-y-auto">
                         {customerResults.length > 0 ? customerResults.map(c => (
                           <button key={c.id} className="w-full text-left px-3 py-2 hover:bg-secondary/50 transition-colors" onClick={() => selectCustomer(c)}>

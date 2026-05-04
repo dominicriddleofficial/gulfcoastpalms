@@ -141,24 +141,42 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
     })();
   }, [bizId]);
 
-  // Customer search — searches both jobber_clients and platform_customers
+  // Customer search — searches both jobber_clients and platform_customers.
+  // When the search is empty, show the first batch of customers so the list
+  // is never blank on focus.
   useEffect(() => {
-    if (!customerSearch || customerSearch.length < 2) { setCustomerResults([]); return; }
     const timer = setTimeout(async () => {
+      const hasQuery = customerSearch && customerSearch.length >= 1;
       const like = `%${customerSearch}%`;
+      const baseJobber = supabase
+        .from("jobber_clients")
+        .select("id, display_name, email, phone, company_name")
+        .eq("business_id", bizId)
+        .order("display_name", { ascending: true })
+        .limit(20);
+      const basePlatform = supabase
+        .from("platform_customers")
+        .select("id, display_name, email, phone, company_name")
+        .eq("business_id", bizId)
+        .order("display_name", { ascending: true })
+        .limit(20);
       const [jobberRes, platformRes] = await Promise.all([
-        supabase
-          .from("jobber_clients")
-          .select("id, display_name, email, phone, company_name")
-          .eq("business_id", bizId)
-          .or(`display_name.ilike.${like},phone.ilike.${like},email.ilike.${like}`)
-          .limit(8),
-        supabase
-          .from("platform_customers")
-          .select("id, display_name, email, phone, company_name")
-          .eq("business_id", bizId)
-          .or(`display_name.ilike.${like},phone.ilike.${like},email.ilike.${like}`)
-          .limit(4),
+        hasQuery
+          ? supabase
+              .from("jobber_clients")
+              .select("id, display_name, email, phone, company_name")
+              .eq("business_id", bizId)
+              .or(`display_name.ilike.${like},phone.ilike.${like},email.ilike.${like}`)
+              .limit(20)
+          : baseJobber,
+        hasQuery
+          ? supabase
+              .from("platform_customers")
+              .select("id, display_name, email, phone, company_name")
+              .eq("business_id", bizId)
+              .or(`display_name.ilike.${like},phone.ilike.${like},email.ilike.${like}`)
+              .limit(20)
+          : basePlatform,
       ]);
       const seen = new Set<string>();
       const combined: CustomerResult[] = [];
@@ -176,8 +194,8 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
           combined.push({ ...c, source: "platform" } as CustomerResult);
         }
       }
-      setCustomerResults(combined.slice(0, 10));
-    }, 250);
+      setCustomerResults(combined.slice(0, 25));
+    }, 200);
     return () => clearTimeout(timer);
   }, [customerSearch, bizId]);
 
@@ -412,7 +430,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
 
   return (
     <>
-      <div className="fixed inset-0 z-50 bg-background flex flex-col invoice-form">
+      <div className="ops-theme fixed inset-0 z-50 bg-background text-foreground flex flex-col invoice-form">
         {/* Top bar */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
           <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -480,7 +498,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
                       onFocus={() => setShowCustomerSearch(true)}
                       className="pl-8 bg-secondary/50 border-border font-body text-sm"
                     />
-                    {showCustomerSearch && customerSearch.length >= 2 && (
+                    {showCustomerSearch && (
                       <div className="absolute z-20 left-0 right-0 top-full mt-1 bg-card border border-border rounded-lg shadow-lg max-h-48 overflow-y-auto">
                         {customerResults.length > 0 ? customerResults.map(c => (
                           <button
