@@ -3,7 +3,7 @@ import { MapPin, Clock, Navigation, User } from "lucide-react";
 import { format } from "date-fns";
 import { GoogleMap, MarkerF, PolylineF, useJsApiLoader } from "@react-google-maps/api";
 import { useGeocodedAddresses, type GeocodedAddress } from "@/hooks/useGeocodedJobs";
-import { darkMapStyle, buildNumberedMarkerIcon, NUMBERED_MARKER_LABEL_STYLE } from "@/lib/map-styles";
+import { lightMapStyle, buildNumberedMarkerIcon, NUMBERED_MARKER_LABEL_STYLE } from "@/lib/map-styles";
 import { cn } from "@/lib/utils";
 
 type JobberJob = {
@@ -339,9 +339,9 @@ function RouteGoogleMap({
         mapTypeControl: false,
         streetViewControl: false,
         fullscreenControl: false,
-        styles: darkMapStyle,
+        styles: lightMapStyle,
         clickableIcons: false,
-        backgroundColor: "#0f172a",
+        backgroundColor: "#f5f5f5",
         gestureHandling: "greedy",
       }}
     >
