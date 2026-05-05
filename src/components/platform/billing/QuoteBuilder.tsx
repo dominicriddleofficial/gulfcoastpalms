@@ -274,13 +274,28 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
       }
 
       // Send SMS
-      if (sendData.sendSms && customerPhone) {
-        try {
-          const smsMessage = `Hi ${customerName}, ${activeBiz?.public_brand_name || "Gulf Coast Palms"} has sent you a quote for $${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}. View and approve here: ${quoteUrl} Reply STOP to unsubscribe.`;
-          await supabase.functions.invoke("send-sms", {
-            body: { to: customerPhone, message: smsMessage },
-          });
-        } catch { /* SMS is best-effort */ }
+      if (sendData.sendSms) {
+        if (!customerPhone) {
+          toast.error("SMS skipped: no phone number on file for this customer");
+        } else {
+          try {
+            const smsMessage = `Hi ${customerName}, ${activeBiz?.public_brand_name || "Gulf Coast Palms"} has sent you a quote for $${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}. View and approve here: ${quoteUrl} Reply STOP to unsubscribe.`;
+            console.log("[SMS] sending quote text", { to: customerPhone, customerName, quoteUrl });
+            const { error: smsErr } = await supabase.functions.invoke("send-sms", {
+              body: { to: customerPhone, message: smsMessage },
+            });
+            if (smsErr) {
+              console.error("[SMS] send error:", smsErr);
+              toast.error(`SMS failed: ${smsErr.message || "Unknown error"}`);
+            } else {
+              toast.success(`Text sent to ${customerPhone}`);
+            }
+          } catch (e: unknown) {
+            const msg = e instanceof Error ? e.message : "Unknown error";
+            console.error("[SMS] exception:", e);
+            toast.error(`SMS error: ${msg}`);
+          }
+        }
       }
 
       // Update status to sent
