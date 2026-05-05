@@ -365,7 +365,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
       const paymentUrl = `${window.location.origin}/pay/${shortcode}/${inv.id}`;
 
       // Send email if enabled
-      if (sendData.email) {
+      if (sendData.sendEmail && sendData.email) {
         try {
           const { data: fnRes, error: fnErr } = await supabase.functions.invoke("send-invoice-email", {
             body: {
@@ -407,24 +407,30 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
       }
 
       // Send SMS if toggled on
-      if (sendData.sendSms && customerPhone) {
-        try {
-          const smsMessage = `Hi ${customerName}, your invoice from ${activeBiz?.public_brand_name || "us"} is ready. Total: $${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}. Pay online here: ${paymentUrl} Reply STOP to unsubscribe.`;
-          const { error: smsErr } = await supabase.functions.invoke("send-sms", {
-            body: { to: customerPhone, message: smsMessage },
-          });
-          if (smsErr) {
-            console.error("SMS send error:", smsErr);
-            toast.error("Invoice created but SMS failed");
-          } else {
-            toast.success(`Text message sent to ${customerPhone}`);
+      if (sendData.sendSms) {
+        if (!customerPhone) {
+          toast.error("SMS skipped: no phone number on file for this customer");
+        } else {
+          try {
+            const smsMessage = `Hi ${customerName}, your invoice from ${activeBiz?.public_brand_name || "us"} is ready. Total: $${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}. Pay online here: ${paymentUrl} Reply STOP to unsubscribe.`;
+            console.log("[SMS] sending invoice text", { to: customerPhone, customerName, paymentUrl });
+            const { error: smsErr } = await supabase.functions.invoke("send-sms", {
+              body: { to: customerPhone, message: smsMessage },
+            });
+            if (smsErr) {
+              console.error("[SMS] send error:", smsErr);
+              toast.error(`SMS failed: ${smsErr.message || "Unknown error"}`);
+            } else {
+              toast.success(`Text sent to ${customerPhone}`);
+            }
+          } catch (e: any) {
+            console.error("[SMS] exception:", e);
+            toast.error(`SMS error: ${e.message}`);
           }
-        } catch (e: any) {
-          console.error("SMS exception:", e);
         }
       }
 
-      if (!sendData.email && !sendData.sendSms) {
+      if (!sendData.sendEmail && !sendData.sendSms) {
         toast.success("Invoice created");
       }
     } else {
