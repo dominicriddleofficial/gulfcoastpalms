@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Send, Mail, Smartphone } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface SendQuoteModalProps {
   customerName: string;
@@ -43,19 +44,38 @@ export default function SendQuoteModal({
 
         <div className="space-y-4">
           <div className="flex gap-2">
-            <button onClick={() => setSendEmail(!sendEmail)}
+            <button
+              type="button"
+              onClick={() => setSendEmail(!sendEmail)}
+              aria-pressed={sendEmail}
               className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border text-sm font-body font-medium transition-all",
-                sendEmail ? "bg-primary/15 text-primary border-primary/30" : "bg-card text-muted-foreground border-border"
+                "flex-1 flex items-center justify-center gap-2 py-3 rounded-lg border-2 text-sm font-body font-semibold transition-all",
+                sendEmail
+                  ? "bg-primary text-primary-foreground border-primary shadow-md"
+                  : "bg-card text-muted-foreground border-border opacity-60"
               )}>
-              <Mail className="w-4 h-4" /> Email
+              <Mail className="w-4 h-4" /> Email {sendEmail ? "✓" : ""}
             </button>
-            <button onClick={() => setSendSms(!sendSms)}
+            <button
+              type="button"
+              onClick={() => {
+                if (!customerPhone) {
+                  toast.error("No phone number on file for this customer");
+                  return;
+                }
+                setSendSms(!sendSms);
+              }}
+              aria-pressed={sendSms}
+              disabled={!customerPhone}
               className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border text-sm font-body font-medium transition-all",
-                sendSms ? "bg-primary/15 text-primary border-primary/30" : "bg-card text-muted-foreground border-border"
+                "flex-1 flex items-center justify-center gap-2 py-3 rounded-lg border-2 text-sm font-body font-semibold transition-all",
+                !customerPhone && "opacity-30 cursor-not-allowed",
+                sendSms && customerPhone
+                  ? "bg-primary text-primary-foreground border-primary shadow-md"
+                  : "bg-card text-muted-foreground border-border opacity-60"
               )}>
-              <Smartphone className="w-4 h-4" /> Text
+              <Smartphone className="w-4 h-4" /> Text {sendSms ? "✓" : ""}
+              {!customerPhone && <span className="text-[10px]">(no phone)</span>}
             </button>
           </div>
 

@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Send, Mail, Smartphone } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface SendInvoiceModalProps {
   customerName: string;
@@ -14,7 +15,7 @@ interface SendInvoiceModalProps {
   dueDate: string;
   businessName: string;
   shortcode: string;
-  onSend: (data: { email: string; subject: string; message: string; ccEmail: string; sendSms?: boolean }) => Promise<void>;
+  onSend: (data: { email: string; subject: string; message: string; ccEmail: string; sendEmail: boolean; sendSms: boolean }) => Promise<void>;
   onClose: () => void;
   saving: boolean;
 }
@@ -44,22 +45,39 @@ export default function SendInvoiceModal({
           {/* Send methods */}
           <div className="flex gap-2">
             <button
+              type="button"
               onClick={() => setSendEmail(!sendEmail)}
+              aria-pressed={sendEmail}
               className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border text-sm font-body font-medium transition-all",
-                sendEmail ? "bg-primary/15 text-primary border-primary/30" : "bg-card text-muted-foreground border-border"
+                "flex-1 flex items-center justify-center gap-2 py-3 rounded-lg border-2 text-sm font-body font-semibold transition-all",
+                sendEmail
+                  ? "bg-primary text-primary-foreground border-primary shadow-md"
+                  : "bg-card text-muted-foreground border-border opacity-60"
               )}
             >
-              <Mail className="w-4 h-4" /> Email
+              <Mail className="w-4 h-4" /> Email {sendEmail ? "✓" : ""}
             </button>
             <button
-              onClick={() => setSendSms(!sendSms)}
+              type="button"
+              onClick={() => {
+                if (!customerPhone) {
+                  toast.error("No phone number on file for this customer");
+                  return;
+                }
+                setSendSms(!sendSms);
+              }}
+              aria-pressed={sendSms}
+              disabled={!customerPhone}
               className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border text-sm font-body font-medium transition-all",
-                sendSms ? "bg-primary/15 text-primary border-primary/30" : "bg-card text-muted-foreground border-border"
+                "flex-1 flex items-center justify-center gap-2 py-3 rounded-lg border-2 text-sm font-body font-semibold transition-all",
+                !customerPhone && "opacity-30 cursor-not-allowed",
+                sendSms && customerPhone
+                  ? "bg-primary text-primary-foreground border-primary shadow-md"
+                  : "bg-card text-muted-foreground border-border opacity-60"
               )}
             >
-              <Smartphone className="w-4 h-4" /> Text
+              <Smartphone className="w-4 h-4" /> Text {sendSms ? "✓" : ""}
+              {!customerPhone && <span className="text-[10px]">(no phone)</span>}
             </button>
           </div>
 
@@ -101,7 +119,7 @@ export default function SendInvoiceModal({
 
         <DialogFooter className="mt-4">
           <Button variant="outline" onClick={onClose} className="font-body text-sm">Cancel</Button>
-          <Button onClick={() => onSend({ email, subject, message, ccEmail, sendSms })} disabled={saving || (!sendEmail && !sendSms)} className="font-body text-sm">
+          <Button onClick={() => onSend({ email, subject, message, ccEmail, sendEmail, sendSms })} disabled={saving || (!sendEmail && !sendSms)} className="font-body text-sm">
             <Send className="w-3.5 h-3.5 mr-1.5" />
             {saving ? "Sending…" : "Send Invoice"}
           </Button>
