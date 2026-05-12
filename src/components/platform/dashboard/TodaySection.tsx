@@ -18,11 +18,10 @@ export default function TodaySection() {
     enabled: ready,
     queryFn: async () => {
       const { count } = await supabase
-        .from("jobber_jobs")
+        .from("platform_job_visits")
         .select("id", { count: "exact", head: true })
         .eq("business_id", selectedBusinessId!)
-        .gte("scheduled_start", dayStart)
-        .lte("scheduled_start", dayEnd);
+        .eq("scheduled_date", today);
       return count ?? 0;
     },
   });
@@ -46,15 +45,14 @@ export default function TodaySection() {
     enabled: ready,
     queryFn: async () => {
       const { data } = await supabase
-        .from("jobber_jobs")
-        .select("total_amount")
+        .from("platform_job_visits")
+        .select("job:platform_jobs!inner(total)")
         .eq("business_id", selectedBusinessId!)
-        .gte("scheduled_start", dayStart)
-        .lte("scheduled_start", dayEnd);
-      return (data ?? []).reduce(
-        (s, r) => s + (Number(r.total_amount) || 0),
-        0,
-      );
+        .eq("scheduled_date", today);
+      return (data ?? []).reduce((s, r: { job: { total: number | string | null } | null }) => {
+        const t = r.job?.total;
+        return s + (Number(t) || 0);
+      }, 0);
     },
   });
 

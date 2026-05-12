@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useDashboardScheduledJobs } from "@/hooks/useDashboardScheduledJobs";
@@ -77,7 +75,7 @@ export default function ScheduledValueChart() {
       const key = format(d, "yyyy-MM-dd");
       map.set(key, { date: key, label: format(d, "EEE"), value: 0, jobs: [] });
     }
-    for (const j of jobs) {
+      for (const j of jobs) {
       const key = j.scheduled_local_date;
       const b = map.get(key);
       if (!b) continue;
@@ -91,7 +89,7 @@ export default function ScheduledValueChart() {
         client_name: j.client_name,
         scheduled_start: j.scheduled_start,
         amount,
-        source: "jobber_jobs",
+          source: j.source,
       });
     }
     return Array.from(map.values()).map((b) => ({
@@ -119,41 +117,6 @@ export default function ScheduledValueChart() {
     });
   }, [buckets, end, graphJobCount, hasMismatch, isLoading, ready, start, summary.jobCount, summary.revenueTotal, visibleGraphTotal]);
 
-  // Sync staleness
-  const { data: lastSync } = useQuery({
-    queryKey: ["dash-chart-last-sync"],
-    enabled: ready,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("sync_logs")
-        .select("completed_at")
-        .eq("status", "success")
-        .in("sync_type", ["full", "jobs", "visits"])
-        .order("started_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      return data?.completed_at ?? null;
-    },
-  });
-  const { data: tokenExpired } = useQuery({
-    queryKey: ["dash-chart-token-status"],
-    enabled: ready,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("jobber_tokens")
-        .select("expires_at")
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (!data?.expires_at) return false;
-      return new Date(data.expires_at).getTime() < Date.now();
-    },
-  });
-  const staleMins = lastSync
-    ? Math.round((Date.now() - new Date(lastSync).getTime()) / 60000)
-    : null;
-  const isStale = staleMins === null || staleMins > 120;
-
   const ticks = niceTicks(Math.max(...buckets.map((b) => b.value), 0));
   const yMax = ticks[ticks.length - 1] ?? 0;
 
@@ -161,19 +124,6 @@ export default function ScheduledValueChart() {
 
   return (
     <SectionCard title="Scheduled Job Value This Week" subtitle={subtitle}>
-      {(tokenExpired || isStale) && (
-        <div
-          className="rounded-md px-3 py-2 font-body"
-          style={{
-            fontSize: 12,
-            color: "#ef4444",
-            background: "rgba(239,68,68,0.08)",
-            border: "1px solid rgba(239,68,68,0.30)",
-          }}
-        >
-          Jobber connection expired. Showing last synced schedule data.
-        </div>
-      )}
       {isOwner && hasMismatch && (
         <div
           className="rounded-md px-3 py-2 font-body"

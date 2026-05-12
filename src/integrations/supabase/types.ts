@@ -5758,6 +5758,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      backfill_jobber_to_platform: {
+        Args: never
+        Returns: {
+          jobs_inserted: number
+          visits_inserted: number
+        }[]
+      }
       create_business_notification: {
         Args: {
           _body: string
