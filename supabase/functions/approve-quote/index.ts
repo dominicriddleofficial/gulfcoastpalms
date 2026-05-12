@@ -131,7 +131,17 @@ Deno.serve(async (req) => {
     const alreadyApproved =
       quote?.status === "approved" || quote?.status === "accepted" || quote?.status === "won";
 
-    const { error } = await supabase
+    if (alreadyApproved) {
+      console.log(`[approve-quote] quote ${quote?.quote_number} already approved — returning idempotent success`);
+      return new Response(
+        JSON.stringify({ success: true, status: "already_approved", quote_status: quote?.status }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // Guard against duplicate approvals at the SQL level: only flip status when it's
+    // currently in a non-approved state. If 0 rows match, treat as already approved.
+    const { data: updatedRows, error } = await supabase
       .from("platform_quotes")
       .update({
         status: "approved",
@@ -139,10 +149,20 @@ Deno.serve(async (req) => {
         approved_at: new Date().toISOString(),
         accepted_at: new Date().toISOString(),
       })
-      .eq("id", quote_id);
+      .eq("id", quote_id)
+      .not("status", "in", "(approved,accepted,won)")
+      .select("id");
 
     if (error) {
       return new Response(JSON.stringify({ error: "Failed to approve quote" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    if (!updatedRows || updatedRows.length === 0) {
+      // Race: another request approved this quote between our SELECT and UPDATE.
+      console.log(`[approve-quote] no rows updated for ${quote?.quote_number} — likely race; returning idempotent success`);
+      return new Response(
+        JSON.stringify({ success: true, status: "already_approved" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
     console.log(`[approve-quote] status updated to approved for ${quote?.quote_number}`);
 
