@@ -353,6 +353,16 @@ export default function PlatformRelease() {
                   <CheckCircle2 className="w-4 h-4" /> Released {active.released_at ? new Date(active.released_at).toLocaleString() : ""}
                 </div>
               )}
+              <div className="mt-4">
+                <label className="text-xs text-muted-foreground">Release notes</label>
+                <Textarea
+                  placeholder="Add release notes (saved when marking ready)…"
+                  value={releaseNotes}
+                  onChange={(e) => setReleaseNotes(e.target.value)}
+                  disabled={active.status === "released"}
+                  className="mt-1 min-h-[60px] text-sm"
+                />
+              </div>
             </Card>
 
             {Object.entries(sections).map(([section, list]) => (
