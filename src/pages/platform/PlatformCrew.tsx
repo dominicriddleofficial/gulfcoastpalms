@@ -12,6 +12,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { enrollCompletedJobInDrip } from "@/lib/drip-enrollment";
+import { enqueueMutation } from "@/lib/offline/queue";
+import { processQueueOnce, startSyncEngine } from "@/lib/offline/sync";
+import { getOfflineDB, setMeta } from "@/lib/offline/db";
+import { useOnlineStatus } from "@/lib/offline/hooks";
+import OfflineBanner from "@/components/platform/offline/OfflineBanner";
+import LastSyncedLabel from "@/components/platform/offline/LastSyncedLabel";
+import { usePullToRefresh } from "@/lib/offline/usePullToRefresh";
 
 type CrewJob = {
   id: string;
@@ -82,13 +89,37 @@ export default function PlatformCrew() {
   const [jobs, setJobs] = useState<CrewJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<CrewJob | null>(null);
+  const [hydratedFromCache, setHydratedFromCache] = useState(false);
+  const online = useOnlineStatus();
 
   const today = useMemo(() => startOfToday(), []);
   const businessId = auth.selectedBusinessId;
 
+  // Start the background sync loop once.
+  useEffect(() => {
+    startSyncEngine();
+  }, []);
+
   useEffect(() => {
     if (!userId || !businessId) return;
     let cancelled = false;
+
+    // Hydrate from IndexedDB first so the screen is usable instantly,
+    // even on a flaky connection.
+    (async () => {
+      try {
+        const db = await getOfflineDB();
+        const cached = await db.getAll("cached_jobs");
+        const mine = cached.filter((c) => c.user_id === userId && c.business_id === businessId);
+        if (mine.length > 0 && !cancelled) {
+          setJobs(mine.map((c) => c.data as CrewJob));
+          setHydratedFromCache(true);
+          setLoading(false);
+        }
+      } catch (err) {
+        if (import.meta.env.DEV) console.warn("[offline] cache hydrate failed", err);
+      }
+    })();
 
     async function loadJobs() {
       setLoading(true);
@@ -210,11 +241,42 @@ export default function PlatformCrew() {
 
       setJobs(enriched);
       setLoading(false);
+
+      // Persist today/this-week jobs for offline use.
+      try {
+        const db = await getOfflineDB();
+        const tx = db.transaction("cached_jobs", "readwrite");
+        // Wipe stale entries for this user/business so deleted jobs don't linger.
+        const all = await tx.store.getAll();
+        for (const c of all) {
+          if (c.user_id === userId && c.business_id === businessId) {
+            await tx.store.delete(c.id);
+          }
+        }
+        const now = Date.now();
+        for (const j of enriched) {
+          await tx.store.put({
+            id: j.id,
+            user_id: userId!,
+            business_id: businessId!,
+            cached_at: now,
+            data: j,
+          });
+        }
+        await tx.done;
+        await setMeta("last_jobs_cache_at", now);
+      } catch (err) {
+        if (import.meta.env.DEV) console.warn("[offline] cache write failed", err);
+      }
     }
 
-    loadJobs();
+    loadJobs().catch((err) => {
+      if (import.meta.env.DEV) console.error("[crew] load jobs failed", err);
+      // If we already hydrated from cache, leave that on screen.
+      if (!hydratedFromCache) setLoading(false);
+    });
     return () => { cancelled = true; };
-  }, [userId, businessId, role, today]);
+  }, [userId, businessId, role, today, hydratedFromCache]);
 
   const tabbed = useMemo(() => {
     const tomorrow = addDays(today, 1);
@@ -229,15 +291,28 @@ export default function PlatformCrew() {
   }, [jobs, tab, today]);
 
   async function updateStatus(job: CrewJob, status: string) {
+    // Translate to a queueable action.
+    const action =
+      status === "on_my_way"
+        ? ("on_my_way" as const)
+        : status === "in_progress"
+        ? ("start_visit" as const)
+        : ("complete_visit" as const);
+
     const patch: { status: string; completed_at?: string } = { status };
     if (status === "completed" || status === "complete") {
       patch.completed_at = new Date().toISOString();
     }
-    const { error } = await supabase.from("platform_jobs").update(patch).eq("id", job.id);
-    if (error) {
-      toast({ title: "Could not update job", description: error.message, variant: "destructive" });
-      return;
-    }
+
+    await enqueueMutation({
+      action,
+      jobId: job.id,
+      businessId: job.business_id,
+      userId,
+      payload: { status },
+    });
+    void processQueueOnce();
+
     if ((status === "completed" || status === "complete") && job.business_id && job.customer_id) {
       enrollCompletedJobInDrip({
         businessId: job.business_id,
@@ -247,22 +322,64 @@ export default function PlatformCrew() {
         if (import.meta.env.DEV) console.error("[drip] enroll failed", err);
       });
     }
-    toast({ title: status === "in_progress" ? "Job started" : "Job marked complete" });
+    toast({
+      title: navigator.onLine
+        ? status === "in_progress"
+          ? "Job started"
+          : "Job marked complete"
+        : "Saved locally — will sync when online",
+    });
     setJobs(prev => prev.map(j => j.id === job.id ? { ...j, ...patch } : j));
     setSelected(prev => prev && prev.id === job.id ? { ...prev, ...patch } : prev);
   }
 
   async function saveCrewNotes(job: CrewJob, notes: string) {
     const merged = (job.internal_notes ? job.internal_notes + "\n\n" : "") + `[Crew · ${format(new Date(), "MMM d h:mma")}] ${notes}`;
-    const { error } = await supabase.from("platform_jobs").update({ internal_notes: merged }).eq("id", job.id);
-    if (error) {
-      toast({ title: "Could not save note", description: error.message, variant: "destructive" });
-      return;
-    }
-    toast({ title: "Note saved" });
+    await enqueueMutation({
+      action: "add_note",
+      jobId: job.id,
+      businessId: job.business_id,
+      userId,
+      payload: { text: notes },
+    });
+    void processQueueOnce();
+    toast({ title: navigator.onLine ? "Note saved" : "Note saved locally" });
     setJobs(prev => prev.map(j => j.id === job.id ? { ...j, internal_notes: merged } : j));
     setSelected(prev => prev && prev.id === job.id ? { ...prev, internal_notes: merged } : prev);
   }
+
+  // Pull to refresh on the schedule list (window scroll).
+  const refreshNow = async () => {
+    if (!userId || !businessId) return;
+    // Re-trigger the load by bumping a key; simplest: reload via auth state untouched.
+    // For now, just kick the sync engine and reload.
+    await processQueueOnce();
+    // Force a reload of jobs by toggling loading to surface visual feedback.
+    setLoading(true);
+    // Trigger re-fetch by using the same effect dependencies — easiest: emulate by
+    // re-running the data loader inline.
+    const start = format(today, "yyyy-MM-dd");
+    const end = format(addDays(today, 7), "yyyy-MM-dd");
+    const { data: platformData } = await supabase
+      .from("platform_jobs")
+      .select(`id, business_id, job_number, title, job_type, status, scheduled_start, scheduled_end, estimated_duration_minutes, internal_notes, client_notes, assigned_to, assigned_crew_member_id, customer_id, property_id, completed_at`)
+      .eq("business_id", businessId)
+      .gte("scheduled_start", start)
+      .lte("scheduled_start", end)
+      .order("scheduled_start", { ascending: true });
+    const native = (platformData || []) as CrewJob[];
+    const filtered = role === "crew"
+      ? native.filter(j => (j.assigned_to || []).includes(userId) || j.assigned_crew_member_id === userId)
+      : native;
+    setJobs((prev) => {
+      // keep enrichment from previous if still relevant
+      const map = new Map(prev.map((j) => [j.id, j] as const));
+      return filtered.map((j) => ({ ...map.get(j.id), ...j }));
+    });
+    setLoading(false);
+  };
+
+  const { pullDistance, refreshing } = usePullToRefresh({ onRefresh: refreshNow });
 
   if (auth.loading || roleLoading) {
     return (
@@ -276,18 +393,31 @@ export default function PlatformCrew() {
 
   if (selected) {
     return (
-      <CrewJobDetail
-        job={selected}
-        onBack={() => setSelected(null)}
-        onStart={() => updateStatus(selected, "in_progress")}
-        onComplete={() => updateStatus(selected, "completed")}
-        onSaveNotes={(text) => saveCrewNotes(selected, text)}
-      />
+      <>
+        <OfflineBanner />
+        <CrewJobDetail
+          job={selected}
+          onBack={() => setSelected(null)}
+          onStart={() => updateStatus(selected, "in_progress")}
+          onComplete={() => updateStatus(selected, "completed")}
+          onSaveNotes={(text) => saveCrewNotes(selected, text)}
+          userId={userId}
+        />
+      </>
     );
   }
 
   return (
     <div className="ops-theme min-h-screen bg-background text-foreground pb-24">
+      <OfflineBanner />
+      {pullDistance > 0 && (
+        <div
+          className="flex items-center justify-center text-[11px] text-muted-foreground transition-all"
+          style={{ height: pullDistance, opacity: Math.min(pullDistance / 70, 1) }}
+        >
+          {refreshing ? "Refreshing…" : pullDistance >= 70 ? "Release to refresh" : "Pull to refresh"}
+        </div>
+      )}
       {/* Sticky header */}
       <header className="sticky top-0 z-30 bg-card/90 backdrop-blur border-b border-border">
         <div className="px-4 pt-4 pb-2 flex items-center justify-between gap-3">
@@ -306,6 +436,9 @@ export default function PlatformCrew() {
             </div>
             <span className="font-body text-[12px] capitalize">{firstName || "Crew"}</span>
           </div>
+        </div>
+        <div className="px-4 pb-1.5">
+          <LastSyncedLabel />
         </div>
 
         {/* Tabs */}
