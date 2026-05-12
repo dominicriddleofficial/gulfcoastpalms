@@ -663,8 +663,13 @@ function JobDetail({
   const [tab, setTab] = useState<JobDetailTab>("visit");
   const [omwOpen, setOmwOpen] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
+  const [rescheduleOpen, setRescheduleOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const navigate = useNavigate();
   const { advance, reopen } = useVisitLifecycle();
+  const { isStaff } = useUserRole();
+  const qc = useQueryClient();
   const lifeStatus = normalizeVisitStatus(job.visit_status);
   const statusKey = getStatusKey(job);
   const statusInfo = STATUS_STYLES[statusKey];
@@ -728,14 +733,44 @@ function JobDetail({
               <Phone className="w-5 h-5" />
             </a>
           )}
-          <button
-            type="button"
-            onClick={onContact}
-            aria-label="More options"
-            className="p-2 rounded-lg text-foreground/80 hover:text-foreground hover:bg-secondary/60 transition-colors"
-          >
-            <MoreHorizontal className="w-5 h-5" />
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                aria-label="More options"
+                className="p-2 rounded-lg text-foreground/80 hover:text-foreground hover:bg-secondary/60 transition-colors"
+              >
+                <MoreHorizontal className="w-5 h-5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-card border-border w-56">
+              <DropdownMenuItem
+                onClick={() => setRescheduleOpen(true)}
+                disabled={!isStaff}
+                className="gap-2"
+              >
+                <CalendarClock className="w-4 h-4" />
+                Reschedule
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setEditOpen(true)}
+                disabled={!isStaff}
+                className="gap-2"
+              >
+                <Pencil className="w-4 h-4" />
+                Edit job
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => setDeleteOpen(true)}
+                disabled={!isStaff}
+                className="gap-2 text-destructive focus:text-destructive"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete visit
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -1063,6 +1098,38 @@ function JobDetail({
           if (choice === "invoice_now") {
             setTimeout(() => navigate("/platform/invoices/new"), 250);
           }
+        }}
+      />
+
+      <RescheduleSheet
+        open={rescheduleOpen}
+        onClose={() => setRescheduleOpen(false)}
+        job={job}
+        onSaved={() => {
+          setRescheduleOpen(false);
+          qc.invalidateQueries({ queryKey: ["schedule-jobber"] });
+        }}
+      />
+
+      <EditJobSheet
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        job={job}
+        onSaved={() => {
+          setEditOpen(false);
+          qc.invalidateQueries({ queryKey: ["schedule-jobber"] });
+        }}
+      />
+
+      <DeleteJobDialog
+        open={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        jobId={job.id}
+        jobLabel={job.title ?? job.client_name ?? "this visit"}
+        onDeleted={() => {
+          setDeleteOpen(false);
+          qc.invalidateQueries({ queryKey: ["schedule-jobber"] });
+          onClose();
         }}
       />
     </div>
