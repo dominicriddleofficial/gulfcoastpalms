@@ -388,3 +388,9 @@ export default function PlatformDashboard() {
     </PlatformLayout>
   );
 }
+
+function OwnerOnlySnapshot() {
+  const { isOwner } = useUserRole();
+  if (!isOwner) return null;
+  return <KpiSnapshotWidget />;
+}
