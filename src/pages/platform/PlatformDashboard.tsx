@@ -2,6 +2,8 @@ import { useMemo } from "react";
 import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
+import KpiSnapshotWidget from "@/components/platform/KpiSnapshotWidget";
+import { useUserRole } from "@/hooks/useUserRole";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -279,6 +281,8 @@ export default function PlatformDashboard() {
             <KPICard label="Jobs This Month" value={jobsMonthPending || jobsThisMonth === undefined ? "—" : jobsThisMonth.toString()} icon={Calendar} />
           </div>
 
+          <OwnerOnlySnapshot />
+
           {/* Chart */}
           <div
             className="rounded-2xl p-5 space-y-3"
@@ -383,4 +387,10 @@ export default function PlatformDashboard() {
       </div>
     </PlatformLayout>
   );
+}
+
+function OwnerOnlySnapshot() {
+  const { isOwner } = useUserRole();
+  if (!isOwner) return null;
+  return <KpiSnapshotWidget />;
 }
