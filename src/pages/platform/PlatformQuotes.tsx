@@ -14,6 +14,7 @@ import {
   Search, Plus, FileText, DollarSign, Clock, Hash, Trash2,
   Send, CheckCircle, XCircle, History, ChevronRight, Receipt,
   Link2, MoreHorizontal, Copy, TrendingUp, Eye, Briefcase,
+  MessageSquare,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -437,6 +438,26 @@ function QuoteDetail({ quote, biz, businesses, onUpdate, onClose }: {
               onClose();
             }}>
             <Briefcase className="w-3 h-3" /> Convert to Job
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1 text-xs"
+            onClick={async () => {
+              const t = toast.loading("Sending approval SMS...");
+              const { data, error } = await supabase.functions.invoke("resend-approval-sms", {
+                body: { quote_id: quote.id },
+              });
+              toast.dismiss(t);
+              if (error || (data && (data as { error?: string }).error)) {
+                const msg = error?.message || (data as { error?: string })?.error || "Failed to send SMS";
+                toast.error(msg);
+              } else {
+                toast.success("Approval SMS sent");
+              }
+            }}
+          >
+            <MessageSquare className="w-3 h-3" /> Resend Approval SMS
           </Button>
           </>
         )}
