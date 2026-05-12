@@ -255,12 +255,12 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
       // Send email
       if (sendData.sendEmail && sendData.email) {
         try {
-          const { data: fnRes, error: fnErr } = await supabase.functions.invoke("send-invoice-email", {
+          const { data: fnRes, error: fnErr } = await supabase.functions.invoke("send-quote-email", {
             body: {
-              invoiceId: quote.id, recipientEmail: sendData.email, recipientName: customerName,
+              quoteId: quote.id, recipientEmail: sendData.email, recipientName: customerName,
               subject: sendData.subject, message: sendData.message,
-              businessName: activeBiz?.public_brand_name || "", invoiceNumber: quoteNumber,
-              total, dueDate: validUntil, paymentUrl: quoteUrl,
+              businessName: activeBiz?.public_brand_name || "", quoteNumber,
+              quoteUrl,
               ownerEmail: "dominicriddleofficial@gmail.com",
             },
           });
