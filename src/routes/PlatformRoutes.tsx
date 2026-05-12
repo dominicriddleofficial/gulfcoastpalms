@@ -34,6 +34,7 @@ const PlatformDocs = lazy(() => import("@/pages/platform/PlatformDocs"));
 const PlatformRelease = lazy(() => import("@/pages/platform/PlatformRelease"));
 const PlatformQAChecklist = lazy(() => import("@/pages/platform/PlatformQAChecklist"));
 const PlatformOfflineQueue = lazy(() => import("@/pages/platform/PlatformOfflineQueue"));
+const JobberOAuthCallback = lazy(() => import("@/pages/platform/JobberOAuthCallback"));
 
 export const PlatformRoutes = () => (
   <>
@@ -66,6 +67,7 @@ export const PlatformRoutes = () => (
     <Route path="/platform/release" element={<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformRelease /></RoleRoute>} />
     <Route path="/platform/qa-checklist" element={<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformQAChecklist /></RoleRoute>} />
     <Route path="/platform/offline-queue" element={<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformOfflineQueue /></RoleRoute>} />
+    <Route path="/platform/integrations/jobber/callback" element={<RoleRoute allow={["owner","office_manager"]}><JobberOAuthCallback /></RoleRoute>} />
 
     {/* Full-page creation editors */}
     <Route path="/platform/jobs/new" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformJobNew /></RoleRoute>} />
