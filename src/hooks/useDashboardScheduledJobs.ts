@@ -85,6 +85,7 @@ type PlatformVisitRow = {
   id: string;
   business_id: string | null;
   property_id: string | null;
+  title: string | null;
   scheduled_date: string | null;
   scheduled_start_time: string | null;
   scheduled_end_time: string | null;
@@ -253,7 +254,7 @@ export function useDashboardScheduledJobs(opts: UseDashboardScheduledJobsOptions
       let visitQuery = supabase
         .from("platform_job_visits")
         .select(
-          `id, business_id, property_id, scheduled_date, scheduled_start_time, scheduled_end_time, status, internal_notes,
+          `id, business_id, property_id, title, scheduled_date, scheduled_start_time, scheduled_end_time, status, internal_notes,
            job:platform_jobs!inner(
              id, business_id, job_number, title, total, status, source, source_system, source_record_id, internal_notes, deleted_at, scheduled_start, scheduled_end,
              customer:platform_customers(display_name, phone, email),
