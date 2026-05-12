@@ -20,10 +20,30 @@ interface Props {
 
 export default function QuickActionFAB({ brandColor = "var(--button-bg)" }: Props) {
   const [open, setOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { isOwner, isCrew } = useUserRole();
+
+  // Hide FAB whenever any Radix dialog/sheet is open (e.g. job detail sheet).
+  useEffect(() => {
+    const check = () => {
+      const hasOpen = document.querySelector(
+        '[role="dialog"][data-state="open"]',
+      );
+      setDialogOpen(Boolean(hasOpen));
+    };
+    check();
+    const observer = new MutationObserver(check);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["data-state"],
+    });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -50,6 +70,8 @@ export default function QuickActionFAB({ brandColor = "var(--button-bg)" }: Prop
   if (isCrew) return null;
   // Hide FAB on the creation pages themselves — no creating-while-creating
   if (/\/platform\/(invoices|quotes|jobs|customers|leads)\/new$/.test(location.pathname)) return null;
+  // Hide FAB while a sheet/dialog is open so it doesn't float over content.
+  if (dialogOpen) return null;
 
   const visibleActions = ACTIONS.filter(a => !a.ownerOnly || isOwner);
 
