@@ -14,6 +14,87 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics_events: {
+        Row: {
+          business_type: string | null
+          created_at: string
+          customer_id: string | null
+          device_type: string | null
+          event_name: string
+          id: string
+          invoice_id: string | null
+          ip_hash: string | null
+          lead_id: string | null
+          page_path: string | null
+          page_url: string | null
+          properties: Json
+          quote_id: string | null
+          referrer: string | null
+          session_id: string | null
+          source_component: string | null
+          user_agent: string | null
+          user_id: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+          visitor_id: string | null
+        }
+        Insert: {
+          business_type?: string | null
+          created_at?: string
+          customer_id?: string | null
+          device_type?: string | null
+          event_name: string
+          id?: string
+          invoice_id?: string | null
+          ip_hash?: string | null
+          lead_id?: string | null
+          page_path?: string | null
+          page_url?: string | null
+          properties?: Json
+          quote_id?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          source_component?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          visitor_id?: string | null
+        }
+        Update: {
+          business_type?: string | null
+          created_at?: string
+          customer_id?: string | null
+          device_type?: string | null
+          event_name?: string
+          id?: string
+          invoice_id?: string | null
+          ip_hash?: string | null
+          lead_id?: string | null
+          page_path?: string | null
+          page_url?: string | null
+          properties?: Json
+          quote_id?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          source_component?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          visitor_id?: string | null
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action_type: string
