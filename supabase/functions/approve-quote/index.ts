@@ -38,6 +38,7 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json();
     const { quote_id, action, approved_by, change_notes, approval_token } = body;
+    console.log(`[approve-quote] START quote_id=${quote_id} action=${action || "approve"}`);
 
     if (!quote_id || typeof quote_id !== "string") {
       return new Response(JSON.stringify({ error: "quote_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -143,6 +144,7 @@ Deno.serve(async (req) => {
     if (error) {
       return new Response(JSON.stringify({ error: "Failed to approve quote" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
+    console.log(`[approve-quote] status updated to approved for ${quote?.quote_number}`);
 
     // ── Auto-create draft invoice from approved quote ──
     // Only PPS auto-creates an invoice (deposit/payment workflow).
@@ -209,28 +211,32 @@ Deno.serve(async (req) => {
     } catch { /* Invoice creation is best-effort — owner can still convert manually */ }
 
     // ── Send SMS to owner about approval (idempotent: only once per quote) ──
+    console.log(`[approve-quote] approval_sms_sent (before) = ${quote?.approval_sms_sent}`);
     if (!quote?.approval_sms_sent) {
       try {
         const totalStr = quote?.total
           ? `$${Number(quote.total).toLocaleString("en-US", { minimumFractionDigits: 2 })}`
           : "$0.00";
         const smsMsg =
-          `Quote approved: ${quote?.quote_number || "quote"} — ${customerName} — ${totalStr}. ` +
-          `View in dashboard: ${adminQuoteUrl}`;
+          `Quote approved: ${quote?.quote_number || "quote"} — ${customerName} — ${totalStr}. View: ${adminQuoteUrl}`;
+        console.log(`[approve-quote] calling send-sms to ${ownerPhone}`);
         const smsResp = await fetch(`${supabaseUrl}/functions/v1/send-sms`, {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${serviceKey}` },
           body: JSON.stringify({ to: ownerPhone, message: smsMsg }),
         });
+        const smsBody = await smsResp.text().catch(() => "");
         if (smsResp.ok) {
+          console.log(`[approve-quote] SMS success: ${smsBody.substring(0, 200)}`);
           await supabase
             .from("platform_quotes")
             .update({ approval_sms_sent: true, approval_sms_sent_at: new Date().toISOString() })
             .eq("id", quote_id);
+          console.log(`[approve-quote] approval_sms_sent (after) = true`);
         } else {
-          const txt = await smsResp.text().catch(() => "");
+          console.error(`[approve-quote] SMS failed (${smsResp.status}): ${smsBody.substring(0, 300)}`);
           await supabase.from("error_logs").insert({
-            error_message: `approve-quote SMS failed (${smsResp.status}) for ${quote?.quote_number}: ${txt.substring(0, 300)}`,
+            error_message: `approve-quote SMS failed (${smsResp.status}) for ${quote?.quote_number}: ${smsBody.substring(0, 300)}`,
             page_url: "/edge/approve-quote",
           }).then(() => null, () => null);
         }
@@ -238,6 +244,8 @@ Deno.serve(async (req) => {
         // SMS is best-effort — never block approval
         console.error("[approve-quote] SMS exception:", e);
       }
+    } else {
+      console.log(`[approve-quote] skipping SMS — already sent for ${quote?.quote_number}`);
     }
 
     return new Response(JSON.stringify({ success: true, status: "approved", invoice_number: invoiceNumber || null }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
