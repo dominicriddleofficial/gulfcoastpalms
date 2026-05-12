@@ -173,6 +173,9 @@ function buildPlatformItem(
   job: PlatformJobShape,
   visit: PlatformVisitRow | null,
   importedJobberIds: Set<string>,
+  jobberFallback?: JobberJobRow | null,
+  jobberClient?: JobberClientRow | null,
+  jobberProperty?: JobberPropertyRow | null,
 ): DashboardScheduledJob | null {
   if (job.deleted_at || isExcludedStatus(job.status) || isExcludedStatus(visit?.status ?? null)) return null;
 
@@ -193,9 +196,17 @@ function buildPlatformItem(
   if (externalId) importedJobberIds.add(externalId);
 
   const source: NormalizedScheduleSource = externalId ? "jobber_import" : "platform";
-  const address = platformAddress(job.property);
+  const address =
+    platformAddress(job.property) ??
+    jobberFallback?.property_address ??
+    jobberAddress(jobberProperty ?? null);
   const amount = toAmount(job.total);
   const visitStatus = cleanStatus(visit?.status ?? null);
+  const customerName =
+    job.customer?.display_name ?? jobberFallback?.client_name ?? jobberClient?.display_name ?? null;
+  const customerPhone =
+    job.customer?.phone ?? jobberFallback?.client_phone ?? jobberClient?.phone ?? null;
+  const customerEmail = job.customer?.email ?? jobberClient?.email ?? null;
 
   return {
     id: visit?.id ?? job.id,
@@ -206,25 +217,25 @@ function buildPlatformItem(
     dedupe_key: externalId ? `jobber:${externalId}` : `platform:${job.id}:${visit?.id ?? "job"}`,
     job_number: job.job_number,
     title: visit?.title ?? job.title,
-    customer_name: job.customer?.display_name ?? null,
-    customer_phone: job.customer?.phone ?? null,
-    customer_email: job.customer?.email ?? null,
+    customer_name: customerName,
+    customer_phone: customerPhone,
+    customer_email: customerEmail,
     address,
     scheduled_start: scheduledStart,
     scheduled_end: scheduledEnd,
     status: cleanStatus(job.status),
     total_amount: amount,
     business_id: visit?.business_id ?? job.business_id,
-    client_name: job.customer?.display_name ?? null,
-    client_phone: job.customer?.phone ?? null,
+    client_name: customerName,
+    client_phone: customerPhone,
     property_address: address,
     visit_status: visitStatus,
     scheduled_local_date: localDate,
     amount_counted: amount,
     internal_notes: visit?.internal_notes ?? job.internal_notes,
-    assigned_employee_names: null,
-    property_id: visit?.property_id ?? null,
-    service_items: null,
+    assigned_employee_names: jobberFallback?.assigned_employee_names ?? null,
+    property_id: visit?.property_id ?? jobberFallback?.property_id ?? null,
+    service_items: jobberFallback?.service_items ?? null,
   };
 }
 
@@ -312,32 +323,52 @@ export function useDashboardScheduledJobs(opts: UseDashboardScheduledJobsOptions
       const platformJobRows = (platformJobResult.data ?? []) as unknown as PlatformJobShape[];
       const jobberRows = (jobberResult.data ?? []) as unknown as JobberJobRow[];
 
+      // Collect jobber source_record_ids referenced by platform jobs (imports) so we
+      // can backfill missing customer/property info that wasn't migrated.
+      const importedSourceIds = new Set<string>();
+      const collectImport = (j: PlatformJobShape | null | undefined) => {
+        const id = j ? jobberImportId(j) : null;
+        if (id) importedSourceIds.add(id);
+      };
+      for (const v of visitRows) collectImport(v.job);
+      for (const j of platformJobRows) collectImport(j);
+
+      const jobberFallbackMap = new Map<string, JobberJobRow>();
+      const fallbackClientIds = new Set<string>();
+      const fallbackPropertyIds = new Set<string>();
+      if (importedSourceIds.size > 0) {
+        const { data: fallbackRows, error: fallbackErr } = await supabase
+          .from("jobber_jobs")
+          .select(
+            "id, jobber_id, title, status, scheduled_start, scheduled_end, client_id, property_id, client_name, client_phone, property_address, assigned_employee_names, service_items, internal_notes, job_number, total_amount, visit_status, business_id",
+          )
+          .in("id", [...importedSourceIds]);
+        if (fallbackErr) throw fallbackErr;
+        for (const row of (fallbackRows ?? []) as unknown as JobberJobRow[]) {
+          jobberFallbackMap.set(row.id, row);
+          if (row.client_id) fallbackClientIds.add(row.client_id);
+          if (row.property_id) fallbackPropertyIds.add(row.property_id);
+        }
+      }
+
       const importedJobberIds = new Set<string>();
       const platformJobIdsWithVisits = new Set<string>();
       const normalized: DashboardScheduledJob[] = [];
 
-      for (const visit of visitRows) {
-        if (!visit.job) continue;
-        platformJobIdsWithVisits.add(visit.job.id);
-        const item = buildPlatformItem(visit.job, visit, importedJobberIds);
-        if (item) normalized.push(item);
-      }
-
-      for (const job of platformJobRows) {
-        if (platformJobIdsWithVisits.has(job.id)) continue;
-        const item = buildPlatformItem(job, null, importedJobberIds);
-        if (item) normalized.push(item);
-      }
-
       const clientIds = [...new Set(jobberRows.map((j) => j.client_id).filter((id): id is string => Boolean(id)))];
       const propertyIds = [...new Set(jobberRows.map((j) => j.property_id).filter((id): id is string => Boolean(id)))];
 
+      for (const id of fallbackClientIds) clientIds.push(id);
+      for (const id of fallbackPropertyIds) propertyIds.push(id);
+      const uniqueClientIds = [...new Set(clientIds)];
+      const uniquePropertyIds = [...new Set(propertyIds)];
+
       const [clientResult, propertyResult] = await Promise.all([
-        clientIds.length > 0
-          ? supabase.from("jobber_clients").select("id, display_name, email, phone").in("id", clientIds)
+        uniqueClientIds.length > 0
+          ? supabase.from("jobber_clients").select("id, display_name, email, phone").in("id", uniqueClientIds)
           : Promise.resolve({ data: [], error: null }),
-        propertyIds.length > 0
-          ? supabase.from("jobber_properties").select("id, street1, street2, city, state, zip").in("id", propertyIds)
+        uniquePropertyIds.length > 0
+          ? supabase.from("jobber_properties").select("id, street1, street2, city, state, zip").in("id", uniquePropertyIds)
           : Promise.resolve({ data: [], error: null }),
       ]);
 
@@ -352,6 +383,29 @@ export function useDashboardScheduledJobs(opts: UseDashboardScheduledJobsOptions
       const propertyMap = new Map<string, JobberPropertyRow>();
       for (const property of (propertyResult.data ?? []) as unknown as JobberPropertyRow[]) {
         propertyMap.set(property.id, property);
+      }
+
+      const enrichArgs = (job: PlatformJobShape) => {
+        const sid = jobberImportId(job);
+        const fb = sid ? jobberFallbackMap.get(sid) ?? null : null;
+        const fbClient = fb?.client_id ? clientMap.get(fb.client_id) ?? null : null;
+        const fbProperty = fb?.property_id ? propertyMap.get(fb.property_id) ?? null : null;
+        return { fb, fbClient, fbProperty };
+      };
+
+      for (const visit of visitRows) {
+        if (!visit.job) continue;
+        platformJobIdsWithVisits.add(visit.job.id);
+        const { fb, fbClient, fbProperty } = enrichArgs(visit.job);
+        const item = buildPlatformItem(visit.job, visit, importedJobberIds, fb, fbClient, fbProperty);
+        if (item) normalized.push(item);
+      }
+
+      for (const job of platformJobRows) {
+        if (platformJobIdsWithVisits.has(job.id)) continue;
+        const { fb, fbClient, fbProperty } = enrichArgs(job);
+        const item = buildPlatformItem(job, null, importedJobberIds, fb, fbClient, fbProperty);
+        if (item) normalized.push(item);
       }
 
       for (const job of jobberRows) {
