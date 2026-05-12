@@ -3,7 +3,7 @@ import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { GoogleMap, MarkerF, useJsApiLoader } from "@react-google-maps/api";
@@ -17,7 +17,6 @@ import {
   User,
   RefreshCw,
   CalendarDays,
-  FileText,
   Map,
   Phone,
   Navigation,
