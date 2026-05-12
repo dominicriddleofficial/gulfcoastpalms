@@ -37,16 +37,20 @@ export default function ReliabilitySection() {
     refetchInterval: 60_000,
   });
 
-  const lastCron = checks.find((c) => c.check_name === "cron_health");
+  const tracked = TRACKED.map(({ key, label }) => {
+    const row = checks.find((c) => c.check_name === key);
+    return { key, label, row, status: (row?.status ?? "unknown") as HealthRow["status"] };
+  });
+  const problems = tracked.filter(
+    (t) => t.status === "warn" || t.status === "fail",
+  );
+
+  if (isPending || problems.length === 0) return null;
 
   return (
     <SectionCard
       title="Reliability"
-      subtitle={
-        lastCron?.last_ok_at
-          ? `Last cron OK ${formatDistanceToNow(new Date(lastCron.last_ok_at), { addSuffix: true })}`
-          : "Backend systems status"
-      }
+      subtitle={`${problems.length} system${problems.length === 1 ? "" : "s"} need attention`}
       action={
         <Link
           to="/platform/backend-health"
@@ -58,9 +62,7 @@ export default function ReliabilitySection() {
       }
     >
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-        {TRACKED.map(({ key, label }) => {
-          const row = checks.find((c) => c.check_name === key);
-          const status = row?.status ?? "unknown";
+        {problems.map(({ key, label, row, status }) => {
           const stamp = row?.updated_at
             ? formatDistanceToNow(new Date(row.updated_at), { addSuffix: true })
             : "no data";
@@ -110,14 +112,6 @@ export default function ReliabilitySection() {
             </div>
           );
         })}
-        {isPending && (
-          <div
-            className="font-body col-span-full"
-            style={{ fontSize: "11px", color: "hsl(220 8% 50%)" }}
-          >
-            Loading status…
-          </div>
-        )}
       </div>
     </SectionCard>
   );
