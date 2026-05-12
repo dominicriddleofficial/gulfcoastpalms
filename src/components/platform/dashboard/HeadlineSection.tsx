@@ -88,12 +88,23 @@ export default function HeadlineSection() {
     queryKey: ["dash-rev-week", selectedBusinessId, wsDate],
     enabled: ready,
     queryFn: async () => {
-      const { data } = await supabase
+      // Prefer recorded payments; fall back to completed Jobber jobs so the
+      // dashboard stays accurate even when payments haven't been ingested yet.
+      const { data: pays } = await supabase
         .from("platform_payments")
         .select("amount")
         .eq("business_id", selectedBusinessId!)
         .gte("payment_date", wsDate);
-      return (data ?? []).reduce((s, r) => s + (Number(r.amount) || 0), 0);
+      const paySum = (pays ?? []).reduce((s, r) => s + (Number(r.amount) || 0), 0);
+      if (paySum > 0) return paySum;
+      const { data: jobs } = await supabase
+        .from("jobber_jobs")
+        .select("total_amount,visit_status")
+        .eq("business_id", selectedBusinessId!)
+        .eq("visit_status", "completed")
+        .gte("scheduled_start", weekStart.toISOString())
+        .lte("scheduled_start", weekEnd.toISOString());
+      return (jobs ?? []).reduce((s, r) => s + (Number(r.total_amount) || 0), 0);
     },
   });
 
@@ -101,12 +112,21 @@ export default function HeadlineSection() {
     queryKey: ["dash-rev-month", selectedBusinessId, msDate],
     enabled: ready,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data: pays } = await supabase
         .from("platform_payments")
         .select("amount")
         .eq("business_id", selectedBusinessId!)
         .gte("payment_date", msDate);
-      return (data ?? []).reduce((s, r) => s + (Number(r.amount) || 0), 0);
+      const paySum = (pays ?? []).reduce((s, r) => s + (Number(r.amount) || 0), 0);
+      if (paySum > 0) return paySum;
+      const { data: jobs } = await supabase
+        .from("jobber_jobs")
+        .select("total_amount,visit_status")
+        .eq("business_id", selectedBusinessId!)
+        .eq("visit_status", "completed")
+        .gte("scheduled_start", monthStart.toISOString())
+        .lte("scheduled_start", monthEnd.toISOString());
+      return (jobs ?? []).reduce((s, r) => s + (Number(r.total_amount) || 0), 0);
     },
   });
 
