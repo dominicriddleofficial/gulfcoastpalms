@@ -124,6 +124,7 @@ const PlatformCustomerNew = lazy(() => import("./pages/platform/PlatformCustomer
 const PlatformLeadNew = lazy(() => import("./pages/platform/PlatformLeadNew"));
 const PlatformInvoiceNew = lazy(() => import("./pages/platform/PlatformInvoiceNew"));
 const PlatformQuoteNew = lazy(() => import("./pages/platform/PlatformQuoteNew"));
+const PlatformBackendHealth = lazy(() => import("./pages/platform/PlatformBackendHealth"));
 
 
 // Payment pages — lazy
@@ -321,6 +322,7 @@ const App = () => (
                   <Route path="/platform/change-password" element={<PlatformChangePassword />} />
                   <Route path="/platform/finance" element={<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformFinance /></RoleRoute>} />
                   <Route path="/platform/finance/:section" element={<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformFinance /></RoleRoute>} />
+                  <Route path="/platform/backend-health" element={<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformBackendHealth /></RoleRoute>} />
 
                   {/* Platform — full-page creation editors */}
                   <Route path="/platform/jobs/new" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformJobNew /></RoleRoute>} />
