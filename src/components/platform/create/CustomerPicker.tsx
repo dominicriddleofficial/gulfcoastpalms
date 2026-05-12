@@ -48,7 +48,15 @@ export default function CustomerPicker({ businessId, value, onChange, onCreateNe
           <p className="text-sm font-medium text-foreground truncate">{value.display_name}</p>
           <p className="text-xs text-muted-foreground truncate">{value.phone || value.email || "—"}</p>
         </div>
-        <Button type="button" size="sm" variant="ghost" onClick={() => onChange(null)}>Change</Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="border-primary/40 text-primary hover:bg-primary/10 hover:text-primary"
+          onClick={() => onChange(null)}
+        >
+          Change
+        </Button>
       </div>
     );
   }
