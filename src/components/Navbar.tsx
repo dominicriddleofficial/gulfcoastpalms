@@ -38,6 +38,11 @@ const Navbar = () => {
     setLearnOpen(false);
   };
 
+  const trackMenuLink = (label: string) => {
+    trackEvent("mobile_menu_link_clicked", { source: "mobile_menu", cta_text: label });
+    closeAll();
+  };
+
   const toggleOne = (setter: React.Dispatch<React.SetStateAction<boolean>>, others: React.Dispatch<React.SetStateAction<boolean>>[]) => {
     setter((prev) => {
       const next = !prev;
@@ -151,7 +156,10 @@ const Navbar = () => {
           >
             <Phone className="w-5 h-5" />
           </a>
-          <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+          <Sheet open={sheetOpen} onOpenChange={(o) => {
+            setSheetOpen(o);
+            if (o) trackEvent("mobile_menu_opened", { source: "navbar" });
+          }}>
             <SheetTrigger asChild>
               <button
                 className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] text-foreground rounded-lg"
@@ -169,16 +177,16 @@ const Navbar = () => {
                 <p className="font-body text-[11px] uppercase tracking-wider text-muted-foreground/70 px-2 mb-2">Main</p>
                 <ul className="mb-5">
                   <li>
-                    <Link to="/" onClick={closeAll} className={`block px-2 py-2.5 rounded-md font-body text-base ${location.pathname === "/" ? "text-primary font-semibold" : "text-foreground"}`}>Home</Link>
+                    <Link to="/" onClick={() => trackMenuLink("Home")} className={`block px-2 py-2.5 rounded-md font-body text-base ${location.pathname === "/" ? "text-primary font-semibold" : "text-foreground"}`}>Home</Link>
                   </li>
                   <li>
-                    <Link to="/about" onClick={closeAll} className={`block px-2 py-2.5 rounded-md font-body text-base ${location.pathname === "/about" ? "text-primary font-semibold" : "text-foreground"}`}>About</Link>
+                    <Link to="/about" onClick={() => trackMenuLink("About")} className={`block px-2 py-2.5 rounded-md font-body text-base ${location.pathname === "/about" ? "text-primary font-semibold" : "text-foreground"}`}>About</Link>
                   </li>
                   <li>
-                    <Link to="/jobs" onClick={closeAll} className={`block px-2 py-2.5 rounded-md font-body text-base ${location.pathname === "/jobs" ? "text-primary font-semibold" : "text-foreground"}`}>Jobs Completed</Link>
+                    <Link to="/jobs" onClick={() => trackMenuLink("Jobs")} className={`block px-2 py-2.5 rounded-md font-body text-base ${location.pathname === "/jobs" ? "text-primary font-semibold" : "text-foreground"}`}>Jobs Completed</Link>
                   </li>
                   <li>
-                    <Link to="/palm-trees/buy" onClick={closeAll} className={`block px-2 py-2.5 rounded-md font-body text-base ${location.pathname === "/palm-trees/buy" ? "text-primary font-semibold" : "text-foreground"}`}>Buy Palm Trees</Link>
+                    <Link to="/palm-trees/buy" onClick={() => trackMenuLink("Buy Palm Trees")} className={`block px-2 py-2.5 rounded-md font-body text-base ${location.pathname === "/palm-trees/buy" ? "text-primary font-semibold" : "text-foreground"}`}>Buy Palm Trees</Link>
                   </li>
                 </ul>
 
@@ -197,17 +205,17 @@ const Navbar = () => {
                 {servicesOpen && (
                   <ul id="mobile-services-panel" className="max-h-[40vh] overflow-y-auto pl-3 border-l border-border ml-2 mb-3">
                     <li>
-                      <Link to="/services" onClick={closeAll} className="block px-2 py-2 font-body text-sm text-foreground/90 hover:text-primary">View all services</Link>
+                      <Link to="/services" onClick={() => trackMenuLink("All services")} className="block px-2 py-2 font-body text-sm text-foreground/90 hover:text-primary">View all services</Link>
                     </li>
                     {serviceNavLinks.map((link) => (
                       <li key={link.to}>
-                        <Link to={link.to} onClick={closeAll} className={`block px-2 py-2 font-body text-sm hover:text-primary ${location.pathname === link.to ? "text-primary font-semibold" : "text-foreground/90"}`}>
+                        <Link to={link.to} onClick={() => trackMenuLink(link.label)} className={`block px-2 py-2 font-body text-sm hover:text-primary ${location.pathname === link.to ? "text-primary font-semibold" : "text-foreground/90"}`}>
                           {link.label}
                         </Link>
                       </li>
                     ))}
                     <li>
-                      <Link to="/palm-tree-maintenance-plans" onClick={closeAll} className="block px-2 py-2 font-body text-sm text-foreground/90 hover:text-primary">Maintenance Plans</Link>
+                      <Link to="/palm-tree-maintenance-plans" onClick={() => trackMenuLink("Maintenance Plans")} className="block px-2 py-2 font-body text-sm text-foreground/90 hover:text-primary">Maintenance Plans</Link>
                     </li>
                   </ul>
                 )}
@@ -228,7 +236,7 @@ const Navbar = () => {
                   <ul id="mobile-learn-panel" className="max-h-[40vh] overflow-y-auto pl-3 border-l border-border ml-2 mb-3">
                     {learnLinks.map((link) => (
                       <li key={link.to}>
-                        <Link to={link.to} onClick={closeAll} className={`block px-2 py-2 font-body text-sm hover:text-primary ${location.pathname === link.to ? "text-primary font-semibold" : "text-foreground/90"}`}>
+                        <Link to={link.to} onClick={() => trackMenuLink(link.label)} className={`block px-2 py-2 font-body text-sm hover:text-primary ${location.pathname === link.to ? "text-primary font-semibold" : "text-foreground/90"}`}>
                           {link.label}
                         </Link>
                       </li>
@@ -252,13 +260,13 @@ const Navbar = () => {
                   <ul id="mobile-areas-panel" className="max-h-[40vh] overflow-y-auto pl-3 border-l border-border ml-2 mb-3">
                     {topAreas.map((loc) => (
                       <li key={loc.slug}>
-                        <Link to={`/${loc.slug}`} onClick={closeAll} className={`block px-2 py-2 font-body text-sm hover:text-primary ${location.pathname === `/${loc.slug}` ? "text-primary font-semibold" : "text-foreground/90"}`}>
+                        <Link to={`/${loc.slug}`} onClick={() => trackMenuLink(`${loc.city}, ${loc.state}`)} className={`block px-2 py-2 font-body text-sm hover:text-primary ${location.pathname === `/${loc.slug}` ? "text-primary font-semibold" : "text-foreground/90"}`}>
                           {loc.city}, {loc.state}
                         </Link>
                       </li>
                     ))}
                     <li>
-                      <Link to="/service-areas" onClick={closeAll} className="inline-flex items-center gap-1 px-2 py-2 font-body text-sm font-semibold text-primary hover:underline">
+                      <Link to="/service-areas" onClick={() => trackMenuLink("All service areas")} className="inline-flex items-center gap-1 px-2 py-2 font-body text-sm font-semibold text-primary hover:underline">
                         View all service areas <ArrowRight className="w-3.5 h-3.5" />
                       </Link>
                     </li>
@@ -269,10 +277,10 @@ const Navbar = () => {
                 <p className="font-body text-[11px] uppercase tracking-wider text-muted-foreground/70 px-2 mt-2 mb-2">Contact</p>
                 <ul>
                   <li>
-                    <Link to="/emergency-palm-service" onClick={closeAll} className="block px-2 py-2.5 rounded-md font-body text-base text-foreground">Emergency Service</Link>
+                    <Link to="/emergency-palm-service" onClick={() => trackMenuLink("Emergency")} className="block px-2 py-2.5 rounded-md font-body text-base text-foreground">Emergency Service</Link>
                   </li>
                   <li>
-                    <Link to="/referral" onClick={closeAll} className="block px-2 py-2.5 rounded-md font-body text-base text-foreground">Referral Program</Link>
+                    <Link to="/referral" onClick={() => trackMenuLink("Referral")} className="block px-2 py-2.5 rounded-md font-body text-base text-foreground">Referral Program</Link>
                   </li>
                 </ul>
               </nav>
@@ -281,7 +289,7 @@ const Navbar = () => {
               <div className="border-t border-border p-4 flex flex-col gap-2.5 bg-background">
                 <Link
                   to="/quote"
-                  onClick={closeAll}
+                  onClick={() => trackMenuLink("Get a Free Quote")}
                   className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-primary text-primary-foreground font-body font-semibold"
                 >
                   Get a Free Quote <ArrowRight className="w-4 h-4" />

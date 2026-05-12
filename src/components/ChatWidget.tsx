@@ -76,7 +76,7 @@ const ChatWidget = () => {
     const userMsg: Msg = { role: "user", content: input.trim() };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
-    setIsLoading(true);
+    setIsLoading(true); trackEvent("chat_message_sent", { source: "ai_chat" });
 
     checkForContactInfo(userMsg.content);
 
@@ -175,7 +175,7 @@ const ChatWidget = () => {
       {/* Chat Bubble */}
       {!isOpen && isVisible && (
         <button
-          onClick={() => setIsOpen(true)}
+          onClick={() => { setIsOpen(true); trackEvent("chat_opened", { source: "chat_bubble" }); }}
           className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+5rem)] md:bottom-6 right-4 z-40 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-all flex items-center justify-center animate-fade-in"
           aria-label="Open chat assistant"
         >
