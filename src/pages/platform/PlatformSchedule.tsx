@@ -45,6 +45,29 @@ import { toast } from "sonner";
 import { ContactCustomerSheet } from "@/components/platform/ContactCustomerSheet";
 import { useVisitLifecycle, type VisitStatus } from "@/hooks/useVisitLifecycle";
 import { OnMyWaySheet } from "@/components/platform/schedule/OnMyWaySheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useQueryClient } from "@tanstack/react-query";
+import { CalendarClock, Pencil, Trash2 } from "lucide-react";
 
 type ScheduleTab = "day" | "list" | "map";
 
@@ -640,8 +663,13 @@ function JobDetail({
   const [tab, setTab] = useState<JobDetailTab>("visit");
   const [omwOpen, setOmwOpen] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
+  const [rescheduleOpen, setRescheduleOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const navigate = useNavigate();
   const { advance, reopen } = useVisitLifecycle();
+  const { isStaff } = useUserRole();
+  const qc = useQueryClient();
   const lifeStatus = normalizeVisitStatus(job.visit_status);
   const statusKey = getStatusKey(job);
   const statusInfo = STATUS_STYLES[statusKey];
@@ -705,14 +733,44 @@ function JobDetail({
               <Phone className="w-5 h-5" />
             </a>
           )}
-          <button
-            type="button"
-            onClick={onContact}
-            aria-label="More options"
-            className="p-2 rounded-lg text-foreground/80 hover:text-foreground hover:bg-secondary/60 transition-colors"
-          >
-            <MoreHorizontal className="w-5 h-5" />
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                aria-label="More options"
+                className="p-2 rounded-lg text-foreground/80 hover:text-foreground hover:bg-secondary/60 transition-colors"
+              >
+                <MoreHorizontal className="w-5 h-5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-card border-border w-56">
+              <DropdownMenuItem
+                onClick={() => setRescheduleOpen(true)}
+                disabled={!isStaff}
+                className="gap-2"
+              >
+                <CalendarClock className="w-4 h-4" />
+                Reschedule
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setEditOpen(true)}
+                disabled={!isStaff}
+                className="gap-2"
+              >
+                <Pencil className="w-4 h-4" />
+                Edit job
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => setDeleteOpen(true)}
+                disabled={!isStaff}
+                className="gap-2 text-destructive focus:text-destructive"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete visit
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -1042,6 +1100,38 @@ function JobDetail({
           }
         }}
       />
+
+      <RescheduleSheet
+        open={rescheduleOpen}
+        onClose={() => setRescheduleOpen(false)}
+        job={job}
+        onSaved={() => {
+          setRescheduleOpen(false);
+          qc.invalidateQueries({ queryKey: ["schedule-jobber"] });
+        }}
+      />
+
+      <EditJobSheet
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        job={job}
+        onSaved={() => {
+          setEditOpen(false);
+          qc.invalidateQueries({ queryKey: ["schedule-jobber"] });
+        }}
+      />
+
+      <DeleteJobDialog
+        open={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        jobId={job.id}
+        jobLabel={job.title ?? job.client_name ?? "this visit"}
+        onDeleted={() => {
+          setDeleteOpen(false);
+          qc.invalidateQueries({ queryKey: ["schedule-jobber"] });
+          onClose();
+        }}
+      />
     </div>
   );
 }
@@ -1147,5 +1237,260 @@ function DetailRow({
         {value}
       </p>
     </div>
+  );
+}
+
+function toLocalInputValue(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function RescheduleSheet({
+  open,
+  onClose,
+  job,
+  onSaved,
+}: {
+  open: boolean;
+  onClose: () => void;
+  job: JobberJob;
+  onSaved: () => void;
+}) {
+  const [start, setStart] = useState<string>(() => toLocalInputValue(job.scheduled_start));
+  const [end, setEnd] = useState<string>(() => toLocalInputValue(job.scheduled_end));
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setStart(toLocalInputValue(job.scheduled_start));
+      setEnd(toLocalInputValue(job.scheduled_end));
+    }
+  }, [open, job.scheduled_start, job.scheduled_end]);
+
+  const handleSave = async () => {
+    if (!start) {
+      toast.error("Pick a start date and time");
+      return;
+    }
+    setSaving(true);
+    const startIso = new Date(start).toISOString();
+    const endIso = end ? new Date(end).toISOString() : null;
+    if (endIso && new Date(endIso) <= new Date(startIso)) {
+      toast.error("End must be after start");
+      setSaving(false);
+      return;
+    }
+    const { error } = await supabase
+      .from("jobber_jobs")
+      .update({ scheduled_start: startIso, scheduled_end: endIso })
+      .eq("id", job.id);
+    setSaving(false);
+    if (error) {
+      toast.error(error.message || "Reschedule failed");
+      return;
+    }
+    toast.success("Visit rescheduled");
+    onSaved();
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
+      <SheetContent
+        side="bottom"
+        className="ops-theme bg-background border-t border-border rounded-t-2xl p-5 space-y-4"
+      >
+        <div className="space-y-1">
+          <h3 className="font-display text-[20px] font-extrabold text-foreground">Reschedule visit</h3>
+          <p className="font-body text-[13px] text-muted-foreground">
+            Updates the scheduled time on this Jobber visit.
+          </p>
+        </div>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label className="font-body text-[13px] text-muted-foreground">Start</Label>
+            <Input
+              type="datetime-local"
+              value={start}
+              onChange={(e) => setStart(e.target.value)}
+              className="bg-card border-border text-foreground"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="font-body text-[13px] text-muted-foreground">End (optional)</Label>
+            <Input
+              type="datetime-local"
+              value={end}
+              onChange={(e) => setEnd(e.target.value)}
+              className="bg-card border-border text-foreground"
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3 pt-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="min-h-[52px] rounded-xl bg-secondary/60 text-foreground font-body font-semibold text-[15px] hover:bg-secondary/80 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={saving}
+            onClick={handleSave}
+            className="min-h-[52px] rounded-xl bg-primary text-primary-foreground font-body font-bold text-[15px] hover:bg-primary/90 transition-colors disabled:opacity-50"
+          >
+            {saving ? "Saving…" : "Save"}
+          </button>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function EditJobSheet({
+  open,
+  onClose,
+  job,
+  onSaved,
+}: {
+  open: boolean;
+  onClose: () => void;
+  job: JobberJob;
+  onSaved: () => void;
+}) {
+  const [title, setTitle] = useState(job.title ?? "");
+  const [notes, setNotes] = useState(job.internal_notes ?? "");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setTitle(job.title ?? "");
+      setNotes(job.internal_notes ?? "");
+    }
+  }, [open, job.title, job.internal_notes]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    const { error } = await supabase
+      .from("jobber_jobs")
+      .update({ title: title.trim() || null, internal_notes: notes })
+      .eq("id", job.id);
+    setSaving(false);
+    if (error) {
+      toast.error(error.message || "Update failed");
+      return;
+    }
+    toast.success("Job updated");
+    onSaved();
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
+      <SheetContent
+        side="bottom"
+        className="ops-theme bg-background border-t border-border rounded-t-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto"
+      >
+        <div className="space-y-1">
+          <h3 className="font-display text-[20px] font-extrabold text-foreground">Edit job</h3>
+          <p className="font-body text-[13px] text-muted-foreground">
+            Title and instructions update locally. Changes don't sync back to Jobber.
+          </p>
+        </div>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label className="font-body text-[13px] text-muted-foreground">Title</Label>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="bg-card border-border text-foreground"
+              placeholder="Job title"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="font-body text-[13px] text-muted-foreground">Instructions / notes</Label>
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="bg-card border-border text-foreground min-h-[120px]"
+              placeholder="Notes for the crew"
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3 pt-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="min-h-[52px] rounded-xl bg-secondary/60 text-foreground font-body font-semibold text-[15px] hover:bg-secondary/80 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={saving}
+            onClick={handleSave}
+            className="min-h-[52px] rounded-xl bg-primary text-primary-foreground font-body font-bold text-[15px] hover:bg-primary/90 transition-colors disabled:opacity-50"
+          >
+            {saving ? "Saving…" : "Save changes"}
+          </button>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function DeleteJobDialog({
+  open,
+  onClose,
+  jobId,
+  jobLabel,
+  onDeleted,
+}: {
+  open: boolean;
+  onClose: () => void;
+  jobId: string;
+  jobLabel: string;
+  onDeleted: () => void;
+}) {
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    const { error } = await supabase.from("jobber_jobs").delete().eq("id", jobId);
+    setDeleting(false);
+    if (error) {
+      toast.error(error.message || "Delete failed");
+      return;
+    }
+    toast.success("Visit deleted");
+    onDeleted();
+  };
+
+  return (
+    <AlertDialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <AlertDialogContent className="ops-theme bg-background border-border">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="font-display text-foreground">Delete this visit?</AlertDialogTitle>
+          <AlertDialogDescription className="font-body text-muted-foreground">
+            This permanently removes "{jobLabel}" from your schedule. The next Jobber sync will re-add it
+            if it still exists in Jobber.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel className="bg-secondary/60 border-border text-foreground hover:bg-secondary/80">
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction
+            disabled={deleting}
+            onClick={handleDelete}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {deleting ? "Deleting…" : "Delete"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
