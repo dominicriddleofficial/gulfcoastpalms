@@ -9,6 +9,7 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-assista
 
 const ChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -29,6 +30,30 @@ const ChatWidget = () => {
   useEffect(() => {
     if (isOpen && inputRef.current) inputRef.current.focus();
   }, [isOpen]);
+
+  // Reveal bubble after 5s OR after user scrolls 35% of the page,
+  // whichever comes first. Prevents the bubble from competing with the
+  // hero CTA on first paint (mobile conversion fix).
+  useEffect(() => {
+    let revealed = false;
+    const reveal = () => {
+      if (revealed) return;
+      revealed = true;
+      setIsVisible(true);
+      window.removeEventListener("scroll", onScroll);
+    };
+    const onScroll = () => {
+      const scrolled = window.scrollY;
+      const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+      if (scrolled / max >= 0.35) reveal();
+    };
+    const timer = window.setTimeout(reveal, 5000);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, []);
 
   // Check for contact info in message and auto-capture as lead
   const checkForContactInfo = (text: string) => {
@@ -148,10 +173,10 @@ const ChatWidget = () => {
   return (
     <>
       {/* Chat Bubble */}
-      {!isOpen && (
+      {!isOpen && isVisible && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-20 md:bottom-6 right-4 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-all flex items-center justify-center animate-fade-in"
+          className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+5rem)] md:bottom-6 right-4 z-40 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-all flex items-center justify-center animate-fade-in"
           aria-label="Open chat assistant"
         >
           <MessageSquare className="w-6 h-6" />
@@ -160,7 +185,7 @@ const ChatWidget = () => {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-20 md:bottom-6 right-4 z-50 w-[calc(100vw-2rem)] max-w-sm bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-fade-in" style={{ height: "min(500px, calc(100vh - 10rem))" }}>
+        <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+5rem)] md:bottom-6 right-4 z-50 w-[calc(100vw-2rem)] max-w-sm bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-fade-in" style={{ height: "min(500px, calc(100vh - 10rem))" }}>
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 bg-primary text-primary-foreground">
             <div>
