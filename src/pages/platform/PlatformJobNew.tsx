@@ -34,12 +34,12 @@ export default function PlatformJobNew() {
   const [customer, setCustomer] = useState<CustomerLite | null>(prefill?.customer ?? null);
   const [title, setTitle] = useState(prefill?.title ?? "");
   const [description, setDescription] = useState(prefill?.description ?? "");
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(() => prefill?.scheduledDate ?? new Date().toISOString().slice(0, 10));
   const [time, setTime] = useState("09:00");
   const [duration, setDuration] = useState(60);
-  const [address, setAddress] = useState("");
+  const [address, setAddress] = useState(prefill?.address ?? "");
   const [total, setTotal] = useState<string>(prefill?.total != null ? String(prefill.total) : "");
-  const [notes, setNotes] = useState("");
+  const [notes, setNotes] = useState(prefill?.internalNotes ?? "");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -53,9 +53,9 @@ export default function PlatformJobNew() {
     })();
   }, [selectedBusinessId]);
 
-  // Pre-fill address from customer's primary property
+  // Pre-fill address from customer's primary property (only if not provided via prefill)
   useEffect(() => {
-    if (!customer || !selectedBusinessId) return;
+    if (!customer || !selectedBusinessId || address) return;
     (async () => {
       const { data } = await supabase
         .from("platform_properties")
@@ -67,13 +67,29 @@ export default function PlatformJobNew() {
         .maybeSingle();
       if (data) setAddress(`${data.address_1}, ${data.city}, ${data.state} ${data.zip}`.trim());
     })();
-  }, [customer, selectedBusinessId]);
+  }, [customer, selectedBusinessId, address]);
 
   const handleSave = async () => {
     if (!selectedBusinessId) { toast.error("Select a workspace"); return; }
     if (!customer) { toast.error("Pick a customer"); return; }
     if (!title.trim()) { toast.error("Enter a job title"); return; }
     setSaving(true);
+
+    // Prevent accidental duplicate when prefilled from a quote
+    if (prefill?.fromQuoteId) {
+      const { data: existing } = await supabase
+        .from("platform_jobs")
+        .select("id, job_number")
+        .eq("quote_id", prefill.fromQuoteId)
+        .limit(1);
+      if (existing && existing.length > 0) {
+        const ok = confirm(
+          `Job ${existing[0].job_number} was already created from this quote. Create another?`,
+        );
+        if (!ok) { setSaving(false); return; }
+      }
+    }
+
     const scheduledStart = new Date(`${date}T${time}:00`).toISOString();
     const scheduledEnd = new Date(new Date(scheduledStart).getTime() + duration * 60000).toISOString();
     const { data: { user } } = await supabase.auth.getUser();
