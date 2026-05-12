@@ -225,7 +225,7 @@ export default function PlatformQuotes() {
       </div>
 
       <Sheet open={!!selectedQuote} onOpenChange={() => setSelectedQuote(null)}>
-        <SheetContent className="bg-card border-border w-full sm:max-w-lg overflow-y-auto">
+        <SheetContent className="ops-theme bg-background text-foreground border-border w-full sm:max-w-lg overflow-y-auto">
           {selectedQuote && (
             <QuoteDetail
               quote={selectedQuote}
