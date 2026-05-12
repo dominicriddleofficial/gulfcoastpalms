@@ -8,12 +8,7 @@ import HeadlineSection from "@/components/platform/dashboard/HeadlineSection";
 import ScheduledValueChart from "@/components/platform/dashboard/ScheduledValueChart";
 
 export default function PlatformDashboard() {
-  const {
-    selectedBusinessId,
-    businesses,
-    loading: authLoading,
-  } = usePlatformAuth();
-  void authLoading;
+  const { selectedBusinessId, businesses } = usePlatformAuth();
 
   const selectedBiz = businesses.find((b) => b.id === selectedBusinessId);
 
