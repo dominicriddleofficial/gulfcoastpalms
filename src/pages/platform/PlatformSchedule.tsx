@@ -74,7 +74,11 @@ type ScheduleTab = "day" | "list" | "map";
 
 type JobberJob = {
   id: string;
+  source: "platform" | "jobber_import" | "jobber_synced";
   jobber_id: string | null;
+  visit_id: string | null;
+  customer_email: string | null;
+  address: string | null;
   title: string | null;
   client_name: string | null;
   client_phone: string | null;
@@ -139,6 +143,13 @@ export default function PlatformSchedule() {
   const [selectedJob, setSelectedJob] = useState<JobberJob | null>(null);
   const [contactJob, setContactJob] = useState<JobberJob | null>(null);
 
+  const selectedRange = useMemo(() => {
+    if (scheduleTab === "list") {
+      return { start: startOfWeek(selectedDate, { weekStartsOn: 1 }), end: endOfWeek(selectedDate, { weekStartsOn: 1 }) };
+    }
+    return { start: startOfDay(selectedDate), end: endOfDay(selectedDate) };
+  }, [selectedDate, scheduleTab]);
+
   // Google Maps key for route view
   const { data: mapsKey } = useQuery({
     queryKey: ["google-maps-key"],
@@ -154,7 +165,7 @@ export default function PlatformSchedule() {
   // Uses the shared dashboard scheduled jobs hook so KPIs, the Dashboard graph, and this
   // page never drift out of sync.
   const { jobs: jobberJobsRaw, isLoading: loading, refetch: refetchJobs } =
-    useDashboardScheduledJobs({ businessId: selectedBusinessId });
+    useDashboardScheduledJobs({ businessId: selectedBusinessId, startDate: selectedRange.start, endDate: selectedRange.end });
   const jobberJobs = jobberJobsRaw as unknown as JobberJob[];
 
   const { data: lastSyncTime, refetch: refetchSync } = useQuery({
@@ -191,13 +202,6 @@ export default function PlatformSchedule() {
     setSyncing(false);
   };
 
-  const selectedRange = useMemo(() => {
-    if (scheduleTab === "list") {
-      return { start: startOfWeek(selectedDate, { weekStartsOn: 1 }), end: endOfWeek(selectedDate, { weekStartsOn: 1 }) };
-    }
-    return { start: startOfDay(selectedDate), end: endOfDay(selectedDate) };
-  }, [selectedDate, scheduleTab]);
-
   const scheduledJobs = useMemo(() => {
     return activeJobs.filter((job) => {
       if (!job.scheduled_start) return false;
@@ -216,9 +220,9 @@ export default function PlatformSchedule() {
   }, [scheduledJobs]);
 
   const selectedBiz = businesses.find((b) => b.id === selectedBusinessId);
-  const syncLabel = lastSyncTime
-    ? `${Math.max(1, Math.round((Date.now() - new Date(lastSyncTime).getTime()) / 60000))}m ago`
-    : "waiting for first sync";
+  const scheduleSourceLabel = lastSyncTime
+    ? "Using platform + imported schedule data"
+    : "Using platform + historical schedule data";
 
   const renderJobCard = (job: JobberJob, isCombined: boolean) => {
     const statusKey = getStatusKey(job);
@@ -348,7 +352,7 @@ export default function PlatformSchedule() {
               {selectedBiz && <InlineBadge shortcode={selectedBiz.shortcode} color={selectedBiz.default_business_color} />}
             </div>
             <p className="font-body text-xs text-muted-foreground">
-              {scheduledJobs.length} synced Jobber jobs · Last synced {syncLabel}
+              {scheduledJobs.length} jobs · {scheduleSourceLabel}
             </p>
           </div>
           <Button size="sm" variant="outline" className="font-body text-xs gap-1.5" disabled={syncing} onClick={handleSync}>
@@ -413,7 +417,7 @@ export default function PlatformSchedule() {
             ) : scheduledJobs.length === 0 ? (
               <div className="text-center py-12">
                 <CalendarDays className="w-10 h-10 mx-auto text-muted-foreground/40 mb-2" />
-                <p className="font-body text-sm text-muted-foreground">No synced Jobber jobs for this period</p>
+                <p className="font-body text-sm text-muted-foreground">No jobs scheduled for this period</p>
               </div>
             ) : (
               <div className="space-y-5">
