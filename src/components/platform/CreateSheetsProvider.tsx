@@ -15,6 +15,10 @@ export interface JobPrefillState {
   description?: string;
   total?: number | null;
   fromQuoteId?: string;
+  fromQuoteNumber?: string;
+  address?: string;
+  internalNotes?: string;
+  scheduledDate?: string;
 }
 export interface InvoicePrefillState {
   customer?: { id: string; display_name: string; phone: string | null; email: string | null } | null;

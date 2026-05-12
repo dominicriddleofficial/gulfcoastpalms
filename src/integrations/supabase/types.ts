@@ -3728,6 +3728,8 @@ export type Database = {
       platform_quotes: {
         Row: {
           accepted_at: string | null
+          approval_sms_sent: boolean
+          approval_sms_sent_at: string | null
           approved_at: string | null
           approved_by: string | null
           business_id: string
@@ -3770,6 +3772,8 @@ export type Database = {
         }
         Insert: {
           accepted_at?: string | null
+          approval_sms_sent?: boolean
+          approval_sms_sent_at?: string | null
           approved_at?: string | null
           approved_by?: string | null
           business_id: string
@@ -3812,6 +3816,8 @@ export type Database = {
         }
         Update: {
           accepted_at?: string | null
+          approval_sms_sent?: boolean
+          approval_sms_sent_at?: string | null
           approved_at?: string | null
           approved_by?: string | null
           business_id?: string
