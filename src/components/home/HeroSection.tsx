@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { HERO_IMAGE_URL } from "@/data/assets";
+import { HERO_IMAGE_URL, heroImageSrc, heroSrcSet } from "@/data/assets";
 import HeroReviewBadge from "@/components/home/HeroReviewBadge";
 import { GCP_BUSINESS, TEL_HREF } from "@/lib/business-info";
 
@@ -9,16 +9,27 @@ const HeroSection = () => {
   return (
     <section className="relative min-h-[80vh] md:min-h-[90vh] flex items-center justify-center overflow-hidden pt-6 pb-10 md:pt-12 md:pb-16">
       <div className="absolute inset-0">
-        <img
-          src={HERO_IMAGE_URL}
-          alt="Gulf Coast Palms — Professional Palm Tree Trimming and Removal in NW Florida"
-          className="w-full h-full object-cover"
-          loading="eager"
-          fetchPriority="high"
-          decoding="async"
-          width={1920}
-          height={1080}
-        />
+        <picture>
+          <source type="image/avif" srcSet={heroSrcSet("avif")} sizes="100vw" />
+          <source type="image/webp" srcSet={heroSrcSet("webp")} sizes="100vw" />
+          <img
+            src={heroImageSrc(1280, "jpg")}
+            srcSet={heroSrcSet("jpg")}
+            sizes="100vw"
+            alt="Gulf Coast Palms — Professional Palm Tree Trimming and Removal in NW Florida"
+            className="w-full h-full object-cover"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+            width={1920}
+            height={1080}
+            onError={(e) => {
+              // Fallback to raw object URL if the render endpoint isn't available
+              const img = e.currentTarget;
+              if (img.src !== HERO_IMAGE_URL) img.src = HERO_IMAGE_URL;
+            }}
+          />
+        </picture>
         <div className="absolute inset-0 bg-gradient-to-b from-palm-dark/70 via-palm-dark/50 to-palm-dark/80" />
       </div>
 
