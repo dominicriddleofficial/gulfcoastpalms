@@ -414,12 +414,16 @@ export default function PlatformSchedule() {
       </div>
 
       <Sheet open={!!selectedJob} onOpenChange={() => setSelectedJob(null)}>
-        <SheetContent className="ops-theme bg-background border-border w-full sm:max-w-lg overflow-y-auto">
+        <SheetContent
+          hideClose
+          className="ops-theme bg-background border-border w-full sm:max-w-lg overflow-y-auto p-0"
+        >
           {selectedJob && (
             <JobDetail
               job={selectedJob}
               businessId={selectedBusinessId}
               onContact={() => setContactJob(selectedJob)}
+              onClose={() => setSelectedJob(null)}
             />
           )}
         </SheetContent>
