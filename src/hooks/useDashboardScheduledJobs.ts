@@ -3,30 +3,36 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
+export type NormalizedScheduleSource = "platform" | "jobber_import" | "jobber_synced";
+
 export type DashboardScheduledJob = {
   id: string;
+  source: NormalizedScheduleSource;
   job_id: string;
-  jobber_id: string | null;
   visit_id: string | null;
+  jobber_id: string | null;
   dedupe_key: string;
+  job_number: string | null;
   title: string | null;
+  customer_name: string | null;
+  customer_phone: string | null;
+  customer_email: string | null;
+  address: string | null;
+  scheduled_start: string;
+  scheduled_end: string | null;
+  status: string;
+  total_amount: number;
+  business_id: string | null;
   client_name: string | null;
   client_phone: string | null;
   property_address: string | null;
-  status: string;
   visit_status: string | null;
-  scheduled_start: string;
-  scheduled_end: string | null;
   scheduled_local_date: string;
-  total_amount: number;
   amount_counted: number;
-  job_number: string | null;
   internal_notes: string | null;
   assigned_employee_names: string[] | null;
-  business_id: string | null;
   property_id: string | null;
   service_items: unknown;
-  source: "platform_jobs" | "jobber_import";
 };
 
 export type DashboardScheduledJobsSummary = {
@@ -43,7 +49,39 @@ export type UseDashboardScheduledJobsOptions = {
 
 const EXCLUDED_STATUSES = new Set(["archived", "canceled", "cancelled", "deleted"]);
 
-type VisitRow = {
+type PlatformCustomerRow = {
+  display_name: string | null;
+  phone: string | null;
+  email: string | null;
+};
+
+type PlatformPropertyRow = {
+  address_1: string | null;
+  address_2: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
+};
+
+type PlatformJobShape = {
+  id: string;
+  business_id: string | null;
+  job_number: string | null;
+  title: string | null;
+  total: number | string | null;
+  status: string | null;
+  source: string | null;
+  source_system: string | null;
+  source_record_id: string | null;
+  internal_notes: string | null;
+  deleted_at: string | null;
+  scheduled_start: string | null;
+  scheduled_end: string | null;
+  customer: PlatformCustomerRow | null;
+  property: PlatformPropertyRow | null;
+};
+
+type PlatformVisitRow = {
   id: string;
   business_id: string | null;
   property_id: string | null;
@@ -52,33 +90,47 @@ type VisitRow = {
   scheduled_end_time: string | null;
   status: string | null;
   internal_notes: string | null;
-  job: {
-    id: string;
-    job_number: string | null;
-    title: string | null;
-    total: number | string | null;
-    status: string | null;
-    source: string | null;
-    source_record_id: string | null;
-    internal_notes: string | null;
-    customer: { display_name: string | null; phone: string | null } | null;
-    property: { address_1: string | null; city: string | null; state: string | null } | null;
-  } | null;
+  job: PlatformJobShape | null;
 };
 
-type JobberEnrichRow = {
+type JobberJobRow = {
   id: string;
+  jobber_id: string | null;
+  title: string | null;
+  status: string | null;
+  scheduled_start: string | null;
+  scheduled_end: string | null;
+  client_id: string | null;
+  property_id: string | null;
   client_name: string | null;
   client_phone: string | null;
   property_address: string | null;
   assigned_employee_names: string[] | null;
   service_items: unknown;
-  visit_status: string | null;
+  internal_notes: string | null;
+  job_number: string | null;
   total_amount: number | string | null;
+  visit_status: string | null;
+  business_id: string | null;
+};
+
+type JobberClientRow = {
+  id: string;
+  display_name: string | null;
+  email: string | null;
+  phone: string | null;
+};
+
+type JobberPropertyRow = {
+  id: string;
+  street1: string | null;
+  street2: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
 };
 
 function combineDateTime(date: string, time: string | null): string {
-  // Build a local timestamp string; Date will interpret as local timezone.
   const t = time ?? "00:00:00";
   return new Date(`${date}T${t}`).toISOString();
 }
@@ -86,6 +138,93 @@ function combineDateTime(date: string, time: string | null): string {
 function toAmount(value: number | string | null): number {
   const n = Number(value ?? 0);
   return Number.isFinite(n) ? n : 0;
+}
+
+function cleanStatus(value: string | null): string {
+  return (value ?? "scheduled").toLowerCase();
+}
+
+function isExcludedStatus(value: string | null): boolean {
+  return EXCLUDED_STATUSES.has(cleanStatus(value));
+}
+
+function platformAddress(property: PlatformPropertyRow | null): string | null {
+  if (!property) return null;
+  const cityStateZip = [property.city, property.state, property.zip].filter(Boolean).join(" ");
+  return [property.address_1, property.address_2, cityStateZip].filter(Boolean).join(", ") || null;
+}
+
+function jobberAddress(property: JobberPropertyRow | null): string | null {
+  if (!property) return null;
+  const cityStateZip = [property.city, property.state, property.zip].filter(Boolean).join(" ");
+  return [property.street1, property.street2, cityStateZip].filter(Boolean).join(", ") || null;
+}
+
+function isJobberImport(job: PlatformJobShape): boolean {
+  return job.source_system === "jobber" || job.source === "jobber" || Boolean(job.source_record_id);
+}
+
+function jobberImportId(job: PlatformJobShape): string | null {
+  return isJobberImport(job) ? job.source_record_id : null;
+}
+
+function buildPlatformItem(
+  job: PlatformJobShape,
+  visit: PlatformVisitRow | null,
+  importedJobberIds: Set<string>,
+): DashboardScheduledJob | null {
+  if (job.deleted_at || isExcludedStatus(job.status) || isExcludedStatus(visit?.status ?? null)) return null;
+
+  const scheduledDate = visit?.scheduled_date ?? job.scheduled_start;
+  if (!scheduledDate) return null;
+
+  const localDate = scheduledDate.slice(0, 10);
+  const scheduledStart = visit
+    ? combineDateTime(localDate, visit.scheduled_start_time)
+    : combineDateTime(localDate, null);
+  const scheduledEnd = visit?.scheduled_end_time
+    ? combineDateTime(localDate, visit.scheduled_end_time)
+    : job.scheduled_end
+      ? combineDateTime(job.scheduled_end.slice(0, 10), null)
+      : null;
+
+  const externalId = jobberImportId(job);
+  if (externalId) importedJobberIds.add(externalId);
+
+  const source: NormalizedScheduleSource = externalId ? "jobber_import" : "platform";
+  const address = platformAddress(job.property);
+  const amount = toAmount(job.total);
+  const visitStatus = cleanStatus(visit?.status ?? null);
+
+  return {
+    id: visit?.id ?? job.id,
+    source,
+    job_id: job.id,
+    visit_id: visit?.id ?? null,
+    jobber_id: externalId,
+    dedupe_key: externalId ? `jobber:${externalId}` : `platform:${job.id}:${visit?.id ?? "job"}`,
+    job_number: job.job_number,
+    title: visit?.title ?? job.title,
+    customer_name: job.customer?.display_name ?? null,
+    customer_phone: job.customer?.phone ?? null,
+    customer_email: job.customer?.email ?? null,
+    address,
+    scheduled_start: scheduledStart,
+    scheduled_end: scheduledEnd,
+    status: cleanStatus(job.status),
+    total_amount: amount,
+    business_id: visit?.business_id ?? job.business_id,
+    client_name: job.customer?.display_name ?? null,
+    client_phone: job.customer?.phone ?? null,
+    property_address: address,
+    visit_status: visitStatus,
+    scheduled_local_date: localDate,
+    amount_counted: amount,
+    internal_notes: visit?.internal_notes ?? job.internal_notes,
+    assigned_employee_names: null,
+    property_id: visit?.property_id ?? null,
+    service_items: null,
+  };
 }
 
 export function summarizeDashboardScheduledJobs(
@@ -106,94 +245,157 @@ export function useDashboardScheduledJobs(opts: UseDashboardScheduledJobsOptions
     queryKey: ["dashboard-scheduled-jobs", businessId, startKey, endKey],
     enabled: enabled && !!businessId,
     queryFn: async (): Promise<DashboardScheduledJob[]> => {
-      let q = supabase
+      const startDay = startDate ? format(startDate, "yyyy-MM-dd") : null;
+      const endDay = endDate ? format(endDate, "yyyy-MM-dd") : null;
+      const startIso = startDate?.toISOString() ?? null;
+      const endIso = endDate?.toISOString() ?? null;
+
+      let visitQuery = supabase
         .from("platform_job_visits")
         .select(
           `id, business_id, property_id, scheduled_date, scheduled_start_time, scheduled_end_time, status, internal_notes,
            job:platform_jobs!inner(
-             id, job_number, title, total, status, source, source_record_id, internal_notes,
-             customer:platform_customers(display_name, phone),
-             property:platform_properties(address_1, city, state)
+             id, business_id, job_number, title, total, status, source, source_system, source_record_id, internal_notes, deleted_at, scheduled_start, scheduled_end,
+             customer:platform_customers(display_name, phone, email),
+             property:platform_properties(address_1, address_2, city, state, zip)
            )`,
         )
         .not("scheduled_date", "is", null)
         .order("scheduled_date", { ascending: true });
 
-      if (businessId) q = q.eq("business_id", businessId);
-      if (startDate) q = q.gte("scheduled_date", format(startDate, "yyyy-MM-dd"));
-      if (endDate) q = q.lte("scheduled_date", format(endDate, "yyyy-MM-dd"));
+      let platformJobQuery = supabase
+        .from("platform_jobs")
+        .select(
+          `id, business_id, job_number, title, total, status, source, source_system, source_record_id, internal_notes, deleted_at, scheduled_start, scheduled_end,
+           customer:platform_customers(display_name, phone, email),
+           property:platform_properties(address_1, address_2, city, state, zip)`,
+        )
+        .not("scheduled_start", "is", null)
+        .order("scheduled_start", { ascending: true });
 
-      const { data, error } = await q;
-      if (error) throw error;
+      let jobberQuery = supabase
+        .from("jobber_jobs")
+        .select(
+          "id, jobber_id, title, status, scheduled_start, scheduled_end, client_id, property_id, client_name, client_phone, property_address, assigned_employee_names, service_items, internal_notes, job_number, total_amount, visit_status, business_id",
+        )
+        .not("scheduled_start", "is", null)
+        .order("scheduled_start", { ascending: true });
 
-      const rows = (data ?? []) as unknown as VisitRow[];
+      if (businessId) {
+        visitQuery = visitQuery.eq("business_id", businessId);
+        platformJobQuery = platformJobQuery.eq("business_id", businessId);
+        jobberQuery = jobberQuery.eq("business_id", businessId);
+      }
+      if (startDay) {
+        visitQuery = visitQuery.gte("scheduled_date", startDay);
+        platformJobQuery = platformJobQuery.gte("scheduled_start", startDay);
+      }
+      if (endDay) {
+        visitQuery = visitQuery.lte("scheduled_date", endDay);
+        platformJobQuery = platformJobQuery.lte("scheduled_start", endDay);
+      }
+      if (startIso) jobberQuery = jobberQuery.gte("scheduled_start", startIso);
+      if (endIso) jobberQuery = jobberQuery.lte("scheduled_start", endIso);
 
-      // Collect jobber source ids to enrich client/property/items info.
-      const jobberIds = rows
-        .map((r) => r.job?.source_record_id)
-        .filter((v): v is string => !!v);
+      const [visitResult, platformJobResult, jobberResult] = await Promise.all([
+        visitQuery,
+        platformJobQuery,
+        jobberQuery,
+      ]);
 
-      let enrichMap = new Map<string, JobberEnrichRow>();
-      if (jobberIds.length > 0) {
-        const { data: jdata } = await supabase
-          .from("jobber_jobs")
-          .select(
-            "id, client_name, client_phone, property_address, assigned_employee_names, service_items, visit_status, total_amount",
-          )
-          .in("id", jobberIds);
-        for (const j of (jdata ?? []) as JobberEnrichRow[]) {
-          enrichMap.set(j.id, j);
-        }
+      if (visitResult.error) throw visitResult.error;
+      if (platformJobResult.error) throw platformJobResult.error;
+      if (jobberResult.error) throw jobberResult.error;
+
+      const visitRows = (visitResult.data ?? []) as unknown as PlatformVisitRow[];
+      const platformJobRows = (platformJobResult.data ?? []) as unknown as PlatformJobShape[];
+      const jobberRows = (jobberResult.data ?? []) as unknown as JobberJobRow[];
+
+      const importedJobberIds = new Set<string>();
+      const platformJobIdsWithVisits = new Set<string>();
+      const normalized: DashboardScheduledJob[] = [];
+
+      for (const visit of visitRows) {
+        if (!visit.job) continue;
+        platformJobIdsWithVisits.add(visit.job.id);
+        const item = buildPlatformItem(visit.job, visit, importedJobberIds);
+        if (item) normalized.push(item);
       }
 
-      const out: DashboardScheduledJob[] = [];
-      for (const r of rows) {
-        if (!r.job || !r.scheduled_date) continue;
-        const jobStatus = (r.job.status ?? "").toLowerCase();
-        const visitStatus = (r.status ?? "").toLowerCase();
-        if (EXCLUDED_STATUSES.has(jobStatus) || EXCLUDED_STATUSES.has(visitStatus)) continue;
+      for (const job of platformJobRows) {
+        if (platformJobIdsWithVisits.has(job.id)) continue;
+        const item = buildPlatformItem(job, null, importedJobberIds);
+        if (item) normalized.push(item);
+      }
 
-        const jobber = r.job.source_record_id ? enrichMap.get(r.job.source_record_id) ?? null : null;
-        const scheduledStart = combineDateTime(r.scheduled_date, r.scheduled_start_time);
-        const scheduledEnd =
-          r.scheduled_end_time != null ? combineDateTime(r.scheduled_date, r.scheduled_end_time) : null;
+      const clientIds = [...new Set(jobberRows.map((j) => j.client_id).filter((id): id is string => Boolean(id)))];
+      const propertyIds = [...new Set(jobberRows.map((j) => j.property_id).filter((id): id is string => Boolean(id)))];
 
-        const customerName = r.job.customer?.display_name ?? jobber?.client_name ?? null;
-        const customerPhone = r.job.customer?.phone ?? jobber?.client_phone ?? null;
-        const propAddress = r.job.property
-          ? [r.job.property.address_1, r.job.property.city].filter(Boolean).join(", ") || null
-          : jobber?.property_address ?? null;
+      const [clientResult, propertyResult] = await Promise.all([
+        clientIds.length > 0
+          ? supabase.from("jobber_clients").select("id, display_name, email, phone").in("id", clientIds)
+          : Promise.resolve({ data: [], error: null }),
+        propertyIds.length > 0
+          ? supabase.from("jobber_properties").select("id, street1, street2, city, state, zip").in("id", propertyIds)
+          : Promise.resolve({ data: [], error: null }),
+      ]);
 
-        const amount = toAmount(r.job.total ?? jobber?.total_amount ?? 0);
+      if (clientResult.error) throw clientResult.error;
+      if (propertyResult.error) throw propertyResult.error;
 
-        out.push({
-          id: r.id,
-          job_id: r.job.id,
-          jobber_id: r.job.source_record_id,
-          visit_id: r.id,
-          dedupe_key: r.id,
-          title: r.job.title,
+      const clientMap = new Map<string, JobberClientRow>();
+      for (const client of (clientResult.data ?? []) as unknown as JobberClientRow[]) {
+        clientMap.set(client.id, client);
+      }
+
+      const propertyMap = new Map<string, JobberPropertyRow>();
+      for (const property of (propertyResult.data ?? []) as unknown as JobberPropertyRow[]) {
+        propertyMap.set(property.id, property);
+      }
+
+      for (const job of jobberRows) {
+        if (!job.scheduled_start || isExcludedStatus(job.status) || isExcludedStatus(job.visit_status)) continue;
+        if (importedJobberIds.has(job.id) || (job.jobber_id && importedJobberIds.has(job.jobber_id))) continue;
+
+        const client = job.client_id ? clientMap.get(job.client_id) ?? null : null;
+        const property = job.property_id ? propertyMap.get(job.property_id) ?? null : null;
+        const address = job.property_address ?? jobberAddress(property);
+        const amount = toAmount(job.total_amount);
+        const customerName = job.client_name ?? client?.display_name ?? null;
+        const customerPhone = job.client_phone ?? client?.phone ?? null;
+
+        normalized.push({
+          id: job.id,
+          source: "jobber_synced",
+          job_id: job.id,
+          visit_id: null,
+          jobber_id: job.jobber_id ?? job.id,
+          dedupe_key: `jobber:${job.id}`,
+          job_number: job.job_number,
+          title: job.title,
+          customer_name: customerName,
+          customer_phone: customerPhone,
+          customer_email: client?.email ?? null,
+          address,
+          scheduled_start: job.scheduled_start,
+          scheduled_end: job.scheduled_end,
+          status: cleanStatus(job.status),
+          total_amount: amount,
+          business_id: job.business_id,
           client_name: customerName,
           client_phone: customerPhone,
-          property_address: propAddress,
-          status: jobStatus || "scheduled",
-          visit_status: visitStatus || jobber?.visit_status || null,
-          scheduled_start: scheduledStart,
-          scheduled_end: scheduledEnd,
-          scheduled_local_date: r.scheduled_date,
-          total_amount: amount,
+          property_address: address,
+          visit_status: cleanStatus(job.visit_status),
+          scheduled_local_date: format(new Date(job.scheduled_start), "yyyy-MM-dd"),
           amount_counted: amount,
-          job_number: r.job.job_number,
-          internal_notes: r.internal_notes ?? r.job.internal_notes,
-          assigned_employee_names: jobber?.assigned_employee_names ?? null,
-          business_id: r.business_id,
-          property_id: r.property_id,
-          service_items: jobber?.service_items ?? null,
-          source: r.job.source === "jobber" ? "jobber_import" : "platform_jobs",
+          internal_notes: job.internal_notes,
+          assigned_employee_names: job.assigned_employee_names,
+          property_id: job.property_id,
+          service_items: job.service_items,
         });
       }
 
-      return out.sort(
+      return normalized.sort(
         (a, b) => new Date(a.scheduled_start).getTime() - new Date(b.scheduled_start).getTime(),
       );
     },
