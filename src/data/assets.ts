@@ -24,3 +24,19 @@ export const HERO_IMAGE_URL =
 /** Render path for on-the-fly image transforms (width, format, quality) */
 export const HERO_IMAGE_RENDER_URL =
   `${SUPABASE_URL}/storage/v1/render/image/public/site-assets/hero.jpg`;
+
+/**
+ * Build a Supabase image-transform URL for a given width and format.
+ * Falls back to the raw object URL if the env doesn't expose the render path.
+ */
+export function heroImageSrc(width: number, format: "avif" | "webp" | "jpg" = "jpg") {
+  const fmt = format === "jpg" ? "origin" : format;
+  return `${HERO_IMAGE_RENDER_URL}?width=${width}&quality=72&format=${fmt}`;
+}
+
+/** Comma-joined srcset for a given format. */
+export function heroSrcSet(format: "avif" | "webp" | "jpg") {
+  return [640, 960, 1280, 1600, 1920]
+    .map((w) => `${heroImageSrc(w, format)} ${w}w`)
+    .join(", ");
+}
