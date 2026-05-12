@@ -4347,6 +4347,47 @@ export type Database = {
         }
         Relationships: []
       }
+      reconciliation_dismissals: {
+        Row: {
+          business_id: string | null
+          category: string
+          created_at: string
+          dismissed_by_user_id: string | null
+          finding_key: string
+          id: string
+          note: string | null
+          severity: string
+        }
+        Insert: {
+          business_id?: string | null
+          category: string
+          created_at?: string
+          dismissed_by_user_id?: string | null
+          finding_key: string
+          id?: string
+          note?: string | null
+          severity: string
+        }
+        Update: {
+          business_id?: string | null
+          category?: string
+          created_at?: string
+          dismissed_by_user_id?: string | null
+          finding_key?: string
+          id?: string
+          note?: string | null
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reconciliation_dismissals_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recurring_contracts: {
         Row: {
           auto_renew: boolean | null
