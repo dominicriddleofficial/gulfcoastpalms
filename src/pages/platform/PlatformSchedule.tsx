@@ -145,10 +145,25 @@ export default function PlatformSchedule() {
 
   const selectedRange = useMemo(() => {
     if (scheduleTab === "list") {
-      return { start: startOfWeek(selectedDate, { weekStartsOn: 1 }), end: endOfWeek(selectedDate, { weekStartsOn: 1 }) };
+      return { start: startOfWeek(selectedDate, { weekStartsOn: 0 }), end: endOfWeek(selectedDate, { weekStartsOn: 0 }) };
     }
     return { start: startOfDay(selectedDate), end: endOfDay(selectedDate) };
   }, [selectedDate, scheduleTab]);
+
+  // Always fetch the full week containing selectedDate, so the week strip can show
+  // per-day count dots without extra queries. Day/Map views then filter to the
+  // selected day; List view uses the whole week.
+  const weekRange = useMemo(
+    () => ({
+      start: startOfWeek(selectedDate, { weekStartsOn: 0 }),
+      end: endOfWeek(selectedDate, { weekStartsOn: 0 }),
+    }),
+    [selectedDate],
+  );
+  const weekDays = useMemo(
+    () => Array.from({ length: 7 }, (_, i) => addDays(weekRange.start, i)),
+    [weekRange.start],
+  );
 
   // Google Maps key for route view
   const { data: mapsKey } = useQuery({
@@ -165,8 +180,19 @@ export default function PlatformSchedule() {
   // Uses the shared dashboard scheduled jobs hook so KPIs, the Dashboard graph, and this
   // page never drift out of sync.
   const { jobs: jobberJobsRaw, isLoading: loading, refetch: refetchJobs } =
-    useDashboardScheduledJobs({ businessId: selectedBusinessId, startDate: selectedRange.start, endDate: selectedRange.end });
+    useDashboardScheduledJobs({ businessId: selectedBusinessId, startDate: weekRange.start, endDate: weekRange.end });
   const jobberJobs = jobberJobsRaw as unknown as JobberJob[];
+
+  // Per-day counts for the week strip indicators.
+  const weekDayCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const job of jobberJobs) {
+      if (!job.scheduled_start) continue;
+      const key = format(new Date(job.scheduled_start), "yyyy-MM-dd");
+      counts[key] = (counts[key] ?? 0) + 1;
+    }
+    return counts;
+  }, [jobberJobs]);
 
   const { data: lastSyncTime, refetch: refetchSync } = useQuery({
     queryKey: ["schedule-last-sync"],
