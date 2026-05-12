@@ -114,7 +114,7 @@ export async function recordIdempotencyReceipt(
     result: (result ?? null) as unknown as Record<string, unknown>,
     error: errorText ?? undefined,
   };
-  await supabase.from("mutation_idempotency").insert(row);
+  await supabase.from("mutation_idempotency").insert([row]);
 }
 
 export async function checkAlreadyApplied(clientMutationId: string): Promise<boolean> {
