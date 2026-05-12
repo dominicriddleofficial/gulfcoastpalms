@@ -387,7 +387,38 @@ function QuoteDetail({ quote, biz, businesses, onUpdate, onClose }: {
             <Receipt className="w-3 h-3" /> {converting ? "Converting..." : "Convert to Invoice"}
           </Button>
           <Button size="sm" variant="outline" className="gap-1 text-xs"
-            onClick={() => {
+            onClick={async () => {
+              // Duplicate-conversion guard
+              const { data: existingJobs } = await supabase
+                .from("platform_jobs")
+                .select("id, job_number")
+                .eq("quote_id", quote.id)
+                .limit(1);
+              if (existingJobs && existingJobs.length > 0) {
+                const ok = confirm(
+                  `A job (${existingJobs[0].job_number}) was already created from this quote. Create another?`,
+                );
+                if (!ok) { onClose(); return; }
+              }
+
+              // Pull address from customer's primary property
+              let address: string | undefined;
+              if (quote.customer_id) {
+                const { data: prop } = await supabase
+                  .from("platform_properties")
+                  .select("address_1, city, state, zip")
+                  .eq("business_id", quote.business_id)
+                  .eq("customer_id", quote.customer_id)
+                  .order("created_at", { ascending: true })
+                  .limit(1)
+                  .maybeSingle();
+                if (prop) address = `${prop.address_1}, ${prop.city}, ${prop.state} ${prop.zip}`.trim();
+              }
+
+              const scopeLines = lineItems.map(li => `• ${li.description} (${li.quantity} ${li.unit})`).join("\n");
+              const description = [quote.scope_of_work, scopeLines, quote.public_notes]
+                .filter(Boolean).join("\n\n").trim() || undefined;
+
               openSheet("job", {
                 customer: quote.customer_id ? {
                   id: quote.customer_id,
@@ -395,10 +426,13 @@ function QuoteDetail({ quote, biz, businesses, onUpdate, onClose }: {
                   phone: null,
                   email: null,
                 } : null,
-                title: `Quote ${quote.quote_number}`,
-                description: lineItems.map(li => `• ${li.description} (${li.quantity} ${li.unit})`).join("\n") || undefined,
+                title: `Job from ${quote.quote_number}`,
+                description,
                 total: quote.total ?? null,
                 fromQuoteId: quote.id,
+                fromQuoteNumber: quote.quote_number,
+                address,
+                internalNotes: quote.internal_notes || undefined,
               });
               onClose();
             }}>
