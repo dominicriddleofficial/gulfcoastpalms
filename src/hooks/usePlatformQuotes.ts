@@ -41,6 +41,7 @@ export interface PlatformQuote {
   declined_at: string | null;
   internal_notes: string | null;
   public_notes: string | null;
+  scope_of_work?: string | null;
   version_number: number;
   created_at: string;
   updated_at: string;
