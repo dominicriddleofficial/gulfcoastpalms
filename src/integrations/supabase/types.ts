@@ -4422,6 +4422,97 @@ export type Database = {
           },
         ]
       }
+      qa_runs: {
+        Row: {
+          business_id: string | null
+          created_at: string
+          finished_at: string | null
+          id: string
+          label: string
+          started_at: string
+          started_by: string | null
+          status: string
+          summary: Json
+        }
+        Insert: {
+          business_id?: string | null
+          created_at?: string
+          finished_at?: string | null
+          id?: string
+          label: string
+          started_at?: string
+          started_by?: string | null
+          status?: string
+          summary?: Json
+        }
+        Update: {
+          business_id?: string | null
+          created_at?: string
+          finished_at?: string | null
+          id?: string
+          label?: string
+          started_at?: string
+          started_by?: string | null
+          status?: string
+          summary?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_runs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_steps: {
+        Row: {
+          context: Json
+          detail: string | null
+          finished_at: string | null
+          id: string
+          link_url: string | null
+          name: string
+          run_id: string
+          started_at: string
+          status: string
+          step_number: number
+        }
+        Insert: {
+          context?: Json
+          detail?: string | null
+          finished_at?: string | null
+          id?: string
+          link_url?: string | null
+          name: string
+          run_id: string
+          started_at?: string
+          status?: string
+          step_number: number
+        }
+        Update: {
+          context?: Json
+          detail?: string | null
+          finished_at?: string | null
+          id?: string
+          link_url?: string | null
+          name?: string
+          run_id?: string
+          started_at?: string
+          status?: string
+          step_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_steps_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "qa_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rate_limit_counters: {
         Row: {
           endpoint: string
