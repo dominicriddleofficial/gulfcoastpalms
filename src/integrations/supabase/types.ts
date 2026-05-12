@@ -2404,6 +2404,45 @@ export type Database = {
         }
         Relationships: []
       }
+      mutation_idempotency: {
+        Row: {
+          action_type: string
+          business_id: string | null
+          client_mutation_id: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          error: string | null
+          result: Json | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          business_id?: string | null
+          client_mutation_id: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          error?: string | null
+          result?: Json | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          business_id?: string | null
+          client_mutation_id?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          error?: string | null
+          result?: Json | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       numbering_sequences: {
         Row: {
           business_id: string
