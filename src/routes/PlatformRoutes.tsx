@@ -32,6 +32,7 @@ const PlatformBackendHealth = lazy(() => import("@/pages/platform/PlatformBacken
 const PlatformReconciliation = lazy(() => import("@/pages/platform/PlatformReconciliation"));
 const PlatformDocs = lazy(() => import("@/pages/platform/PlatformDocs"));
 const PlatformRelease = lazy(() => import("@/pages/platform/PlatformRelease"));
+const PlatformQAChecklist = lazy(() => import("@/pages/platform/PlatformQAChecklist"));
 const PlatformOfflineQueue = lazy(() => import("@/pages/platform/PlatformOfflineQueue"));
 
 export const PlatformRoutes = () => (
@@ -63,6 +64,7 @@ export const PlatformRoutes = () => (
     <Route path="/platform/reconciliation" element={<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformReconciliation /></RoleRoute>} />
     <Route path="/platform/docs" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformDocs /></RoleRoute>} />
     <Route path="/platform/release" element={<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformRelease /></RoleRoute>} />
+    <Route path="/platform/qa-checklist" element={<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformQAChecklist /></RoleRoute>} />
     <Route path="/platform/offline-queue" element={<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformOfflineQueue /></RoleRoute>} />
 
     {/* Full-page creation editors */}
