@@ -3,7 +3,7 @@ import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { GoogleMap, MarkerF, useJsApiLoader } from "@react-google-maps/api";
@@ -17,7 +17,6 @@ import {
   User,
   RefreshCw,
   CalendarDays,
-  FileText,
   Map,
   Phone,
   Navigation,
@@ -54,6 +53,15 @@ type JobberJob = {
   internal_notes: string | null;
   assigned_employee_names: string[] | null;
   business_id: string | null;
+  service_items: ServiceItem[] | null;
+};
+
+type ServiceItem = {
+  name?: string | null;
+  description?: string | null;
+  quantity?: number | null;
+  unit_price?: number | null;
+  total?: number | null;
 };
 
 type MappedJob = JobberJob & { position: google.maps.LatLngLiteral };
@@ -112,7 +120,7 @@ export default function PlatformSchedule() {
     queryFn: async () => {
       let q = supabase
         .from("jobber_jobs")
-        .select("id, title, client_name, client_phone, property_address, status, visit_status, scheduled_start, scheduled_end, total_amount, job_number, internal_notes, assigned_employee_names, business_id")
+        .select("id, title, client_name, client_phone, property_address, status, visit_status, scheduled_start, scheduled_end, total_amount, job_number, internal_notes, assigned_employee_names, business_id, service_items")
         .not("scheduled_start", "is", null)
         .order("scheduled_start", { ascending: true, nullsFirst: false });
       if (selectedBusinessId) q = q.eq("business_id", selectedBusinessId);
@@ -589,63 +597,123 @@ function PlatformScheduleGoogleMap({ mapsKey, mappedJobs, mapCenter, onJobSelect
   );
 }
 
-function JobDetail({ job, businessId, onContact }: { job: JobberJob; businessId: string | null; onContact: () => void }) {
+type JobDetailTab = "visit" | "details" | "notes";
+
+function openAppleMaps(address: string) {
+  const encoded = encodeURIComponent(address);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  window.location.href = isIOS
+    ? `maps://?daddr=${encoded}`
+    : `https://maps.apple.com/?daddr=${encoded}`;
+}
+
+function JobDetail({
+  job,
+  businessId,
+  onContact,
+}: {
+  job: JobberJob;
+  businessId: string | null;
+  onContact: () => void;
+}) {
+  const [tab, setTab] = useState<JobDetailTab>("visit");
+  const statusKey = getStatusKey(job);
+  const statusInfo = STATUS_STYLES[statusKey];
+  const bizStyle = getBizStyle(job.business_id);
+  const items: ServiceItem[] = Array.isArray(job.service_items) ? job.service_items : [];
+  const subtotal = items.reduce((sum, it) => {
+    const t =
+      typeof it.total === "number"
+        ? it.total
+        : (Number(it.quantity) || 0) * (Number(it.unit_price) || 0);
+    return sum + (Number.isFinite(t) ? t : 0);
+  }, 0);
+  const total =
+    typeof job.total_amount === "number" && job.total_amount > 0
+      ? Number(job.total_amount)
+      : subtotal;
+
+  const customerName = job.client_name ?? "Customer";
+  const serviceTitle = job.title ?? "Visit";
+  const hasAddress = Boolean(job.property_address);
+
   return (
-    <div className="space-y-5 pt-4">
-      <SheetHeader>
-        <SheetTitle className="font-display text-foreground flex items-center gap-2 flex-wrap">
-          <span className="font-mono text-sm text-muted-foreground">{job.job_number ?? "No job #"}</span>
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-body font-medium bg-primary/15 text-primary">
-            {(job.visit_status ?? job.status ?? "scheduled").replace(/_/g, " ")}
+    <div className="space-y-6 pt-2 pb-8">
+      {/* Header status row */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span
+          className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-body font-bold uppercase tracking-wide"
+          style={{ backgroundColor: statusInfo.bg, color: statusInfo.text }}
+        >
+          {statusInfo.label}
+        </span>
+        <span
+          className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-body font-bold"
+          style={{ backgroundColor: bizStyle.badge, color: bizStyle.badgeText }}
+        >
+          {bizStyle.label}
+        </span>
+        {job.job_number && (
+          <span className="font-mono text-[12px] text-muted-foreground">
+            #{job.job_number}
           </span>
-        </SheetTitle>
-      </SheetHeader>
-
-      <div>
-        <h3 className="font-body text-lg font-semibold text-foreground">{job.title ?? "Untitled Job"}</h3>
-        <p className="font-body text-xs text-muted-foreground mt-1">Live Jobber schedule item</p>
-      </div>
-
-      <div className="space-y-3">
-        {job.client_name && (
-          <div className="flex items-center gap-2">
-            <User className="w-4 h-4 text-muted-foreground" />
-            <span className="font-body text-sm text-foreground">{job.client_name}</span>
-          </div>
-        )}
-        {job.property_address && (
-          <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-muted-foreground" />
-            <span className="font-body text-sm text-foreground">{job.property_address}</span>
-          </div>
-        )}
-        {job.scheduled_start && (
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-muted-foreground" />
-            <span className="font-body text-sm text-foreground">
-              {format(new Date(job.scheduled_start), "MMM d, yyyy · h:mm a")}
-              {job.scheduled_end ? ` – ${format(new Date(job.scheduled_end), "h:mm a")}` : ""}
-            </span>
-          </div>
-        )}
-        {job.assigned_employee_names && job.assigned_employee_names.length > 0 && (
-          <div className="flex items-center gap-2">
-            <User className="w-4 h-4 text-muted-foreground" />
-            <span className="font-body text-sm text-foreground">{job.assigned_employee_names.join(", ")}</span>
-          </div>
         )}
       </div>
 
-      {job.internal_notes && (
-        <div className="bg-card border border-border rounded-lg p-3">
-          <div className="flex items-center gap-2 mb-1">
-            <FileText className="w-3.5 h-3.5 text-muted-foreground" />
-            <p className="font-body text-xs text-muted-foreground">Notes</p>
+      {/* Main title */}
+      <div className="space-y-1">
+        <h2 className="font-display text-[28px] leading-tight font-extrabold text-foreground">
+          Visit for {customerName}
+        </h2>
+        <p className="font-body text-[18px] font-semibold text-foreground/85">
+          {serviceTitle}
+        </p>
+      </div>
+
+      {/* Address + Directions / Contact */}
+      {hasAddress && (
+        <div className="space-y-3">
+          <div className="flex items-start gap-3">
+            <MapPin className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+            <p className="font-body text-[17px] font-semibold text-foreground leading-snug">
+              {job.property_address}
+            </p>
           </div>
-          <p className="font-body text-sm text-foreground">{job.internal_notes}</p>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => openAppleMaps(job.property_address as string)}
+              className="flex items-center justify-center gap-2 min-h-[56px] rounded-2xl bg-secondary/60 border border-border text-foreground font-body font-bold text-[15px] hover:bg-secondary/80 transition-colors"
+            >
+              <Navigation className="w-5 h-5" />
+              Directions
+            </button>
+            <button
+              type="button"
+              onClick={onContact}
+              className="flex items-center justify-center gap-2 min-h-[56px] rounded-2xl bg-secondary/60 border border-border text-foreground font-body font-bold text-[15px] hover:bg-secondary/80 transition-colors"
+            >
+              <Phone className="w-5 h-5" />
+              Contact
+            </button>
+          </div>
         </div>
       )}
 
+      {/* Schedule */}
+      {job.scheduled_start && (
+        <div className="flex items-start gap-3">
+          <CalendarDays className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+          <p className="font-body text-[17px] font-semibold text-foreground">
+            {format(new Date(job.scheduled_start), "EEE, MMM d · h:mm a")}
+            {job.scheduled_end
+              ? ` – ${format(new Date(job.scheduled_end), "h:mm a")}`
+              : ""}
+          </p>
+        </div>
+      )}
+
+      {/* Visit lifecycle: On My Way → Start → Complete */}
       <VisitActionPanel
         jobberJobId={job.id}
         businessId={businessId}
@@ -654,6 +722,185 @@ function JobDetail({ job, businessId, onContact }: { job: JobberJob; businessId:
         customerPhone={job.client_phone}
         onContact={onContact}
       />
+
+      {/* Tabs */}
+      <div className="border-b border-border flex items-center gap-1">
+        {(["visit", "details", "notes"] as JobDetailTab[]).map((t) => {
+          const active = tab === t;
+          return (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTab(t)}
+              className={cn(
+                "relative px-4 py-3 font-body text-[15px] capitalize transition-colors",
+                active
+                  ? "text-foreground font-bold"
+                  : "text-muted-foreground hover:text-foreground/80 font-semibold",
+              )}
+            >
+              {t}
+              {active && (
+                <span className="absolute left-2 right-2 -bottom-px h-[3px] rounded-full bg-primary" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {tab === "visit" && (
+        <div className="space-y-5">
+          <DetailSection title="Instructions">
+            <p className="font-body text-[15px] text-foreground/90 whitespace-pre-wrap">
+              {job.internal_notes?.trim() || "No instructions added."}
+            </p>
+          </DetailSection>
+
+          <DetailSection title="Line Items">
+            {items.length === 0 ? (
+              <p className="font-body text-[14px] text-muted-foreground">
+                No line items.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {items.map((it, idx) => {
+                  const qty = Number(it.quantity) || 0;
+                  const unit = Number(it.unit_price) || 0;
+                  const lineTotal =
+                    typeof it.total === "number" ? it.total : qty * unit;
+                  return (
+                    <div
+                      key={idx}
+                      className="flex items-start justify-between gap-3 py-2 border-b border-border/60 last:border-b-0"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-body text-[15px] font-semibold text-foreground truncate">
+                          {it.name ?? it.description ?? "Item"}
+                        </p>
+                        {qty > 0 && (
+                          <p className="font-body text-[13px] text-muted-foreground">
+                            {qty} × ${unit.toFixed(2)}
+                          </p>
+                        )}
+                      </div>
+                      <p className="font-body text-[15px] font-bold text-foreground tabular-nums">
+                        ${lineTotal.toFixed(2)}
+                      </p>
+                    </div>
+                  );
+                })}
+                <div className="flex items-center justify-between pt-3 mt-1 border-t border-border">
+                  <p className="font-body text-[16px] font-bold text-foreground">
+                    Total
+                  </p>
+                  <p className="font-body text-[18px] font-extrabold text-foreground tabular-nums">
+                    ${total.toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            )}
+          </DetailSection>
+
+          {job.assigned_employee_names &&
+            job.assigned_employee_names.length > 0 && (
+              <DetailSection title="Team">
+                <div className="space-y-1">
+                  {job.assigned_employee_names.map((name) => (
+                    <p
+                      key={name}
+                      className="font-body text-[15px] font-semibold text-foreground"
+                    >
+                      {name}
+                    </p>
+                  ))}
+                </div>
+              </DetailSection>
+            )}
+
+          <DetailSection title="Customer">
+            <p className="font-body text-[16px] font-bold text-foreground">
+              {customerName}
+            </p>
+            {job.client_phone && (
+              <a
+                href={`tel:${job.client_phone}`}
+                className="font-body text-[14px] text-primary hover:underline"
+              >
+                {job.client_phone}
+              </a>
+            )}
+          </DetailSection>
+        </div>
+      )}
+
+      {tab === "details" && (
+        <div className="space-y-2">
+          <DetailRow label="Job Number" value={job.job_number ?? "—"} mono />
+          <DetailRow
+            label="Status"
+            value={(job.visit_status ?? job.status ?? "scheduled").replace(
+              /_/g,
+              " ",
+            )}
+          />
+          <DetailRow label="Business" value={bizStyle.label} />
+          <DetailRow label="Source" value="Jobber sync" />
+          {total > 0 && (
+            <DetailRow label="Total" value={`$${total.toFixed(2)}`} />
+          )}
+        </div>
+      )}
+
+      {tab === "notes" && (
+        <div className="space-y-4">
+          <DetailSection title="Internal Notes">
+            <p className="font-body text-[15px] text-foreground/90 whitespace-pre-wrap">
+              {job.internal_notes?.trim() || "No notes added."}
+            </p>
+          </DetailSection>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DetailSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="bg-card/60 border border-border rounded-2xl p-5 space-y-3">
+      <h4 className="font-display text-[13px] uppercase tracking-wider font-bold text-muted-foreground">
+        {title}
+      </h4>
+      {children}
+    </div>
+  );
+}
+
+function DetailRow({
+  label,
+  value,
+  mono,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-2.5 border-b border-border/50 last:border-b-0">
+      <p className="font-body text-[14px] text-muted-foreground">{label}</p>
+      <p
+        className={cn(
+          "font-body text-[15px] font-semibold text-foreground capitalize",
+          mono && "font-mono",
+        )}
+      >
+        {value}
+      </p>
     </div>
   );
 }
