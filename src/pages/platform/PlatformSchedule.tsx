@@ -1,5 +1,4 @@
 import { useMemo, useState, useEffect, useCallback } from "react";
-import RouteView from "@/components/platform/schedule/RouteView";
 import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
@@ -38,8 +37,7 @@ import { toast } from "sonner";
 import { ContactCustomerSheet } from "@/components/platform/ContactCustomerSheet";
 import VisitActionPanel from "@/components/platform/schedule/VisitActionPanel";
 
-type ViewMode = "day" | "week";
-type ScheduleTab = "jobber" | "map" | "route";
+type ScheduleTab = "day" | "list" | "map";
 
 type JobberJob = {
   id: string;
@@ -92,8 +90,7 @@ function getBizStyle(businessId: string | null) {
 export default function PlatformSchedule() {
   const { selectedBusinessId, businesses } = usePlatformAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<ViewMode>("day");
-  const [scheduleTab, setScheduleTab] = useState<ScheduleTab>("jobber");
+  const [scheduleTab, setScheduleTab] = useState<ScheduleTab>("day");
   const [syncing, setSyncing] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobberJob | null>(null);
   const [contactJob, setContactJob] = useState<JobberJob | null>(null);
@@ -159,11 +156,11 @@ export default function PlatformSchedule() {
   };
 
   const selectedRange = useMemo(() => {
-    if (viewMode === "week") {
+    if (scheduleTab === "list") {
       return { start: startOfWeek(selectedDate, { weekStartsOn: 1 }), end: endOfWeek(selectedDate, { weekStartsOn: 1 }) };
     }
     return { start: startOfDay(selectedDate), end: endOfDay(selectedDate) };
-  }, [selectedDate, viewMode]);
+  }, [selectedDate, scheduleTab]);
 
   const scheduledJobs = useMemo(() => {
     return activeJobs.filter((job) => {
@@ -191,47 +188,83 @@ export default function PlatformSchedule() {
     const statusKey = getStatusKey(job);
     const style = STATUS_STYLES[statusKey] ?? STATUS_STYLES.scheduled;
     const bizStyle = isCombined ? getBizStyle(job.business_id) : null;
+    const isDone = statusKey === "completed" || statusKey === "complete";
+    const isUrgent = statusKey === "late";
+    const accentBar = isUrgent
+      ? "#ef4444"
+      : isDone
+        ? "rgba(var(--biz-accent-rgb),0.45)"
+        : "var(--accent-color)";
 
     return (
       <div
         key={job.id}
-        className="w-full bg-card border border-border rounded-lg hover:border-primary/20 transition-colors text-left flex items-stretch overflow-hidden"
-        style={isCombined ? { borderLeftWidth: "4px", borderLeftColor: bizStyle!.border } : undefined}
+        className="w-full bg-card border border-border rounded-2xl hover:border-primary/30 transition-colors text-left flex items-stretch overflow-hidden shadow-sm"
+        style={{
+          borderLeftWidth: "6px",
+          borderLeftColor: isCombined ? bizStyle!.border : accentBar,
+          minHeight: 140,
+        }}
       >
         <button
           onClick={() => setSelectedJob(job)}
-          className="flex-1 min-w-0 p-3 text-left"
+          className="flex-1 min-w-0 p-5 text-left"
         >
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-              {job.job_number && <span className="font-body text-[10px] text-muted-foreground font-mono">{job.job_number}</span>}
+          {/* Top row: job# / status / price */}
+          <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
+              {job.job_number && (
+                <span className="font-mono text-[12px] text-muted-foreground/90 font-semibold">{job.job_number}</span>
+              )}
               <span
-                className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-body font-medium capitalize"
+                className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-body font-bold capitalize"
                 style={{ backgroundColor: style.bg, color: style.text }}
               >
                 {style.label}
               </span>
               {isCombined && bizStyle && (
                 <span
-                  className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-display font-bold tracking-tight"
+                  className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-display font-bold tracking-tight"
                   style={{ backgroundColor: bizStyle.badge, color: bizStyle.badgeText }}
                 >
                   {bizStyle.label}
                 </span>
               )}
             </div>
-            <p className="font-body text-sm font-medium text-foreground truncate">{job.title || job.client_name || "Jobber Job"}</p>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5 text-[11px] text-muted-foreground font-body">
-              {job.client_name && <span className="flex items-center gap-1"><User className="w-3 h-3" />{job.client_name}</span>}
-              {job.scheduled_start && (
-                <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{format(new Date(job.scheduled_start), "h:mm a")}</span>
-              )}
-              {job.property_address && <span className="flex items-center gap-1 truncate"><MapPin className="w-3 h-3 shrink-0" />{job.property_address}</span>}
-            </div>
-            </div>
             {job.total_amount != null && job.total_amount > 0 && (
-              <span className="font-body text-sm font-semibold text-foreground shrink-0">${Number(job.total_amount).toLocaleString()}</span>
+              <span className="font-display text-[20px] font-extrabold text-foreground tabular-nums">
+                ${Number(job.total_amount).toLocaleString()}
+              </span>
+            )}
+          </div>
+
+          {/* Job title */}
+          <p className="font-display text-[20px] leading-snug font-extrabold text-foreground mb-2 break-words">
+            {job.title || job.client_name || "Jobber Job"}
+          </p>
+
+          {/* Detail rows */}
+          <div className="space-y-1.5 font-body">
+            {job.client_name && (
+              <div className="flex items-center gap-2 text-[16px] font-bold text-foreground/95">
+                <User className="w-[18px] h-[18px] text-muted-foreground shrink-0" />
+                <span className="truncate">{job.client_name}</span>
+              </div>
+            )}
+            {job.scheduled_start && (
+              <div className="flex items-center gap-2 text-[15px] font-semibold text-foreground/85">
+                <Clock className="w-[18px] h-[18px] text-muted-foreground shrink-0" />
+                <span>
+                  {format(new Date(job.scheduled_start), "h:mm a")}
+                  {job.scheduled_end && ` – ${format(new Date(job.scheduled_end), "h:mm a")}`}
+                </span>
+              </div>
+            )}
+            {job.property_address && (
+              <div className="flex items-start gap-2 text-[15px] font-semibold text-foreground/85">
+                <MapPin className="w-[18px] h-[18px] text-muted-foreground shrink-0 mt-0.5" />
+                <span className="break-words">{job.property_address}</span>
+              </div>
             )}
           </div>
         </button>
@@ -241,9 +274,9 @@ export default function PlatformSchedule() {
               type="button"
               onClick={(e) => { e.stopPropagation(); setContactJob(job); }}
               aria-label={`Contact ${job.client_name ?? "customer"}`}
-              className="flex items-center justify-center w-12 flex-1 min-h-[44px] text-muted-foreground hover:text-primary hover:bg-secondary/40 transition-colors"
+              className="flex items-center justify-center w-14 flex-1 min-h-[60px] text-foreground/80 hover:text-primary hover:bg-secondary/40 transition-colors"
             >
-              <Phone className="w-4 h-4" />
+              <Phone className="w-[22px] h-[22px]" />
             </button>
           )}
           {job.property_address && (
@@ -258,9 +291,9 @@ export default function PlatformSchedule() {
                 );
               }}
               aria-label="Get directions"
-              className="flex items-center justify-center w-12 flex-1 min-h-[44px] text-muted-foreground hover:text-primary hover:bg-secondary/40 transition-colors border-t border-border"
+              className="flex items-center justify-center w-14 flex-1 min-h-[60px] text-foreground/80 hover:text-primary hover:bg-secondary/40 transition-colors border-t border-border"
             >
-              <Navigation className="w-4 h-4" />
+              <Navigation className="w-[22px] h-[22px]" />
             </button>
           )}
         </div>
@@ -287,64 +320,58 @@ export default function PlatformSchedule() {
           </Button>
         </div>
 
-        {/* Schedule tab selector */}
-        <div className="flex items-center gap-0.5 bg-card border border-border rounded-lg p-0.5 w-fit flex-wrap">
-          {(["jobber", "map", "route"] as const).map((tab) => (
+        {/* Day / List / Map tab selector */}
+        <div className="grid grid-cols-3 gap-1 bg-card border border-border rounded-xl p-1 w-full">
+          {(["day", "list", "map"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setScheduleTab(tab)}
               className={cn(
-                "px-2.5 py-1 rounded-md text-[11px] font-body font-medium transition-all capitalize flex items-center gap-1",
-                scheduleTab === tab ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                "px-3 py-2.5 rounded-lg text-sm font-body font-bold transition-all capitalize",
+                scheduleTab === tab
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
-              {tab === "jobber" ? "Jobber" : tab === "map" ? "Map" : "Route"}
+              {tab}
             </button>
           ))}
         </div>
 
-        {/* Route tab content */}
         {scheduleTab === "map" ? (
           <PlatformScheduleMap jobs={scheduledJobs} mapsKey={mapsKey ?? null} onJobSelect={setSelectedJob} />
-        ) : scheduleTab === "route" ? (
-          <RouteView jobs={scheduledJobs} googleMapsKey={mapsKey ?? null} />
         ) : (
           <>
-            {/* Date nav */}
-            <div className="flex items-center justify-between bg-card border border-border rounded-lg p-2">
-              <button onClick={() => setSelectedDate((d) => subDays(d, viewMode === "week" ? 7 : 1))} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground">
-                <ChevronLeft className="w-4 h-4" />
+            {/* Date nav — Jobber-style */}
+            <div className="flex items-center justify-between bg-card border border-border rounded-2xl p-2.5 gap-2">
+              <button
+                onClick={() => setSelectedDate((d) => subDays(d, scheduleTab === "list" ? 7 : 1))}
+                className="p-3 rounded-xl hover:bg-secondary text-foreground/80 hover:text-primary transition-colors"
+                aria-label="Previous"
+              >
+                <ChevronLeft className="w-5 h-5" />
               </button>
-              <button onClick={() => setSelectedDate(new Date())} className="font-body text-sm font-medium px-3 py-1 rounded-md transition-all text-foreground hover:text-primary">
-                {viewMode === "week"
+              <button
+                onClick={() => setSelectedDate(new Date())}
+                className="flex-1 font-display text-base sm:text-lg font-extrabold text-foreground hover:text-primary px-2 py-1 transition-colors text-center truncate"
+              >
+                {scheduleTab === "list"
                   ? `${format(selectedRange.start, "MMM d")} – ${format(selectedRange.end, "MMM d, yyyy")}`
-                  : format(selectedDate, "EEEE, MMMM d, yyyy")}
+                  : format(selectedDate, "EEE, MMM d, yyyy")}
               </button>
-              <button onClick={() => setSelectedDate((d) => addDays(d, viewMode === "week" ? 7 : 1))} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground">
-                <ChevronRight className="w-4 h-4" />
+              <button
+                onClick={() => setSelectedDate((d) => addDays(d, scheduleTab === "list" ? 7 : 1))}
+                className="p-3 rounded-xl hover:bg-secondary text-foreground/80 hover:text-primary transition-colors"
+                aria-label="Next"
+              >
+                <ChevronRight className="w-5 h-5" />
               </button>
-            </div>
-
-            {/* Day / Week toggle */}
-            <div className="flex items-center gap-0.5 bg-card border border-border rounded-lg p-0.5 w-fit">
-              {(["day", "week"] as const).map((mode) => (
-                <button
-                  key={mode}
-                  onClick={() => setViewMode(mode)}
-                  className={cn(
-                    "px-2.5 py-1 rounded-md text-[11px] font-body font-medium transition-all capitalize",
-                    viewMode === mode ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {mode}
-                </button>
-              ))}
             </div>
 
             {/* Jobs list */}
             {isLoading ? (
               <div className="space-y-3">
-                {[1, 2, 3].map((item) => <div key={item} className="h-20 bg-card rounded-lg animate-pulse border border-border" />)}
+                {[1, 2, 3].map((item) => <div key={item} className="h-36 bg-card rounded-2xl animate-pulse border border-border" />)}
               </div>
             ) : scheduledJobs.length === 0 ? (
               <div className="text-center py-12">
@@ -352,11 +379,11 @@ export default function PlatformSchedule() {
                 <p className="font-body text-sm text-muted-foreground">No synced Jobber jobs for this period</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-5">
                 {Object.entries(groupedJobs).map(([dateKey, dateJobs]) => (
-                  <div key={dateKey} className="space-y-2">
+                  <div key={dateKey} className="space-y-3">
                     <DayHeader dateKey={dateKey} jobs={dateJobs} />
-                    <div className="space-y-1.5">
+                    <div className="space-y-3">
                       {dateJobs.map((job) => renderJobCard(job, false))}
                     </div>
                   </div>
