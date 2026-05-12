@@ -4,6 +4,7 @@ import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { GoogleMap, MarkerF, useJsApiLoader } from "@react-google-maps/api";
@@ -20,6 +21,14 @@ import {
   Map,
   Phone,
   Navigation,
+  Truck,
+  Play,
+  CheckCircle2,
+  RotateCcw,
+  ArrowLeft,
+  MoreHorizontal,
+  FileText,
+  Mail,
 } from "lucide-react";
 import {
   addDays,
@@ -34,7 +43,8 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { ContactCustomerSheet } from "@/components/platform/ContactCustomerSheet";
-import VisitActionPanel from "@/components/platform/schedule/VisitActionPanel";
+import { useVisitLifecycle, type VisitStatus } from "@/hooks/useVisitLifecycle";
+import { OnMyWaySheet } from "@/components/platform/schedule/OnMyWaySheet";
 
 type ScheduleTab = "day" | "list" | "map";
 
