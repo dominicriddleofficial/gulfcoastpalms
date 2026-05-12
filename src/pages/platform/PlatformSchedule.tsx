@@ -4,6 +4,7 @@ import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { GoogleMap, MarkerF, useJsApiLoader } from "@react-google-maps/api";
@@ -20,6 +21,14 @@ import {
   Map,
   Phone,
   Navigation,
+  Truck,
+  Play,
+  CheckCircle2,
+  RotateCcw,
+  ArrowLeft,
+  MoreHorizontal,
+  FileText,
+  Mail,
 } from "lucide-react";
 import {
   addDays,
@@ -34,7 +43,8 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { ContactCustomerSheet } from "@/components/platform/ContactCustomerSheet";
-import VisitActionPanel from "@/components/platform/schedule/VisitActionPanel";
+import { useVisitLifecycle, type VisitStatus } from "@/hooks/useVisitLifecycle";
+import { OnMyWaySheet } from "@/components/platform/schedule/OnMyWaySheet";
 
 type ScheduleTab = "day" | "list" | "map";
 
@@ -404,12 +414,13 @@ export default function PlatformSchedule() {
       </div>
 
       <Sheet open={!!selectedJob} onOpenChange={() => setSelectedJob(null)}>
-        <SheetContent className="ops-theme bg-background border-border w-full sm:max-w-lg overflow-y-auto">
+        <SheetContent className="ops-theme bg-background border-border w-full sm:max-w-lg overflow-y-auto p-0">
           {selectedJob && (
             <JobDetail
               job={selectedJob}
               businessId={selectedBusinessId}
               onContact={() => setContactJob(selectedJob)}
+              onClose={() => setSelectedJob(null)}
             />
           )}
         </SheetContent>
@@ -607,16 +618,31 @@ function openAppleMaps(address: string) {
     : `https://maps.apple.com/?daddr=${encoded}`;
 }
 
+function normalizeVisitStatus(status: string | null): VisitStatus {
+  const s = (status ?? "scheduled").toLowerCase();
+  if (s === "on_my_way" || s === "on_site" || s === "in_progress" || s === "complete") {
+    return s;
+  }
+  return "scheduled";
+}
+
 function JobDetail({
   job,
   businessId,
   onContact,
+  onClose,
 }: {
   job: JobberJob;
   businessId: string | null;
   onContact: () => void;
+  onClose: () => void;
 }) {
   const [tab, setTab] = useState<JobDetailTab>("visit");
+  const [omwOpen, setOmwOpen] = useState(false);
+  const [completeOpen, setCompleteOpen] = useState(false);
+  const navigate = useNavigate();
+  const { advance, reopen } = useVisitLifecycle();
+  const lifeStatus = normalizeVisitStatus(job.visit_status);
   const statusKey = getStatusKey(job);
   const statusInfo = STATUS_STYLES[statusKey];
   const bizStyle = getBizStyle(job.business_id);
@@ -636,10 +662,62 @@ function JobDetail({
   const customerName = job.client_name ?? "Customer";
   const serviceTitle = job.title ?? "Visit";
   const hasAddress = Boolean(job.property_address);
+  const phone = job.client_phone ?? null;
+  const instructions = job.internal_notes?.trim() ?? "";
+
+  // Synthesize a fallback line item if no service_items but we have title/total/instructions
+  const showSyntheticItem =
+    items.length === 0 && (Boolean(job.title) || total > 0 || instructions.length > 0);
+
+  const busy = advance.isPending || reopen.isPending || !businessId;
+
+  const doAdvance = (next: VisitStatus, smsSent?: boolean) => {
+    if (!businessId) return;
+    advance.mutate({
+      jobberJobId: job.id,
+      businessId,
+      nextStatus: next,
+      customerName: job.client_name,
+      customerPhone: job.client_phone,
+      smsSent,
+    });
+  };
 
   return (
-    <div className="space-y-6 pt-2 pb-8">
-      {/* Header status row */}
+    <div className="flex flex-col pb-8">
+      {/* Sticky compact header bar */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border px-4 py-3 flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Back"
+          className="p-2 -ml-2 rounded-lg text-foreground/80 hover:text-foreground hover:bg-secondary/60 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div className="flex items-center gap-1.5">
+          {phone && (
+            <a
+              href={`tel:${phone}`}
+              aria-label="Call customer"
+              className="p-2 rounded-lg text-foreground/80 hover:text-primary hover:bg-secondary/60 transition-colors"
+            >
+              <Phone className="w-5 h-5" />
+            </a>
+          )}
+          <button
+            type="button"
+            onClick={onContact}
+            aria-label="More options"
+            className="p-2 rounded-lg text-foreground/80 hover:text-foreground hover:bg-secondary/60 transition-colors"
+          >
+            <MoreHorizontal className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      <div className="px-5 pt-5 space-y-6">
+      {/* Status / business / job# row */}
       <div className="flex items-center gap-2 flex-wrap">
         <span
           className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-body font-bold uppercase tracking-wide"
@@ -670,33 +748,13 @@ function JobDetail({
         </p>
       </div>
 
-      {/* Address + Directions / Contact */}
+      {/* Address */}
       {hasAddress && (
-        <div className="space-y-3">
-          <div className="flex items-start gap-3">
-            <MapPin className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-            <p className="font-body text-[17px] font-semibold text-foreground leading-snug">
-              {job.property_address}
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => openAppleMaps(job.property_address as string)}
-              className="flex items-center justify-center gap-2 min-h-[56px] rounded-2xl bg-secondary/60 border border-border text-foreground font-body font-bold text-[15px] hover:bg-secondary/80 transition-colors"
-            >
-              <Navigation className="w-5 h-5" />
-              Directions
-            </button>
-            <button
-              type="button"
-              onClick={onContact}
-              className="flex items-center justify-center gap-2 min-h-[56px] rounded-2xl bg-secondary/60 border border-border text-foreground font-body font-bold text-[15px] hover:bg-secondary/80 transition-colors"
-            >
-              <Phone className="w-5 h-5" />
-              Contact
-            </button>
-          </div>
+        <div className="flex items-start gap-3">
+          <MapPin className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+          <p className="font-body text-[17px] font-semibold text-foreground leading-snug">
+            {job.property_address}
+          </p>
         </div>
       )}
 
@@ -713,15 +771,85 @@ function JobDetail({
         </div>
       )}
 
-      {/* Visit lifecycle: On My Way → Start → Complete */}
-      <VisitActionPanel
-        jobberJobId={job.id}
-        businessId={businessId}
-        visitStatus={job.visit_status}
-        customerName={job.client_name}
-        customerPhone={job.client_phone}
-        onContact={onContact}
-      />
+      {/* Quick actions: Directions + Contact (single row, no duplicates) */}
+      <div className="grid grid-cols-2 gap-3">
+        <button
+          type="button"
+          disabled={!hasAddress}
+          onClick={() => job.property_address && openAppleMaps(job.property_address)}
+          className="flex items-center justify-center gap-2 min-h-[56px] rounded-2xl bg-secondary/60 border border-border text-foreground font-body font-bold text-[15px] hover:bg-secondary/80 transition-colors disabled:opacity-40"
+        >
+          <Navigation className="w-5 h-5" />
+          Directions
+        </button>
+        <button
+          type="button"
+          disabled={!phone && !job.client_name}
+          onClick={onContact}
+          className="flex items-center justify-center gap-2 min-h-[56px] rounded-2xl bg-secondary/60 border border-border text-foreground font-body font-bold text-[15px] hover:bg-secondary/80 transition-colors disabled:opacity-40"
+        >
+          <Phone className="w-5 h-5" />
+          {phone ? "Contact" : "No phone"}
+        </button>
+      </div>
+
+      {/* Visit lifecycle action buttons */}
+      <div className="space-y-2">
+        {(lifeStatus === "scheduled" || lifeStatus === "on_my_way" || lifeStatus === "on_site" || lifeStatus === "in_progress") && (
+          <>
+            {(lifeStatus === "scheduled") && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => setOmwOpen(true)}
+                className="w-full flex items-center justify-center gap-2 min-h-[60px] rounded-2xl bg-secondary text-foreground font-body font-bold text-[16px] hover:bg-secondary/80 transition-colors disabled:opacity-50"
+              >
+                <Truck className="w-5 h-5" />
+                On My Way
+              </button>
+            )}
+            {(lifeStatus === "scheduled" || lifeStatus === "on_my_way" || lifeStatus === "on_site") && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => doAdvance("in_progress")}
+                className="w-full flex items-center justify-center gap-2 min-h-[60px] rounded-2xl bg-primary text-primary-foreground font-body font-bold text-[16px] hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                <Play className="w-5 h-5" />
+                Start Visit
+              </button>
+            )}
+            {lifeStatus === "in_progress" && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => setCompleteOpen(true)}
+                className="w-full flex items-center justify-center gap-2 min-h-[60px] rounded-2xl bg-primary text-primary-foreground font-body font-bold text-[16px] hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                <CheckCircle2 className="w-5 h-5" />
+                Complete Visit
+              </button>
+            )}
+          </>
+        )}
+        {lifeStatus === "complete" && (
+          <>
+            <div className="w-full flex items-center justify-center gap-2 min-h-[56px] rounded-2xl bg-primary/10 text-primary font-body font-bold text-[15px]">
+              <CheckCircle2 className="w-5 h-5" />
+              Visit completed
+            </div>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => businessId && reopen.mutate({ jobberJobId: job.id, businessId })}
+              className="w-full flex items-center justify-center gap-2 min-h-[44px] rounded-xl bg-secondary/40 text-foreground font-body font-medium text-sm hover:bg-secondary/70 transition-colors disabled:opacity-50"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Reopen visit
+            </button>
+          </>
+        )}
+      </div>
 
       {/* Tabs */}
       <div className="border-b border-border flex items-center gap-1">
@@ -733,15 +861,15 @@ function JobDetail({
               type="button"
               onClick={() => setTab(t)}
               className={cn(
-                "relative px-4 py-3 font-body text-[15px] capitalize transition-colors",
+                "relative px-5 py-3 font-body text-[15px] capitalize transition-colors",
                 active
-                  ? "text-foreground font-bold"
+                  ? "text-primary font-extrabold"
                   : "text-muted-foreground hover:text-foreground/80 font-semibold",
               )}
             >
               {t}
               {active && (
-                <span className="absolute left-2 right-2 -bottom-px h-[3px] rounded-full bg-primary" />
+                <span className="absolute left-3 right-3 -bottom-px h-[3px] rounded-full bg-primary" />
               )}
             </button>
           );
@@ -752,15 +880,43 @@ function JobDetail({
         <div className="space-y-5">
           <DetailSection title="Instructions">
             <p className="font-body text-[15px] text-foreground/90 whitespace-pre-wrap">
-              {job.internal_notes?.trim() || "No instructions added."}
+              {instructions || "No instructions added."}
             </p>
           </DetailSection>
 
           <DetailSection title="Line Items">
-            {items.length === 0 ? (
+            {items.length === 0 && !showSyntheticItem ? (
               <p className="font-body text-[14px] text-muted-foreground">
                 No line items.
               </p>
+            ) : items.length === 0 ? (
+              <div className="space-y-2">
+                <div className="flex items-start justify-between gap-3 py-2">
+                  <div className="min-w-0">
+                    <p className="font-body text-[15px] font-semibold text-foreground">
+                      {job.title ?? "Service"}
+                    </p>
+                    {instructions && (
+                      <p className="font-body text-[13px] text-muted-foreground line-clamp-2">
+                        {instructions}
+                      </p>
+                    )}
+                  </div>
+                  {total > 0 && (
+                    <p className="font-body text-[15px] font-bold text-foreground tabular-nums">
+                      ${total.toFixed(2)}
+                    </p>
+                  )}
+                </div>
+                {total > 0 && (
+                  <div className="flex items-center justify-between pt-3 mt-1 border-t border-border">
+                    <p className="font-body text-[16px] font-bold text-foreground">Total</p>
+                    <p className="font-body text-[18px] font-extrabold text-foreground tabular-nums">
+                      ${total.toFixed(2)}
+                    </p>
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="space-y-2">
                 {items.map((it, idx) => {
@@ -801,21 +957,19 @@ function JobDetail({
             )}
           </DetailSection>
 
-          {job.assigned_employee_names &&
-            job.assigned_employee_names.length > 0 && (
-              <DetailSection title="Team">
-                <div className="space-y-1">
-                  {job.assigned_employee_names.map((name) => (
-                    <p
-                      key={name}
-                      className="font-body text-[15px] font-semibold text-foreground"
-                    >
-                      {name}
-                    </p>
-                  ))}
-                </div>
-              </DetailSection>
+          <DetailSection title="Team">
+            {job.assigned_employee_names && job.assigned_employee_names.length > 0 ? (
+              <div className="space-y-1">
+                {job.assigned_employee_names.map((name) => (
+                  <p key={name} className="font-body text-[15px] font-semibold text-foreground">
+                    {name}
+                  </p>
+                ))}
+              </div>
+            ) : (
+              <p className="font-body text-[14px] text-muted-foreground">No team assigned.</p>
             )}
+          </DetailSection>
 
           <DetailSection title="Customer">
             <p className="font-body text-[16px] font-bold text-foreground">
@@ -824,10 +978,15 @@ function JobDetail({
             {job.client_phone && (
               <a
                 href={`tel:${job.client_phone}`}
-                className="font-body text-[14px] text-primary hover:underline"
+                className="font-body text-[14px] text-primary hover:underline block"
               >
                 {job.client_phone}
               </a>
+            )}
+            {job.property_address && (
+              <p className="font-body text-[13px] text-muted-foreground">
+                {job.property_address}
+              </p>
             )}
           </DetailSection>
         </div>
@@ -845,6 +1004,7 @@ function JobDetail({
           />
           <DetailRow label="Business" value={bizStyle.label} />
           <DetailRow label="Source" value="Jobber sync" />
+          <DetailRow label="Jobber ID" value={job.id} mono />
           {total > 0 && (
             <DetailRow label="Total" value={`$${total.toFixed(2)}`} />
           )}
@@ -855,12 +1015,97 @@ function JobDetail({
         <div className="space-y-4">
           <DetailSection title="Internal Notes">
             <p className="font-body text-[15px] text-foreground/90 whitespace-pre-wrap">
-              {job.internal_notes?.trim() || "No notes added."}
+              {instructions || "No notes added."}
             </p>
           </DetailSection>
         </div>
       )}
+      </div>
+
+      <OnMyWaySheet
+        open={omwOpen}
+        onClose={() => setOmwOpen(false)}
+        customerName={job.client_name}
+        customerPhone={job.client_phone}
+        onConfirm={(smsSent) => doAdvance("on_my_way", smsSent)}
+      />
+
+      <CompleteVisitSheet
+        open={completeOpen}
+        onClose={() => setCompleteOpen(false)}
+        onChoice={(choice) => {
+          setCompleteOpen(false);
+          if (choice === "cancel" || choice === "leave_open") return;
+          doAdvance("complete");
+          if (choice === "invoice_now") {
+            setTimeout(() => navigate("/platform/invoices/new"), 250);
+          }
+        }}
+      />
     </div>
+  );
+}
+
+function CompleteVisitSheet({
+  open,
+  onClose,
+  onChoice,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onChoice: (choice: "invoice_now" | "invoice_later" | "leave_open" | "cancel") => void;
+}) {
+  return (
+    <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
+      <SheetContent
+        side="bottom"
+        className="ops-theme bg-background border-t border-border rounded-t-2xl p-5 space-y-3"
+      >
+        <div className="space-y-1 text-left">
+          <h3 className="font-display text-[20px] font-extrabold text-foreground">Complete visit</h3>
+          <p className="font-body text-[14px] text-muted-foreground">
+            What would you like to do next?
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => onChoice("invoice_now")}
+          className="w-full flex items-center justify-between gap-3 min-h-[60px] px-4 rounded-2xl bg-primary text-primary-foreground font-body font-bold text-[15px] hover:bg-primary/90 transition-colors"
+        >
+          <span className="flex items-center gap-3">
+            <FileText className="w-5 h-5" />
+            Close job &amp; invoice now
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => onChoice("invoice_later")}
+          className="w-full flex items-center justify-between gap-3 min-h-[60px] px-4 rounded-2xl bg-secondary text-foreground font-body font-bold text-[15px] hover:bg-secondary/80 transition-colors"
+        >
+          <span className="flex items-center gap-3">
+            <Mail className="w-5 h-5" />
+            Close job &amp; invoice later
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => onChoice("leave_open")}
+          className="w-full flex items-center justify-between gap-3 min-h-[60px] px-4 rounded-2xl bg-secondary/60 text-foreground font-body font-semibold text-[15px] hover:bg-secondary/80 transition-colors"
+        >
+          <span className="flex items-center gap-3">
+            <RotateCcw className="w-5 h-5" />
+            Leave job open
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => onChoice("cancel")}
+          className="w-full flex items-center justify-center gap-2 min-h-[48px] rounded-xl bg-transparent text-muted-foreground font-body font-medium text-sm hover:text-foreground transition-colors"
+        >
+          Cancel
+        </button>
+      </SheetContent>
+    </Sheet>
   );
 }
 
