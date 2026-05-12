@@ -1127,6 +1127,24 @@ Deno.serve(async (req) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("jobber-sync failed:", message);
-    return jsonResponse({ error: message }, 500);
+    const looksLikeAuth = /401|unauthor|expired|invalid_grant|invalid token|forbidden/i.test(message);
+    if (looksLikeAuth) {
+      try {
+        await supabase.from("sync_logs").insert({
+          sync_type: "jobber_token",
+          status: "reconnect_required",
+          error_message: message,
+          completed_at: new Date().toISOString(),
+        });
+      } catch (_) { /* non-fatal */ }
+      return jsonResponse({
+        success: false,
+        needs_reconnect: true,
+        code: "JOBBER_AUTH_FAILED",
+        error: "Jobber connection expired. Reconnect Jobber to resume syncing.",
+        raw: message,
+      });
+    }
+    return jsonResponse({ success: false, error: message }, 500);
   }
 });
