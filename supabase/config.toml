@@ -48,6 +48,9 @@ verify_jwt = false
 [functions.customer-portal-request]
 verify_jwt = false
 
+[functions.track-event]
+verify_jwt = false
+
 [functions.customer-portal-data]
 verify_jwt = false
 
