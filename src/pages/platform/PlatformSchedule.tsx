@@ -145,10 +145,25 @@ export default function PlatformSchedule() {
 
   const selectedRange = useMemo(() => {
     if (scheduleTab === "list") {
-      return { start: startOfWeek(selectedDate, { weekStartsOn: 1 }), end: endOfWeek(selectedDate, { weekStartsOn: 1 }) };
+      return { start: startOfWeek(selectedDate, { weekStartsOn: 0 }), end: endOfWeek(selectedDate, { weekStartsOn: 0 }) };
     }
     return { start: startOfDay(selectedDate), end: endOfDay(selectedDate) };
   }, [selectedDate, scheduleTab]);
+
+  // Always fetch the full week containing selectedDate, so the week strip can show
+  // per-day count dots without extra queries. Day/Map views then filter to the
+  // selected day; List view uses the whole week.
+  const weekRange = useMemo(
+    () => ({
+      start: startOfWeek(selectedDate, { weekStartsOn: 0 }),
+      end: endOfWeek(selectedDate, { weekStartsOn: 0 }),
+    }),
+    [selectedDate],
+  );
+  const weekDays = useMemo(
+    () => Array.from({ length: 7 }, (_, i) => addDays(weekRange.start, i)),
+    [weekRange.start],
+  );
 
   // Google Maps key for route view
   const { data: mapsKey } = useQuery({
@@ -165,8 +180,19 @@ export default function PlatformSchedule() {
   // Uses the shared dashboard scheduled jobs hook so KPIs, the Dashboard graph, and this
   // page never drift out of sync.
   const { jobs: jobberJobsRaw, isLoading: loading, refetch: refetchJobs } =
-    useDashboardScheduledJobs({ businessId: selectedBusinessId, startDate: selectedRange.start, endDate: selectedRange.end });
+    useDashboardScheduledJobs({ businessId: selectedBusinessId, startDate: weekRange.start, endDate: weekRange.end });
   const jobberJobs = jobberJobsRaw as unknown as JobberJob[];
+
+  // Per-day counts for the week strip indicators.
+  const weekDayCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const job of jobberJobs) {
+      if (!job.scheduled_start) continue;
+      const key = format(new Date(job.scheduled_start), "yyyy-MM-dd");
+      counts[key] = (counts[key] ?? 0) + 1;
+    }
+    return counts;
+  }, [jobberJobs]);
 
   const { data: lastSyncTime, refetch: refetchSync } = useQuery({
     queryKey: ["schedule-last-sync"],
@@ -377,6 +403,65 @@ export default function PlatformSchedule() {
               {tab}
             </button>
           ))}
+        </div>
+
+        {/* Week strip — Jobber-style tap-any-day navigation */}
+        <div className="bg-card border border-border rounded-2xl p-2">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setSelectedDate((d) => subDays(d, 7))}
+              className="p-2 rounded-lg hover:bg-secondary text-foreground/70 hover:text-primary transition-colors shrink-0"
+              aria-label="Previous week"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="grid grid-cols-7 gap-1 flex-1">
+              {weekDays.map((day) => {
+                const key = format(day, "yyyy-MM-dd");
+                const isSelected = format(selectedDate, "yyyy-MM-dd") === key;
+                const isToday = format(new Date(), "yyyy-MM-dd") === key;
+                const count = weekDayCounts[key] ?? 0;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setSelectedDate(day)}
+                    className={cn(
+                      "flex flex-col items-center justify-center py-2 rounded-xl transition-all min-h-[56px]",
+                      isSelected
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-foreground/80 hover:bg-secondary",
+                    )}
+                  >
+                    <span className={cn("text-[10px] font-body font-bold uppercase tracking-wider", isSelected ? "opacity-90" : "text-muted-foreground")}>
+                      {format(day, "EEEEE")}
+                    </span>
+                    <span className={cn("font-display text-base font-extrabold tabular-nums", isToday && !isSelected && "text-primary")}>
+                      {format(day, "d")}
+                    </span>
+                    {count > 0 ? (
+                      <span
+                        className={cn(
+                          "mt-0.5 text-[9px] font-bold leading-none px-1.5 py-0.5 rounded-full tabular-nums",
+                          isSelected ? "bg-primary-foreground/20 text-primary-foreground" : "bg-primary/15 text-primary",
+                        )}
+                      >
+                        {count}
+                      </span>
+                    ) : (
+                      <span className="mt-0.5 h-[14px]" aria-hidden />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              onClick={() => setSelectedDate((d) => addDays(d, 7))}
+              className="p-2 rounded-lg hover:bg-secondary text-foreground/70 hover:text-primary transition-colors shrink-0"
+              aria-label="Next week"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {scheduleTab === "map" ? (
