@@ -61,33 +61,45 @@ export function useVisitLifecycle() {
 
   const advance = useMutation({
     mutationFn: async (params: AdvanceParams) => {
-      const now = new Date().toISOString();
-      const eventPatch: Partial<VisitEvents> = {};
+      // Map client-side intent to server action. The server records audit_logs +
+      // timeline_events + job_visit_events transactionally.
+      const action =
+        params.nextStatus === "on_my_way" ? "on_my_way" :
+        params.nextStatus === "in_progress" ? "start_visit" :
+        params.nextStatus === "on_site" ? "start_visit" :
+        params.nextStatus === "complete" ? "complete_visit" :
+        null;
 
-      if (params.nextStatus === "on_my_way") {
-        eventPatch.on_my_way_at = now;
-        if (params.smsSent) eventPatch.on_my_way_sms_sent_at = now;
-      } else if (params.nextStatus === "on_site") {
-        eventPatch.arrived_at = now;
-      } else if (params.nextStatus === "in_progress") {
-        eventPatch.started_at = now;
-      } else if (params.nextStatus === "complete") {
-        eventPatch.completed_at = now;
+      if (action) {
+        const { error } = await supabase.functions.invoke("update-visit-status", {
+          body: {
+            jobber_job_id: params.jobberJobId,
+            action,
+            sms_sent: !!params.smsSent,
+          },
+        });
+        if (error) throw error;
+      } else {
+        // Fallback for "scheduled" or unmapped — direct update
+        const { error: jobErr } = await supabase
+          .from("jobber_jobs")
+          .update({ visit_status: params.nextStatus })
+          .eq("id", params.jobberJobId);
+        if (jobErr) throw jobErr;
       }
 
-      const { error: jobErr } = await supabase
-        .from("jobber_jobs")
-        .update({ visit_status: params.nextStatus })
-        .eq("id", params.jobberJobId);
-      if (jobErr) throw jobErr;
-
-      await upsertEvent(params.jobberJobId, params.businessId, eventPatch);
+      // Capture on_site timestamp client-side (server uses start_visit for both)
+      if (params.nextStatus === "on_site") {
+        await upsertEvent(params.jobberJobId, params.businessId, {
+          arrived_at: new Date().toISOString(),
+        });
+      }
 
       // On complete: queue review request + enroll drip
       if (params.nextStatus === "complete") {
         await handleCompletionSideEffects(params);
         await upsertEvent(params.jobberJobId, params.businessId, {
-          review_queued_at: now,
+          review_queued_at: new Date().toISOString(),
         });
       }
     },
@@ -111,14 +123,10 @@ export function useVisitLifecycle() {
 
   const reopen = useMutation({
     mutationFn: async (params: { jobberJobId: string; businessId: string }) => {
-      const { error } = await supabase
-        .from("jobber_jobs")
-        .update({ visit_status: "in_progress" })
-        .eq("id", params.jobberJobId);
-      if (error) throw error;
-      await upsertEvent(params.jobberJobId, params.businessId, {
-        completed_at: null,
+      const { error } = await supabase.functions.invoke("update-visit-status", {
+        body: { jobber_job_id: params.jobberJobId, action: "reopen_visit" },
       });
+      if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["schedule-jobber"] });

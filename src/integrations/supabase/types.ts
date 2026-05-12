@@ -4555,6 +4555,109 @@ export type Database = {
           },
         ]
       }
+      sms_queue: {
+        Row: {
+          attempts: number
+          business_id: string
+          created_at: string
+          created_by_user_id: string | null
+          customer_id: string | null
+          id: string
+          last_error: string | null
+          message_body: string
+          phone: string
+          provider_message_id: string | null
+          reason: string
+          related_id: string | null
+          related_type: string | null
+          scheduled_for: string
+          sent_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          business_id: string
+          created_at?: string
+          created_by_user_id?: string | null
+          customer_id?: string | null
+          id?: string
+          last_error?: string | null
+          message_body: string
+          phone: string
+          provider_message_id?: string | null
+          reason: string
+          related_id?: string | null
+          related_type?: string | null
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          business_id?: string
+          created_at?: string
+          created_by_user_id?: string | null
+          customer_id?: string | null
+          id?: string
+          last_error?: string | null
+          message_body?: string
+          phone?: string
+          provider_message_id?: string | null
+          reason?: string
+          related_id?: string | null
+          related_type?: string | null
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_queue_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_quiet_hours: {
+        Row: {
+          business_id: string
+          enabled: boolean
+          end_hour: number
+          start_hour: number
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          enabled?: boolean
+          end_hour?: number
+          start_hour?: number
+          timezone?: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          enabled?: boolean
+          end_hour?: number
+          start_hour?: number
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_quiet_hours_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sop_acknowledgments: {
         Row: {
           created_at: string
