@@ -38,6 +38,11 @@ const Navbar = () => {
     setLearnOpen(false);
   };
 
+  const trackMenuLink = (label: string) => {
+    trackEvent("mobile_menu_link_clicked", { source: "mobile_menu", cta_text: label });
+    closeAll();
+  };
+
   const toggleOne = (setter: React.Dispatch<React.SetStateAction<boolean>>, others: React.Dispatch<React.SetStateAction<boolean>>[]) => {
     setter((prev) => {
       const next = !prev;
