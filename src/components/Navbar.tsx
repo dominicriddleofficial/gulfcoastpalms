@@ -289,7 +289,7 @@ const Navbar = () => {
               <div className="border-t border-border p-4 flex flex-col gap-2.5 bg-background">
                 <Link
                   to="/quote"
-                  onClick={closeAll}
+                  onClick={() => trackMenuLink("Get a Free Quote")}
                   className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-primary text-primary-foreground font-body font-semibold"
                 >
                   Get a Free Quote <ArrowRight className="w-4 h-4" />
