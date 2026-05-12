@@ -159,7 +159,7 @@ export default function ViewQuote() {
         const resp = await fetch(`${baseUrl}/get-quote-public`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ quote_id: quoteId }),
+          body: JSON.stringify({ quote_id: quoteId, shortcode }),
         });
         const data = await resp.json();
         if (!resp.ok || data.error) setError(data.error || "Quote not found");
