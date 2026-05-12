@@ -284,11 +284,12 @@ export default function PlatformSchedule() {
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                window.open(
-                  `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(job.property_address!)}`,
-                  "_blank",
-                  "noopener,noreferrer",
-                );
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+                const encoded = encodeURIComponent(job.property_address!);
+                const url = isIOS
+                  ? `maps://?daddr=${encoded}`
+                  : `https://maps.apple.com/?daddr=${encoded}`;
+                window.location.href = url;
               }}
               aria-label="Get directions"
               className="flex items-center justify-center w-14 flex-1 min-h-[60px] text-foreground/80 hover:text-primary hover:bg-secondary/40 transition-colors border-t border-border"
