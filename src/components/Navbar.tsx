@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Phone, MessageSquare, Menu, ChevronDown } from "lucide-react";
+import { Phone, MessageSquare, Menu, ChevronDown, ArrowRight } from "lucide-react";
 import { locations } from "@/data/locations";
 import { serviceNavLinks } from "@/data/services";
 import { PHONE_NUMBER_TEL, PHONE_NUMBER_DISPLAY, SMS_NUMBER } from "@/data/contact";
@@ -20,7 +20,15 @@ const Navbar = () => {
   const [servicesOpen, setServicesOpen] = useState(false);
   const [areasOpen, setAreasOpen] = useState(false);
   const [learnOpen, setLearnOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const closeAll = () => {
     setSheetOpen(false);
@@ -37,11 +45,13 @@ const Navbar = () => {
     });
   };
 
+  const topAreas = locations.slice(0, 6);
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border">
-      <div className="container mx-auto flex items-center justify-between h-20 px-4 lg:px-8">
+    <header className={`fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border transition-[height,box-shadow] duration-200 ${scrolled ? "shadow-sm" : ""}`}>
+      <div className={`container mx-auto flex items-center justify-between px-4 lg:px-8 transition-[height] duration-200 ${scrolled ? "h-14 lg:h-16" : "h-16 lg:h-20"}`}>
         <Link to="/" className="flex items-center gap-2">
-          <span className="text-2xl font-display font-bold text-primary">
+          <span className={`font-display font-bold text-primary transition-all ${scrolled ? "text-xl" : "text-2xl"}`}>
             Gulf Coast <span className="text-palm-light">Palms</span>
           </span>
         </Link>
@@ -132,85 +142,166 @@ const Navbar = () => {
 
         {/* Mobile: phone icon + Sheet menu */}
         <div className="lg:hidden flex items-center gap-2">
-          <a href={PHONE_NUMBER_TEL} className="p-2 rounded-lg bg-primary text-primary-foreground" aria-label="Call Gulf Coast Palms">
+          <a
+            href={PHONE_NUMBER_TEL}
+            onClick={() => trackEvent("call_now_click", { source: "navbar_mobile" })}
+            className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg bg-primary text-primary-foreground"
+            aria-label={`Call ${PHONE_NUMBER_DISPLAY}`}
+          >
             <Phone className="w-5 h-5" />
           </a>
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
-              <button className="text-foreground p-2" aria-label="Open navigation menu">
+              <button
+                className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] text-foreground rounded-lg"
+                aria-label="Open navigation menu"
+              >
                 <Menu className="w-6 h-6" />
               </button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[85%] max-w-sm bg-background p-0 overflow-y-auto">
+            <SheetContent side="right" className="w-[88%] max-w-sm bg-background p-0 flex flex-col">
               <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-              <nav className="flex flex-col items-center gap-4 py-6 px-4">
-                <Link to="/" onClick={closeAll} className={`font-body font-medium text-lg transition-colors hover:text-primary ${location.pathname === "/" ? "text-primary" : "text-muted-foreground"}`}>
-                  Home
-                </Link>
 
-                {/* Mobile Services */}
-                <button onClick={() => toggleOne(setServicesOpen, [setAreasOpen, setLearnOpen])} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.startsWith("/services") ? "text-primary" : "text-muted-foreground"}`}>
-                  Services <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${servicesOpen ? "rotate-180" : ""}`} />
+              {/* Scrollable section list */}
+              <nav className="flex-1 overflow-y-auto px-4 py-5">
+                {/* Main */}
+                <p className="font-body text-[11px] uppercase tracking-wider text-muted-foreground/70 px-2 mb-2">Main</p>
+                <ul className="mb-5">
+                  <li>
+                    <Link to="/" onClick={closeAll} className={`block px-2 py-2.5 rounded-md font-body text-base ${location.pathname === "/" ? "text-primary font-semibold" : "text-foreground"}`}>Home</Link>
+                  </li>
+                  <li>
+                    <Link to="/about" onClick={closeAll} className={`block px-2 py-2.5 rounded-md font-body text-base ${location.pathname === "/about" ? "text-primary font-semibold" : "text-foreground"}`}>About</Link>
+                  </li>
+                  <li>
+                    <Link to="/jobs" onClick={closeAll} className={`block px-2 py-2.5 rounded-md font-body text-base ${location.pathname === "/jobs" ? "text-primary font-semibold" : "text-foreground"}`}>Jobs Completed</Link>
+                  </li>
+                  <li>
+                    <Link to="/palm-trees/buy" onClick={closeAll} className={`block px-2 py-2.5 rounded-md font-body text-base ${location.pathname === "/palm-trees/buy" ? "text-primary font-semibold" : "text-foreground"}`}>Buy Palm Trees</Link>
+                  </li>
+                </ul>
+
+                {/* Services */}
+                <p className="font-body text-[11px] uppercase tracking-wider text-muted-foreground/70 px-2 mb-2">Services</p>
+                <button
+                  type="button"
+                  onClick={() => toggleOne(setServicesOpen, [setAreasOpen, setLearnOpen])}
+                  aria-expanded={servicesOpen}
+                  aria-controls="mobile-services-panel"
+                  className={`w-full flex items-center justify-between px-2 py-2.5 rounded-md font-body text-base ${location.pathname.startsWith("/services") ? "text-primary font-semibold" : "text-foreground"}`}
+                >
+                  <span>All Services</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${servicesOpen ? "rotate-180" : ""}`} />
                 </button>
                 {servicesOpen && (
-                  <div className="flex flex-col items-center gap-2 w-full">
+                  <ul id="mobile-services-panel" className="max-h-[40vh] overflow-y-auto pl-3 border-l border-border ml-2 mb-3">
+                    <li>
+                      <Link to="/services" onClick={closeAll} className="block px-2 py-2 font-body text-sm text-foreground/90 hover:text-primary">View all services</Link>
+                    </li>
                     {serviceNavLinks.map((link) => (
-                      <Link key={link.to} to={link.to} onClick={closeAll} className={`font-body text-sm transition-colors hover:text-primary ${location.pathname === link.to ? "text-primary" : "text-muted-foreground"}`}>
-                        {link.label}
-                      </Link>
+                      <li key={link.to}>
+                        <Link to={link.to} onClick={closeAll} className={`block px-2 py-2 font-body text-sm hover:text-primary ${location.pathname === link.to ? "text-primary font-semibold" : "text-foreground/90"}`}>
+                          {link.label}
+                        </Link>
+                      </li>
                     ))}
-                  </div>
+                    <li>
+                      <Link to="/palm-tree-maintenance-plans" onClick={closeAll} className="block px-2 py-2 font-body text-sm text-foreground/90 hover:text-primary">Maintenance Plans</Link>
+                    </li>
+                  </ul>
                 )}
 
-                <Link to="/jobs" onClick={closeAll} className={`font-body font-medium text-lg transition-colors hover:text-primary ${location.pathname === "/jobs" ? "text-primary" : "text-muted-foreground"}`}>
-                  Jobs Completed
-                </Link>
-
-                {/* Mobile Learn */}
-                <button onClick={() => toggleOne(setLearnOpen, [setServicesOpen, setAreasOpen])} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${["/palm-trees", "/palm-tree-cost", "/hurricane-palm-preparation"].some((p) => location.pathname.startsWith(p)) ? "text-primary" : "text-muted-foreground"}`}>
-                  Learn <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${learnOpen ? "rotate-180" : ""}`} />
+                {/* Learn */}
+                <p className="font-body text-[11px] uppercase tracking-wider text-muted-foreground/70 px-2 mt-2 mb-2">Learn</p>
+                <button
+                  type="button"
+                  onClick={() => toggleOne(setLearnOpen, [setServicesOpen, setAreasOpen])}
+                  aria-expanded={learnOpen}
+                  aria-controls="mobile-learn-panel"
+                  className="w-full flex items-center justify-between px-2 py-2.5 rounded-md font-body text-base text-foreground"
+                >
+                  <span>Guides &amp; Resources</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${learnOpen ? "rotate-180" : ""}`} />
                 </button>
                 {learnOpen && (
-                  <div className="flex flex-col items-center gap-2 w-full">
+                  <ul id="mobile-learn-panel" className="max-h-[40vh] overflow-y-auto pl-3 border-l border-border ml-2 mb-3">
                     {learnLinks.map((link) => (
-                      <Link key={link.to} to={link.to} onClick={closeAll} className={`font-body text-sm transition-colors hover:text-primary ${location.pathname === link.to ? "text-primary" : "text-muted-foreground"}`}>
-                        {link.label}
-                      </Link>
+                      <li key={link.to}>
+                        <Link to={link.to} onClick={closeAll} className={`block px-2 py-2 font-body text-sm hover:text-primary ${location.pathname === link.to ? "text-primary font-semibold" : "text-foreground/90"}`}>
+                          {link.label}
+                        </Link>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 )}
 
-                <Link to="/palm-trees/buy" onClick={closeAll} className={`font-body font-medium text-lg transition-colors hover:text-primary ${location.pathname === "/palm-trees/buy" ? "text-primary" : "text-muted-foreground"}`}>
-                  Buy Palm Trees
-                </Link>
-
-                {/* Mobile Service Areas */}
-                <button onClick={() => toggleOne(setAreasOpen, [setServicesOpen, setLearnOpen])} className={`font-body font-medium text-lg transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.includes("palm-tree-trimming") ? "text-primary" : "text-muted-foreground"}`}>
-                  Service Areas <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${areasOpen ? "rotate-180" : ""}`} />
+                {/* Service Areas */}
+                <p className="font-body text-[11px] uppercase tracking-wider text-muted-foreground/70 px-2 mt-2 mb-2">Service Areas</p>
+                <button
+                  type="button"
+                  onClick={() => toggleOne(setAreasOpen, [setServicesOpen, setLearnOpen])}
+                  aria-expanded={areasOpen}
+                  aria-controls="mobile-areas-panel"
+                  className="w-full flex items-center justify-between px-2 py-2.5 rounded-md font-body text-base text-foreground"
+                >
+                  <span>Where We Serve</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${areasOpen ? "rotate-180" : ""}`} />
                 </button>
                 {areasOpen && (
-                  <div className="flex flex-col items-center gap-2 w-full">
-                    {locations.map((loc) => (
-                      <Link key={loc.slug} to={`/${loc.slug}`} onClick={closeAll} className={`font-body text-sm transition-colors hover:text-primary ${location.pathname === `/${loc.slug}` ? "text-primary" : "text-muted-foreground"}`}>
-                        {loc.city}, {loc.state}
-                      </Link>
+                  <ul id="mobile-areas-panel" className="max-h-[40vh] overflow-y-auto pl-3 border-l border-border ml-2 mb-3">
+                    {topAreas.map((loc) => (
+                      <li key={loc.slug}>
+                        <Link to={`/${loc.slug}`} onClick={closeAll} className={`block px-2 py-2 font-body text-sm hover:text-primary ${location.pathname === `/${loc.slug}` ? "text-primary font-semibold" : "text-foreground/90"}`}>
+                          {loc.city}, {loc.state}
+                        </Link>
+                      </li>
                     ))}
-                  </div>
+                    <li>
+                      <Link to="/service-areas" onClick={closeAll} className="inline-flex items-center gap-1 px-2 py-2 font-body text-sm font-semibold text-primary hover:underline">
+                        View all service areas <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </li>
+                  </ul>
                 )}
 
-                <Link to="/about" onClick={closeAll} className={`font-body font-medium text-lg transition-colors hover:text-primary ${location.pathname === "/about" ? "text-primary" : "text-muted-foreground"}`}>
-                  About
-                </Link>
+                {/* Contact */}
+                <p className="font-body text-[11px] uppercase tracking-wider text-muted-foreground/70 px-2 mt-2 mb-2">Contact</p>
+                <ul>
+                  <li>
+                    <Link to="/emergency-palm-service" onClick={closeAll} className="block px-2 py-2.5 rounded-md font-body text-base text-foreground">Emergency Service</Link>
+                  </li>
+                  <li>
+                    <Link to="/referral" onClick={closeAll} className="block px-2 py-2.5 rounded-md font-body text-base text-foreground">Referral Program</Link>
+                  </li>
+                </ul>
+              </nav>
 
-                <div className="flex flex-col gap-3 mt-4 w-full max-w-xs">
-                  <a href={SMS_NUMBER} className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-primary text-primary-foreground font-body font-semibold">
-                    <MessageSquare className="w-4 h-4" /> Text Us a Photo for Instant Quote
+              {/* Pinned CTAs */}
+              <div className="border-t border-border p-4 flex flex-col gap-2.5 bg-background">
+                <Link
+                  to="/quote"
+                  onClick={closeAll}
+                  className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-primary text-primary-foreground font-body font-semibold"
+                >
+                  Get a Free Quote <ArrowRight className="w-4 h-4" />
+                </Link>
+                <div className="grid grid-cols-2 gap-2">
+                  <a
+                    href={PHONE_NUMBER_TEL}
+                    onClick={() => { trackEvent("call_now_click", { source: "mobile_menu" }); closeAll(); }}
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg border-2 border-primary text-primary font-body font-semibold text-sm"
+                  >
+                    <Phone className="w-4 h-4" /> Call
                   </a>
-                  <a href={PHONE_NUMBER_TEL} className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg border-2 border-primary text-primary font-body font-semibold">
-                    <Phone className="w-4 h-4" /> Call {PHONE_NUMBER_DISPLAY}
+                  <a
+                    href={SMS_NUMBER}
+                    onClick={() => { trackEvent("text_us_click", { source: "mobile_menu" }); closeAll(); }}
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg border-2 border-primary text-primary font-body font-semibold text-sm"
+                  >
+                    <MessageSquare className="w-4 h-4" /> Text
                   </a>
                 </div>
-              </nav>
+              </div>
             </SheetContent>
           </Sheet>
         </div>

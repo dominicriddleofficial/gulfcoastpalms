@@ -14,7 +14,9 @@ const Layout = ({ children }: LayoutProps) => {
     <div className="min-h-screen flex flex-col">
       <SeasonalBanner />
       <Navbar />
-      <main className="flex-1 pt-20 pb-16 md:pb-0">{children}</main>
+      <main className="flex-1 pt-16 md:pt-20 pb-[calc(env(safe-area-inset-bottom,0px)+4.5rem)] md:pb-0">
+        {children}
+      </main>
       <Footer />
       <StickyContactBar />
       <ChatWidget />
