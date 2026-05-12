@@ -471,7 +471,8 @@ export default function ViewQuote() {
               </div>
             </div>
 
-            {/* ── PAYMENT MILESTONES ── */}
+            {/* ── PAYMENT MILESTONES (PPS only) ── */}
+            {showDepositFlow && (
             <div style={{ padding: "20px 20px 24px" }}>
               <div style={{
                 borderRadius: 12, overflow: "hidden",
@@ -548,6 +549,7 @@ export default function ViewQuote() {
                 </div>
               </div>
             </div>
+            )}
 
             {/* ── SIGNATURE & APPROVAL ── */}
             {!isApproved && !isDeclined && !isExpired && !isChangesReq && (
@@ -577,7 +579,7 @@ export default function ViewQuote() {
                           boxShadow: (agreedToTerms && hasSignature) ? `0 0 20px rgba(${accentRgb}, 0.3)` : "none",
                         }}
                       >
-                        <CheckCircle className="w-5 h-5" /> Approve & Pay Deposit
+                        <CheckCircle className="w-5 h-5" /> {showDepositFlow ? "Approve & Pay Deposit" : "Approve Quote"}
                       </button>
 
                       <button
