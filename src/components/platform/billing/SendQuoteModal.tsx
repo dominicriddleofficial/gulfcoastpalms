@@ -30,7 +30,7 @@ export default function SendQuoteModal({
   const [email, setEmail] = useState(customerEmail);
   const [subject, setSubject] = useState(`Quote ${quoteNumber} from ${businessName} — Valid Until ${validUntil}`);
   const [message, setMessage] = useState(
-    `Hi ${customerName},\n\nPlease find your quote attached. You can approve it online using the link below.\n\nThank you for considering ${businessName}!`
+    `Please find your quote attached. You can view and approve it online using the link below.\n\nThank you for considering ${businessName}!`
   );
   const [sendEmail, setSendEmail] = useState(true);
   const [sendSms, setSendSms] = useState(false);
