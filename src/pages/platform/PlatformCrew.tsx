@@ -15,7 +15,6 @@ import { enrollCompletedJobInDrip } from "@/lib/drip-enrollment";
 import { enqueueMutation } from "@/lib/offline/queue";
 import { processQueueOnce, startSyncEngine } from "@/lib/offline/sync";
 import { getOfflineDB, setMeta } from "@/lib/offline/db";
-import { useOnlineStatus } from "@/lib/offline/hooks";
 import OfflineBanner from "@/components/platform/offline/OfflineBanner";
 import LastSyncedLabel from "@/components/platform/offline/LastSyncedLabel";
 import { usePullToRefresh } from "@/lib/offline/usePullToRefresh";
@@ -90,7 +89,6 @@ export default function PlatformCrew() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<CrewJob | null>(null);
   const [hydratedFromCache, setHydratedFromCache] = useState(false);
-  const online = useOnlineStatus();
 
   const today = useMemo(() => startOfToday(), []);
   const businessId = auth.selectedBusinessId;
