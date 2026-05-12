@@ -143,6 +143,13 @@ export default function PlatformSchedule() {
   const [selectedJob, setSelectedJob] = useState<JobberJob | null>(null);
   const [contactJob, setContactJob] = useState<JobberJob | null>(null);
 
+  const selectedRange = useMemo(() => {
+    if (scheduleTab === "list") {
+      return { start: startOfWeek(selectedDate, { weekStartsOn: 1 }), end: endOfWeek(selectedDate, { weekStartsOn: 1 }) };
+    }
+    return { start: startOfDay(selectedDate), end: endOfDay(selectedDate) };
+  }, [selectedDate, scheduleTab]);
+
   // Google Maps key for route view
   const { data: mapsKey } = useQuery({
     queryKey: ["google-maps-key"],
@@ -158,7 +165,7 @@ export default function PlatformSchedule() {
   // Uses the shared dashboard scheduled jobs hook so KPIs, the Dashboard graph, and this
   // page never drift out of sync.
   const { jobs: jobberJobsRaw, isLoading: loading, refetch: refetchJobs } =
-    useDashboardScheduledJobs({ businessId: selectedBusinessId });
+    useDashboardScheduledJobs({ businessId: selectedBusinessId, startDate: selectedRange.start, endDate: selectedRange.end });
   const jobberJobs = jobberJobsRaw as unknown as JobberJob[];
 
   const { data: lastSyncTime, refetch: refetchSync } = useQuery({
@@ -194,13 +201,6 @@ export default function PlatformSchedule() {
     }
     setSyncing(false);
   };
-
-  const selectedRange = useMemo(() => {
-    if (scheduleTab === "list") {
-      return { start: startOfWeek(selectedDate, { weekStartsOn: 1 }), end: endOfWeek(selectedDate, { weekStartsOn: 1 }) };
-    }
-    return { start: startOfDay(selectedDate), end: endOfDay(selectedDate) };
-  }, [selectedDate, scheduleTab]);
 
   const scheduledJobs = useMemo(() => {
     return activeJobs.filter((job) => {
