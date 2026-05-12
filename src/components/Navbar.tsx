@@ -151,7 +151,10 @@ const Navbar = () => {
           >
             <Phone className="w-5 h-5" />
           </a>
-          <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+          <Sheet open={sheetOpen} onOpenChange={(o) => {
+            setSheetOpen(o);
+            if (o) trackEvent("mobile_menu_opened", { source: "navbar" });
+          }}>
             <SheetTrigger asChild>
               <button
                 className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] text-foreground rounded-lg"
