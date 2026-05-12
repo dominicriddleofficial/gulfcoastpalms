@@ -1,50 +1,14 @@
-import { useMemo } from "react";
 import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
-import KpiSnapshotWidget from "@/components/platform/KpiSnapshotWidget";
-import { useUserRole } from "@/hooks/useUserRole";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import {
-  DollarSign,
-  TrendingUp,
-  Briefcase,
-  Calendar,
-  Clock,
-  MapPin,
-  CalendarDays,
-} from "lucide-react";
-import {
-  format,
-  isToday,
-  startOfWeek,
-  endOfWeek,
-  startOfMonth,
-  endOfMonth,
-  subDays,
-} from "date-fns";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-} from "recharts";
-
-type JobberJob = {
-  id: string;
-  title: string | null;
-  client_name: string | null;
-  property_address: string | null;
-  status: string;
-  visit_status: string | null;
-  scheduled_start: string | null;
-  total_amount: number | null;
-  job_number: string | null;
-};
+import TodaySection from "@/components/platform/dashboard/TodaySection";
+import PipelineSection from "@/components/platform/dashboard/PipelineSection";
+import OperationsSection from "@/components/platform/dashboard/OperationsSection";
+import MoneySection from "@/components/platform/dashboard/MoneySection";
+import ReliabilitySection from "@/components/platform/dashboard/ReliabilitySection";
+import QuickActionsBar from "@/components/platform/dashboard/QuickActionsBar";
 
 function KPICard({
   label,
