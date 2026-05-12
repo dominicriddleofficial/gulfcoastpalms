@@ -25,11 +25,11 @@ serve(async (req) => {
       });
     }
 
-    // Validate shortcode if provided
-    if (shortcode !== undefined && (typeof shortcode !== "string" || shortcode.length > 50)) {
-      return new Response(JSON.stringify({ error: true, message: "Invalid shortcode format", code: "VALIDATION_ERROR" }), {
+    // Require shortcode for public access — return 404 to avoid revealing existence
+    if (!shortcode || typeof shortcode !== "string" || shortcode.length > 50) {
+      return new Response(JSON.stringify({ error: true, message: "Invoice not found", code: "NOT_FOUND" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
+        status: 404,
       });
     }
 
@@ -54,8 +54,23 @@ serve(async (req) => {
 
     // If shortcode was provided, verify it matches the invoice's business
     const invoiceShortcode = (data as any).businesses?.shortcode || "";
-    if (shortcode && shortcode.toLowerCase() !== invoiceShortcode.toLowerCase()) {
+    if (!invoiceShortcode || shortcode.toLowerCase() !== invoiceShortcode.toLowerCase()) {
       // Don't reveal that the invoice exists — just return not found
+      try {
+        const supabaseLog = createClient(
+          Deno.env.get("SUPABASE_URL") ?? "",
+          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+        );
+        await supabaseLog.from("audit_logs").insert({
+          event_name: "public_invoice_access_denied",
+          entity_type: "invoice",
+          entity_id: invoice_id,
+          action_type: "deny",
+          context_json: { reason: "shortcode_mismatch", shortcode_provided: shortcode },
+          ip_address: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null,
+          user_agent: req.headers.get("user-agent") || null,
+        });
+      } catch { /* best-effort */ }
       return new Response(JSON.stringify({ error: true, message: "Invoice not found", code: "NOT_FOUND" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 404,

@@ -77,7 +77,7 @@ export default function PayInvoice() {
         const resp = await fetch(`${baseUrl}/get-invoice-public`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ invoice_id: invoiceId }),
+          body: JSON.stringify({ invoice_id: invoiceId, shortcode }),
         });
         const data = await resp.json();
         if (!resp.ok || data.error) setError(data.error || "Invoice not found");
@@ -100,7 +100,7 @@ export default function PayInvoice() {
         const resp = await fetch(`${baseUrl}/get-invoice-public`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ invoice_id: invoiceId }),
+          body: JSON.stringify({ invoice_id: invoiceId, shortcode }),
         });
         const data = await resp.json();
         if (resp.ok && !data.error) setInvoice(data);
