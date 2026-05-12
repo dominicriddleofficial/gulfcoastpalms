@@ -6,6 +6,7 @@ import { serviceNavLinks } from "@/data/services";
 import { PHONE_NUMBER_TEL, PHONE_NUMBER_DISPLAY, SMS_NUMBER } from "@/data/contact";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { trackEvent } from "@/lib/analytics";
+import { prefetchOnHover } from "@/lib/route-prefetch";
 
 const learnLinks = [
   { label: "Palm Care Guides", to: "/learn" },
@@ -70,11 +71,11 @@ const Navbar = () => {
             <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
               <div className="bg-card border border-border rounded-xl shadow-xl py-2 min-w-[260px]">
                 {serviceNavLinks.map((link) => (
-                  <Link key={link.to} to={link.to} className={`block px-4 py-2.5 font-body text-sm hover:bg-secondary transition-colors ${location.pathname === link.to ? "text-primary font-semibold" : "text-foreground"}`}>
+                  <Link key={link.to} to={link.to} {...prefetchOnHover(link.to)} className={`block px-4 py-2.5 font-body text-sm hover:bg-secondary transition-colors ${location.pathname === link.to ? "text-primary font-semibold" : "text-foreground"}`}>
                     {link.label}
                   </Link>
                 ))}
-                <Link to="/palm-tree-maintenance-plans" className={`block px-4 py-2.5 font-body text-sm hover:bg-secondary transition-colors ${location.pathname === "/palm-tree-maintenance-plans" ? "text-primary font-semibold" : "text-foreground"}`}>
+                <Link to="/palm-tree-maintenance-plans" {...prefetchOnHover("/palm-tree-maintenance-plans")} className={`block px-4 py-2.5 font-body text-sm hover:bg-secondary transition-colors ${location.pathname === "/palm-tree-maintenance-plans" ? "text-primary font-semibold" : "text-foreground"}`}>
                   Maintenance Plans
                 </Link>
               </div>
@@ -113,7 +114,7 @@ const Navbar = () => {
             <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
               <div className="bg-card border border-border rounded-xl shadow-xl py-2 min-w-[220px] max-h-[60vh] overflow-y-auto">
                 {locations.map((loc) => (
-                  <Link key={loc.slug} to={`/${loc.slug}`} className={`block px-4 py-2.5 font-body text-sm hover:bg-secondary transition-colors ${location.pathname === `/${loc.slug}` ? "text-primary font-semibold" : "text-foreground"}`}>
+                  <Link key={loc.slug} to={`/${loc.slug}`} {...prefetchOnHover(`/${loc.slug}`)} className={`block px-4 py-2.5 font-body text-sm hover:bg-secondary transition-colors ${location.pathname === `/${loc.slug}` ? "text-primary font-semibold" : "text-foreground"}`}>
                     {loc.city}, {loc.state}
                   </Link>
                 ))}
