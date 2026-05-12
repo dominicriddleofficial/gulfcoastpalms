@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { CreditCard, CheckCircle, XCircle, Loader2, Shield, AlertCircle, Download, Copy } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import DocumentBrandMark from "@/components/platform/billing/DocumentBrandMark";
 
 type InvoiceData = {
   id: string;
