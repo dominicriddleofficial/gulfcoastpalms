@@ -1,5 +1,4 @@
 import { useMemo, useState, useEffect, useCallback } from "react";
-import RouteView from "@/components/platform/schedule/RouteView";
 import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
