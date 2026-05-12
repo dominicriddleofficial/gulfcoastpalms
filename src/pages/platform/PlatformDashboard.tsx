@@ -9,6 +9,8 @@ import OperationsSection from "@/components/platform/dashboard/OperationsSection
 import MoneySection from "@/components/platform/dashboard/MoneySection";
 import ReliabilitySection from "@/components/platform/dashboard/ReliabilitySection";
 import QuickActionsBar from "@/components/platform/dashboard/QuickActionsBar";
+import HeadlineSection from "@/components/platform/dashboard/HeadlineSection";
+import ScheduledValueChart from "@/components/platform/dashboard/ScheduledValueChart";
 
 export default function PlatformDashboard() {
   const {
@@ -36,9 +38,16 @@ export default function PlatformDashboard() {
   });
 
   const selectedBiz = businesses.find((b) => b.id === selectedBusinessId);
-  const syncLabel = lastSyncTime
-    ? `${Math.max(1, Math.round((Date.now() - new Date(lastSyncTime).getTime()) / 60000))}m ago`
-    : "waiting for first sync";
+  const syncLabel = (() => {
+    if (!lastSyncTime) return "waiting for first sync";
+    const diffMs = Date.now() - new Date(lastSyncTime).getTime();
+    const mins = Math.max(1, Math.round(diffMs / 60000));
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.round(mins / 60);
+    if (hrs < 48) return `${hrs}h ago`;
+    const days = Math.round(hrs / 24);
+    return `${days}d ago`;
+  })();
 
   return (
     <PlatformLayout>
@@ -84,10 +93,12 @@ export default function PlatformDashboard() {
             </div>
           </header>
 
-          <TodaySection />
-          <QuickActionsBar />
+          <HeadlineSection />
+          <ScheduledValueChart />
           <MoneySection />
           <PipelineSection />
+          <TodaySection />
+          <QuickActionsBar />
           <OperationsSection />
           <ReliabilitySection />
         </div>
