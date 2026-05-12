@@ -1102,7 +1102,7 @@ function JobDetail({
         job={job}
         onSaved={() => {
           setRescheduleOpen(false);
-          qc.invalidateQueries({ queryKey: ["schedule-jobber"] });
+          qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
         }}
       />
 
@@ -1112,7 +1112,7 @@ function JobDetail({
         job={job}
         onSaved={() => {
           setEditOpen(false);
-          qc.invalidateQueries({ queryKey: ["schedule-jobber"] });
+          qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
         }}
       />
 
@@ -1123,7 +1123,7 @@ function JobDetail({
         jobLabel={job.title ?? job.client_name ?? "this visit"}
         onDeleted={() => {
           setDeleteOpen(false);
-          qc.invalidateQueries({ queryKey: ["schedule-jobber"] });
+          qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
           onClose();
         }}
       />
