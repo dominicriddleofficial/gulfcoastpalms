@@ -71,6 +71,21 @@ export default function TodaySection() {
     },
   });
 
+  const tasksCompleted = useQuery({
+    queryKey: ["dash-today-tasks-completed", selectedBusinessId, today],
+    enabled: ready,
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("platform_tasks")
+        .select("id", { count: "exact", head: true })
+        .eq("business_id", selectedBusinessId!)
+        .eq("status", "completed")
+        .gte("completed_at", dayStart)
+        .lte("completed_at", dayEnd);
+      return count ?? 0;
+    },
+  });
+
   const openIssues = useQuery({
     queryKey: ["dash-today-issues", selectedBusinessId],
     enabled: ready,
@@ -139,6 +154,14 @@ export default function TodaySection() {
           loading={revenueCollected.isPending}
           to="/platform/payments"
           intent="good"
+        />
+        <MetricTile
+          label="Tasks completed"
+          value={tasksCompleted.data ?? 0}
+          loading={tasksCompleted.isPending}
+          to="/platform/tasks?status=completed"
+          intent={(tasksCompleted.data ?? 0) > 0 ? "good" : "neutral"}
+          hint="Office manager"
         />
         <MetricTile
           label="Open issues"
