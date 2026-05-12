@@ -7,7 +7,7 @@ import {
   UserPlus, FileCheck2, Upload as UploadIcon, GraduationCap, BookOpen,
   ShieldCheck, FileSpreadsheet, Files,
   ClipboardCheck, Calculator,
-  Activity, ShieldAlert, BookText, Rocket,
+  Activity, ShieldAlert, BookText, Rocket, TestTube,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -41,6 +41,7 @@ const buildMoreItems = (shortcode: string | undefined, hideAnalytics: boolean): 
   ...(hideAnalytics ? [] : [{ label: "Backend Health", path: "/platform/backend-health", icon: Activity } as MoreItem]),
   ...(hideAnalytics ? [] : [{ label: "Reconciliation", path: "/platform/reconciliation", icon: ShieldAlert } as MoreItem]),
   ...(hideAnalytics ? [] : [{ label: "Release Checklist", path: "/platform/release", icon: Rocket } as MoreItem]),
+  ...(hideAnalytics ? [] : [{ label: "QA Checklist", path: "/platform/qa-checklist", icon: TestTube } as MoreItem]),
     { label: "Docs & Runbooks", path: "/platform/docs", icon: BookText },
   { label: "Applicants", path: "/admin/applicants", icon: UserPlus, external: true, group: "Team & HR" },
   { label: "SOP Acknowledgements", path: "/admin/sop-acknowledgments", icon: FileCheck2, external: true, group: "Team & HR" },
