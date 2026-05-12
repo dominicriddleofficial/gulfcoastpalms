@@ -59,9 +59,21 @@ Deno.serve(async (req) => {
     // Fetch full quote details
     const { data: quote } = await supabase
       .from("platform_quotes")
-      .select("quote_number, total, subtotal, tax_rate, tax_total, discount_total, customer_id, business_id, public_notes, internal_notes")
+      .select("quote_number, total, subtotal, tax_rate, tax_total, discount_total, customer_id, business_id, public_notes, internal_notes, status, approval_sms_sent")
       .eq("id", quote_id)
       .single();
+
+    // Determine brand (GCP vs PPS) from business shortcode
+    let shortcode = "gcp";
+    if (quote?.business_id) {
+      const { data: biz } = await supabase
+        .from("businesses")
+        .select("shortcode")
+        .eq("id", quote.business_id)
+        .single();
+      if (biz?.shortcode) shortcode = String(biz.shortcode).toLowerCase();
+    }
+    const isPPS = shortcode === "pps";
 
     let customerName = "Customer";
     if (quote?.customer_id) {
@@ -74,6 +86,10 @@ Deno.serve(async (req) => {
     }
 
     const ownerPhone = "8509101290";
+
+    // Public origin used to build the dashboard link in the SMS
+    const adminOrigin = req.headers.get("origin") || "https://gulfcoastpalmservices.com";
+    const adminQuoteUrl = `${adminOrigin}/platform/quotes`;
 
     // ── Change Request Flow ──
     if (action === "request_changes") {
@@ -111,6 +127,9 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "approved_by name required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    const alreadyApproved =
+      quote?.status === "approved" || quote?.status === "accepted" || quote?.status === "won";
+
     const { error } = await supabase
       .from("platform_quotes")
       .update({
@@ -126,9 +145,11 @@ Deno.serve(async (req) => {
     }
 
     // ── Auto-create draft invoice from approved quote ──
+    // Only PPS auto-creates an invoice (deposit/payment workflow).
+    // GCP is approval-only — owner converts to job, then invoices later.
     let invoiceNumber = "";
     try {
-      if (quote?.business_id) {
+      if (isPPS && quote?.business_id && !alreadyApproved) {
         // Generate invoice number
         const { data: invNum, error: numErr } = await supabase.rpc("generate_next_number", {
           _business_id: quote.business_id,
@@ -187,17 +208,37 @@ Deno.serve(async (req) => {
       }
     } catch { /* Invoice creation is best-effort — owner can still convert manually */ }
 
-    // Send SMS to owner about approval
-    try {
-      const total = quote?.total ? `$${Number(quote.total).toLocaleString("en-US", { minimumFractionDigits: 2 })}` : "";
-      const invoiceNote = invoiceNumber ? ` Draft invoice ${invoiceNumber} created automatically.` : " Convert to invoice in the platform.";
-      const smsMsg = `Quote approved! ${customerName} approved ${quote?.quote_number || "a quote"}${total ? ` for ${total}` : ""}.${invoiceNote}`;
-      await fetch(`${supabaseUrl}/functions/v1/send-sms`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${serviceKey}` },
-        body: JSON.stringify({ to: ownerPhone, message: smsMsg }),
-      });
-    } catch { /* SMS is best-effort */ }
+    // ── Send SMS to owner about approval (idempotent: only once per quote) ──
+    if (!quote?.approval_sms_sent) {
+      try {
+        const totalStr = quote?.total
+          ? `$${Number(quote.total).toLocaleString("en-US", { minimumFractionDigits: 2 })}`
+          : "$0.00";
+        const smsMsg =
+          `Quote approved: ${quote?.quote_number || "quote"} — ${customerName} — ${totalStr}. ` +
+          `View in dashboard: ${adminQuoteUrl}`;
+        const smsResp = await fetch(`${supabaseUrl}/functions/v1/send-sms`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${serviceKey}` },
+          body: JSON.stringify({ to: ownerPhone, message: smsMsg }),
+        });
+        if (smsResp.ok) {
+          await supabase
+            .from("platform_quotes")
+            .update({ approval_sms_sent: true, approval_sms_sent_at: new Date().toISOString() })
+            .eq("id", quote_id);
+        } else {
+          const txt = await smsResp.text().catch(() => "");
+          await supabase.from("error_logs").insert({
+            error_message: `approve-quote SMS failed (${smsResp.status}) for ${quote?.quote_number}: ${txt.substring(0, 300)}`,
+            page_url: "/edge/approve-quote",
+          }).then(() => null, () => null);
+        }
+      } catch (e) {
+        // SMS is best-effort — never block approval
+        console.error("[approve-quote] SMS exception:", e);
+      }
+    }
 
     return new Response(JSON.stringify({ success: true, status: "approved", invoice_number: invoiceNumber || null }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
