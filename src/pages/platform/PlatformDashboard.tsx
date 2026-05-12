@@ -4,9 +4,6 @@ import { InlineBadge } from "@/components/platform/BusinessSwitcher";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import TodaySection from "@/components/platform/dashboard/TodaySection";
-import PipelineSection from "@/components/platform/dashboard/PipelineSection";
-import OperationsSection from "@/components/platform/dashboard/OperationsSection";
-import MoneySection from "@/components/platform/dashboard/MoneySection";
 import ReliabilitySection from "@/components/platform/dashboard/ReliabilitySection";
 import QuickActionsBar from "@/components/platform/dashboard/QuickActionsBar";
 import HeadlineSection from "@/components/platform/dashboard/HeadlineSection";
@@ -38,15 +35,17 @@ export default function PlatformDashboard() {
   });
 
   const selectedBiz = businesses.find((b) => b.id === selectedBusinessId);
-  const syncLabel = (() => {
-    if (!lastSyncTime) return "waiting for first sync";
+  const syncInfo = (() => {
+    if (!lastSyncTime) return { label: "waiting for first sync", stale: true };
     const diffMs = Date.now() - new Date(lastSyncTime).getTime();
-    const mins = Math.max(1, Math.round(diffMs / 60000));
-    if (mins < 60) return `${mins}m ago`;
-    const hrs = Math.round(mins / 60);
-    if (hrs < 48) return `${hrs}h ago`;
-    const days = Math.round(hrs / 24);
-    return `${days}d ago`;
+    const mins = Math.round(diffMs / 60000);
+    const stale = mins > 120;
+    let label: string;
+    if (mins < 1) label = "just now";
+    else if (mins < 60) label = `${mins}m ago`;
+    else if (mins < 48 * 60) label = `${Math.round(mins / 60)}h ago`;
+    else label = `${Math.round(mins / 1440)}d ago`;
+    return { label, stale };
   })();
 
   return (
@@ -87,19 +86,30 @@ export default function PlatformDashboard() {
                   style={{ fontSize: "13px", color: "hsl(220 8% 50%)" }}
                 >
                   {selectedBiz?.public_brand_name ?? "All Businesses"} · Last
-                  synced {syncLabel}
+                  synced {syncInfo.label}
                 </p>
+                {syncInfo.stale && (
+                  <span
+                    className="font-body uppercase rounded-md px-2 py-0.5"
+                    style={{
+                      fontSize: "10px",
+                      letterSpacing: "0.12em",
+                      color: "#f59e0b",
+                      background: "rgba(245,158,11,0.10)",
+                      border: "1px solid rgba(245,158,11,0.35)",
+                    }}
+                  >
+                    Sync stale
+                  </span>
+                )}
               </div>
             </div>
           </header>
 
           <HeadlineSection />
           <ScheduledValueChart />
-          <MoneySection />
-          <PipelineSection />
           <TodaySection />
           <QuickActionsBar />
-          <OperationsSection />
           <ReliabilitySection />
         </div>
       </div>
