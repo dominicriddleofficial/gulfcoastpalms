@@ -54,6 +54,15 @@ type JobberJob = {
   internal_notes: string | null;
   assigned_employee_names: string[] | null;
   business_id: string | null;
+  service_items: ServiceItem[] | null;
+};
+
+type ServiceItem = {
+  name?: string | null;
+  description?: string | null;
+  quantity?: number | null;
+  unit_price?: number | null;
+  total?: number | null;
 };
 
 type MappedJob = JobberJob & { position: google.maps.LatLngLiteral };
@@ -112,7 +121,7 @@ export default function PlatformSchedule() {
     queryFn: async () => {
       let q = supabase
         .from("jobber_jobs")
-        .select("id, title, client_name, client_phone, property_address, status, visit_status, scheduled_start, scheduled_end, total_amount, job_number, internal_notes, assigned_employee_names, business_id")
+        .select("id, title, client_name, client_phone, property_address, status, visit_status, scheduled_start, scheduled_end, total_amount, job_number, internal_notes, assigned_employee_names, business_id, service_items")
         .not("scheduled_start", "is", null)
         .order("scheduled_start", { ascending: true, nullsFirst: false });
       if (selectedBusinessId) q = q.eq("business_id", selectedBusinessId);
