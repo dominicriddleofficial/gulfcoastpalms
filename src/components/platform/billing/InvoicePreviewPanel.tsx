@@ -3,6 +3,7 @@
  * GCP: dark green glow + bright green accents.
  * Prestige: dark monochrome + white accents.
  */
+import { getBusinessLogo } from "@/lib/business-logos";
 
 const BRAND: Record<string, {
   name: string;
@@ -77,6 +78,7 @@ interface PreviewData {
 
 export default function InvoicePreviewPanel({ data }: { data: PreviewData }) {
   const brand = BRAND[data.shortcode?.toLowerCase()] || BRAND.gcp;
+  const resolvedLogo = getBusinessLogo(data.shortcode || "", data.logoUrl);
   const fmt = (n: number) =>
     `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -143,9 +145,9 @@ export default function InvoicePreviewPanel({ data }: { data: PreviewData }) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           {/* Left - business info */}
           <div>
-            {data.logoUrl && (
+            {resolvedLogo && (
               <img
-                src={data.logoUrl}
+                src={resolvedLogo}
                 alt={data.businessName || brand.name}
                 style={{ height: 44, marginBottom: 8, maxWidth: 180, objectFit: "contain" }}
                 onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
