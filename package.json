@@ -10,7 +10,10 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "perf:bundle": "node scripts/check-bundle-size.mjs",
+    "perf:lighthouse": "lhci autorun --config=./lighthouserc.cjs",
+    "perf": "bun run build && bun run perf:bundle && bun run perf:lighthouse"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
