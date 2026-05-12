@@ -405,6 +405,65 @@ export default function PlatformSchedule() {
           ))}
         </div>
 
+        {/* Week strip — Jobber-style tap-any-day navigation */}
+        <div className="bg-card border border-border rounded-2xl p-2">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setSelectedDate((d) => subDays(d, 7))}
+              className="p-2 rounded-lg hover:bg-secondary text-foreground/70 hover:text-primary transition-colors shrink-0"
+              aria-label="Previous week"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="grid grid-cols-7 gap-1 flex-1">
+              {weekDays.map((day) => {
+                const key = format(day, "yyyy-MM-dd");
+                const isSelected = format(selectedDate, "yyyy-MM-dd") === key;
+                const isToday = format(new Date(), "yyyy-MM-dd") === key;
+                const count = weekDayCounts[key] ?? 0;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setSelectedDate(day)}
+                    className={cn(
+                      "flex flex-col items-center justify-center py-2 rounded-xl transition-all min-h-[56px]",
+                      isSelected
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-foreground/80 hover:bg-secondary",
+                    )}
+                  >
+                    <span className={cn("text-[10px] font-body font-bold uppercase tracking-wider", isSelected ? "opacity-90" : "text-muted-foreground")}>
+                      {format(day, "EEEEE")}
+                    </span>
+                    <span className={cn("font-display text-base font-extrabold tabular-nums", isToday && !isSelected && "text-primary")}>
+                      {format(day, "d")}
+                    </span>
+                    {count > 0 ? (
+                      <span
+                        className={cn(
+                          "mt-0.5 text-[9px] font-bold leading-none px-1.5 py-0.5 rounded-full tabular-nums",
+                          isSelected ? "bg-primary-foreground/20 text-primary-foreground" : "bg-primary/15 text-primary",
+                        )}
+                      >
+                        {count}
+                      </span>
+                    ) : (
+                      <span className="mt-0.5 h-[14px]" aria-hidden />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              onClick={() => setSelectedDate((d) => addDays(d, 7))}
+              className="p-2 rounded-lg hover:bg-secondary text-foreground/70 hover:text-primary transition-colors shrink-0"
+              aria-label="Next week"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
         {scheduleTab === "map" ? (
           <PlatformScheduleMap jobs={scheduledJobs} mapsKey={mapsKey ?? null} onJobSelect={setSelectedJob} />
         ) : (
