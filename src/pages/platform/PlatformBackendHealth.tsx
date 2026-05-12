@@ -49,7 +49,7 @@ export default function PlatformBackendHealth() {
         </header>
 
         <Tabs value={tab} onValueChange={setTab} className="space-y-4">
-          <TabsList className="bg-card border border-border w-full grid grid-cols-3 sm:grid-cols-8">
+          <TabsList className="bg-card border border-border w-full grid grid-cols-3 sm:grid-cols-8 h-auto gap-1 p-1">
             <TabsTrigger value="health">Health</TabsTrigger>
             <TabsTrigger value="sms">SMS Queue</TabsTrigger>
             <TabsTrigger value="email">Email</TabsTrigger>
