@@ -49,9 +49,11 @@ export default function PlatformBackendHealth() {
         </header>
 
         <Tabs value={tab} onValueChange={setTab} className="space-y-4">
-          <TabsList className="bg-card border border-border w-full grid grid-cols-3 sm:grid-cols-6">
+          <TabsList className="bg-card border border-border w-full grid grid-cols-3 sm:grid-cols-8">
             <TabsTrigger value="health">Health</TabsTrigger>
             <TabsTrigger value="sms">SMS Queue</TabsTrigger>
+            <TabsTrigger value="email">Email</TabsTrigger>
+            <TabsTrigger value="ops">Ops</TabsTrigger>
             <TabsTrigger value="automations">Automations</TabsTrigger>
             <TabsTrigger value="audit">Audit</TabsTrigger>
             <TabsTrigger value="timeline">Timeline</TabsTrigger>
@@ -59,6 +61,8 @@ export default function PlatformBackendHealth() {
           </TabsList>
           <TabsContent value="health"><HealthTab /></TabsContent>
           <TabsContent value="sms"><SmsQueueTab /></TabsContent>
+          <TabsContent value="email"><EmailTab /></TabsContent>
+          <TabsContent value="ops"><OpsTab /></TabsContent>
           <TabsContent value="automations"><AutomationsTab /></TabsContent>
           <TabsContent value="audit"><AuditTab /></TabsContent>
           <TabsContent value="timeline"><TimelineTab /></TabsContent>
@@ -150,8 +154,9 @@ interface SmsQueueRow {
 function SmsQueueTab() {
   const { selectedBusinessId } = useBusinessContext();
   const [filter, setFilter] = useState<"all" | "pending" | "failed" | "sent" | "skipped_opt_out">("all");
+  const [reason, setReason] = useState<string>("");
   const { data, refetch } = useQuery({
-    queryKey: ["sms-queue-tab", selectedBusinessId, filter],
+    queryKey: ["sms-queue-tab", selectedBusinessId, filter, reason],
     queryFn: async (): Promise<SmsQueueRow[]> => {
       let q = supabase
         .from("sms_queue")
@@ -159,6 +164,7 @@ function SmsQueueTab() {
         .order("created_at", { ascending: false }).limit(100);
       if (selectedBusinessId) q = q.eq("business_id", selectedBusinessId);
       if (filter !== "all") q = q.eq("status", filter);
+      if (reason) q = q.eq("reason", reason);
       const { data, error } = await q;
       if (error) throw error;
       return (data || []) as SmsQueueRow[];
@@ -174,6 +180,12 @@ function SmsQueueTab() {
         <Button size="sm" variant="ghost" onClick={() => refetch()} className="ml-auto">
           <RefreshCw className="h-4 w-4" />
         </Button>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs text-muted-foreground">reason:</span>
+        {(["", "quote_approval", "on_my_way", "review_request", "lead_notify", "appointment_reminder"] as const).map((r) => (
+          <Button key={r || "any"} size="sm" variant={reason === r ? "default" : "outline"} onClick={() => setReason(r)}>{r || "any"}</Button>
+        ))}
       </div>
       <div className="space-y-2">
         {(data || []).map((r) => (
@@ -394,6 +406,139 @@ function ErrorsTab() {
         </Card>
       ))}
       {data && data.length === 0 && <p className="text-sm text-muted-foreground">No errors logged.</p>}
+    </div>
+  );
+}
+
+interface EmailLogRow {
+  id: string;
+  template_name: string;
+  recipient_email: string;
+  status: string;
+  error_message: string | null;
+  created_at: string;
+}
+
+function EmailTab() {
+  const [status, setStatus] = useState<string>("");
+  const { data, refetch, isFetching } = useQuery({
+    queryKey: ["email-send-log", status],
+    queryFn: async (): Promise<EmailLogRow[]> => {
+      const { data, error } = await supabase.rpc("get_email_send_log_filtered", {
+        _status: status || null,
+        _template: null,
+        _from: null,
+        _to: null,
+        _limit: 100,
+        _offset: 0,
+      });
+      if (error) throw error;
+      return (data || []) as EmailLogRow[];
+    },
+    refetchInterval: 60_000,
+  });
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-2">
+        {(["", "sent", "failed", "bounced", "complained", "suppressed", "dlq"] as const).map((s) => (
+          <Button key={s || "all"} size="sm" variant={status === s ? "default" : "outline"} onClick={() => setStatus(s)}>{s || "all"}</Button>
+        ))}
+        <Button size="sm" variant="ghost" onClick={() => refetch()} className="ml-auto" disabled={isFetching}>
+          <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+        </Button>
+      </div>
+      <div className="space-y-2">
+        {(data || []).map((r) => (
+          <Card key={r.id} className="p-3 bg-card border-border text-sm">
+            <div className="flex items-center justify-between gap-2">
+              <div className="font-mono text-xs text-muted-foreground truncate">{r.recipient_email}</div>
+              <Badge variant="outline" className={
+                r.status === "sent" ? STATUS_COLORS.ok :
+                r.status === "failed" || r.status === "bounced" || r.status === "dlq" ? STATUS_COLORS.fail :
+                STATUS_COLORS.warn
+              }>{r.status}</Badge>
+            </div>
+            <div className="flex flex-wrap gap-3 mt-1 text-xs text-muted-foreground">
+              <span>{r.template_name}</span>
+              <span>{timeAgo(r.created_at)}</span>
+            </div>
+            {r.error_message && <p className="mt-1 text-xs text-red-400">{r.error_message}</p>}
+          </Card>
+        ))}
+        {data && data.length === 0 && <p className="text-sm text-muted-foreground">No email log entries.</p>}
+      </div>
+    </div>
+  );
+}
+
+function OpsTab() {
+  const { selectedBusinessId } = useBusinessContext();
+  const { data: reviews } = useQuery({
+    queryKey: ["review-requests", selectedBusinessId],
+    queryFn: async () => {
+      let q = supabase.from("review_requests")
+        .select("id, customer_name, customer_phone, scheduled_for, sent_at, status, created_at")
+        .order("scheduled_for", { ascending: false }).limit(50);
+      if (selectedBusinessId) q = q.eq("business_id", selectedBusinessId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data || [];
+    },
+    refetchInterval: 60_000,
+  });
+  const { data: contracts } = useQuery({
+    queryKey: ["recurring-contracts", selectedBusinessId],
+    queryFn: async () => {
+      let q = supabase.from("recurring_contracts")
+        .select("id, service_type, frequency, status, next_scheduled_date, auto_renew, end_date")
+        .order("next_scheduled_date", { ascending: true, nullsFirst: false }).limit(50);
+      if (selectedBusinessId) q = q.eq("business_id", selectedBusinessId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data || [];
+    },
+    refetchInterval: 120_000,
+  });
+  return (
+    <div className="space-y-4">
+      <section>
+        <h3 className="text-sm font-semibold mb-2">Review request queue</h3>
+        <div className="space-y-1">
+          {(reviews || []).map((r) => (
+            <Card key={r.id} className="p-2 bg-card border-border text-xs flex items-center justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="font-mono">{r.customer_name || r.customer_phone}</div>
+                <div className="text-muted-foreground truncate">due {timeAgo(r.scheduled_for)} · sent {r.sent_at ? timeAgo(r.sent_at) : "—"}</div>
+              </div>
+              <Badge variant="outline" className={
+                r.status === "sent" ? STATUS_COLORS.ok :
+                r.status === "failed" ? STATUS_COLORS.fail :
+                STATUS_COLORS.warn
+              }>{r.status}</Badge>
+            </Card>
+          ))}
+          {reviews && reviews.length === 0 && <p className="text-sm text-muted-foreground">No review requests.</p>}
+        </div>
+      </section>
+      <section>
+        <h3 className="text-sm font-semibold mb-2">Recurring contracts</h3>
+        <div className="space-y-1">
+          {(contracts || []).map((c) => (
+            <Card key={c.id} className="p-2 bg-card border-border text-xs flex items-center justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="font-mono">{c.service_type} · {c.frequency}</div>
+                <div className="text-muted-foreground">next {c.next_scheduled_date || "—"} · ends {c.end_date || "open"} · auto-renew {c.auto_renew ? "on" : "off"}</div>
+              </div>
+              <Badge variant="outline" className={
+                c.status === "active" ? STATUS_COLORS.ok :
+                c.status === "paused" ? STATUS_COLORS.warn :
+                STATUS_COLORS.unknown
+              }>{c.status}</Badge>
+            </Card>
+          ))}
+          {contracts && contracts.length === 0 && <p className="text-sm text-muted-foreground">No recurring contracts.</p>}
+        </div>
+      </section>
     </div>
   );
 }
