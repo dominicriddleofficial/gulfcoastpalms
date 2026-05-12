@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import PlatformLayout from "@/components/platform/PlatformLayout";
+import ConversionFunnelWidget from "@/components/platform/ConversionFunnelWidget";
 import { useBusinessContext } from "@/contexts/BusinessContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -371,6 +372,7 @@ export default function PlatformAnalytics() {
   return (
     <PlatformLayout>
       <div className="space-y-6">
+        <ConversionFunnelWidget days={30} />
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
