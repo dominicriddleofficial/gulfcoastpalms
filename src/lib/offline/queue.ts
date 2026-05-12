@@ -111,10 +111,14 @@ export async function recordIdempotencyReceipt(
     entity_type: "job",
     entity_id: m.job_id,
     status,
-    result: (result ?? null) as unknown as Record<string, unknown>,
+    result: (result ?? null) as unknown,
     error: errorText ?? undefined,
   };
-  await supabase.from("mutation_idempotency").insert([row]);
+  // Cast the typed client to a loose form because Supabase's strict insert
+  // shape doesn't accept arbitrary JSON for `result` without the assertion.
+  await (supabase.from("mutation_idempotency") as unknown as {
+    insert: (rows: unknown) => Promise<unknown>;
+  }).insert([row]);
 }
 
 export async function checkAlreadyApplied(clientMutationId: string): Promise<boolean> {
