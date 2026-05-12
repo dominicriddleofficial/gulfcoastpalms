@@ -66,14 +66,13 @@ function formatAddress(p: CrewJob["property"]) {
 
 function buildDirectionsUrl(p: CrewJob["property"]) {
   if (!p) return "#";
+  const address = [p.address_1, p.city, p.state, p.zip].filter(Boolean).join(", ");
+  const encoded = encodeURIComponent(address);
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  if (p.latitude && p.longitude) {
-    const ll = `${p.latitude},${p.longitude}`;
-    return isIOS ? `maps://?q=${ll}` : `geo:${ll}?q=${ll}`;
+  if (isIOS) {
+    return `maps://?daddr=${encoded}`;
   }
-  const q = encodeURIComponent([p.address_1, p.city, p.state, p.zip].filter(Boolean).join(" "));
-  if (!q) return "#";
-  return isIOS ? `maps://?q=${q}` : `https://www.google.com/maps/search/?api=1&query=${q}`;
+  return `https://maps.apple.com/?daddr=${encoded}`;
 }
 
 export default function PlatformCrew() {
