@@ -80,18 +80,33 @@ async function applyMutation(m: QueuedMutation): Promise<{ ok: true; result: Rec
       return { ok: true, result: { path } };
     }
     case "complete_checklist_item": {
-      const itemId = String(m.payload.item_id ?? "");
+      // Checklist items are stored as a JSONB array on `job_checklists.items`.
+      const checklistId = String(m.payload.checklist_id ?? "");
+      const itemIndex = Number(m.payload.item_index ?? -1);
       const completed = Boolean(m.payload.completed ?? true);
-      if (!itemId) return { ok: false, error: "Missing checklist item id" };
+      if (!checklistId || itemIndex < 0) {
+        return { ok: false, error: "Missing checklist_id or item_index" };
+      }
+      const { data: row, error: readErr } = await supabase
+        .from("job_checklists")
+        .select("items")
+        .eq("id", checklistId)
+        .maybeSingle();
+      if (readErr) return { ok: false, error: readErr.message };
+      const items = Array.isArray(row?.items) ? [...(row.items as unknown[])] : [];
+      if (!items[itemIndex]) return { ok: false, error: "Checklist item index out of range" };
+      const current = items[itemIndex] as Record<string, unknown>;
+      items[itemIndex] = {
+        ...current,
+        completed,
+        completed_at: completed ? new Date(m.created_at).toISOString() : null,
+      };
       const { error } = await supabase
-        .from("job_checklist_items")
-        .update({
-          completed,
-          completed_at: completed ? new Date(m.created_at).toISOString() : null,
-        })
-        .eq("id", itemId);
+        .from("job_checklists")
+        .update({ items: items as never })
+        .eq("id", checklistId);
       if (error) return { ok: false, error: error.message };
-      return { ok: true, result: { item_id: itemId, completed } };
+      return { ok: true, result: { checklist_id: checklistId, item_index: itemIndex, completed } };
     }
     default:
       return { ok: false, error: `Unknown action: ${String(m.action)}` };
@@ -119,12 +134,13 @@ export async function processQueueOnce(): Promise<void> {
         }
         await updateMutation(m.client_mutation_id, { status: "synced", last_error: null });
       } else {
+        const errorText = result.error;
         const nextAttempts = m.attempts + 1;
         const finalStatus: "pending" | "failed" =
           nextAttempts >= MAX_ATTEMPTS ? "failed" : "pending";
         if (finalStatus === "failed") {
           try {
-            await recordIdempotencyReceipt(m, "error", null, result.error);
+            await recordIdempotencyReceipt(m, "error", null, errorText);
           } catch {
             // ignore
           }
@@ -132,7 +148,7 @@ export async function processQueueOnce(): Promise<void> {
         await updateMutation(m.client_mutation_id, {
           status: finalStatus,
           attempts: nextAttempts,
-          last_error: result.error,
+          last_error: errorText,
         });
       }
     }
