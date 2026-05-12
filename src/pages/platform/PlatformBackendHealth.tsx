@@ -49,9 +49,11 @@ export default function PlatformBackendHealth() {
         </header>
 
         <Tabs value={tab} onValueChange={setTab} className="space-y-4">
-          <TabsList className="bg-card border border-border w-full grid grid-cols-3 sm:grid-cols-6">
+          <TabsList className="bg-card border border-border w-full grid grid-cols-3 sm:grid-cols-8">
             <TabsTrigger value="health">Health</TabsTrigger>
             <TabsTrigger value="sms">SMS Queue</TabsTrigger>
+            <TabsTrigger value="email">Email</TabsTrigger>
+            <TabsTrigger value="ops">Ops</TabsTrigger>
             <TabsTrigger value="automations">Automations</TabsTrigger>
             <TabsTrigger value="audit">Audit</TabsTrigger>
             <TabsTrigger value="timeline">Timeline</TabsTrigger>
@@ -59,6 +61,8 @@ export default function PlatformBackendHealth() {
           </TabsList>
           <TabsContent value="health"><HealthTab /></TabsContent>
           <TabsContent value="sms"><SmsQueueTab /></TabsContent>
+          <TabsContent value="email"><EmailTab /></TabsContent>
+          <TabsContent value="ops"><OpsTab /></TabsContent>
           <TabsContent value="automations"><AutomationsTab /></TabsContent>
           <TabsContent value="audit"><AuditTab /></TabsContent>
           <TabsContent value="timeline"><TimelineTab /></TabsContent>
@@ -150,8 +154,9 @@ interface SmsQueueRow {
 function SmsQueueTab() {
   const { selectedBusinessId } = useBusinessContext();
   const [filter, setFilter] = useState<"all" | "pending" | "failed" | "sent" | "skipped_opt_out">("all");
+  const [reason, setReason] = useState<string>("");
   const { data, refetch } = useQuery({
-    queryKey: ["sms-queue-tab", selectedBusinessId, filter],
+    queryKey: ["sms-queue-tab", selectedBusinessId, filter, reason],
     queryFn: async (): Promise<SmsQueueRow[]> => {
       let q = supabase
         .from("sms_queue")
@@ -159,6 +164,7 @@ function SmsQueueTab() {
         .order("created_at", { ascending: false }).limit(100);
       if (selectedBusinessId) q = q.eq("business_id", selectedBusinessId);
       if (filter !== "all") q = q.eq("status", filter);
+      if (reason) q = q.eq("reason", reason);
       const { data, error } = await q;
       if (error) throw error;
       return (data || []) as SmsQueueRow[];
@@ -174,6 +180,12 @@ function SmsQueueTab() {
         <Button size="sm" variant="ghost" onClick={() => refetch()} className="ml-auto">
           <RefreshCw className="h-4 w-4" />
         </Button>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs text-muted-foreground">reason:</span>
+        {(["", "quote_approval", "on_my_way", "review_request", "lead_notify", "appointment_reminder"] as const).map((r) => (
+          <Button key={r || "any"} size="sm" variant={reason === r ? "default" : "outline"} onClick={() => setReason(r)}>{r || "any"}</Button>
+        ))}
       </div>
       <div className="space-y-2">
         {(data || []).map((r) => (
