@@ -144,6 +144,9 @@ export default function ViewQuote() {
   const brand = BRAND[brandKey] || BRAND.gcp;
   const accent = brand.accent;
   const accentRgb = brand.accentRgb;
+  // GCP = quote-only flow (no deposit schedule, no checkout on approval).
+  // PPS = deposit/payment schedule + Stripe checkout on approval.
+  const showDepositFlow = brandKey === "pps";
 
   const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
   const baseUrl = `https://${projectId}.supabase.co/functions/v1`;
@@ -181,24 +184,27 @@ export default function ViewQuote() {
       if (!resp.ok || data.error) throw new Error(data.error || "Approval failed");
       setApproved(true);
 
-      // Immediately kick off Stripe Checkout for the 20% deposit
-      try {
-        const checkoutResp = await fetch(`${baseUrl}/create-checkout`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ quote_id: quote.id, origin_url: window.location.origin }),
-        });
-        const checkoutData = await checkoutResp.json();
-        if (checkoutResp.ok && checkoutData.url) {
-          window.location.href = checkoutData.url;
-        } else {
-          toast({
-            title: "Approved — payment link unavailable",
-            description: checkoutData.message || "We'll follow up with a payment link shortly.",
+      // PPS quotes proceed directly to Stripe Checkout for the 20% deposit.
+      // GCP quotes are approval-only — payment is handled later via invoice.
+      if (showDepositFlow) {
+        try {
+          const checkoutResp = await fetch(`${baseUrl}/create-checkout`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ quote_id: quote.id, origin_url: window.location.origin }),
           });
+          const checkoutData = await checkoutResp.json();
+          if (checkoutResp.ok && checkoutData.url) {
+            window.location.href = checkoutData.url;
+          } else {
+            toast({
+              title: "Approved — payment link unavailable",
+              description: checkoutData.message || "We'll follow up with a payment link shortly.",
+            });
+          }
+        } catch {
+          toast({ title: "Approved", description: "We'll follow up with a payment link shortly." });
         }
-      } catch {
-        toast({ title: "Approved", description: "We'll follow up with a payment link shortly." });
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Approval failed");
@@ -465,7 +471,8 @@ export default function ViewQuote() {
               </div>
             </div>
 
-            {/* ── PAYMENT MILESTONES ── */}
+            {/* ── PAYMENT MILESTONES (PPS only) ── */}
+            {showDepositFlow && (
             <div style={{ padding: "20px 20px 24px" }}>
               <div style={{
                 borderRadius: 12, overflow: "hidden",
@@ -542,6 +549,7 @@ export default function ViewQuote() {
                 </div>
               </div>
             </div>
+            )}
 
             {/* ── SIGNATURE & APPROVAL ── */}
             {!isApproved && !isDeclined && !isExpired && !isChangesReq && (
@@ -571,7 +579,7 @@ export default function ViewQuote() {
                           boxShadow: (agreedToTerms && hasSignature) ? `0 0 20px rgba(${accentRgb}, 0.3)` : "none",
                         }}
                       >
-                        <CheckCircle className="w-5 h-5" /> Approve & Pay Deposit
+                        <CheckCircle className="w-5 h-5" /> {showDepositFlow ? "Approve & Pay Deposit" : "Approve Quote"}
                       </button>
 
                       <button
