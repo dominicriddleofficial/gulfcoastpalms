@@ -209,7 +209,7 @@ const Navbar = () => {
                     </li>
                     {serviceNavLinks.map((link) => (
                       <li key={link.to}>
-                        <Link to={link.to} onClick={closeAll} className={`block px-2 py-2 font-body text-sm hover:text-primary ${location.pathname === link.to ? "text-primary font-semibold" : "text-foreground/90"}`}>
+                        <Link to={link.to} onClick={() => trackMenuLink(link.label)} className={`block px-2 py-2 font-body text-sm hover:text-primary ${location.pathname === link.to ? "text-primary font-semibold" : "text-foreground/90"}`}>
                           {link.label}
                         </Link>
                       </li>
@@ -236,7 +236,7 @@ const Navbar = () => {
                   <ul id="mobile-learn-panel" className="max-h-[40vh] overflow-y-auto pl-3 border-l border-border ml-2 mb-3">
                     {learnLinks.map((link) => (
                       <li key={link.to}>
-                        <Link to={link.to} onClick={closeAll} className={`block px-2 py-2 font-body text-sm hover:text-primary ${location.pathname === link.to ? "text-primary font-semibold" : "text-foreground/90"}`}>
+                        <Link to={link.to} onClick={() => trackMenuLink(link.label)} className={`block px-2 py-2 font-body text-sm hover:text-primary ${location.pathname === link.to ? "text-primary font-semibold" : "text-foreground/90"}`}>
                           {link.label}
                         </Link>
                       </li>
@@ -260,7 +260,7 @@ const Navbar = () => {
                   <ul id="mobile-areas-panel" className="max-h-[40vh] overflow-y-auto pl-3 border-l border-border ml-2 mb-3">
                     {topAreas.map((loc) => (
                       <li key={loc.slug}>
-                        <Link to={`/${loc.slug}`} onClick={closeAll} className={`block px-2 py-2 font-body text-sm hover:text-primary ${location.pathname === `/${loc.slug}` ? "text-primary font-semibold" : "text-foreground/90"}`}>
+                        <Link to={`/${loc.slug}`} onClick={() => trackMenuLink(`${loc.city}, ${loc.state}`)} className={`block px-2 py-2 font-body text-sm hover:text-primary ${location.pathname === `/${loc.slug}` ? "text-primary font-semibold" : "text-foreground/90"}`}>
                           {loc.city}, {loc.state}
                         </Link>
                       </li>
