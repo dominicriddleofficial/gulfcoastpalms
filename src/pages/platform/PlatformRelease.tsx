@@ -175,7 +175,7 @@ export default function PlatformRelease() {
       if (!activeId || !items) return;
       const { data, error } = await supabase.functions.invoke("release-readiness-check");
       if (error) throw error;
-      const probes: Array<{ item_key: string; status: ItemStatus; detail: string; link_url?: string }> =
+      const probes: Array<{ item_key: string; status: ItemStatus | "unknown"; detail: string; link_url?: string }> =
         data.probes ?? [];
       const byKey = new Map(items.map((i) => [i.item_key, i]));
       for (const p of probes) {
