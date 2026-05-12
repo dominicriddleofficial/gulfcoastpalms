@@ -531,13 +531,14 @@ export default function PlatformCrew() {
 }
 
 function CrewJobDetail({
-  job, onBack, onStart, onComplete, onSaveNotes,
+  job, onBack, onStart, onComplete, onSaveNotes, userId,
 }: {
   job: CrewJob;
   onBack: () => void;
   onStart: () => void;
   onComplete: () => void;
   onSaveNotes: (text: string) => void;
+  userId: string | null;
 }) {
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
@@ -649,12 +650,20 @@ function CrewJobDetail({
                 const file = e.target.files?.[0];
                 if (!file) return;
                 const path = `${job.business_id}/${job.id}/${Date.now()}-${file.name}`;
-                const { error } = await supabase.storage.from("job-photos").upload(path, file);
-                if (error) {
-                  toast({ title: "Upload failed", description: error.message, variant: "destructive" });
-                } else {
-                  toast({ title: "Photo uploaded" });
-                }
+                await enqueueMutation({
+                  action: "upload_photo",
+                  jobId: job.id,
+                  businessId: job.business_id,
+                  userId,
+                  payload: { path, filename: file.name },
+                  blob: file,
+                  blobFilename: file.name,
+                });
+                void processQueueOnce();
+                toast({
+                  title: navigator.onLine ? "Photo queued for upload" : "Photo saved locally",
+                  description: navigator.onLine ? "Uploading now…" : "Will upload when back online",
+                });
                 e.target.value = "";
               }}
             />
