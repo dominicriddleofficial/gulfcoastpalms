@@ -70,6 +70,116 @@ export type Database = {
           },
         ]
       }
+      automation_rules: {
+        Row: {
+          action_config: Json
+          action_type: string
+          business_id: string
+          conditions: Json
+          created_at: string
+          created_by_user_id: string | null
+          description: string | null
+          enabled: boolean
+          event_name: string
+          id: string
+          last_triggered_at: string | null
+          name: string
+          trigger_count: number
+          updated_at: string
+        }
+        Insert: {
+          action_config?: Json
+          action_type: string
+          business_id: string
+          conditions?: Json
+          created_at?: string
+          created_by_user_id?: string | null
+          description?: string | null
+          enabled?: boolean
+          event_name: string
+          id?: string
+          last_triggered_at?: string | null
+          name: string
+          trigger_count?: number
+          updated_at?: string
+        }
+        Update: {
+          action_config?: Json
+          action_type?: string
+          business_id?: string
+          conditions?: Json
+          created_at?: string
+          created_by_user_id?: string | null
+          description?: string | null
+          enabled?: boolean
+          event_name?: string
+          id?: string
+          last_triggered_at?: string | null
+          name?: string
+          trigger_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_rules_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automation_runs: {
+        Row: {
+          business_id: string
+          completed_at: string | null
+          created_at: string
+          error: string | null
+          event_name: string
+          event_payload: Json | null
+          id: string
+          rule_id: string | null
+          status: string
+        }
+        Insert: {
+          business_id: string
+          completed_at?: string | null
+          created_at?: string
+          error?: string | null
+          event_name: string
+          event_payload?: Json | null
+          id?: string
+          rule_id?: string | null
+          status?: string
+        }
+        Update: {
+          business_id?: string
+          completed_at?: string | null
+          created_at?: string
+          error?: string | null
+          event_name?: string
+          event_payload?: Json | null
+          id?: string
+          rule_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_runs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_runs_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "automation_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_brand_assets: {
         Row: {
           asset_type: string
@@ -104,6 +214,74 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "business_brand_assets_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_kpi_snapshots: {
+        Row: {
+          business_id: string
+          id: string
+          invoices_outstanding_count: number
+          invoices_outstanding_total: number
+          jobs_month: number
+          jobs_today: number
+          jobs_week: number
+          leads_new_today: number
+          payments_collected_30d: number
+          quote_conversion_30d: number
+          quotes_open: number
+          quotes_won_30d: number
+          refreshed_at: string
+          revenue_month: number
+          revenue_today: number
+          revenue_week: number
+          snapshot_date: string
+        }
+        Insert: {
+          business_id: string
+          id?: string
+          invoices_outstanding_count?: number
+          invoices_outstanding_total?: number
+          jobs_month?: number
+          jobs_today?: number
+          jobs_week?: number
+          leads_new_today?: number
+          payments_collected_30d?: number
+          quote_conversion_30d?: number
+          quotes_open?: number
+          quotes_won_30d?: number
+          refreshed_at?: string
+          revenue_month?: number
+          revenue_today?: number
+          revenue_week?: number
+          snapshot_date?: string
+        }
+        Update: {
+          business_id?: string
+          id?: string
+          invoices_outstanding_count?: number
+          invoices_outstanding_total?: number
+          jobs_month?: number
+          jobs_today?: number
+          jobs_week?: number
+          leads_new_today?: number
+          payments_collected_30d?: number
+          quote_conversion_30d?: number
+          quotes_open?: number
+          quotes_won_30d?: number
+          refreshed_at?: string
+          revenue_month?: number
+          revenue_today?: number
+          revenue_week?: number
+          snapshot_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_kpi_snapshots_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
@@ -4839,6 +5017,36 @@ export type Database = {
           },
         ]
       }
+      system_health_checks: {
+        Row: {
+          check_name: string
+          details: Json | null
+          last_failure_at: string | null
+          last_ok_at: string | null
+          message: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          check_name: string
+          details?: Json | null
+          last_failure_at?: string | null
+          last_ok_at?: string | null
+          message?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          check_name?: string
+          details?: Json | null
+          last_failure_at?: string | null
+          last_ok_at?: string | null
+          message?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tap_to_pay_transactions: {
         Row: {
           amount: number
@@ -5283,6 +5491,40 @@ export type Database = {
         Args: { _business_id: string; _record_type: string }
         Returns: string
       }
+      get_audit_logs_filtered: {
+        Args: {
+          _business_id?: string
+          _entity_id?: string
+          _entity_type?: string
+          _event_name?: string
+          _from?: string
+          _limit?: number
+          _offset?: number
+          _to?: string
+          _user_id?: string
+        }
+        Returns: {
+          action_type: string
+          business_id: string | null
+          context_json: Json | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          event_name: string
+          id: string
+          ip_address: string | null
+          new_values_json: Json | null
+          old_values_json: Json | null
+          user_agent: string | null
+          user_id: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "audit_logs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_business_recipient_user_ids: {
         Args: { _business_id: string }
         Returns: string[]
@@ -5321,6 +5563,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      refresh_business_kpi_snapshots: { Args: never; Returns: number }
       run_jobber_auto_sync: { Args: never; Returns: undefined }
       sms_upsert_conversation: {
         Args: {
