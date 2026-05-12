@@ -134,7 +134,7 @@ export async function processQueueOnce(): Promise<void> {
         }
         await updateMutation(m.client_mutation_id, { status: "synced", last_error: null });
       } else {
-        const errorText = result.error;
+        const errorText = (result as { ok: false; error: string }).error;
         const nextAttempts = m.attempts + 1;
         const finalStatus: "pending" | "failed" =
           nextAttempts >= MAX_ATTEMPTS ? "failed" : "pending";
