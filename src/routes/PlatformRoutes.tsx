@@ -30,42 +30,38 @@ const PlatformInvoiceNew = lazy(() => import("@/pages/platform/PlatformInvoiceNe
 const PlatformQuoteNew = lazy(() => import("@/pages/platform/PlatformQuoteNew"));
 const PlatformBackendHealth = lazy(() => import("@/pages/platform/PlatformBackendHealth"));
 
-const M = ["owner", "office_manager", "manager"] as const;
-const O = ["owner", "office_manager"] as const;
-const OWNER = ["owner"] as const;
-
 export const PlatformRoutes = () => (
   <>
     <Route path="/platform/login" element={<PlatformLogin />} />
-    <Route path="/platform" element={<RoleRoute allow={[...M]}><PlatformDashboard /></RoleRoute>} />
-    <Route path="/platform/leads" element={<RoleRoute allow={[...M]}><PlatformLeads /></RoleRoute>} />
-    <Route path="/platform/customers" element={<RoleRoute allow={[...M]}><PlatformCustomers /></RoleRoute>} />
-    <Route path="/platform/quotes" element={<RoleRoute allow={[...M]}><PlatformQuotes /></RoleRoute>} />
+    <Route path="/platform" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformDashboard /></RoleRoute>} />
+    <Route path="/platform/leads" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformLeads /></RoleRoute>} />
+    <Route path="/platform/customers" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformCustomers /></RoleRoute>} />
+    <Route path="/platform/quotes" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformQuotes /></RoleRoute>} />
     <Route path="/platform/quote-display" element={<PlatformQuoteDisplay />} />
     <Route path="/platform/quote-display/:shortcode/:quoteId" element={<PlatformQuoteDisplay />} />
-    <Route path="/platform/jobs" element={<RoleRoute allow={[...M]}><PlatformJobs /></RoleRoute>} />
-    <Route path="/platform/schedule" element={<RoleRoute allow={[...M]}><PlatformSchedule /></RoleRoute>} />
-    <Route path="/platform/invoices" element={<RoleRoute allow={[...O]}><PlatformInvoices /></RoleRoute>} />
-    <Route path="/platform/payments" element={<RoleRoute allow={[...O]}><PlatformPayments /></RoleRoute>} />
-    <Route path="/platform/analytics" element={<RoleRoute allow={[...OWNER]} redirectTo="/platform"><PlatformAnalytics /></RoleRoute>} />
-    <Route path="/platform/communications" element={<RoleRoute allow={[...M]}><PlatformComms /></RoleRoute>} />
-    <Route path="/platform/tasks" element={<RoleRoute allow={[...M]}><PlatformTasks /></RoleRoute>} />
-    <Route path="/platform/settings" element={<RoleRoute allow={[...O]}><PlatformSettings /></RoleRoute>} />
-    <Route path="/platform/team" element={<RoleRoute allow={[...OWNER]} redirectTo="/platform"><PlatformTeam /></RoleRoute>} />
+    <Route path="/platform/jobs" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformJobs /></RoleRoute>} />
+    <Route path="/platform/schedule" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformSchedule /></RoleRoute>} />
+    <Route path="/platform/invoices" element={<RoleRoute allow={["owner","office_manager"]}><PlatformInvoices /></RoleRoute>} />
+    <Route path="/platform/payments" element={<RoleRoute allow={["owner","office_manager"]}><PlatformPayments /></RoleRoute>} />
+    <Route path="/platform/analytics" element={<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformAnalytics /></RoleRoute>} />
+    <Route path="/platform/communications" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformComms /></RoleRoute>} />
+    <Route path="/platform/tasks" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformTasks /></RoleRoute>} />
+    <Route path="/platform/settings" element={<RoleRoute allow={["owner","office_manager"]}><PlatformSettings /></RoleRoute>} />
+    <Route path="/platform/team" element={<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformTeam /></RoleRoute>} />
     <Route path="/platform/crew" element={<RoleRoute allow={["owner", "manager", "crew"]}><PlatformCrew /></RoleRoute>} />
-    <Route path="/platform/documents/:category" element={<RoleRoute allow={[...M]}><PlatformDocuments /></RoleRoute>} />
-    <Route path="/platform/job-checklists" element={<RoleRoute allow={[...M]}><PlatformJobChecklists /></RoleRoute>} />
-    <Route path="/platform/job-pricing" element={<RoleRoute allow={[...M]}><PlatformJobPricing /></RoleRoute>} />
+    <Route path="/platform/documents/:category" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformDocuments /></RoleRoute>} />
+    <Route path="/platform/job-checklists" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformJobChecklists /></RoleRoute>} />
+    <Route path="/platform/job-pricing" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformJobPricing /></RoleRoute>} />
     <Route path="/platform/change-password" element={<PlatformChangePassword />} />
-    <Route path="/platform/finance" element={<RoleRoute allow={[...OWNER]} redirectTo="/platform"><PlatformFinance /></RoleRoute>} />
-    <Route path="/platform/finance/:section" element={<RoleRoute allow={[...OWNER]} redirectTo="/platform"><PlatformFinance /></RoleRoute>} />
-    <Route path="/platform/backend-health" element={<RoleRoute allow={[...OWNER]} redirectTo="/platform"><PlatformBackendHealth /></RoleRoute>} />
+    <Route path="/platform/finance" element={<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformFinance /></RoleRoute>} />
+    <Route path="/platform/finance/:section" element={<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformFinance /></RoleRoute>} />
+    <Route path="/platform/backend-health" element={<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformBackendHealth /></RoleRoute>} />
 
     {/* Full-page creation editors */}
-    <Route path="/platform/jobs/new" element={<RoleRoute allow={[...M]}><PlatformJobNew /></RoleRoute>} />
-    <Route path="/platform/customers/new" element={<RoleRoute allow={[...M]}><PlatformCustomerNew /></RoleRoute>} />
-    <Route path="/platform/leads/new" element={<RoleRoute allow={[...M]}><PlatformLeadNew /></RoleRoute>} />
-    <Route path="/platform/quotes/new" element={<RoleRoute allow={[...M]}><PlatformQuoteNew /></RoleRoute>} />
-    <Route path="/platform/invoices/new" element={<RoleRoute allow={[...O]}><PlatformInvoiceNew /></RoleRoute>} />
+    <Route path="/platform/jobs/new" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformJobNew /></RoleRoute>} />
+    <Route path="/platform/customers/new" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformCustomerNew /></RoleRoute>} />
+    <Route path="/platform/leads/new" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformLeadNew /></RoleRoute>} />
+    <Route path="/platform/quotes/new" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformQuoteNew /></RoleRoute>} />
+    <Route path="/platform/invoices/new" element={<RoleRoute allow={["owner","office_manager"]}><PlatformInvoiceNew /></RoleRoute>} />
   </>
 );
