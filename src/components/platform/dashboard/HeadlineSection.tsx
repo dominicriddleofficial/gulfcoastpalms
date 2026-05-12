@@ -1,6 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
+import { useDashboardScheduledJobs } from "@/hooks/useDashboardScheduledJobs";
 import { fmtMoney } from "./primitives";
 import { Link } from "react-router-dom";
 import { startOfWeek, startOfMonth, endOfWeek, endOfMonth } from "date-fns";
@@ -81,109 +80,48 @@ export default function HeadlineSection() {
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
 
-  const wsDate = weekStart.toISOString().slice(0, 10);
-  const msDate = monthStart.toISOString().slice(0, 10);
-
-  const revenueWeek = useQuery({
-    queryKey: ["dash-rev-week", selectedBusinessId, wsDate],
+  const weekJobs = useDashboardScheduledJobs({
+    businessId: selectedBusinessId,
+    startDate: weekStart,
+    endDate: weekEnd,
     enabled: ready,
-    queryFn: async () => {
-      // Prefer recorded payments; fall back to completed Jobber jobs so the
-      // dashboard stays accurate even when payments haven't been ingested yet.
-      const { data: pays } = await supabase
-        .from("platform_payments")
-        .select("amount")
-        .eq("business_id", selectedBusinessId!)
-        .gte("payment_date", wsDate);
-      const paySum = (pays ?? []).reduce((s, r) => s + (Number(r.amount) || 0), 0);
-      if (paySum > 0) return paySum;
-      const { data: jobs } = await supabase
-        .from("jobber_jobs")
-        .select("total_amount")
-        .eq("business_id", selectedBusinessId!)
-        .gte("scheduled_start", weekStart.toISOString())
-        .lte("scheduled_start", weekEnd.toISOString());
-      return (jobs ?? []).reduce((s, r) => s + (Number(r.total_amount) || 0), 0);
-    },
   });
 
-  const revenueMonth = useQuery({
-    queryKey: ["dash-rev-month", selectedBusinessId, msDate],
+  const monthJobs = useDashboardScheduledJobs({
+    businessId: selectedBusinessId,
+    startDate: monthStart,
+    endDate: monthEnd,
     enabled: ready,
-    queryFn: async () => {
-      const { data: pays } = await supabase
-        .from("platform_payments")
-        .select("amount")
-        .eq("business_id", selectedBusinessId!)
-        .gte("payment_date", msDate);
-      const paySum = (pays ?? []).reduce((s, r) => s + (Number(r.amount) || 0), 0);
-      if (paySum > 0) return paySum;
-      const { data: jobs } = await supabase
-        .from("jobber_jobs")
-        .select("total_amount")
-        .eq("business_id", selectedBusinessId!)
-        .gte("scheduled_start", monthStart.toISOString())
-        .lte("scheduled_start", monthEnd.toISOString());
-      return (jobs ?? []).reduce((s, r) => s + (Number(r.total_amount) || 0), 0);
-    },
-  });
-
-  const jobsWeek = useQuery({
-    queryKey: ["dash-jobs-week", selectedBusinessId, wsDate],
-    enabled: ready,
-    queryFn: async () => {
-      const { count } = await supabase
-        .from("jobber_jobs")
-        .select("id", { count: "exact", head: true })
-        .eq("business_id", selectedBusinessId!)
-        .gte("scheduled_start", weekStart.toISOString())
-        .lte("scheduled_start", weekEnd.toISOString());
-      return count ?? 0;
-    },
-  });
-
-  const jobsMonth = useQuery({
-    queryKey: ["dash-jobs-month", selectedBusinessId, msDate],
-    enabled: ready,
-    queryFn: async () => {
-      const { count } = await supabase
-        .from("jobber_jobs")
-        .select("id", { count: "exact", head: true })
-        .eq("business_id", selectedBusinessId!)
-        .gte("scheduled_start", monthStart.toISOString())
-        .lte("scheduled_start", monthEnd.toISOString());
-      return count ?? 0;
-    },
   });
 
   return (
     <div className="grid grid-cols-2 gap-3">
       <HeroTile
         label="Revenue This Week"
-        value={fmtMoney(revenueWeek.data ?? 0)}
+        value={fmtMoney(weekJobs.summary.revenueTotal)}
         icon={TrendingUp}
-        loading={revenueWeek.isPending}
+        loading={weekJobs.isPending}
         to="/platform/payments"
       />
       <HeroTile
         label="Revenue This Month"
-        value={fmtMoney(revenueMonth.data ?? 0)}
+        value={fmtMoney(monthJobs.summary.revenueTotal)}
         icon={DollarSign}
-        loading={revenueMonth.isPending}
+        loading={monthJobs.isPending}
         to="/platform/payments"
       />
       <HeroTile
         label="Jobs This Week"
-        value={jobsWeek.data ?? 0}
+        value={weekJobs.summary.jobCount}
         icon={Briefcase}
-        loading={jobsWeek.isPending}
+        loading={weekJobs.isPending}
         to="/platform/schedule"
       />
       <HeroTile
         label="Jobs This Month"
-        value={jobsMonth.data ?? 0}
+        value={monthJobs.summary.jobCount}
         icon={Calendar}
-        loading={jobsMonth.isPending}
+        loading={monthJobs.isPending}
         to="/platform/schedule"
       />
     </div>
