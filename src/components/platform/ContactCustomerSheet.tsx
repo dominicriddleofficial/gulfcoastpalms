@@ -83,12 +83,11 @@ export function ContactCustomerSheet({
       ? `${job!.lat},${job!.lng}`
       : "";
     if (!query) return;
-    // Use Google Maps universal link — works on iOS, Android, and web.
-    window.open(
-      `https://www.google.com/maps/dir/?api=1&destination=${query}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const url = isIOS
+      ? `maps://?daddr=${query}`
+      : `https://maps.apple.com/?daddr=${query}`;
+    window.location.href = url;
     onClose();
   };
 
