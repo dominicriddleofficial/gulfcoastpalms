@@ -970,11 +970,34 @@ Deno.serve(async (req) => {
 
   const { data: tokenRow } = await supabase.from("jobber_tokens").select("*").limit(1).maybeSingle();
   if (!tokenRow) {
-    return jsonResponse({ error: "Jobber not connected. Connect first in Settings." }, 400);
+    return jsonResponse({
+      success: false,
+      needs_reconnect: true,
+      code: "JOBBER_NOT_CONNECTED",
+      error: "Jobber is not connected. Connect Jobber in Settings to enable syncing.",
+    });
   }
 
   try {
-    const accessToken = await refreshAccessTokenIfNeeded(tokenRow, supabase);
+    const refresh = await refreshAccessTokenIfNeeded(tokenRow, supabase);
+    if (refresh.needsReconnect || !refresh.accessToken) {
+      // Log skipped sync attempt with structured 200 response
+      try {
+        await supabase.from("sync_logs").insert({
+          sync_type: "jobber",
+          status: "sync_skipped_expired_token",
+          error_message: refresh.error || "Token expired",
+          completed_at: new Date().toISOString(),
+        });
+      } catch (_) { /* non-fatal */ }
+      return jsonResponse({
+        success: false,
+        needs_reconnect: true,
+        code: "JOBBER_TOKEN_EXPIRED",
+        error: refresh.error || "Jobber connection expired. Reconnect Jobber to resume syncing.",
+      });
+    }
+    const accessToken = refresh.accessToken;
 
     if (action !== "test") {
       context.businessId = await resolveTargetBusinessId(supabase, context.businessId);
