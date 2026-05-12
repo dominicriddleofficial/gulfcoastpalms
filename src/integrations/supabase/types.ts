@@ -4609,6 +4609,125 @@ export type Database = {
         }
         Relationships: []
       }
+      release_checklist_items: {
+        Row: {
+          auto_check_result: Json | null
+          checked_at: string | null
+          checked_by: string | null
+          checklist_id: string
+          created_at: string
+          id: string
+          is_critical: boolean
+          item_key: string
+          label: string
+          link_url: string | null
+          notes: string | null
+          section: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          auto_check_result?: Json | null
+          checked_at?: string | null
+          checked_by?: string | null
+          checklist_id: string
+          created_at?: string
+          id?: string
+          is_critical?: boolean
+          item_key: string
+          label: string
+          link_url?: string | null
+          notes?: string | null
+          section: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          auto_check_result?: Json | null
+          checked_at?: string | null
+          checked_by?: string | null
+          checklist_id?: string
+          created_at?: string
+          id?: string
+          is_critical?: boolean
+          item_key?: string
+          label?: string
+          link_url?: string | null
+          notes?: string | null
+          section?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "release_checklist_items_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "release_checklists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      release_checklists: {
+        Row: {
+          business_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          label: string
+          notes: string | null
+          released_at: string | null
+          released_by: string | null
+          status: string
+          summary: Json
+          updated_at: string
+          workspace_id: string | null
+        }
+        Insert: {
+          business_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label: string
+          notes?: string | null
+          released_at?: string | null
+          released_by?: string | null
+          status?: string
+          summary?: Json
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Update: {
+          business_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string
+          notes?: string | null
+          released_at?: string | null
+          released_by?: string | null
+          status?: string
+          summary?: Json
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "release_checklists_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "release_checklists_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       review_requests: {
         Row: {
           business_id: string
