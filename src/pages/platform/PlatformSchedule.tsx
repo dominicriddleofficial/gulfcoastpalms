@@ -68,6 +68,7 @@ import { Label } from "@/components/ui/label";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useQueryClient } from "@tanstack/react-query";
 import { CalendarClock, Pencil, Trash2 } from "lucide-react";
+import { useScheduledJobs } from "@/hooks/useScheduledJobs";
 
 type ScheduleTab = "day" | "list" | "map";
 
@@ -147,20 +148,12 @@ export default function PlatformSchedule() {
     staleTime: Infinity,
   });
 
-  // Jobber tab — scoped to active business, only scheduled jobs
-  const { data: jobberJobs = [], isLoading: loading, refetch: refetchJobs } = useQuery({
-    queryKey: ["schedule-jobber", selectedBusinessId],
-    queryFn: async () => {
-      let q = supabase
-        .from("jobber_jobs")
-        .select("id, title, client_name, client_phone, property_address, status, visit_status, scheduled_start, scheduled_end, total_amount, job_number, internal_notes, assigned_employee_names, business_id, service_items")
-        .not("scheduled_start", "is", null)
-        .order("scheduled_start", { ascending: true, nullsFirst: false });
-      if (selectedBusinessId) q = q.eq("business_id", selectedBusinessId);
-      const { data } = await q;
-      return (data as JobberJob[]) ?? [];
-    },
-  });
+  // Jobber tab — scoped to active business, only scheduled jobs.
+  // Uses the shared useScheduledJobs hook so the Dashboard graph and this
+  // page never drift out of sync.
+  const { data: jobberJobsRaw = [], isLoading: loading, refetch: refetchJobs } =
+    useScheduledJobs({ businessId: selectedBusinessId });
+  const jobberJobs = jobberJobsRaw as unknown as JobberJob[];
 
   const { data: lastSyncTime, refetch: refetchSync } = useQuery({
     queryKey: ["schedule-last-sync"],
