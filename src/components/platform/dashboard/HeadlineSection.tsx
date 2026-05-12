@@ -99,9 +99,8 @@ export default function HeadlineSection() {
       if (paySum > 0) return paySum;
       const { data: jobs } = await supabase
         .from("jobber_jobs")
-        .select("total_amount,visit_status")
+        .select("total_amount")
         .eq("business_id", selectedBusinessId!)
-        .eq("visit_status", "completed")
         .gte("scheduled_start", weekStart.toISOString())
         .lte("scheduled_start", weekEnd.toISOString());
       return (jobs ?? []).reduce((s, r) => s + (Number(r.total_amount) || 0), 0);
@@ -121,9 +120,8 @@ export default function HeadlineSection() {
       if (paySum > 0) return paySum;
       const { data: jobs } = await supabase
         .from("jobber_jobs")
-        .select("total_amount,visit_status")
+        .select("total_amount")
         .eq("business_id", selectedBusinessId!)
-        .eq("visit_status", "completed")
         .gte("scheduled_start", monthStart.toISOString())
         .lte("scheduled_start", monthEnd.toISOString());
       return (jobs ?? []).reduce((s, r) => s + (Number(r.total_amount) || 0), 0);
