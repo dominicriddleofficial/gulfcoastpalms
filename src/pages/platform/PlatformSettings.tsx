@@ -391,15 +391,8 @@ function JobberConnectionStatus({ businessId }: { businessId: string | null }) {
     setReconnecting(true);
     try {
       const redirectUri = `${window.location.origin}/platform/integrations/jobber/callback`;
-      const { data, error } = await supabase.functions.invoke("jobber-oauth", {
-        method: "GET",
-        // @ts-expect-error - functions.invoke supports query via path
-        body: undefined,
-      } as any);
-      // The supabase JS client doesn't easily pass query params on invoke; use fetch directly.
-      void data; void error;
-      const projectUrl = (import.meta as any).env?.VITE_SUPABASE_URL || "";
-      const anonKey = (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY || "";
+      const projectUrl = import.meta.env.VITE_SUPABASE_URL as string;
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
       const url = `${projectUrl}/functions/v1/jobber-oauth?action=authorize&redirect_uri=${encodeURIComponent(redirectUri)}`;
       const res = await fetch(url, { headers: { Authorization: `Bearer ${anonKey}`, apikey: anonKey } });
       const json = await res.json();
