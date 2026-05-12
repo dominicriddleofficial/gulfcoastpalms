@@ -813,15 +813,37 @@ async function runVisitsModule(accessToken: string, supabase: any, context: Sync
 async function refreshAccessTokenIfNeeded(tokenRow: any, supabase: any) {
   let accessToken = tokenRow.access_token;
 
-  if (new Date(tokenRow.expires_at) >= new Date()) {
-    return accessToken;
+  // Refresh ~5 minutes before expiry to avoid mid-sync expiration.
+  const expiresAtMs = tokenRow.expires_at ? new Date(tokenRow.expires_at).getTime() : 0;
+  const skewMs = 5 * 60 * 1000;
+  const isExpiringSoon = !expiresAtMs || expiresAtMs - skewMs <= Date.now();
+  if (!isExpiringSoon) {
+    return { accessToken, refreshed: false, needsReconnect: false } as const;
   }
+
+  // Lifecycle log: token expired (or near-expiry)
+  try {
+    await supabase.from("sync_logs").insert({
+      sync_type: "jobber_token",
+      status: "token_expired",
+      error_message: `Token expires_at=${tokenRow.expires_at}`,
+      completed_at: new Date().toISOString(),
+    });
+  } catch (_) { /* non-fatal */ }
 
   const clientId = Deno.env.get("JOBBER_CLIENT_ID");
   const clientSecret = Deno.env.get("JOBBER_CLIENT_SECRET");
   if (!clientId || !clientSecret) {
-    throw new Error("Jobber credentials not configured");
+    return { accessToken: null, refreshed: false, needsReconnect: true, error: "Jobber credentials not configured" } as const;
   }
+
+  try {
+    await supabase.from("sync_logs").insert({
+      sync_type: "jobber_token",
+      status: "refresh_attempted",
+      completed_at: new Date().toISOString(),
+    });
+  } catch (_) { /* non-fatal */ }
 
   const refreshRes = await fetch("https://api.getjobber.com/api/oauth/token", {
     method: "POST",
@@ -837,7 +859,21 @@ async function refreshAccessTokenIfNeeded(tokenRow: any, supabase: any) {
   if (!refreshRes.ok) {
     const body = await refreshRes.text();
     console.error("Token refresh failed during sync:", body);
-    throw new Error("Token expired and refresh failed");
+    try {
+      await supabase.from("sync_logs").insert({
+        sync_type: "jobber_token",
+        status: "refresh_failed",
+        error_message: `HTTP ${refreshRes.status}: ${body.slice(0, 500)}`,
+        completed_at: new Date().toISOString(),
+      });
+      await supabase.from("sync_logs").insert({
+        sync_type: "jobber_token",
+        status: "reconnect_required",
+        error_message: "Jobber connection expired. Reconnect Jobber to resume syncing.",
+        completed_at: new Date().toISOString(),
+      });
+    } catch (_) { /* non-fatal */ }
+    return { accessToken: null, refreshed: false, needsReconnect: true, error: "Jobber connection expired. Reconnect Jobber to resume syncing." } as const;
   }
 
   const refreshData = await refreshRes.json();
@@ -856,7 +892,15 @@ async function refreshAccessTokenIfNeeded(tokenRow: any, supabase: any) {
     })
     .eq("id", tokenRow.id);
 
-  return accessToken;
+  try {
+    await supabase.from("sync_logs").insert({
+      sync_type: "jobber_token",
+      status: "refresh_success",
+      completed_at: new Date().toISOString(),
+    });
+  } catch (_) { /* non-fatal */ }
+
+  return { accessToken, refreshed: true, needsReconnect: false } as const;
 }
 
 async function testConnection(accessToken: string, context: SyncContext) {
@@ -926,11 +970,34 @@ Deno.serve(async (req) => {
 
   const { data: tokenRow } = await supabase.from("jobber_tokens").select("*").limit(1).maybeSingle();
   if (!tokenRow) {
-    return jsonResponse({ error: "Jobber not connected. Connect first in Settings." }, 400);
+    return jsonResponse({
+      success: false,
+      needs_reconnect: true,
+      code: "JOBBER_NOT_CONNECTED",
+      error: "Jobber is not connected. Connect Jobber in Settings to enable syncing.",
+    });
   }
 
   try {
-    const accessToken = await refreshAccessTokenIfNeeded(tokenRow, supabase);
+    const refresh = await refreshAccessTokenIfNeeded(tokenRow, supabase);
+    if (refresh.needsReconnect || !refresh.accessToken) {
+      // Log skipped sync attempt with structured 200 response
+      try {
+        await supabase.from("sync_logs").insert({
+          sync_type: "jobber",
+          status: "sync_skipped_expired_token",
+          error_message: refresh.error || "Token expired",
+          completed_at: new Date().toISOString(),
+        });
+      } catch (_) { /* non-fatal */ }
+      return jsonResponse({
+        success: false,
+        needs_reconnect: true,
+        code: "JOBBER_TOKEN_EXPIRED",
+        error: refresh.error || "Jobber connection expired. Reconnect Jobber to resume syncing.",
+      });
+    }
+    const accessToken = refresh.accessToken;
 
     if (action !== "test") {
       context.businessId = await resolveTargetBusinessId(supabase, context.businessId);
@@ -1060,6 +1127,24 @@ Deno.serve(async (req) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("jobber-sync failed:", message);
-    return jsonResponse({ error: message }, 500);
+    const looksLikeAuth = /401|unauthor|expired|invalid_grant|invalid token|forbidden/i.test(message);
+    if (looksLikeAuth) {
+      try {
+        await supabase.from("sync_logs").insert({
+          sync_type: "jobber_token",
+          status: "reconnect_required",
+          error_message: message,
+          completed_at: new Date().toISOString(),
+        });
+      } catch (_) { /* non-fatal */ }
+      return jsonResponse({
+        success: false,
+        needs_reconnect: true,
+        code: "JOBBER_AUTH_FAILED",
+        error: "Jobber connection expired. Reconnect Jobber to resume syncing.",
+        raw: message,
+      });
+    }
+    return jsonResponse({ success: false, error: message }, 500);
   }
 });

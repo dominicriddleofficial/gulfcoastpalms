@@ -320,6 +320,8 @@ function JobberConnectionStatus({ businessId }: { businessId: string | null }) {
   const [lastSyncLog, setLastSyncLog] = useState<{ status: string; completed_at: string | null; error_message: string | null; records_synced: number } | null>(null);
   const [dataCounts, setDataCounts] = useState<{ clients: number; jobs: number; properties: number } | null>(null);
   const [syncing, setSyncing] = useState(false);
+  const [reconnecting, setReconnecting] = useState(false);
+  const [needsReconnect, setNeedsReconnect] = useState(false);
   const [syncResponse, setSyncResponse] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -362,21 +364,54 @@ function JobberConnectionStatus({ businessId }: { businessId: string | null }) {
       const { data, error } = await supabase.functions.invoke("jobber-sync", {
         body: { businessId },
       });
-      if (error) throw error;
-      setSyncResponse(JSON.stringify(data, null, 2));
-      toast({ title: "Sync complete", description: `${data?.records_synced || 0} records synced.` });
+      setSyncResponse(JSON.stringify(data ?? { error: error?.message }, null, 2));
+      if (data?.needs_reconnect) {
+        setNeedsReconnect(true);
+        toast({
+          title: "Reconnect Jobber",
+          description: "Jobber connection expired. Reconnect Jobber to resume syncing.",
+          variant: "destructive",
+        });
+      } else if (error) {
+        // Suppress raw "non-2xx status code" — keep raw available in details panel.
+        toast({ title: "Sync failed", description: "Sync could not complete. View raw sync response for details.", variant: "destructive" });
+      } else {
+        setNeedsReconnect(false);
+        toast({ title: "Sync complete", description: `${data?.records_synced || 0} records synced.` });
+      }
       await loadDiagnostics();
     } catch (err: any) {
       setSyncResponse(`Error: ${err.message || "Unknown error"}`);
-      toast({ title: "Sync failed", description: err.message || "Unknown error", variant: "destructive" });
+      toast({ title: "Sync failed", description: "Sync could not complete. View raw sync response for details.", variant: "destructive" });
     }
     setSyncing(false);
   };
 
+  const handleReconnect = async () => {
+    setReconnecting(true);
+    try {
+      const redirectUri = `${window.location.origin}/platform/integrations/jobber/callback`;
+      const projectUrl = import.meta.env.VITE_SUPABASE_URL as string;
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+      const url = `${projectUrl}/functions/v1/jobber-oauth?action=authorize&redirect_uri=${encodeURIComponent(redirectUri)}`;
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${anonKey}`, apikey: anonKey } });
+      const json = await res.json();
+      if (!res.ok || !json?.url) {
+        throw new Error(json?.error || "Failed to start Jobber OAuth");
+      }
+      window.location.href = json.url;
+    } catch (err: any) {
+      toast({ title: "Reconnect failed", description: err?.message || "Unable to start Jobber reconnect.", variant: "destructive" });
+      setReconnecting(false);
+    }
+  };
+
   // Determine state: A (not connected), B (connected ok), C (error/expired)
   const stateA = tokenInfo && !tokenInfo.exists;
-  const stateC = tokenInfo?.exists && (tokenInfo.isExpired || lastSyncLog?.status === "failed");
+  const stateC = !!(tokenInfo?.exists && (tokenInfo.isExpired || needsReconnect || lastSyncLog?.status === "failed"));
   const stateB = tokenInfo?.exists && !stateC;
+  const showReconnect = stateA || stateC || needsReconnect;
+  const reconnectRequired = !!(tokenInfo?.isExpired || needsReconnect || stateA);
 
   return (
     <div className="space-y-3">
@@ -412,7 +447,9 @@ function JobberConnectionStatus({ businessId }: { businessId: string | null }) {
       {stateC && (
         <div className="bg-[#f59e0b]/10 border border-[#f59e0b]/20 rounded-lg p-2.5">
           <p className="font-body text-[11px] text-[#f59e0b] font-medium mb-1">
-            {tokenInfo?.isExpired ? "⚠️ Jobber token has expired." : "⚠️ Last sync failed."}
+            {reconnectRequired
+              ? "⚠️ Jobber connection expired. Reconnect Jobber to resume syncing."
+              : "⚠️ Last sync failed."}
           </p>
           {lastSyncLog?.error_message && (
             <p className="font-body text-[10px] text-destructive">{lastSyncLog.error_message}</p>
@@ -471,8 +508,21 @@ function JobberConnectionStatus({ businessId }: { businessId: string | null }) {
         </div>
       )}
 
-      {/* Sync button */}
-      {tokenInfo?.exists && (
+      {/* Action button — Reconnect when expired/missing, otherwise Sync Now */}
+      {showReconnect ? (
+        <Button
+          size="sm"
+          className="font-body text-xs w-full"
+          disabled={reconnecting}
+          onClick={handleReconnect}
+        >
+          {reconnecting ? (
+            <><RefreshCw className="w-3 h-3 mr-1.5 animate-spin" /> Starting OAuth…</>
+          ) : (
+            <><Zap className="w-3 h-3 mr-1.5" /> Reconnect Jobber</>
+          )}
+        </Button>
+      ) : tokenInfo?.exists ? (
         <Button
           size="sm"
           className="font-body text-xs w-full"
@@ -485,7 +535,7 @@ function JobberConnectionStatus({ businessId }: { businessId: string | null }) {
             <><RefreshCw className="w-3 h-3 mr-1.5" /> Sync Now</>
           )}
         </Button>
-      )}
+      ) : null}
 
       {/* Raw sync response */}
       {syncResponse && (
