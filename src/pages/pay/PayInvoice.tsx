@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { CreditCard, CheckCircle, XCircle, Loader2, Shield, AlertCircle, Download, Copy } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import DocumentBrandMark from "@/components/platform/billing/DocumentBrandMark";
 
 type InvoiceData = {
   id: string;
@@ -244,9 +245,13 @@ export default function PayInvoice() {
             <div style={{ padding: "20px 20px 16px", borderBottom: `1px solid ${cardBorder}` }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 16 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", background: `rgba(${accentRgb}, 0.12)`, border: `1px solid rgba(${accentRgb}, 0.25)`, flexShrink: 0 }}>
-                    <span style={{ color: accent, fontWeight: 700, fontSize: 11, letterSpacing: "0.05em" }}>{(invoice.shortcode || brandKey).toUpperCase()}</span>
-                  </div>
+                  <DocumentBrandMark
+                    shortcode={invoice.shortcode || brandKey}
+                    logoUrl={invoice.logo_url}
+                    accent={accent}
+                    accentRgb={accentRgb}
+                    size={48}
+                  />
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>{invoice.business_name || brand.name}</div>
                     <div style={{ fontSize: 11, color: labelColor, marginTop: 1 }}>{brand.tagline}</div>

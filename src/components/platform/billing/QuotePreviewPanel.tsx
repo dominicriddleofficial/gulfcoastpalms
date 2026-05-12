@@ -3,6 +3,7 @@
  * GCP: dark green glow + bright green accents.
  * Prestige: dark monochrome + white accents.
  */
+import { getBusinessLogo } from "@/lib/business-logos";
 
 const BRAND: Record<string, {
   name: string; tagline: string; bg: string; cardBg: string; accent: string;
@@ -55,6 +56,7 @@ interface QuotePreviewData {
 
 export default function QuotePreviewPanel({ data }: { data: QuotePreviewData }) {
   const brand = BRAND[data.shortcode?.toLowerCase()] || BRAND.gcp;
+  const resolvedLogo = getBusinessLogo(data.shortcode || "", data.logoUrl);
   const fmt = (n: number) =>
     `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -105,8 +107,8 @@ export default function QuotePreviewPanel({ data }: { data: QuotePreviewData }) 
       <div style={{ background: `${brand.glowGradient}, ${brand.bg}`, padding: "40px 32px 32px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
-            {data.logoUrl && (
-              <img src={data.logoUrl} alt={data.businessName || brand.name}
+            {resolvedLogo && (
+              <img src={resolvedLogo} alt={data.businessName || brand.name}
                 style={{ height: 44, marginBottom: 8, maxWidth: 180, objectFit: "contain" }}
                 onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
             )}
