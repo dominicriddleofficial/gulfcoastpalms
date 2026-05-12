@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { HERO_IMAGE_URL, heroImageSrc, heroSrcSet } from "@/data/assets";
 import HeroReviewBadge from "@/components/home/HeroReviewBadge";
 import { GCP_BUSINESS, TEL_HREF } from "@/lib/business-info";
+import QuoteRequestButton from "@/components/cta/QuoteRequestButton";
 
 const HeroSection = () => {
   return (
@@ -75,13 +76,12 @@ const HeroSection = () => {
           transition={{ duration: 0.7, delay: 0.35 }}
           className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center"
         >
-          <Link
-            to="/quote"
-            className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-6 md:px-8 py-3.5 md:py-4 rounded-xl bg-primary text-primary-foreground font-body font-bold text-base md:text-lg hover:bg-palm-light transition-all shadow-lg shadow-primary/30 whitespace-nowrap"
+          <QuoteRequestButton
+            source="hero"
+            className="w-full sm:w-auto md:px-8 md:py-4 md:text-lg"
           >
             Get a Free Quote Online
-            <ArrowRight className="w-5 h-5 shrink-0" />
-          </Link>
+          </QuoteRequestButton>
           <Link
             to="/services"
             className="hidden md:inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl border-2 border-primary-foreground/30 text-primary-foreground font-body font-semibold text-lg hover:bg-primary-foreground/10 transition-all"
