@@ -143,7 +143,10 @@ export default function RouteView({ jobs, googleMapsKey }: RouteViewProps) {
   const openNavigation = (address: string) => {
     const encoded = encodeURIComponent(address);
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    window.open(isIOS ? `maps://maps.apple.com/?daddr=${encoded}` : `https://www.google.com/maps/dir/?api=1&destination=${encoded}`, "_blank");
+    const url = isIOS
+      ? `maps://?daddr=${encoded}`
+      : `https://maps.apple.com/?daddr=${encoded}`;
+    window.location.href = url;
   };
 
   return (
