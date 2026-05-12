@@ -92,6 +92,7 @@ export default function PlatformRelease() {
   const qc = useQueryClient();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [newLabel, setNewLabel] = useState("");
+  const [releaseNotes, setReleaseNotes] = useState("");
 
   const { data: checklists } = useQuery({
     queryKey: ["release_checklists"],
@@ -125,6 +126,12 @@ export default function PlatformRelease() {
       return data as Item[];
     },
   });
+
+  // Sync local notes state when active checklist changes
+  useEffect(() => {
+    const active = checklists?.find((c) => c.id === activeId);
+    setReleaseNotes(active?.notes ?? "");
+  }, [activeId, checklists]);
 
   const createChecklist = useMutation({
     mutationFn: async (label: string) => {
@@ -160,9 +167,13 @@ export default function PlatformRelease() {
   const updateItem = useMutation({
     mutationFn: async ({ id, patch }: { id: string; patch: Partial<Item> }) => {
       const user = (await supabase.auth.getUser()).data.user;
+      const isStatusChange = "status" in patch;
+      const enriched = isStatusChange
+        ? { ...patch, checked_by: user?.id, checked_at: new Date().toISOString() }
+        : patch;
       const { error } = await supabase
         .from("release_checklist_items")
-        .update({ ...patch, checked_by: user?.id, checked_at: new Date().toISOString() })
+        .update(enriched)
         .eq("id", id);
       if (error) throw error;
     },
@@ -210,6 +221,7 @@ export default function PlatformRelease() {
           released_at: new Date().toISOString(),
           released_by: user?.id,
           summary: summary,
+          notes: releaseNotes || null,
         })
         .eq("id", activeId);
       if (error) throw error;
@@ -341,6 +353,16 @@ export default function PlatformRelease() {
                   <CheckCircle2 className="w-4 h-4" /> Released {active.released_at ? new Date(active.released_at).toLocaleString() : ""}
                 </div>
               )}
+              <div className="mt-4">
+                <label className="text-xs text-muted-foreground">Release notes</label>
+                <Textarea
+                  placeholder="Add release notes (saved when marking ready)…"
+                  value={releaseNotes}
+                  onChange={(e) => setReleaseNotes(e.target.value)}
+                  disabled={active.status === "released"}
+                  className="mt-1 min-h-[60px] text-sm"
+                />
+              </div>
             </Card>
 
             {Object.entries(sections).map(([section, list]) => (
