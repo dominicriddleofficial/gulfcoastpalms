@@ -35,6 +35,62 @@ Deno.serve(async (req) => {
       );
     }
 
+    // ── Auth gate ──
+    // Accept either:
+    //   (a) Service-role bearer token (internal Edge Function calls)
+    //   (b) A valid authenticated platform user JWT
+    // Anything else → 401 + audit log.
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+    const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const authHeader = req.headers.get("Authorization") || "";
+    const bearer = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+    const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE);
+
+    let authorized = false;
+    let authMode: "service_role" | "user" | "none" = "none";
+    let authedUserId: string | null = null;
+
+    if (bearer && bearer === SERVICE_ROLE) {
+      authorized = true;
+      authMode = "service_role";
+    } else if (bearer) {
+      try {
+        const userClient = createClient(
+          SUPABASE_URL,
+          Deno.env.get("SUPABASE_ANON_KEY") || "",
+          { global: { headers: { Authorization: authHeader } } },
+        );
+        const { data: ud } = await userClient.auth.getUser();
+        if (ud?.user?.id) {
+          authorized = true;
+          authMode = "user";
+          authedUserId = ud.user.id;
+        }
+      } catch { /* fall through */ }
+    }
+
+    if (!authorized) {
+      try {
+        await supabaseAdmin.from("error_logs").insert({
+          error_message: "send-sms unauthorized call blocked",
+          page_url: "/edge/send-sms",
+        });
+        await supabaseAdmin.from("audit_logs").insert({
+          event_name: "send_sms_unauthorized",
+          entity_type: "edge_function",
+          entity_id: "send-sms",
+          action_type: "deny",
+          context_json: { has_bearer: !!bearer },
+          ip_address: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null,
+          user_agent: req.headers.get("user-agent") || null,
+        });
+      } catch { /* best-effort */ }
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const { to, message } = await req.json();
 
     if (!to || !message) {
@@ -60,10 +116,8 @@ Deno.serve(async (req) => {
     }
 
     // Rate limiting: 10 per business per hour
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    const supabase = supabaseAdmin;
+    void authMode; void authedUserId;
 
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
     const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString();
