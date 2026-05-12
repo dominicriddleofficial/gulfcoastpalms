@@ -173,6 +173,9 @@ function buildPlatformItem(
   job: PlatformJobShape,
   visit: PlatformVisitRow | null,
   importedJobberIds: Set<string>,
+  jobberFallback?: JobberJobRow | null,
+  jobberClient?: JobberClientRow | null,
+  jobberProperty?: JobberPropertyRow | null,
 ): DashboardScheduledJob | null {
   if (job.deleted_at || isExcludedStatus(job.status) || isExcludedStatus(visit?.status ?? null)) return null;
 
@@ -193,9 +196,17 @@ function buildPlatformItem(
   if (externalId) importedJobberIds.add(externalId);
 
   const source: NormalizedScheduleSource = externalId ? "jobber_import" : "platform";
-  const address = platformAddress(job.property);
+  const address =
+    platformAddress(job.property) ??
+    jobberFallback?.property_address ??
+    jobberAddress(jobberProperty ?? null);
   const amount = toAmount(job.total);
   const visitStatus = cleanStatus(visit?.status ?? null);
+  const customerName =
+    job.customer?.display_name ?? jobberFallback?.client_name ?? jobberClient?.display_name ?? null;
+  const customerPhone =
+    job.customer?.phone ?? jobberFallback?.client_phone ?? jobberClient?.phone ?? null;
+  const customerEmail = job.customer?.email ?? jobberClient?.email ?? null;
 
   return {
     id: visit?.id ?? job.id,
@@ -206,25 +217,25 @@ function buildPlatformItem(
     dedupe_key: externalId ? `jobber:${externalId}` : `platform:${job.id}:${visit?.id ?? "job"}`,
     job_number: job.job_number,
     title: visit?.title ?? job.title,
-    customer_name: job.customer?.display_name ?? null,
-    customer_phone: job.customer?.phone ?? null,
-    customer_email: job.customer?.email ?? null,
+    customer_name: customerName,
+    customer_phone: customerPhone,
+    customer_email: customerEmail,
     address,
     scheduled_start: scheduledStart,
     scheduled_end: scheduledEnd,
     status: cleanStatus(job.status),
     total_amount: amount,
     business_id: visit?.business_id ?? job.business_id,
-    client_name: job.customer?.display_name ?? null,
-    client_phone: job.customer?.phone ?? null,
+    client_name: customerName,
+    client_phone: customerPhone,
     property_address: address,
     visit_status: visitStatus,
     scheduled_local_date: localDate,
     amount_counted: amount,
     internal_notes: visit?.internal_notes ?? job.internal_notes,
-    assigned_employee_names: null,
-    property_id: visit?.property_id ?? null,
-    service_items: null,
+    assigned_employee_names: jobberFallback?.assigned_employee_names ?? null,
+    property_id: visit?.property_id ?? jobberFallback?.property_id ?? null,
+    service_items: jobberFallback?.service_items ?? null,
   };
 }
 
