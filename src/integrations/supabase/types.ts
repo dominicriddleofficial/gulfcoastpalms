@@ -5529,6 +5529,32 @@ export type Database = {
         Args: { _business_id: string }
         Returns: string[]
       }
+      get_email_send_log_filtered: {
+        Args: {
+          _from?: string
+          _limit?: number
+          _offset?: number
+          _status?: string
+          _template?: string
+          _to?: string
+        }
+        Returns: {
+          created_at: string
+          error_message: string | null
+          id: string
+          message_id: string | null
+          metadata: Json | null
+          recipient_email: string
+          status: string
+          template_name: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "email_send_log"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_user_business_ids: { Args: { _user_id: string }; Returns: string[] }
       get_user_role: {
         Args: { _business_id: string; _user_id: string }
