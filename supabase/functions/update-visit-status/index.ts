@@ -343,3 +343,23 @@ function summaryFor(action: Action, title: string | null): string {
     case "reopen_visit": return `${t} — visit reopened`;
   }
 }
+
+function mapPlatformStatusToVisit(status: string | null): string {
+  const s = (status ?? "").toLowerCase();
+  if (s === "completed" || s === "complete") return "complete";
+  if (s === "in_progress") return "in_progress";
+  if (s === "on_my_way") return "on_my_way";
+  if (s === "on_site") return "on_site";
+  if (s === "cancelled" || s === "canceled") return "cancelled";
+  return "scheduled";
+}
+
+function mapVisitStatusToPlatform(visit: string): string {
+  switch (visit) {
+    case "complete": return "completed";
+    case "in_progress":
+    case "on_site":
+    case "on_my_way": return "in_progress";
+    default: return "scheduled";
+  }
+}
