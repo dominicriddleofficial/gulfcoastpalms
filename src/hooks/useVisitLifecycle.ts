@@ -27,6 +27,7 @@ interface AdvanceParams {
   customerName?: string | null;
   customerPhone?: string | null;
   smsSent?: boolean;
+  visitId?: string | null;
 }
 
 async function upsertEvent(
@@ -74,6 +75,7 @@ export function useVisitLifecycle() {
         const { data, error } = await supabase.functions.invoke("update-visit-status", {
           body: {
             jobber_job_id: params.jobberJobId,
+            visit_id: params.visitId ?? null,
             action,
             sms_sent: !!params.smsSent,
           },

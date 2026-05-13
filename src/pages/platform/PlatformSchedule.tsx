@@ -77,6 +77,7 @@ type JobberJob = {
   source: "platform" | "jobber_import" | "jobber_synced";
   jobber_id: string | null;
   visit_id: string | null;
+  job_id: string | null;
   customer_email: string | null;
   address: string | null;
   title: string | null;
@@ -786,7 +787,8 @@ function JobDetail({
   const doAdvance = (next: VisitStatus, smsSent?: boolean) => {
     if (!businessId) return;
     advance.mutate({
-      jobberJobId: job.id,
+      jobberJobId: job.job_id ?? job.id,
+      visitId: job.visit_id ?? null,
       businessId,
       nextStatus: next,
       customerName: job.client_name,
