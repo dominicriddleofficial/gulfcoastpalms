@@ -71,14 +71,33 @@ export function useVisitLifecycle() {
         null;
 
       if (action) {
-        const { error } = await supabase.functions.invoke("update-visit-status", {
+        const { data, error } = await supabase.functions.invoke("update-visit-status", {
           body: {
             jobber_job_id: params.jobberJobId,
             action,
             sms_sent: !!params.smsSent,
           },
         });
-        if (error) throw error;
+        if (error) {
+          // Try to extract the real error message from the function response body.
+          let detail = "";
+          try {
+            const ctx = (error as { context?: Response }).context;
+            if (ctx && typeof ctx.text === "function") {
+              const txt = await ctx.text();
+              try {
+                const json = JSON.parse(txt);
+                detail = json?.error || json?.message || txt;
+              } catch {
+                detail = txt;
+              }
+            }
+          } catch { /* noop */ }
+          throw new Error(detail || error.message || "Unable to update visit status.");
+        }
+        if (data && typeof data === "object" && "error" in data && data.error) {
+          throw new Error(String(data.error));
+        }
       } else {
         // Fallback for "scheduled" or unmapped — direct update
         const { error: jobErr } = await supabase
