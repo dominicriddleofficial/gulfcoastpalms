@@ -117,7 +117,7 @@ export default function PlatformCustomerNew() {
           <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </section>
 
-        <div className="fixed bottom-0 left-0 right-0 lg:left-[240px] z-30 bg-background/95 backdrop-blur-md border-t border-border p-3 flex gap-2 pb-[calc(env(safe-area-inset-bottom)+12px)]">
+        <div className="fixed bottom-[64px] lg:bottom-0 left-0 right-0 lg:left-[240px] z-50 bg-background/95 backdrop-blur-md border-t border-border p-3 flex gap-2 pb-[calc(env(safe-area-inset-bottom)+12px)]">
           <Button variant="outline" className="flex-1" onClick={() => navigate(-1)} disabled={saving}>Cancel</Button>
           <Button className="flex-1" onClick={handleSave} disabled={saving}>{saving ? "Saving…" : "Save Customer"}</Button>
         </div>
