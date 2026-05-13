@@ -85,6 +85,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const jobberJobId = typeof body?.jobber_job_id === "string" ? body.jobber_job_id : "";
+    const visitIdInput = typeof body?.visit_id === "string" ? body.visit_id : "";
     const action = body?.action as Action;
     const note = typeof body?.note === "string" ? body.note.slice(0, 500) : null;
     const smsSent = body?.sms_sent === true;
@@ -106,6 +107,7 @@ Deno.serve(async (req) => {
     // Fallback: lookup as platform_jobs row (new platform-created or quote-converted jobs)
     let isPlatformJob = false;
     let platformJobRow: { id: string; business_id: string; status: string | null; title: string | null; total: number | null; customer_id: string | null } | null = null;
+    let resolvedVisitId: string | null = visitIdInput || null;
     if (!job) {
       const { data: pj } = await supabase
         .from("platform_jobs")
@@ -139,6 +141,38 @@ Deno.serve(async (req) => {
             scheduled_start: null,
             client_id: pj.customer_id,
           } as typeof job;
+        }
+      }
+      // Final fallback: resolve via visit_id → platform_jobs
+      if (!job && resolvedVisitId) {
+        const { data: v } = await supabase
+          .from("platform_job_visits")
+          .select("id, job_id")
+          .eq("id", resolvedVisitId)
+          .maybeSingle();
+        if (v?.job_id) {
+          const { data: pj2 } = await supabase
+            .from("platform_jobs")
+            .select("id, business_id, status, title, total, customer_id, source_system, source_record_id")
+            .eq("id", v.job_id)
+            .maybeSingle();
+          if (pj2) {
+            isPlatformJob = true;
+            platformJobRow = pj2;
+            job = {
+              id: pj2.id,
+              business_id: pj2.business_id,
+              visit_status: mapPlatformStatusToVisit(pj2.status),
+              status: pj2.status,
+              title: pj2.title,
+              client_name: null,
+              client_phone: null,
+              property_address: null,
+              total_amount: pj2.total,
+              scheduled_start: null,
+              client_id: pj2.customer_id,
+            } as typeof job;
+          }
         }
       }
     }
@@ -199,6 +233,15 @@ Deno.serve(async (req) => {
         await supabase.from("platform_jobs")
           .update({ status: platformStatus, ...(newStatus === "complete" ? { completed_at: now } : {}) })
           .eq("source_system", "jobber").eq("source_record_id", job.id);
+      }
+      // Mirror to platform_job_visits.status so Schedule reflects the change for native platform jobs
+      const visitPatch: Record<string, string | null> = { status: newStatus };
+      if (newStatus === "in_progress") visitPatch.actual_start_at = now;
+      if (newStatus === "complete") visitPatch.actual_end_at = now;
+      if (resolvedVisitId) {
+        await supabase.from("platform_job_visits").update(visitPatch).eq("id", resolvedVisitId);
+      } else if (platformJobRow?.id) {
+        await supabase.from("platform_job_visits").update(visitPatch).eq("job_id", platformJobRow.id);
       }
     }
 
