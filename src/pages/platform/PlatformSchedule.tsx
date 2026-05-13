@@ -77,6 +77,7 @@ type JobberJob = {
   source: "platform" | "jobber_import" | "jobber_synced";
   jobber_id: string | null;
   visit_id: string | null;
+  job_id: string | null;
   customer_email: string | null;
   address: string | null;
   title: string | null;
