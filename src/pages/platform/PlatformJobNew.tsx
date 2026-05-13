@@ -94,35 +94,35 @@ export default function PlatformJobNew() {
       }
     }
 
-    const scheduledStart = new Date(`${date}T${time}:00`).toISOString();
-    const scheduledEnd = new Date(new Date(scheduledStart).getTime() + duration * 60000).toISOString();
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data: row, error } = await supabase.from("platform_jobs").insert({
-      business_id: selectedBusinessId,
-      job_number: jobNumber,
-      customer_id: customer.id,
-      quote_id: prefill?.fromQuoteId ?? null,
-      title: title.trim(),
-      description: description || null,
-      status: "scheduled",
-      source: "platform",
-      is_read_only: false,
-      scheduled_start: scheduledStart,
-      scheduled_end: scheduledEnd,
-      estimated_duration_minutes: duration,
-      total: isOwner && total ? Number(total) : null,
-      internal_notes: notes || null,
-      created_by_user_id: user?.id || null,
-    }).select("id").single();
-    if (error) { toast.error(error.message); setSaving(false); return; }
-    if (prefill?.fromQuoteId) {
-      await supabase.from("platform_quotes").update({ status: "converted" }).eq("id", prefill.fromQuoteId);
+    const { data, error } = await supabase.functions.invoke("create-platform-job", {
+      body: {
+        business_id: selectedBusinessId,
+        customer: { id: customer.id, display_name: customer.display_name },
+        address_freeform: address || null,
+        title: title.trim(),
+        description: description || null,
+        internal_notes: notes || null,
+        scheduled_date: date,
+        scheduled_start_time: time,
+        duration_minutes: duration,
+        total: isOwner && total ? Number(total) : null,
+        quote_id: prefill?.fromQuoteId ?? null,
+      },
+    });
+    const errMsg =
+      (data && typeof data === "object" && "error" in data ? (data as { error?: string }).error : null) ||
+      error?.message;
+    if (errMsg) {
+      toast.error(errMsg);
+      setSaving(false);
+      return;
     }
-    toast.success(`Job ${jobNumber} created`);
+    const created = data as { job?: { job_number?: string; scheduled_start?: string } };
+    toast.success(`Job ${created?.job?.job_number || jobNumber} saved`);
     notifyCreated();
     setSaving(false);
-    navigate("/platform/jobs");
-    void row;
+    const targetDate = created?.job?.scheduled_start || date;
+    navigate(`/platform/schedule?date=${targetDate}`);
   };
 
   return (
