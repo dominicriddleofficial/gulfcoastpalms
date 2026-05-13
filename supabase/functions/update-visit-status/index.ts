@@ -75,13 +75,13 @@ Deno.serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
     const token = authHeader.replace("Bearer ", "");
-    const { data: claims, error: claimsErr } = await userClient.auth.getClaims(token);
-    if (claimsErr || !claims?.claims?.sub) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+    const { data: userData, error: userErr } = await userClient.auth.getUser(token);
+    if (userErr || !userData?.user?.id) {
+      return new Response(JSON.stringify({ error: "Your session expired. Please sign in again." }), {
         status: 401, headers: { ...headers, "Content-Type": "application/json" },
       });
     }
-    const userId = claims.claims.sub as string;
+    const userId = userData.user.id;
 
     const body = await req.json().catch(() => ({}));
     const jobberJobId = typeof body?.jobber_job_id === "string" ? body.jobber_job_id : "";
@@ -97,13 +97,58 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    const { data: job, error: jobErr } = await supabase
+    let { data: job, error: jobErr } = await supabase
       .from("jobber_jobs")
       .select("id, business_id, visit_status, status, title, client_name, client_phone, property_address, total_amount, scheduled_start, client_id")
       .eq("id", jobberJobId)
       .maybeSingle();
-    if (jobErr || !job) {
-      return new Response(JSON.stringify({ error: "Job not found" }), {
+
+    // Fallback: lookup as platform_jobs row (new platform-created or quote-converted jobs)
+    let isPlatformJob = false;
+    let platformJobRow: { id: string; business_id: string; status: string | null; title: string | null; total: number | null; customer_id: string | null } | null = null;
+    if (!job) {
+      const { data: pj } = await supabase
+        .from("platform_jobs")
+        .select("id, business_id, status, title, total, customer_id, source_system, source_record_id")
+        .eq("id", jobberJobId)
+        .maybeSingle();
+      if (pj) {
+        isPlatformJob = true;
+        platformJobRow = pj;
+        // If the platform job mirrors a jobber_jobs row, also load that row so existing logic keeps working
+        if (pj.source_system === "jobber" && pj.source_record_id) {
+          const { data: jj } = await supabase
+            .from("jobber_jobs")
+            .select("id, business_id, visit_status, status, title, client_name, client_phone, property_address, total_amount, scheduled_start, client_id")
+            .eq("id", pj.source_record_id)
+            .maybeSingle();
+          if (jj) job = jj;
+        }
+        if (!job) {
+          // Synthesize a job-like object for downstream code
+          job = {
+            id: pj.id,
+            business_id: pj.business_id,
+            visit_status: mapPlatformStatusToVisit(pj.status),
+            status: pj.status,
+            title: pj.title,
+            client_name: null,
+            client_phone: null,
+            property_address: null,
+            total_amount: pj.total,
+            scheduled_start: null,
+            client_id: pj.customer_id,
+          } as typeof job;
+        }
+      }
+    }
+    if (jobErr && !job) {
+      return new Response(JSON.stringify({ error: "Unable to load job. Please refresh and try again." }), {
+        status: 500, headers: { ...headers, "Content-Type": "application/json" },
+      });
+    }
+    if (!job) {
+      return new Response(JSON.stringify({ error: "Job not found. It may have been deleted or not yet synced." }), {
         status: 404, headers: { ...headers, "Content-Type": "application/json" },
       });
     }
@@ -113,7 +158,7 @@ Deno.serve(async (req) => {
       _user_id: userId, _business_id: job.business_id,
     });
     if (!hasAccess) {
-      return new Response(JSON.stringify({ error: "Forbidden" }), {
+      return new Response(JSON.stringify({ error: "You do not have access to this business." }), {
         status: 403, headers: { ...headers, "Content-Type": "application/json" },
       });
     }
@@ -123,7 +168,7 @@ Deno.serve(async (req) => {
       _user_id: userId, _business_id: job.business_id, _roles: ALLOWED_ROLES,
     });
     if (!hasRole) {
-      return new Response(JSON.stringify({ error: "Insufficient role" }), {
+      return new Response(JSON.stringify({ error: "You do not have permission to update this visit." }), {
         status: 403, headers: { ...headers, "Content-Type": "application/json" },
       });
     }
@@ -132,13 +177,29 @@ Deno.serve(async (req) => {
     const oldStatus = job.visit_status;
     const newStatus = statusForAction(action);
 
-    // Update job visit_status
+    // Update job visit_status. If the job came from jobber_jobs (or a platform mirror with a
+    // jobber source_record_id), update jobber_jobs. Always also mirror status to platform_jobs
+    // when one exists.
     if (newStatus && newStatus !== oldStatus) {
-      const { error: upErr } = await supabase
-        .from("jobber_jobs")
-        .update({ visit_status: newStatus })
-        .eq("id", job.id);
-      if (upErr) throw upErr;
+      // Update jobber_jobs row when the id matches a real jobber_jobs row
+      const { data: jjExists } = await supabase
+        .from("jobber_jobs").select("id").eq("id", job.id).maybeSingle();
+      if (jjExists?.id) {
+        const { error: upErr } = await supabase
+          .from("jobber_jobs").update({ visit_status: newStatus }).eq("id", job.id);
+        if (upErr) throw upErr;
+      }
+      // Mirror to platform_jobs
+      const platformStatus = mapVisitStatusToPlatform(newStatus);
+      if (platformJobRow?.id) {
+        await supabase.from("platform_jobs")
+          .update({ status: platformStatus, ...(newStatus === "complete" ? { completed_at: now } : {}) })
+          .eq("id", platformJobRow.id);
+      } else {
+        await supabase.from("platform_jobs")
+          .update({ status: platformStatus, ...(newStatus === "complete" ? { completed_at: now } : {}) })
+          .eq("source_system", "jobber").eq("source_record_id", job.id);
+      }
     }
 
     // Upsert job_visit_events row with timestamps
@@ -280,5 +341,25 @@ function summaryFor(action: Action, title: string | null): string {
     case "close_invoice_later": return `${t} — completed, invoice deferred`;
     case "leave_open": return `${t} — completed, left open`;
     case "reopen_visit": return `${t} — visit reopened`;
+  }
+}
+
+function mapPlatformStatusToVisit(status: string | null): string {
+  const s = (status ?? "").toLowerCase();
+  if (s === "completed" || s === "complete") return "complete";
+  if (s === "in_progress") return "in_progress";
+  if (s === "on_my_way") return "on_my_way";
+  if (s === "on_site") return "on_site";
+  if (s === "cancelled" || s === "canceled") return "cancelled";
+  return "scheduled";
+}
+
+function mapVisitStatusToPlatform(visit: string): string {
+  switch (visit) {
+    case "complete": return "completed";
+    case "in_progress":
+    case "on_site":
+    case "on_my_way": return "in_progress";
+    default: return "scheduled";
   }
 }
