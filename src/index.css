@@ -193,6 +193,10 @@
 }
 
 /* Invoice form input visibility on dark theme */
+.ops-theme input,
+.ops-theme textarea,
+.ops-theme select,
+.ops-theme [role="combobox"],
 .invoice-form input,
 .invoice-form textarea,
 .invoice-form select,
@@ -200,14 +204,29 @@
   color: #ffffff !important;
   caret-color: var(--accent-color) !important;
 }
+.ops-theme input::placeholder,
+.ops-theme textarea::placeholder,
 .invoice-form input::placeholder,
 .invoice-form textarea::placeholder {
   color: rgba(255, 255, 255, 0.40) !important;
 }
+.ops-theme input:focus,
+.ops-theme textarea:focus,
 .invoice-form input:focus,
 .invoice-form textarea:focus {
   border-color: rgba(var(--biz-accent-rgb), 0.60) !important;
   box-shadow: 0 0 0 2px rgba(var(--biz-accent-rgb), 0.12) !important;
+}
+.ops-theme input:-webkit-autofill,
+.ops-theme textarea:-webkit-autofill {
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: var(--accent-color) !important;
+  transition: background-color 9999s ease-in-out 0s;
+}
+.ops-theme input:disabled,
+.ops-theme textarea:disabled {
+  color: rgba(255, 255, 255, 0.55) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.55) !important;
 }
 
 .platform-dashboard-bg {
