@@ -2,7 +2,7 @@ import { useEffect, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, keepPreviousData } from "@tanstack/react-query";
 import { BrowserRouter, Routes, useLocation } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { BusinessProvider } from "@/contexts/BusinessContext";
@@ -59,6 +59,10 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
       retry: 1,
+      // Keep previously-loaded data visible while a query refetches in the
+      // background. Prevents KPI cards / lists from flickering back to
+      // skeleton/dash placeholders on every nav or business switch.
+      placeholderData: keepPreviousData,
     },
   },
 });
