@@ -608,18 +608,14 @@ function JobEditForm({
 
     try {
       if (isNative) {
-        const patch: Record<string, unknown> = {
-          title: title.trim(),
-          internal_notes: notes || null,
-          total: totalNum,
-        };
-        if (date) {
-          patch.scheduled_start = date;
-          patch.scheduled_end = date;
-        }
         const { error: jobErr } = await supabase
           .from("platform_jobs")
-          .update(patch)
+          .update({
+            title: title.trim(),
+            internal_notes: notes || null,
+            total: totalNum,
+            ...(date ? { scheduled_start: date, scheduled_end: date } : {}),
+          })
           .eq("id", job.id);
         if (jobErr) throw jobErr;
 
@@ -631,10 +627,11 @@ function JobEditForm({
             .eq("job_id", job.id)
             .order("visit_number", { ascending: true })
             .limit(1);
-          const visitPatch: Record<string, unknown> = {};
-          if (date) visitPatch.scheduled_date = date;
-          if (startTime) visitPatch.scheduled_start_time = startTime;
-          if (endTime) visitPatch.scheduled_end_time = endTime;
+          const visitPatch = {
+            ...(date ? { scheduled_date: date } : {}),
+            ...(startTime ? { scheduled_start_time: startTime } : {}),
+            ...(endTime ? { scheduled_end_time: endTime } : {}),
+          };
           if (visits && visits[0]) {
             const { error: vErr } = await supabase
               .from("platform_job_visits")
@@ -657,22 +654,24 @@ function JobEditForm({
         }
       } else {
         // Jobber-imported: update local mirror in jobber_jobs (timestamptz)
-        const patch: Record<string, unknown> = {
-          title: title.trim(),
-          internal_notes: notes || null,
-          total_amount: totalNum,
-        };
-        if (date && startTime) {
-          patch.scheduled_start = new Date(`${date}T${startTime}:00`).toISOString();
-          patch.scheduled_end = endTime
-            ? new Date(`${date}T${endTime}:00`).toISOString()
-            : new Date(`${date}T${startTime}:00`).toISOString();
-        } else if (date) {
-          patch.scheduled_start = new Date(`${date}T08:00:00`).toISOString();
-        }
+        const schedulePatch = date
+          ? startTime
+            ? {
+                scheduled_start: new Date(`${date}T${startTime}:00`).toISOString(),
+                scheduled_end: new Date(
+                  `${date}T${endTime || startTime}:00`,
+                ).toISOString(),
+              }
+            : { scheduled_start: new Date(`${date}T08:00:00`).toISOString() }
+          : {};
         const { error: jErr } = await supabase
           .from("jobber_jobs")
-          .update(patch)
+          .update({
+            title: title.trim(),
+            internal_notes: notes || null,
+            total_amount: totalNum,
+            ...schedulePatch,
+          })
           .eq("id", job.id);
         if (jErr) throw jErr;
       }
