@@ -489,13 +489,5 @@ export async function fetchDashboardScheduledJobs(
       return normalized.sort(
         (a, b) => new Date(a.scheduled_start).getTime() - new Date(b.scheduled_start).getTime(),
       );
-    },
-  });
-
-  const summary = useMemo(
-    () => summarizeDashboardScheduledJobs(query.data ?? []),
-    [query.data],
-  );
-
-  return { ...query, jobs: query.data ?? [], summary };
+  }
 }
