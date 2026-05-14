@@ -281,12 +281,11 @@ export default function PlatformLayout({ children }: Props) {
     })();
   }, [auth.loading, auth.selectedBusinessId]);
 
-  // Only block the entire app while we don't yet know whether the user is
-  // signed in. Once we have a userId (or have confirmed there isn't one and
-  // the redirect effect is firing), render the shell immediately so the
-  // header + nav are usable while business access / dashboard data load in
-  // the background. Each page is responsible for its own skeletons.
-  if (auth.loading && !auth.userId) {
+  // Only block the full screen when we genuinely have nothing to render yet
+  // (no user known AND no businesses cached). Once we have either, render
+  // the shell immediately so the header + bottom nav are usable while
+  // business access / dashboard data continue loading in the background.
+  if (auth.loading && !auth.userId && auth.businesses.length === 0) {
     return (
       <div className="ops-theme min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
