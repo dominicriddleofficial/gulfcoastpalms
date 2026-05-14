@@ -4,6 +4,8 @@ import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Search,
@@ -20,6 +22,8 @@ import {
   XCircle,
   Trash2,
   Receipt,
+  Pencil,
+  Save,
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
