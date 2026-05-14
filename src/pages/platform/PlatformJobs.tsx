@@ -570,3 +570,159 @@ function InfoBlock({ icon: Icon, label, value }: { icon: any; label: string; val
     </div>
   );
 }
+
+function JobEditForm({
+  job,
+  onCancel,
+  onSaved,
+}: {
+  job: JobberJob;
+  onCancel: () => void;
+  onSaved: () => void;
+}) {
+  const isNative = job.source === "platform";
+  const initialDate = job.scheduled_start ? format(new Date(job.scheduled_start), "yyyy-MM-dd") : "";
+  const initialStart = job.scheduled_start ? format(new Date(job.scheduled_start), "HH:mm") : "";
+  const initialEnd = job.scheduled_end ? format(new Date(job.scheduled_end), "HH:mm") : "";
+
+  const [title, setTitle] = useState(job.title ?? "");
+  const [notes, setNotes] = useState(job.internal_notes ?? "");
+  const [total, setTotal] = useState(job.total_amount != null ? String(job.total_amount) : "");
+  const [date, setDate] = useState(initialDate);
+  const [startTime, setStartTime] = useState(initialStart);
+  const [endTime, setEndTime] = useState(initialEnd);
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    if (!title.trim()) {
+      toast.error("Title is required");
+      return;
+    }
+    setSaving(true);
+    const totalNum = total === "" ? null : Number(total);
+    if (totalNum != null && Number.isNaN(totalNum)) {
+      toast.error("Total must be a number");
+      setSaving(false);
+      return;
+    }
+
+    try {
+      if (isNative) {
+        const patch: Record<string, unknown> = {
+          title: title.trim(),
+          internal_notes: notes || null,
+          total: totalNum,
+        };
+        if (date) {
+          patch.scheduled_start = date;
+          patch.scheduled_end = date;
+        }
+        const { error: jobErr } = await supabase
+          .from("platform_jobs")
+          .update(patch)
+          .eq("id", job.id);
+        if (jobErr) throw jobErr;
+
+        // Sync first visit row to match
+        if (date || startTime || endTime) {
+          const { data: visits } = await supabase
+            .from("platform_job_visits")
+            .select("id, visit_number")
+            .eq("job_id", job.id)
+            .order("visit_number", { ascending: true })
+            .limit(1);
+          const visitPatch: Record<string, unknown> = {};
+          if (date) visitPatch.scheduled_date = date;
+          if (startTime) visitPatch.scheduled_start_time = startTime;
+          if (endTime) visitPatch.scheduled_end_time = endTime;
+          if (visits && visits[0]) {
+            const { error: vErr } = await supabase
+              .from("platform_job_visits")
+              .update(visitPatch)
+              .eq("id", visits[0].id);
+            if (vErr) throw vErr;
+          } else if (job.business_id && date) {
+            const { error: vInsErr } = await supabase.from("platform_job_visits").insert({
+              business_id: job.business_id,
+              job_id: job.id,
+              visit_number: 1,
+              title: title.trim(),
+              status: "scheduled",
+              scheduled_date: date,
+              scheduled_start_time: startTime || null,
+              scheduled_end_time: endTime || null,
+            });
+            if (vInsErr) throw vInsErr;
+          }
+        }
+      } else {
+        // Jobber-imported: update local mirror in jobber_jobs (timestamptz)
+        const patch: Record<string, unknown> = {
+          title: title.trim(),
+          internal_notes: notes || null,
+          total_amount: totalNum,
+        };
+        if (date && startTime) {
+          patch.scheduled_start = new Date(`${date}T${startTime}:00`).toISOString();
+          patch.scheduled_end = endTime
+            ? new Date(`${date}T${endTime}:00`).toISOString()
+            : new Date(`${date}T${startTime}:00`).toISOString();
+        } else if (date) {
+          patch.scheduled_start = new Date(`${date}T08:00:00`).toISOString();
+        }
+        const { error: jErr } = await supabase
+          .from("jobber_jobs")
+          .update(patch)
+          .eq("id", job.id);
+        if (jErr) throw jErr;
+      }
+
+      toast.success("Job updated");
+      onSaved();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to save job";
+      toast.error(msg);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="bg-card border border-border rounded-lg p-3 space-y-3">
+      <div>
+        <Label className="font-body text-xs text-muted-foreground">Title</Label>
+        <Input value={title} onChange={(e) => setTitle(e.target.value)} className="mt-1" />
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        <div className="col-span-3">
+          <Label className="font-body text-xs text-muted-foreground">Date</Label>
+          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1" />
+        </div>
+        <div>
+          <Label className="font-body text-xs text-muted-foreground">Start</Label>
+          <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className="mt-1" />
+        </div>
+        <div>
+          <Label className="font-body text-xs text-muted-foreground">End</Label>
+          <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} className="mt-1" />
+        </div>
+        <div>
+          <Label className="font-body text-xs text-muted-foreground">Total ($)</Label>
+          <Input type="number" inputMode="decimal" step="0.01" value={total} onChange={(e) => setTotal(e.target.value)} className="mt-1" />
+        </div>
+      </div>
+      <div>
+        <Label className="font-body text-xs text-muted-foreground">Instructions / notes</Label>
+        <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className="mt-1" />
+      </div>
+      <div className="flex gap-2 justify-end pt-1">
+        <Button size="sm" variant="outline" className="font-body text-xs" onClick={onCancel} disabled={saving}>
+          Cancel
+        </Button>
+        <Button size="sm" className="font-body text-xs" onClick={save} disabled={saving}>
+          <Save className="w-3.5 h-3.5 mr-1" /> {saving ? "Saving…" : "Save changes"}
+        </Button>
+      </div>
+    </div>
+  );
+}
