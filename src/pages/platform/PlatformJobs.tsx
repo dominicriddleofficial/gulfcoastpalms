@@ -4,6 +4,8 @@ import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Search,
@@ -20,6 +22,8 @@ import {
   XCircle,
   Trash2,
   Receipt,
+  Pencil,
+  Save,
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -323,9 +327,11 @@ export default function PlatformJobs() {
 function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: () => void; onChanged: () => void }) {
   const { selectedBusinessId } = usePlatformAuth();
   const { notifyCreated, open: openSheet } = useCreateSheets();
+  const { isStaff } = useUserRole();
   const [requestingReview, setRequestingReview] = useState(false);
   const [jobStatus, setJobStatus] = useState(job.visit_status || job.status || "scheduled");
   const [acting, setActing] = useState(false);
+  const [editing, setEditing] = useState(false);
   const isNative = job.source === "platform";
 
   const finishUpdate = (error: { message: string } | null, successMsg: string) => {
@@ -449,11 +455,26 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
       </SheetHeader>
 
       <div>
-        <h3 className="font-body text-lg font-semibold text-foreground">{job.title || "Untitled Job"}</h3>
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-body text-lg font-semibold text-foreground flex-1">{job.title || "Untitled Job"}</h3>
+          {isStaff && !editing && (
+            <Button size="sm" variant="outline" className="font-body text-xs shrink-0" onClick={() => setEditing(true)}>
+              <Pencil className="w-3.5 h-3.5 mr-1" /> Edit
+            </Button>
+          )}
+        </div>
         <p className="font-body text-xs text-muted-foreground mt-1">
-          {job.source === "platform" ? "Native job — created in platform" : "Synced from Jobber — edit in Jobber until migration"}
+          {job.source === "platform" ? "Native job — created in platform" : "Synced from Jobber — edits saved locally"}
         </p>
       </div>
+
+      {editing && isStaff && (
+        <JobEditForm
+          job={job}
+          onCancel={() => setEditing(false)}
+          onSaved={() => { setEditing(false); notifyCreated(); onChanged(); }}
+        />
+      )}
 
       {isNative && (
         <div className="grid grid-cols-2 gap-2">
@@ -546,6 +567,161 @@ function InfoBlock({ icon: Icon, label, value }: { icon: any; label: string; val
         <p className="font-body text-[10px] text-muted-foreground">{label}</p>
       </div>
       <p className="font-body text-sm text-foreground truncate">{value}</p>
+    </div>
+  );
+}
+
+function JobEditForm({
+  job,
+  onCancel,
+  onSaved,
+}: {
+  job: JobberJob;
+  onCancel: () => void;
+  onSaved: () => void;
+}) {
+  const isNative = job.source === "platform";
+  const initialDate = job.scheduled_start ? format(new Date(job.scheduled_start), "yyyy-MM-dd") : "";
+  const initialStart = job.scheduled_start ? format(new Date(job.scheduled_start), "HH:mm") : "";
+  const initialEnd = job.scheduled_end ? format(new Date(job.scheduled_end), "HH:mm") : "";
+
+  const [title, setTitle] = useState(job.title ?? "");
+  const [notes, setNotes] = useState(job.internal_notes ?? "");
+  const [total, setTotal] = useState(job.total_amount != null ? String(job.total_amount) : "");
+  const [date, setDate] = useState(initialDate);
+  const [startTime, setStartTime] = useState(initialStart);
+  const [endTime, setEndTime] = useState(initialEnd);
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    if (!title.trim()) {
+      toast.error("Title is required");
+      return;
+    }
+    setSaving(true);
+    const totalNum = total === "" ? null : Number(total);
+    if (totalNum != null && Number.isNaN(totalNum)) {
+      toast.error("Total must be a number");
+      setSaving(false);
+      return;
+    }
+
+    try {
+      if (isNative) {
+        const { error: jobErr } = await supabase
+          .from("platform_jobs")
+          .update({
+            title: title.trim(),
+            internal_notes: notes || null,
+            total: totalNum,
+            ...(date ? { scheduled_start: date, scheduled_end: date } : {}),
+          })
+          .eq("id", job.id);
+        if (jobErr) throw jobErr;
+
+        // Sync first visit row to match
+        if (date || startTime || endTime) {
+          const { data: visits } = await supabase
+            .from("platform_job_visits")
+            .select("id, visit_number")
+            .eq("job_id", job.id)
+            .order("visit_number", { ascending: true })
+            .limit(1);
+          const visitPatch = {
+            ...(date ? { scheduled_date: date } : {}),
+            ...(startTime ? { scheduled_start_time: startTime } : {}),
+            ...(endTime ? { scheduled_end_time: endTime } : {}),
+          };
+          if (visits && visits[0]) {
+            const { error: vErr } = await supabase
+              .from("platform_job_visits")
+              .update(visitPatch)
+              .eq("id", visits[0].id);
+            if (vErr) throw vErr;
+          } else if (job.business_id && date) {
+            const { error: vInsErr } = await supabase.from("platform_job_visits").insert({
+              business_id: job.business_id,
+              job_id: job.id,
+              visit_number: 1,
+              title: title.trim(),
+              status: "scheduled",
+              scheduled_date: date,
+              scheduled_start_time: startTime || null,
+              scheduled_end_time: endTime || null,
+            });
+            if (vInsErr) throw vInsErr;
+          }
+        }
+      } else {
+        // Jobber-imported: update local mirror in jobber_jobs (timestamptz)
+        const schedulePatch = date
+          ? startTime
+            ? {
+                scheduled_start: new Date(`${date}T${startTime}:00`).toISOString(),
+                scheduled_end: new Date(
+                  `${date}T${endTime || startTime}:00`,
+                ).toISOString(),
+              }
+            : { scheduled_start: new Date(`${date}T08:00:00`).toISOString() }
+          : {};
+        const { error: jErr } = await supabase
+          .from("jobber_jobs")
+          .update({
+            title: title.trim(),
+            internal_notes: notes || null,
+            total_amount: totalNum,
+            ...schedulePatch,
+          })
+          .eq("id", job.id);
+        if (jErr) throw jErr;
+      }
+
+      toast.success("Job updated");
+      onSaved();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to save job";
+      toast.error(msg);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="bg-card border border-border rounded-lg p-3 space-y-3">
+      <div>
+        <Label className="font-body text-xs text-muted-foreground">Title</Label>
+        <Input value={title} onChange={(e) => setTitle(e.target.value)} className="mt-1" />
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        <div className="col-span-3">
+          <Label className="font-body text-xs text-muted-foreground">Date</Label>
+          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1" />
+        </div>
+        <div>
+          <Label className="font-body text-xs text-muted-foreground">Start</Label>
+          <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className="mt-1" />
+        </div>
+        <div>
+          <Label className="font-body text-xs text-muted-foreground">End</Label>
+          <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} className="mt-1" />
+        </div>
+        <div>
+          <Label className="font-body text-xs text-muted-foreground">Total ($)</Label>
+          <Input type="number" inputMode="decimal" step="0.01" value={total} onChange={(e) => setTotal(e.target.value)} className="mt-1" />
+        </div>
+      </div>
+      <div>
+        <Label className="font-body text-xs text-muted-foreground">Instructions / notes</Label>
+        <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className="mt-1" />
+      </div>
+      <div className="flex gap-2 justify-end pt-1">
+        <Button size="sm" variant="outline" className="font-body text-xs" onClick={onCancel} disabled={saving}>
+          Cancel
+        </Button>
+        <Button size="sm" className="font-body text-xs" onClick={save} disabled={saving}>
+          <Save className="w-3.5 h-3.5 mr-1" /> {saving ? "Saving…" : "Save changes"}
+        </Button>
+      </div>
     </div>
   );
 }
