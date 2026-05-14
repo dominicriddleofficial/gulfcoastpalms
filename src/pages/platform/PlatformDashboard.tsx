@@ -1,5 +1,9 @@
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { startOfWeek, endOfWeek } from "date-fns";
 import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
+import { prefetchDashboardScheduledJobs } from "@/hooks/useDashboardScheduledJobs";
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
 import TodaySection from "@/components/platform/dashboard/TodaySection";
 import ReliabilitySection from "@/components/platform/dashboard/ReliabilitySection";
@@ -9,8 +13,21 @@ import ScheduledValueChart from "@/components/platform/dashboard/ScheduledValueC
 
 export default function PlatformDashboard() {
   const { selectedBusinessId, businesses } = usePlatformAuth();
+  const qc = useQueryClient();
 
   const selectedBiz = businesses.find((b) => b.id === selectedBusinessId);
+
+  // Warm the Schedule page cache so tapping the bottom-nav Schedule tab is instant.
+  // Matches PlatformSchedule's Sunday-Saturday week range.
+  useEffect(() => {
+    if (!selectedBusinessId) return;
+    const now = new Date();
+    prefetchDashboardScheduledJobs(qc, {
+      businessId: selectedBusinessId,
+      startDate: startOfWeek(now, { weekStartsOn: 0 }),
+      endDate: endOfWeek(now, { weekStartsOn: 0 }),
+    });
+  }, [qc, selectedBusinessId]);
 
   return (
     <PlatformLayout>
