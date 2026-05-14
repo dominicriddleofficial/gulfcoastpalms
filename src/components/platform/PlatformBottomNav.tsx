@@ -1,4 +1,8 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { startOfWeek, endOfWeek } from "date-fns";
+import { prefetchRoute } from "@/lib/route-prefetch";
+import { prefetchDashboardScheduledJobs } from "@/hooks/useDashboardScheduledJobs";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, CalendarDays, Receipt, Search, MoreHorizontal,
@@ -63,6 +67,7 @@ export default function PlatformBottomNav({ businessId, onSignOut, workspaceShor
   const location = useLocation();
   const navigate = useNavigate();
   const { role } = useUserRole();
+  const qc = useQueryClient();
   const [moreOpen, setMoreOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -117,9 +122,27 @@ export default function PlatformBottomNav({ businessId, onSignOut, workspaceShor
               </div>
             );
 
+  const warmRoute = (to: string) => {
+    prefetchRoute(to);
+    if (to === "/platform/schedule" && businessId) {
+      const now = new Date();
+      prefetchDashboardScheduledJobs(qc, {
+        businessId,
+        startDate: startOfWeek(now, { weekStartsOn: 0 }),
+        endDate: endOfWeek(now, { weekStartsOn: 0 }),
+      });
+    }
+  };
+
             if (item.type === "link") {
               return (
-                <Link key={item.key} to={item.to} className="flex-1 flex">
+                <Link
+                  key={item.key}
+                  to={item.to}
+                  className="flex-1 flex"
+                  onPointerDown={() => warmRoute(item.to)}
+                  onTouchStart={() => warmRoute(item.to)}
+                >
                   {content}
                 </Link>
               );

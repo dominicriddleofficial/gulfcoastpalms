@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, type QueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -256,7 +256,43 @@ export function useDashboardScheduledJobs(opts: UseDashboardScheduledJobsOptions
   const query = useQuery({
     queryKey: ["dashboard-scheduled-jobs", businessId, startKey, endKey],
     enabled: enabled && !!businessId,
-    queryFn: async (): Promise<DashboardScheduledJob[]> => {
+    queryFn: () => fetchDashboardScheduledJobs({ businessId, startDate, endDate }),
+  });
+
+  const summary = useMemo(
+    () => summarizeDashboardScheduledJobs(query.data ?? []),
+    [query.data],
+  );
+
+  return { ...query, jobs: query.data ?? [], summary };
+}
+
+export function dashboardScheduledJobsKey(
+  businessId: string | null,
+  startDate?: Date,
+  endDate?: Date,
+) {
+  const startKey = startDate ? format(startDate, "yyyy-MM-dd") : "all";
+  const endKey = endDate ? format(endDate, "yyyy-MM-dd") : "all";
+  return ["dashboard-scheduled-jobs", businessId, startKey, endKey] as const;
+}
+
+export function prefetchDashboardScheduledJobs(
+  qc: QueryClient,
+  opts: { businessId: string | null; startDate?: Date; endDate?: Date },
+) {
+  if (!opts.businessId) return Promise.resolve();
+  return qc.prefetchQuery({
+    queryKey: dashboardScheduledJobsKey(opts.businessId, opts.startDate, opts.endDate),
+    queryFn: () => fetchDashboardScheduledJobs(opts),
+  });
+}
+
+export async function fetchDashboardScheduledJobs(
+  opts: { businessId: string | null; startDate?: Date; endDate?: Date },
+): Promise<DashboardScheduledJob[]> {
+  const { businessId, startDate, endDate } = opts;
+  {
       const startDay = startDate ? format(startDate, "yyyy-MM-dd") : null;
       const endDay = endDate ? format(endDate, "yyyy-MM-dd") : null;
       const startIso = startDate?.toISOString() ?? null;
@@ -453,13 +489,5 @@ export function useDashboardScheduledJobs(opts: UseDashboardScheduledJobsOptions
       return normalized.sort(
         (a, b) => new Date(a.scheduled_start).getTime() - new Date(b.scheduled_start).getTime(),
       );
-    },
-  });
-
-  const summary = useMemo(
-    () => summarizeDashboardScheduledJobs(query.data ?? []),
-    [query.data],
-  );
-
-  return { ...query, jobs: query.data ?? [], summary };
+  }
 }
