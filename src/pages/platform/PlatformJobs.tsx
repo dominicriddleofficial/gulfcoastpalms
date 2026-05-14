@@ -327,9 +327,11 @@ export default function PlatformJobs() {
 function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: () => void; onChanged: () => void }) {
   const { selectedBusinessId } = usePlatformAuth();
   const { notifyCreated, open: openSheet } = useCreateSheets();
+  const { isStaff } = useUserRole();
   const [requestingReview, setRequestingReview] = useState(false);
   const [jobStatus, setJobStatus] = useState(job.visit_status || job.status || "scheduled");
   const [acting, setActing] = useState(false);
+  const [editing, setEditing] = useState(false);
   const isNative = job.source === "platform";
 
   const finishUpdate = (error: { message: string } | null, successMsg: string) => {
@@ -453,11 +455,26 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
       </SheetHeader>
 
       <div>
-        <h3 className="font-body text-lg font-semibold text-foreground">{job.title || "Untitled Job"}</h3>
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-body text-lg font-semibold text-foreground flex-1">{job.title || "Untitled Job"}</h3>
+          {isStaff && !editing && (
+            <Button size="sm" variant="outline" className="font-body text-xs shrink-0" onClick={() => setEditing(true)}>
+              <Pencil className="w-3.5 h-3.5 mr-1" /> Edit
+            </Button>
+          )}
+        </div>
         <p className="font-body text-xs text-muted-foreground mt-1">
-          {job.source === "platform" ? "Native job — created in platform" : "Synced from Jobber — edit in Jobber until migration"}
+          {job.source === "platform" ? "Native job — created in platform" : "Synced from Jobber — edits saved locally"}
         </p>
       </div>
+
+      {editing && isStaff && (
+        <JobEditForm
+          job={job}
+          onCancel={() => setEditing(false)}
+          onSaved={() => { setEditing(false); notifyCreated(); onChanged(); }}
+        />
+      )}
 
       {isNative && (
         <div className="grid grid-cols-2 gap-2">
