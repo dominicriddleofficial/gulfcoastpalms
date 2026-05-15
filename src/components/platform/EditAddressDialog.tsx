@@ -103,7 +103,7 @@ export default function EditAddressDialog({
       }
       const { data: created, error: insErr } = await supabase
         .from("platform_properties")
-        .insert(insertRow)
+        .insert([insertRow as never])
         .select("*")
         .single();
       setSaving(false);
