@@ -78,6 +78,17 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
   const [customerName, setCustomerName] = useState(prefill?.customer?.display_name ?? "");
   const [customerEmail, setCustomerEmail] = useState(prefill?.customer?.email ?? "");
   const [customerPhone, setCustomerPhone] = useState(prefill?.customer?.phone ?? "");
+  // Service/property address snapshot for the invoice — frozen from job/property at creation time.
+  const [serviceLine1, setServiceLine1] = useState(prefill?.serviceAddress?.line1 ?? "");
+  const [serviceLine2, setServiceLine2] = useState(prefill?.serviceAddress?.line2 ?? "");
+  const [serviceCity, setServiceCity] = useState(prefill?.serviceAddress?.city ?? "");
+  const [serviceState, setServiceState] = useState(prefill?.serviceAddress?.state ?? "");
+  const [serviceZip, setServiceZip] = useState(prefill?.serviceAddress?.zip ?? "");
+  const [servicePropertyId] = useState<string | null>(prefill?.serviceAddress?.property_id ?? null);
+  const [serviceFormatted] = useState<string | null>(prefill?.serviceAddress?.formatted_address ?? null);
+  const [serviceLat] = useState<number | null>(prefill?.serviceAddress?.latitude ?? null);
+  const [serviceLng] = useState<number | null>(prefill?.serviceAddress?.longitude ?? null);
+  const [servicePlaceId] = useState<string | null>(prefill?.serviceAddress?.place_id ?? null);
   const [invoiceNumber, setInvoiceNumber] = useState("Generating…");
   const [invoiceNumberOverride, setInvoiceNumberOverride] = useState(false);
   const [issueDate, setIssueDate] = useState(format(new Date(), "yyyy-MM-dd"));
@@ -273,6 +284,13 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
     customerName: customerName || "Customer Name",
     customerEmail,
     customerPhone,
+    customerAddress: {
+      line1: serviceLine1 || null,
+      line2: serviceLine2 || null,
+      city: serviceCity || null,
+      state: serviceState || null,
+      zip: serviceZip || null,
+    },
     lineItems: lineItems.filter(l => l.description.trim()).map(l => ({
       description: l.description,
       quantity: Number(l.qty) || 1,
@@ -289,7 +307,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
     shortcode: activeBiz?.shortcode || "gcp",
     isDraft: true,
     logoUrl: logoUrl,
-  }), [invoiceNumber, issueDate, dueDate, customerName, customerEmail, customerPhone, lineItems, subtotal, taxEnabled, taxRate, taxAmount, discountAmount, total, publicNotes, activeBiz, logoUrl]);
+  }), [invoiceNumber, issueDate, dueDate, customerName, customerEmail, customerPhone, serviceLine1, serviceLine2, serviceCity, serviceState, serviceZip, lineItems, subtotal, taxEnabled, taxRate, taxAmount, discountAmount, total, publicNotes, activeBiz, logoUrl]);
 
   // Save invoice
   const handleSave = async (sendAfter: boolean = false, sendData: SendInvoiceData | null = null) => {
@@ -338,6 +356,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
       business_id: bizId,
       invoice_number: invoiceNumber,
       customer_id: resolvedCustomerId,
+      property_id: servicePropertyId,
       status: "draft",
       terms,
       issue_date: issueDate,
@@ -352,6 +371,15 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
       public_notes: publicNotes || null,
       internal_notes: internalNotes || null,
       created_by_user_id: userId,
+      service_address_line1: serviceLine1 || null,
+      service_address_line2: serviceLine2 || null,
+      service_city: serviceCity || null,
+      service_state: serviceState || null,
+      service_zip: serviceZip || null,
+      service_formatted_address: serviceFormatted,
+      service_latitude: serviceLat,
+      service_longitude: serviceLng,
+      service_place_id: servicePlaceId,
     }).select().single();
 
     if (error || !inv) {
@@ -543,6 +571,43 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
                         )}
                       </div>
                     )}
+                  </div>
+                )}
+                {customerId && (
+                  <div className="pt-2 mt-2 border-t border-border/50 space-y-1.5">
+                    <p className="font-body text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                      Service Address
+                    </p>
+                    <Input
+                      placeholder="Street address"
+                      value={serviceLine1}
+                      onChange={(e) => setServiceLine1(e.target.value)}
+                      className="bg-secondary/50 border-border font-body text-xs h-8"
+                    />
+                    <div className="grid grid-cols-3 gap-1.5">
+                      <Input
+                        placeholder="City"
+                        value={serviceCity}
+                        onChange={(e) => setServiceCity(e.target.value)}
+                        className="col-span-2 bg-secondary/50 border-border font-body text-xs h-8"
+                      />
+                      <Input
+                        placeholder="ST"
+                        value={serviceState}
+                        onChange={(e) => setServiceState(e.target.value.toUpperCase().slice(0, 2))}
+                        maxLength={2}
+                        className="bg-secondary/50 border-border font-body text-xs h-8"
+                      />
+                    </div>
+                    <Input
+                      placeholder="Zip"
+                      value={serviceZip}
+                      onChange={(e) => setServiceZip(e.target.value)}
+                      className="bg-secondary/50 border-border font-body text-xs h-8"
+                    />
+                    <p className="font-body text-[10px] text-muted-foreground">
+                      Pulled from the linked job — saved with this invoice so it never changes.
+                    </p>
                   </div>
                 )}
               </div>

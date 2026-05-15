@@ -62,6 +62,13 @@ interface PreviewData {
   customerName: string;
   customerEmail?: string;
   customerPhone?: string;
+  customerAddress?: {
+    line1?: string | null;
+    line2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    zip?: string | null;
+  } | null;
   lineItems: Array<{ description: string; quantity: number; unit_price: number; line_total: number }>;
   subtotal: number;
   taxRate: number;
@@ -207,14 +214,26 @@ export default function InvoicePreviewPanel({ data }: { data: PreviewData }) {
           <div style={{ fontSize: "16px", fontWeight: 700, color: "#fff" }}>
             {data.customerName}
           </div>
+          {data.customerPhone && (
+            <div style={{ fontSize: "12px", color: brand.secondaryText, marginTop: "3px" }}>
+              {data.customerPhone}
+            </div>
+          )}
           {data.customerEmail && (
             <div style={{ fontSize: "12px", color: brand.secondaryText, marginTop: "3px" }}>
               {data.customerEmail}
             </div>
           )}
-          {data.customerPhone && (
-            <div style={{ fontSize: "12px", color: brand.secondaryText, marginTop: "2px" }}>
-              {data.customerPhone}
+          {data.customerAddress && (data.customerAddress.line1 || data.customerAddress.city) && (
+            <div style={{ fontSize: "12px", color: brand.secondaryText, marginTop: "6px", lineHeight: 1.45 }}>
+              {data.customerAddress.line1 && <div>{data.customerAddress.line1}</div>}
+              {data.customerAddress.line2 && <div>{data.customerAddress.line2}</div>}
+              {(data.customerAddress.city || data.customerAddress.state || data.customerAddress.zip) && (
+                <div>
+                  {[data.customerAddress.city, data.customerAddress.state].filter(Boolean).join(", ")}
+                  {data.customerAddress.zip ? ` ${data.customerAddress.zip}` : ""}
+                </div>
+              )}
             </div>
           )}
         </div>

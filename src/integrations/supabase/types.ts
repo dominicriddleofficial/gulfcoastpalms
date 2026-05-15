@@ -3091,6 +3091,15 @@ export type Database = {
           public_notes: string | null
           quote_id: string | null
           sent_at: string | null
+          service_address_line1: string | null
+          service_address_line2: string | null
+          service_city: string | null
+          service_formatted_address: string | null
+          service_latitude: number | null
+          service_longitude: number | null
+          service_place_id: string | null
+          service_state: string | null
+          service_zip: string | null
           source: string
           source_last_synced_at: string | null
           source_record_id: string | null
@@ -3131,6 +3140,15 @@ export type Database = {
           public_notes?: string | null
           quote_id?: string | null
           sent_at?: string | null
+          service_address_line1?: string | null
+          service_address_line2?: string | null
+          service_city?: string | null
+          service_formatted_address?: string | null
+          service_latitude?: number | null
+          service_longitude?: number | null
+          service_place_id?: string | null
+          service_state?: string | null
+          service_zip?: string | null
           source?: string
           source_last_synced_at?: string | null
           source_record_id?: string | null
@@ -3171,6 +3189,15 @@ export type Database = {
           public_notes?: string | null
           quote_id?: string | null
           sent_at?: string | null
+          service_address_line1?: string | null
+          service_address_line2?: string | null
+          service_city?: string | null
+          service_formatted_address?: string | null
+          service_latitude?: number | null
+          service_longitude?: number | null
+          service_place_id?: string | null
+          service_state?: string | null
+          service_zip?: string | null
           source?: string
           source_last_synced_at?: string | null
           source_record_id?: string | null

@@ -415,6 +415,7 @@ function CustomerDetail({ customer }: { customer: UnifiedCustomer }) {
           target={customer.source === "jobber" ? "jobber_property" : "platform_property"}
           propertyId={editing.id}
           businessId={selectedBusinessId}
+          customerId={customer.source === "jobber" ? null : customer.id}
           initial={{
             address_1: editing.street1 || "",
             city: editing.city,

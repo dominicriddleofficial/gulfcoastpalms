@@ -339,6 +339,7 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
   const [editingAddress, setEditingAddress] = useState<{
     target: "platform_property" | "jobber_property";
     propertyId: string;
+    customerId: string | null;
     initial: { address_1: string; city?: string | null; state?: string | null; zip?: string | null; verified?: boolean };
   } | null>(null);
   const [loadingAddress, setLoadingAddress] = useState(false);
@@ -350,7 +351,7 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
       if (isNative) {
         const { data: row } = await supabase
           .from("platform_jobs")
-          .select("property_id, platform_properties(id, address_1, city, state, zip, address_verified)")
+          .select("property_id, customer_id, platform_properties(id, address_1, city, state, zip, address_verified)")
           .eq("id", job.id)
           .maybeSingle();
         const prop = (row as any)?.platform_properties;
@@ -361,6 +362,7 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
         setEditingAddress({
           target: "platform_property",
           propertyId: prop.id,
+          customerId: (row as any)?.customer_id ?? null,
           initial: { address_1: prop.address_1, city: prop.city, state: prop.state, zip: prop.zip, verified: !!prop.address_verified },
         });
       } else {
@@ -377,6 +379,7 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
         setEditingAddress({
           target: "jobber_property",
           propertyId: prop.id,
+          customerId: null,
           initial: { address_1: prop.street1 || "", city: prop.city, state: prop.state, zip: prop.zip, verified: !!prop.address_verified },
         });
       }
@@ -478,20 +481,51 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
 
     let customerPayload: { id: string; display_name: string; phone: string | null; email: string | null } | null = null;
     let fromJobId: string | undefined;
+    let serviceAddress:
+      | {
+          line1?: string | null;
+          line2?: string | null;
+          city?: string | null;
+          state?: string | null;
+          zip?: string | null;
+          formatted_address?: string | null;
+          latitude?: number | null;
+          longitude?: number | null;
+          place_id?: string | null;
+          property_id?: string | null;
+        }
+      | null = null;
 
     if (isNative) {
       const { data: jobRow } = await supabase
         .from("platform_jobs")
-        .select("customer_id, platform_customers(display_name, phone, email)")
+        .select("customer_id, property_id, platform_customers(display_name, phone, email), platform_properties(id, address_1, address_2, city, state, zip, formatted_address, latitude, longitude, map_place_id)")
         .eq("id", job.id)
         .maybeSingle();
       const c = jobRow?.platform_customers as { display_name: string; phone: string | null; email: string | null } | null;
+      const p = (jobRow as any)?.platform_properties as
+        | { id: string; address_1: string; address_2: string | null; city: string; state: string; zip: string; formatted_address: string | null; latitude: number | null; longitude: number | null; map_place_id: string | null }
+        | null;
       if (jobRow?.customer_id) {
         customerPayload = {
           id: jobRow.customer_id,
           display_name: c?.display_name || job.client_name || "Customer",
           phone: c?.phone ?? null,
           email: c?.email ?? null,
+        };
+      }
+      if (p) {
+        serviceAddress = {
+          line1: p.address_1,
+          line2: p.address_2,
+          city: p.city,
+          state: p.state,
+          zip: p.zip,
+          formatted_address: p.formatted_address,
+          latitude: p.latitude != null ? Number(p.latitude) : null,
+          longitude: p.longitude != null ? Number(p.longitude) : null,
+          place_id: p.map_place_id,
+          property_id: p.id,
         };
       }
       fromJobId = job.id;
@@ -513,6 +547,42 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
           };
         }
       }
+      // Try to load the imported jobber property for this job, fall back to free-text property_address.
+      const { data: jjRow } = await supabase
+        .from("jobber_jobs")
+        .select("property_id, jobber_properties(street1, street2, city, state, zip, formatted_address, lat, lng, place_id)")
+        .eq("id", job.id)
+        .maybeSingle();
+      const jp = (jjRow as any)?.jobber_properties as
+        | { street1: string | null; street2: string | null; city: string | null; state: string | null; zip: string | null; formatted_address: string | null; lat: number | null; lng: number | null; place_id: string | null }
+        | null;
+      if (jp && (jp.street1 || jp.city)) {
+        serviceAddress = {
+          line1: jp.street1,
+          line2: jp.street2,
+          city: jp.city,
+          state: jp.state,
+          zip: jp.zip,
+          formatted_address: jp.formatted_address,
+          latitude: jp.lat != null ? Number(jp.lat) : null,
+          longitude: jp.lng != null ? Number(jp.lng) : null,
+          place_id: jp.place_id,
+          property_id: null,
+        };
+      } else if (job.property_address) {
+        serviceAddress = {
+          line1: job.property_address,
+          line2: null,
+          city: null,
+          state: null,
+          zip: null,
+          formatted_address: job.property_address,
+          latitude: null,
+          longitude: null,
+          place_id: null,
+          property_id: null,
+        };
+      }
     }
 
     if (!customerPayload && !job.client_name) {
@@ -525,6 +595,7 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
       customer: customerPayload,
       items: [{ description: job.title || "Job", quantity: 1, unit_price: total }],
       fromJobId,
+      serviceAddress,
     });
   };
 
@@ -735,6 +806,7 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
         target={editingAddress.target}
         propertyId={editingAddress.propertyId}
         businessId={selectedBusinessId}
+        customerId={editingAddress.customerId}
         initial={editingAddress.initial}
         onSaved={() => { notifyCreated(); onChanged(); }}
       />

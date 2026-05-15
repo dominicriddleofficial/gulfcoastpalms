@@ -41,7 +41,7 @@ serve(async (req) => {
 
     const { data, error } = await supabaseAdmin
       .from("platform_invoices")
-      .select("id, invoice_number, total, balance_due, status, deposit_required, deposit_amount, deposit_paid, business_id, customer_id, property_id, issue_date, due_date, subtotal, tax_total, tax_rate, public_notes, platform_customers(display_name, email, phone), platform_properties(address_1, address_2, city, state, zip), businesses(shortcode, public_brand_name, support_phone, support_email, website_url, logo_url)")
+      .select("id, invoice_number, total, balance_due, status, deposit_required, deposit_amount, deposit_paid, business_id, customer_id, property_id, job_id, issue_date, due_date, subtotal, tax_total, tax_rate, public_notes, service_address_line1, service_address_line2, service_city, service_state, service_zip, service_formatted_address, platform_customers(display_name, email, phone), platform_properties(address_1, address_2, city, state, zip), businesses(shortcode, public_brand_name, support_phone, support_email, website_url, logo_url)")
       .eq("id", invoice_id)
       .single();
 
@@ -87,11 +87,75 @@ serve(async (req) => {
     const cust = (data as any).platform_customers;
     const prop = (data as any).platform_properties;
     const biz = (data as any).businesses;
-    const customerAddress = prop
-      ? [prop.address_1, prop.address_2, [prop.city, prop.state, prop.zip].filter(Boolean).join(", ")]
-          .filter(Boolean)
-          .join(", ")
-      : null;
+
+    // Resolve address with priority:
+    // 1) snapshot fields stored on the invoice
+    // 2) linked property (platform_properties)
+    // 3) linked job's property/free-text address
+    let addr: { line1: string | null; line2: string | null; city: string | null; state: string | null; zip: string | null; formatted: string | null } = {
+      line1: (data as any).service_address_line1 || null,
+      line2: (data as any).service_address_line2 || null,
+      city: (data as any).service_city || null,
+      state: (data as any).service_state || null,
+      zip: (data as any).service_zip || null,
+      formatted: (data as any).service_formatted_address || null,
+    };
+    if (!addr.line1 && !addr.city && prop) {
+      addr = {
+        line1: prop.address_1 || null,
+        line2: prop.address_2 || null,
+        city: prop.city || null,
+        state: prop.state || null,
+        zip: prop.zip || null,
+        formatted: null,
+      };
+    }
+    if (!addr.line1 && !addr.city && (data as any).job_id) {
+      // Fallback: pull from linked native job's property, then jobber_jobs free text.
+      const jobId = (data as any).job_id as string;
+      const { data: pj } = await supabaseAdmin
+        .from("platform_jobs")
+        .select("platform_properties(address_1, address_2, city, state, zip)")
+        .eq("id", jobId)
+        .maybeSingle();
+      const pjp = (pj as any)?.platform_properties;
+      if (pjp && (pjp.address_1 || pjp.city)) {
+        addr = {
+          line1: pjp.address_1 || null,
+          line2: pjp.address_2 || null,
+          city: pjp.city || null,
+          state: pjp.state || null,
+          zip: pjp.zip || null,
+          formatted: null,
+        };
+      } else {
+        const { data: jj } = await supabaseAdmin
+          .from("jobber_jobs")
+          .select("property_address, jobber_properties(street1, street2, city, state, zip, formatted_address)")
+          .eq("id", jobId)
+          .maybeSingle();
+        const jjp = (jj as any)?.jobber_properties;
+        if (jjp && (jjp.street1 || jjp.city)) {
+          addr = {
+            line1: jjp.street1 || null,
+            line2: jjp.street2 || null,
+            city: jjp.city || null,
+            state: jjp.state || null,
+            zip: jjp.zip || null,
+            formatted: jjp.formatted_address || null,
+          };
+        } else if ((jj as any)?.property_address) {
+          addr.line1 = (jj as any).property_address;
+        }
+      }
+    }
+
+    const customerAddress =
+      addr.formatted ||
+      [addr.line1, addr.line2, [addr.city, addr.state, addr.zip].filter(Boolean).join(", ")]
+        .filter(Boolean)
+        .join(", ") ||
+      null;
 
     // Return only safe public-facing fields — no internal notes, cost margins, or employee data
     return new Response(JSON.stringify({
@@ -114,6 +178,7 @@ serve(async (req) => {
       customer_email: cust?.email || null,
       customer_phone: cust?.phone || null,
       customer_address: customerAddress,
+      customer_address_lines: addr,
       business_name: biz?.public_brand_name || "",
       business_phone: biz?.support_phone || null,
       business_email: biz?.support_email || null,
