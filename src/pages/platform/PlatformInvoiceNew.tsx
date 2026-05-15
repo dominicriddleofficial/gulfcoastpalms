@@ -1,12 +1,15 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { useCreateSheets } from "@/components/platform/CreateSheetsProvider";
 import InvoiceBuilder from "@/components/platform/billing/InvoiceBuilder";
+import type { InvoicePrefillState } from "@/components/platform/CreateSheetsProvider";
 
 export default function PlatformInvoiceNew() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { selectedBusinessId, businesses, userId } = usePlatformAuth();
   const { notifyCreated } = useCreateSheets();
+  const prefill = (location.state as { prefill?: InvoicePrefillState } | null)?.prefill;
 
   if (!selectedBusinessId) {
     return (
@@ -20,6 +23,7 @@ export default function PlatformInvoiceNew() {
       businessId={selectedBusinessId}
       businesses={businesses}
       userId={userId}
+      prefill={prefill}
       onClose={() => navigate(-1)}
       onCreated={() => { notifyCreated(); navigate("/platform/invoices"); }}
     />
