@@ -3827,11 +3827,15 @@ export type Database = {
           access_notes: string | null
           address_1: string
           address_2: string | null
+          address_verified: boolean
+          address_verified_at: string | null
           business_id: string
           city: string
           country: string | null
+          county: string | null
           created_at: string
           customer_id: string
+          formatted_address: string | null
           gate_code: string | null
           geocode_last_attempt_at: string | null
           geocode_source: string | null
@@ -3843,7 +3847,9 @@ export type Database = {
           map_place_id: string | null
           property_label: string | null
           property_type: string | null
+          route: string | null
           state: string
+          street_number: string | null
           updated_at: string
           zip: string
         }
@@ -3851,11 +3857,15 @@ export type Database = {
           access_notes?: string | null
           address_1: string
           address_2?: string | null
+          address_verified?: boolean
+          address_verified_at?: string | null
           business_id: string
           city: string
           country?: string | null
+          county?: string | null
           created_at?: string
           customer_id: string
+          formatted_address?: string | null
           gate_code?: string | null
           geocode_last_attempt_at?: string | null
           geocode_source?: string | null
@@ -3867,7 +3877,9 @@ export type Database = {
           map_place_id?: string | null
           property_label?: string | null
           property_type?: string | null
+          route?: string | null
           state?: string
+          street_number?: string | null
           updated_at?: string
           zip: string
         }
@@ -3875,11 +3887,15 @@ export type Database = {
           access_notes?: string | null
           address_1?: string
           address_2?: string | null
+          address_verified?: boolean
+          address_verified_at?: string | null
           business_id?: string
           city?: string
           country?: string | null
+          county?: string | null
           created_at?: string
           customer_id?: string
+          formatted_address?: string | null
           gate_code?: string | null
           geocode_last_attempt_at?: string | null
           geocode_source?: string | null
@@ -3891,7 +3907,9 @@ export type Database = {
           map_place_id?: string | null
           property_label?: string | null
           property_type?: string | null
+          route?: string | null
           state?: string
+          street_number?: string | null
           updated_at?: string
           zip?: string
         }

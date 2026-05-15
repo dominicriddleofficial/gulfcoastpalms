@@ -27,11 +27,27 @@ interface PropertyInput {
   zip?: string | null;
 }
 
+interface VerifiedAddressInput {
+  formatted_address?: string | null;
+  street_number?: string | null;
+  route?: string | null;
+  street_address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  postal_code?: string | null;
+  county?: string | null;
+  place_id?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  geocode_source?: string | null;
+}
+
 interface Payload {
   business_id: string;
   customer: CustomerInput;
   property?: PropertyInput | null;
   address_freeform?: string | null;
+  verified_address?: VerifiedAddressInput | null;
   title: string;
   description?: string | null;
   internal_notes?: string | null;
@@ -138,7 +154,15 @@ Deno.serve(async (req) => {
     let propertyId: string | null = payload.property?.id || null;
     if (!propertyId) {
       let propFields: { address_1: string; city: string; state: string; zip: string } | null = null;
-      if (payload.property?.address_1) {
+      const v = payload.verified_address || null;
+      if (v && (v.formatted_address || v.street_address)) {
+        propFields = {
+          address_1: v.street_address || v.formatted_address || "",
+          city: v.city || "Pensacola",
+          state: v.state || "FL",
+          zip: v.postal_code || "",
+        };
+      } else if (payload.property?.address_1) {
         propFields = {
           address_1: payload.property.address_1,
           city: payload.property.city || "Pensacola",
@@ -159,6 +183,24 @@ Deno.serve(async (req) => {
           .maybeSingle();
         if (existing?.id) {
           propertyId = existing.id;
+          if (v) {
+            await admin
+              .from("platform_properties")
+              .update({
+                formatted_address: v.formatted_address ?? null,
+                street_number: v.street_number ?? null,
+                route: v.route ?? null,
+                county: v.county ?? null,
+                latitude: v.latitude ?? null,
+                longitude: v.longitude ?? null,
+                map_place_id: v.place_id ?? null,
+                address_verified: true,
+                address_verified_at: new Date().toISOString(),
+                geocode_source: "google_places",
+                geocode_status: "success",
+              })
+              .eq("id", existing.id);
+          }
         } else {
           const { data: prop, error: pErr } = await admin
             .from("platform_properties")
@@ -170,7 +212,21 @@ Deno.serve(async (req) => {
               state: propFields.state,
               zip: propFields.zip,
               property_type: "residential",
-              geocode_status: "pending",
+              geocode_status: v ? "success" : "pending",
+              ...(v
+                ? {
+                    formatted_address: v.formatted_address ?? null,
+                    street_number: v.street_number ?? null,
+                    route: v.route ?? null,
+                    county: v.county ?? null,
+                    latitude: v.latitude ?? null,
+                    longitude: v.longitude ?? null,
+                    map_place_id: v.place_id ?? null,
+                    address_verified: true,
+                    address_verified_at: new Date().toISOString(),
+                    geocode_source: "google_places",
+                  }
+                : {}),
             })
             .select("id")
             .single();

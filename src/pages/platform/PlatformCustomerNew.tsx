@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { User, MapPin, FileText, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import AddressAutocomplete, { type VerifiedAddress } from "@/components/platform/AddressAutocomplete";
 
 function fmtPhone(raw: string) {
   const d = raw.replace(/\D/g, "").slice(0, 10);
@@ -42,6 +43,15 @@ export default function PlatformCustomerNew() {
   const [zip, setZip] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [verified, setVerified] = useState<VerifiedAddress | null>(null);
+
+  const onVerifiedSelect = (v: VerifiedAddress) => {
+    setVerified(v);
+    setAddress(v.street_address || v.formatted_address);
+    setCity(v.city || "");
+    setStateField(v.state || "FL");
+    setZip(v.postal_code || "");
+  };
 
   const handleSave = async () => {
     if (!first.trim() && !last.trim()) { toast.error("Enter a first or last name"); return; }
@@ -67,6 +77,17 @@ export default function PlatformCustomerNew() {
         city: city || "",
         state: stateField || "FL",
         zip: zip || "",
+        formatted_address: verified?.formatted_address || null,
+        street_number: verified?.street_number || null,
+        route: verified?.route || null,
+        county: verified?.county || null,
+        latitude: verified?.latitude ?? null,
+        longitude: verified?.longitude ?? null,
+        map_place_id: verified?.place_id || null,
+        address_verified: !!verified,
+        address_verified_at: verified ? new Date().toISOString() : null,
+        geocode_source: verified ? "google_places" : null,
+        geocode_status: verified ? "success" : "pending",
       });
     }
     toast.success("Customer created");
@@ -104,7 +125,15 @@ export default function PlatformCustomerNew() {
 
         <section className="bg-card/40 border border-border rounded-xl p-4 mb-4 space-y-3">
           <SectionHeader icon={MapPin} label="Property Address" />
-          <div><Label>Street address</Label><Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="123 Main St" /></div>
+          <AddressAutocomplete
+            label="Street address"
+            value={address}
+            onTextChange={setAddress}
+            onSelect={onVerifiedSelect}
+            onUnverify={() => setVerified(null)}
+            verified={!!verified}
+            placeholder="123 Main St, Pensacola, FL"
+          />
           <div className="grid grid-cols-3 gap-2">
             <div className="col-span-2"><Label>City</Label><Input value={city} onChange={(e) => setCity(e.target.value)} /></div>
             <div><Label>State</Label><Input value={stateField} onChange={(e) => setStateField(e.target.value)} maxLength={2} /></div>
