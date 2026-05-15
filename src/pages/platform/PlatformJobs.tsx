@@ -28,6 +28,7 @@ import {
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import JobStatusProgress from "@/components/platform/jobs/JobStatusProgress";
 import AssignedCrewPicker from "@/components/platform/jobs/AssignedCrewPicker";
@@ -632,12 +633,13 @@ function JobEditForm({
             .eq("id", job.id)
             .maybeSingle();
           if (jobRow?.property_id) {
-            const patch: Record<string, unknown> = verifiedAddr
+            type PropUpdate = Database["public"]["Tables"]["platform_properties"]["Update"];
+            const patch: PropUpdate = verifiedAddr
               ? {
                   address_1: verifiedAddr.street_address || verifiedAddr.formatted_address,
-                  city: verifiedAddr.city || undefined,
-                  state: verifiedAddr.state || undefined,
-                  zip: verifiedAddr.postal_code || undefined,
+                  ...(verifiedAddr.city ? { city: verifiedAddr.city } : {}),
+                  ...(verifiedAddr.state ? { state: verifiedAddr.state } : {}),
+                  ...(verifiedAddr.postal_code ? { zip: verifiedAddr.postal_code } : {}),
                   formatted_address: verifiedAddr.formatted_address,
                   street_number: verifiedAddr.street_number,
                   route: verifiedAddr.route,
@@ -662,14 +664,9 @@ function JobEditForm({
                   geocode_source: null,
                   geocode_status: "pending",
                 };
-            const cleaned: Record<string, unknown> = {};
-            for (const [k, v] of Object.entries(patch)) {
-              if (v !== undefined) cleaned[k] = v;
-            }
             const { error: pErr } = await supabase
               .from("platform_properties")
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              .update(cleaned as any)
+              .update(patch)
               .eq("id", jobRow.property_id);
             if (pErr) throw pErr;
           }
