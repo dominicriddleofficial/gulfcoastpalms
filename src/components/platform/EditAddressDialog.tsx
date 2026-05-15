@@ -131,10 +131,24 @@ export default function EditAddressDialog({
     setSaving(false);
 
     if (error || (data && (data as any).error)) {
-      const msg =
-        (data as any)?.error ||
-        error?.message ||
-        "Unable to update address.";
+      // supabase.functions.invoke wraps non-2xx responses in a FunctionsHttpError.
+      // The actual JSON error body is on error.context (a Response); read it
+      // so the user sees the real backend message instead of a generic
+      // "Edge Function returned a non-2xx status code".
+      let msg = (data as any)?.error || error?.message || "Unable to update address.";
+      const ctx = (error as any)?.context;
+      if (ctx && typeof ctx.json === "function") {
+        try {
+          const body = await ctx.json();
+          if (body?.error) msg = body.error;
+        } catch {
+          try {
+            const text = await ctx.text();
+            if (text) msg = text.slice(0, 300);
+          } catch { /* ignore */ }
+        }
+      }
+      console.error("[update-address] failed", { msg, error, data });
       toast.error(msg);
       return;
     }
