@@ -24,6 +24,19 @@ export interface InvoicePrefillState {
   customer?: { id: string; display_name: string; phone: string | null; email: string | null } | null;
   items?: Array<{ description: string; quantity: number; unit_price: number }>;
   fromJobId?: string;
+  /** Snapshot of the job/property service address to freeze on this invoice. */
+  serviceAddress?: {
+    line1?: string | null;
+    line2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    zip?: string | null;
+    formatted_address?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+    place_id?: string | null;
+    property_id?: string | null;
+  } | null;
 }
 
 interface CreateSheetsContextValue {
