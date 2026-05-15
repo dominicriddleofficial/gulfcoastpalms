@@ -410,6 +410,47 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
     finishUpdate(error, "Job marked complete");
   };
 
+  const markCompleteJobber = async () => {
+    if (!job.business_id) {
+      toast.error("Missing business context for this job.");
+      return;
+    }
+    setActing(true);
+    const nowIso = new Date().toISOString();
+    const { error } = await supabase
+      .from("jobber_jobs")
+      .update({ visit_status: "completed" })
+      .eq("id", job.id);
+    if (error) {
+      finishUpdate(error, "");
+      return;
+    }
+    // Stamp completed_at (and started_at if missing) so duration shows
+    const { data: existing } = await supabase
+      .from("job_visit_events")
+      .select("id, started_at")
+      .eq("jobber_job_id", job.id)
+      .maybeSingle();
+    if (existing) {
+      await supabase
+        .from("job_visit_events")
+        .update({
+          completed_at: nowIso,
+          ...(existing.started_at ? {} : { started_at: nowIso }),
+        })
+        .eq("id", existing.id);
+    } else {
+      await supabase.from("job_visit_events").insert({
+        jobber_job_id: job.id,
+        business_id: job.business_id,
+        started_at: nowIso,
+        completed_at: nowIso,
+      });
+    }
+    setJobStatus("completed");
+    finishUpdate(null, "Job marked complete");
+  };
+
   const cancelJob = async () => {
     const reason = window.prompt("Cancellation reason (optional):") ?? "";
     setActing(true);
@@ -600,6 +641,19 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
 
       {/* Live timer / completed duration (works for both native + Jobber jobs) */}
       <VisitTimer jobberJobId={job.id} status={jobStatus} />
+
+      {/* Quick "Mark Complete" for Jobber-imported jobs (skip timer flow) */}
+      {!isNative && !isCompleted && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="w-full font-body text-xs"
+          onClick={markCompleteJobber}
+          disabled={acting}
+        >
+          <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Mark Complete
+        </Button>
+      )}
 
       {/* Invoice action for Jobber-imported jobs */}
       {!isNative && (
