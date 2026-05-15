@@ -37,6 +37,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { enrollCompletedJobInDrip } from "@/lib/drip-enrollment";
 import AddressAutocomplete, { type VerifiedAddress } from "@/components/platform/AddressAutocomplete";
 import EditAddressDialog from "@/components/platform/EditAddressDialog";
+import VisitTimer from "@/components/platform/jobs/VisitTimer";
 
 type JobberJob = {
   id: string;
@@ -558,6 +559,22 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
         currentStatus={jobStatus}
         onStatusChange={(s) => setJobStatus(s)}
       />
+      )}
+
+      {/* Live timer / completed duration (works for both native + Jobber jobs) */}
+      <VisitTimer jobberJobId={job.id} status={jobStatus} />
+
+      {/* Invoice action for Jobber-imported jobs */}
+      {!isNative && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="w-full font-body text-xs"
+          onClick={createInvoiceFromJob}
+          disabled={acting}
+        >
+          <Receipt className="w-3.5 h-3.5 mr-1" /> Create Invoice
+        </Button>
       )}
 
       {isCompleted && job.client_phone && (
