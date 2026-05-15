@@ -573,6 +573,43 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
                     )}
                   </div>
                 )}
+                {customerId && (
+                  <div className="pt-2 mt-2 border-t border-border/50 space-y-1.5">
+                    <p className="font-body text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                      Service Address
+                    </p>
+                    <Input
+                      placeholder="Street address"
+                      value={serviceLine1}
+                      onChange={(e) => setServiceLine1(e.target.value)}
+                      className="bg-secondary/50 border-border font-body text-xs h-8"
+                    />
+                    <div className="grid grid-cols-3 gap-1.5">
+                      <Input
+                        placeholder="City"
+                        value={serviceCity}
+                        onChange={(e) => setServiceCity(e.target.value)}
+                        className="col-span-2 bg-secondary/50 border-border font-body text-xs h-8"
+                      />
+                      <Input
+                        placeholder="ST"
+                        value={serviceState}
+                        onChange={(e) => setServiceState(e.target.value.toUpperCase().slice(0, 2))}
+                        maxLength={2}
+                        className="bg-secondary/50 border-border font-body text-xs h-8"
+                      />
+                    </div>
+                    <Input
+                      placeholder="Zip"
+                      value={serviceZip}
+                      onChange={(e) => setServiceZip(e.target.value)}
+                      className="bg-secondary/50 border-border font-body text-xs h-8"
+                    />
+                    <p className="font-body text-[10px] text-muted-foreground">
+                      Pulled from the linked job — saved with this invoice so it never changes.
+                    </p>
+                  </div>
+                )}
               </div>
             </section>
 
