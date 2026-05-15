@@ -37,6 +37,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { enrollCompletedJobInDrip } from "@/lib/drip-enrollment";
 import AddressAutocomplete, { type VerifiedAddress } from "@/components/platform/AddressAutocomplete";
 import EditAddressDialog from "@/components/platform/EditAddressDialog";
+import VisitTimer from "@/components/platform/jobs/VisitTimer";
 
 type JobberJob = {
   id: string;
@@ -429,23 +430,60 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
 
   const createInvoiceFromJob = async () => {
     if (!selectedBusinessId) return;
-    // Look up customer_id so the sheet can preselect the customer
-    const { data: jobRow } = await supabase
-      .from("platform_jobs")
-      .select("customer_id, platform_customers(display_name, phone, email)")
-      .eq("id", job.id)
-      .maybeSingle();
-
     const total = Number(job.total_amount ?? 0);
-    const c = jobRow?.platform_customers as { display_name: string; phone: string | null; email: string | null } | null;
+    if (!total) {
+      toast.warning("No job amount set. Add amount before sending invoice.");
+    }
+
+    let customerPayload: { id: string; display_name: string; phone: string | null; email: string | null } | null = null;
+    let fromJobId: string | undefined;
+
+    if (isNative) {
+      const { data: jobRow } = await supabase
+        .from("platform_jobs")
+        .select("customer_id, platform_customers(display_name, phone, email)")
+        .eq("id", job.id)
+        .maybeSingle();
+      const c = jobRow?.platform_customers as { display_name: string; phone: string | null; email: string | null } | null;
+      if (jobRow?.customer_id) {
+        customerPayload = {
+          id: jobRow.customer_id,
+          display_name: c?.display_name || job.client_name || "Customer",
+          phone: c?.phone ?? null,
+          email: c?.email ?? null,
+        };
+      }
+      fromJobId = job.id;
+    } else {
+      // Jobber-imported: try matching customer by name within this business
+      if (job.client_name && selectedBusinessId) {
+        const { data: cust } = await supabase
+          .from("platform_customers")
+          .select("id, display_name, phone, email")
+          .eq("business_id", selectedBusinessId)
+          .ilike("display_name", job.client_name)
+          .maybeSingle();
+        if (cust) {
+          customerPayload = {
+            id: cust.id,
+            display_name: cust.display_name,
+            phone: cust.phone,
+            email: cust.email,
+          };
+        }
+      }
+    }
+
+    if (!customerPayload && !job.client_name) {
+      toast.error("Unable to create invoice because job has no customer.");
+      return;
+    }
 
     onClose();
     openSheet("invoice", {
-      customer: jobRow?.customer_id
-        ? { id: jobRow.customer_id, display_name: c?.display_name || job.client_name || "Customer", phone: c?.phone ?? null, email: c?.email ?? null }
-        : null,
+      customer: customerPayload,
       items: [{ description: job.title || "Job", quantity: 1, unit_price: total }],
-      fromJobId: job.id,
+      fromJobId,
     });
   };
 
@@ -558,6 +596,22 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
         currentStatus={jobStatus}
         onStatusChange={(s) => setJobStatus(s)}
       />
+      )}
+
+      {/* Live timer / completed duration (works for both native + Jobber jobs) */}
+      <VisitTimer jobberJobId={job.id} status={jobStatus} />
+
+      {/* Invoice action for Jobber-imported jobs */}
+      {!isNative && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="w-full font-body text-xs"
+          onClick={createInvoiceFromJob}
+          disabled={acting}
+        >
+          <Receipt className="w-3.5 h-3.5 mr-1" /> Create Invoice
+        </Button>
       )}
 
       {isCompleted && job.client_phone && (
