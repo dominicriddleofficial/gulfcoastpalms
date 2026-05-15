@@ -2098,51 +2098,75 @@ export type Database = {
       }
       jobber_properties: {
         Row: {
+          address_verified: boolean
+          address_verified_at: string | null
           business_id: string | null
           city: string | null
           client_id: string | null
           country: string | null
+          county: string | null
           created_at: string
+          formatted_address: string | null
+          geocode_source: string | null
           id: string
           jobber_id: string
           lat: number | null
           lng: number | null
+          original_address: string | null
+          place_id: string | null
           state: string | null
           street1: string | null
           street2: string | null
           synced_at: string
+          updated_at: string
           zip: string | null
         }
         Insert: {
+          address_verified?: boolean
+          address_verified_at?: string | null
           business_id?: string | null
           city?: string | null
           client_id?: string | null
           country?: string | null
+          county?: string | null
           created_at?: string
+          formatted_address?: string | null
+          geocode_source?: string | null
           id?: string
           jobber_id: string
           lat?: number | null
           lng?: number | null
+          original_address?: string | null
+          place_id?: string | null
           state?: string | null
           street1?: string | null
           street2?: string | null
           synced_at?: string
+          updated_at?: string
           zip?: string | null
         }
         Update: {
+          address_verified?: boolean
+          address_verified_at?: string | null
           business_id?: string | null
           city?: string | null
           client_id?: string | null
           country?: string | null
+          county?: string | null
           created_at?: string
+          formatted_address?: string | null
+          geocode_source?: string | null
           id?: string
           jobber_id?: string
           lat?: number | null
           lng?: number | null
+          original_address?: string | null
+          place_id?: string | null
           state?: string | null
           street1?: string | null
           street2?: string | null
           synced_at?: string
+          updated_at?: string
           zip?: string | null
         }
         Relationships: [
