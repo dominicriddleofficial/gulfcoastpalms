@@ -36,6 +36,7 @@ import { useCreateSheets } from "@/components/platform/CreateSheetsProvider";
 import { useUserRole } from "@/hooks/useUserRole";
 import { enrollCompletedJobInDrip } from "@/lib/drip-enrollment";
 import AddressAutocomplete, { type VerifiedAddress } from "@/components/platform/AddressAutocomplete";
+import EditAddressDialog from "@/components/platform/EditAddressDialog";
 
 type JobberJob = {
   id: string;
@@ -334,7 +335,54 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
   const [jobStatus, setJobStatus] = useState(job.visit_status || job.status || "scheduled");
   const [acting, setActing] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<{
+    target: "platform_property" | "jobber_property";
+    propertyId: string;
+    initial: { address_1: string; city?: string | null; state?: string | null; zip?: string | null; verified?: boolean };
+  } | null>(null);
+  const [loadingAddress, setLoadingAddress] = useState(false);
   const isNative = job.source === "platform";
+
+  const openEditAddress = async () => {
+    setLoadingAddress(true);
+    try {
+      if (isNative) {
+        const { data: row } = await supabase
+          .from("platform_jobs")
+          .select("property_id, platform_properties(id, address_1, city, state, zip, address_verified)")
+          .eq("id", job.id)
+          .maybeSingle();
+        const prop = (row as any)?.platform_properties;
+        if (!prop?.id) {
+          toast.error("This job has no linked property to edit.");
+          return;
+        }
+        setEditingAddress({
+          target: "platform_property",
+          propertyId: prop.id,
+          initial: { address_1: prop.address_1, city: prop.city, state: prop.state, zip: prop.zip, verified: !!prop.address_verified },
+        });
+      } else {
+        const { data: row } = await supabase
+          .from("jobber_jobs")
+          .select("property_id, jobber_properties(id, street1, city, state, zip, address_verified)")
+          .eq("id", job.id)
+          .maybeSingle();
+        const prop = (row as any)?.jobber_properties;
+        if (!prop?.id) {
+          toast.error("Imported job needs local address mirror first.");
+          return;
+        }
+        setEditingAddress({
+          target: "jobber_property",
+          propertyId: prop.id,
+          initial: { address_1: prop.street1 || "", city: prop.city, state: prop.state, zip: prop.zip, verified: !!prop.address_verified },
+        });
+      }
+    } finally {
+      setLoadingAddress(false);
+    }
+  };
 
   const finishUpdate = (error: { message: string } | null, successMsg: string) => {
     if (error) toast.error(error.message);
@@ -524,7 +572,20 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
 
       <div className="grid grid-cols-2 gap-3">
         <InfoBlock icon={User} label="Customer" value={job.client_name || "—"} />
-        <InfoBlock icon={MapPin} label="Property" value={job.property_address || "—"} />
+        <button
+          type="button"
+          onClick={() => isStaff && openEditAddress()}
+          disabled={!isStaff || loadingAddress}
+          className="text-left bg-card border border-border rounded-lg p-2.5 hover:border-primary/30 transition-colors disabled:opacity-100 disabled:cursor-default"
+        >
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <MapPin className="w-3 h-3 text-muted-foreground" />
+            <p className="font-body text-[10px] text-muted-foreground">
+              Property {isStaff && <span className="text-primary">· Edit</span>}
+            </p>
+          </div>
+          <p className="font-body text-sm text-foreground truncate">{job.property_address || "—"}</p>
+        </button>
         <InfoBlock icon={Calendar} label="Scheduled" value={job.scheduled_start ? format(new Date(job.scheduled_start), "MMM d, yyyy") : "Unscheduled"} />
         <InfoBlock icon={Clock} label="Time" value={job.scheduled_start ? format(new Date(job.scheduled_start), "h:mm a") : "—"} />
       </div>
@@ -558,6 +619,18 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
         </div>
       )}
     </div>
+    {editingAddress && selectedBusinessId && (
+      <EditAddressDialog
+        open={!!editingAddress}
+        onOpenChange={(o) => !o && setEditingAddress(null)}
+        target={editingAddress.target}
+        propertyId={editingAddress.propertyId}
+        businessId={selectedBusinessId}
+        initial={editingAddress.initial}
+        onSaved={() => { notifyCreated(); onChanged(); }}
+      />
+    )}
+    </>
   );
 }
 
