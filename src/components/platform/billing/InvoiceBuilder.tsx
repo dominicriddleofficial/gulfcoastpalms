@@ -15,6 +15,7 @@ import { format, addDays } from "date-fns";
 import InvoicePreviewPanel from "./InvoicePreviewPanel";
 import SendInvoiceModal from "./SendInvoiceModal";
 import { useQuery } from "@tanstack/react-query";
+import type { InvoicePrefillState } from "@/components/platform/CreateSheetsProvider";
 
 interface LineItem {
   id: string;
@@ -61,27 +62,37 @@ interface InvoiceBuilderProps {
   userId: string | null;
   onClose: () => void;
   onCreated: () => void;
+  prefill?: InvoicePrefillState;
 }
 
 let lineIdCounter = 0;
 function newLineId() { return `line-${++lineIdCounter}-${Date.now()}`; }
 
-export default function InvoiceBuilder({ businessId, businesses, userId, onClose, onCreated }: InvoiceBuilderProps) {
+export default function InvoiceBuilder({ businessId, businesses, userId, onClose, onCreated, prefill }: InvoiceBuilderProps) {
   const biz = businesses.find(b => b.id === businessId);
 
   // Form state
   const [bizId, setBizId] = useState(businessId || businesses[0]?.id || "");
-  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [customerId, setCustomerId] = useState<string | null>(prefill?.customer?.id ?? null);
   const [customerSource, setCustomerSource] = useState<"platform" | "jobber">("platform");
-  const [customerName, setCustomerName] = useState("");
-  const [customerEmail, setCustomerEmail] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerName, setCustomerName] = useState(prefill?.customer?.display_name ?? "");
+  const [customerEmail, setCustomerEmail] = useState(prefill?.customer?.email ?? "");
+  const [customerPhone, setCustomerPhone] = useState(prefill?.customer?.phone ?? "");
   const [invoiceNumber, setInvoiceNumber] = useState("Generating…");
   const [invoiceNumberOverride, setInvoiceNumberOverride] = useState(false);
   const [issueDate, setIssueDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [dueDate, setDueDate] = useState(format(addDays(new Date(), 30), "yyyy-MM-dd"));
   const [poNumber, setPoNumber] = useState("");
-  const [lineItems, setLineItems] = useState<LineItem[]>([{ id: newLineId(), description: "", qty: "1", price: "" }]);
+  const [lineItems, setLineItems] = useState<LineItem[]>(
+    prefill?.items && prefill.items.length > 0
+      ? prefill.items.map(it => ({
+          id: newLineId(),
+          description: it.description,
+          qty: String(it.quantity ?? 1),
+          price: String(it.unit_price ?? 0),
+        }))
+      : [{ id: newLineId(), description: "", qty: "1", price: "" }]
+  );
   const [taxEnabled, setTaxEnabled] = useState(false);
   const [taxRate, setTaxRate] = useState("7");
   const [discountEnabled, setDiscountEnabled] = useState(false);
