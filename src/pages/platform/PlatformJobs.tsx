@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
@@ -662,12 +662,14 @@ function JobEditForm({
                   geocode_source: null,
                   geocode_status: "pending",
                 };
-            const cleaned = Object.fromEntries(
-              Object.entries(patch).filter(([, v]) => v !== undefined),
-            );
+            const cleaned: Record<string, unknown> = {};
+            for (const [k, v] of Object.entries(patch)) {
+              if (v !== undefined) cleaned[k] = v;
+            }
             const { error: pErr } = await supabase
               .from("platform_properties")
-              .update(cleaned)
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .update(cleaned as any)
               .eq("id", jobRow.property_id);
             if (pErr) throw pErr;
           }
