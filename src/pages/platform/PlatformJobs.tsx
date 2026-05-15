@@ -34,6 +34,7 @@ import AssignedCrewPicker from "@/components/platform/jobs/AssignedCrewPicker";
 import { useCreateSheets } from "@/components/platform/CreateSheetsProvider";
 import { useUserRole } from "@/hooks/useUserRole";
 import { enrollCompletedJobInDrip } from "@/lib/drip-enrollment";
+import AddressAutocomplete, { type VerifiedAddress } from "@/components/platform/AddressAutocomplete";
 
 type JobberJob = {
   id: string;
@@ -592,6 +593,9 @@ function JobEditForm({
   const [startTime, setStartTime] = useState(initialStart);
   const [endTime, setEndTime] = useState(initialEnd);
   const [saving, setSaving] = useState(false);
+  const [address, setAddress] = useState(job.property_address ?? "");
+  const [verifiedAddr, setVerifiedAddr] = useState<VerifiedAddress | null>(null);
+  const initialAddressRef = useRef(job.property_address ?? "");
 
   const save = async () => {
     if (!title.trim()) {
@@ -618,6 +622,56 @@ function JobEditForm({
           })
           .eq("id", job.id);
         if (jobErr) throw jobErr;
+
+        // Address update for native jobs — patch the linked property_id
+        const addressChanged = address.trim() !== initialAddressRef.current.trim();
+        if (addressChanged || verifiedAddr) {
+          const { data: jobRow } = await supabase
+            .from("platform_jobs")
+            .select("property_id")
+            .eq("id", job.id)
+            .maybeSingle();
+          if (jobRow?.property_id) {
+            const patch: Record<string, unknown> = verifiedAddr
+              ? {
+                  address_1: verifiedAddr.street_address || verifiedAddr.formatted_address,
+                  city: verifiedAddr.city || undefined,
+                  state: verifiedAddr.state || undefined,
+                  zip: verifiedAddr.postal_code || undefined,
+                  formatted_address: verifiedAddr.formatted_address,
+                  street_number: verifiedAddr.street_number,
+                  route: verifiedAddr.route,
+                  county: verifiedAddr.county,
+                  latitude: verifiedAddr.latitude,
+                  longitude: verifiedAddr.longitude,
+                  map_place_id: verifiedAddr.place_id,
+                  address_verified: true,
+                  address_verified_at: new Date().toISOString(),
+                  geocode_source: "google_places",
+                  geocode_status: "success",
+                }
+              : {
+                  // text changed without verification — clear stale coords
+                  address_1: address.trim(),
+                  latitude: null,
+                  longitude: null,
+                  map_place_id: null,
+                  formatted_address: null,
+                  address_verified: false,
+                  address_verified_at: null,
+                  geocode_source: null,
+                  geocode_status: "pending",
+                };
+            const cleaned = Object.fromEntries(
+              Object.entries(patch).filter(([, v]) => v !== undefined),
+            );
+            const { error: pErr } = await supabase
+              .from("platform_properties")
+              .update(cleaned)
+              .eq("id", jobRow.property_id);
+            if (pErr) throw pErr;
+          }
+        }
 
         // Sync first visit row to match
         if (date || startTime || endTime) {
@@ -670,6 +724,9 @@ function JobEditForm({
             title: title.trim(),
             internal_notes: notes || null,
             total_amount: totalNum,
+            ...(address.trim() !== initialAddressRef.current.trim()
+              ? { property_address: address.trim() }
+              : {}),
             ...schedulePatch,
           })
           .eq("id", job.id);
@@ -714,6 +771,17 @@ function JobEditForm({
         <Label className="font-body text-xs text-muted-foreground">Instructions / notes</Label>
         <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className="mt-1" />
       </div>
+      <AddressAutocomplete
+        label="Address"
+        value={address}
+        onTextChange={setAddress}
+        onSelect={(v) => {
+          setVerifiedAddr(v);
+          setAddress(v.formatted_address);
+        }}
+        onUnverify={() => setVerifiedAddr(null)}
+        verified={!!verifiedAddr}
+      />
       <div className="flex gap-2 justify-end pt-1">
         <Button size="sm" variant="outline" className="font-body text-xs" onClick={onCancel} disabled={saving}>
           Cancel
