@@ -339,6 +339,7 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
   const [editingAddress, setEditingAddress] = useState<{
     target: "platform_property" | "jobber_property";
     propertyId: string;
+    customerId: string | null;
     initial: { address_1: string; city?: string | null; state?: string | null; zip?: string | null; verified?: boolean };
   } | null>(null);
   const [loadingAddress, setLoadingAddress] = useState(false);
@@ -350,7 +351,7 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
       if (isNative) {
         const { data: row } = await supabase
           .from("platform_jobs")
-          .select("property_id, platform_properties(id, address_1, city, state, zip, address_verified)")
+          .select("property_id, customer_id, platform_properties(id, address_1, city, state, zip, address_verified)")
           .eq("id", job.id)
           .maybeSingle();
         const prop = (row as any)?.platform_properties;
@@ -361,6 +362,7 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
         setEditingAddress({
           target: "platform_property",
           propertyId: prop.id,
+          customerId: (row as any)?.customer_id ?? null,
           initial: { address_1: prop.address_1, city: prop.city, state: prop.state, zip: prop.zip, verified: !!prop.address_verified },
         });
       } else {
@@ -377,6 +379,7 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
         setEditingAddress({
           target: "jobber_property",
           propertyId: prop.id,
+          customerId: null,
           initial: { address_1: prop.street1 || "", city: prop.city, state: prop.state, zip: prop.zip, verified: !!prop.address_verified },
         });
       }
@@ -803,6 +806,7 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
         target={editingAddress.target}
         propertyId={editingAddress.propertyId}
         businessId={selectedBusinessId}
+        customerId={editingAddress.customerId}
         initial={editingAddress.initial}
         onSaved={() => { notifyCreated(); onChanged(); }}
       />
