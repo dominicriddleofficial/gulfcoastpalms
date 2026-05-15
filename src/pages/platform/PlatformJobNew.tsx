@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Briefcase, User, Calendar as CalIcon, FileText, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import AddressAutocomplete, { type VerifiedAddress } from "@/components/platform/AddressAutocomplete";
 
 function SectionHeader({ icon: Icon, label }: { icon: React.ComponentType<{ className?: string }>; label: string }) {
   return (
@@ -45,6 +46,7 @@ export default function PlatformJobNew() {
   const [total, setTotal] = useState<string>(prefill?.total != null ? String(prefill.total) : "");
   const [notes, setNotes] = useState(prefill?.internalNotes ?? "");
   const [saving, setSaving] = useState(false);
+  const [verifiedAddr, setVerifiedAddr] = useState<VerifiedAddress | null>(null);
 
   useEffect(() => {
     if (!selectedBusinessId) return;
@@ -99,6 +101,7 @@ export default function PlatformJobNew() {
         business_id: selectedBusinessId,
         customer: { id: customer.id, display_name: customer.display_name },
         address_freeform: address || null,
+        verified_address: verifiedAddr,
         title: title.trim(),
         description: description || null,
         internal_notes: notes || null,
@@ -163,19 +166,21 @@ export default function PlatformJobNew() {
             <Label className={labelCls}>Description</Label>
             <Textarea rows={3} className={inputCls} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the work, materials, special considerations…" />
           </div>
-          <div>
-            <Label className={labelCls}>Address</Label>
-            <Input
-              className={inputCls}
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder={customer ? "" : "Select a customer first to auto-fill"}
-              disabled={!customer && !address}
-            />
-            {customer && (
-              <p className="text-[11px] text-muted-foreground/80 mt-1.5">Auto-filled from customer record. Edit to override.</p>
-            )}
-          </div>
+          <AddressAutocomplete
+            label="Address"
+            value={address}
+            onTextChange={setAddress}
+            onSelect={(v) => {
+              setVerifiedAddr(v);
+              setAddress(v.formatted_address);
+            }}
+            onUnverify={() => setVerifiedAddr(null)}
+            verified={!!verifiedAddr}
+            placeholder={customer ? "Search address…" : "Select a customer first to auto-fill"}
+          />
+          {customer && !verifiedAddr && (
+            <p className="text-[11px] text-muted-foreground/80 mt-1.5">Auto-filled from customer record. Pick a suggestion to verify.</p>
+          )}
           {isOwner && (
             <div>
               <Label className={labelCls}>Total ($)</Label>
