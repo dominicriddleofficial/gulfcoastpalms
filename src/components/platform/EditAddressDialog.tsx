@@ -7,6 +7,7 @@ import AddressAutocomplete, { type VerifiedAddress } from "@/components/platform
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface Props {
   open: boolean;
@@ -15,6 +16,13 @@ interface Props {
   target: "platform_property" | "jobber_property";
   propertyId: string;
   businessId: string;
+  /**
+   * Optional: when present, the dialog allows "Add as new property for this customer"
+   * which creates a new platform_properties row instead of overwriting.
+   * For jobber_property targets, also pass the matched local platform customer
+   * so the new address can be filed under the right customer.
+   */
+  customerId?: string | null;
   initial: {
     address_1: string;
     city?: string | null;
@@ -31,6 +39,7 @@ export default function EditAddressDialog({
   target,
   propertyId,
   businessId,
+  customerId,
   initial,
   onSaved,
 }: Props) {
@@ -41,6 +50,8 @@ export default function EditAddressDialog({
   const [verified, setVerified] = useState<VerifiedAddress | null>(null);
   const [wasVerified, setWasVerified] = useState(!!initial.verified);
   const [saving, setSaving] = useState(false);
+  const canAddNew = target === "platform_property" && !!customerId;
+  const [mode, setMode] = useState<"update" | "add_new">("update");
 
   const handleSelect = (v: VerifiedAddress) => {
     setVerified(v);
@@ -62,6 +73,50 @@ export default function EditAddressDialog({
       return;
     }
     setSaving(true);
+
+    // "Add as new" path — create another platform_properties row under the same customer.
+    if (mode === "add_new" && canAddNew && customerId) {
+      const v = verified;
+      const insertRow: Record<string, any> = {
+        business_id: businessId,
+        customer_id: customerId,
+        address_1: v ? v.street_address || v.formatted_address : address.trim(),
+        address_2: null,
+        city: v?.city || city.trim() || "Unknown",
+        state: v?.state || stateField.trim() || "FL",
+        zip: v?.postal_code || zip.trim() || "",
+        country: "US",
+        property_type: "residential",
+      };
+      if (v) {
+        insertRow.formatted_address = v.formatted_address;
+        insertRow.street_number = v.street_number;
+        insertRow.route = v.route;
+        insertRow.county = v.county;
+        insertRow.latitude = v.latitude;
+        insertRow.longitude = v.longitude;
+        insertRow.map_place_id = v.place_id;
+        insertRow.address_verified = true;
+        insertRow.address_verified_at = new Date().toISOString();
+        insertRow.geocode_source = "google_places";
+        insertRow.geocode_status = "success";
+      }
+      const { data: created, error: insErr } = await supabase
+        .from("platform_properties")
+        .insert(insertRow)
+        .select("*")
+        .single();
+      setSaving(false);
+      if (insErr || !created) {
+        toast.error(insErr?.message || "Unable to add new address.");
+        return;
+      }
+      toast.success(verified ? "New verified address added" : "New address added");
+      onSaved?.(created);
+      onOpenChange(false);
+      return;
+    }
+
     const { data, error } = await supabase.functions.invoke("update-address", {
       body: {
         target,
@@ -95,6 +150,27 @@ export default function EditAddressDialog({
           <DialogTitle className="font-display">Edit address</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
+          {canAddNew && (
+            <div className="rounded-lg border border-border p-3">
+              <p className="text-[11px] text-muted-foreground mb-2 uppercase tracking-wider">Save as</p>
+              <RadioGroup value={mode} onValueChange={(v) => setMode(v as "update" | "add_new")} className="gap-2">
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <RadioGroupItem value="update" id="mode-update" className="mt-0.5" />
+                  <div className="text-xs">
+                    <div className="text-foreground font-medium">Update this address</div>
+                    <div className="text-muted-foreground">Replaces the current address on file.</div>
+                  </div>
+                </label>
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <RadioGroupItem value="add_new" id="mode-add" className="mt-0.5" />
+                  <div className="text-xs">
+                    <div className="text-foreground font-medium">Add as new property</div>
+                    <div className="text-muted-foreground">Keeps the old one and adds this under the same customer.</div>
+                  </div>
+                </label>
+              </RadioGroup>
+            </div>
+          )}
           <AddressAutocomplete
             label="Street address"
             value={address}
