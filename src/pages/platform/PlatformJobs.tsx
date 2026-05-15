@@ -496,6 +496,7 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
   const isCompleted = jobStatus.toLowerCase() === "completed" || jobStatus.toLowerCase() === "complete";
 
   return (
+    <>
     <div className="space-y-5 pt-4">
       <SheetHeader>
         <SheetTitle className="font-display text-foreground flex items-center gap-2 flex-wrap">
