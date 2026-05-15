@@ -56,7 +56,12 @@ export default function JobStatusProgress({ jobId, businessId, clientName, clien
       // Persist timestamps so the live visit timer + completed duration work
       if (businessId && (step.key === "in_progress" || step.key === "complete" || step.key === "on_my_way" || step.key === "on_site")) {
         const nowIso = new Date().toISOString();
-        const patch: Record<string, string> = {};
+        const patch: {
+          on_my_way_at?: string;
+          arrived_at?: string;
+          started_at?: string;
+          completed_at?: string;
+        } = {};
         if (step.key === "on_my_way") patch.on_my_way_at = nowIso;
         if (step.key === "on_site") patch.arrived_at = nowIso;
         if (step.key === "in_progress") patch.started_at = nowIso;
@@ -69,7 +74,7 @@ export default function JobStatusProgress({ jobId, businessId, clientName, clien
           .maybeSingle();
         if (existing) {
           // Don't overwrite an existing started_at on later transitions
-          const safePatch = { ...patch };
+          const safePatch: typeof patch = { ...patch };
           if (step.key !== "in_progress" && existing.started_at) delete safePatch.started_at;
           await supabase.from("job_visit_events").update(safePatch).eq("id", existing.id);
         } else {
