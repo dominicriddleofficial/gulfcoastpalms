@@ -11,13 +11,15 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Search, Phone, Mail, Home, User, MapPin, Plus,
+  Search, Phone, Mail, Home, User, MapPin, Plus, Pencil, CheckCircle2, AlertTriangle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import PropertyNotesForm from "@/components/platform/customers/PropertyNotesForm";
 import RecurringContractForm from "@/components/platform/customers/RecurringContractForm";
 import { toast } from "@/hooks/use-toast";
+import EditAddressDialog from "@/components/platform/EditAddressDialog";
+import { useUserRole } from "@/hooks/useUserRole";
 
 type UnifiedCustomer = {
   id: string;
@@ -43,6 +45,7 @@ type JobberProperty = {
   state: string | null;
   zip: string | null;
   country: string | null;
+  address_verified?: boolean | null;
 };
 
 export default function PlatformCustomers() {
@@ -291,32 +294,36 @@ function CreateCustomerForm({ businesses, selectedBusinessId, onCreated }: {
 
 function CustomerDetail({ customer }: { customer: UnifiedCustomer }) {
   const { selectedBusinessId } = usePlatformAuth();
+  const { isStaff } = useUserRole();
   const [properties, setProperties] = useState<JobberProperty[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState<JobberProperty | null>(null);
 
-  useEffect(() => {
-    const fetchProperties = async () => {
+  const fetchProperties = async () => {
       setLoading(true);
       if (customer.source === "jobber") {
         const { data } = await supabase
           .from("jobber_properties")
-          .select("id, street1, street2, city, state, zip, country")
+          .select("id, street1, street2, city, state, zip, country, address_verified")
           .eq("client_id", customer.id)
           .order("created_at", { ascending: false });
         setProperties((data as JobberProperty[]) || []);
       } else {
         const { data } = await supabase
           .from("platform_properties")
-          .select("id, address_1, address_2, city, state, zip, country")
+          .select("id, address_1, address_2, city, state, zip, country, address_verified")
           .eq("customer_id", customer.id)
           .order("created_at", { ascending: false });
         setProperties(((data || []) as any[]).map(p => ({
           id: p.id, street1: p.address_1, street2: p.address_2,
           city: p.city, state: p.state, zip: p.zip, country: p.country,
+          address_verified: p.address_verified,
         })));
       }
       setLoading(false);
-    };
+  };
+
+  useEffect(() => {
     fetchProperties();
   }, [customer.id, customer.source]);
 
@@ -353,10 +360,33 @@ function CustomerDetail({ customer }: { customer: UnifiedCustomer }) {
                 <div key={p.id} className="bg-secondary/40 border border-border rounded-lg p-3">
                   <div className="flex items-start gap-2">
                     <MapPin className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="text-sm text-foreground">{p.street1 || "No street"}</p>
-                      {(p.city || p.state || p.zip) && <p className="text-xs text-muted-foreground">{[p.city, p.state, p.zip].filter(Boolean).join(", ")}</p>}
+                      {(p.city || p.state || p.zip) && (
+                        <p className="text-xs text-muted-foreground">
+                          {[p.city, p.state, p.zip].filter(Boolean).join(", ")}
+                        </p>
+                      )}
+                      {p.address_verified ? (
+                        <p className="text-[10px] text-primary flex items-center gap-1 mt-1">
+                          <CheckCircle2 className="w-3 h-3" /> Verified
+                        </p>
+                      ) : (
+                        <p className="text-[10px] text-amber-500 flex items-center gap-1 mt-1">
+                          <AlertTriangle className="w-3 h-3" /> Unverified
+                        </p>
+                      )}
                     </div>
+                    {isStaff && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => setEditing(p)}
+                      >
+                        <Pencil className="w-3 h-3 mr-1" /> Edit
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -377,6 +407,24 @@ function CustomerDetail({ customer }: { customer: UnifiedCustomer }) {
           </>
         )}
       </div>
+
+      {editing && selectedBusinessId && (
+        <EditAddressDialog
+          open={!!editing}
+          onOpenChange={(o) => !o && setEditing(null)}
+          target={customer.source === "jobber" ? "jobber_property" : "platform_property"}
+          propertyId={editing.id}
+          businessId={selectedBusinessId}
+          initial={{
+            address_1: editing.street1 || "",
+            city: editing.city,
+            state: editing.state,
+            zip: editing.zip,
+            verified: !!editing.address_verified,
+          }}
+          onSaved={() => fetchProperties()}
+        />
+      )}
     </>
   );
 }
