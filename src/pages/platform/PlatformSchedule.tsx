@@ -1362,24 +1362,85 @@ function RescheduleSheet({
       return;
     }
     setSaving(true);
-    const startIso = new Date(start).toISOString();
-    const endIso = end ? new Date(end).toISOString() : null;
-    if (endIso && new Date(endIso) <= new Date(startIso)) {
+    const startDate = new Date(start);
+    const startIso = startDate.toISOString();
+    const endDate = end ? new Date(end) : null;
+    const endIso = endDate ? endDate.toISOString() : null;
+    if (endIso && endDate && endDate <= startDate) {
       toast.error("End must be after start");
       setSaving(false);
       return;
     }
-    const { error } = await supabase
-      .from("jobber_jobs")
-      .update({ scheduled_start: startIso, scheduled_end: endIso })
-      .eq("id", job.id);
-    setSaving(false);
-    if (error) {
-      toast.error(error.message || "Reschedule failed");
-      return;
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const localDate = `${startDate.getFullYear()}-${pad(startDate.getMonth() + 1)}-${pad(startDate.getDate())}`;
+    const localStartTime = `${pad(startDate.getHours())}:${pad(startDate.getMinutes())}:00`;
+    const localEndTime = endDate
+      ? `${pad(endDate.getHours())}:${pad(endDate.getMinutes())}:00`
+      : null;
+
+    try {
+      if (job.source === "jobber_synced") {
+        // No platform mirror — update jobber_jobs (which schedule reads from).
+        const { error, count } = await supabase
+          .from("jobber_jobs")
+          .update(
+            { scheduled_start: startIso, scheduled_end: endIso },
+            { count: "exact" },
+          )
+          .eq("id", job.id);
+        if (error) {
+          throw new Error(
+            error.message?.toLowerCase().includes("policy")
+              ? "RLS blocked schedule update."
+              : error.message || "Unable to update schedule.",
+          );
+        }
+        if (!count) throw new Error("Visit record missing.");
+      } else {
+        // platform OR jobber_import — source of truth lives in platform tables.
+        if (!job.job_id) {
+          throw new Error("Imported job needs local platform visit first.");
+        }
+        if (job.visit_id) {
+          const { error: vErr, count: vCount } = await supabase
+            .from("platform_job_visits")
+            .update(
+              {
+                scheduled_date: localDate,
+                scheduled_start_time: localStartTime,
+                scheduled_end_time: localEndTime,
+              },
+              { count: "exact" },
+            )
+            .eq("id", job.visit_id);
+          if (vErr) {
+            throw new Error(
+              vErr.message?.toLowerCase().includes("policy")
+                ? "You do not have permission to reschedule this job."
+                : vErr.message || "Unable to update schedule.",
+            );
+          }
+          if (!vCount) throw new Error("Visit record missing.");
+        }
+        const { error: jErr } = await supabase
+          .from("platform_jobs")
+          .update({ scheduled_start: startIso, scheduled_end: endIso })
+          .eq("id", job.job_id);
+        if (jErr) {
+          throw new Error(
+            jErr.message?.toLowerCase().includes("policy")
+              ? "You do not have permission to reschedule this job."
+              : jErr.message || "Unable to update schedule.",
+          );
+        }
+      }
+      toast.success("Visit rescheduled");
+      onSaved();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Unable to update schedule.");
+    } finally {
+      setSaving(false);
     }
-    toast.success("Visit rescheduled");
-    onSaved();
   };
 
   return (
