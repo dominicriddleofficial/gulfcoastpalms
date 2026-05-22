@@ -390,9 +390,9 @@ export default function PlatformSchedule() {
           </Button>
         </div>
 
-        {/* Day / List / Map tab selector */}
-        <div className="grid grid-cols-3 gap-1 bg-card border border-border rounded-xl p-1 w-full">
-          {(["day", "list", "map"] as const).map((tab) => (
+        {/* Day / List / Map / Crew tab selector */}
+        <div className="grid grid-cols-4 gap-1 bg-card border border-border rounded-xl p-1 w-full">
+          {(["day", "list", "map", "crew"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setScheduleTab(tab)}
