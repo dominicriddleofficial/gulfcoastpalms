@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { format } from "date-fns";
-import { Clock, Power, Truck } from "lucide-react";
+import { format, formatDistanceToNowStrict } from "date-fns";
+import { Clock, Power, Truck, AlertTriangle, Wifi, WifiOff } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useClockSession } from "@/hooks/useClockSession";
-import { useGpsTracker } from "@/hooks/useGpsTracker";
+import { useGpsTracker, captureGpsPointNow } from "@/hooks/useGpsTracker";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,7 +58,7 @@ export function ClockBar({
   }, [active?.vehicle_id]);
 
   // GPS tracker — only runs while clocked in
-  useGpsTracker({
+  const tracker = useGpsTracker({
     enabled: !!active,
     sessionId: active?.id ?? null,
     businessId,
@@ -70,42 +71,107 @@ export function ClockBar({
       setConsentOpen(true);
       return;
     }
-    clockIn.mutate(vehicleId);
+    doClockIn();
   };
 
   const confirmConsent = () => {
     localStorage.setItem(CONSENT_KEY, "yes");
     setConsentOpen(false);
-    clockIn.mutate(vehicleId);
+    doClockIn();
+  };
+
+  // Run clock-in, then immediately capture one GPS point inside the same
+  // user-gesture chain so the iOS permission prompt fires reliably and the
+  // crew tab gets a first ping without waiting for watchPosition.
+  const doClockIn = () => {
+    clockIn.mutate(vehicleId, {
+      onSuccess: async (session) => {
+        if (!businessId || !userId) return;
+        const r = await captureGpsPointNow({
+          sessionId: session.id,
+          businessId,
+          userId,
+        });
+        if (!r.ok && r.error) toast.error(`GPS: ${r.error}`);
+      },
+    });
   };
 
   if (active) {
+    const trackerOk = tracker.isWatching && !tracker.lastError;
     return (
-      <div className="bg-card border border-primary/40 rounded-2xl p-4 flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-primary opacity-60 animate-ping" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary" />
-            </span>
-            <p className="font-body text-sm font-bold text-foreground">Tracking Active</p>
+      <div className="bg-card border border-primary/40 rounded-2xl p-4 space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className={cn(
+                  "absolute inline-flex h-full w-full rounded-full opacity-60",
+                  trackerOk ? "bg-primary animate-ping" : "bg-amber-500",
+                )} />
+                <span className={cn(
+                  "relative inline-flex rounded-full h-2.5 w-2.5",
+                  trackerOk ? "bg-primary" : "bg-amber-500",
+                )} />
+              </span>
+              <p className="font-body text-sm font-bold text-foreground">
+                {trackerOk ? "Tracking Active" : "Clocked In"}
+              </p>
+            </div>
+            <p className="font-body text-xs text-muted-foreground mt-0.5">
+              Since {format(new Date(active.clock_in_at), "h:mm a")}
+              {active.vehicle_id && vehicles?.find((v) => v.id === active.vehicle_id)
+                ? ` · ${vehicles.find((v) => v.id === active.vehicle_id)?.name}`
+                : ""}
+            </p>
           </div>
-          <p className="font-body text-xs text-muted-foreground mt-0.5">
-            Since {format(new Date(active.clock_in_at), "h:mm a")}
-            {active.vehicle_id && vehicles?.find((v) => v.id === active.vehicle_id)
-              ? ` · ${vehicles.find((v) => v.id === active.vehicle_id)?.name}`
-              : ""}
-          </p>
+          <button
+            type="button"
+            disabled={clockOut.isPending}
+            onClick={() => clockOut.mutate()}
+            className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-destructive/40 text-destructive font-body font-bold text-sm hover:bg-destructive/10 transition-colors disabled:opacity-50"
+          >
+            <Power className="w-4 h-4" />
+            Clock Out
+          </button>
         </div>
-        <button
-          type="button"
-          disabled={clockOut.isPending}
-          onClick={() => clockOut.mutate()}
-          className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-destructive/40 text-destructive font-body font-bold text-sm hover:bg-destructive/10 transition-colors disabled:opacity-50"
-        >
-          <Power className="w-4 h-4" />
-          Clock Out
-        </button>
+
+        <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/60">
+          <div className="flex items-center gap-1.5 text-[11px] font-body text-muted-foreground min-w-0">
+            {tracker.lastError ? (
+              <>
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                <span className="truncate">{tracker.lastError}</span>
+              </>
+            ) : tracker.lastPingAt ? (
+              <>
+                <Wifi className="w-3.5 h-3.5 text-primary shrink-0" />
+                <span className="truncate">
+                  Last ping {formatDistanceToNowStrict(tracker.lastPingAt, { addSuffix: true })}
+                </span>
+              </>
+            ) : (
+              <>
+                <WifiOff className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">Waiting for first GPS fix…</span>
+              </>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={async () => {
+              if (!businessId || !userId || !active) return;
+              const r = await captureGpsPointNow({
+                sessionId: active.id, businessId, userId,
+              });
+              if (r.ok) toast.success("Ping sent");
+              else toast.error(`GPS: ${r.error ?? "failed"}`);
+            }}
+            className="text-[11px] font-body font-bold text-primary hover:underline shrink-0"
+          >
+            Ping now
+          </button>
+        </div>
       </div>
     );
   }
