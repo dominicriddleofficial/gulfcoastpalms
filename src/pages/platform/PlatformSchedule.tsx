@@ -72,7 +72,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CalendarClock, Pencil, Trash2 } from "lucide-react";
 import { useDashboardScheduledJobs } from "@/hooks/useDashboardScheduledJobs";
 
-type ScheduleTab = "day" | "list" | "map";
+type ScheduleTab = "day" | "list" | "map" | "crew";
 
 type JobberJob = {
   id: string;
