@@ -467,7 +467,24 @@ export default function PlatformSchedule() {
           </div>
         </div>
 
-        {scheduleTab === "map" ? (
+        {/* Clock-in bar — visible on day & list views */}
+        {(scheduleTab === "day" || scheduleTab === "list") && (
+          <ClockBar
+            businessId={selectedBusinessId}
+            userId={userId}
+            date={selectedDate}
+            jobCount={scheduledJobs.length}
+          />
+        )}
+
+        {scheduleTab === "crew" ? (
+          <CrewTab
+            businessId={selectedBusinessId}
+            date={selectedDate}
+            scheduledJobCount={scheduledJobs.length}
+            onViewOnMap={() => setScheduleTab("map")}
+          />
+        ) : scheduleTab === "map" ? (
           <PlatformScheduleMap jobs={scheduledJobs} mapsKey={mapsKey ?? null} onJobSelect={setSelectedJob} />
         ) : (
           <>
