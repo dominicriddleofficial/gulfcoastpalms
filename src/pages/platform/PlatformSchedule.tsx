@@ -139,7 +139,7 @@ function getBizStyle(businessId: string | null) {
 }
 
 export default function PlatformSchedule() {
-  const { selectedBusinessId, businesses } = usePlatformAuth();
+  const { selectedBusinessId, businesses, userId } = usePlatformAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [scheduleTab, setScheduleTab] = useState<ScheduleTab>("day");
   const [syncing, setSyncing] = useState(false);
