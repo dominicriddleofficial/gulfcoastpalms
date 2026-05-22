@@ -45,6 +45,8 @@ import { toast } from "sonner";
 import { ContactCustomerSheet } from "@/components/platform/ContactCustomerSheet";
 import { useVisitLifecycle, type VisitStatus } from "@/hooks/useVisitLifecycle";
 import { OnMyWaySheet } from "@/components/platform/schedule/OnMyWaySheet";
+import { ClockBar } from "@/components/platform/schedule/ClockBar";
+import { CrewTab } from "@/components/platform/schedule/CrewTab";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -70,7 +72,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CalendarClock, Pencil, Trash2 } from "lucide-react";
 import { useDashboardScheduledJobs } from "@/hooks/useDashboardScheduledJobs";
 
-type ScheduleTab = "day" | "list" | "map";
+type ScheduleTab = "day" | "list" | "map" | "crew";
 
 type JobberJob = {
   id: string;
@@ -137,7 +139,7 @@ function getBizStyle(businessId: string | null) {
 }
 
 export default function PlatformSchedule() {
-  const { selectedBusinessId, businesses } = usePlatformAuth();
+  const { selectedBusinessId, businesses, userId } = usePlatformAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [scheduleTab, setScheduleTab] = useState<ScheduleTab>("day");
   const [syncing, setSyncing] = useState(false);
@@ -388,9 +390,9 @@ export default function PlatformSchedule() {
           </Button>
         </div>
 
-        {/* Day / List / Map tab selector */}
-        <div className="grid grid-cols-3 gap-1 bg-card border border-border rounded-xl p-1 w-full">
-          {(["day", "list", "map"] as const).map((tab) => (
+        {/* Day / List / Map / Crew tab selector */}
+        <div className="grid grid-cols-4 gap-1 bg-card border border-border rounded-xl p-1 w-full">
+          {(["day", "list", "map", "crew"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setScheduleTab(tab)}
@@ -465,7 +467,24 @@ export default function PlatformSchedule() {
           </div>
         </div>
 
-        {scheduleTab === "map" ? (
+        {/* Clock-in bar — visible on day & list views */}
+        {(scheduleTab === "day" || scheduleTab === "list") && (
+          <ClockBar
+            businessId={selectedBusinessId}
+            userId={userId}
+            date={selectedDate}
+            jobCount={scheduledJobs.length}
+          />
+        )}
+
+        {scheduleTab === "crew" ? (
+          <CrewTab
+            businessId={selectedBusinessId}
+            date={selectedDate}
+            scheduledJobCount={scheduledJobs.length}
+            onViewOnMap={() => setScheduleTab("map")}
+          />
+        ) : scheduleTab === "map" ? (
           <PlatformScheduleMap jobs={scheduledJobs} mapsKey={mapsKey ?? null} onJobSelect={setSelectedJob} />
         ) : (
           <>

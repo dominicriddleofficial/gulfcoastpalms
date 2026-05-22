@@ -2687,6 +2687,63 @@ export type Database = {
           },
         ]
       }
+      platform_clock_sessions: {
+        Row: {
+          business_id: string
+          clock_in_at: string
+          clock_out_at: string | null
+          created_at: string
+          employee_user_id: string
+          id: string
+          schedule_date: string
+          status: string
+          total_minutes: number | null
+          updated_at: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          business_id: string
+          clock_in_at?: string
+          clock_out_at?: string | null
+          created_at?: string
+          employee_user_id: string
+          id?: string
+          schedule_date: string
+          status?: string
+          total_minutes?: number | null
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          business_id?: string
+          clock_in_at?: string
+          clock_out_at?: string | null
+          created_at?: string
+          employee_user_id?: string
+          id?: string
+          schedule_date?: string
+          status?: string
+          total_minutes?: number | null
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_clock_sessions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_clock_sessions_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "platform_vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_comm_logs: {
         Row: {
           body: string | null
@@ -2741,6 +2798,54 @@ export type Database = {
           },
         ]
       }
+      platform_crew_assignments: {
+        Row: {
+          assigned_job_ids: string[]
+          business_id: string
+          created_at: string
+          employee_user_id: string
+          id: string
+          schedule_date: string
+          updated_at: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          assigned_job_ids?: string[]
+          business_id: string
+          created_at?: string
+          employee_user_id: string
+          id?: string
+          schedule_date: string
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          assigned_job_ids?: string[]
+          business_id?: string
+          created_at?: string
+          employee_user_id?: string
+          id?: string
+          schedule_date?: string
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_crew_assignments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_crew_assignments_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "platform_vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_crew_members: {
         Row: {
           business_id: string
@@ -2789,6 +2894,50 @@ export type Database = {
             foreignKeyName: "platform_crew_members_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_crew_settings: {
+        Row: {
+          business_id: string
+          created_at: string
+          geofence_radius_feet: number
+          require_clock_in_to_start: boolean
+          require_notes_to_complete: boolean
+          require_photo_to_complete: boolean
+          tracking_enabled: boolean
+          tracking_interval_seconds: number
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          geofence_radius_feet?: number
+          require_clock_in_to_start?: boolean
+          require_notes_to_complete?: boolean
+          require_photo_to_complete?: boolean
+          tracking_enabled?: boolean
+          tracking_interval_seconds?: number
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          geofence_radius_feet?: number
+          require_clock_in_to_start?: boolean
+          require_notes_to_complete?: boolean
+          require_photo_to_complete?: boolean
+          tracking_enabled?: boolean
+          tracking_interval_seconds?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_crew_settings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
@@ -3000,6 +3149,60 @@ export type Database = {
             columns: ["related_employee_id"]
             isOneToOne: false
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_gps_points: {
+        Row: {
+          accuracy: number | null
+          business_id: string
+          captured_at: string
+          clock_session_id: string
+          employee_user_id: string
+          heading: number | null
+          id: string
+          lat: number
+          lng: number
+          speed: number | null
+        }
+        Insert: {
+          accuracy?: number | null
+          business_id: string
+          captured_at?: string
+          clock_session_id: string
+          employee_user_id: string
+          heading?: number | null
+          id?: string
+          lat: number
+          lng: number
+          speed?: number | null
+        }
+        Update: {
+          accuracy?: number | null
+          business_id?: string
+          captured_at?: string
+          clock_session_id?: string
+          employee_user_id?: string
+          heading?: number | null
+          id?: string
+          lat?: number
+          lng?: number
+          speed?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_gps_points_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_gps_points_clock_session_id_fkey"
+            columns: ["clock_session_id"]
+            isOneToOne: false
+            referencedRelation: "platform_clock_sessions"
             referencedColumns: ["id"]
           },
         ]
@@ -3246,6 +3449,107 @@ export type Database = {
             columns: ["quote_id"]
             isOneToOne: false
             referencedRelation: "platform_quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_job_photos: {
+        Row: {
+          business_id: string
+          employee_user_id: string
+          id: string
+          image_url: string
+          job_id: string
+          photo_type: string
+          uploaded_at: string
+        }
+        Insert: {
+          business_id: string
+          employee_user_id: string
+          id?: string
+          image_url: string
+          job_id: string
+          photo_type?: string
+          uploaded_at?: string
+        }
+        Update: {
+          business_id?: string
+          employee_user_id?: string
+          id?: string
+          image_url?: string
+          job_id?: string
+          photo_type?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_job_photos_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_job_time_logs: {
+        Row: {
+          arrived_at: string | null
+          business_id: string
+          clock_session_id: string | null
+          completed_at: string | null
+          created_at: string
+          departed_at: string | null
+          employee_user_id: string
+          id: string
+          job_id: string
+          notes: string | null
+          started_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          arrived_at?: string | null
+          business_id: string
+          clock_session_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          departed_at?: string | null
+          employee_user_id: string
+          id?: string
+          job_id: string
+          notes?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          arrived_at?: string | null
+          business_id?: string
+          clock_session_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          departed_at?: string | null
+          employee_user_id?: string
+          id?: string
+          job_id?: string
+          notes?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_job_time_logs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_job_time_logs_clock_session_id_fkey"
+            columns: ["clock_session_id"]
+            isOneToOne: false
+            referencedRelation: "platform_clock_sessions"
             referencedColumns: ["id"]
           },
         ]
@@ -4353,6 +4657,7 @@ export type Database = {
       platform_user_profiles: {
         Row: {
           created_at: string
+          crew_tracking_consent_at: string | null
           display_name: string | null
           email: string | null
           must_change_password: boolean
@@ -4361,6 +4666,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          crew_tracking_consent_at?: string | null
           display_name?: string | null
           email?: string | null
           must_change_password?: boolean
@@ -4369,6 +4675,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          crew_tracking_consent_at?: string | null
           display_name?: string | null
           email?: string | null
           must_change_password?: boolean
@@ -4376,6 +4683,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      platform_vehicles: {
+        Row: {
+          active: boolean
+          business_id: string
+          created_at: string
+          id: string
+          label: string | null
+          license_plate: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          business_id: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          license_plate?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          business_id?: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          license_plate?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_vehicles_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       platform_visit_assignments: {
         Row: {
