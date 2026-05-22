@@ -45,6 +45,8 @@ import { toast } from "sonner";
 import { ContactCustomerSheet } from "@/components/platform/ContactCustomerSheet";
 import { useVisitLifecycle, type VisitStatus } from "@/hooks/useVisitLifecycle";
 import { OnMyWaySheet } from "@/components/platform/schedule/OnMyWaySheet";
+import { ClockBar } from "@/components/platform/schedule/ClockBar";
+import { CrewTab } from "@/components/platform/schedule/CrewTab";
 import {
   DropdownMenu,
   DropdownMenuContent,
