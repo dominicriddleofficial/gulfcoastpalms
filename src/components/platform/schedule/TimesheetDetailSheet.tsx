@@ -33,7 +33,7 @@ export function TimesheetDetailSheet({
 }) {
   const qc = useQueryClient();
   const { data, isLoading, refetch } = useTimesheetDetail(sessionId);
-  const mapsKey = useGoogleMapsKey();
+  const { apiKey: mapsKey } = useGoogleMapsKey();
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
     googleMapsApiKey: mapsKey ?? "",
@@ -83,7 +83,7 @@ export function TimesheetDetailSheet({
     const { data: u } = await supabase.auth.getUser();
     const uid = u.user?.id ?? null;
 
-    const update: Record<string, unknown> = { [editing]: newIso };
+    const update: Record<string, string | number | null> = { [editing]: newIso };
     // recompute total_minutes when both ends known
     const newIn = editing === "clock_in_at" ? newIso : session.clock_in_at;
     const newOut = editing === "clock_out_at" ? newIso : session.clock_out_at;
@@ -97,7 +97,8 @@ export function TimesheetDetailSheet({
 
     const { error: e1 } = await supabase
       .from("platform_clock_sessions")
-      .update(update)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .update(update as any)
       .eq("id", session.id);
     if (e1) {
       toast.error(e1.message);
