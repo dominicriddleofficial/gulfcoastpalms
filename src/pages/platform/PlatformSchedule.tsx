@@ -491,7 +491,15 @@ export default function PlatformSchedule() {
             />
           ) : (
             <>
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5"
+                  onClick={() => navigate("/platform/settings#crew-tracking")}
+                >
+                  <Truck className="w-4 h-4" /> Crew Settings
+                </Button>
                 <Button
                   size="sm"
                   variant="outline"
