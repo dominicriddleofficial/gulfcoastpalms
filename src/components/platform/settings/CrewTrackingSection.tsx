@@ -47,6 +47,7 @@ type CrewSettings = {
   require_notes_to_complete: boolean;
   require_signature_to_complete: boolean;
   require_payment_to_complete: boolean;
+  allow_clock_in_without_gps: boolean;
 };
 
 const DEFAULT_SETTINGS = (businessId: string): CrewSettings => ({
@@ -65,6 +66,7 @@ const DEFAULT_SETTINGS = (businessId: string): CrewSettings => ({
   require_notes_to_complete: false,
   require_signature_to_complete: false,
   require_payment_to_complete: false,
+  allow_clock_in_without_gps: true,
 });
 
 export function CrewTrackingSection({ businessId }: { businessId: string | null }) {

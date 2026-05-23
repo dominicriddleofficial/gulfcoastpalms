@@ -2693,14 +2693,19 @@ export type Database = {
           approval_status: string
           approved_at: string | null
           approved_by: string | null
+          auto_closed_at: string | null
           business_id: string
           clock_in_at: string
           clock_out_at: string | null
+          close_reason: string | null
+          closed_by: string | null
           created_at: string
           employee_user_id: string
           ending_mileage: number | null
           exported_at: string | null
+          gps_permission: string
           id: string
+          needs_review: boolean
           overtime_flag: boolean
           schedule_date: string
           starting_mileage: number | null
@@ -2714,14 +2719,19 @@ export type Database = {
           approval_status?: string
           approved_at?: string | null
           approved_by?: string | null
+          auto_closed_at?: string | null
           business_id: string
           clock_in_at?: string
           clock_out_at?: string | null
+          close_reason?: string | null
+          closed_by?: string | null
           created_at?: string
           employee_user_id: string
           ending_mileage?: number | null
           exported_at?: string | null
+          gps_permission?: string
           id?: string
+          needs_review?: boolean
           overtime_flag?: boolean
           schedule_date: string
           starting_mileage?: number | null
@@ -2735,14 +2745,19 @@ export type Database = {
           approval_status?: string
           approved_at?: string | null
           approved_by?: string | null
+          auto_closed_at?: string | null
           business_id?: string
           clock_in_at?: string
           clock_out_at?: string | null
+          close_reason?: string | null
+          closed_by?: string | null
           created_at?: string
           employee_user_id?: string
           ending_mileage?: number | null
           exported_at?: string | null
+          gps_permission?: string
           id?: string
+          needs_review?: boolean
           overtime_flag?: boolean
           schedule_date?: string
           starting_mileage?: number | null
@@ -2925,6 +2940,7 @@ export type Database = {
       }
       platform_crew_settings: {
         Row: {
+          allow_clock_in_without_gps: boolean
           allow_employee_edit_clock: boolean
           business_id: string
           created_at: string
@@ -2944,6 +2960,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          allow_clock_in_without_gps?: boolean
           allow_employee_edit_clock?: boolean
           business_id: string
           created_at?: string
@@ -2963,6 +2980,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          allow_clock_in_without_gps?: boolean
           allow_employee_edit_clock?: boolean
           business_id?: string
           created_at?: string
@@ -6309,6 +6327,10 @@ export type Database = {
           visits_inserted: number
         }[]
       }
+      close_clock_session_with_reason: {
+        Args: { _clock_out_at: string; _reason: string; _session_id: string }
+        Returns: undefined
+      }
       create_business_notification: {
         Args: {
           _body: string
@@ -6408,6 +6430,10 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      flag_stale_clock_sessions: {
+        Args: { _business_id: string }
+        Returns: number
       }
       generate_next_number: {
         Args: { _business_id: string; _record_type: string }
