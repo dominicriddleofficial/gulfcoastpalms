@@ -47,6 +47,7 @@ import { useVisitLifecycle, type VisitStatus } from "@/hooks/useVisitLifecycle";
 import { OnMyWaySheet } from "@/components/platform/schedule/OnMyWaySheet";
 import { ClockBar } from "@/components/platform/schedule/ClockBar";
 import { CrewTab } from "@/components/platform/schedule/CrewTab";
+import { MapTab } from "@/components/platform/schedule/MapTab";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -145,6 +146,9 @@ export default function PlatformSchedule() {
   const [syncing, setSyncing] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobberJob | null>(null);
   const [contactJob, setContactJob] = useState<JobberJob | null>(null);
+  // When admin taps "View on Map" inside the Crew tab we jump to the Map tab
+  // and focus on that crew member's pin / route trail.
+  const [focusedCrewSessionId, setFocusedCrewSessionId] = useState<string | null>(null);
 
   const selectedRange = useMemo(() => {
     if (scheduleTab === "list") {
@@ -482,10 +486,21 @@ export default function PlatformSchedule() {
             businessId={selectedBusinessId}
             date={selectedDate}
             scheduledJobCount={scheduledJobs.length}
-            onViewOnMap={() => setScheduleTab("map")}
+            onViewOnMap={(member) => {
+              setFocusedCrewSessionId(member.session_id);
+              setScheduleTab("map");
+            }}
           />
         ) : scheduleTab === "map" ? (
-          <PlatformScheduleMap jobs={scheduledJobs} mapsKey={mapsKey ?? null} onJobSelect={setSelectedJob} />
+          <MapTab
+            jobs={scheduledJobs}
+            mapsKey={mapsKey ?? null}
+            businessId={selectedBusinessId}
+            date={selectedDate}
+            focusedSessionId={focusedCrewSessionId}
+            onJobOpen={setSelectedJob}
+            onContactCustomer={setContactJob}
+          />
         ) : (
           <>
             {/* Date nav — Jobber-style */}
