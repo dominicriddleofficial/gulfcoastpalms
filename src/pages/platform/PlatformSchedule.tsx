@@ -48,6 +48,7 @@ import { OnMyWaySheet } from "@/components/platform/schedule/OnMyWaySheet";
 import { ClockBar } from "@/components/platform/schedule/ClockBar";
 import { CrewTab } from "@/components/platform/schedule/CrewTab";
 import { MapTab, type MapTabJob } from "@/components/platform/schedule/MapTab";
+import { TimesheetsView } from "@/components/platform/schedule/TimesheetsView";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -149,6 +150,7 @@ export default function PlatformSchedule() {
   // When admin taps "View on Map" inside the Crew tab we jump to the Map tab
   // and focus on that crew member's pin / route trail.
   const [focusedCrewSessionId, setFocusedCrewSessionId] = useState<string | null>(null);
+  const [showTimesheets, setShowTimesheets] = useState(false);
 
   const selectedRange = useMemo(() => {
     if (scheduleTab === "list") {
@@ -482,15 +484,34 @@ export default function PlatformSchedule() {
         )}
 
         {scheduleTab === "crew" ? (
-          <CrewTab
-            businessId={selectedBusinessId}
-            date={selectedDate}
-            scheduledJobCount={scheduledJobs.length}
-            onViewOnMap={(member) => {
-              setFocusedCrewSessionId(member.session_id);
-              setScheduleTab("map");
-            }}
-          />
+          showTimesheets ? (
+            <TimesheetsView
+              businessId={selectedBusinessId}
+              onClose={() => setShowTimesheets(false)}
+            />
+          ) : (
+            <>
+              <div className="flex justify-end">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5"
+                  onClick={() => setShowTimesheets(true)}
+                >
+                  <FileText className="w-4 h-4" /> Timesheets
+                </Button>
+              </div>
+              <CrewTab
+                businessId={selectedBusinessId}
+                date={selectedDate}
+                scheduledJobCount={scheduledJobs.length}
+                onViewOnMap={(member) => {
+                  setFocusedCrewSessionId(member.session_id);
+                  setScheduleTab("map");
+                }}
+              />
+            </>
+          )
         ) : scheduleTab === "map" ? (
           <MapTab
             jobs={scheduledJobs as unknown as MapTabJob[]}
