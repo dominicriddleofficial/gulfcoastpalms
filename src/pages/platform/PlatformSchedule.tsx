@@ -47,7 +47,7 @@ import { useVisitLifecycle, type VisitStatus } from "@/hooks/useVisitLifecycle";
 import { OnMyWaySheet } from "@/components/platform/schedule/OnMyWaySheet";
 import { ClockBar } from "@/components/platform/schedule/ClockBar";
 import { CrewTab } from "@/components/platform/schedule/CrewTab";
-import { MapTab } from "@/components/platform/schedule/MapTab";
+import { MapTab, type MapTabJob } from "@/components/platform/schedule/MapTab";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -493,13 +493,13 @@ export default function PlatformSchedule() {
           />
         ) : scheduleTab === "map" ? (
           <MapTab
-            jobs={scheduledJobs}
+            jobs={scheduledJobs as unknown as MapTabJob[]}
             mapsKey={mapsKey ?? null}
             businessId={selectedBusinessId}
             date={selectedDate}
             focusedSessionId={focusedCrewSessionId}
-            onJobOpen={setSelectedJob}
-            onContactCustomer={setContactJob}
+            onJobOpen={(j) => setSelectedJob(j as unknown as JobberJob)}
+            onContactCustomer={(j) => setContactJob(j as unknown as JobberJob)}
           />
         ) : (
           <>
