@@ -2689,12 +2689,18 @@ export type Database = {
       }
       platform_clock_sessions: {
         Row: {
+          admin_notes: string | null
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           business_id: string
           clock_in_at: string
           clock_out_at: string | null
           created_at: string
           employee_user_id: string
+          exported_at: string | null
           id: string
+          overtime_flag: boolean
           schedule_date: string
           status: string
           total_minutes: number | null
@@ -2702,12 +2708,18 @@ export type Database = {
           vehicle_id: string | null
         }
         Insert: {
+          admin_notes?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           business_id: string
           clock_in_at?: string
           clock_out_at?: string | null
           created_at?: string
           employee_user_id: string
+          exported_at?: string | null
           id?: string
+          overtime_flag?: boolean
           schedule_date: string
           status?: string
           total_minutes?: number | null
@@ -2715,12 +2727,18 @@ export type Database = {
           vehicle_id?: string | null
         }
         Update: {
+          admin_notes?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           business_id?: string
           clock_in_at?: string
           clock_out_at?: string | null
           created_at?: string
           employee_user_id?: string
+          exported_at?: string | null
           id?: string
+          overtime_flag?: boolean
           schedule_date?: string
           status?: string
           total_minutes?: number | null
@@ -4650,6 +4668,57 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_timesheet_edits: {
+        Row: {
+          business_id: string
+          clock_session_id: string
+          created_at: string
+          edited_by: string
+          field_name: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+          reason: string
+        }
+        Insert: {
+          business_id: string
+          clock_session_id: string
+          created_at?: string
+          edited_by: string
+          field_name: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          reason: string
+        }
+        Update: {
+          business_id?: string
+          clock_session_id?: string
+          created_at?: string
+          edited_by?: string
+          field_name?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_timesheet_edits_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_timesheet_edits_clock_session_id_fkey"
+            columns: ["clock_session_id"]
+            isOneToOne: false
+            referencedRelation: "platform_clock_sessions"
             referencedColumns: ["id"]
           },
         ]
