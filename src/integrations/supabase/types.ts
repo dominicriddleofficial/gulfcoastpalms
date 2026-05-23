@@ -2698,10 +2698,12 @@ export type Database = {
           clock_out_at: string | null
           created_at: string
           employee_user_id: string
+          ending_mileage: number | null
           exported_at: string | null
           id: string
           overtime_flag: boolean
           schedule_date: string
+          starting_mileage: number | null
           status: string
           total_minutes: number | null
           updated_at: string
@@ -2717,10 +2719,12 @@ export type Database = {
           clock_out_at?: string | null
           created_at?: string
           employee_user_id: string
+          ending_mileage?: number | null
           exported_at?: string | null
           id?: string
           overtime_flag?: boolean
           schedule_date: string
+          starting_mileage?: number | null
           status?: string
           total_minutes?: number | null
           updated_at?: string
@@ -2736,10 +2740,12 @@ export type Database = {
           clock_out_at?: string | null
           created_at?: string
           employee_user_id?: string
+          ending_mileage?: number | null
           exported_at?: string | null
           id?: string
           overtime_flag?: boolean
           schedule_date?: string
+          starting_mileage?: number | null
           status?: string
           total_minutes?: number | null
           updated_at?: string
@@ -2919,36 +2925,60 @@ export type Database = {
       }
       platform_crew_settings: {
         Row: {
+          allow_employee_edit_clock: boolean
           business_id: string
           created_at: string
           geofence_radius_feet: number
           require_clock_in_to_start: boolean
+          require_consent_before_tracking: boolean
+          require_end_mileage: boolean
           require_notes_to_complete: boolean
+          require_payment_to_complete: boolean
           require_photo_to_complete: boolean
+          require_signature_to_complete: boolean
+          require_start_mileage: boolean
+          require_vehicle_at_clock_in: boolean
           tracking_enabled: boolean
           tracking_interval_seconds: number
+          tracking_only_during_hours: boolean
           updated_at: string
         }
         Insert: {
+          allow_employee_edit_clock?: boolean
           business_id: string
           created_at?: string
           geofence_radius_feet?: number
           require_clock_in_to_start?: boolean
+          require_consent_before_tracking?: boolean
+          require_end_mileage?: boolean
           require_notes_to_complete?: boolean
+          require_payment_to_complete?: boolean
           require_photo_to_complete?: boolean
+          require_signature_to_complete?: boolean
+          require_start_mileage?: boolean
+          require_vehicle_at_clock_in?: boolean
           tracking_enabled?: boolean
           tracking_interval_seconds?: number
+          tracking_only_during_hours?: boolean
           updated_at?: string
         }
         Update: {
+          allow_employee_edit_clock?: boolean
           business_id?: string
           created_at?: string
           geofence_radius_feet?: number
           require_clock_in_to_start?: boolean
+          require_consent_before_tracking?: boolean
+          require_end_mileage?: boolean
           require_notes_to_complete?: boolean
+          require_payment_to_complete?: boolean
           require_photo_to_complete?: boolean
+          require_signature_to_complete?: boolean
+          require_start_mileage?: boolean
+          require_vehicle_at_clock_in?: boolean
           tracking_enabled?: boolean
           tracking_interval_seconds?: number
+          tracking_only_during_hours?: boolean
           updated_at?: string
         }
         Relationships: [
@@ -4756,32 +4786,44 @@ export type Database = {
       platform_vehicles: {
         Row: {
           active: boolean
+          assigned_employee_user_id: string | null
           business_id: string
           created_at: string
           id: string
           label: string | null
           license_plate: string | null
           name: string
+          notes: string | null
+          trailer_attached: boolean
+          truck_number: string | null
           updated_at: string
         }
         Insert: {
           active?: boolean
+          assigned_employee_user_id?: string | null
           business_id: string
           created_at?: string
           id?: string
           label?: string | null
           license_plate?: string | null
           name: string
+          notes?: string | null
+          trailer_attached?: boolean
+          truck_number?: string | null
           updated_at?: string
         }
         Update: {
           active?: boolean
+          assigned_employee_user_id?: string | null
           business_id?: string
           created_at?: string
           id?: string
           label?: string | null
           license_plate?: string | null
           name?: string
+          notes?: string | null
+          trailer_attached?: boolean
+          truck_number?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -6115,7 +6157,9 @@ export type Database = {
         Row: {
           access_scope: string | null
           active_status: string
+          assigned_vehicle_id: string | null
           business_id: string
+          can_clock_in: boolean
           can_delete_records: boolean | null
           can_export_data: boolean | null
           can_manage_communications: boolean | null
@@ -6127,6 +6171,7 @@ export type Database = {
           can_manage_schedule: boolean | null
           can_manage_settings: boolean | null
           can_manage_users: boolean | null
+          can_see_all_jobs: boolean
           can_view_all_business_data: boolean | null
           can_view_financials: boolean | null
           created_at: string
@@ -6139,7 +6184,9 @@ export type Database = {
         Insert: {
           access_scope?: string | null
           active_status?: string
+          assigned_vehicle_id?: string | null
           business_id: string
+          can_clock_in?: boolean
           can_delete_records?: boolean | null
           can_export_data?: boolean | null
           can_manage_communications?: boolean | null
@@ -6151,6 +6198,7 @@ export type Database = {
           can_manage_schedule?: boolean | null
           can_manage_settings?: boolean | null
           can_manage_users?: boolean | null
+          can_see_all_jobs?: boolean
           can_view_all_business_data?: boolean | null
           can_view_financials?: boolean | null
           created_at?: string
@@ -6163,7 +6211,9 @@ export type Database = {
         Update: {
           access_scope?: string | null
           active_status?: string
+          assigned_vehicle_id?: string | null
           business_id?: string
+          can_clock_in?: boolean
           can_delete_records?: boolean | null
           can_export_data?: boolean | null
           can_manage_communications?: boolean | null
@@ -6175,6 +6225,7 @@ export type Database = {
           can_manage_schedule?: boolean | null
           can_manage_settings?: boolean | null
           can_manage_users?: boolean | null
+          can_see_all_jobs?: boolean
           can_view_all_business_data?: boolean | null
           can_view_financials?: boolean | null
           created_at?: string
@@ -6185,6 +6236,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "user_business_access_assigned_vehicle_id_fkey"
+            columns: ["assigned_vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "platform_vehicles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_business_access_business_id_fkey"
             columns: ["business_id"]
