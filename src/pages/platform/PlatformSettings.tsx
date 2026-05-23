@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { toast as sonnerToast } from "sonner";
 import { format } from "date-fns";
 import TeamMembersSection from "@/components/platform/settings/TeamMembersSection";
+import { CrewTrackingSection } from "@/components/platform/settings/CrewTrackingSection";
 
 interface BizSettings {
   id: string;
@@ -121,6 +122,11 @@ export default function PlatformSettings() {
 
             {/* Team Members (owner-only — handled inside the component) */}
             <TeamMembersSection />
+
+            {/* Crew Tracking */}
+            <div id="crew-tracking">
+              <CrewTrackingSection businessId={selectedBusinessId} />
+            </div>
 
             {/* Integrations */}
             <SettingsSection title="Integrations" icon={Zap}>

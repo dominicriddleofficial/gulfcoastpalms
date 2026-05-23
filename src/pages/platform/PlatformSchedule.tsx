@@ -151,6 +151,7 @@ export default function PlatformSchedule() {
   // and focus on that crew member's pin / route trail.
   const [focusedCrewSessionId, setFocusedCrewSessionId] = useState<string | null>(null);
   const [showTimesheets, setShowTimesheets] = useState(false);
+  const platformNavigate = useNavigate();
 
   const selectedRange = useMemo(() => {
     if (scheduleTab === "list") {
@@ -491,7 +492,15 @@ export default function PlatformSchedule() {
             />
           ) : (
             <>
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5"
+                  onClick={() => platformNavigate("/platform/settings#crew-tracking")}
+                >
+                  <Truck className="w-4 h-4" /> Crew Settings
+                </Button>
                 <Button
                   size="sm"
                   variant="outline"
