@@ -50,7 +50,7 @@ export function useClockSession(params: {
         .limit(1)
         .maybeSingle();
       if (error) throw error;
-      return (data as unknown as ClockSession | null) ?? null;
+      return ((data as unknown) as ClockSession | null) ?? null;
     },
     refetchInterval: 30_000,
     refetchOnWindowFocus: true,
@@ -76,7 +76,7 @@ export function useClockSession(params: {
         .limit(1)
         .maybeSingle();
       if (error) throw error;
-      return (data as unknown as ClockSession | null) ?? null;
+      return ((data as unknown) as ClockSession | null) ?? null;
     },
     refetchInterval: 30_000,
     refetchOnWindowFocus: true,
@@ -105,7 +105,7 @@ export function useClockSession(params: {
         .eq("employee_user_id", userId)
         .is("clock_out_at", null)
         .maybeSingle();
-      if (existing) return existing as unknown as ClockSession;
+      if (existing) return (existing as unknown) as ClockSession;
 
       const { data, error } = await supabase
         .from("platform_clock_sessions")
@@ -130,11 +130,11 @@ export function useClockSession(params: {
             .eq("employee_user_id", userId)
             .is("clock_out_at", null)
             .maybeSingle();
-          if (row) return row as unknown as ClockSession;
+          if (row) return (row as unknown) as ClockSession;
         }
         throw error;
       }
-      return data as unknown as ClockSession;
+      return (data as unknown) as ClockSession;
     },
     onSuccess: (session) => {
       toast.success("Clocked in — tracking active");
