@@ -1233,7 +1233,41 @@ function JobDetail({
           if (choice === "cancel" || choice === "leave_open") return;
           doAdvance("complete");
           if (choice === "invoice_now") {
-            setTimeout(() => navigate("/platform/invoices/new"), 250);
+            const prefillItems = items.length > 0
+              ? items.map(it => ({
+                  description: it.description ?? it.name ?? "Service",
+                  quantity: Number(it.quantity) || 1,
+                  unit_price: Number(it.unit_price) || (Number(it.total) || 0),
+                }))
+              : showSyntheticItem
+              ? [{
+                  description: serviceTitle,
+                  quantity: 1,
+                  unit_price: total || 0,
+                }]
+              : [];
+            const prefill = {
+              customer: job.client_name
+                ? {
+                    id: "",
+                    display_name: job.client_name,
+                    phone: job.client_phone ?? null,
+                    email: job.customer_email ?? null,
+                  }
+                : null,
+              items: prefillItems,
+              fromJobId: job.id,
+              serviceAddress: job.property_address
+                ? {
+                    formatted_address: job.property_address,
+                    property_id: job.property_id ?? null,
+                  }
+                : null,
+            };
+            setTimeout(
+              () => navigate("/platform/invoices/new", { state: { prefill } }),
+              250,
+            );
           }
         }}
       />
