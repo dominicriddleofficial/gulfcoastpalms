@@ -22,7 +22,6 @@ import {
   Phone,
   Navigation,
   Truck,
-  Play,
   CheckCircle2,
   RotateCcw,
   ArrowLeft,
