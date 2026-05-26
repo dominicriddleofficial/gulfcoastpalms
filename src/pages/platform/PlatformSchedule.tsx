@@ -1016,28 +1016,15 @@ function JobDetail({
                 On My Way
               </button>
             )}
-            {(lifeStatus === "scheduled" || lifeStatus === "on_my_way" || lifeStatus === "on_site") && (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => doAdvance("in_progress")}
-                className="w-full flex items-center justify-center gap-2 min-h-[60px] rounded-2xl bg-primary text-primary-foreground font-body font-bold text-[16px] hover:bg-primary/90 transition-colors disabled:opacity-50"
-              >
-                <Play className="w-5 h-5" />
-                Start Visit
-              </button>
-            )}
-            {lifeStatus === "in_progress" && (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => setCompleteOpen(true)}
-                className="w-full flex items-center justify-center gap-2 min-h-[60px] rounded-2xl bg-primary text-primary-foreground font-body font-bold text-[16px] hover:bg-primary/90 transition-colors disabled:opacity-50"
-              >
-                <CheckCircle2 className="w-5 h-5" />
-                Complete Visit
-              </button>
-            )}
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => setCompleteOpen(true)}
+              className="w-full flex items-center justify-center gap-2 min-h-[60px] rounded-2xl bg-primary text-primary-foreground font-body font-bold text-[16px] hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
+              <CheckCircle2 className="w-5 h-5" />
+              Complete Visit
+            </button>
           </>
         )}
         {lifeStatus === "complete" && (
