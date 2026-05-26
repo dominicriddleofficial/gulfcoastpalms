@@ -22,7 +22,6 @@ import {
   Phone,
   Navigation,
   Truck,
-  Play,
   CheckCircle2,
   RotateCcw,
   ArrowLeft,
@@ -1016,28 +1015,15 @@ function JobDetail({
                 On My Way
               </button>
             )}
-            {(lifeStatus === "scheduled" || lifeStatus === "on_my_way" || lifeStatus === "on_site") && (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => doAdvance("in_progress")}
-                className="w-full flex items-center justify-center gap-2 min-h-[60px] rounded-2xl bg-primary text-primary-foreground font-body font-bold text-[16px] hover:bg-primary/90 transition-colors disabled:opacity-50"
-              >
-                <Play className="w-5 h-5" />
-                Start Visit
-              </button>
-            )}
-            {lifeStatus === "in_progress" && (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => setCompleteOpen(true)}
-                className="w-full flex items-center justify-center gap-2 min-h-[60px] rounded-2xl bg-primary text-primary-foreground font-body font-bold text-[16px] hover:bg-primary/90 transition-colors disabled:opacity-50"
-              >
-                <CheckCircle2 className="w-5 h-5" />
-                Complete Visit
-              </button>
-            )}
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => setCompleteOpen(true)}
+              className="w-full flex items-center justify-center gap-2 min-h-[60px] rounded-2xl bg-primary text-primary-foreground font-body font-bold text-[16px] hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
+              <CheckCircle2 className="w-5 h-5" />
+              Complete Visit
+            </button>
           </>
         )}
         {lifeStatus === "complete" && (
@@ -1246,7 +1232,41 @@ function JobDetail({
           if (choice === "cancel" || choice === "leave_open") return;
           doAdvance("complete");
           if (choice === "invoice_now") {
-            setTimeout(() => navigate("/platform/invoices/new"), 250);
+            const prefillItems = items.length > 0
+              ? items.map(it => ({
+                  description: it.description ?? it.name ?? "Service",
+                  quantity: Number(it.quantity) || 1,
+                  unit_price: Number(it.unit_price) || (Number(it.total) || 0),
+                }))
+              : showSyntheticItem
+              ? [{
+                  description: serviceTitle,
+                  quantity: 1,
+                  unit_price: total || 0,
+                }]
+              : [];
+            const prefill = {
+              customer: job.client_name
+                ? {
+                    id: "",
+                    display_name: job.client_name,
+                    phone: job.client_phone ?? null,
+                    email: job.customer_email ?? null,
+                  }
+                : null,
+              items: prefillItems,
+              fromJobId: job.id,
+              serviceAddress: job.property_address
+                ? {
+                    formatted_address: job.property_address,
+                    property_id: job.property_id ?? null,
+                  }
+                : null,
+            };
+            setTimeout(
+              () => navigate("/platform/invoices/new", { state: { prefill } }),
+              250,
+            );
           }
         }}
       />
