@@ -24,11 +24,13 @@ import { Radio, Truck, Users, Shield, ClipboardCheck, Plus, Pencil, Trash2 } fro
 import { toast } from "sonner";
 
 const INTERVAL_OPTIONS = [
+  { value: 10, label: "10 sec" },
   { value: 15, label: "15 sec" },
   { value: 30, label: "30 sec" },
   { value: 60, label: "1 min" },
   { value: 120, label: "2 min" },
   { value: 300, label: "5 min" },
+  { value: 600, label: "10 min" },
 ];
 
 type CrewSettings = {
@@ -53,7 +55,7 @@ type CrewSettings = {
 const DEFAULT_SETTINGS = (businessId: string): CrewSettings => ({
   business_id: businessId,
   tracking_enabled: true,
-  tracking_interval_seconds: 30,
+  tracking_interval_seconds: 15,
   geofence_radius_feet: 250,
   tracking_only_during_hours: false,
   require_consent_before_tracking: true,
@@ -137,7 +139,12 @@ function TrackingSettings({ businessId }: { businessId: string }) {
           onChange={(v) => setField("tracking_enabled", v)}
         />
         <div className="flex items-center justify-between gap-3 py-2">
-          <Label className="text-sm">GPS tracking interval</Label>
+          <div>
+            <Label className="text-sm">GPS tracking interval</Label>
+            <p className="font-body text-[11px] text-muted-foreground">
+              Lower = more accurate breadcrumb trail, more battery use. True background tracking when the phone screen is off requires the native app.
+            </p>
+          </div>
           <Select
             value={String(draft.tracking_interval_seconds)}
             onValueChange={(v) => setField("tracking_interval_seconds", Number(v))}

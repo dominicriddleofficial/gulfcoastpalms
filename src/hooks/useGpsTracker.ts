@@ -28,7 +28,7 @@ export function useGpsTracker({
   sessionId,
   businessId,
   userId,
-  intervalSeconds = 30,
+  intervalSeconds = 15,
 }: Params): TrackerState {
   const lastPushRef = useRef<number>(0);
   const watchIdRef = useRef<number | null>(null);
@@ -158,7 +158,7 @@ export function useGpsTracker({
 
     watchIdRef.current = navigator.geolocation.watchPosition(onPos, onErr, {
       enableHighAccuracy: true,
-      maximumAge: 10_000,
+      maximumAge: 2_000,
       timeout: 30_000,
     });
     setState((s) => ({ ...s, isWatching: true, lastError: null }));
