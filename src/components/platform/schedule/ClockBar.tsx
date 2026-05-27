@@ -86,7 +86,7 @@ export function ClockBar({
     if (active?.vehicle_id) setVehicleId(active.vehicle_id);
   }, [active?.vehicle_id]);
 
-  const intervalSeconds = settings?.tracking_interval_seconds ?? 30;
+  const intervalSeconds = settings?.tracking_interval_seconds ?? 15;
   const trackingEnabled = settings?.tracking_enabled ?? true;
   const allowWithoutGps = settings?.allow_clock_in_without_gps ?? true;
   const requireConsent = settings?.require_consent_before_tracking ?? true;
