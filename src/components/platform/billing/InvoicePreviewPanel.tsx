@@ -211,21 +211,8 @@ export default function InvoicePreviewPanel({ data }: { data: PreviewData }) {
           }}>
             BILL TO
           </div>
-          <div style={{ fontSize: "16px", fontWeight: 700, color: "#fff" }}>
-            {data.customerName}
-          </div>
-          {data.customerPhone && (
-            <div style={{ fontSize: "12px", color: brand.secondaryText, marginTop: "3px" }}>
-              {data.customerPhone}
-            </div>
-          )}
-          {data.customerEmail && (
-            <div style={{ fontSize: "12px", color: brand.secondaryText, marginTop: "3px" }}>
-              {data.customerEmail}
-            </div>
-          )}
-          {data.customerAddress && (data.customerAddress.line1 || data.customerAddress.city) && (
-            <div style={{ fontSize: "12px", color: brand.secondaryText, marginTop: "6px", lineHeight: 1.45 }}>
+          {data.customerAddress && (data.customerAddress.line1 || data.customerAddress.city) ? (
+            <div style={{ fontSize: "15px", fontWeight: 600, color: "#fff", lineHeight: 1.5 }}>
               {data.customerAddress.line1 && <div>{data.customerAddress.line1}</div>}
               {data.customerAddress.line2 && <div>{data.customerAddress.line2}</div>}
               {(data.customerAddress.city || data.customerAddress.state || data.customerAddress.zip) && (
@@ -234,6 +221,20 @@ export default function InvoicePreviewPanel({ data }: { data: PreviewData }) {
                   {data.customerAddress.zip ? ` ${data.customerAddress.zip}` : ""}
                 </div>
               )}
+            </div>
+          ) : (
+            <div style={{ fontSize: "13px", color: brand.secondaryText, fontStyle: "italic" }}>
+              No service address
+            </div>
+          )}
+          {data.customerPhone && (
+            <div style={{ fontSize: "12px", color: brand.secondaryText, marginTop: "3px" }}>
+              {data.customerPhone}
+            </div>
+          )}
+          {data.customerEmail && (
+            <div style={{ fontSize: "12px", color: brand.secondaryText, marginTop: "3px" }}>
+              {data.customerEmail}
             </div>
           )}
         </div>
