@@ -1257,10 +1257,35 @@ function JobDetail({
               items: prefillItems,
               fromJobId: job.id,
               serviceAddress: job.property_address
-                ? {
-                    formatted_address: job.property_address,
-                    property_id: job.property_id ?? null,
-                  }
+                ? (() => {
+                    // Parse "123 Main St, City, ST 32501" into structured parts so
+                    // the invoice form shows them prefilled instead of empty inputs.
+                    const raw = job.property_address.trim();
+                    const parts = raw.split(",").map((p) => p.trim()).filter(Boolean);
+                    let line1 = "", city = "", state = "", zip = "";
+                    if (parts.length >= 3) {
+                      line1 = parts[0];
+                      city = parts[1];
+                      const m = parts[2].match(/^([A-Za-z]{2})\s*(\d{5}(?:-\d{4})?)?/);
+                      if (m) { state = m[1].toUpperCase(); zip = m[2] ?? ""; }
+                      else { state = parts[2]; }
+                    } else if (parts.length === 2) {
+                      line1 = parts[0];
+                      const m = parts[1].match(/^(.*?)\s+([A-Za-z]{2})\s*(\d{5}(?:-\d{4})?)?$/);
+                      if (m) { city = m[1]; state = m[2].toUpperCase(); zip = m[3] ?? ""; }
+                      else { city = parts[1]; }
+                    } else {
+                      line1 = raw;
+                    }
+                    return {
+                      line1,
+                      city,
+                      state,
+                      zip,
+                      formatted_address: raw,
+                      property_id: job.property_id ?? null,
+                    };
+                  })()
                 : null,
             };
             setTimeout(
