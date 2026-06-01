@@ -439,6 +439,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
       business_id: bizId,
       invoice_number: invoiceNumber,
       customer_id: resolvedCustomerId,
+      job_id: prefill?.fromJobId ?? null,
       property_id: servicePropertyId,
       status: "draft",
       terms,
@@ -613,7 +614,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
                 <div className="flex items-center justify-between">
                   <p className="font-body text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Bill To</p>
                   {customerId && (
-                    <button className="font-body text-[10px] text-primary hover:underline" onClick={() => { setCustomerId(null); setCustomerName(""); setShowCustomerSearch(true); }}>
+                    <button className="font-body text-[10px] text-primary hover:underline" onClick={() => { setCustomerId(null); setCustomerName(""); clearServiceAddress(); setShowCustomerSearch(true); }}>
                       Change
                     </button>
                   )}
