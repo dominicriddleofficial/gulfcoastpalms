@@ -14,6 +14,7 @@ export type DashboardScheduledJob = {
   dedupe_key: string;
   job_number: string | null;
   title: string | null;
+  customer_id: string | null;
   customer_name: string | null;
   customer_phone: string | null;
   customer_email: string | null;
@@ -217,6 +218,7 @@ function buildPlatformItem(
     dedupe_key: externalId ? `jobber:${externalId}` : `platform:${job.id}:${visit?.id ?? "job"}`,
     job_number: job.job_number,
     title: visit?.title ?? job.title,
+    customer_id: job.customer_id,
     customer_name: customerName,
     customer_phone: customerPhone,
     customer_email: customerEmail,
@@ -234,7 +236,7 @@ function buildPlatformItem(
     amount_counted: amount,
     internal_notes: visit?.internal_notes ?? job.internal_notes,
     assigned_employee_names: jobberFallback?.assigned_employee_names ?? null,
-    property_id: visit?.property_id ?? jobberFallback?.property_id ?? null,
+    property_id: visit?.property_id ?? job.property_id ?? jobberFallback?.property_id ?? null,
     service_items: jobberFallback?.service_items ?? null,
   };
 }
@@ -464,6 +466,7 @@ export async function fetchDashboardScheduledJobs(
           dedupe_key: `jobber:${job.id}`,
           job_number: job.job_number,
           title: job.title,
+          customer_id: null,
           customer_name: customerName,
           customer_phone: customerPhone,
           customer_email: client?.email ?? null,
