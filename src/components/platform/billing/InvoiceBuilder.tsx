@@ -165,6 +165,33 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
     })();
   }, [bizId, serviceLine1, servicePropertyId]);
 
+  useEffect(() => {
+    if (!customerId || customerSource !== "platform" || serviceLine1) return;
+
+    (async () => {
+      const { data } = await supabase
+        .from("platform_properties")
+        .select("id, address_1, address_2, city, state, zip, formatted_address, latitude, longitude, map_place_id")
+        .eq("business_id", bizId)
+        .eq("customer_id", customerId)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (!data) return;
+      setServicePropertyId(data.id);
+      setServiceLine1(data.address_1 ?? "");
+      setServiceLine2(data.address_2 ?? "");
+      setServiceCity(data.city ?? "");
+      setServiceState(data.state ?? "");
+      setServiceZip(data.zip ?? "");
+      setServiceFormatted(data.formatted_address ?? null);
+      setServiceLat(data.latitude != null ? Number(data.latitude) : null);
+      setServiceLng(data.longitude != null ? Number(data.longitude) : null);
+      setServicePlaceId(data.map_place_id ?? null);
+    })();
+  }, [bizId, customerId, customerSource, serviceLine1]);
+
   // Fetch logo for invoice preview
   const { data: brandAssets } = useQuery({
     queryKey: ['brand-assets-invoice', bizId],
@@ -298,7 +325,21 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
     setShowSavedItems(false);
   };
 
+  const clearServiceAddress = () => {
+    setServiceLine1("");
+    setServiceLine2("");
+    setServiceCity("");
+    setServiceState("");
+    setServiceZip("");
+    setServicePropertyId(null);
+    setServiceFormatted(null);
+    setServiceLat(null);
+    setServiceLng(null);
+    setServicePlaceId(null);
+  };
+
   const selectCustomer = (c: CustomerResult) => {
+    clearServiceAddress();
     setCustomerId(c.id);
     setCustomerSource((c.source as "platform" | "jobber") || "platform");
     setCustomerName(c.display_name);
