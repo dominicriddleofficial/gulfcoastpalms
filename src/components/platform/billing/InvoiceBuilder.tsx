@@ -84,11 +84,11 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
   const [serviceCity, setServiceCity] = useState(prefill?.serviceAddress?.city ?? "");
   const [serviceState, setServiceState] = useState(prefill?.serviceAddress?.state ?? "");
   const [serviceZip, setServiceZip] = useState(prefill?.serviceAddress?.zip ?? "");
-  const [servicePropertyId] = useState<string | null>(prefill?.serviceAddress?.property_id ?? null);
-  const [serviceFormatted] = useState<string | null>(prefill?.serviceAddress?.formatted_address ?? null);
-  const [serviceLat] = useState<number | null>(prefill?.serviceAddress?.latitude ?? null);
-  const [serviceLng] = useState<number | null>(prefill?.serviceAddress?.longitude ?? null);
-  const [servicePlaceId] = useState<string | null>(prefill?.serviceAddress?.place_id ?? null);
+  const [servicePropertyId, setServicePropertyId] = useState<string | null>(prefill?.serviceAddress?.property_id ?? null);
+  const [serviceFormatted, setServiceFormatted] = useState<string | null>(prefill?.serviceAddress?.formatted_address ?? null);
+  const [serviceLat, setServiceLat] = useState<number | null>(prefill?.serviceAddress?.latitude ?? null);
+  const [serviceLng, setServiceLng] = useState<number | null>(prefill?.serviceAddress?.longitude ?? null);
+  const [servicePlaceId, setServicePlaceId] = useState<string | null>(prefill?.serviceAddress?.place_id ?? null);
   const [invoiceNumber, setInvoiceNumber] = useState("Generating…");
   const [invoiceNumberOverride, setInvoiceNumberOverride] = useState(false);
   const [issueDate, setIssueDate] = useState(format(new Date(), "yyyy-MM-dd"));
@@ -124,6 +124,46 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
   const [saving, setSaving] = useState(false);
 
   const activeBiz = businesses.find(b => b.id === bizId);
+
+  useEffect(() => {
+    const addr = prefill?.serviceAddress;
+    if (!addr) return;
+
+    setServiceLine1(addr.line1 ?? "");
+    setServiceLine2(addr.line2 ?? "");
+    setServiceCity(addr.city ?? "");
+    setServiceState(addr.state ?? "");
+    setServiceZip(addr.zip ?? "");
+    setServicePropertyId(addr.property_id ?? null);
+    setServiceFormatted(addr.formatted_address ?? null);
+    setServiceLat(addr.latitude ?? null);
+    setServiceLng(addr.longitude ?? null);
+    setServicePlaceId(addr.place_id ?? null);
+  }, [prefill?.serviceAddress]);
+
+  useEffect(() => {
+    if (!servicePropertyId || serviceLine1) return;
+
+    (async () => {
+      const { data } = await supabase
+        .from("platform_properties")
+        .select("address_1, address_2, city, state, zip, formatted_address, latitude, longitude, map_place_id")
+        .eq("id", servicePropertyId)
+        .eq("business_id", bizId)
+        .maybeSingle();
+
+      if (!data) return;
+      setServiceLine1(data.address_1 ?? "");
+      setServiceLine2(data.address_2 ?? "");
+      setServiceCity(data.city ?? "");
+      setServiceState(data.state ?? "");
+      setServiceZip(data.zip ?? "");
+      setServiceFormatted(data.formatted_address ?? null);
+      setServiceLat(data.latitude != null ? Number(data.latitude) : null);
+      setServiceLng(data.longitude != null ? Number(data.longitude) : null);
+      setServicePlaceId(data.map_place_id ?? null);
+    })();
+  }, [bizId, serviceLine1, servicePropertyId]);
 
   // Fetch logo for invoice preview
   const { data: brandAssets } = useQuery({
