@@ -176,13 +176,13 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
         .select("id, display_name, email, phone, company_name")
         .eq("business_id", bizId)
         .order("display_name", { ascending: true })
-        .limit(20);
+        .limit(50);
       const basePlatform = supabase
         .from("platform_customers")
         .select("id, display_name, email, phone, company_name")
         .eq("business_id", bizId)
-        .order("display_name", { ascending: true })
-        .limit(20);
+        .order("created_at", { ascending: false })
+        .limit(50);
       const [jobberRes, platformRes] = await Promise.all([
         hasQuery
           ? supabase
@@ -190,7 +190,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
               .select("id, display_name, email, phone, company_name")
               .eq("business_id", bizId)
               .or(`display_name.ilike.${like},phone.ilike.${like},email.ilike.${like}`)
-              .limit(20)
+              .limit(50)
           : baseJobber,
         hasQuery
           ? supabase
@@ -198,7 +198,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
               .select("id, display_name, email, phone, company_name")
               .eq("business_id", bizId)
               .or(`display_name.ilike.${like},phone.ilike.${like},email.ilike.${like}`)
-              .limit(20)
+              .limit(50)
           : basePlatform,
       ]);
       const seen = new Set<string>();
