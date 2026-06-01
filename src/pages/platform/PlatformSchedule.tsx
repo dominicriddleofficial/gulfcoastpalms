@@ -1256,7 +1256,7 @@ function JobDetail({
                   }
                 : null,
               items: prefillItems,
-              fromJobId: job.id,
+              fromJobId: job.source === "jobber_synced" ? undefined : job.job_id,
               serviceAddress: job.property_address || job.property_id
                 ? (() => {
                     // Parse "123 Main St, City, ST 32501" into structured parts so
