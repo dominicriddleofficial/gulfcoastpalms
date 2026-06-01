@@ -176,13 +176,13 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
         .select("id, display_name, email, phone, company_name")
         .eq("business_id", bizId)
         .order("display_name", { ascending: true })
-        .limit(20);
+        .limit(50);
       const basePlatform = supabase
         .from("platform_customers")
         .select("id, display_name, email, phone, company_name")
         .eq("business_id", bizId)
-        .order("display_name", { ascending: true })
-        .limit(20);
+        .order("created_at", { ascending: false })
+        .limit(50);
       const [jobberRes, platformRes] = await Promise.all([
         hasQuery
           ? supabase
@@ -190,7 +190,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
               .select("id, display_name, email, phone, company_name")
               .eq("business_id", bizId)
               .or(`display_name.ilike.${like},phone.ilike.${like},email.ilike.${like}`)
-              .limit(20)
+              .limit(50)
           : baseJobber,
         hasQuery
           ? supabase
@@ -198,18 +198,13 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
               .select("id, display_name, email, phone, company_name")
               .eq("business_id", bizId)
               .or(`display_name.ilike.${like},phone.ilike.${like},email.ilike.${like}`)
-              .limit(20)
+              .limit(50)
           : basePlatform,
       ]);
       const seen = new Set<string>();
       const combined: CustomerResult[] = [];
-      for (const c of (jobberRes.data || [])) {
-        const key = c.display_name?.toLowerCase();
-        if (key && !seen.has(key)) {
-          seen.add(key);
-          combined.push({ ...c, source: "jobber" } as CustomerResult);
-        }
-      }
+      // Platform customers first — these are manually entered and should take priority
+      // over the synced Jobber mirror so recent schedule jobs always appear in search.
       for (const c of (platformRes.data || [])) {
         const key = c.display_name?.toLowerCase();
         if (key && !seen.has(key)) {
@@ -217,7 +212,14 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
           combined.push({ ...c, source: "platform" } as CustomerResult);
         }
       }
-      setCustomerResults(combined.slice(0, 25));
+      for (const c of (jobberRes.data || [])) {
+        const key = c.display_name?.toLowerCase();
+        if (key && !seen.has(key)) {
+          seen.add(key);
+          combined.push({ ...c, source: "jobber" } as CustomerResult);
+        }
+      }
+      setCustomerResults(combined.slice(0, 50));
     }, 200);
     return () => clearTimeout(timer);
   }, [customerSearch, bizId]);
