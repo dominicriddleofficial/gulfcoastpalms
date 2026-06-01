@@ -238,7 +238,7 @@ function buildPlatformItem(
     amount_counted: amount,
     internal_notes: visit?.internal_notes ?? job.internal_notes,
     assigned_employee_names: jobberFallback?.assigned_employee_names ?? null,
-    property_id: visit?.property_id ?? job.property_id ?? jobberFallback?.property_id ?? null,
+    property_id: visit?.property_id ?? job.property_id ?? null,
     service_items: jobberFallback?.service_items ?? null,
   };
 }
