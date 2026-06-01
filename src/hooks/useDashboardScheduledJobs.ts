@@ -67,6 +67,8 @@ type PlatformPropertyRow = {
 type PlatformJobShape = {
   id: string;
   business_id: string | null;
+  customer_id: string | null;
+  property_id: string | null;
   job_number: string | null;
   title: string | null;
   total: number | string | null;
@@ -305,7 +307,7 @@ export async function fetchDashboardScheduledJobs(
         .select(
           `id, business_id, property_id, title, scheduled_date, scheduled_start_time, scheduled_end_time, status, internal_notes,
            job:platform_jobs!inner(
-             id, business_id, job_number, title, total, status, source, source_system, source_record_id, internal_notes, deleted_at, scheduled_start, scheduled_end,
+             id, business_id, customer_id, property_id, job_number, title, total, status, source, source_system, source_record_id, internal_notes, deleted_at, scheduled_start, scheduled_end,
              customer:platform_customers(display_name, phone, email),
              property:platform_properties(address_1, address_2, city, state, zip)
            )`,
@@ -316,7 +318,7 @@ export async function fetchDashboardScheduledJobs(
       let platformJobQuery = supabase
         .from("platform_jobs")
         .select(
-          `id, business_id, job_number, title, total, status, source, source_system, source_record_id, internal_notes, deleted_at, scheduled_start, scheduled_end,
+           `id, business_id, customer_id, property_id, job_number, title, total, status, source, source_system, source_record_id, internal_notes, deleted_at, scheduled_start, scheduled_end,
            customer:platform_customers(display_name, phone, email),
            property:platform_properties(address_1, address_2, city, state, zip)`,
         )
