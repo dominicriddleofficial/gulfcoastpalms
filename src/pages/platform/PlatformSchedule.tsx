@@ -84,6 +84,7 @@ type JobberJob = {
   customer_email: string | null;
   address: string | null;
   title: string | null;
+  customer_id: string | null;
   client_name: string | null;
   client_phone: string | null;
   property_address: string | null;
@@ -1248,7 +1249,7 @@ function JobDetail({
             const prefill = {
               customer: job.client_name
                 ? {
-                    id: "",
+                    id: job.customer_id ?? "",
                     display_name: job.client_name,
                     phone: job.client_phone ?? null,
                     email: job.customer_email ?? null,
@@ -1256,11 +1257,11 @@ function JobDetail({
                 : null,
               items: prefillItems,
               fromJobId: job.id,
-              serviceAddress: job.property_address
+              serviceAddress: job.property_address || job.property_id
                 ? (() => {
                     // Parse "123 Main St, City, ST 32501" into structured parts so
                     // the invoice form shows them prefilled instead of empty inputs.
-                    const raw = job.property_address.trim();
+                    const raw = job.property_address?.trim() ?? "";
                     const parts = raw.split(",").map((p) => p.trim()).filter(Boolean);
                     let line1 = "", city = "", state = "", zip = "";
                     if (parts.length >= 3) {
