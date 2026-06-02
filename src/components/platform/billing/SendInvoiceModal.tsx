@@ -15,7 +15,7 @@ interface SendInvoiceModalProps {
   dueDate: string;
   businessName: string;
   shortcode: string;
-  onSend: (data: { email: string; subject: string; message: string; ccEmail: string; sendEmail: boolean; sendSms: boolean }) => Promise<void>;
+  onSend: (data: { email: string; subject: string; message: string; ccEmail: string; sendEmail: boolean; sendSms: boolean; smsMessage: string }) => Promise<void>;
   onClose: () => void;
   saving: boolean;
 }
@@ -33,6 +33,9 @@ export default function SendInvoiceModal({
   );
   const [sendEmail, setSendEmail] = useState(true);
   const [sendSms, setSendSms] = useState(false);
+  const [smsMessage, setSmsMessage] = useState(
+    `Hi ${customerName}, your invoice from ${businessName} is ready. Pay online here: [PAYMENT_LINK]. Reply STOP to unsubscribe.`
+  );
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -107,19 +110,23 @@ export default function SendInvoiceModal({
           )}
 
           {sendSms && (
-            <div className="bg-card border border-border rounded-lg p-3">
-              <p className="font-body text-[10px] text-muted-foreground mb-1">Text message preview:</p>
-              <p className="font-body text-xs text-foreground">
-                Hi {customerName}, your invoice from {businessName} is ready. Pay online here: [PAYMENT_LINK]. Reply STOP to unsubscribe.
-              </p>
-              <p className="font-body text-[10px] text-muted-foreground mt-2">→ {customerPhone || "No phone on file"}</p>
+            <div>
+              <label className="font-body text-[10px] font-medium text-muted-foreground mb-1 block">
+                Text message ({smsMessage.length} chars) — [PAYMENT_LINK] will be replaced
+              </label>
+              <Textarea
+                value={smsMessage}
+                onChange={e => setSmsMessage(e.target.value)}
+                className="bg-card border-border font-body text-sm min-h-[90px]"
+              />
+              <p className="font-body text-[10px] text-muted-foreground mt-1">→ {customerPhone || "No phone on file"}</p>
             </div>
           )}
         </div>
 
         <DialogFooter className="mt-4">
           <Button variant="outline" onClick={onClose} className="font-body text-sm">Cancel</Button>
-          <Button onClick={() => onSend({ email, subject, message, ccEmail, sendEmail, sendSms })} disabled={saving || (!sendEmail && !sendSms)} className="font-body text-sm">
+          <Button onClick={() => onSend({ email, subject, message, ccEmail, sendEmail, sendSms, smsMessage })} disabled={saving || (!sendEmail && !sendSms)} className="font-body text-sm">
             <Send className="w-3.5 h-3.5 mr-1.5" />
             {saving ? "Sending…" : "Send Invoice"}
           </Button>
