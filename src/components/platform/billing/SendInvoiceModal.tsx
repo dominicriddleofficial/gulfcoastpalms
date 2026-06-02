@@ -39,7 +39,7 @@ export default function SendInvoiceModal({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-md bg-background border-border">
+      <DialogContent className="ops-theme max-w-md bg-background border-border">
         <DialogHeader>
           <DialogTitle className="font-display text-foreground">Send Invoice</DialogTitle>
         </DialogHeader>
@@ -103,8 +103,15 @@ export default function SendInvoiceModal({
               </div>
               <div>
                 <label className="font-body text-[10px] font-medium text-muted-foreground mb-1 block">Message</label>
-                <Textarea value={message} onChange={e => setMessage(e.target.value)}
-                  className="bg-card border-border font-body text-sm min-h-[80px]" />
+                <Textarea
+                  value={message}
+                  onChange={e => setMessage(e.target.value)}
+                  readOnly={false}
+                  disabled={false}
+                  rows={5}
+                  className="bg-card border-border font-body text-sm min-h-[120px] text-foreground"
+                />
+                <p className="font-body text-[10px] text-muted-foreground mt-1">Edit freely — this is the email body the customer will see.</p>
               </div>
             </>
           )}
@@ -117,7 +124,10 @@ export default function SendInvoiceModal({
               <Textarea
                 value={smsMessage}
                 onChange={e => setSmsMessage(e.target.value)}
-                className="bg-card border-border font-body text-sm min-h-[90px]"
+                readOnly={false}
+                disabled={false}
+                rows={4}
+                className="bg-card border-border font-body text-sm min-h-[90px] text-foreground"
               />
               <p className="font-body text-[10px] text-muted-foreground mt-1">→ {customerPhone || "No phone on file"}</p>
             </div>
