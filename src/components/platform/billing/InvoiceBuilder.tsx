@@ -48,6 +48,7 @@ interface SendInvoiceData {
   ccEmail: string;
   sendEmail: boolean;
   sendSms: boolean;
+  smsMessage?: string;
 }
 
 interface InvoiceBuilderProps {
@@ -536,7 +537,10 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
           toast.error("SMS skipped: no phone number on file for this customer");
         } else {
           try {
-            const smsMessage = `Hi ${customerName}, your invoice from ${activeBiz?.public_brand_name || "us"} is ready. Total: $${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}. Pay online here: ${paymentUrl} Reply STOP to unsubscribe.`;
+            const template = sendData.smsMessage?.trim()
+              ? sendData.smsMessage
+              : `Hi ${customerName}, your invoice from ${activeBiz?.public_brand_name || "us"} is ready. Pay online here: [PAYMENT_LINK]. Reply STOP to unsubscribe.`;
+            const smsMessage = template.replace(/\[PAYMENT_LINK\]/g, paymentUrl);
             console.log("[SMS] sending invoice text", { to: customerPhone, customerName, paymentUrl });
             const { error: smsErr } = await supabase.functions.invoke("send-sms", {
               body: { to: customerPhone, message: smsMessage },
