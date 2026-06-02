@@ -47,6 +47,14 @@ const BRAND_INFO: Record<string, { name: string; tagline: string; footer: string
 
 const fmt = (n: number) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+const hasRealAddress = (value: unknown): value is string => {
+  if (typeof value !== "string") return false;
+  const text = value.trim();
+  if (!text) return false;
+  const normalized = text.replace(/[^a-z0-9]/gi, "").toLowerCase();
+  return !["na", "n/a", "notapplicable", "none", "null", "unknown"].includes(normalized);
+};
+
 export default function PayInvoice() {
   const { shortcode, invoiceId } = useParams();
   const [searchParams] = useSearchParams();
@@ -88,7 +96,7 @@ export default function PayInvoice() {
       setLoading(false);
     }
     load();
-  }, [invoiceId, baseUrl]);
+  }, [invoiceId, shortcode, baseUrl]);
 
   // Poll for invoice status changes so the page reflects webhook-driven updates
   // (status flips to "paid" / balance_due drops to 0) without a manual refresh.
@@ -109,7 +117,7 @@ export default function PayInvoice() {
       }
     }, 5000);
     return () => clearInterval(interval);
-  }, [invoiceId, baseUrl, invoice]);
+  }, [invoiceId, shortcode, baseUrl, invoice]);
 
   const handlePay = async () => {
     if (!invoice) return;
@@ -161,6 +169,7 @@ export default function PayInvoice() {
   const isOverdue = invoice.status === "overdue" || (invoice.due_date && new Date(invoice.due_date) < new Date() && !isPaid && invoice.status !== "draft" && invoice.status !== "void");
   const isDraft = invoice.status === "draft";
   const dueNow = invoice.deposit_required && !invoice.deposit_paid && invoice.deposit_amount > 0 ? invoice.deposit_amount : invoice.balance_due;
+  const billToAddress = hasRealAddress(invoice.customer_address) ? invoice.customer_address.trim() : null;
 
   const statusBadge = () => {
     if (isPaid) return { label: "Paid", bg: `rgba(${accentRgb}, 0.15)`, color: accent, border: `rgba(${accentRgb}, 0.3)` };
@@ -269,8 +278,9 @@ export default function PayInvoice() {
               {/* Customer info */}
               <div>
                 <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: "#71717a", marginBottom: 4 }}>BILL TO</div>
-                <p style={{ color: "#fff", fontWeight: 600, fontSize: 15 }}>{invoice.customer_name}</p>
-                {(invoice as Record<string, unknown>).customer_address && <p style={{ fontSize: 12, color: labelColor, marginTop: 2 }}>{String((invoice as Record<string, unknown>).customer_address)}</p>}
+                <p style={{ color: billToAddress ? "#fff" : labelColor, fontWeight: billToAddress ? 600 : 400, fontSize: billToAddress ? 15 : 13, fontStyle: billToAddress ? "normal" : "italic" }}>
+                  {billToAddress || "No service address"}
+                </p>
                 <p style={{ fontSize: 12, color: labelColor, marginTop: 2 }}>
                   {[(invoice as Record<string, unknown>).customer_phone, (invoice as Record<string, unknown>).customer_email].filter(Boolean).map(String).join(" · ")}
                 </p>
