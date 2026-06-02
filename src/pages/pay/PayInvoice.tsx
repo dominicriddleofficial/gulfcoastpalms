@@ -96,7 +96,7 @@ export default function PayInvoice() {
       setLoading(false);
     }
     load();
-  }, [invoiceId, baseUrl]);
+  }, [invoiceId, shortcode, baseUrl]);
 
   // Poll for invoice status changes so the page reflects webhook-driven updates
   // (status flips to "paid" / balance_due drops to 0) without a manual refresh.
@@ -117,7 +117,7 @@ export default function PayInvoice() {
       }
     }, 5000);
     return () => clearInterval(interval);
-  }, [invoiceId, baseUrl, invoice]);
+  }, [invoiceId, shortcode, baseUrl, invoice]);
 
   const handlePay = async () => {
     if (!invoice) return;
