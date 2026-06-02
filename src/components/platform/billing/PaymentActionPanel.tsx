@@ -213,6 +213,27 @@ export default function PaymentActionPanel({
             </Button>
           </div>
 
+          {/* Quick: Mark as Paid (zeros out balance) */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full h-9 font-body text-xs border-[#22c55e]/30 text-[#22c55e] hover:bg-[#22c55e]/10"
+            onClick={() => {
+              if (balance <= 0) {
+                toast({ title: "Already paid", description: "This invoice has no remaining balance." });
+                return;
+              }
+              const ok = window.confirm(
+                `Mark invoice ${invoice.invoice_number} as PAID? This will record a $${balance.toLocaleString()} payment and set the balance due to $0.00.`
+              );
+              if (!ok) return;
+              onRecordPayment(balance, "other", "Marked as paid", false);
+              toast({ title: "Marked as paid", description: `Balance set to $0.00.` });
+            }}
+          >
+            <CheckCircle className="w-3.5 h-3.5 mr-1" /> Mark as Paid ($0.00 due)
+          </Button>
+
           {/* Tap to Pay — deep link */}
           <TapToPayButton
             businessId={businessId || ""}
