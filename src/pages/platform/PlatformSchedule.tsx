@@ -914,7 +914,7 @@ function JobDetail({
                 className="gap-2"
               >
                 <Pencil className="w-4 h-4" />
-                Edit job
+                Edit visit
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -1623,32 +1623,82 @@ function EditJobSheet({
   open: boolean;
   onClose: () => void;
   job: JobberJob;
-  onSaved: () => void;
+  onSaved: (changes: Partial<JobberJob>) => void;
 }) {
   const [title, setTitle] = useState(job.title ?? "");
   const [notes, setNotes] = useState(job.internal_notes ?? "");
+  const [price, setPrice] = useState(job.total_amount != null ? String(job.total_amount) : "");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (open) {
       setTitle(job.title ?? "");
       setNotes(job.internal_notes ?? "");
+      setPrice(job.total_amount != null ? String(job.total_amount) : "");
     }
-  }, [open, job.title, job.internal_notes]);
+  }, [open, job.title, job.internal_notes, job.total_amount]);
 
   const handleSave = async () => {
-    setSaving(true);
-    const { error } = await supabase
-      .from("jobber_jobs")
-      .update({ title: title.trim() || null, internal_notes: notes })
-      .eq("id", job.id);
-    setSaving(false);
-    if (error) {
-      toast.error(error.message || "Update failed");
+    const trimmedTitle = title.trim() || null;
+    const trimmedNotes = notes.trim() || null;
+    const trimmedPrice = price.trim();
+    const parsedPrice = trimmedPrice === "" ? null : Number(trimmedPrice);
+    if (parsedPrice !== null && (!Number.isFinite(parsedPrice) || parsedPrice < 0)) {
+      toast.error("Enter a valid job price");
       return;
     }
-    toast.success("Job updated");
-    onSaved();
+
+    setSaving(true);
+    try {
+      if (job.source === "jobber_synced") {
+        const { error, count } = await supabase
+          .from("jobber_jobs")
+          .update(
+            { title: trimmedTitle, internal_notes: trimmedNotes, total_amount: parsedPrice },
+            { count: "exact" },
+          )
+          .eq("id", job.id);
+        if (error) throw error;
+        if (!count) throw new Error("Visit record missing.");
+      } else {
+        if (!job.job_id) throw new Error("Local job record missing.");
+
+        const updates: PromiseLike<{ error: unknown; count?: number | null }>[] = [
+          supabase
+            .from("platform_jobs")
+            .update(
+              { title: trimmedTitle, internal_notes: trimmedNotes, total: parsedPrice },
+              { count: "exact" },
+            )
+            .eq("id", job.job_id),
+        ];
+
+        if (job.visit_id) {
+          updates.push(
+            supabase
+              .from("platform_job_visits")
+              .update(
+                { title: trimmedTitle, internal_notes: trimmedNotes },
+                { count: "exact" },
+              )
+              .eq("id", job.visit_id),
+          );
+        }
+
+        const results = await Promise.all(updates);
+        const failed = results.find((result) => result.error);
+        if (failed?.error) throw failed.error;
+        if (!results[0].count) throw new Error("Job record missing.");
+      }
+
+      toast.success("Visit updated");
+      onSaved({ title: trimmedTitle, internal_notes: trimmedNotes, total_amount: parsedPrice });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Update failed";
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -1658,9 +1708,9 @@ function EditJobSheet({
         className="ops-theme bg-background border-t border-border rounded-t-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto"
       >
         <div className="space-y-1">
-          <h3 className="font-display text-[20px] font-extrabold text-foreground">Edit job</h3>
+          <h3 className="font-display text-[20px] font-extrabold text-foreground">Edit visit</h3>
           <p className="font-body text-[13px] text-muted-foreground">
-            Title and instructions update locally. Changes don't sync back to Jobber.
+            Updates the visit details used by the schedule and invoices.
           </p>
         </div>
         <div className="space-y-3">
@@ -1671,6 +1721,19 @@ function EditJobSheet({
               onChange={(e) => setTitle(e.target.value)}
               className="bg-card border-border text-foreground"
               placeholder="Job title"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="font-body text-[13px] text-muted-foreground">Job price</Label>
+            <Input
+              type="number"
+              min="0"
+              step="0.01"
+              inputMode="decimal"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              className="bg-card border-border text-foreground"
+              placeholder="0.00"
             />
           </div>
           <div className="space-y-1.5">
