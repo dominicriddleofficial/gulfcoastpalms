@@ -1663,32 +1663,27 @@ function EditJobSheet({
       } else {
         if (!job.job_id) throw new Error("Local job record missing.");
 
-        const updates: PromiseLike<{ error: unknown; count?: number | null }>[] = [
-          supabase
-            .from("platform_jobs")
-            .update(
-              { title: trimmedTitle, internal_notes: trimmedNotes, total: parsedPrice },
-              { count: "exact" },
-            )
-            .eq("id", job.job_id),
-        ];
+        const { error: jobError, count: jobCount } = await supabase
+          .from("platform_jobs")
+          .update(
+            { title: trimmedTitle, internal_notes: trimmedNotes, total: parsedPrice },
+            { count: "exact" },
+          )
+          .eq("id", job.job_id);
+        if (jobError) throw jobError;
+        if (!jobCount) throw new Error("Job record missing.");
 
         if (job.visit_id) {
-          updates.push(
-            supabase
-              .from("platform_job_visits")
-              .update(
-                { title: trimmedTitle, internal_notes: trimmedNotes },
-                { count: "exact" },
-              )
-              .eq("id", job.visit_id),
-          );
+          const { error: visitError, count: visitCount } = await supabase
+            .from("platform_job_visits")
+            .update(
+              { title: trimmedTitle, internal_notes: trimmedNotes },
+              { count: "exact" },
+            )
+            .eq("id", job.visit_id);
+          if (visitError) throw visitError;
+          if (!visitCount) throw new Error("Visit record missing.");
         }
-
-        const results = await Promise.all(updates);
-        const failed = results.find((result) => result.error);
-        if (failed?.error) throw failed.error;
-        if (!results[0].count) throw new Error("Job record missing.");
       }
 
       toast.success("Visit updated");
@@ -1789,7 +1784,7 @@ function DeleteJobDialog({
       if (job.source === "jobber_synced") {
         const { error, count } = await supabase
           .from("jobber_jobs")
-          .delete({ count: "exact" })
+          .update({ status: "deleted" }, { count: "exact" })
           .eq("id", job.id);
         if (error) throw error;
         if (!count) throw new Error("Visit record missing.");
