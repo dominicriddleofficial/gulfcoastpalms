@@ -593,6 +593,10 @@ export default function PlatformSchedule() {
               businessId={selectedBusinessId}
               onContact={() => setContactJob(selectedJob)}
               onClose={() => setSelectedJob(null)}
+              onJobChanged={(changes) => {
+                setSelectedJob((current) => current && current.id === selectedJob.id ? { ...current, ...changes } : current);
+                setContactJob((current) => current && current.id === selectedJob.id ? { ...current, ...changes } : current);
+              }}
             />
           )}
         </SheetContent>
@@ -803,11 +807,13 @@ function JobDetail({
   businessId,
   onContact,
   onClose,
+  onJobChanged,
 }: {
   job: JobberJob;
   businessId: string | null;
   onContact: () => void;
   onClose: () => void;
+  onJobChanged: (changes: Partial<JobberJob>) => void;
 }) {
   const [tab, setTab] = useState<JobDetailTab>("visit");
   const [omwOpen, setOmwOpen] = useState(false);
@@ -908,7 +914,7 @@ function JobDetail({
                 className="gap-2"
               >
                 <Pencil className="w-4 h-4" />
-                Edit job
+                Edit visit
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -1311,7 +1317,8 @@ function JobDetail({
         open={editOpen}
         onClose={() => setEditOpen(false)}
         job={job}
-        onSaved={() => {
+        onSaved={(changes) => {
+          onJobChanged(changes);
           setEditOpen(false);
           qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
         }}
@@ -1320,7 +1327,7 @@ function JobDetail({
       <DeleteJobDialog
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}
-        jobId={job.id}
+        job={job}
         jobLabel={job.title ?? job.client_name ?? "this visit"}
         onDeleted={() => {
           setDeleteOpen(false);
@@ -1616,32 +1623,77 @@ function EditJobSheet({
   open: boolean;
   onClose: () => void;
   job: JobberJob;
-  onSaved: () => void;
+  onSaved: (changes: Partial<JobberJob>) => void;
 }) {
   const [title, setTitle] = useState(job.title ?? "");
   const [notes, setNotes] = useState(job.internal_notes ?? "");
+  const [price, setPrice] = useState(job.total_amount != null ? String(job.total_amount) : "");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (open) {
       setTitle(job.title ?? "");
       setNotes(job.internal_notes ?? "");
+      setPrice(job.total_amount != null ? String(job.total_amount) : "");
     }
-  }, [open, job.title, job.internal_notes]);
+  }, [open, job.title, job.internal_notes, job.total_amount]);
 
   const handleSave = async () => {
-    setSaving(true);
-    const { error } = await supabase
-      .from("jobber_jobs")
-      .update({ title: title.trim() || null, internal_notes: notes })
-      .eq("id", job.id);
-    setSaving(false);
-    if (error) {
-      toast.error(error.message || "Update failed");
+    const trimmedTitle = title.trim() || null;
+    const trimmedNotes = notes.trim() || null;
+    const trimmedPrice = price.trim();
+    const parsedPrice = trimmedPrice === "" ? null : Number(trimmedPrice);
+    if (parsedPrice !== null && (!Number.isFinite(parsedPrice) || parsedPrice < 0)) {
+      toast.error("Enter a valid job price");
       return;
     }
-    toast.success("Job updated");
-    onSaved();
+
+    setSaving(true);
+    try {
+      if (job.source === "jobber_synced") {
+        const { error, count } = await supabase
+          .from("jobber_jobs")
+          .update(
+            { title: trimmedTitle, internal_notes: trimmedNotes, total_amount: parsedPrice },
+            { count: "exact" },
+          )
+          .eq("id", job.id);
+        if (error) throw error;
+        if (!count) throw new Error("Visit record missing.");
+      } else {
+        if (!job.job_id) throw new Error("Local job record missing.");
+
+        const { error: jobError, count: jobCount } = await supabase
+          .from("platform_jobs")
+          .update(
+            { title: trimmedTitle, internal_notes: trimmedNotes, total: parsedPrice },
+            { count: "exact" },
+          )
+          .eq("id", job.job_id);
+        if (jobError) throw jobError;
+        if (!jobCount) throw new Error("Job record missing.");
+
+        if (job.visit_id) {
+          const { error: visitError, count: visitCount } = await supabase
+            .from("platform_job_visits")
+            .update(
+              { title: trimmedTitle, internal_notes: trimmedNotes },
+              { count: "exact" },
+            )
+            .eq("id", job.visit_id);
+          if (visitError) throw visitError;
+          if (!visitCount) throw new Error("Visit record missing.");
+        }
+      }
+
+      toast.success("Visit updated");
+      onSaved({ title: trimmedTitle, internal_notes: trimmedNotes, total_amount: parsedPrice });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Update failed";
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -1651,9 +1703,9 @@ function EditJobSheet({
         className="ops-theme bg-background border-t border-border rounded-t-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto"
       >
         <div className="space-y-1">
-          <h3 className="font-display text-[20px] font-extrabold text-foreground">Edit job</h3>
+          <h3 className="font-display text-[20px] font-extrabold text-foreground">Edit visit</h3>
           <p className="font-body text-[13px] text-muted-foreground">
-            Title and instructions update locally. Changes don't sync back to Jobber.
+            Updates the visit details used by the schedule and invoices.
           </p>
         </div>
         <div className="space-y-3">
@@ -1664,6 +1716,19 @@ function EditJobSheet({
               onChange={(e) => setTitle(e.target.value)}
               className="bg-card border-border text-foreground"
               placeholder="Job title"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="font-body text-[13px] text-muted-foreground">Job price</Label>
+            <Input
+              type="number"
+              min="0"
+              step="0.01"
+              inputMode="decimal"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              className="bg-card border-border text-foreground"
+              placeholder="0.00"
             />
           </div>
           <div className="space-y-1.5">
@@ -1701,13 +1766,13 @@ function EditJobSheet({
 function DeleteJobDialog({
   open,
   onClose,
-  jobId,
+  job,
   jobLabel,
   onDeleted,
 }: {
   open: boolean;
   onClose: () => void;
-  jobId: string;
+  job: JobberJob;
   jobLabel: string;
   onDeleted: () => void;
 }) {
@@ -1715,14 +1780,55 @@ function DeleteJobDialog({
 
   const handleDelete = async () => {
     setDeleting(true);
-    const { error } = await supabase.from("jobber_jobs").delete().eq("id", jobId);
-    setDeleting(false);
-    if (error) {
-      toast.error(error.message || "Delete failed");
-      return;
+    try {
+      if (job.source === "jobber_synced") {
+        const { error, count } = await supabase
+          .from("jobber_jobs")
+          .update({ status: "deleted" }, { count: "exact" })
+          .eq("id", job.id);
+        if (error) throw error;
+        if (!count) throw new Error("Visit record missing.");
+      } else if (job.visit_id) {
+        const { error, count } = await supabase
+          .from("platform_job_visits")
+          .delete({ count: "exact" })
+          .eq("id", job.visit_id);
+        if (error) throw error;
+        if (!count) throw new Error("Visit record missing.");
+
+        if (job.job_id) {
+          const { count: remainingVisits, error: countError } = await supabase
+            .from("platform_job_visits")
+            .select("id", { count: "exact", head: true })
+            .eq("job_id", job.job_id);
+          if (countError) throw countError;
+          if ((remainingVisits ?? 0) === 0) {
+            const { error: jobError } = await supabase
+              .from("platform_jobs")
+              .update({ status: "deleted", deleted_at: new Date().toISOString() })
+              .eq("id", job.job_id);
+            if (jobError) throw jobError;
+          }
+        }
+      } else if (job.job_id) {
+        const { error, count } = await supabase
+          .from("platform_jobs")
+          .update({ status: "deleted", deleted_at: new Date().toISOString() }, { count: "exact" })
+          .eq("id", job.job_id);
+        if (error) throw error;
+        if (!count) throw new Error("Job record missing.");
+      } else {
+        throw new Error("Visit record missing.");
+      }
+
+      toast.success("Visit deleted");
+      onDeleted();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Delete failed";
+      toast.error(message);
+    } finally {
+      setDeleting(false);
     }
-    toast.success("Visit deleted");
-    onDeleted();
   };
 
   return (
