@@ -1317,7 +1317,8 @@ function JobDetail({
         open={editOpen}
         onClose={() => setEditOpen(false)}
         job={job}
-        onSaved={() => {
+        onSaved={(changes) => {
+          onJobChanged(changes);
           setEditOpen(false);
           qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
         }}
@@ -1326,7 +1327,7 @@ function JobDetail({
       <DeleteJobDialog
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}
-        jobId={job.id}
+        job={job}
         jobLabel={job.title ?? job.client_name ?? "this visit"}
         onDeleted={() => {
           setDeleteOpen(false);
