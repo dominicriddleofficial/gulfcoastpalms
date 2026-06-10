@@ -1797,11 +1797,18 @@ function DeleteJobDialog({
         if (!count) throw new Error("Visit record missing.");
 
         if (job.job_id) {
-          const { error: jobError } = await supabase
-            .from("platform_jobs")
-            .update({ status: "deleted", deleted_at: new Date().toISOString() })
-            .eq("id", job.job_id);
-          if (jobError) throw jobError;
+          const { count: remainingVisits, error: countError } = await supabase
+            .from("platform_job_visits")
+            .select("id", { count: "exact", head: true })
+            .eq("job_id", job.job_id);
+          if (countError) throw countError;
+          if ((remainingVisits ?? 0) === 0) {
+            const { error: jobError } = await supabase
+              .from("platform_jobs")
+              .update({ status: "deleted", deleted_at: new Date().toISOString() })
+              .eq("id", job.job_id);
+            if (jobError) throw jobError;
+          }
         }
       } else if (job.job_id) {
         const { error, count } = await supabase
