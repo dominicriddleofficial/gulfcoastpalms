@@ -1771,13 +1771,13 @@ function EditJobSheet({
 function DeleteJobDialog({
   open,
   onClose,
-  jobId,
+  job,
   jobLabel,
   onDeleted,
 }: {
   open: boolean;
   onClose: () => void;
-  jobId: string;
+  job: JobberJob;
   jobLabel: string;
   onDeleted: () => void;
 }) {
@@ -1785,14 +1785,40 @@ function DeleteJobDialog({
 
   const handleDelete = async () => {
     setDeleting(true);
-    const { error } = await supabase.from("jobber_jobs").delete().eq("id", jobId);
-    setDeleting(false);
-    if (error) {
-      toast.error(error.message || "Delete failed");
-      return;
+    try {
+      if (job.source === "jobber_synced") {
+        const { error, count } = await supabase
+          .from("jobber_jobs")
+          .delete({ count: "exact" })
+          .eq("id", job.id);
+        if (error) throw error;
+        if (!count) throw new Error("Visit record missing.");
+      } else if (job.visit_id) {
+        const { error, count } = await supabase
+          .from("platform_job_visits")
+          .update({ status: "deleted" }, { count: "exact" })
+          .eq("id", job.visit_id);
+        if (error) throw error;
+        if (!count) throw new Error("Visit record missing.");
+      } else if (job.job_id) {
+        const { error, count } = await supabase
+          .from("platform_jobs")
+          .update({ status: "deleted", deleted_at: new Date().toISOString() }, { count: "exact" })
+          .eq("id", job.job_id);
+        if (error) throw error;
+        if (!count) throw new Error("Job record missing.");
+      } else {
+        throw new Error("Visit record missing.");
+      }
+
+      toast.success("Visit deleted");
+      onDeleted();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Delete failed";
+      toast.error(message);
+    } finally {
+      setDeleting(false);
     }
-    toast.success("Visit deleted");
-    onDeleted();
   };
 
   return (
