@@ -1795,6 +1795,14 @@ function DeleteJobDialog({
           .eq("id", job.visit_id);
         if (error) throw error;
         if (!count) throw new Error("Visit record missing.");
+
+        if (job.job_id) {
+          const { error: jobError } = await supabase
+            .from("platform_jobs")
+            .update({ status: "deleted", deleted_at: new Date().toISOString() })
+            .eq("id", job.job_id);
+          if (jobError) throw jobError;
+        }
       } else if (job.job_id) {
         const { error, count } = await supabase
           .from("platform_jobs")
