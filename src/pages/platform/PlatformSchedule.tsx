@@ -1791,7 +1791,7 @@ function DeleteJobDialog({
       } else if (job.visit_id) {
         const { error, count } = await supabase
           .from("platform_job_visits")
-          .update({ status: "deleted" }, { count: "exact" })
+          .delete({ count: "exact" })
           .eq("id", job.visit_id);
         if (error) throw error;
         if (!count) throw new Error("Visit record missing.");
