@@ -593,6 +593,10 @@ export default function PlatformSchedule() {
               businessId={selectedBusinessId}
               onContact={() => setContactJob(selectedJob)}
               onClose={() => setSelectedJob(null)}
+              onJobChanged={(changes) => {
+                setSelectedJob((current) => current && current.id === selectedJob.id ? { ...current, ...changes } : current);
+                setContactJob((current) => current && current.id === selectedJob.id ? { ...current, ...changes } : current);
+              }}
             />
           )}
         </SheetContent>
@@ -803,11 +807,13 @@ function JobDetail({
   businessId,
   onContact,
   onClose,
+  onJobChanged,
 }: {
   job: JobberJob;
   businessId: string | null;
   onContact: () => void;
   onClose: () => void;
+  onJobChanged: (changes: Partial<JobberJob>) => void;
 }) {
   const [tab, setTab] = useState<JobDetailTab>("visit");
   const [omwOpen, setOmwOpen] = useState(false);
