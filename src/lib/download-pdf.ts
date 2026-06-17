@@ -1,5 +1,3 @@
-import html2pdf from "html2pdf.js";
-
 /**
  * Render an element to a downloadable PDF file (not the browser print dialog).
  * Returns a promise that resolves once the file has been saved.
@@ -9,6 +7,8 @@ export async function downloadElementAsPdf(
   filename: string
 ): Promise<void> {
   if (!element) return;
+  const mod = await import("html2pdf.js");
+  const html2pdf = (mod as { default?: unknown }).default ?? mod;
   const opt = {
     margin: [8, 8, 8, 8] as [number, number, number, number],
     filename: filename.endsWith(".pdf") ? filename : `${filename}.pdf`,
@@ -22,5 +22,8 @@ export async function downloadElementAsPdf(
     jsPDF: { unit: "mm" as const, format: "a4", orientation: "portrait" as const },
     pagebreak: { mode: ["css", "legacy"] },
   };
-  await html2pdf().set(opt).from(element).save();
+  await (html2pdf as () => { set: (o: unknown) => { from: (e: HTMLElement) => { save: () => Promise<void> } } })()
+    .set(opt)
+    .from(element)
+    .save();
 }
