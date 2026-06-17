@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { CreditCard, CheckCircle, XCircle, Loader2, Shield, AlertCircle, Download, Copy } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import DocumentBrandMark from "@/components/platform/billing/DocumentBrandMark";
+import { downloadElementAsPdf } from "@/lib/download-pdf";
 
 type InvoiceData = {
   id: string;
