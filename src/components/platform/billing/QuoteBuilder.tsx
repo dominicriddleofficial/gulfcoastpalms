@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import QuotePreviewPanel from "./QuotePreviewPanel";
 import SendQuoteModal from "./SendQuoteModal";
 import { useQuery } from "@tanstack/react-query";
 import { generateQuoteNumber, calculateQuoteTotals } from "@/hooks/usePlatformQuotes";
+import { downloadElementAsPdf } from "@/lib/download-pdf";
 
 interface LineItem {
   id: string;
