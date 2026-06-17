@@ -358,7 +358,14 @@ export default function ViewQuote() {
           <button onClick={handleCopyLink} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, border: `1px solid ${cardBorder}`, background: "rgba(255,255,255,0.04)", color: labelColor, fontSize: 13, cursor: "pointer", fontFamily: "'Inter', sans-serif" }}>
             <Copy className="w-4 h-4" /> Share
           </button>
-          <button onClick={() => window.print()} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, border: `1px solid ${cardBorder}`, background: "rgba(255,255,255,0.04)", color: labelColor, fontSize: 13, cursor: "pointer", fontFamily: "'Inter', sans-serif" }}>
+          <button onClick={async () => {
+            try {
+              await downloadElementAsPdf(quoteCardRef.current, `Quote-${quote.quote_number}.pdf`);
+            } catch (err) {
+              console.error("PDF download failed", err);
+              toast({ title: "Could not generate PDF", variant: "destructive" });
+            }
+          }} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, border: `1px solid ${cardBorder}`, background: "rgba(255,255,255,0.04)", color: labelColor, fontSize: 13, cursor: "pointer", fontFamily: "'Inter', sans-serif" }}>
             <Download className="w-4 h-4" /> Download PDF
           </button>
         </div>
@@ -374,7 +381,7 @@ export default function ViewQuote() {
           }} />
 
           {/* ── QUOTE CARD ── */}
-          <div style={{
+          <div ref={quoteCardRef} style={{
             position: "relative", zIndex: 1,
             background: cardBg, border: `1px solid ${cardBorder}`,
             borderRadius: 16, overflow: "hidden",
