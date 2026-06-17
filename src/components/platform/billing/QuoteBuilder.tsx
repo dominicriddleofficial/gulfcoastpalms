@@ -196,7 +196,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   }), [quoteNumber, quoteDate, validUntil, customerName, customerEmail, customerPhone, lineItems, subtotal, taxEnabled, taxRate, taxAmount, discountAmount, total, depositEnabled, depositAmount, scopeOfWork, publicNotes, activeBiz, logoUrl]);
 
   // Save quote
-  const handleSave = async (sendAfter: boolean = false, sendData: { email: string; subject: string; message: string; sendEmail: boolean; sendSms: boolean } | null = null) => {
+  const handleSave = async (sendAfter: boolean = false, sendData: { email: string; subject: string; message: string; sendEmail: boolean; sendSms: boolean; smsMessage?: string } | null = null) => {
     if (!bizId) return;
     if (!customerId) { toast.error("Please select a customer"); return; }
     const validLines = lineItems.filter(l => l.description.trim());
@@ -281,7 +281,9 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
           toast.error("SMS skipped: no phone number on file for this customer");
         } else {
           try {
-            const smsMessage = `Hi ${customerName}, ${activeBiz?.public_brand_name || "Gulf Coast Palms"} has sent you a quote for $${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}. View and approve here: ${quoteUrl} Reply STOP to unsubscribe.`;
+            const smsMessage = sendData.smsMessage?.trim()
+              ? sendData.smsMessage.replace(/\/quote\/([^/]+)\/PENDING/g, `/quote/$1/${quote.id}`)
+              : `Hi ${customerName}, ${activeBiz?.public_brand_name || "Gulf Coast Palms"} has sent you a quote for $${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}. View and approve here: ${quoteUrl} Reply STOP to unsubscribe.`;
             console.log("[SMS] sending quote text", { to: customerPhone, customerName, quoteUrl });
             const { error: smsErr } = await supabase.functions.invoke("send-sms", {
               body: { to: customerPhone, message: smsMessage },

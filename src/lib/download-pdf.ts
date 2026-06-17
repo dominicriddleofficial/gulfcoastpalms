@@ -9,9 +9,10 @@ export async function downloadElementAsPdf(
   if (!element) return;
   const mod = await import("html2pdf.js");
   const html2pdf = (mod as { default?: unknown }).default ?? mod;
+  const safeFilename = filename.endsWith(".pdf") ? filename : `${filename}.pdf`;
   const opt = {
     margin: [8, 8, 8, 8] as [number, number, number, number],
-    filename: filename.endsWith(".pdf") ? filename : `${filename}.pdf`,
+    filename: safeFilename,
     image: { type: "jpeg" as const, quality: 0.95 },
     html2canvas: {
       scale: 2,
@@ -22,8 +23,36 @@ export async function downloadElementAsPdf(
     jsPDF: { unit: "mm" as const, format: "a4", orientation: "portrait" as const },
     pagebreak: { mode: ["css", "legacy"] },
   };
-  await (html2pdf as () => { set: (o: unknown) => { from: (e: HTMLElement) => { save: () => Promise<void> } } })()
+  const worker = (html2pdf as () => {
+    set: (o: unknown) => {
+      from: (e: HTMLElement) => {
+        outputPdf: (type: "blob") => Promise<Blob>;
+      };
+    };
+  })()
     .set(opt)
-    .from(element)
-    .save();
+    .from(element);
+  const blob = await worker.outputPdf("blob");
+  const file = new File([blob], safeFilename, { type: "application/pdf" });
+  const navigatorWithShare = navigator as Navigator & {
+    canShare?: (data: ShareData) => boolean;
+    share?: (data: ShareData) => Promise<void>;
+  };
+  if (navigatorWithShare.share && navigatorWithShare.canShare?.({ files: [file] })) {
+    try {
+      await navigatorWithShare.share({ files: [file], title: safeFilename });
+      return;
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
+    }
+  }
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = safeFilename;
+  link.rel = "noopener";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
 }
