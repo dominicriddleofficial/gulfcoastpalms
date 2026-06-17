@@ -39,8 +39,12 @@ export async function downloadElementAsPdf(
     share?: (data: ShareData) => Promise<void>;
   };
   if (navigatorWithShare.share && navigatorWithShare.canShare?.({ files: [file] })) {
-    await navigatorWithShare.share({ files: [file], title: safeFilename });
-    return;
+    try {
+      await navigatorWithShare.share({ files: [file], title: safeFilename });
+      return;
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
+    }
   }
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
