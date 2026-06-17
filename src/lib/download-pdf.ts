@@ -10,7 +10,7 @@ export async function downloadElementAsPdf(
 ): Promise<void> {
   if (!element) return;
   const opt = {
-    margin: [8, 8, 8, 8],
+    margin: [8, 8, 8, 8] as [number, number, number, number],
     filename: filename.endsWith(".pdf") ? filename : `${filename}.pdf`,
     image: { type: "jpeg", quality: 0.95 },
     html2canvas: {
