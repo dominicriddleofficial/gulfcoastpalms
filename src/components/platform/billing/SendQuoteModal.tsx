@@ -40,7 +40,7 @@ export default function SendQuoteModal({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-md bg-background border-border">
+      <DialogContent className="ops-theme max-w-md bg-background border-border">
         <DialogHeader>
           <DialogTitle className="font-display text-foreground">Send Quote</DialogTitle>
         </DialogHeader>
@@ -111,6 +111,8 @@ export default function SendQuoteModal({
               <Textarea
                 value={smsMessage}
                 onChange={e => setSmsMessage(e.target.value)}
+                readOnly={false}
+                disabled={false}
                 rows={4}
                 className="bg-card border-border font-body text-sm min-h-[90px] text-foreground"
               />
