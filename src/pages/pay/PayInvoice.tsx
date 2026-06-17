@@ -63,6 +63,8 @@ export default function PayInvoice() {
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const invoiceCardRef = useRef<HTMLDivElement>(null);
+  const [downloading, setDownloading] = useState(false);
   const cancelled = searchParams.get("cancelled") === "true";
 
   const brandKey = shortcode?.toLowerCase() || "gcp";
@@ -142,6 +144,18 @@ export default function PayInvoice() {
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
     toast({ title: "Link copied!", description: "Invoice link copied to clipboard." });
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!invoiceCardRef.current || downloading) return;
+    setDownloading(true);
+    try {
+      await downloadElementAsPdf(invoiceCardRef.current, `Invoice-${invoice?.invoice_number || "invoice"}.pdf`);
+    } catch (err) {
+      toast({ title: "Download failed", description: err instanceof Error ? err.message : "Could not generate PDF.", variant: "destructive" });
+    } finally {
+      setDownloading(false);
+    }
   };
 
   if (loading) {
@@ -224,13 +238,13 @@ export default function PayInvoice() {
           <button onClick={handleCopyLink} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, border: `1px solid ${cardBorder}`, background: "rgba(255,255,255,0.04)", color: labelColor, fontSize: 13, cursor: "pointer", fontFamily: "'Inter', sans-serif" }}>
             <Copy className="w-4 h-4" /> Share
           </button>
-          <button onClick={() => window.print()} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, border: `1px solid ${cardBorder}`, background: "rgba(255,255,255,0.04)", color: labelColor, fontSize: 13, cursor: "pointer", fontFamily: "'Inter', sans-serif" }}>
-            <Download className="w-4 h-4" /> Download PDF
+          <button onClick={handleDownloadPdf} disabled={downloading} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, border: `1px solid ${cardBorder}`, background: "rgba(255,255,255,0.04)", color: labelColor, fontSize: 13, cursor: downloading ? "wait" : "pointer", fontFamily: "'Inter', sans-serif", opacity: downloading ? 0.6 : 1 }}>
+            {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />} {downloading ? "Generating…" : "Download PDF"}
           </button>
         </div>
 
         {/* ── INVOICE WRAPPER ── */}
-        <div style={{ position: "relative", maxWidth: 680, width: "100%" }}>
+        <div ref={invoiceCardRef} style={{ position: "relative", maxWidth: 680, width: "100%" }}>
           {/* ── INVOICE CARD ── */}
           <div style={{
             position: "relative", zIndex: 1,
