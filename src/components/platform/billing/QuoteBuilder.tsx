@@ -90,6 +90,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
   const [showSavedItems, setShowSavedItems] = useState(false);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
+  const mobilePreviewRef = useRef<HTMLDivElement>(null);
   const [showSendModal, setShowSendModal] = useState(false);
   const [saving, setSaving] = useState(false);
 
