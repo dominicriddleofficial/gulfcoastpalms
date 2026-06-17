@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { Loader2, XCircle, CheckCircle, MessageSquare, Shield, Download, Copy, Check, Send } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import DocumentBrandMark from "@/components/platform/billing/DocumentBrandMark";
+import { downloadElementAsPdf } from "@/lib/download-pdf";
 
 /* ── Brand tokens ── */
 const BRAND: Record<string, {
