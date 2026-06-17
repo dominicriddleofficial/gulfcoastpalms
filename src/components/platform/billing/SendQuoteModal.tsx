@@ -17,7 +17,7 @@ interface SendQuoteModalProps {
   shortcode: string;
   total: number;
   quoteUrl: string;
-  onSend: (data: { email: string; subject: string; message: string; sendEmail: boolean; sendSms: boolean }) => Promise<void>;
+  onSend: (data: { email: string; subject: string; message: string; sendEmail: boolean; sendSms: boolean; smsMessage?: string }) => Promise<void>;
   onClose: () => void;
   saving: boolean;
 }
@@ -34,6 +34,9 @@ export default function SendQuoteModal({
   );
   const [sendEmail, setSendEmail] = useState(true);
   const [sendSms, setSendSms] = useState(false);
+  const [smsMessage, setSmsMessage] = useState(
+    `Hi ${customerName}, ${businessName} has sent you a quote for $${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}. View and approve here: ${quoteUrl} Reply STOP to unsubscribe.`
+  );
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -94,25 +97,31 @@ export default function SendQuoteModal({
               <div>
                 <label className="font-body text-[10px] font-medium text-muted-foreground mb-1 block">Message</label>
                 <Textarea value={message} onChange={e => setMessage(e.target.value)}
-                  className="bg-card border-border font-body text-sm min-h-[80px]" />
+                  rows={5}
+                  className="bg-card border-border font-body text-sm min-h-[120px] text-foreground" />
               </div>
             </>
           )}
 
           {sendSms && (
-            <div className="bg-card border border-border rounded-lg p-3">
-              <p className="font-body text-[10px] text-muted-foreground mb-1">Text message preview:</p>
-              <p className="font-body text-xs text-foreground">
-                Hi {customerName}, {businessName} has sent you a quote for ${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}. View and approve here: {quoteUrl} Reply STOP to unsubscribe.
-              </p>
-              <p className="font-body text-[10px] text-muted-foreground mt-2">→ {customerPhone || "No phone on file"}</p>
+            <div>
+              <label className="font-body text-[10px] font-medium text-muted-foreground mb-1 block">
+                Text message ({smsMessage.length} chars)
+              </label>
+              <Textarea
+                value={smsMessage}
+                onChange={e => setSmsMessage(e.target.value)}
+                rows={4}
+                className="bg-card border-border font-body text-sm min-h-[90px] text-foreground"
+              />
+              <p className="font-body text-[10px] text-muted-foreground mt-1">→ {customerPhone || "No phone on file"}</p>
             </div>
           )}
         </div>
 
         <DialogFooter className="mt-4">
           <Button variant="outline" onClick={onClose} className="font-body text-sm">Cancel</Button>
-          <Button onClick={() => onSend({ email, subject, message, sendEmail, sendSms })} disabled={saving || (!sendEmail && !sendSms)} className="font-body text-sm">
+          <Button onClick={() => onSend({ email, subject, message, sendEmail, sendSms, smsMessage })} disabled={saving || (!sendEmail && !sendSms)} className="font-body text-sm">
             <Send className="w-3.5 h-3.5 mr-1.5" />
             {saving ? "Sending…" : "Send Quote"}
           </Button>
