@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import InvoicePreviewPanel from "./InvoicePreviewPanel";
 import SendInvoiceModal from "./SendInvoiceModal";
 import { useQuery } from "@tanstack/react-query";
 import type { InvoicePrefillState } from "@/components/platform/CreateSheetsProvider";
+import { downloadElementAsPdf } from "@/lib/download-pdf";
 
 interface LineItem {
   id: string;
@@ -121,6 +122,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
   const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
   const [showSavedItems, setShowSavedItems] = useState(false);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
+  const mobilePreviewRef = useRef<HTMLDivElement>(null);
   const [showSendModal, setShowSendModal] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -947,12 +949,19 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
             <SheetTitle className="text-foreground font-display text-base">Invoice Preview</SheetTitle>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto px-4 pb-4">
-            <div className="max-w-[480px] mx-auto">
+            <div className="max-w-[480px] mx-auto" ref={mobilePreviewRef}>
               <InvoicePreviewPanel data={previewData} />
             </div>
           </div>
           <div className="shrink-0 px-4 py-3 border-t border-border bg-background flex gap-2">
-            <Button variant="outline" className="flex-1 font-body text-sm" onClick={() => window.print()}>
+            <Button variant="outline" className="flex-1 font-body text-sm" onClick={async () => {
+              try {
+                await downloadElementAsPdf(mobilePreviewRef.current, `Invoice-${invoiceNumber || "draft"}.pdf`);
+              } catch (err) {
+                console.error("PDF download failed", err);
+                toast.error("Could not generate PDF");
+              }
+            }}>
               Download PDF
             </Button>
             <Button variant="ghost" className="font-body text-sm" onClick={() => setShowMobilePreview(false)}>
