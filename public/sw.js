@@ -2,7 +2,7 @@
 // Scope: /platform only. The public website is intentionally NOT cached so it
 // continues to behave as a normal website with no offline shell.
 
-const CACHE_NAME = 'field-ops-v1';
+const CACHE_NAME = 'field-ops-v2';
 const APP_SHELL = ['/platform', '/platform/login'];
 
 self.addEventListener('install', (event) => {
@@ -61,19 +61,29 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets: cache-first so the platform shell loads on spotty cell signal.
+  // Static assets: network-first so deployed fixes replace stale bundled code.
   if (isStaticAsset(url)) {
     event.respondWith(
-      caches.match(request).then(
-        (cached) =>
-          cached ||
-          fetch(request).then((resp) => {
+      fetch(request)
+        .then((resp) => {
+          if (resp.ok) {
+            const clone = resp.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
+          return resp;
+        })
+        .catch(() =>
+          caches.match(request).then((cached) => {
+            if (cached) return cached;
+            return fetch(request).then((resp) => {
             if (resp.ok) {
               const clone = resp.clone();
               caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
             }
             return resp;
+            });
           })
+        )
       )
     );
     return;
