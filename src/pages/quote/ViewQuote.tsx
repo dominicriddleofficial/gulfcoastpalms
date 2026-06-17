@@ -252,6 +252,8 @@ export default function ViewQuote() {
     setChangeSubmitting(false);
   };
 
+  const quoteCardRef = useRef<HTMLDivElement>(null);
+
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
     toast({ title: "Link copied!", description: "Quote link copied to clipboard." });
