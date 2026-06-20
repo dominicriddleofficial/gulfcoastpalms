@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useBusinessContext } from "@/contexts/BusinessContext";
+import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 
 export type PlatformRole = "owner" | "office_manager" | "manager" | "crew" | null;
 
@@ -9,51 +9,37 @@ const roleCache = new Map<string, PlatformRole>();
 
 export function useUserRole() {
   const { selectedBusinessId } = useBusinessContext();
+  const auth = usePlatformAuth();
   const [role, setRole] = useState<PlatformRole>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
+    function load() {
       setIsLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (cancelled) return;
 
-      if (!user) {
+      if (auth.loading) return;
+
+      if (!auth.userId) {
         setUserId(null);
         setRole(null);
         setIsLoading(false);
         return;
       }
 
-      setUserId(user.id);
+      setUserId(auth.userId);
 
       // No business selected → owner-style "All Businesses" view.
-      // Treat as owner only if they actually own a workspace. Otherwise,
-      // fall back to the user's highest role across any business so non-owner
+      // Treat as owner only if platform auth resolved owner/admin access.
+      // Otherwise, fall back to the user's highest role across any business so non-owner
       // accounts (office_manager / manager / crew) don't render as role=null
       // and trigger blank-screen redirect loops.
       if (!selectedBusinessId) {
-        const { data: ws } = await supabase
-          .from("workspaces")
-          .select("id")
-          .eq("owner_user_id", user.id)
-          .limit(1);
-        if (cancelled) return;
-        if (ws && ws.length > 0) {
+        if (auth.isOwner) {
           setRole("owner");
           setIsLoading(false);
           return;
         }
-
-        const { data: anyAccess } = await supabase
-          .from("user_business_access")
-          .select("role_name")
-          .eq("user_id", user.id)
-          .eq("active_status", "active");
-        if (cancelled) return;
 
         const priority: Record<string, number> = {
           owner: 1,
@@ -61,7 +47,7 @@ export function useUserRole() {
           manager: 3,
           crew: 4,
         };
-        const best = (anyAccess ?? [])
+        const best = auth.businessAccess
           .map((a) => a.role_name as Exclude<PlatformRole, null>)
           .sort((a, b) => (priority[a] ?? 99) - (priority[b] ?? 99))[0] ?? null;
         setRole(best);
@@ -69,35 +55,18 @@ export function useUserRole() {
         return;
       }
 
-      const cacheKey = `${user.id}:${selectedBusinessId}`;
+      const cacheKey = `${auth.userId}:${selectedBusinessId}`;
       if (roleCache.has(cacheKey)) {
         setRole(roleCache.get(cacheKey) ?? null);
         setIsLoading(false);
         return;
       }
 
-      const { data, error } = await supabase.rpc("get_user_role", {
-        _user_id: user.id,
-        _business_id: selectedBusinessId,
-      });
-      if (cancelled) return;
-
-      if (error) {
-        if (import.meta.env.DEV) {
-          console.error("[useUserRole] get_user_role error:", error, {
-            userId: user.id,
-            businessId: selectedBusinessId,
-          });
-        }
-      }
-
-      const resolved: PlatformRole = error
-        ? null
-        : (data as PlatformRole) ?? null;
+      const resolved = (auth.businessAccess.find((a) => a.business_id === selectedBusinessId)?.role_name as PlatformRole) ?? null;
 
       if (!resolved && import.meta.env.DEV) {
         console.warn("[useUserRole] Resolved role is null", {
-          userId: user.id,
+          userId: auth.userId,
           businessId: selectedBusinessId,
         });
       }
@@ -108,8 +77,7 @@ export function useUserRole() {
     }
 
     load();
-    return () => { cancelled = true; };
-  }, [selectedBusinessId]);
+  }, [auth.businessAccess, auth.isOwner, auth.loading, auth.userId, selectedBusinessId]);
 
   return {
     userId,
