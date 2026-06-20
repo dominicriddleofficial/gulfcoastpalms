@@ -645,6 +645,8 @@ export default function ScheduledValueChart() {
 function StatsStrip({
   stats,
   period,
+  animTotal,
+  animAvg,
 }: {
   stats: {
     total: number;
@@ -654,12 +656,14 @@ function StatsStrip({
     priorTotal: number;
   };
   period: Period;
+  animTotal: number;
+  animAvg: number;
 }) {
   const showDelta = stats.deltaPct !== null && Number.isFinite(stats.deltaPct);
   const up = (stats.deltaPct ?? 0) >= 0;
   const items: Array<{ label: string; value: string; tone?: "accent" }> = [
-    { label: "Total scheduled", value: fmtMoney(stats.total), tone: "accent" },
-    { label: "Avg / day", value: fmtMoney(stats.avgPerDay) },
+    { label: "Total scheduled", value: fmtMoney(animTotal), tone: "accent" },
+    { label: "Avg / day", value: fmtMoney(animAvg) },
     {
       label: "Busiest day",
       value:
