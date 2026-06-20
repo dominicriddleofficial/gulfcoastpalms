@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { createContext, createElement, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useBusinessContext } from "@/contexts/BusinessContext";
@@ -31,7 +31,23 @@ export interface BusinessAccess {
   };
 }
 
-export function usePlatformAuth() {
+export interface PlatformAuthState {
+  loading: boolean;
+  userId: string | null;
+  userEmail: string;
+  isOwner: boolean;
+  accessDenied: boolean;
+  businessAccess: BusinessAccess[];
+  businesses: BusinessAccess["business"][];
+  selectedBusinessId: string | null;
+  setSelectedBusinessId: (id: string | null) => void;
+  selectedBusiness: BusinessAccess | null;
+  signOut: () => Promise<void>;
+}
+
+const PlatformAuthContext = createContext<PlatformAuthState | null>(null);
+
+function usePlatformAuthState(): PlatformAuthState {
   const [loading, setLoading] = useState(true);
   const [initialSessionChecked, setInitialSessionChecked] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
@@ -56,11 +72,12 @@ export function usePlatformAuth() {
     setLoading(true);
     setAccessDenied(false);
 
-    const { data: workspaces } = await supabase
-      .from("workspaces")
-      .select("id")
-      .eq("owner_user_id", user.id);
-    if (isCancelled()) return;
+    try {
+      const { data: workspaces } = await supabase
+        .from("workspaces")
+        .select("id")
+        .eq("owner_user_id", user.id);
+      if (isCancelled()) return;
 
     const owner = !!(workspaces && workspaces.length > 0);
 
@@ -192,27 +209,53 @@ export function usePlatformAuth() {
       }
     }
     
-    setLoading(false);
-  }, [selectedBusinessId, setSelectedBusinessId]);
+      setLoading(false);
+    } catch (error) {
+      if (isCancelled()) return;
+      if (import.meta.env.DEV) {
+        console.error("[usePlatformAuth] Failed to load platform access:", error);
+      }
+      clearAuthState();
+      setAccessDenied(true);
+      setLoading(false);
+    }
+  }, [clearAuthState, selectedBusinessId, setSelectedBusinessId]);
 
   useEffect(() => {
     let cancelled = false;
+    let initialHandled = false;
+
+    const handleInitialSession = (user: User | null) => {
+      if (cancelled || initialHandled) return;
+      initialHandled = true;
+      initialSessionLoadedRef.current = true;
+      setInitialSessionChecked(true);
+
+      if (user) {
+        hadSessionRef.current = true;
+        void loadPlatformAccess(user, () => cancelled);
+      } else {
+        hadSessionRef.current = false;
+        clearAuthState();
+        setLoading(false);
+      }
+    };
+
+    const hardStopTimer = window.setTimeout(() => {
+      if (cancelled || initialHandled) return;
+      initialHandled = true;
+      initialSessionLoadedRef.current = true;
+      setInitialSessionChecked(true);
+      clearAuthState();
+      setLoading(false);
+      navigate("/platform/login", { replace: true });
+    }, 8000);
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (cancelled) return;
 
       if (event === "INITIAL_SESSION") {
-        initialSessionLoadedRef.current = true;
-        setInitialSessionChecked(true);
-
-        if (session?.user) {
-          hadSessionRef.current = true;
-          void loadPlatformAccess(session.user, () => cancelled);
-        } else {
-          hadSessionRef.current = false;
-          clearAuthState();
-          setLoading(false);
-        }
+        handleInitialSession(session?.user ?? null);
         return;
       }
 
@@ -233,8 +276,23 @@ export function usePlatformAuth() {
       }
     });
 
+    const fallbackTimer = window.setTimeout(() => {
+      if (cancelled || initialHandled) return;
+      void supabase.auth.getSession().then(({ data }) => {
+        handleInitialSession(data.session?.user ?? null);
+      }).catch((error) => {
+        if (cancelled) return;
+        if (import.meta.env.DEV) {
+          console.error("[usePlatformAuth] Initial session fallback failed:", error);
+        }
+        handleInitialSession(null);
+      });
+    }, 1500);
+
     return () => {
       cancelled = true;
+      window.clearTimeout(hardStopTimer);
+      window.clearTimeout(fallbackTimer);
       subscription.unsubscribe();
     };
   }, [clearAuthState, loadPlatformAccess, navigate]);
@@ -266,5 +324,28 @@ export function usePlatformAuth() {
     setSelectedBusinessId,
     selectedBusiness,
     signOut,
+  };
+}
+
+export function PlatformAuthProvider({ children }: { children: ReactNode }) {
+  const auth = usePlatformAuthState();
+  return createElement(PlatformAuthContext.Provider, { value: auth }, children);
+}
+
+export function usePlatformAuth() {
+  const auth = useContext(PlatformAuthContext);
+  if (auth) return auth;
+  return {
+    loading: false,
+    userId: null,
+    userEmail: "",
+    isOwner: false,
+    accessDenied: false,
+    businessAccess: [],
+    businesses: [],
+    selectedBusinessId: null,
+    setSelectedBusinessId: () => undefined,
+    selectedBusiness: null,
+    signOut: async () => undefined,
   };
 }
