@@ -353,7 +353,6 @@ export default function ScheduledValueChart() {
                   fill: "hsl(220 8% 55%)",
                   fontSize: 9,
                   letterSpacing: 1.5,
-                  textTransform: "uppercase",
                 }}
                 axisLine={false}
                 tickLine={false}
