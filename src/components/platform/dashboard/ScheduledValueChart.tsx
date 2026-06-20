@@ -261,40 +261,99 @@ export default function ScheduledValueChart() {
         </div>
       )}
       <StatsStrip stats={stats} period={period} />
-      <div style={{ width: "100%", height: 220, position: "relative" }}>
+      <div
+        className="rounded-xl overflow-hidden"
+        style={{
+          width: "100%",
+          height: 220,
+          position: "relative",
+          background:
+            "radial-gradient(120% 90% at 50% 110%, rgba(var(--biz-accent-rgb),0.12) 0%, rgba(var(--biz-accent-rgb),0.04) 35%, rgba(0,0,0,0) 65%), radial-gradient(140% 100% at 50% 50%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.55) 100%), #05070a",
+          border: "1px solid rgba(var(--biz-accent-rgb),0.10)",
+          boxShadow:
+            "inset 0 0 0 1px rgba(var(--biz-accent-rgb),0.05), inset 0 0 40px rgba(var(--biz-accent-rgb),0.05)",
+        }}
+      >
+        <style>{`
+          @keyframes schedPeakPulse {
+            0%, 100% { transform: scale(1); opacity: 0.55; }
+            50% { transform: scale(1.8); opacity: 0.05; }
+          }
+          .sched-peak-pulse {
+            transform-origin: center;
+            transform-box: fill-box;
+            animation: schedPeakPulse 2s ease-in-out infinite;
+          }
+          @keyframes schedAreaFade {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+          .sched-chart-mount {
+            animation: schedAreaFade 900ms ease-out both;
+          }
+        `}</style>
         {showSkeleton && <ChartSkeleton />}
         {showEmpty && !showSkeleton && (
           <EmptyState period={period} />
         )}
         {!showEmpty && !showSkeleton && (
-          <ResponsiveContainer>
+          <ResponsiveContainer key={period} className="sched-chart-mount">
             <AreaChart
-              key={period}
               data={buckets}
               margin={{ top: 12, right: 12, left: -12, bottom: 0 }}
             >
               <defs>
                 <linearGradient id="schedValGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="rgba(var(--biz-accent-rgb),0.55)" />
-                  <stop offset="60%" stopColor="rgba(var(--biz-accent-rgb),0.18)" />
+                  <stop offset="0%" stopColor="rgba(var(--biz-accent-rgb),0.50)" />
+                  <stop offset="45%" stopColor="rgba(var(--biz-accent-rgb),0.18)" />
                   <stop offset="100%" stopColor="rgba(var(--biz-accent-rgb),0)" />
                 </linearGradient>
-                <filter id="schedValGlow" x="-20%" y="-20%" width="140%" height="140%">
-                  <feGaussianBlur stdDeviation="2.5" result="blur" />
+                <filter id="schedAuraBlur" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="7" />
+                </filter>
+                <filter id="schedMidBlur" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="3" />
+                </filter>
+                <filter id="schedCoreGlow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="0.6" result="blur" />
                   <feMerge>
                     <feMergeNode in="blur" />
                     <feMergeNode in="SourceGraphic" />
                   </feMerge>
                 </filter>
+                <linearGradient id="schedSheen" x1="-0.3" y1="0" x2="0" y2="0">
+                  <stop offset="0%" stopColor="rgb(var(--biz-accent-rgb))" />
+                  <stop offset="42%" stopColor="rgb(var(--biz-accent-rgb))" />
+                  <stop offset="50%" stopColor="rgba(255,255,255,1)" />
+                  <stop offset="58%" stopColor="rgb(var(--biz-accent-rgb))" />
+                  <stop offset="100%" stopColor="rgb(var(--biz-accent-rgb))" />
+                  <animate
+                    attributeName="x1"
+                    values="-0.3;1;-0.3"
+                    dur="3.5s"
+                    repeatCount="indefinite"
+                  />
+                  <animate
+                    attributeName="x2"
+                    values="0;1.3;0"
+                    dur="3.5s"
+                    repeatCount="indefinite"
+                  />
+                </linearGradient>
               </defs>
               <CartesianGrid
                 strokeDasharray="2 4"
-                stroke="rgba(255,255,255,0.04)"
-                vertical={false}
+                stroke="rgba(255,255,255,0.05)"
+                vertical
+                horizontal
               />
               <XAxis
                 dataKey="label"
-                tick={{ fill: "hsl(220 8% 55%)", fontSize: 10 }}
+                tick={{
+                  fill: "hsl(220 8% 55%)",
+                  fontSize: 9,
+                  letterSpacing: 1.5,
+                }}
                 axisLine={false}
                 tickLine={false}
                 interval={0}
@@ -305,7 +364,11 @@ export default function ScheduledValueChart() {
                 minTickGap={0}
               />
               <YAxis
-                tick={{ fill: "hsl(220 8% 55%)", fontSize: 10 }}
+                tick={{
+                  fill: "hsl(220 8% 55%)",
+                  fontSize: 9,
+                  letterSpacing: 1,
+                }}
                 axisLine={false}
                 tickLine={false}
                 ticks={ticks}
@@ -330,32 +393,86 @@ export default function ScheduledValueChart() {
                   }}
                 />
               )}
+              {/* AURA underlay — thick, heavy blur, no fill */}
               <Area
                 type="monotone"
                 dataKey="value"
-                stroke="rgb(var(--biz-accent-rgb))"
-                strokeWidth={2.25}
-                fill="url(#schedValGrad)"
-                filter="url(#schedValGlow)"
-                animationDuration={600}
+                stroke="rgba(var(--biz-accent-rgb),0.45)"
+                strokeWidth={10}
+                fill="none"
+                filter="url(#schedAuraBlur)"
+                animationDuration={1000}
                 animationEasing="ease-out"
+                isAnimationActive
+                dot={false}
+                activeDot={false}
+                legendType="none"
+              />
+              {/* MID glow */}
+              <Area
+                type="monotone"
+                dataKey="value"
+                stroke="rgba(var(--biz-accent-rgb),0.8)"
+                strokeWidth={4}
+                fill="url(#schedValGrad)"
+                filter="url(#schedMidBlur)"
+                animationDuration={1000}
+                animationEasing="ease-out"
+                isAnimationActive
+                dot={false}
+                activeDot={false}
+                legendType="none"
+              />
+              {/* CORE line — crisp, with traveling sheen */}
+              <Area
+                type="monotone"
+                dataKey="value"
+                stroke="url(#schedSheen)"
+                strokeWidth={2.25}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+                filter="url(#schedCoreGlow)"
+                animationDuration={1000}
+                animationEasing="ease-out"
+                isAnimationActive
                 dot={false}
                 activeDot={{
                   r: 5,
-                  stroke: "rgb(var(--biz-accent-rgb))",
+                  stroke: "rgba(255,255,255,0.9)",
                   strokeWidth: 2,
-                  fill: "#0a0f0a",
+                  fill: "rgb(var(--biz-accent-rgb))",
                 }}
               />
               {peakLabel && peak && peak.value > 0 && (
                 <ReferenceDot
                   x={peakLabel}
                   y={peak.value}
-                  r={6}
-                  fill="rgb(var(--biz-accent-rgb))"
-                  stroke="rgba(var(--biz-accent-rgb),0.35)"
-                  strokeWidth={6}
+                  r={4}
                   isFront
+                  shape={(props: { cx?: number; cy?: number }) => {
+                    const cx = props.cx ?? 0;
+                    const cy = props.cy ?? 0;
+                    return (
+                      <g>
+                        <circle
+                          cx={cx}
+                          cy={cy}
+                          r={11}
+                          fill="rgb(var(--biz-accent-rgb))"
+                          className="sched-peak-pulse"
+                        />
+                        <circle
+                          cx={cx}
+                          cy={cy}
+                          r={4}
+                          fill="rgb(var(--biz-accent-rgb))"
+                          stroke="rgba(255,255,255,0.85)"
+                          strokeWidth={1}
+                        />
+                      </g>
+                    );
+                  }}
                 />
               )}
             </AreaChart>
