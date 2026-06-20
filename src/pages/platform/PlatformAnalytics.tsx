@@ -19,6 +19,17 @@ const GREEN_FAINT = "rgba(var(--biz-accent-rgb),0.25)";
 const RED = "#f87171";
 const CARD_BORDER = "rgba(var(--biz-accent-rgb),0.15)";
 
+// A job counts as "completed" if it's not cancelled/deleted AND either has an
+// explicit completion status OR is scheduled in the past. Jobber imports rarely
+// carry a "completed" status, so the past-dated fallback is what catches them.
+function isJobCompleted(j: UnifiedJob, now: Date = new Date()): boolean {
+  const s = (j.status || "").toLowerCase().trim();
+  if (["deleted", "archived", "canceled", "cancelled", "void", "draft"].includes(s)) return false;
+  if (["completed", "complete", "done", "paid", "invoiced", "requires_invoicing"].includes(s)) return true;
+  if (!j.scheduled_start) return false;
+  return new Date(j.scheduled_start) < now;
+}
+
 function extractCity(addr: string | null): string {
   if (!addr) return "Unknown";
   const parts = addr.split(",").map(s => s.trim());
