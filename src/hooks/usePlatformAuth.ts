@@ -241,6 +241,16 @@ function usePlatformAuthState(): PlatformAuthState {
       }
     };
 
+    const hardStopTimer = window.setTimeout(() => {
+      if (cancelled || initialHandled) return;
+      initialHandled = true;
+      initialSessionLoadedRef.current = true;
+      setInitialSessionChecked(true);
+      clearAuthState();
+      setLoading(false);
+      navigate("/platform/login", { replace: true });
+    }, 8000);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (cancelled) return;
 
@@ -281,6 +291,7 @@ function usePlatformAuthState(): PlatformAuthState {
 
     return () => {
       cancelled = true;
+      window.clearTimeout(hardStopTimer);
       window.clearTimeout(fallbackTimer);
       subscription.unsubscribe();
     };
