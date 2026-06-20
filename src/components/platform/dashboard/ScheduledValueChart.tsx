@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useDashboardScheduledJobs } from "@/hooks/useDashboardScheduledJobs";
@@ -23,6 +23,7 @@ import {
   CartesianGrid,
   ReferenceLine,
   ReferenceDot,
+  Customized,
 } from "recharts";
 import { CalendarDays } from "lucide-react";
 
@@ -65,6 +66,42 @@ function fmtTick(v: number): string {
 }
 
 type Period = "week" | "month";
+
+function useCountUp(value: number, resetKey: string | number): number {
+  const [n, setN] = useState<number>(value);
+  const fromRef = useRef<number>(0);
+  useEffect(() => {
+    const from = fromRef.current;
+    const to = value;
+    if (from === to) {
+      setN(to);
+      return;
+    }
+    const dur = 850;
+    const startTs = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - startTs) / dur);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const cur = from + (to - from) * eased;
+      if (t >= 1) {
+        setN(to);
+        fromRef.current = to;
+        return;
+      }
+      setN(cur);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [value, resetKey]);
+  // restart from 0 whenever the resetKey changes (period toggle / first mount)
+  useEffect(() => {
+    fromRef.current = 0;
+    setN(0);
+  }, [resetKey]);
+  return n;
+}
 
 export default function ScheduledValueChart() {
   const { selectedBusinessId, userId, loading } = usePlatformAuth();
@@ -133,6 +170,29 @@ export default function ScheduledValueChart() {
     }));
   }, [jobs, start, end, period]);
 
+  const priorBuckets = useMemo<number[]>(() => {
+    const days = eachDayOfInterval({ start: prevStart, end: prevEnd });
+    const map = new Map<string, number>();
+    for (const d of days) map.set(format(d, "yyyy-MM-dd"), 0);
+    for (const j of prior.jobs ?? []) {
+      const key = j.scheduled_local_date;
+      if (!map.has(key)) continue;
+      map.set(key, (map.get(key) ?? 0) + j.amount_counted);
+    }
+    return Array.from(map.values()).map((v) => Math.round(v));
+  }, [prior.jobs, prevStart, prevEnd]);
+
+  const chartData = useMemo(
+    () =>
+      buckets.map((b, i) => ({
+        ...b,
+        prior: priorBuckets[i] ?? null,
+      })),
+    [buckets, priorBuckets],
+  );
+
+  const hasPrior = priorBuckets.some((v) => v > 0);
+
   const visibleGraphTotal = buckets.reduce((s, b) => s + b.value, 0);
   const graphJobCount = buckets.reduce((s, b) => s + b.jobs.length, 0);
 
@@ -178,14 +238,19 @@ export default function ScheduledValueChart() {
     });
   }, [buckets, end, graphJobCount, hasMismatch, isLoading, period, ready, start, summary.jobCount, summary.revenueTotal, visibleGraphTotal]);
 
-  const ticks = niceTicks(Math.max(...buckets.map((b) => b.value), 0));
+  const ticks = niceTicks(
+    Math.max(...buckets.map((b) => b.value), ...priorBuckets, 0),
+  );
   const yMax = ticks[ticks.length - 1] ?? 0;
 
   const title =
     period === "week"
       ? "Scheduled Job Value This Week"
       : "Scheduled Job Value This Month";
-  const subtitle = `${period === "week" ? "This week" : "This month"} · ${fmtMoney(visibleGraphTotal)} total`;
+  const animHeadline = useCountUp(visibleGraphTotal, period);
+  const animTotal = useCountUp(stats.total, period);
+  const animAvg = useCountUp(stats.avgPerDay, period);
+  const subtitle = `${period === "week" ? "This week" : "This month"} · ${fmtMoney(Math.round(animHeadline))} total`;
 
   // Sparse x-axis labels for month view
   const monthLabelTargets = useMemo(() => {
@@ -260,7 +325,12 @@ export default function ScheduledValueChart() {
           Graph mismatch detected. Open View graph data for details.
         </div>
       )}
-      <StatsStrip stats={stats} period={period} />
+      <StatsStrip
+        stats={stats}
+        period={period}
+        animTotal={Math.round(animTotal)}
+        animAvg={Math.round(animAvg)}
+      />
       <div
         className="rounded-xl overflow-hidden"
         style={{
@@ -291,6 +361,22 @@ export default function ScheduledValueChart() {
           .sched-chart-mount {
             animation: schedAreaFade 900ms ease-out both;
           }
+          @keyframes schedBreath {
+            0%, 100% { opacity: 0.82; }
+            50% { opacity: 1; }
+          }
+          .sched-breath-aura { animation: schedBreath 3.6s ease-in-out infinite; transform-origin: center; }
+          .sched-breath-mid { animation: schedBreath 3.6s ease-in-out infinite; animation-delay: -0.4s; }
+          @keyframes schedCometFade {
+            0% { opacity: 0; }
+            8% { opacity: 1; }
+            85% { opacity: 1; }
+            100% { opacity: 0; }
+          }
+          @keyframes schedLiveCursor {
+            0%, 100% { opacity: 0.85; }
+            50% { opacity: 1; }
+          }
         `}</style>
         {showSkeleton && <ChartSkeleton />}
         {showEmpty && !showSkeleton && (
@@ -299,7 +385,7 @@ export default function ScheduledValueChart() {
         {!showEmpty && !showSkeleton && (
           <ResponsiveContainer key={period} className="sched-chart-mount">
             <AreaChart
-              data={buckets}
+              data={chartData}
               margin={{ top: 12, right: 12, left: -12, bottom: 0 }}
             >
               <defs>
@@ -321,21 +407,23 @@ export default function ScheduledValueChart() {
                     <feMergeNode in="SourceGraphic" />
                   </feMerge>
                 </filter>
-                <linearGradient id="schedSheen" x1="-0.3" y1="0" x2="0" y2="0">
-                  <stop offset="0%" stopColor="rgb(var(--biz-accent-rgb))" />
-                  <stop offset="42%" stopColor="rgb(var(--biz-accent-rgb))" />
-                  <stop offset="50%" stopColor="rgba(255,255,255,1)" />
-                  <stop offset="58%" stopColor="rgb(var(--biz-accent-rgb))" />
-                  <stop offset="100%" stopColor="rgb(var(--biz-accent-rgb))" />
+                <linearGradient id="schedSheen" x1="-0.25" y1="0" x2="0.05" y2="0">
+                  <stop offset="0%" stopColor="rgb(var(--biz-accent-rgb))" stopOpacity="1" />
+                  <stop offset="40%" stopColor="rgb(var(--biz-accent-rgb))" stopOpacity="1" />
+                  <stop offset="46%" stopColor="rgba(255,255,255,0.55)" stopOpacity="1" />
+                  <stop offset="50%" stopColor="rgba(255,255,255,0.95)" stopOpacity="1" />
+                  <stop offset="54%" stopColor="rgba(255,255,255,0.55)" stopOpacity="1" />
+                  <stop offset="60%" stopColor="rgb(var(--biz-accent-rgb))" stopOpacity="1" />
+                  <stop offset="100%" stopColor="rgb(var(--biz-accent-rgb))" stopOpacity="1" />
                   <animate
                     attributeName="x1"
-                    values="-0.3;1;-0.3"
+                    values="-0.25;1;-0.25"
                     dur="3.5s"
                     repeatCount="indefinite"
                   />
                   <animate
                     attributeName="x2"
-                    values="0;1.3;0"
+                    values="0.05;1.3;0.05"
                     dur="3.5s"
                     repeatCount="indefinite"
                   />
@@ -393,6 +481,22 @@ export default function ScheduledValueChart() {
                   }}
                 />
               )}
+              {/* GHOST prior-period comparison line — behind everything, no fill, dashed */}
+              {hasPrior && (
+                <Area
+                  type="monotone"
+                  dataKey="prior"
+                  stroke="rgba(var(--biz-accent-rgb),0.22)"
+                  strokeWidth={1.25}
+                  strokeDasharray="3 4"
+                  fill="none"
+                  isAnimationActive={false}
+                  dot={false}
+                  activeDot={false}
+                  legendType="none"
+                  connectNulls={false}
+                />
+              )}
               {/* AURA underlay — thick, heavy blur, no fill */}
               <Area
                 type="monotone"
@@ -407,6 +511,7 @@ export default function ScheduledValueChart() {
                 dot={false}
                 activeDot={false}
                 legendType="none"
+                className="sched-breath-aura"
               />
               {/* MID glow */}
               <Area
@@ -422,6 +527,7 @@ export default function ScheduledValueChart() {
                 dot={false}
                 activeDot={false}
                 legendType="none"
+                className="sched-breath-mid"
               />
               {/* CORE line — crisp, with traveling sheen */}
               <Area
@@ -444,6 +550,8 @@ export default function ScheduledValueChart() {
                   fill: "rgb(var(--biz-accent-rgb))",
                 }}
               />
+              {/* Comet draw-head + live cursor — uses real rendered points */}
+              <Customized component={CometOverlay as never} />
               {peakLabel && peak && peak.value > 0 && (
                 <ReferenceDot
                   x={peakLabel}
@@ -537,6 +645,8 @@ export default function ScheduledValueChart() {
 function StatsStrip({
   stats,
   period,
+  animTotal,
+  animAvg,
 }: {
   stats: {
     total: number;
@@ -546,12 +656,14 @@ function StatsStrip({
     priorTotal: number;
   };
   period: Period;
+  animTotal: number;
+  animAvg: number;
 }) {
   const showDelta = stats.deltaPct !== null && Number.isFinite(stats.deltaPct);
   const up = (stats.deltaPct ?? 0) >= 0;
   const items: Array<{ label: string; value: string; tone?: "accent" }> = [
-    { label: "Total scheduled", value: fmtMoney(stats.total), tone: "accent" },
-    { label: "Avg / day", value: fmtMoney(stats.avgPerDay) },
+    { label: "Total scheduled", value: fmtMoney(animTotal), tone: "accent" },
+    { label: "Avg / day", value: fmtMoney(animAvg) },
     {
       label: "Busiest day",
       value:
@@ -676,5 +788,84 @@ function EmptyState({ period }: { period: Period }) {
         No jobs scheduled this {period === "week" ? "week" : "month"} yet
       </div>
     </div>
+  );
+}
+
+type CometOverlayProps = {
+  formattedGraphicalItems?: Array<{
+    props?: { points?: Array<{ x: number; y: number }>; dataKey?: string };
+    item?: { props?: { dataKey?: string } };
+  }>;
+};
+
+function CometOverlay(props: CometOverlayProps) {
+  const items = props.formattedGraphicalItems ?? [];
+  // Find the CORE line (dataKey="value"). Recharts may expose dataKey on item.props.
+  const valueItems = items.filter((it) => {
+    const k = it.item?.props?.dataKey ?? it.props?.dataKey;
+    return k === "value";
+  });
+  const target = valueItems[valueItems.length - 1] ?? items[items.length - 1];
+  const points = target?.props?.points ?? [];
+  const cleaned = points.filter(
+    (p) => Number.isFinite(p?.x) && Number.isFinite(p?.y),
+  );
+  if (cleaned.length < 2) return null;
+  const d = cleaned
+    .map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`)
+    .join(" ");
+  const pathId = `schedCometPath-${cleaned.length}-${Math.round(cleaned[0].x)}-${Math.round(cleaned[cleaned.length - 1].x)}`;
+  const last = cleaned[cleaned.length - 1];
+  return (
+    <g style={{ pointerEvents: "none" }}>
+      <path id={pathId} d={d} fill="none" stroke="none" />
+      {/* Comet outer halo */}
+      <circle
+        r={7}
+        fill="rgb(var(--biz-accent-rgb))"
+        opacity={0.55}
+        filter="url(#schedAuraBlur)"
+        style={{ animation: "schedCometFade 1100ms ease-out both" }}
+      >
+        <animateMotion dur="1000ms" repeatCount="1" fill="freeze" begin="0s">
+          <mpath href={`#${pathId}`} />
+        </animateMotion>
+      </circle>
+      {/* Comet bright core */}
+      <circle
+        r={3}
+        fill="rgba(255,255,255,0.95)"
+        style={{ animation: "schedCometFade 1100ms ease-out both" }}
+      >
+        <animateMotion dur="1000ms" repeatCount="1" fill="freeze" begin="0s">
+          <mpath href={`#${pathId}`} />
+        </animateMotion>
+      </circle>
+      {/* Live cursor — steady glow on the most recent point, fades in after comet lands */}
+      <g
+        style={{
+          opacity: 0,
+          animation:
+            "schedCometFade 600ms ease-out 950ms forwards, schedLiveCursor 2.4s ease-in-out 1550ms infinite",
+        }}
+      >
+        <circle
+          cx={last.x}
+          cy={last.y}
+          r={6}
+          fill="rgb(var(--biz-accent-rgb))"
+          opacity={0.45}
+          filter="url(#schedMidBlur)"
+        />
+        <circle
+          cx={last.x}
+          cy={last.y}
+          r={2.75}
+          fill="rgb(var(--biz-accent-rgb))"
+          stroke="rgba(255,255,255,0.9)"
+          strokeWidth={1}
+        />
+      </g>
+    </g>
   );
 }
