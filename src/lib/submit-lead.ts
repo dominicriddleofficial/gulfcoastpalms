@@ -2,6 +2,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { trackEvent } from "@/lib/analytics";
 import { leadFormSchema, sanitizeText } from "@/lib/validation";
 
+const GCP_BUSINESS_ID = "b0000000-0000-0000-0000-000000000001";
+
 export interface LeadData {
   name: string;
   phone?: string;
@@ -77,7 +79,46 @@ export async function submitLead(data: LeadData): Promise<{ success: boolean; er
 
     const leadSource = detectLeadSource(clean.source);
 
-    // Insert lead into database
+    // Insert into the platform workspace lead pipeline first so quote-form leads
+    // are visible in Platform → Leads immediately.
+    const pageContext = typeof window !== "undefined"
+      ? {
+          website_origin: window.location.origin,
+          landing_page_url: window.location.href,
+          referrer_url: document.referrer || null,
+          utm_source: sessionStorage.getItem("utm_source"),
+          utm_medium: sessionStorage.getItem("utm_medium"),
+          utm_campaign: sessionStorage.getItem("utm_campaign"),
+          utm_content: sessionStorage.getItem("utm_content"),
+          utm_term: sessionStorage.getItem("utm_term"),
+        }
+      : {};
+
+    const { error: platformInsertError } = await supabase
+      .from("platform_leads")
+      .insert({
+        business_id: GCP_BUSINESS_ID,
+        inquiry_name: clean.name,
+        inquiry_phone: clean.phone || null,
+        inquiry_email: clean.email || null,
+        requested_service: clean.service || null,
+        requested_service_category: clean.service || null,
+        message: clean.message || null,
+        source_name: clean.source || "website",
+        urgency_level: "normal",
+        lead_status: "new",
+        lead_source: leadSource,
+        raw_payload_json: {
+          location: clean.location || null,
+          sqft: clean.sqft || null,
+          source: clean.source || "website",
+        },
+        ...pageContext,
+      });
+
+    if (platformInsertError) throw platformInsertError;
+
+    // Keep the legacy raw lead record for existing admin/reporting flows.
     const { data: lead, error: insertError } = await supabase
       .from("leads")
       .insert({
