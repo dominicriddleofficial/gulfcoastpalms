@@ -1,4 +1,4 @@
-import { lazy } from "react";
+import { lazy, type ReactNode } from "react";
 import { Route } from "react-router-dom";
 import RoleRoute from "@/components/platform/RoleRoute";
 import { PlatformAuthProvider } from "@/hooks/usePlatformAuth";
@@ -37,44 +37,48 @@ const PlatformQAChecklist = lazy(() => import("@/pages/platform/PlatformQACheckl
 const PlatformOfflineQueue = lazy(() => import("@/pages/platform/PlatformOfflineQueue"));
 const JobberOAuthCallback = lazy(() => import("@/pages/platform/JobberOAuthCallback"));
 
+const withPlatformAuth = (element: ReactNode) => (
+  <PlatformAuthProvider>{element}</PlatformAuthProvider>
+);
+
 export const PlatformRoutes = () => (
   <>
     <Route path="/platform/login" element={<PlatformLogin />} />
-    <Route path="/platform" element={<PlatformAuthProvider><RoleRoute allow={["owner","office_manager","manager"]}><PlatformDashboard /></RoleRoute></PlatformAuthProvider>} />
-    <Route path="/platform/leads" element={<PlatformAuthProvider><RoleRoute allow={["owner","office_manager","manager"]}><PlatformLeads /></RoleRoute></PlatformAuthProvider>} />
-    <Route path="/platform/customers" element={<PlatformAuthProvider><RoleRoute allow={["owner","office_manager","manager"]}><PlatformCustomers /></RoleRoute></PlatformAuthProvider>} />
-    <Route path="/platform/quotes" element={<PlatformAuthProvider><RoleRoute allow={["owner","office_manager","manager"]}><PlatformQuotes /></RoleRoute></PlatformAuthProvider>} />
-    <Route path="/platform/quote-display" element={<PlatformQuoteDisplay />} />
-    <Route path="/platform/quote-display/:shortcode/:quoteId" element={<PlatformQuoteDisplay />} />
-    <Route path="/platform/jobs" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformJobs /></RoleRoute>} />
-    <Route path="/platform/schedule" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformSchedule /></RoleRoute>} />
-    <Route path="/platform/invoices" element={<RoleRoute allow={["owner","office_manager"]}><PlatformInvoices /></RoleRoute>} />
-    <Route path="/platform/payments" element={<RoleRoute allow={["owner","office_manager"]}><PlatformPayments /></RoleRoute>} />
-    <Route path="/platform/analytics" element={<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformAnalytics /></RoleRoute>} />
-    <Route path="/platform/communications" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformComms /></RoleRoute>} />
-    <Route path="/platform/tasks" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformTasks /></RoleRoute>} />
-    <Route path="/platform/settings" element={<RoleRoute allow={["owner","office_manager"]}><PlatformSettings /></RoleRoute>} />
-    <Route path="/platform/team" element={<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformTeam /></RoleRoute>} />
-    <Route path="/platform/crew" element={<RoleRoute allow={["owner", "manager", "crew"]}><PlatformCrew /></RoleRoute>} />
-    <Route path="/platform/documents/:category" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformDocuments /></RoleRoute>} />
-    <Route path="/platform/job-checklists" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformJobChecklists /></RoleRoute>} />
-    <Route path="/platform/job-pricing" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformJobPricing /></RoleRoute>} />
-    <Route path="/platform/change-password" element={<PlatformChangePassword />} />
-    <Route path="/platform/finance" element={<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformFinance /></RoleRoute>} />
-    <Route path="/platform/finance/:section" element={<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformFinance /></RoleRoute>} />
-    <Route path="/platform/backend-health" element={<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformBackendHealth /></RoleRoute>} />
-    <Route path="/platform/reconciliation" element={<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformReconciliation /></RoleRoute>} />
-    <Route path="/platform/docs" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformDocs /></RoleRoute>} />
-    <Route path="/platform/release" element={<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformRelease /></RoleRoute>} />
-    <Route path="/platform/qa-checklist" element={<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformQAChecklist /></RoleRoute>} />
-    <Route path="/platform/offline-queue" element={<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformOfflineQueue /></RoleRoute>} />
-    <Route path="/platform/integrations/jobber/callback" element={<RoleRoute allow={["owner","office_manager"]}><JobberOAuthCallback /></RoleRoute>} />
+    <Route path="/platform" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformDashboard /></RoleRoute>)} />
+    <Route path="/platform/leads" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformLeads /></RoleRoute>)} />
+    <Route path="/platform/customers" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformCustomers /></RoleRoute>)} />
+    <Route path="/platform/quotes" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformQuotes /></RoleRoute>)} />
+    <Route path="/platform/quote-display" element={withPlatformAuth(<PlatformQuoteDisplay />)} />
+    <Route path="/platform/quote-display/:shortcode/:quoteId" element={withPlatformAuth(<PlatformQuoteDisplay />)} />
+    <Route path="/platform/jobs" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformJobs /></RoleRoute>)} />
+    <Route path="/platform/schedule" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformSchedule /></RoleRoute>)} />
+    <Route path="/platform/invoices" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager"]}><PlatformInvoices /></RoleRoute>)} />
+    <Route path="/platform/payments" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager"]}><PlatformPayments /></RoleRoute>)} />
+    <Route path="/platform/analytics" element={withPlatformAuth(<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformAnalytics /></RoleRoute>)} />
+    <Route path="/platform/communications" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformComms /></RoleRoute>)} />
+    <Route path="/platform/tasks" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformTasks /></RoleRoute>)} />
+    <Route path="/platform/settings" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager"]}><PlatformSettings /></RoleRoute>)} />
+    <Route path="/platform/team" element={withPlatformAuth(<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformTeam /></RoleRoute>)} />
+    <Route path="/platform/crew" element={withPlatformAuth(<RoleRoute allow={["owner", "manager", "crew"]}><PlatformCrew /></RoleRoute>)} />
+    <Route path="/platform/documents/:category" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformDocuments /></RoleRoute>)} />
+    <Route path="/platform/job-checklists" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformJobChecklists /></RoleRoute>)} />
+    <Route path="/platform/job-pricing" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformJobPricing /></RoleRoute>)} />
+    <Route path="/platform/change-password" element={withPlatformAuth(<PlatformChangePassword />)} />
+    <Route path="/platform/finance" element={withPlatformAuth(<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformFinance /></RoleRoute>)} />
+    <Route path="/platform/finance/:section" element={withPlatformAuth(<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformFinance /></RoleRoute>)} />
+    <Route path="/platform/backend-health" element={withPlatformAuth(<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformBackendHealth /></RoleRoute>)} />
+    <Route path="/platform/reconciliation" element={withPlatformAuth(<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformReconciliation /></RoleRoute>)} />
+    <Route path="/platform/docs" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformDocs /></RoleRoute>)} />
+    <Route path="/platform/release" element={withPlatformAuth(<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformRelease /></RoleRoute>)} />
+    <Route path="/platform/qa-checklist" element={withPlatformAuth(<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformQAChecklist /></RoleRoute>)} />
+    <Route path="/platform/offline-queue" element={withPlatformAuth(<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformOfflineQueue /></RoleRoute>)} />
+    <Route path="/platform/integrations/jobber/callback" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager"]}><JobberOAuthCallback /></RoleRoute>)} />
 
     {/* Full-page creation editors */}
-    <Route path="/platform/jobs/new" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformJobNew /></RoleRoute>} />
-    <Route path="/platform/customers/new" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformCustomerNew /></RoleRoute>} />
-    <Route path="/platform/leads/new" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformLeadNew /></RoleRoute>} />
-    <Route path="/platform/quotes/new" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformQuoteNew /></RoleRoute>} />
-    <Route path="/platform/invoices/new" element={<RoleRoute allow={["owner","office_manager"]}><PlatformInvoiceNew /></RoleRoute>} />
+    <Route path="/platform/jobs/new" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformJobNew /></RoleRoute>)} />
+    <Route path="/platform/customers/new" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformCustomerNew /></RoleRoute>)} />
+    <Route path="/platform/leads/new" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformLeadNew /></RoleRoute>)} />
+    <Route path="/platform/quotes/new" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformQuoteNew /></RoleRoute>)} />
+    <Route path="/platform/invoices/new" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager"]}><PlatformInvoiceNew /></RoleRoute>)} />
   </>
 );
