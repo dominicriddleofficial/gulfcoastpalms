@@ -334,6 +334,18 @@ export function PlatformAuthProvider({ children }: { children: ReactNode }) {
 
 export function usePlatformAuth() {
   const auth = useContext(PlatformAuthContext);
-  if (!auth) throw new Error("usePlatformAuth must be used within PlatformAuthProvider");
-  return auth;
+  if (auth) return auth;
+  return {
+    loading: false,
+    userId: null,
+    userEmail: "",
+    isOwner: false,
+    accessDenied: false,
+    businessAccess: [],
+    businesses: [],
+    selectedBusinessId: null,
+    setSelectedBusinessId: () => undefined,
+    selectedBusiness: null,
+    signOut: async () => undefined,
+  };
 }
