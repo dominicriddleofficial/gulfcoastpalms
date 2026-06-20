@@ -4,12 +4,10 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { useDashboardScheduledJobs } from "@/hooks/useDashboardScheduledJobs";
 import { SectionCard, fmtMoney } from "./primitives";
 import {
-  addDays,
   eachDayOfInterval,
   endOfMonth,
   endOfWeek,
   format,
-  isSameDay,
   startOfMonth,
   startOfWeek,
   subMonths,
