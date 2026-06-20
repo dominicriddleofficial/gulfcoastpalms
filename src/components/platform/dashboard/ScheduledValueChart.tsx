@@ -790,3 +790,82 @@ function EmptyState({ period }: { period: Period }) {
     </div>
   );
 }
+
+type CometOverlayProps = {
+  formattedGraphicalItems?: Array<{
+    props?: { points?: Array<{ x: number; y: number }>; dataKey?: string };
+    item?: { props?: { dataKey?: string } };
+  }>;
+};
+
+function CometOverlay(props: CometOverlayProps) {
+  const items = props.formattedGraphicalItems ?? [];
+  // Find the CORE line (dataKey="value"). Recharts may expose dataKey on item.props.
+  const valueItems = items.filter((it) => {
+    const k = it.item?.props?.dataKey ?? it.props?.dataKey;
+    return k === "value";
+  });
+  const target = valueItems[valueItems.length - 1] ?? items[items.length - 1];
+  const points = target?.props?.points ?? [];
+  const cleaned = points.filter(
+    (p) => Number.isFinite(p?.x) && Number.isFinite(p?.y),
+  );
+  if (cleaned.length < 2) return null;
+  const d = cleaned
+    .map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`)
+    .join(" ");
+  const pathId = `schedCometPath-${cleaned.length}-${Math.round(cleaned[0].x)}-${Math.round(cleaned[cleaned.length - 1].x)}`;
+  const last = cleaned[cleaned.length - 1];
+  return (
+    <g style={{ pointerEvents: "none" }}>
+      <path id={pathId} d={d} fill="none" stroke="none" />
+      {/* Comet outer halo */}
+      <circle
+        r={7}
+        fill="rgb(var(--biz-accent-rgb))"
+        opacity={0.55}
+        filter="url(#schedAuraBlur)"
+        style={{ animation: "schedCometFade 1100ms ease-out both" }}
+      >
+        <animateMotion dur="1000ms" repeatCount="1" fill="freeze" begin="0s">
+          <mpath href={`#${pathId}`} />
+        </animateMotion>
+      </circle>
+      {/* Comet bright core */}
+      <circle
+        r={3}
+        fill="rgba(255,255,255,0.95)"
+        style={{ animation: "schedCometFade 1100ms ease-out both" }}
+      >
+        <animateMotion dur="1000ms" repeatCount="1" fill="freeze" begin="0s">
+          <mpath href={`#${pathId}`} />
+        </animateMotion>
+      </circle>
+      {/* Live cursor — steady glow on the most recent point, fades in after comet lands */}
+      <g
+        style={{
+          opacity: 0,
+          animation:
+            "schedCometFade 600ms ease-out 950ms forwards, schedLiveCursor 2.4s ease-in-out 1550ms infinite",
+        }}
+      >
+        <circle
+          cx={last.x}
+          cy={last.y}
+          r={6}
+          fill="rgb(var(--biz-accent-rgb))"
+          opacity={0.45}
+          filter="url(#schedMidBlur)"
+        />
+        <circle
+          cx={last.x}
+          cy={last.y}
+          r={2.75}
+          fill="rgb(var(--biz-accent-rgb))"
+          stroke="rgba(255,255,255,0.9)"
+          strokeWidth={1}
+        />
+      </g>
+    </g>
+  );
+}
