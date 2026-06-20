@@ -25,6 +25,12 @@ export default function PlatformLogin() {
     let initialSessionLoaded = false;
     let hadSession = false;
 
+    const fallbackTimer = window.setTimeout(() => {
+      if (cancelled || initialSessionLoaded) return;
+      initialSessionLoaded = true;
+      setCheckingSession(false);
+    }, 8000);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (cancelled) return;
 
@@ -54,6 +60,7 @@ export default function PlatformLogin() {
 
     return () => {
       cancelled = true;
+      window.clearTimeout(fallbackTimer);
       subscription.unsubscribe();
     };
   }, [navigate]);
