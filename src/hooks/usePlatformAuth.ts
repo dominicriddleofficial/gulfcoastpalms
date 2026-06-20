@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react";
+import { createContext, createElement, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useBusinessContext } from "@/contexts/BusinessContext";
@@ -318,7 +318,7 @@ function usePlatformAuthState(): PlatformAuthState {
 
 export function PlatformAuthProvider({ children }: { children: ReactNode }) {
   const auth = usePlatformAuthState();
-  return <PlatformAuthContext.Provider value={auth}>{children}</PlatformAuthContext.Provider>;
+  return createElement(PlatformAuthContext.Provider, { value: auth }, children);
 }
 
 export function usePlatformAuth() {
