@@ -387,7 +387,7 @@ export default function PlatformAnalytics() {
   return (
     <PlatformLayout>
       <div className="space-y-6">
-        <ConversionFunnelWidget days={30} />
+        <ConversionFunnelWidget days={30} businessId={selectedBusinessId} />
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
