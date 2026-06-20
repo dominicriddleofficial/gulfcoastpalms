@@ -1,8 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ArrowRight } from "lucide-react";
+import { BarChart3, TrendingDown, Inbox } from "lucide-react";
+
+const ACCENT = "var(--accent-color)";
+const ACCENT_DIM = "rgba(var(--biz-accent-rgb),0.5)";
+const CARD_BG = "rgba(255,255,255,0.03)";
+const CARD_BORDER = "rgba(var(--biz-accent-rgb),0.15)";
+const TRACK_BG = "rgba(255,255,255,0.05)";
 
 interface FunnelData {
   visitors: number;
@@ -19,11 +23,12 @@ interface FunnelData {
 }
 
 function pct(n: number, d: number): string {
-  if (!d) return "—";
-  return `${Math.round((n / d) * 1000) / 10}%`;
+  if (!d || d <= 0) return "—";
+  const v = (n / d) * 100;
+  return `${v >= 100 ? Math.round(v) : Math.round(v * 10) / 10}%`;
 }
 
-async function fetchFunnel(days: number): Promise<FunnelData> {
+async function fetchFunnel(days: number, businessId: string | null): Promise<FunnelData> {
   const since = new Date(Date.now() - days * 86400_000).toISOString();
 
   const counts = async (event: string): Promise<number> => {
@@ -64,6 +69,8 @@ async function fetchFunnel(days: number): Promise<FunnelData> {
       .slice(0, 8);
   };
 
+  // analytics_events has no business_id column (only a coarse business_type tag),
+  // so site-wide event queries are intentionally not scoped by business here.
   const [visitors, quote_starts, quote_submits, calls, texts] = await Promise.all([
     distinctVisitors(),
     counts("quote_request_started"),
@@ -72,14 +79,29 @@ async function fetchFunnel(days: number): Promise<FunnelData> {
     groupByPage("text_us_click"),
   ]);
 
-  // Backend pipeline counts (already exist in platform tables)
+  // These platform tables DO have business_id — scope to current workspace.
   const sinceDate = since.slice(0, 10);
-  const [{ count: sent_quotes }, { count: approved_quotes }, { count: jobs_from_quotes }, { count: paid_invoices }] = await Promise.all([
-    supabase.from("platform_quotes").select("id", { count: "exact", head: true }).in("status", ["sent", "viewed", "approved", "won", "accepted", "declined"]).gte("created_at", since),
-    supabase.from("platform_quotes").select("id", { count: "exact", head: true }).in("status", ["approved", "won", "accepted"]).gte("created_at", since),
-    supabase.from("platform_jobs").select("id", { count: "exact", head: true }).not("quote_id", "is", null).gte("created_at", since),
-    supabase.from("platform_invoices").select("id", { count: "exact", head: true }).eq("status", "paid").gte("issue_date", sinceDate),
-  ]);
+
+  const qSent = supabase.from("platform_quotes").select("id", { count: "exact", head: true })
+    .in("status", ["sent", "viewed", "approved", "won", "accepted", "declined"])
+    .gte("created_at", since);
+  const qApproved = supabase.from("platform_quotes").select("id", { count: "exact", head: true })
+    .in("status", ["approved", "won", "accepted"])
+    .gte("created_at", since);
+  const qJobs = supabase.from("platform_jobs").select("id", { count: "exact", head: true })
+    .not("quote_id", "is", null)
+    .gte("created_at", since);
+  const qPaid = supabase.from("platform_invoices").select("id", { count: "exact", head: true })
+    .eq("status", "paid")
+    .gte("issue_date", sinceDate);
+
+  const [{ count: sent_quotes }, { count: approved_quotes }, { count: jobs_from_quotes }, { count: paid_invoices }] =
+    await Promise.all([
+      businessId ? qSent.eq("business_id", businessId) : qSent,
+      businessId ? qApproved.eq("business_id", businessId) : qApproved,
+      businessId ? qJobs.eq("business_id", businessId) : qJobs,
+      businessId ? qPaid.eq("business_id", businessId) : qPaid,
+    ]);
 
   const all_service_pages = await groupByPage("service_page_cta_click");
   const all_city_pages = await groupByPage("location_page_cta_click");
@@ -99,18 +121,31 @@ async function fetchFunnel(days: number): Promise<FunnelData> {
   };
 }
 
-export default function ConversionFunnelWidget({ days = 30 }: { days?: number }) {
+export default function ConversionFunnelWidget({
+  days = 30,
+  businessId = null,
+}: { days?: number; businessId?: string | null }) {
   const { data, isLoading } = useQuery({
-    queryKey: ["conversion-funnel", days],
-    queryFn: () => fetchFunnel(days),
-    refetchOnWindowFocus: false,
+    queryKey: ["conversion-funnel", days, businessId],
+    queryFn: () => fetchFunnel(days, businessId),
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
+  const panelStyle = {
+    background: CARD_BG,
+    border: `1px solid ${CARD_BORDER}`,
+  } as const;
+
   if (isLoading || !data) {
-    return <Card className="p-6 text-sm text-muted-foreground">Loading conversion funnel…</Card>;
+    return (
+      <div className="rounded-xl p-5" style={panelStyle}>
+        <p className="font-body text-xs text-muted-foreground">Loading conversion funnel…</p>
+      </div>
+    );
   }
 
-  const steps = [
+  const steps: Array<{ label: string; value: number; prev: number | null }> = [
     { label: "Visitors", value: data.visitors, prev: null },
     { label: "Quote starts", value: data.quote_starts, prev: data.visitors },
     { label: "Quote submits", value: data.quote_submits, prev: data.quote_starts },
@@ -120,51 +155,141 @@ export default function ConversionFunnelWidget({ days = 30 }: { days?: number })
     { label: "Paid invoices", value: data.paid_invoices, prev: data.jobs_from_quotes },
   ];
 
+  const top = Math.max(1, ...steps.map((s) => s.value));
+
   return (
     <div className="space-y-4">
-      <Card className="p-4">
-        <h3 className="text-sm font-semibold mb-3">Conversion funnel · last {days}d</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-          {steps.map((s, i) => (
-            <div key={s.label} className="rounded-lg border border-border p-3">
-              <div className="text-xs text-muted-foreground">{s.label}</div>
-              <div className="text-2xl font-bold">{s.value.toLocaleString()}</div>
-              {s.prev != null && (
-                <Badge variant="outline" className="mt-1 text-xs">
-                  {pct(s.value, s.prev)} {i > 0 && <ArrowRight className="w-3 h-3 inline ml-0.5" />}
-                </Badge>
-              )}
-            </div>
-          ))}
+      <div className="rounded-xl p-5 space-y-4" style={panelStyle}>
+        <div className="flex items-center gap-2">
+          <BarChart3 className="w-4 h-4" style={{ color: ACCENT }} />
+          <div>
+            <h3 className="font-display text-sm font-semibold text-foreground">Conversion Funnel</h3>
+            <p className="font-body text-[10px] text-muted-foreground">Last {days} days · website to paid</p>
+          </div>
         </div>
-      </Card>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+          {steps.map((s) => {
+            const share = Math.max(0, Math.min(1, s.value / top));
+            const conv = s.prev == null ? null : pct(s.value, s.prev);
+            return (
+              <div
+                key={s.label}
+                className="rounded-lg p-3 space-y-2"
+                style={{ background: "rgba(255,255,255,0.02)", border: `1px solid ${CARD_BORDER}` }}
+              >
+                <p className="font-body text-[9px] uppercase tracking-wider text-muted-foreground truncate">
+                  {s.label}
+                </p>
+                <p className="font-display text-xl font-bold tracking-tight text-foreground">
+                  {s.value.toLocaleString()}
+                </p>
+                <div
+                  className="w-full h-1.5 rounded-full overflow-hidden"
+                  style={{ background: TRACK_BG }}
+                >
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${share * 100}%`,
+                      background: ACCENT,
+                      opacity: 0.85,
+                    }}
+                  />
+                </div>
+                {conv === null ? (
+                  <span className="inline-block font-body text-[10px] text-muted-foreground">
+                    top of funnel
+                  </span>
+                ) : conv === "—" ? (
+                  <span className="inline-block font-body text-[10px] text-muted-foreground">—</span>
+                ) : (
+                  <span
+                    className="inline-block font-body text-[10px] font-medium px-1.5 py-0.5 rounded"
+                    style={{
+                      color: ACCENT,
+                      background: "rgba(var(--biz-accent-rgb),0.10)",
+                      border: `1px solid ${CARD_BORDER}`,
+                    }}
+                  >
+                    {conv} vs prior
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <RankCard title="Call clicks by page" rows={data.call_clicks_by_page} />
-        <RankCard title="SMS clicks by page" rows={data.sms_clicks_by_page} />
-        <RankCard title="Top service pages (CTA clicks)" rows={data.service_pages} />
-        <RankCard title="Top city pages (CTA clicks)" rows={data.city_pages} />
+        <RankCard title="Call clicks by page" subtitle="Tap-to-call CTA hits" rows={data.call_clicks_by_page} />
+        <RankCard title="SMS clicks by page" subtitle="Text-us CTA hits" rows={data.sms_clicks_by_page} />
+        <RankCard title="Top service pages" subtitle="Service page CTA clicks" rows={data.service_pages} />
+        <RankCard title="Top city pages" subtitle="Location page CTA clicks" rows={data.city_pages} />
       </div>
     </div>
   );
 }
 
-function RankCard({ title, rows }: { title: string; rows: Array<{ page: string; count: number }> }) {
+function RankCard({
+  title,
+  subtitle,
+  rows,
+}: {
+  title: string;
+  subtitle: string;
+  rows: Array<{ page: string; count: number }>;
+}) {
+  const max = rows.length > 0 ? Math.max(1, ...rows.map((r) => r.count)) : 1;
   return (
-    <Card className="p-4">
-      <h4 className="text-sm font-semibold mb-2">{title}</h4>
+    <div
+      className="rounded-xl p-5 space-y-4"
+      style={{ background: CARD_BG, border: `1px solid ${CARD_BORDER}` }}
+    >
+      <div className="flex items-center gap-2">
+        <BarChart3 className="w-4 h-4" style={{ color: ACCENT }} />
+        <div>
+          <h4 className="font-display text-sm font-semibold text-foreground">{title}</h4>
+          <p className="font-body text-[10px] text-muted-foreground">{subtitle}</p>
+        </div>
+      </div>
       {rows.length === 0 ? (
-        <p className="text-xs text-muted-foreground">No data yet for this range.</p>
+        <div className="flex flex-col items-center justify-center py-8 gap-2">
+          <Inbox className="w-6 h-6 text-muted-foreground/40" />
+          <p className="font-body text-xs text-muted-foreground">No data yet for this range</p>
+        </div>
       ) : (
-        <ul className="space-y-1">
+        <div className="space-y-3">
           {rows.map((r) => (
-            <li key={r.page} className="flex items-center justify-between text-sm">
-              <span className="truncate text-foreground/90 mr-2">{r.page}</span>
-              <Badge variant="outline">{r.count}</Badge>
-            </li>
+            <div key={r.page} className="space-y-1">
+              <div className="flex justify-between items-baseline gap-3">
+                <span
+                  className="font-body text-xs text-foreground truncate"
+                  title={r.page}
+                  style={{ maxWidth: "75%" }}
+                >
+                  {r.page}
+                </span>
+                <span className="font-body text-[10px] text-muted-foreground tabular-nums">
+                  {r.count.toLocaleString()}
+                </span>
+              </div>
+              <div
+                className="w-full h-2 rounded-full overflow-hidden"
+                style={{ background: TRACK_BG }}
+              >
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{
+                    width: `${(r.count / max) * 100}%`,
+                    background: ACCENT,
+                  }}
+                />
+              </div>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
-    </Card>
+    </div>
   );
 }

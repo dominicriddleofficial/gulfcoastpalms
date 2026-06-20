@@ -19,6 +19,17 @@ const GREEN_FAINT = "rgba(var(--biz-accent-rgb),0.25)";
 const RED = "#f87171";
 const CARD_BORDER = "rgba(var(--biz-accent-rgb),0.15)";
 
+// A job counts as "completed" if it's not cancelled/deleted AND either has an
+// explicit completion status OR is scheduled in the past. Jobber imports rarely
+// carry a "completed" status, so the past-dated fallback is what catches them.
+function isJobCompleted(j: UnifiedJob, now: Date = new Date()): boolean {
+  const s = (j.status || "").toLowerCase().trim();
+  if (["deleted", "archived", "canceled", "cancelled", "void", "draft"].includes(s)) return false;
+  if (["completed", "complete", "done", "paid", "invoiced", "requires_invoicing"].includes(s)) return true;
+  if (!j.scheduled_start) return false;
+  return new Date(j.scheduled_start) < now;
+}
+
 function extractCity(addr: string | null): string {
   if (!addr) return "Unknown";
   const parts = addr.split(",").map(s => s.trim());
@@ -278,6 +289,8 @@ export default function PlatformAnalytics() {
     queryKey: ["platform-analytics", selectedBusinessId, selectedYear],
     queryFn: () => fetchAnalytics(selectedBusinessId, selectedYear),
     enabled: !!selectedBusinessId,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const handleSyncHistorical = async () => {
@@ -289,6 +302,7 @@ export default function PlatformAnalytics() {
       if (error) throw error;
       toast.success(`Historical sync complete — ${fnData?.records_synced || 0} records synced`);
       queryClient.invalidateQueries({ queryKey: ["platform-analytics"] });
+      queryClient.invalidateQueries({ queryKey: ["conversion-funnel"] });
     } catch (err: any) {
       toast.error(`Sync failed: ${err.message || "Unknown error"}`);
     } finally {
@@ -316,8 +330,9 @@ export default function PlatformAnalytics() {
 
   // Cards
   const prevFullRev = prevJobs.reduce((s, j) => s + j.total_amount, 0);
-  const jobsCompleted = curJobs.filter(j => ["completed", "done"].includes(j.status?.toLowerCase() || "")).length;
-  const prevJobsCompleted = prevJobs.filter(j => ["completed", "done"].includes(j.status?.toLowerCase() || "")).length;
+  const _now = new Date();
+  const jobsCompleted = curJobs.filter(j => isJobCompleted(j, _now)).length;
+  const prevJobsCompleted = prevJobs.filter(j => isJobCompleted(j, _now)).length;
   const avgJobValue = curJobs.length > 0 ? curRevenue / curJobs.length : 0;
   const prevAvgJobValue = prevJobs.length > 0 ? prevFullRev / prevJobs.length : 0;
 
@@ -372,7 +387,7 @@ export default function PlatformAnalytics() {
   return (
     <PlatformLayout>
       <div className="space-y-6">
-        <ConversionFunnelWidget days={30} />
+        <ConversionFunnelWidget days={30} businessId={selectedBusinessId} />
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
@@ -473,7 +488,11 @@ export default function PlatformAnalytics() {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
               <XAxis dataKey="name" tick={{ fill: "#888", fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis tickFormatter={v => `$${(v / 1000).toFixed(0)}k`} tick={{ fill: "#888", fontSize: 11 }} axisLine={false} tickLine={false} width={45} />
-              <Tooltip contentStyle={customTooltipStyle} formatter={(v: number) => [`$${v.toLocaleString()}`, ""]} />
+              <Tooltip
+                contentStyle={customTooltipStyle}
+                labelStyle={{ color: "#ddd", fontWeight: 600 }}
+                formatter={(v: number, name) => [`$${Number(v).toLocaleString()}`, String(name)]}
+              />
               <Area type="monotone" dataKey={`${selectedYear - 1}`} stroke={GREEN_DIM} strokeWidth={1.5} strokeDasharray="4 4" fill="none" name={`${selectedYear - 1}`} />
               <Area type="monotone" dataKey={selectedYear.toString()} stroke={GREEN} strokeWidth={2.5} fill="url(#greenGrad)" name={`${selectedYear}`} />
             </AreaChart>
@@ -520,7 +539,11 @@ export default function PlatformAnalytics() {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
               <XAxis dataKey="name" tick={{ fill: "#888", fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis tickFormatter={v => `$${(v / 1000).toFixed(0)}k`} tick={{ fill: "#888", fontSize: 11 }} axisLine={false} tickLine={false} width={45} />
-              <Tooltip contentStyle={customTooltipStyle} formatter={(v: number) => [`$${v.toLocaleString()}`, ""]} />
+              <Tooltip
+                contentStyle={customTooltipStyle}
+                labelStyle={{ color: "#ddd", fontWeight: 600 }}
+                formatter={(v: number, name) => [`$${Number(v).toLocaleString()}`, String(name)]}
+              />
               <Legend wrapperStyle={{ fontSize: 11, color: "#888" }} />
               <Line type="monotone" dataKey={selectedYear.toString()} stroke={GREEN} strokeWidth={2.5} dot={false} name={`${selectedYear}`} />
               <Line type="monotone" dataKey={`${selectedYear - 1}`} stroke={GREEN_DIM} strokeWidth={2} dot={false} name={`${selectedYear - 1}`} />
