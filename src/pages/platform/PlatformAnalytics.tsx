@@ -46,6 +46,65 @@ type UnifiedJob = {
   title: string | null;
 };
 
+const EXCLUDED_JOB_STATUSES = new Set([
+  "archived", "canceled", "cancelled", "deleted", "draft", "void",
+]);
+
+type PlatformJobRow = {
+  id: string;
+  status: string | null;
+  scheduled_start: string | null;
+  total: number | string | null;
+  title: string | null;
+  source_record_id: string | null;
+  deleted_at: string | null;
+  customer: { display_name: string | null } | null;
+  property: { address_1: string | null; city: string | null; state: string | null; zip: string | null } | null;
+};
+
+function platformAddressString(p: PlatformJobRow["property"]): string | null {
+  if (!p) return null;
+  const cityStateZip = [p.city, p.state, p.zip].filter(Boolean).join(" ");
+  return [p.address_1, cityStateZip].filter(Boolean).join(", ") || null;
+}
+
+async function fetchPlatformJobsUnified(
+  businessId: string,
+  startIso: string,
+  endIso: string,
+): Promise<{ jobs: UnifiedJob[]; importedJobberIds: Set<string> }> {
+  const { data } = await supabase
+    .from("platform_jobs")
+    .select(
+      `id, status, scheduled_start, total, title, source_record_id, deleted_at,
+       customer:platform_customers(display_name),
+       property:platform_properties(address_1, city, state, zip)`,
+    )
+    .eq("business_id", businessId)
+    .is("deleted_at", null)
+    .gte("scheduled_start", startIso.slice(0, 10))
+    .lt("scheduled_start", endIso.slice(0, 10));
+
+  const importedJobberIds = new Set<string>();
+  const rows = (data || []) as unknown as PlatformJobRow[];
+  const jobs: UnifiedJob[] = [];
+  for (const r of rows) {
+    const s = (r.status || "").toLowerCase();
+    if (EXCLUDED_JOB_STATUSES.has(s)) continue;
+    if (r.source_record_id) importedJobberIds.add(r.source_record_id);
+    jobs.push({
+      id: r.id,
+      scheduled_start: r.scheduled_start,
+      total_amount: Number(r.total) || 0,
+      client_name: r.customer?.display_name ?? null,
+      property_address: platformAddressString(r.property),
+      status: r.status,
+      title: r.title,
+    });
+  }
+  return { jobs, importedJobberIds };
+}
+
 async function fetchLegacyJobs(yearStart: string, yearEnd: string): Promise<UnifiedJob[]> {
   const { data } = await supabase
     .from("jobs")
@@ -114,8 +173,11 @@ async function fetchAnalytics(businessId: string | null, year: number) {
   const now = new Date();
   const samePeriodEnd = new Date(year - 1, now.getMonth(), now.getDate()).toISOString();
 
-  // Fetch Jobber data
-  const [currentYear, prevYear, twoYearsAgo, prevYearSamePeriod] = await Promise.all([
+  // Fetch Jobber + Platform data in parallel for all four ranges
+  const [
+    jobberCurrent, jobberPrev, jobberTwoAgo, jobberPrevSamePeriod,
+    platformCurrent, platformPrev, platformTwoAgo, platformPrevSamePeriod,
+  ] = await Promise.all([
     supabase.from("jobber_jobs").select("id, title, status, scheduled_start, total_amount, client_name, property_address")
       .eq("business_id", businessId).gte("scheduled_start", yearStart).lt("scheduled_start", yearEnd),
     supabase.from("jobber_jobs").select("id, title, status, scheduled_start, total_amount, client_name, property_address")
@@ -124,6 +186,10 @@ async function fetchAnalytics(businessId: string | null, year: number) {
       .eq("business_id", businessId).gte("scheduled_start", twoYearsAgoStart).lt("scheduled_start", twoYearsAgoEnd),
     supabase.from("jobber_jobs").select("id, total_amount, scheduled_start, client_name, property_address, title, status")
       .eq("business_id", businessId).gte("scheduled_start", prevYearStart).lt("scheduled_start", samePeriodEnd),
+    fetchPlatformJobsUnified(businessId, yearStart, yearEnd),
+    fetchPlatformJobsUnified(businessId, prevYearStart, prevYearEnd),
+    fetchPlatformJobsUnified(businessId, twoYearsAgoStart, twoYearsAgoEnd),
+    fetchPlatformJobsUnified(businessId, prevYearStart, samePeriodEnd),
   ]);
 
   // Fetch legacy data for all three year ranges
@@ -139,22 +205,38 @@ async function fetchAnalytics(businessId: string | null, year: number) {
     fetchLegacyInvoices(prevYearStart, samePeriodEnd),
   ]);
 
-  const toUnified = (data: any[]): UnifiedJob[] =>
-    (data || []).map(j => ({
-      id: j.id,
-      scheduled_start: j.scheduled_start || null,
-      total_amount: Number(j.total_amount) || 0,
-      client_name: j.client_name || null,
-      property_address: j.property_address || null,
-      status: j.status || null,
-      title: j.title || null,
-    }));
+  const toUnifiedJobber = (data: any[], importedIds: Set<string>): UnifiedJob[] =>
+    (data || [])
+      .filter(j => !importedIds.has(j.id))
+      .map(j => ({
+        id: j.id,
+        scheduled_start: j.scheduled_start || null,
+        total_amount: Number(j.total_amount) || 0,
+        client_name: j.client_name || null,
+        property_address: j.property_address || null,
+        status: j.status || null,
+        title: j.title || null,
+      }));
+
+  // Union platform_jobs + jobber_jobs (dedup by source_record_id), then add
+  // legacy data only when neither modern source has anything for the range.
+  const merge = (
+    platform: { jobs: UnifiedJob[]; importedJobberIds: Set<string> },
+    jobber: any,
+    legacyJobs: UnifiedJob[],
+    legacyInv: UnifiedJob[],
+  ): UnifiedJob[] => {
+    const jobberUnified = toUnifiedJobber(jobber.data || [], platform.importedJobberIds);
+    const modern = [...platform.jobs, ...jobberUnified];
+    if (modern.length > 0) return modern;
+    return deduplicateByRevenue([], legacyJobs, legacyInv);
+  };
 
   return {
-    currentYear: deduplicateByRevenue(toUnified(currentYear.data || []), legacyCur, legacyInvCur),
-    prevYear: deduplicateByRevenue(toUnified(prevYear.data || []), legacyPrev, legacyInvPrev),
-    twoYearsAgo: deduplicateByRevenue(toUnified(twoYearsAgo.data || []), legacyTwoAgo, legacyInvTwoAgo),
-    prevYearSamePeriod: deduplicateByRevenue(toUnified(prevYearSamePeriod.data || []), legacySamePeriod, legacyInvSamePeriod),
+    currentYear: merge(platformCurrent, jobberCurrent, legacyCur, legacyInvCur),
+    prevYear: merge(platformPrev, jobberPrev, legacyPrev, legacyInvPrev),
+    twoYearsAgo: merge(platformTwoAgo, jobberTwoAgo, legacyTwoAgo, legacyInvTwoAgo),
+    prevYearSamePeriod: merge(platformPrevSamePeriod, jobberPrevSamePeriod, legacySamePeriod, legacyInvSamePeriod),
     unscheduled: [] as UnifiedJob[],
     year,
   };
