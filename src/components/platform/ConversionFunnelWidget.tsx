@@ -81,15 +81,27 @@ async function fetchFunnel(days: number, businessId: string | null): Promise<Fun
 
   // These platform tables DO have business_id — scope to current workspace.
   const sinceDate = since.slice(0, 10);
-  const scope = <T extends { eq: (col: string, v: string) => T }>(q: T): T =>
-    businessId ? q.eq("business_id", businessId) : q;
 
-  const [{ count: sent_quotes }, { count: approved_quotes }, { count: jobs_from_quotes }, { count: paid_invoices }] = await Promise.all([
-    scope(supabase.from("platform_quotes").select("id", { count: "exact", head: true }).in("status", ["sent", "viewed", "approved", "won", "accepted", "declined"]).gte("created_at", since)),
-    scope(supabase.from("platform_quotes").select("id", { count: "exact", head: true }).in("status", ["approved", "won", "accepted"]).gte("created_at", since)),
-    scope(supabase.from("platform_jobs").select("id", { count: "exact", head: true }).not("quote_id", "is", null).gte("created_at", since)),
-    scope(supabase.from("platform_invoices").select("id", { count: "exact", head: true }).eq("status", "paid").gte("issue_date", sinceDate)),
-  ]);
+  const qSent = supabase.from("platform_quotes").select("id", { count: "exact", head: true })
+    .in("status", ["sent", "viewed", "approved", "won", "accepted", "declined"])
+    .gte("created_at", since);
+  const qApproved = supabase.from("platform_quotes").select("id", { count: "exact", head: true })
+    .in("status", ["approved", "won", "accepted"])
+    .gte("created_at", since);
+  const qJobs = supabase.from("platform_jobs").select("id", { count: "exact", head: true })
+    .not("quote_id", "is", null)
+    .gte("created_at", since);
+  const qPaid = supabase.from("platform_invoices").select("id", { count: "exact", head: true })
+    .eq("status", "paid")
+    .gte("issue_date", sinceDate);
+
+  const [{ count: sent_quotes }, { count: approved_quotes }, { count: jobs_from_quotes }, { count: paid_invoices }] =
+    await Promise.all([
+      businessId ? qSent.eq("business_id", businessId) : qSent,
+      businessId ? qApproved.eq("business_id", businessId) : qApproved,
+      businessId ? qJobs.eq("business_id", businessId) : qJobs,
+      businessId ? qPaid.eq("business_id", businessId) : qPaid,
+    ]);
 
   const all_service_pages = await groupByPage("service_page_cta_click");
   const all_city_pages = await groupByPage("location_page_cta_click");
