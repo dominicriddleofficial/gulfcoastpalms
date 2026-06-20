@@ -56,11 +56,12 @@ export function usePlatformAuth() {
     setLoading(true);
     setAccessDenied(false);
 
-    const { data: workspaces } = await supabase
-      .from("workspaces")
-      .select("id")
-      .eq("owner_user_id", user.id);
-    if (isCancelled()) return;
+    try {
+      const { data: workspaces } = await supabase
+        .from("workspaces")
+        .select("id")
+        .eq("owner_user_id", user.id);
+      if (isCancelled()) return;
 
     const owner = !!(workspaces && workspaces.length > 0);
 
@@ -192,27 +193,53 @@ export function usePlatformAuth() {
       }
     }
     
-    setLoading(false);
-  }, [selectedBusinessId, setSelectedBusinessId]);
+      setLoading(false);
+    } catch (error) {
+      if (isCancelled()) return;
+      if (import.meta.env.DEV) {
+        console.error("[usePlatformAuth] Failed to load platform access:", error);
+      }
+      clearAuthState();
+      setAccessDenied(true);
+      setLoading(false);
+    }
+  }, [clearAuthState, selectedBusinessId, setSelectedBusinessId]);
 
   useEffect(() => {
     let cancelled = false;
+    let initialHandled = false;
+
+    const handleInitialSession = (user: User | null) => {
+      if (cancelled || initialHandled) return;
+      initialHandled = true;
+      initialSessionLoadedRef.current = true;
+      setInitialSessionChecked(true);
+
+      if (user) {
+        hadSessionRef.current = true;
+        void loadPlatformAccess(user, () => cancelled);
+      } else {
+        hadSessionRef.current = false;
+        clearAuthState();
+        setLoading(false);
+      }
+    };
+
+    void supabase.auth.getSession().then(({ data }) => {
+      handleInitialSession(data.session?.user ?? null);
+    }).catch((error) => {
+      if (cancelled) return;
+      if (import.meta.env.DEV) {
+        console.error("[usePlatformAuth] Initial session check failed:", error);
+      }
+      handleInitialSession(null);
+    });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (cancelled) return;
 
       if (event === "INITIAL_SESSION") {
-        initialSessionLoadedRef.current = true;
-        setInitialSessionChecked(true);
-
-        if (session?.user) {
-          hadSessionRef.current = true;
-          void loadPlatformAccess(session.user, () => cancelled);
-        } else {
-          hadSessionRef.current = false;
-          clearAuthState();
-          setLoading(false);
-        }
+        handleInitialSession(session?.user ?? null);
         return;
       }
 
