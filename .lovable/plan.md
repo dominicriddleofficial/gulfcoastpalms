@@ -1,73 +1,96 @@
-# Schedule Crew Tracking
+## Findings
 
-Add live crew operations (clock-in, GPS tracking, job time logs, vehicles) into the existing `PlatformSchedule` page as a fourth `Crew` tab. No separate module.
+### Problem 1 — Analytics revenue is empty for recent months
 
-## 1. Database (single migration)
+**Root cause: Analytics and the dashboard read from different tables.**
 
-New tables under `public` with `business_id`, RLS via `has_business_access`, indexed on `business_id + schedule_date`.
+| Source | Used by | June 2026 jobs | June 2026 revenue |
+|---|---|---|---|
+| `jobber_jobs` | Analytics page (`fetchAnalytics` in `PlatformAnalytics.tsx`) | **3** | **$150** |
+| `platform_jobs` (+ visits, deduped with `jobber_jobs`) | HOME dashboard (`useDashboardScheduledJobs`) | **75** | **$30,300** |
 
-- **`platform_vehicles`** — `id, business_id, name, label, license_plate, active, created_at`
-- **`platform_clock_sessions`** — `id, business_id, employee_user_id, schedule_date, vehicle_id, clock_in_at, clock_out_at, total_minutes, status` (`active|closed`). Unique on `(business_id, employee_user_id, schedule_date)` partial where `clock_out_at IS NULL` to enforce one open session.
-- **`platform_gps_points`** — `id, business_id, clock_session_id, employee_user_id, lat, lng, accuracy, speed, heading, captured_at`. Indexed on `clock_session_id, captured_at`.
-- **`platform_job_time_logs`** — `id, business_id, job_id (text—source jobber/platform), clock_session_id, employee_user_id, arrived_at, started_at, completed_at, departed_at, status, notes`
-- **`platform_crew_assignments`** — `id, business_id, employee_user_id, vehicle_id, schedule_date, assigned_job_ids text[]`
-- **`platform_job_photos`** — `id, business_id, job_id, employee_user_id, image_url, photo_type (before|after|note), uploaded_at`. Storage bucket `job-photos` already exists.
-- **`platform_crew_settings`** — one row per `business_id`: `tracking_enabled, tracking_interval_seconds (default 30), geofence_radius_feet (default 250), require_clock_in_to_start, require_photo_to_complete, require_notes_to_complete`.
+Sub-findings (GCP, `business_id = b0000…0001`):
 
-RLS: members of the business can read; employees can write their own session/gps/time-logs; owners/managers can write settings, vehicles, assignments.
+- `PlatformAnalytics.fetchAnalytics` queries **only** `jobber_jobs` (lines 119–127) plus the legacy `jobs`/`invoices` tables. It never touches `platform_jobs` / `platform_job_visits`.
+- `useDashboardScheduledJobs` (HOME) queries `platform_job_visits` + `platform_jobs` + `jobber_jobs` and dedupes by `source_record_id`.
+- Of the 75 platform_jobs in June 2026, **70 have `source_system = NULL`** (created natively in the app), and only 5 came from Jobber. Those 70 native jobs are completely invisible to Analytics.
+- Jobber sync is stale: `max(jobber_jobs.synced_at) = 2026-05-08`, `max(updated_at) = 2026-06-15`. So even the Jobber side hasn't been refreshed in ~5 weeks.
+- Full month-by-month comparison for 2026 confirms divergence starts in May:
 
-## 2. Hooks
+```
+        jobber_jobs        platform_jobs
+month   count   revenue    count   revenue
+May     17      $9,844     45      $9,844
+Jun      3      $150       75      $30,300
+Jul      6      $1,270     12      $1,270
+```
 
-- `useClockSession(date)` — current open session for the user; `clockIn(vehicleId)`, `clockOut()` mutations.
-- `useGpsTracker(sessionId, intervalSeconds)` — `navigator.geolocation.watchPosition`, batches inserts to `platform_gps_points` every interval, stops on unmount or when `sessionId` null. Requests permission with consent text.
-- `useJobTimeLog(jobId)` — start/complete/arrive/depart mutations writing to `platform_job_time_logs`.
-- `useCrewToday(date)` — admin view: joins `platform_clock_sessions` + latest `platform_gps_points` + `platform_user_profiles` + assignments + completed job count.
-- `useGeofence(jobs, currentPosition, radiusFeet)` — returns nearest job within radius; surfaces prompt.
+**Recommendation:** point Analytics at the same unified source the dashboard uses. Cleanest path: build a unified fetcher that pulls `platform_jobs` (filtered by `business_id`, `deleted_at IS NULL`, status not in archived/canceled/deleted) and unions any `jobber_jobs` whose `id` is not already referenced by `platform_jobs.source_record_id`. Treat `total` (platform) and `total_amount` (jobber) as the revenue field. Drop the legacy `jobs` / `invoices` fallback, or only use it for years where neither table has data (2024 historical). This will make the 2026 chart, "Best Month", "Avg Job Value", "Jobs Completed", Geographic, and Service-Type sections all match the dashboard immediately.
 
-## 3. UI changes
+### Problem 2 — "Can't see how many people called or texted"
 
-### `src/pages/platform/PlatformSchedule.tsx`
-- Add `Crew` to the `Tabs` list (Day | List | Map | Crew).
-- Above the day list, render `<ClockBar />`:
-  - Not clocked in → green "Clock In to Today's Schedule" with vehicle select.
-  - Clocked in → "Tracking Active since 7:42 AM" + "Clock Out" (red outline).
-  - First-use consent dialog.
-- Pass `clockSession` into job card so action buttons show conditionally.
+**Last 30 days, Gulf Coast Palms website:**
 
-### Job cards (extend `VisitActionPanel` or schedule-specific card)
-- Always show: Navigate, Call Customer, Add Note, Upload Photos.
-- Only when clocked in: Start Job, Complete Job (with photo/notes gates per settings).
-- Geofence toast: "You appear to be at [name]. Start job?" → Start Job mutation.
+```
+event_name              count
+call_now_click          6
+text_us_click           14
+```
 
-### Crew tab (`src/components/platform/schedule/CrewTab.tsx`)
-- Top stat cards: Clocked In, Clocked Out, Jobs Completed, Jobs Remaining, Total Crew Hours.
-- Active crew list cards: name, vehicle, clock-in time, status badge, current job, last GPS update (relative time), hours today, completed jobs, "View on Map" button (switches to Map tab + focuses crew).
-- Status derived from latest GPS speed + active job log: Driving (>5mph), On Site (in geofence, no started log), Job In Progress (started log open), Break/Idle (stationary >10min), Clocked In (default), Not Clocked In, Clocked Out.
+Per-page breakdown (what the widget shows today):
 
-### Map tab
-- Add crew location pins (truck icon, green = active) from latest GPS per active session.
-- Optional polyline route trail for selected crew (today's GPS points).
-- "Focus crew" param from Crew tab opens map zoomed to that crew.
+```
+call_now_click  /services/palm-tree-trimming  2
+                /quote                        2
+                /about                        1
+                /                             1
+text_us_click   /quote                        10
+                /services/palm-tree-trimming  2
+                /                             1
+                /palm-tree-cost               1
+```
 
-### Admin settings
-- Add `CrewSettingsCard` in `PlatformSettings` page: toggles + numeric inputs writing to `platform_crew_settings`. Vehicles CRUD list. Assignment table by date.
+Findings:
 
-## 4. Privacy
-- Consent dialog stored in `platform_user_profiles.crew_tracking_consent_at` (add column).
-- `useGpsTracker` no-ops unless session is open. Cleared on clock-out.
-- Copy: "Location is tracked only while you are clocked in for work and stops when you clock out."
+1. **The RankCard restyle renders correctly** — rows + magnitude bars come through fine (verified against `ConversionFunnelWidget.tsx` lines 234–294). Data is present, so the lists are not empty.
+2. **There is no glanceable total anywhere on the page.** Only the per-page list — no "20 total texts / 6 total calls" headline. That's almost certainly what the user is missing post-restyle (the previous funnel was probably more obvious at-a-glance).
+3. **Other call/text event names are not being counted.** The DB also has `phone_click`, `sticky_bar_call_click`, `sticky_bar_text_click` events being emitted (last 60d), but the widget only counts `call_now_click` and `text_us_click`. Including the sticky-bar variants will materially increase the totals.
+4. `analytics_events` still has no `business_id` column — these queries remain workspace-wide (acceptable today; GCP is the only public site emitting events).
 
-## 5. Out of scope (this pass)
-- Real-time websocket push (use 30s React Query polling for admin view).
-- Idle detection beyond simple speed/time heuristic.
-- Vehicle telematics integration.
+## Recommended Fix Plan
 
-## Acceptance checklist
-- Schedule page shows Day | List | Map | Crew.
-- Clock In/Out works; GPS only writes while session open.
-- Job cards expose Start/Complete only after clock-in.
-- Crew tab lists active employees with live status + map focus.
-- Admin can review per-crew route + per-job timestamps for today.
-- Settings page lets owner toggle tracking, radius, interval, gates, vehicles.
+### A. Unify Analytics revenue source (Problem 1)
 
-Proceed?
+In `src/pages/platform/PlatformAnalytics.tsx`:
+
+1. Replace the `jobber_jobs`-only queries inside `fetchAnalytics` with a unified query helper:
+   - Pull `platform_jobs` rows for the year, filtered by `business_id`, `deleted_at IS NULL`, status not in (`archived`,`canceled`,`cancelled`,`deleted`,`draft`).
+   - Pull `jobber_jobs` rows for the year (same `business_id`, scheduled in range).
+   - Build a Set of `platform_jobs.source_record_id` values; drop any `jobber_jobs` whose `id` is in that Set (already imported).
+   - Map both into the existing `UnifiedJob` shape (`total` for platform, `total_amount` for jobber). Use `platform_jobs.title` and `platform_customers.display_name` for service/customer attribution where available; fall back to jobber fields.
+2. Apply the same union to `currentYear`, `prevYear`, `twoYearsAgo`, and `prevYearSamePeriod`.
+3. Keep the legacy `jobs`/`invoices` fallback only for **years strictly before the earliest year that has any platform/jobber data** (so 2024 historical still renders), to avoid double-counting 2025/2026.
+4. Re-verify against DB: after change, June 2026 should report 75 jobs / $30,300 to match the dashboard.
+
+No schema changes. No edits outside `PlatformAnalytics.tsx` (and possibly a small local helper).
+
+### B. Surface call/text totals (Problem 2)
+
+In `src/components/platform/ConversionFunnelWidget.tsx`:
+
+1. Extend `fetchFunnel` to also count `phone_click`, `sticky_bar_call_click`, `sticky_bar_text_click` and roll them into the call/text page lists and totals. Total calls = sum of `call_now_click + phone_click + sticky_bar_call_click`. Total texts = sum of `text_us_click + sticky_bar_text_click`.
+2. Add two prominent stat tiles above (or alongside) the existing Call/SMS RankCards: **Total Calls (30d)** and **Total Texts (30d)**, styled as the existing accent panels (`rgba(255,255,255,0.03)` bg, `--biz-accent-rgb` border, `font-display` big number, small "last 30 days" subtitle, Phone/MessageSquare icon).
+3. Optionally show a small delta vs. prior 30 days under each total.
+4. Keep the per-page RankCards underneath unchanged.
+
+No schema changes. Single-file edit.
+
+### Verification
+
+- After A: re-run the month-by-month query above; Analytics 2026 chart should match dashboard counts.
+- After B: 30-day totals should read approximately Calls ≈ 6+ (plus any sticky-bar / phone_click hits) and Texts ≈ 14+.
+
+## Out of scope
+
+- Re-enabling / fixing the Jobber sync schedule (separate concern; data is fine without it once Analytics reads `platform_jobs`).
+- Adding `business_id` to `analytics_events` (would be a larger migration).

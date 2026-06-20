@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { BarChart3, TrendingDown, Inbox } from "lucide-react";
+import { BarChart3, Inbox, Phone, MessageSquare } from "lucide-react";
 
 const ACCENT = "var(--accent-color)";
 const ACCENT_DIM = "rgba(var(--biz-accent-rgb),0.5)";
@@ -16,11 +16,18 @@ interface FunnelData {
   approved_quotes: number;
   jobs_from_quotes: number;
   paid_invoices: number;
+  total_calls: number;
+  total_texts: number;
+  total_calls_prev: number;
+  total_texts_prev: number;
   call_clicks_by_page: Array<{ page: string; count: number }>;
   sms_clicks_by_page: Array<{ page: string; count: number }>;
   service_pages: Array<{ page: string; count: number }>;
   city_pages: Array<{ page: string; count: number }>;
 }
+
+const CALL_EVENTS = ["call_now_click", "phone_click", "sticky_bar_call_click"] as const;
+const TEXT_EVENTS = ["text_us_click", "sticky_bar_text_click"] as const;
 
 function pct(n: number, d: number): string {
   if (!d || d <= 0) return "—";
@@ -30,6 +37,7 @@ function pct(n: number, d: number): string {
 
 async function fetchFunnel(days: number, businessId: string | null): Promise<FunnelData> {
   const since = new Date(Date.now() - days * 86400_000).toISOString();
+  const prevSince = new Date(Date.now() - 2 * days * 86400_000).toISOString();
 
   const counts = async (event: string): Promise<number> => {
     const { count } = await supabase
@@ -69,14 +77,50 @@ async function fetchFunnel(days: number, businessId: string | null): Promise<Fun
       .slice(0, 8);
   };
 
+  const groupByPageMulti = async (events: readonly string[]): Promise<Array<{ page: string; count: number }>> => {
+    const { data } = await supabase
+      .from("analytics_events")
+      .select("page_path")
+      .in("event_name", events as unknown as string[])
+      .gte("created_at", since)
+      .limit(5000);
+    const m = new Map<string, number>();
+    for (const r of data || []) {
+      const p = r.page_path || "/";
+      m.set(p, (m.get(p) || 0) + 1);
+    }
+    return Array.from(m.entries())
+      .map(([page, count]) => ({ page, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8);
+  };
+
+  const countMulti = async (events: readonly string[], from: string, to?: string): Promise<number> => {
+    let q = supabase
+      .from("analytics_events")
+      .select("id", { count: "exact", head: true })
+      .in("event_name", events as unknown as string[])
+      .gte("created_at", from);
+    if (to) q = q.lt("created_at", to);
+    const { count } = await q;
+    return count ?? 0;
+  };
+
   // analytics_events has no business_id column (only a coarse business_type tag),
   // so site-wide event queries are intentionally not scoped by business here.
-  const [visitors, quote_starts, quote_submits, calls, texts] = await Promise.all([
+  const [
+    visitors, quote_starts, quote_submits, calls, texts,
+    total_calls, total_texts, total_calls_prev, total_texts_prev,
+  ] = await Promise.all([
     distinctVisitors(),
     counts("quote_request_started"),
     counts("quote_request_submitted").then(async (v) => v || (await counts("lead_form_submit"))),
-    groupByPage("call_now_click"),
-    groupByPage("text_us_click"),
+    groupByPageMulti(CALL_EVENTS),
+    groupByPageMulti(TEXT_EVENTS),
+    countMulti(CALL_EVENTS, since),
+    countMulti(TEXT_EVENTS, since),
+    countMulti(CALL_EVENTS, prevSince, since),
+    countMulti(TEXT_EVENTS, prevSince, since),
   ]);
 
   // These platform tables DO have business_id — scope to current workspace.
@@ -114,6 +158,10 @@ async function fetchFunnel(days: number, businessId: string | null): Promise<Fun
     approved_quotes: approved_quotes ?? 0,
     jobs_from_quotes: jobs_from_quotes ?? 0,
     paid_invoices: paid_invoices ?? 0,
+    total_calls,
+    total_texts,
+    total_calls_prev,
+    total_texts_prev,
     call_clicks_by_page: calls,
     sms_clicks_by_page: texts,
     service_pages: all_service_pages,
@@ -221,12 +269,88 @@ export default function ConversionFunnelWidget({
         </div>
       </div>
 
+      {/* Call / Text totals — glanceable headline */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <TotalTile
+          label="Total Calls"
+          subtitle={`Last ${days} days · tap-to-call from website`}
+          value={data.total_calls}
+          prev={data.total_calls_prev}
+          icon={Phone}
+        />
+        <TotalTile
+          label="Total Texts"
+          subtitle={`Last ${days} days · text-us from website`}
+          value={data.total_texts}
+          prev={data.total_texts_prev}
+          icon={MessageSquare}
+        />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <RankCard title="Call clicks by page" subtitle="Tap-to-call CTA hits" rows={data.call_clicks_by_page} />
         <RankCard title="SMS clicks by page" subtitle="Text-us CTA hits" rows={data.sms_clicks_by_page} />
         <RankCard title="Top service pages" subtitle="Service page CTA clicks" rows={data.service_pages} />
         <RankCard title="Top city pages" subtitle="Location page CTA clicks" rows={data.city_pages} />
       </div>
+    </div>
+  );
+}
+
+function TotalTile({
+  label, subtitle, value, prev, icon: Icon,
+}: {
+  label: string;
+  subtitle: string;
+  value: number;
+  prev: number;
+  icon: typeof Phone;
+}) {
+  const delta = value - prev;
+  const pctStr = prev > 0 ? `${delta >= 0 ? "+" : ""}${Math.round((delta / prev) * 100)}%` : null;
+  const positive = delta >= 0;
+  return (
+    <div
+      className="rounded-xl p-5"
+      style={{ background: CARD_BG, border: `1px solid ${CARD_BORDER}` }}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-body text-[10px] uppercase tracking-wider text-muted-foreground">
+            {label}
+          </p>
+          <p className="font-display text-4xl font-bold tracking-tight text-foreground mt-1.5">
+            {value.toLocaleString()}
+          </p>
+          <p className="font-body text-[10px] text-muted-foreground mt-1">{subtitle}</p>
+        </div>
+        <div
+          className="rounded-lg p-2"
+          style={{
+            background: "rgba(var(--biz-accent-rgb),0.10)",
+            border: `1px solid ${CARD_BORDER}`,
+          }}
+        >
+          <Icon className="w-4 h-4" style={{ color: ACCENT }} />
+        </div>
+      </div>
+      {pctStr && (
+        <div className="mt-3">
+          <span
+            className="inline-block font-body text-[10px] font-medium px-1.5 py-0.5 rounded"
+            style={{
+              color: positive ? ACCENT : "#f87171",
+              background: positive ? "rgba(var(--biz-accent-rgb),0.10)" : "rgba(248,113,113,0.10)",
+              border: `1px solid ${positive ? CARD_BORDER : "rgba(248,113,113,0.25)"}`,
+            }}
+          >
+            {pctStr} vs prior {/* eslint-disable-next-line */}{/* prior period */}
+          </span>
+          <span className="font-body text-[10px] text-muted-foreground ml-2">
+            ({prev.toLocaleString()} prior)
+          </span>
+        </div>
+      )}
     </div>
   );
 }
