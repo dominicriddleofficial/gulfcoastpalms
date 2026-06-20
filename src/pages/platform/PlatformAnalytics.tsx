@@ -289,6 +289,8 @@ export default function PlatformAnalytics() {
     queryKey: ["platform-analytics", selectedBusinessId, selectedYear],
     queryFn: () => fetchAnalytics(selectedBusinessId, selectedYear),
     enabled: !!selectedBusinessId,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const handleSyncHistorical = async () => {
@@ -300,6 +302,7 @@ export default function PlatformAnalytics() {
       if (error) throw error;
       toast.success(`Historical sync complete — ${fnData?.records_synced || 0} records synced`);
       queryClient.invalidateQueries({ queryKey: ["platform-analytics"] });
+      queryClient.invalidateQueries({ queryKey: ["conversion-funnel"] });
     } catch (err: any) {
       toast.error(`Sync failed: ${err.message || "Unknown error"}`);
     } finally {
@@ -327,8 +330,9 @@ export default function PlatformAnalytics() {
 
   // Cards
   const prevFullRev = prevJobs.reduce((s, j) => s + j.total_amount, 0);
-  const jobsCompleted = curJobs.filter(j => ["completed", "done"].includes(j.status?.toLowerCase() || "")).length;
-  const prevJobsCompleted = prevJobs.filter(j => ["completed", "done"].includes(j.status?.toLowerCase() || "")).length;
+  const _now = new Date();
+  const jobsCompleted = curJobs.filter(j => isJobCompleted(j, _now)).length;
+  const prevJobsCompleted = prevJobs.filter(j => isJobCompleted(j, _now)).length;
   const avgJobValue = curJobs.length > 0 ? curRevenue / curJobs.length : 0;
   const prevAvgJobValue = prevJobs.length > 0 ? prevFullRev / prevJobs.length : 0;
 
