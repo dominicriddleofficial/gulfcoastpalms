@@ -1,6 +1,7 @@
 import { lazy } from "react";
 import { Route } from "react-router-dom";
 import RoleRoute from "@/components/platform/RoleRoute";
+import { PlatformAuthProvider } from "@/hooks/usePlatformAuth";
 
 const PlatformLogin = lazy(() => import("@/pages/platform/PlatformLogin"));
 const PlatformDashboard = lazy(() => import("@/pages/platform/PlatformDashboard"));
@@ -39,10 +40,10 @@ const JobberOAuthCallback = lazy(() => import("@/pages/platform/JobberOAuthCallb
 export const PlatformRoutes = () => (
   <>
     <Route path="/platform/login" element={<PlatformLogin />} />
-    <Route path="/platform" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformDashboard /></RoleRoute>} />
-    <Route path="/platform/leads" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformLeads /></RoleRoute>} />
-    <Route path="/platform/customers" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformCustomers /></RoleRoute>} />
-    <Route path="/platform/quotes" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformQuotes /></RoleRoute>} />
+    <Route path="/platform" element={<PlatformAuthProvider><RoleRoute allow={["owner","office_manager","manager"]}><PlatformDashboard /></RoleRoute></PlatformAuthProvider>} />
+    <Route path="/platform/leads" element={<PlatformAuthProvider><RoleRoute allow={["owner","office_manager","manager"]}><PlatformLeads /></RoleRoute></PlatformAuthProvider>} />
+    <Route path="/platform/customers" element={<PlatformAuthProvider><RoleRoute allow={["owner","office_manager","manager"]}><PlatformCustomers /></RoleRoute></PlatformAuthProvider>} />
+    <Route path="/platform/quotes" element={<PlatformAuthProvider><RoleRoute allow={["owner","office_manager","manager"]}><PlatformQuotes /></RoleRoute></PlatformAuthProvider>} />
     <Route path="/platform/quote-display" element={<PlatformQuoteDisplay />} />
     <Route path="/platform/quote-display/:shortcode/:quoteId" element={<PlatformQuoteDisplay />} />
     <Route path="/platform/jobs" element={<RoleRoute allow={["owner","office_manager","manager"]}><PlatformJobs /></RoleRoute>} />
