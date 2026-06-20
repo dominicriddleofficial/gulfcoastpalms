@@ -225,16 +225,6 @@ export function usePlatformAuth() {
       }
     };
 
-    void supabase.auth.getSession().then(({ data }) => {
-      handleInitialSession(data.session?.user ?? null);
-    }).catch((error) => {
-      if (cancelled) return;
-      if (import.meta.env.DEV) {
-        console.error("[usePlatformAuth] Initial session check failed:", error);
-      }
-      handleInitialSession(null);
-    });
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (cancelled) return;
 
@@ -260,8 +250,22 @@ export function usePlatformAuth() {
       }
     });
 
+    const fallbackTimer = window.setTimeout(() => {
+      if (cancelled || initialHandled) return;
+      void supabase.auth.getSession().then(({ data }) => {
+        handleInitialSession(data.session?.user ?? null);
+      }).catch((error) => {
+        if (cancelled) return;
+        if (import.meta.env.DEV) {
+          console.error("[usePlatformAuth] Initial session fallback failed:", error);
+        }
+        handleInitialSession(null);
+      });
+    }, 1500);
+
     return () => {
       cancelled = true;
+      window.clearTimeout(fallbackTimer);
       subscription.unsubscribe();
     };
   }, [clearAuthState, loadPlatformAccess, navigate]);
