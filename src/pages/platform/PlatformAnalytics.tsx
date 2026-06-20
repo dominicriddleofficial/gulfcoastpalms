@@ -488,7 +488,11 @@ export default function PlatformAnalytics() {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
               <XAxis dataKey="name" tick={{ fill: "#888", fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis tickFormatter={v => `$${(v / 1000).toFixed(0)}k`} tick={{ fill: "#888", fontSize: 11 }} axisLine={false} tickLine={false} width={45} />
-              <Tooltip contentStyle={customTooltipStyle} formatter={(v: number) => [`$${v.toLocaleString()}`, ""]} />
+              <Tooltip
+                contentStyle={customTooltipStyle}
+                labelStyle={{ color: "#ddd", fontWeight: 600 }}
+                formatter={(v: number, name) => [`$${Number(v).toLocaleString()}`, String(name)]}
+              />
               <Area type="monotone" dataKey={`${selectedYear - 1}`} stroke={GREEN_DIM} strokeWidth={1.5} strokeDasharray="4 4" fill="none" name={`${selectedYear - 1}`} />
               <Area type="monotone" dataKey={selectedYear.toString()} stroke={GREEN} strokeWidth={2.5} fill="url(#greenGrad)" name={`${selectedYear}`} />
             </AreaChart>
@@ -535,7 +539,11 @@ export default function PlatformAnalytics() {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
               <XAxis dataKey="name" tick={{ fill: "#888", fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis tickFormatter={v => `$${(v / 1000).toFixed(0)}k`} tick={{ fill: "#888", fontSize: 11 }} axisLine={false} tickLine={false} width={45} />
-              <Tooltip contentStyle={customTooltipStyle} formatter={(v: number) => [`$${v.toLocaleString()}`, ""]} />
+              <Tooltip
+                contentStyle={customTooltipStyle}
+                labelStyle={{ color: "#ddd", fontWeight: 600 }}
+                formatter={(v: number, name) => [`$${Number(v).toLocaleString()}`, String(name)]}
+              />
               <Legend wrapperStyle={{ fontSize: 11, color: "#888" }} />
               <Line type="monotone" dataKey={selectedYear.toString()} stroke={GREEN} strokeWidth={2.5} dot={false} name={`${selectedYear}`} />
               <Line type="monotone" dataKey={`${selectedYear - 1}`} stroke={GREEN_DIM} strokeWidth={2} dot={false} name={`${selectedYear - 1}`} />
