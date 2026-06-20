@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useBusinessContext } from "@/contexts/BusinessContext";
@@ -31,7 +31,23 @@ export interface BusinessAccess {
   };
 }
 
-export function usePlatformAuth() {
+export interface PlatformAuthState {
+  loading: boolean;
+  userId: string | null;
+  userEmail: string;
+  isOwner: boolean;
+  accessDenied: boolean;
+  businessAccess: BusinessAccess[];
+  businesses: BusinessAccess["business"][];
+  selectedBusinessId: string | null;
+  setSelectedBusinessId: (id: string | null) => void;
+  selectedBusiness: BusinessAccess | null;
+  signOut: () => Promise<void>;
+}
+
+const PlatformAuthContext = createContext<PlatformAuthState | null>(null);
+
+function usePlatformAuthState(): PlatformAuthState {
   const [loading, setLoading] = useState(true);
   const [initialSessionChecked, setInitialSessionChecked] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
@@ -298,4 +314,15 @@ export function usePlatformAuth() {
     selectedBusiness,
     signOut,
   };
+}
+
+export function PlatformAuthProvider({ children }: { children: ReactNode }) {
+  const auth = usePlatformAuthState();
+  return <PlatformAuthContext.Provider value={auth}>{children}</PlatformAuthContext.Provider>;
+}
+
+export function usePlatformAuth() {
+  const auth = useContext(PlatformAuthContext);
+  if (!auth) throw new Error("usePlatformAuth must be used within PlatformAuthProvider");
+  return auth;
 }
