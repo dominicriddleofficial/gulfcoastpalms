@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export const INVOICE_STATUSES = [
@@ -88,34 +89,42 @@ export type InvoiceLineItem = {
   sort_order: number | null;
 };
 
+export const platformInvoicesKey = (businessId: string | null) =>
+  ["platform-invoices", businessId] as const;
+
+export async function fetchPlatformInvoices(businessId: string | null): Promise<PlatformInvoice[]> {
+  let query = supabase
+    .from("platform_invoices")
+    .select("*, platform_customers(display_name), platform_properties(address_1, city), platform_jobs(job_number)")
+    .order("created_at", { ascending: false });
+
+  if (businessId) query = query.eq("business_id", businessId);
+
+  const { data, error } = await query;
+  if (error || !data) return [];
+  return data.map((inv: any) => ({
+    ...inv,
+    customer_name: inv.platform_customers?.display_name || null,
+    property_address: inv.platform_properties ? `${inv.platform_properties.address_1}, ${inv.platform_properties.city}` : null,
+    job_number: inv.platform_jobs?.job_number || null,
+  })) as PlatformInvoice[];
+}
+
 export function usePlatformInvoices(businessId: string | null) {
-  const [invoices, setInvoices] = useState<PlatformInvoice[]>([]);
-  const [loading, setLoading] = useState(true);
+  const qc = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const fetchInvoices = useCallback(async () => {
-    setLoading(true);
-    let query = supabase
-      .from("platform_invoices")
-      .select("*, platform_customers(display_name), platform_properties(address_1, city), platform_jobs(job_number)")
-      .order("created_at", { ascending: false });
+  const query = useQuery({
+    queryKey: platformInvoicesKey(businessId),
+    queryFn: () => fetchPlatformInvoices(businessId),
+  });
 
-    if (businessId) query = query.eq("business_id", businessId);
+  const invoices = query.data ?? [];
+  const loading = query.isLoading;
 
-    const { data, error } = await query;
-    if (!error && data) {
-      setInvoices(data.map((inv: any) => ({
-        ...inv,
-        customer_name: inv.platform_customers?.display_name || null,
-        property_address: inv.platform_properties ? `${inv.platform_properties.address_1}, ${inv.platform_properties.city}` : null,
-        job_number: inv.platform_jobs?.job_number || null,
-      })));
-    }
-    setLoading(false);
-  }, [businessId]);
-
-  useEffect(() => { fetchInvoices(); }, [fetchInvoices]);
+  const refetch = () =>
+    qc.invalidateQueries({ queryKey: platformInvoicesKey(businessId) });
 
   const filtered = useMemo(() => {
     let result = invoices;
@@ -147,36 +156,44 @@ export function usePlatformInvoices(businessId: string | null) {
 
   return {
     invoices: filtered, allInvoices: invoices, loading, statusFilter, setStatusFilter,
-    searchQuery, setSearchQuery, statusCounts, totals, refetch: fetchInvoices,
+    searchQuery, setSearchQuery, statusCounts, totals, refetch,
   };
 }
 
+export const platformPaymentsKey = (businessId: string | null) =>
+  ["platform-payments", businessId] as const;
+
+export async function fetchPlatformPayments(businessId: string | null): Promise<PlatformPayment[]> {
+  let query = supabase
+    .from("platform_payments")
+    .select("*, platform_customers(display_name), platform_invoices(invoice_number)")
+    .order("created_at", { ascending: false });
+
+  if (businessId) query = query.eq("business_id", businessId);
+
+  const { data, error } = await query;
+  if (error || !data) return [];
+  return data.map((p: any) => ({
+    ...p,
+    customer_name: p.platform_customers?.display_name || null,
+    invoice_number: p.platform_invoices?.invoice_number || null,
+  })) as PlatformPayment[];
+}
+
 export function usePlatformPayments(businessId: string | null) {
-  const [payments, setPayments] = useState<PlatformPayment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const qc = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
 
-  const fetchPayments = useCallback(async () => {
-    setLoading(true);
-    let query = supabase
-      .from("platform_payments")
-      .select("*, platform_customers(display_name), platform_invoices(invoice_number)")
-      .order("created_at", { ascending: false });
+  const query = useQuery({
+    queryKey: platformPaymentsKey(businessId),
+    queryFn: () => fetchPlatformPayments(businessId),
+  });
 
-    if (businessId) query = query.eq("business_id", businessId);
+  const payments = query.data ?? [];
+  const loading = query.isLoading;
 
-    const { data, error } = await query;
-    if (!error && data) {
-      setPayments(data.map((p: any) => ({
-        ...p,
-        customer_name: p.platform_customers?.display_name || null,
-        invoice_number: p.platform_invoices?.invoice_number || null,
-      })));
-    }
-    setLoading(false);
-  }, [businessId]);
-
-  useEffect(() => { fetchPayments(); }, [fetchPayments]);
+  const refetch = () =>
+    qc.invalidateQueries({ queryKey: platformPaymentsKey(businessId) });
 
   const filtered = useMemo(() => {
     if (!searchQuery) return payments;
@@ -194,5 +211,5 @@ export function usePlatformPayments(businessId: string | null) {
     count: payments.length,
   }), [payments]);
 
-  return { payments: filtered, allPayments: payments, loading, searchQuery, setSearchQuery, totals, refetch: fetchPayments };
+  return { payments: filtered, allPayments: payments, loading, searchQuery, setSearchQuery, totals, refetch };
 }
