@@ -223,6 +223,20 @@ export default function PlatformJobs() {
               {s === "all" ? `All (${jobs.length})` : s === "platform" ? `Native (${platformCount})` : `Synced (${jobberCount})`}
             </button>
           ))}
+          {missingAddressCount > 0 && (
+            <button
+              onClick={() => setMissingAddressOnly((v) => !v)}
+              title="Show only jobs with no service address"
+              className={cn(
+                "px-3 py-1 rounded-full text-[11px] font-body font-medium whitespace-nowrap transition-all border inline-flex items-center gap-1",
+                missingAddressOnly
+                  ? "bg-amber-500/15 text-amber-500 border-amber-500/40"
+                  : "bg-secondary text-muted-foreground border-border hover:text-foreground"
+              )}
+            >
+              <MapPin className="w-3 h-3" /> Missing address ({missingAddressCount})
+            </button>
+          )}
         </div>
 
         <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
