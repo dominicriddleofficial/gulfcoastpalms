@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
@@ -20,6 +21,7 @@ import RecurringContractForm from "@/components/platform/customers/RecurringCont
 import { toast } from "@/hooks/use-toast";
 import EditAddressDialog from "@/components/platform/EditAddressDialog";
 import { useUserRole } from "@/hooks/useUserRole";
+import { platformCustomersKey, fetchPlatformCustomersList } from "@/hooks/usePlatformCustomersList";
 
 type UnifiedCustomer = {
   id: string;
@@ -50,38 +52,21 @@ type JobberProperty = {
 
 export default function PlatformCustomers() {
   const { selectedBusinessId, businesses } = usePlatformAuth();
-  const [customers, setCustomers] = useState<UnifiedCustomer[]>([]);
-  const [loading, setLoading] = useState(true);
+  const qc = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<UnifiedCustomer | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
 
-  const fetchCustomers = async () => {
-    if (!selectedBusinessId) {
-      setCustomers([]);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    const [jobberRes, platformRes] = await Promise.all([
-      supabase.from("jobber_clients")
-        .select("id, jobber_id, display_name, first_name, last_name, company_name, email, phone, secondary_phone, created_at, synced_at, business_id")
-        .eq("business_id", selectedBusinessId)
-        .order("display_name", { ascending: true }),
-      supabase.from("platform_customers")
-        .select("id, business_id, display_name, first_name, last_name, company_name, email, phone, secondary_phone, created_at")
-        .eq("business_id", selectedBusinessId)
-        .order("display_name", { ascending: true }),
-    ]);
-    const jobberCustomers: UnifiedCustomer[] = (jobberRes.data || []).map((c: any) => ({ ...c, source: "jobber" as const }));
-    const platformCustomers: UnifiedCustomer[] = (platformRes.data || []).map((c: any) => ({ ...c, source: "platform" as const }));
-    setCustomers([...platformCustomers, ...jobberCustomers]);
-    setLoading(false);
-  };
+  const customersQuery = useQuery({
+    queryKey: platformCustomersKey(selectedBusinessId),
+    queryFn: () => fetchPlatformCustomersList(selectedBusinessId),
+    enabled: !!selectedBusinessId,
+  });
+  const customers: UnifiedCustomer[] = (customersQuery.data ?? []) as UnifiedCustomer[];
+  const loading = !!selectedBusinessId && customersQuery.isLoading;
 
-  useEffect(() => {
-    fetchCustomers();
-  }, [selectedBusinessId]);
+  const invalidateCustomers = () =>
+    qc.invalidateQueries({ queryKey: platformCustomersKey(selectedBusinessId) });
 
   const filteredCustomers = useMemo(() => {
     const search = searchQuery.trim().toLowerCase();
@@ -183,7 +168,7 @@ export default function PlatformCustomers() {
           <CreateCustomerForm
             businesses={businesses}
             selectedBusinessId={selectedBusinessId}
-            onCreated={() => { setShowCreateForm(false); fetchCustomers(); }}
+              onCreated={() => { setShowCreateForm(false); invalidateCustomers(); }}
           />
         </SheetContent>
       </Sheet>
