@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -123,8 +123,10 @@ export function usePlatformInvoices(businessId: string | null) {
   const invoices = query.data ?? [];
   const loading = query.isLoading;
 
-  const refetch = () =>
-    qc.invalidateQueries({ queryKey: platformInvoicesKey(businessId) });
+  const refetch = useCallback(
+    () => qc.invalidateQueries({ queryKey: platformInvoicesKey(businessId) }),
+    [qc, businessId],
+  );
 
   const filtered = useMemo(() => {
     let result = invoices;
@@ -192,8 +194,10 @@ export function usePlatformPayments(businessId: string | null) {
   const payments = query.data ?? [];
   const loading = query.isLoading;
 
-  const refetch = () =>
-    qc.invalidateQueries({ queryKey: platformPaymentsKey(businessId) });
+  const refetch = useCallback(
+    () => qc.invalidateQueries({ queryKey: platformPaymentsKey(businessId) }),
+    [qc, businessId],
+  );
 
   const filtered = useMemo(() => {
     if (!searchQuery) return payments;
