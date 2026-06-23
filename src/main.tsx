@@ -43,8 +43,53 @@ if ('serviceWorker' in navigator) {
 
   if (import.meta.env.PROD && isPlatformRoute && !isInIframe && !isPreviewHost) {
     window.addEventListener('load', () => {
+      // Versioned URL: every deploy ships a new __BUILD_ID__, so the browser
+      // sees a byte-different SW script and triggers install -> activate for
+      // the new version. The SW reads this `v` param to name its cache, so
+      // old-build caches are purged automatically on activate.
+      const swUrl = `/sw.js?v=${encodeURIComponent(__BUILD_ID__)}`;
+
+      // Snapshot whether a SW was already controlling this page BEFORE we
+      // register. If there was none, the first activation is a fresh install
+      // (not an update) and must not trigger a reload.
+      const hadControllerAtLoad = !!navigator.serviceWorker.controller;
+
       navigator.serviceWorker
-        .register('/sw.js', { scope: '/platform' })
+        .register(swUrl, { scope: '/platform' })
+        .then((registration) => {
+          // When an updated SW is found, wait for it to install and then
+          // reload exactly once so the user lands on the fresh app shell.
+          // The guard below prevents an infinite reload loop if controller
+          // changes fire for any other reason.
+          let reloading = false;
+          const reloadOnce = () => {
+            if (reloading) return;
+            reloading = true;
+            window.location.reload();
+          };
+
+          // Case 1: brand-new SW finishes installing while the page is open
+          // and an old SW is still controlling it -> reload once activated.
+          registration.addEventListener('updatefound', () => {
+            const installing = registration.installing;
+            if (!installing) return;
+            installing.addEventListener('statechange', () => {
+              if (
+                installing.state === 'activated' &&
+                navigator.serviceWorker.controller
+              ) {
+                reloadOnce();
+              }
+            });
+          });
+
+          // Case 2: rescue clients stuck on the OLD cache-first SW. When the
+          // new SW calls clients.claim(), `controllerchange` fires here; we
+          // reload once so the user immediately gets fresh assets.
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (hadControllerAtLoad) reloadOnce();
+          });
+        })
         .catch((err) => {
           console.error('Field Ops service worker registration failed:', err);
         });

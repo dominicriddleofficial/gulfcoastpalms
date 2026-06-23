@@ -6,3 +6,6 @@ declare module "@img/*" {
   const src: string;
   export default src;
 }
+
+// Build-time identifier injected by Vite `define` in vite.config.ts.
+declare const __BUILD_ID__: string;

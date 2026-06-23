@@ -7,6 +7,15 @@ import { visualizer } from "rollup-plugin-visualizer";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  define: {
+    // Build-time identifier injected into client code. Used to version the
+    // service worker registration URL (and, via its query string, the SW's
+    // own cache names) so every deploy installs a fresh SW and purges
+    // previous-build caches.
+    __BUILD_ID__: JSON.stringify(
+      process.env.BUILD_ID || String(Date.now())
+    ),
+  },
   server: {
     host: "::",
     port: 8080,
