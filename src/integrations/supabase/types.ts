@@ -4269,6 +4269,9 @@ export type Database = {
           property_label: string | null
           property_type: string | null
           route: string | null
+          source_last_synced_at: string | null
+          source_record_id: string | null
+          source_system: string | null
           state: string
           street_number: string | null
           updated_at: string
@@ -4299,6 +4302,9 @@ export type Database = {
           property_label?: string | null
           property_type?: string | null
           route?: string | null
+          source_last_synced_at?: string | null
+          source_record_id?: string | null
+          source_system?: string | null
           state?: string
           street_number?: string | null
           updated_at?: string
@@ -4329,6 +4335,9 @@ export type Database = {
           property_label?: string | null
           property_type?: string | null
           route?: string | null
+          source_last_synced_at?: string | null
+          source_record_id?: string | null
+          source_system?: string | null
           state?: string
           street_number?: string | null
           updated_at?: string
@@ -6323,7 +6332,10 @@ export type Database = {
       backfill_jobber_to_platform: {
         Args: never
         Returns: {
+          customers_inserted: number
           jobs_inserted: number
+          jobs_relinked: number
+          properties_inserted: number
           visits_inserted: number
         }[]
       }
