@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
@@ -38,6 +39,7 @@ import { enrollCompletedJobInDrip } from "@/lib/drip-enrollment";
 import AddressAutocomplete, { type VerifiedAddress } from "@/components/platform/AddressAutocomplete";
 import EditAddressDialog from "@/components/platform/EditAddressDialog";
 import VisitTimer from "@/components/platform/jobs/VisitTimer";
+import { platformJobsListKey, fetchPlatformJobsList } from "@/hooks/usePlatformJobsList";
 
 type JobberJob = {
   id: string;
@@ -88,75 +90,24 @@ export default function PlatformJobs() {
   const { selectedBusinessId, businesses } = usePlatformAuth();
   const { open: openSheet, createdTick } = useCreateSheets();
   const { isOwner } = useUserRole();
-  const [jobs, setJobs] = useState<JobberJob[]>([]);
-  const [loading, setLoading] = useState(true);
+  const qc = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sourceFilter, setSourceFilter] = useState<"all" | "platform" | "jobber">("all");
   const [missingAddressOnly, setMissingAddressOnly] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobberJob | null>(null);
 
+  const jobsQuery = useQuery({
+    queryKey: platformJobsListKey(selectedBusinessId),
+    queryFn: () => fetchPlatformJobsList(selectedBusinessId),
+  });
+  const jobs: JobberJob[] = (jobsQuery.data ?? []) as JobberJob[];
+  const loading = jobsQuery.isLoading;
+
+  // Invalidate on cross-component creation/mutation broadcast.
   useEffect(() => {
-    const fetchJobs = async () => {
-      setLoading(true);
-      let q = supabase
-        .from("jobber_jobs")
-        .select("id, jobber_id, title, status, visit_status, scheduled_start, scheduled_end, client_name, client_phone, property_address, assigned_employee_names, internal_notes, job_number, total_amount, business_id")
-        .order("scheduled_start", { ascending: false, nullsFirst: false });
-      // CRITICAL: filter by active workspace to prevent GCP/PPS data bleed.
-      if (selectedBusinessId) q = q.eq("business_id", selectedBusinessId);
-      const { data: jobberData } = await q;
-      const jobberRows: JobberJob[] = (jobberData || []).map((j: any) => ({
-        ...j,
-        source: "jobber" as const,
-        missing_address: !j.property_address || !String(j.property_address).trim(),
-      }));
-
-      // Native platform jobs
-      let pq = supabase
-        .from("platform_jobs")
-        .select("id, job_number, title, status, scheduled_start, scheduled_end, internal_notes, total, business_id, customer_id, platform_customers(display_name, phone), platform_properties(address_1, city)")
-        .is("deleted_at", null)
-        .order("scheduled_start", { ascending: false, nullsFirst: false });
-      if (selectedBusinessId) pq = pq.eq("business_id", selectedBusinessId);
-      const { data: platformData } = await pq;
-      const platformRows: JobberJob[] = (platformData || []).map((j: any) => {
-        const prop = j.platform_properties;
-        const addr1 = prop?.address_1?.trim?.() ?? "";
-        const city = prop?.city?.trim?.() ?? "";
-        const hasAddr = !!(addr1 || city);
-        return {
-        id: j.id,
-        jobber_id: "",
-        title: j.title,
-        status: j.status,
-        visit_status: null,
-        scheduled_start: j.scheduled_start,
-        scheduled_end: j.scheduled_end,
-        client_name: j.platform_customers?.display_name ?? null,
-        client_phone: j.platform_customers?.phone ?? null,
-        property_address: hasAddr ? [addr1, city].filter(Boolean).join(", ") : null,
-        assigned_employee_names: null,
-        internal_notes: j.internal_notes,
-        job_number: j.job_number,
-        total_amount: j.total,
-        business_id: j.business_id,
-        source: "platform" as const,
-        missing_address: !hasAddr,
-      };
-      });
-
-      const merged = [...platformRows, ...jobberRows].sort((a, b) => {
-        const ta = a.scheduled_start ? new Date(a.scheduled_start).getTime() : 0;
-        const tb = b.scheduled_start ? new Date(b.scheduled_start).getTime() : 0;
-        return tb - ta;
-      });
-      setJobs(merged);
-      setLoading(false);
-    };
-
-    fetchJobs();
-  }, [selectedBusinessId, createdTick]);
+    qc.invalidateQueries({ queryKey: platformJobsListKey(selectedBusinessId) });
+  }, [createdTick, qc, selectedBusinessId]);
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = { all: jobs.length };
