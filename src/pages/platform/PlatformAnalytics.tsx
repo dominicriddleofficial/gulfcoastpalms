@@ -30,10 +30,106 @@ function isJobCompleted(j: UnifiedJob, now: Date = new Date()): boolean {
   return new Date(j.scheduled_start) < now;
 }
 
-function extractCity(addr: string | null): string {
-  if (!addr) return "Unknown";
-  const parts = addr.split(",").map(s => s.trim());
-  return parts.length >= 2 ? parts[parts.length - 3] || parts[1] || "Unknown" : "Unknown";
+// USPS state name → 2-letter abbreviation. Used to merge "Florida" (manual
+// entry) with "FL" (Jobber sync) into one service-area bucket.
+const STATE_NAME_TO_CODE: Record<string, string> = {
+  alabama: "AL", alaska: "AK", arizona: "AZ", arkansas: "AR", california: "CA",
+  colorado: "CO", connecticut: "CT", delaware: "DE", "district of columbia": "DC",
+  florida: "FL", georgia: "GA", hawaii: "HI", idaho: "ID", illinois: "IL",
+  indiana: "IN", iowa: "IA", kansas: "KS", kentucky: "KY", louisiana: "LA",
+  maine: "ME", maryland: "MD", massachusetts: "MA", michigan: "MI", minnesota: "MN",
+  mississippi: "MS", missouri: "MO", montana: "MT", nebraska: "NE", nevada: "NV",
+  "new hampshire": "NH", "new jersey": "NJ", "new mexico": "NM", "new york": "NY",
+  "north carolina": "NC", "north dakota": "ND", ohio: "OH", oklahoma: "OK",
+  oregon: "OR", pennsylvania: "PA", "rhode island": "RI", "south carolina": "SC",
+  "south dakota": "SD", tennessee: "TN", texas: "TX", utah: "UT", vermont: "VT",
+  virginia: "VA", washington: "WA", "west virginia": "WV", wisconsin: "WI",
+  wyoming: "WY", "puerto rico": "PR",
+};
+
+function titleCaseCity(s: string): string {
+  return s.toLowerCase().replace(/\b[a-z]/g, c => c.toUpperCase());
+}
+
+function normalizeCityName(raw: string): string {
+  let c = raw.trim().replace(/\s+/g, " ");
+  if (!c) return "";
+  c = titleCaseCity(c);
+  // Standardize common abbreviations at the start of a city name so e.g.
+  // "Ft Walton Beach" merges with "Fort Walton Beach".
+  c = c.replace(/^Ft\.?\s+/i, "Fort ")
+       .replace(/^St\.?\s+/i, "Saint ")
+       .replace(/^Mt\.?\s+/i, "Mount ");
+  return c;
+}
+
+// Parse a free-form address string into { city, state, zip }. Pops trailing
+// zip + state segments off the comma-separated parts, then takes whatever
+// remains in the last part as the city. Works for both the platform format
+// ("street, City STATE 12345") and the Jobber format ("street, City, State, 12345").
+function parseServiceArea(addr: string | null): { city: string; state: string; zip: string } {
+  if (!addr) return { city: "", state: "", zip: "" };
+  const parts = addr.split(",").map(s => s.trim()).filter(Boolean);
+  let zip = "";
+  let state = "";
+
+  while (parts.length > 0) {
+    const last = parts[parts.length - 1];
+    // Pure zip segment, e.g. "32563" or "32563-1234"
+    const pureZip = last.match(/^(\d{5})(?:-\d{4})?$/);
+    if (pureZip && !zip) {
+      zip = pureZip[1];
+      parts.pop();
+      continue;
+    }
+    // Pure state segment, e.g. "FL" or "Florida"
+    const lk = last.toLowerCase().replace(/\./g, "");
+    if (!state && (/^[a-z]{2}$/.test(lk) || STATE_NAME_TO_CODE[lk])) {
+      state = lk.length === 2 ? lk.toUpperCase() : STATE_NAME_TO_CODE[lk];
+      parts.pop();
+      continue;
+    }
+    // Mixed segment: "City FL 32563" or "City Florida 32563" or "FL 32563"
+    let str = last;
+    if (!zip) {
+      const m = str.match(/\b(\d{5})(?:-\d{4})?\b/);
+      if (m && m.index !== undefined) {
+        zip = m[1];
+        str = (str.slice(0, m.index) + str.slice(m.index + m[0].length)).trim();
+      }
+    } else {
+      str = str.replace(/\b\d{5}(?:-\d{4})?\b/, "").trim();
+    }
+    if (!state) {
+      const tokens = str.split(/\s+/).filter(Boolean);
+      for (let take = Math.min(2, tokens.length); take >= 1; take--) {
+        const cand = tokens.slice(-take).join(" ").toLowerCase().replace(/\./g, "");
+        if (/^[a-z]{2}$/.test(cand) || STATE_NAME_TO_CODE[cand]) {
+          state = cand.length === 2 ? cand.toUpperCase() : STATE_NAME_TO_CODE[cand];
+          tokens.splice(tokens.length - take, take);
+          str = tokens.join(" ");
+          break;
+        }
+      }
+    }
+    if (str.trim()) {
+      parts[parts.length - 1] = str.trim();
+    } else {
+      parts.pop();
+    }
+    break;
+  }
+
+  const cityRaw = parts.length > 0 ? parts[parts.length - 1] : "";
+  return { city: normalizeCityName(cityRaw), state, zip };
+}
+
+function serviceAreaLabel(p: { city: string; state: string; zip: string }): { key: string; label: string } {
+  if (!p.city && !p.state && !p.zip) return { key: "__unknown__", label: "Unknown" };
+  const key = `${p.city.toLowerCase()}|${p.state}|${p.zip}`;
+  const tail = [p.state, p.zip].filter(Boolean).join(" ");
+  const label = [p.city || "Unknown", tail].filter(Boolean).join(", ");
+  return { key, label };
 }
 
 type UnifiedJob = {
@@ -288,15 +384,15 @@ function countByMonth(jobs: UnifiedJob[]): number[] {
 }
 
 function groupByCity(jobs: UnifiedJob[]): Array<{ city: string; count: number; revenue: number }> {
-  const map: Record<string, { count: number; revenue: number }> = {};
+  const map: Record<string, { label: string; count: number; revenue: number }> = {};
   jobs.forEach(j => {
-    const city = extractCity(j.property_address);
-    if (!map[city]) map[city] = { count: 0, revenue: 0 };
-    map[city].count++;
-    map[city].revenue += j.total_amount;
+    const { key, label } = serviceAreaLabel(parseServiceArea(j.property_address));
+    if (!map[key]) map[key] = { label, count: 0, revenue: 0 };
+    map[key].count++;
+    map[key].revenue += j.total_amount;
   });
-  return Object.entries(map)
-    .map(([city, v]) => ({ city, ...v }))
+  return Object.values(map)
+    .map(v => ({ city: v.label, count: v.count, revenue: v.revenue }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 8);
 }
