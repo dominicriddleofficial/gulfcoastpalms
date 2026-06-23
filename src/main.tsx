@@ -49,6 +49,11 @@ if ('serviceWorker' in navigator) {
       // old-build caches are purged automatically on activate.
       const swUrl = `/sw.js?v=${encodeURIComponent(__BUILD_ID__)}`;
 
+      // Snapshot whether a SW was already controlling this page BEFORE we
+      // register. If there was none, the first activation is a fresh install
+      // (not an update) and must not trigger a reload.
+      const hadControllerAtLoad = !!navigator.serviceWorker.controller;
+
       navigator.serviceWorker
         .register(swUrl, { scope: '/platform' })
         .then((registration) => {
@@ -82,7 +87,7 @@ if ('serviceWorker' in navigator) {
           // new SW calls clients.claim(), `controllerchange` fires here; we
           // reload once so the user immediately gets fresh assets.
           navigator.serviceWorker.addEventListener('controllerchange', () => {
-            reloadOnce();
+            if (hadControllerAtLoad) reloadOnce();
           });
         })
         .catch((err) => {
