@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export type QuoteStatus = "draft" | "sent" | "viewed" | "approved" | "changes_requested" | "revised" | "accepted" | "declined" | "won" | "lost" | "expired" | "archived";
@@ -64,45 +65,57 @@ export interface QuoteLineItem {
   sort_order: number;
 }
 
+export const platformQuotesKey = (businessId: string | null, statusFilter: string) =>
+  ["platform-quotes", businessId, statusFilter] as const;
+
+export async function fetchPlatformQuotes(
+  businessId: string | null,
+  statusFilter: string,
+): Promise<PlatformQuote[]> {
+  let query = supabase
+    .from("platform_quotes")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(200);
+
+  if (businessId) query = query.eq("business_id", businessId);
+  if (statusFilter !== "all") query = query.eq("status", statusFilter);
+
+  const { data } = await query;
+  if (!data) return [];
+
+  // Enrich with customer names
+  const customerIds = [...new Set((data as any[]).map(q => q.customer_id).filter(Boolean))];
+  let customerMap = new Map<string, string>();
+  if (customerIds.length > 0) {
+    const { data: custs } = await supabase
+      .from("platform_customers")
+      .select("id, display_name")
+      .in("id", customerIds);
+    customerMap = new Map((custs || []).map(c => [c.id, c.display_name]));
+  }
+
+  return (data as any[]).map(q => ({
+    ...q,
+    customer_name: customerMap.get(q.customer_id) || "Unknown",
+  })) as PlatformQuote[];
+}
+
 export function usePlatformQuotes(businessId: string | null) {
-  const [quotes, setQuotes] = useState<PlatformQuote[]>([]);
-  const [loading, setLoading] = useState(true);
+  const qc = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const fetchQuotes = useCallback(async () => {
-    setLoading(true);
-    let query = supabase
-      .from("platform_quotes")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(200);
+  const query = useQuery({
+    queryKey: platformQuotesKey(businessId, statusFilter),
+    queryFn: () => fetchPlatformQuotes(businessId, statusFilter),
+  });
 
-    if (businessId) query = query.eq("business_id", businessId);
-    if (statusFilter !== "all") query = query.eq("status", statusFilter);
+  const quotes = query.data ?? [];
+  const loading = query.isLoading;
 
-    const { data } = await query;
-    if (data) {
-      // Enrich with customer names
-      const customerIds = [...new Set((data as any[]).map(q => q.customer_id).filter(Boolean))];
-      let customerMap = new Map<string, string>();
-      if (customerIds.length > 0) {
-        const { data: custs } = await supabase
-          .from("platform_customers")
-          .select("id, display_name")
-          .in("id", customerIds);
-        customerMap = new Map((custs || []).map(c => [c.id, c.display_name]));
-      }
-
-      setQuotes((data as any[]).map(q => ({
-        ...q,
-        customer_name: customerMap.get(q.customer_id) || "Unknown",
-      })));
-    }
-    setLoading(false);
-  }, [businessId, statusFilter]);
-
-  useEffect(() => { fetchQuotes(); }, [fetchQuotes]);
+  const refetch = () =>
+    qc.invalidateQueries({ queryKey: ["platform-quotes", businessId] });
 
   const filtered = searchQuery
     ? quotes.filter(q =>
@@ -122,7 +135,7 @@ export function usePlatformQuotes(businessId: string | null) {
     statusFilter, setStatusFilter,
     searchQuery, setSearchQuery,
     statusCounts,
-    refetch: fetchQuotes,
+    refetch,
   };
 }
 
