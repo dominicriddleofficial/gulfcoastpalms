@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -11,6 +12,11 @@ import NotificationPanel from "./NotificationPanel";
 import InstallPrompt from "./InstallPrompt";
 import { Button } from "@/components/ui/button";
 import { prefetchRoute, prefetchAllPlatformRoutes } from "@/lib/route-prefetch";
+import { platformCustomersKey, fetchPlatformCustomersList } from "@/hooks/usePlatformCustomersList";
+import { platformInvoicesKey, fetchPlatformInvoices } from "@/hooks/usePlatformInvoices";
+import { platformJobsListKey, fetchPlatformJobsList } from "@/hooks/usePlatformJobsList";
+import { platformQuotesKey, fetchPlatformQuotes } from "@/hooks/usePlatformQuotes";
+import { dashboardScheduledJobsKey, fetchDashboardScheduledJobs } from "@/hooks/useDashboardScheduledJobs";
 import {
   LayoutDashboard, Users, FileText, Briefcase, CalendarDays, Receipt,
   CreditCard, MessageSquare, ClipboardList, Settings, LogOut, Menu, X,
@@ -202,6 +208,7 @@ export default function PlatformLayout({ children }: Props) {
   const { isOwner: roleIsOwner, role } = useUserRole();
   useSessionTimeout();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const autoSyncTriggered = useRef(false);
@@ -218,6 +225,64 @@ export default function PlatformLayout({ children }: Props) {
     if (auth.loading) return;
     prefetchAllPlatformRoutes();
   }, [auth.loading]);
+
+  // First-mount data prefetch (after auth + business selected) — warms the
+  // three highest-value lists in parallel so the next tab visit is instant.
+  const dataPrefetchTriggered = useRef<string | null>(null);
+  useEffect(() => {
+    if (auth.loading) return;
+    const bizId = auth.selectedBusinessId;
+    if (!bizId) return;
+    if (dataPrefetchTriggered.current === bizId) return;
+    dataPrefetchTriggered.current = bizId;
+    // Fire-and-forget; failures are silent so the shell never blocks.
+    void Promise.all([
+      queryClient.prefetchQuery({
+        queryKey: dashboardScheduledJobsKey(bizId),
+        queryFn: () => fetchDashboardScheduledJobs({ businessId: bizId }),
+      }),
+      queryClient.prefetchQuery({
+        queryKey: platformInvoicesKey(bizId),
+        queryFn: () => fetchPlatformInvoices(bizId),
+      }),
+      queryClient.prefetchQuery({
+        queryKey: platformCustomersKey(bizId),
+        queryFn: () => fetchPlatformCustomersList(bizId),
+      }),
+    ]);
+  }, [auth.loading, auth.selectedBusinessId, queryClient]);
+
+  // Hover/focus prefetch for the heavy tabs so a hover-then-click is warm.
+  const prefetchNavData = (path: string) => {
+    const bizId = auth.selectedBusinessId;
+    if (!bizId) return;
+    switch (path) {
+      case "/platform/customers":
+        void queryClient.prefetchQuery({
+          queryKey: platformCustomersKey(bizId),
+          queryFn: () => fetchPlatformCustomersList(bizId),
+        });
+        break;
+      case "/platform/jobs":
+        void queryClient.prefetchQuery({
+          queryKey: platformJobsListKey(bizId),
+          queryFn: () => fetchPlatformJobsList(bizId),
+        });
+        break;
+      case "/platform/invoices":
+        void queryClient.prefetchQuery({
+          queryKey: platformInvoicesKey(bizId),
+          queryFn: () => fetchPlatformInvoices(bizId),
+        });
+        break;
+      case "/platform/quotes":
+        void queryClient.prefetchQuery({
+          queryKey: platformQuotesKey(bizId, "all"),
+          queryFn: () => fetchPlatformQuotes(bizId, "all"),
+        });
+        break;
+    }
+  };
 
   // Force-password-change gate
   useEffect(() => {
@@ -376,7 +441,8 @@ export default function PlatformLayout({ children }: Props) {
                   key={item.path}
                   to={item.path}
                   onClick={() => setSidebarOpen(false)}
-                  onMouseEnter={() => prefetchRoute(item.path)}
+                  onMouseEnter={() => { prefetchRoute(item.path); prefetchNavData(item.path); }}
+                  onFocus={() => { prefetchRoute(item.path); prefetchNavData(item.path); }}
                   className={className}
                 >
                   {inner}
