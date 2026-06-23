@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
@@ -20,6 +21,7 @@ import RecurringContractForm from "@/components/platform/customers/RecurringCont
 import { toast } from "@/hooks/use-toast";
 import EditAddressDialog from "@/components/platform/EditAddressDialog";
 import { useUserRole } from "@/hooks/useUserRole";
+import { platformCustomersKey, fetchPlatformCustomersList } from "@/hooks/usePlatformCustomersList";
 
 type UnifiedCustomer = {
   id: string;
