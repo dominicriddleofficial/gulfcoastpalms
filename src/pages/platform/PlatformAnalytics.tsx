@@ -57,6 +57,7 @@ type PlatformJobRow = {
   total: number | string | null;
   title: string | null;
   source_record_id: string | null;
+  source_system: string | null;
   deleted_at: string | null;
   customer: { display_name: string | null } | null;
   property: { address_1: string | null; city: string | null; state: string | null; zip: string | null } | null;
@@ -76,7 +77,7 @@ async function fetchPlatformJobsUnified(
   const { data } = await supabase
     .from("platform_jobs")
     .select(
-      `id, status, scheduled_start, total, title, source_record_id, deleted_at,
+      `id, status, scheduled_start, total, title, source_record_id, source_system, deleted_at,
        customer:platform_customers(display_name),
        property:platform_properties(address_1, city, state, zip)`,
     )
@@ -87,17 +88,39 @@ async function fetchPlatformJobsUnified(
 
   const importedJobberIds = new Set<string>();
   const rows = (data || []) as unknown as PlatformJobRow[];
+
+  // Fallback: when a platform_jobs row has no linked property but was synced
+  // from Jobber, recover the address string from the source jobber_jobs row.
+  const missingJobberIds: string[] = [];
+  for (const r of rows) {
+    if (!r.property && r.source_system === "jobber" && r.source_record_id) {
+      missingJobberIds.push(r.source_record_id);
+    }
+  }
+  const jobberAddrMap = new Map<string, string | null>();
+  if (missingJobberIds.length > 0) {
+    const { data: jobberRows } = await supabase
+      .from("jobber_jobs")
+      .select("id, property_address")
+      .in("id", missingJobberIds);
+    for (const jr of (jobberRows || []) as Array<{ id: string; property_address: string | null }>) {
+      jobberAddrMap.set(jr.id, jr.property_address);
+    }
+  }
+
   const jobs: UnifiedJob[] = [];
   for (const r of rows) {
     const s = (r.status || "").toLowerCase();
     if (EXCLUDED_JOB_STATUSES.has(s)) continue;
     if (r.source_record_id) importedJobberIds.add(r.source_record_id);
+    const fallbackAddr =
+      r.source_record_id ? jobberAddrMap.get(r.source_record_id) ?? null : null;
     jobs.push({
       id: r.id,
       scheduled_start: r.scheduled_start,
       total_amount: Number(r.total) || 0,
       client_name: r.customer?.display_name ?? null,
-      property_address: platformAddressString(r.property),
+      property_address: platformAddressString(r.property) ?? fallbackAddr,
       status: r.status,
       title: r.title,
     });
