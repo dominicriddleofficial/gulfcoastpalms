@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -114,8 +114,10 @@ export function usePlatformQuotes(businessId: string | null) {
   const quotes = query.data ?? [];
   const loading = query.isLoading;
 
-  const refetch = () =>
-    qc.invalidateQueries({ queryKey: ["platform-quotes", businessId] });
+  const refetch = useCallback(
+    () => qc.invalidateQueries({ queryKey: ["platform-quotes", businessId] }),
+    [qc, businessId],
+  );
 
   const filtered = searchQuery
     ? quotes.filter(q =>
