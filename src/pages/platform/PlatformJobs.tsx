@@ -56,6 +56,7 @@ type JobberJob = {
   total_amount: number | null;
   business_id: string | null;
   source?: "jobber" | "platform";
+  missing_address?: boolean;
 };
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
@@ -92,6 +93,7 @@ export default function PlatformJobs() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sourceFilter, setSourceFilter] = useState<"all" | "platform" | "jobber">("all");
+  const [missingAddressOnly, setMissingAddressOnly] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobberJob | null>(null);
 
   useEffect(() => {
@@ -104,7 +106,11 @@ export default function PlatformJobs() {
       // CRITICAL: filter by active workspace to prevent GCP/PPS data bleed.
       if (selectedBusinessId) q = q.eq("business_id", selectedBusinessId);
       const { data: jobberData } = await q;
-      const jobberRows: JobberJob[] = (jobberData || []).map((j: any) => ({ ...j, source: "jobber" as const }));
+      const jobberRows: JobberJob[] = (jobberData || []).map((j: any) => ({
+        ...j,
+        source: "jobber" as const,
+        missing_address: !j.property_address || !String(j.property_address).trim(),
+      }));
 
       // Native platform jobs
       let pq = supabase
@@ -114,7 +120,12 @@ export default function PlatformJobs() {
         .order("scheduled_start", { ascending: false, nullsFirst: false });
       if (selectedBusinessId) pq = pq.eq("business_id", selectedBusinessId);
       const { data: platformData } = await pq;
-      const platformRows: JobberJob[] = (platformData || []).map((j: any) => ({
+      const platformRows: JobberJob[] = (platformData || []).map((j: any) => {
+        const prop = j.platform_properties;
+        const addr1 = prop?.address_1?.trim?.() ?? "";
+        const city = prop?.city?.trim?.() ?? "";
+        const hasAddr = !!(addr1 || city);
+        return {
         id: j.id,
         jobber_id: "",
         title: j.title,
@@ -124,14 +135,16 @@ export default function PlatformJobs() {
         scheduled_end: j.scheduled_end,
         client_name: j.platform_customers?.display_name ?? null,
         client_phone: j.platform_customers?.phone ?? null,
-        property_address: j.platform_properties ? `${j.platform_properties.address_1}, ${j.platform_properties.city}` : null,
+        property_address: hasAddr ? [addr1, city].filter(Boolean).join(", ") : null,
         assigned_employee_names: null,
         internal_notes: j.internal_notes,
         job_number: j.job_number,
         total_amount: j.total,
         business_id: j.business_id,
         source: "platform" as const,
-      }));
+        missing_address: !hasAddr,
+      };
+      });
 
       const merged = [...platformRows, ...jobberRows].sort((a, b) => {
         const ta = a.scheduled_start ? new Date(a.scheduled_start).getTime() : 0;
@@ -164,16 +177,18 @@ export default function PlatformJobs() {
     return jobs.filter((job) => {
       const matchesStatus = statusFilter === "all" || getStatusKey(job) === statusFilter;
       const matchesSource = sourceFilter === "all" || job.source === sourceFilter;
+      const matchesMissing = !missingAddressOnly || job.missing_address;
       const search = searchQuery.trim().toLowerCase();
       const matchesSearch = !search || [job.job_number, job.title, job.client_name, job.property_address]
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(search));
-      return matchesStatus && matchesSource && matchesSearch;
+      return matchesStatus && matchesSource && matchesSearch && matchesMissing;
     });
-  }, [jobs, searchQuery, statusFilter, sourceFilter]);
+  }, [jobs, searchQuery, statusFilter, sourceFilter, missingAddressOnly]);
 
   const jobberCount = useMemo(() => jobs.filter(j => j.source === "jobber").length, [jobs]);
   const platformCount = useMemo(() => jobs.filter(j => j.source === "platform").length, [jobs]);
+  const missingAddressCount = useMemo(() => jobs.filter(j => j.missing_address).length, [jobs]);
 
   const selectedBiz = businesses.find((business) => business.id === selectedBusinessId);
 
@@ -281,6 +296,14 @@ export default function PlatformJobs() {
                       )}>
                         {job.source === "platform" ? "Native" : "Jobber"}
                       </span>
+                      {job.missing_address && (
+                        <span
+                          title="This job has no service address — it won't appear in service-area analytics."
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-body font-medium bg-amber-500/10 text-amber-500 border border-amber-500/30"
+                        >
+                          <MapPin className="w-2.5 h-2.5" /> No address
+                        </span>
+                      )}
                     </div>
                     <p className="font-body text-sm font-medium text-foreground truncate">
                       {job.title || job.client_name || "Untitled Job"}
