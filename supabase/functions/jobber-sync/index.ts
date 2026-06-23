@@ -1079,6 +1079,14 @@ Deno.serve(async (req) => {
 
     // Fire notification for sync result
     if (context.businessId) {
+      // Self-healing: propagate the freshly-synced jobber_* rows into the
+      // platform_* tables (links customers + properties to jobs). Idempotent.
+      try {
+        await supabase.rpc("backfill_jobber_to_platform");
+      } catch (backfillErr) {
+        console.error("backfill_jobber_to_platform failed:", backfillErr);
+      }
+
       try {
         if (status === "success" || status === "partial") {
           await supabase.rpc("create_business_notification", {
