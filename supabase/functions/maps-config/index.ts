@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
     .gte("window_start", windowStart)
     .maybeSingle();
 
-  if (rlData && rlData.request_count >= 10) {
+  if (rlData && rlData.request_count >= 120) {
     return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), {
       status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
