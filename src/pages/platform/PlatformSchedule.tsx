@@ -176,14 +176,19 @@ export default function PlatformSchedule() {
   );
 
   // Google Maps key for route view
-  const { data: mapsKey } = useQuery({
+  const { data: mapsKey, error: mapsKeyError } = useQuery({
     queryKey: ["google-maps-key"],
     queryFn: async () => {
-      const { data } = await supabase.functions.invoke("maps-config");
-      return data?.apiKey || null;
+      const { data, error } = await supabase.functions.invoke("maps-config");
+      if (error) throw error;
+      if (!data?.apiKey) {
+        throw new Error(data?.error || "Maps API key unavailable");
+      }
+      return data.apiKey as string;
     },
     // Prefetch immediately so switching to Map/Route is instant.
     staleTime: Infinity,
+    retry: 2,
   });
 
   // Jobber tab — scoped to active business, only scheduled jobs.
@@ -525,6 +530,7 @@ export default function PlatformSchedule() {
           <MapTab
             jobs={scheduledJobs as unknown as MapTabJob[]}
             mapsKey={mapsKey ?? null}
+            keyError={mapsKeyError instanceof Error ? mapsKeyError.message : mapsKeyError ? String(mapsKeyError) : null}
             businessId={selectedBusinessId}
             date={selectedDate}
             focusedSessionId={focusedCrewSessionId}
