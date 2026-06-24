@@ -1,7 +1,8 @@
 import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { GoogleMap, MarkerF, PolylineF, InfoWindowF, useJsApiLoader } from "@react-google-maps/api";
 import { format, formatDistanceToNowStrict } from "date-fns";
-import { MapPin, Map as MapIcon, Truck, Clock, Navigation, Phone, FileText, X, AlertTriangle, PlayCircle } from "lucide-react";
+import { MapPin, Map as MapIcon, Truck, Clock, Navigation, Phone, FileText, X, AlertTriangle, PlayCircle, RotateCw } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { lightMapStyle, buildNumberedMarkerIcon, NUMBERED_MARKER_LABEL_STYLE } from "@/lib/map-styles";
 import { useGeocodedAddresses, type GeocodedAddress } from "@/hooks/useGeocodedJobs";
 import { useCrewToday, type CrewMember } from "@/hooks/useCrewToday";
@@ -60,6 +61,7 @@ function metersBetween(a: { lat: number; lng: number }, b: { lat: number; lng: n
 export function MapTab({
   jobs,
   mapsKey,
+  keyError,
   businessId,
   date,
   focusedSessionId,
@@ -68,6 +70,7 @@ export function MapTab({
 }: {
   jobs: MapTabJob[];
   mapsKey: string | null;
+  keyError?: string | null;
   businessId: string | null;
   date: Date;
   focusedSessionId: string | null;
@@ -155,11 +158,31 @@ export function MapTab({
   }, [members, mappedJobs]);
 
   // ---------- Empty / no-key fallback ----------
+  // Hooks must be unconditional — declare queryClient before any early return.
+  const queryClient = useQueryClient();
   if (!mapsKey) {
+    const handleRetry = () => {
+      queryClient.invalidateQueries({ queryKey: ["google-maps-key"] });
+    };
     return (
-      <div className="bg-card border border-border rounded-xl p-6 text-center">
-        <MapIcon className="w-8 h-8 mx-auto text-muted-foreground/40 mb-2" />
-        <p className="font-body text-sm text-muted-foreground">Map unavailable</p>
+      <div className="bg-card border border-border rounded-xl p-6 text-center space-y-3">
+        <MapIcon className="w-8 h-8 mx-auto text-muted-foreground/40" />
+        {keyError ? (
+          <>
+            <p className="font-body text-sm text-muted-foreground">
+              Map couldn't load: <span className="text-foreground/80">{keyError}</span>
+            </p>
+            <button
+              type="button"
+              onClick={handleRetry}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/15 text-primary text-xs font-body font-bold hover:bg-primary/25 transition-colors"
+            >
+              <RotateCw className="w-3.5 h-3.5" /> Retry
+            </button>
+          </>
+        ) : (
+          <p className="font-body text-sm text-muted-foreground">Loading map…</p>
+        )}
       </div>
     );
   }
