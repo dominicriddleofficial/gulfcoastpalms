@@ -276,7 +276,7 @@ export default function PlatformBottomNav({ businessId, onSignOut, workspaceShor
             </button>
           </div>
           <div className="w-full">
-            <UniversalSearch businessId={businessId} />
+            <UniversalSearch businessId={businessId} autoOpen embedded />
           </div>
         </SheetContent>
       </Sheet>
