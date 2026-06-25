@@ -152,9 +152,9 @@ export default function UniversalSearch({ businessId }: Props) {
           .eq("business_id", businessId)
           .or(`title.ilike.${like},job_number.ilike.${like},internal_notes.ilike.${like}`).limit(6),
         // Platform quotes
-        supabase.from("platform_quotes").select("id, quote_number, title, total, status")
+        supabase.from("platform_quotes").select("id, quote_number, total, status, internal_notes")
           .eq("business_id", businessId)
-          .or(`quote_number.ilike.${like},title.ilike.${like}`).limit(4),
+          .or(`quote_number.ilike.${like},internal_notes.ilike.${like}`).limit(4),
         // Platform leads
         supabase.from("platform_leads").select("id, inquiry_name, inquiry_phone, inquiry_email, requested_service, lead_status")
           .eq("business_id", businessId)
@@ -235,8 +235,8 @@ export default function UniversalSearch({ businessId }: Props) {
       platformQuotes.data?.forEach(q2 => allResults.push({
         type: "quote",
         id: q2.id,
-        title: q2.quote_number ?? q2.title ?? "Quote",
-        subtitle: [q2.title, q2.status].filter(Boolean).join(" · "),
+        title: q2.quote_number ?? "Quote",
+        subtitle: q2.status ?? "",
         path: "/platform/quotes",
         meta: { amount: isOwner && q2.total ? Number(q2.total) : null },
       }));

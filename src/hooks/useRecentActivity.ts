@@ -54,7 +54,7 @@ export function useRecentActivity({ businessId, isOwner }: Params) {
         ? supabase
             .from("platform_quotes")
             .select(
-              "id, quote_number, title, total, status, created_at, created_by_user_id"
+              "id, quote_number, total, status, created_at, created_by_user_id"
             )
             .eq("business_id", businessId)
             .order("created_at", { ascending: false })
@@ -117,7 +117,6 @@ export function useRecentActivity({ businessId, isOwner }: Params) {
         for (const row of (quotesRes.data ?? []) as Array<{
           id: string;
           quote_number: string | null;
-          title: string | null;
           total: number | string | null;
           status: string | null;
           created_at: string;
@@ -126,7 +125,7 @@ export function useRecentActivity({ businessId, isOwner }: Params) {
           items.push({
             kind: "quote",
             id: row.id,
-            title: row.title ?? row.quote_number ?? "Quote",
+            title: row.quote_number ?? "Quote",
             number: row.quote_number,
             status: row.status,
             total: row.total != null ? Number(row.total) : null,
