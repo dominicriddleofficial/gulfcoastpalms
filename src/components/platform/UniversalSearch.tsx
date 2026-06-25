@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, X, Users, FileText, Briefcase, Receipt, MapPin, Phone } from "lucide-react";
+import { Search, X, Users, FileText, Briefcase, Receipt, MapPin, Phone, Target, Activity } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { formatDistanceToNow } from "date-fns";
+import { usePlatformAuth } from "@/hooks/usePlatformAuth";
+import { useRecentActivity, type RecentActivityItem } from "@/hooks/useRecentActivity";
 
 const JOB_STATUS_MAP: Record<string, { bg: string; text: string; label: string }> = {
   upcoming: { bg: "rgba(59,130,246,0.15)", text: "#60a5fa", label: "Upcoming" },
@@ -34,7 +37,7 @@ interface SearchResult {
 
 const TYPE_META: Record<string, { label: string; icon: typeof Users }> = {
   customer: { label: "Customers", icon: Users },
-  lead: { label: "Leads", icon: Phone },
+  lead: { label: "Leads", icon: Target },
   quote: { label: "Quotes", icon: FileText },
   job: { label: "Jobs", icon: Briefcase },
   invoice: { label: "Invoices", icon: Receipt },
@@ -70,6 +73,11 @@ export default function UniversalSearch({ businessId }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
   const navigate = useNavigate();
+  const { isOwner } = usePlatformAuth();
+  const { data: recentActivity = [], isLoading: activityLoading } = useRecentActivity({
+    businessId,
+    isOwner,
+  });
 
   // Keyboard shortcut: Cmd+K / Ctrl+K
   useEffect(() => {
@@ -109,7 +117,18 @@ export default function UniversalSearch({ businessId }: Props) {
 
     try {
       // Parallel searches across jobber (synced) and platform tables
-      const [jobberClients, jobberJobs, jobberProps, platformCustomers, invoices, crew] = await Promise.all([
+      const [
+        jobberClients,
+        jobberJobs,
+        jobberProps,
+        platformCustomers,
+        invoices,
+        crew,
+        platformJobs,
+        platformQuotes,
+        platformLeads,
+        platformProperties,
+      ] = await Promise.all([
         // Jobber clients — display_name, phone, email
         supabase.from("jobber_clients").select("id, display_name, phone, email, business_id")
           .eq("business_id", businessId).or(`display_name.ilike.${like},phone.ilike.${like},email.ilike.${like}`).limit(6),
@@ -128,6 +147,22 @@ export default function UniversalSearch({ businessId }: Props) {
         // Crew members
         supabase.from("platform_crew_members").select("id, display_name, phone")
           .eq("business_id", businessId).or(`display_name.ilike.${like},phone.ilike.${like}`).limit(5),
+        // Platform jobs (native, separate from jobber sync)
+        supabase.from("platform_jobs").select("id, title, job_number, status, internal_notes, total")
+          .eq("business_id", businessId)
+          .or(`title.ilike.${like},job_number.ilike.${like},internal_notes.ilike.${like}`).limit(6),
+        // Platform quotes
+        supabase.from("platform_quotes").select("id, quote_number, total, status, internal_notes")
+          .eq("business_id", businessId)
+          .or(`quote_number.ilike.${like},internal_notes.ilike.${like}`).limit(4),
+        // Platform leads
+        supabase.from("platform_leads").select("id, inquiry_name, inquiry_phone, inquiry_email, requested_service, lead_status")
+          .eq("business_id", businessId)
+          .or(`inquiry_name.ilike.${like},inquiry_phone.ilike.${like},inquiry_email.ilike.${like}`).limit(4),
+        // Platform properties
+        supabase.from("platform_properties").select("id, address_1, city, zip")
+          .eq("business_id", businessId)
+          .or(`address_1.ilike.${like},city.ilike.${like},zip.ilike.${like}`).limit(4),
       ]);
 
       // Merge jobber + platform customers, dedup by display_name
@@ -180,13 +215,55 @@ export default function UniversalSearch({ businessId }: Props) {
         path: "/platform/settings",
       }));
 
+      platformJobs.data?.forEach(j => {
+        const statusStyle = getJobStatusStyle(j.status ?? "scheduled");
+        allResults.push({
+          type: "job",
+          id: j.id,
+          title: j.title ?? j.job_number ?? "Job",
+          subtitle: j.job_number ?? "",
+          path: "/platform/jobs",
+          meta: {
+            statusLabel: statusStyle.label,
+            statusBg: statusStyle.bg,
+            statusText: statusStyle.text,
+            amount: isOwner && j.total ? Number(j.total) : null,
+          },
+        });
+      });
+
+      platformQuotes.data?.forEach(q2 => allResults.push({
+        type: "quote",
+        id: q2.id,
+        title: q2.quote_number ?? "Quote",
+        subtitle: q2.status ?? "",
+        path: "/platform/quotes",
+        meta: { amount: isOwner && q2.total ? Number(q2.total) : null },
+      }));
+
+      platformLeads.data?.forEach(l => allResults.push({
+        type: "lead",
+        id: l.id,
+        title: l.inquiry_name ?? "Lead",
+        subtitle: [l.inquiry_phone, l.requested_service, l.lead_status].filter(Boolean).join(" · "),
+        path: "/platform/leads",
+      }));
+
+      platformProperties.data?.forEach(p => allResults.push({
+        type: "property",
+        id: p.id,
+        title: [p.address_1, p.city].filter(Boolean).join(", ") || "Property",
+        subtitle: [p.city, p.zip].filter(Boolean).join(" · "),
+        path: "/platform/customers",
+      }));
+
     } catch {
       // Silently fail
     }
 
     setResults(allResults);
     setLoading(false);
-  }, [businessId]);
+  }, [businessId, isOwner]);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -199,6 +276,27 @@ export default function UniversalSearch({ businessId }: Props) {
     setOpen(false);
     setQuery("");
     navigate(result.path);
+  };
+
+  const handleActivityClick = (item: RecentActivityItem) => {
+    setOpen(false);
+    setQuery("");
+    const path =
+      item.kind === "job"
+        ? "/platform/jobs"
+        : item.kind === "invoice"
+          ? "/platform/invoices"
+          : "/platform/quotes";
+    navigate(path);
+  };
+
+  const activityIcon = (kind: RecentActivityItem["kind"]) =>
+    kind === "job" ? Briefcase : kind === "invoice" ? Receipt : FileText;
+
+  const activityActor = (item: RecentActivityItem) => {
+    if (!item.createdByUserId && item.sourceSystem === "jobber") return "Synced from Jobber";
+    if (item.createdByName) return `Added by ${item.createdByName}`;
+    return "Added";
   };
 
   const handleRecentClick = (recent: string) => {
@@ -254,11 +352,60 @@ export default function UniversalSearch({ businessId }: Props) {
                 <button
                   key={r}
                   onClick={() => handleRecentClick(r)}
-                  className="w-full text-left px-3 py-2 text-sm font-body text-foreground hover:bg-secondary/50 rounded-lg transition-colors"
+                  className="w-full text-left px-3 py-2 min-h-[44px] text-sm font-body text-foreground hover:bg-secondary/50 rounded-lg transition-colors"
                 >
                   {r}
                 </button>
               ))}
+            </div>
+          )}
+
+          {!query && (activityLoading || recentActivity.length > 0) && (
+            <div className="p-2 border-b border-border/40">
+              <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50 flex items-center gap-1.5">
+                <Activity className="w-3 h-3" />
+                Recent Activity
+              </p>
+              {activityLoading && recentActivity.length === 0 && (
+                <div className="px-3 py-2 text-xs text-muted-foreground font-body">Loading…</div>
+              )}
+              {recentActivity.map((item) => {
+                const Icon = activityIcon(item.kind);
+                const numberPart = item.number ? `${item.kind === "job" ? "Job" : item.kind === "invoice" ? "Invoice" : "Quote"} ${item.number}` : item.title;
+                const titleLine = item.number && item.title && item.title !== item.number
+                  ? `${numberPart} — ${item.title}`
+                  : numberPart;
+                const when = (() => {
+                  try {
+                    return formatDistanceToNow(new Date(item.createdAt), { addSuffix: true });
+                  } catch {
+                    return "";
+                  }
+                })();
+                const showAmount = isOwner && (item.kind === "invoice" || item.kind === "quote") && item.total != null && item.total > 0;
+                return (
+                  <button
+                    key={`${item.kind}-${item.id}`}
+                    onClick={() => handleActivityClick(item)}
+                    className="w-full text-left px-3 py-2 min-h-[44px] rounded-lg hover:bg-secondary/50 transition-colors flex items-center gap-2"
+                  >
+                    <Icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-sm font-medium font-body text-foreground truncate">
+                        {titleLine}
+                      </span>
+                      <span className="block text-[11px] text-muted-foreground truncate">
+                        {activityActor(item)} · {when}
+                      </span>
+                    </span>
+                    {showAmount && (
+                      <span className="ml-auto text-xs font-body font-semibold text-foreground shrink-0">
+                        ${item.total!.toLocaleString()}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           )}
 
