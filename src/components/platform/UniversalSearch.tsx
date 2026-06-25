@@ -61,10 +61,12 @@ function addRecentSearch(q: string) {
 
 interface Props {
   businessId: string | null;
+  autoOpen?: boolean;
+  embedded?: boolean;
 }
 
-export default function UniversalSearch({ businessId }: Props) {
-  const [open, setOpen] = useState(false);
+export default function UniversalSearch({ businessId, autoOpen = false, embedded = false }: Props) {
+  const [open, setOpen] = useState(autoOpen);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -92,16 +94,24 @@ export default function UniversalSearch({ businessId }: Props) {
     return () => document.removeEventListener("keydown", handler);
   }, []);
 
+  // Auto-focus on mount when autoOpen is requested
+  useEffect(() => {
+    if (autoOpen) {
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+  }, [autoOpen]);
+
   // Close on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
+      if (embedded) return;
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false);
       }
     };
     if (open) document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
+  }, [open, embedded]);
 
   useEffect(() => {
     if (open && !query) setRecentSearches(getRecentSearches());
@@ -328,7 +338,7 @@ export default function UniversalSearch({ businessId }: Props) {
           placeholder="Search… ⌘K"
           className={cn(
             "bg-transparent border-none outline-none font-body text-sm text-foreground placeholder:text-muted-foreground flex-1 min-w-0",
-            !open && "hidden md:block"
+            !embedded && !open && "hidden md:block"
           )}
         />
         {open && query && (
@@ -340,7 +350,12 @@ export default function UniversalSearch({ businessId }: Props) {
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-xl z-[70] max-h-[60vh] overflow-y-auto min-w-[280px] md:min-w-[360px]">
+        <div className={cn(
+          "bg-card border border-border rounded-xl overflow-y-auto",
+          embedded
+            ? "mt-2 max-h-[70vh]"
+            : "absolute top-full left-0 right-0 mt-1 shadow-xl z-[70] max-h-[60vh] min-w-[280px] md:min-w-[360px]"
+        )}>
           {loading && (
             <div className="px-4 py-3 text-sm text-muted-foreground font-body">Searching…</div>
           )}
