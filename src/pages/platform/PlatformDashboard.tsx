@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { startOfWeek, endOfWeek } from "date-fns";
 import PlatformLayout from "@/components/platform/PlatformLayout";
@@ -9,7 +9,21 @@ import TodaySection from "@/components/platform/dashboard/TodaySection";
 import ReliabilitySection from "@/components/platform/dashboard/ReliabilitySection";
 import QuickActionsBar from "@/components/platform/dashboard/QuickActionsBar";
 import HeadlineSection from "@/components/platform/dashboard/HeadlineSection";
-import ScheduledValueChart from "@/components/platform/dashboard/ScheduledValueChart";
+// Lazy-load the recharts-backed chart so the ~382KB chart chunk doesn't
+// block the KPI cards from painting on dashboard open.
+const ScheduledValueChart = lazy(
+  () => import("@/components/platform/dashboard/ScheduledValueChart"),
+);
+
+function ScheduledValueChartSkeleton() {
+  return (
+    <div
+      aria-hidden
+      className="w-full rounded-xl border border-white/5 bg-white/[0.02]"
+      style={{ height: 280 }}
+    />
+  );
+}
 
 export default function PlatformDashboard() {
   const { selectedBusinessId, businesses } = usePlatformAuth();
@@ -73,7 +87,9 @@ export default function PlatformDashboard() {
           </header>
 
           <HeadlineSection />
-          <ScheduledValueChart />
+          <Suspense fallback={<ScheduledValueChartSkeleton />}>
+            <ScheduledValueChart />
+          </Suspense>
           <TodaySection />
           <QuickActionsBar />
           <ReliabilitySection />

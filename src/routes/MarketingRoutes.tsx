@@ -1,7 +1,10 @@
 import { lazy } from "react";
 import { Route } from "react-router-dom";
 
-import Index from "@/pages/Index";
+// Lazy so the homepage subtree (HeroSection, GoogleReviews, VideoTestimonials,
+// FAQ, framer-motion, etc.) is code-split out of the entry chunk that every
+// /platform cold start has to parse.
+const Index = lazy(() => import("@/pages/Index"));
 
 const Services = lazy(() => import("@/pages/Services"));
 const Pensacola = lazy(() => import("@/pages/locations/Pensacola"));
