@@ -74,22 +74,47 @@ self.addEventListener('fetch', (event) => {
   // Never touch Supabase, edge functions, OAuth, analytics, or non-platform pages.
   if (url.pathname.startsWith('/~oauth')) return;
 
-  // Platform navigation: network-first, fall back to cached shell for offline.
-  // The app shell must always come from the network when online so the HTML
-  // references the freshest hashed asset filenames after a deploy.
+  // Platform navigation: stale-while-revalidate. Serve the cached app shell
+  // immediately for an instant cold-start paint (critical on weak cellular),
+  // and refresh the cache in the background so the next launch has fresh HTML.
+  //
+  // Staleness is bounded by the existing build-id update mechanism:
+  //   * The SW is registered as `/sw.js?v=<BUILD_ID>` (src/main.tsx), so a
+  //     new deploy installs a new SW with a new CACHE_NAME.
+  //   * On activate, the new SW calls clients.claim(), which fires
+  //     `controllerchange` in the page and triggers a one-time reload so
+  //     users land on the fresh build automatically.
+  // The first paint after a deploy may briefly come from the previous build's
+  // cache, then the update mechanism rolls the page onto fresh code.
   if (isPlatformNavigation(request, url)) {
     event.respondWith(
-      fetch(request)
-        .then((resp) => {
-          const clone = resp.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          return resp;
-        })
-        .catch(() =>
-          caches.match(request).then(
-            (cached) => cached || caches.match('/platform') || offlineFallback()
-          )
-        )
+      (async () => {
+        const cached =
+          (await caches.match(request)) || (await caches.match('/platform'));
+
+        const networkPromise = fetch(request)
+          .then((resp) => {
+            if (resp && resp.ok) {
+              const clone = resp.clone();
+              caches
+                .open(CACHE_NAME)
+                .then((cache) => cache.put(request, clone))
+                .catch(() => {});
+            }
+            return resp;
+          })
+          .catch(() => null);
+
+        if (cached) {
+          // Don't await — let the revalidation run in the background.
+          event.waitUntil(networkPromise);
+          return cached;
+        }
+
+        const network = await networkPromise;
+        if (network) return network;
+        return offlineFallback();
+      })()
     );
     return;
   }
