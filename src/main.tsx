@@ -3,6 +3,13 @@ import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
 import "./index.css";
 
+// Pre-warm Supabase auth: kick off the async client init immediately on
+// module load so `INITIAL_SESSION` is ready by the time usePlatformAuth
+// subscribes. Fire-and-forget — we never await the result here.
+void import("@/integrations/supabase/client").then(({ supabase }) => {
+  void supabase.auth.getSession().catch(() => { /* ignore — handled later */ });
+}).catch(() => { /* ignore */ });
+
 // Global error handlers for errors outside React's component tree
 const logErrorToSupabase = async (errorMessage: string, errorStack: string) => {
   try {
