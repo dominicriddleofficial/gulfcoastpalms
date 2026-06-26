@@ -235,21 +235,47 @@ export default function PlatformLayout({ children }: Props) {
     if (!bizId) return;
     if (dataPrefetchTriggered.current === bizId) return;
     dataPrefetchTriggered.current = bizId;
-    // Fire-and-forget; failures are silent so the shell never blocks.
-    void Promise.all([
-      queryClient.prefetchQuery({
-        queryKey: dashboardScheduledJobsKey(bizId),
-        queryFn: () => fetchDashboardScheduledJobs({ businessId: bizId }),
-      }),
-      queryClient.prefetchQuery({
-        queryKey: platformInvoicesKey(bizId),
-        queryFn: () => fetchPlatformInvoices(bizId),
-      }),
-      queryClient.prefetchQuery({
-        queryKey: platformCustomersKey(bizId),
-        queryFn: () => fetchPlatformCustomersList(bizId),
-      }),
-    ]);
+    // Defer the prefetch until the browser is idle (or 1.5s after auth
+    // resolves, whichever comes first) so it doesn't contend with the
+    // current page's own queries during first paint on slow networks.
+    const runPrefetch = () => {
+      // Fire-and-forget; failures are silent so the shell never blocks.
+      void Promise.all([
+        queryClient.prefetchQuery({
+          queryKey: dashboardScheduledJobsKey(bizId),
+          queryFn: () => fetchDashboardScheduledJobs({ businessId: bizId }),
+        }),
+        queryClient.prefetchQuery({
+          queryKey: platformInvoicesKey(bizId),
+          queryFn: () => fetchPlatformInvoices(bizId),
+        }),
+        queryClient.prefetchQuery({
+          queryKey: platformCustomersKey(bizId),
+          queryFn: () => fetchPlatformCustomersList(bizId),
+        }),
+      ]);
+    };
+
+    const ric = (window as unknown as {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (handle: number) => void;
+    }).requestIdleCallback;
+    const cic = (window as unknown as {
+      cancelIdleCallback?: (handle: number) => void;
+    }).cancelIdleCallback;
+
+    let idleHandle: number | null = null;
+    let timeoutHandle: number | null = null;
+    if (typeof ric === "function") {
+      idleHandle = ric(runPrefetch, { timeout: 1500 });
+    } else {
+      timeoutHandle = window.setTimeout(runPrefetch, 1500);
+    }
+
+    return () => {
+      if (idleHandle !== null && typeof cic === "function") cic(idleHandle);
+      if (timeoutHandle !== null) window.clearTimeout(timeoutHandle);
+    };
   }, [auth.loading, auth.selectedBusinessId, queryClient]);
 
   // Hover/focus prefetch for the heavy tabs so a hover-then-click is warm.
