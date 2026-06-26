@@ -5,8 +5,8 @@ import { SectionCard, MetricTile, fmtMoney } from "./primitives";
 import { startOfDay, endOfDay, subHours } from "date-fns";
 
 export default function TodaySection() {
-  const { selectedBusinessId, userId, loading } = usePlatformAuth();
-  const ready = !loading && !!userId && !!selectedBusinessId;
+  const { selectedBusinessId } = usePlatformAuth();
+  const ready = !!selectedBusinessId;
 
   const dayStart = startOfDay(new Date()).toISOString();
   const dayEnd = endOfDay(new Date()).toISOString();

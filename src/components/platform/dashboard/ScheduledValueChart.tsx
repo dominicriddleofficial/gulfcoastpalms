@@ -104,11 +104,11 @@ function useCountUp(value: number, resetKey: string | number): number {
 }
 
 export default function ScheduledValueChart() {
-  const { selectedBusinessId, userId, loading } = usePlatformAuth();
+  const { selectedBusinessId } = usePlatformAuth();
   const { isOwner } = useUserRole();
   const [showDebug, setShowDebug] = useState(false);
   const [period, setPeriod] = useState<Period>("week");
-  const ready = !loading && !!userId && !!selectedBusinessId;
+  const ready = !!selectedBusinessId;
 
   const today = useMemo(() => new Date(), []);
   const { start, end, prevStart, prevEnd } = useMemo(() => {
