@@ -21,11 +21,52 @@ const APP_SHELL = ['/platform', '/platform/login'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) =>
-      cache.addAll(APP_SHELL).catch(() => {
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+
+      // App shell HTML — best-effort, same as before.
+      await cache.addAll(APP_SHELL).catch(() => {
         // Non-critical: shell URLs may not respond during install
-      })
-    )
+      });
+
+      // Precache hashed entry + vendor + platform chunks listed in
+      // /asset-manifest.json (emitted at build time by the
+      // platform-preload-and-manifest Vite plugin). This makes the next
+      // cold start serve them from disk even immediately after a deploy,
+      // since the build-id cache name otherwise wipes the previous
+      // build's opportunistically-cached assets on activate.
+      //
+      // All failures fall back silently to the existing opportunistic
+      // caching in the fetch handler so a missing/changed manifest never
+      // breaks install.
+      try {
+        const resp = await fetch('/asset-manifest.json', { cache: 'no-cache' });
+        if (resp && resp.ok) {
+          const manifest = await resp.json();
+          const urls = Array.isArray(manifest && manifest.precache)
+            ? manifest.precache.filter(
+                (u) => typeof u === 'string' && u.startsWith('/'),
+              )
+            : [];
+          if (urls.length) {
+            // addAll is atomic — if any one fails the whole call rejects.
+            // Use individual puts so a single 404 (e.g. a chunk renamed
+            // between manifest fetch and asset fetch) doesn't void the
+            // entire precache.
+            await Promise.all(
+              urls.map((url) =>
+                fetch(url, { credentials: 'same-origin' })
+                  .then((r) => (r && r.ok ? cache.put(url, r) : null))
+                  .catch(() => null),
+              ),
+            );
+          }
+        }
+      } catch {
+        // Manifest unavailable (older deploy, network blip) — skip
+        // precache; fetch handler still warms the cache opportunistically.
+      }
+    })()
   );
   self.skipWaiting();
 });
