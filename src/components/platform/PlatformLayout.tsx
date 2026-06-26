@@ -372,20 +372,11 @@ export default function PlatformLayout({ children }: Props) {
     })();
   }, [auth.loading, auth.selectedBusinessId]);
 
-  // Only block the full screen when we genuinely have nothing to render yet
-  // (no user known AND no businesses cached). Once we have either, render
-  // the shell immediately so the header + bottom nav are usable while
-  // business access / dashboard data continue loading in the background.
-  if (auth.loading && !auth.userId && auth.businesses.length === 0) {
-    return (
-      <div className="ops-theme min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="font-body text-sm text-muted-foreground">Loading platform...</p>
-        </div>
-      </div>
-    );
-  }
+  // No screen-blocking auth gate: always render the real shell immediately.
+  // Individual tiles / route content have their own React Query + Suspense
+  // skeletons; auth resolves in the background. `selectedBiz` and
+  // `auth.businesses` are already guarded with optional chaining / empty
+  // fallbacks below, so a brief empty-auth first paint renders safely.
 
   const workspaceTheme = getWorkspaceThemeFromBusiness(selectedBiz);
 
