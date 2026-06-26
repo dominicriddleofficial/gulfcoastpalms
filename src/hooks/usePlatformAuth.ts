@@ -73,35 +73,40 @@ function usePlatformAuthState(): PlatformAuthState {
     setAccessDenied(false);
 
     try {
-      const { data: workspaces } = await supabase
-        .from("workspaces")
-        .select("id")
-        .eq("owner_user_id", user.id);
+      // Steps 1-3 are independent of each other — run them in parallel so
+      // the cold-start auth boot waits on one round-trip instead of three.
+      // Step 4 (businesses + business_settings) still runs after because it
+      // depends on the business ids returned by step 3.
+      const [
+        { data: workspaces },
+        { data: roles },
+        { data: access },
+      ] = await Promise.all([
+        supabase
+          .from("workspaces")
+          .select("id")
+          .eq("owner_user_id", user.id),
+        supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id),
+        supabase
+          .from("user_business_access")
+          .select(`
+            id, business_id, role_name,
+            can_view_all_business_data, can_manage_leads, can_manage_quotes,
+            can_manage_jobs, can_manage_schedule, can_manage_invoices,
+            can_manage_payments, can_manage_communications, can_manage_settings,
+            can_export_data, can_view_financials, can_manage_users,
+            can_delete_records, default_business
+          `)
+          .eq("user_id", user.id)
+          .eq("active_status", "active"),
+      ]);
       if (isCancelled()) return;
 
-    const owner = !!(workspaces && workspaces.length > 0);
-
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id);
-    if (isCancelled()) return;
-
-    const isAdmin = roles?.some(r => r.role === "admin") || false;
-
-    const { data: access } = await supabase
-      .from("user_business_access")
-      .select(`
-        id, business_id, role_name,
-        can_view_all_business_data, can_manage_leads, can_manage_quotes,
-        can_manage_jobs, can_manage_schedule, can_manage_invoices,
-        can_manage_payments, can_manage_communications, can_manage_settings,
-        can_export_data, can_view_financials, can_manage_users,
-        can_delete_records, default_business
-      `)
-      .eq("user_id", user.id)
-      .eq("active_status", "active");
-    if (isCancelled()) return;
+      const owner = !!(workspaces && workspaces.length > 0);
+      const isAdmin = roles?.some(r => r.role === "admin") || false;
 
     if (!owner && !isAdmin && (!access || access.length === 0)) {
       setUserId(user.id);
