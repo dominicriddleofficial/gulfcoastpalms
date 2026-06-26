@@ -185,6 +185,18 @@ function usePlatformAuthState(): PlatformAuthState {
   const initialSessionLoadedRef = useRef(hydrated !== null);
   const isAdminRef = useRef(hydrated?.isAdmin ?? false);
 
+  // Refs for values that change during a normal load. `loadPlatformAccess`
+  // reads the latest values via refs so its identity stays stable across
+  // renders, preventing the auth subscription effect from tearing down and
+  // re-running its initial-session timers every time `selectedBusinessId`
+  // or `userId` changes.
+  const selectedBusinessIdRef = useRef(selectedBusinessId);
+  const setSelectedBusinessIdRef = useRef(setSelectedBusinessId);
+  const userIdRef = useRef<string | null>(userId);
+  useEffect(() => { selectedBusinessIdRef.current = selectedBusinessId; }, [selectedBusinessId]);
+  useEffect(() => { setSelectedBusinessIdRef.current = setSelectedBusinessId; }, [setSelectedBusinessId]);
+  useEffect(() => { userIdRef.current = userId; }, [userId]);
+
   const clearAuthState = useCallback(() => {
     setUserId(null);
     setUserEmail("");
@@ -197,7 +209,7 @@ function usePlatformAuthState(): PlatformAuthState {
   const loadPlatformAccess = useCallback(async (user: User, isCancelled: () => boolean) => {
     // Don't flip back to loading=true if we already hydrated real data —
     // that would re-show the loading gate during background revalidation.
-    if (userId !== user.id) setLoading(true);
+    if (userIdRef.current !== user.id) setLoading(true);
     setAccessDenied(false);
 
     try {
@@ -319,19 +331,21 @@ function usePlatformAuthState(): PlatformAuthState {
     isAdminRef.current = isAdmin;
 
     // Only set default business if nothing is persisted yet
-    if (selectedBusinessId === null) {
+    const currentSelected = selectedBusinessIdRef.current;
+    const setSelected = setSelectedBusinessIdRef.current;
+    if (currentSelected === null) {
       const defaultBiz = enrichedAccess.find(a => a.default_business);
       if (defaultBiz) {
-        setSelectedBusinessId(defaultBiz.business_id);
+        setSelected(defaultBiz.business_id);
       } else if (!owner && !isAdmin && enrichedAccess.length > 0) {
         // Non-owner/non-admin users MUST have a workspace selected, otherwise
         // useUserRole returns null → RoleRoute redirects → blank page loop.
-        setSelectedBusinessId(enrichedAccess[0].business_id);
+        setSelected(enrichedAccess[0].business_id);
       }
       // If owner and no default, leave as null (= "All Businesses")
     } else {
       // Validate that persisted business is still accessible
-      const isValid = enrichedAccess.some(a => a.business_id === selectedBusinessId);
+      const isValid = enrichedAccess.some(a => a.business_id === currentSelected);
       if (!isValid && !owner && !isAdmin) {
         const defaultBiz = enrichedAccess.find(a => a.default_business);
         const fallback = defaultBiz?.business_id || enrichedAccess[0]?.business_id || null;
@@ -341,7 +355,7 @@ function usePlatformAuthState(): PlatformAuthState {
             fallback,
           );
         }
-        setSelectedBusinessId(fallback);
+        setSelected(fallback);
       }
     }
 
@@ -356,7 +370,7 @@ function usePlatformAuthState(): PlatformAuthState {
         isOwner: owner || isAdmin,
         isAdmin,
         businessAccess: enrichedAccess,
-        selectedBusinessId,
+        selectedBusinessId: selectedBusinessIdRef.current,
       });
 
       // Fold in the theming colors when the parallel settings query lands —
@@ -380,7 +394,7 @@ function usePlatformAuthState(): PlatformAuthState {
           isOwner: owner || isAdmin,
           isAdmin,
           businessAccess: withColors,
-          selectedBusinessId,
+          selectedBusinessId: selectedBusinessIdRef.current,
         });
       }).catch(() => { /* non-critical — colors stay undefined */ });
     } catch (error) {
@@ -392,7 +406,7 @@ function usePlatformAuthState(): PlatformAuthState {
       setAccessDenied(true);
       setLoading(false);
     }
-  }, [clearAuthState, selectedBusinessId, setSelectedBusinessId, userId]);
+  }, [clearAuthState]);
 
   useEffect(() => {
     let cancelled = false;
@@ -432,10 +446,17 @@ function usePlatformAuthState(): PlatformAuthState {
       initialHandled = true;
       initialSessionLoadedRef.current = true;
       setInitialSessionChecked(true);
+      // Snapshot-aware: if we hydrated from a valid snapshot, the user had a
+      // session — keep the cached shell visible and let revalidation finish
+      // in the background instead of bouncing them to login.
+      if (hydrated) {
+        setLoading(false);
+        return;
+      }
       clearAuthState();
       setLoading(false);
       navigate("/platform/login", { replace: true });
-    }, 8000);
+    }, 2500);
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (cancelled) return;
@@ -449,7 +470,7 @@ function usePlatformAuthState(): PlatformAuthState {
         hadSessionRef.current = true;
         setInitialSessionChecked(true);
         // Different user signed in — drop any other user's snapshot.
-        if (userId && userId !== session.user.id) clearAllSnapshots();
+        if (userIdRef.current && userIdRef.current !== session.user.id) clearAllSnapshots();
         void loadPlatformAccess(session.user, () => cancelled);
         return;
       }
@@ -484,7 +505,7 @@ function usePlatformAuthState(): PlatformAuthState {
       window.clearTimeout(fallbackTimer);
       subscription.unsubscribe();
     };
-  }, [clearAuthState, loadPlatformAccess, navigate, hydrated, userId]);
+  }, [clearAuthState, loadPlatformAccess, navigate, hydrated]);
 
   useEffect(() => {
     if (initialSessionChecked && !loading && !userId && !accessDenied) {
