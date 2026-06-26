@@ -67,13 +67,112 @@ const queryClient = new QueryClient({
   },
 });
 
+/**
+ * Static, zero-cost platform shell that paints immediately while the route
+ * chunk + auth resolve. No data, no animation, no JS work — just the
+ * silhouette of the real shell so the screen doesn't sit blank during boot.
+ */
 function PlatformRouteFallback() {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="h-0.5 w-full bg-primary/20 overflow-hidden">
-        <div className="h-full w-1/3 bg-primary animate-[loading_1s_ease-in-out_infinite]" />
+    <div
+      className="min-h-screen text-foreground"
+      style={{ background: "#0a0f0a" }}
+      aria-hidden
+    >
+      {/* Top bar */}
+      <div
+        className="flex items-center gap-3 px-4 md:px-6 border-b"
+        style={{
+          height: 56,
+          borderColor: "rgba(255,255,255,0.06)",
+          background: "rgba(255,255,255,0.02)",
+        }}
+      >
+        <div
+          className="rounded-md"
+          style={{ width: 28, height: 28, background: "rgba(34,197,94,0.35)" }}
+        />
+        <div
+          className="rounded"
+          style={{ width: 140, height: 14, background: "rgba(255,255,255,0.08)" }}
+        />
+        <div className="flex-1" />
+        <div
+          className="rounded-full"
+          style={{ width: 28, height: 28, background: "rgba(255,255,255,0.06)" }}
+        />
       </div>
-      <style>{`@keyframes loading { 0% { transform: translateX(-100%); } 100% { transform: translateX(400%); } }`}</style>
+
+      <div className="flex">
+        {/* Sidebar rail (desktop) */}
+        <div
+          className="hidden md:flex flex-col gap-3 p-3 border-r"
+          style={{
+            width: 224,
+            minHeight: "calc(100vh - 56px)",
+            borderColor: "rgba(255,255,255,0.06)",
+          }}
+        >
+          {Array.from({ length: 7 }).map((_, i) => (
+            <div
+              key={i}
+              className="rounded-md"
+              style={{ height: 32, background: "rgba(255,255,255,0.04)" }}
+            />
+          ))}
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 p-4 md:p-6 space-y-4">
+          <div
+            className="rounded"
+            style={{ width: 220, height: 22, background: "rgba(255,255,255,0.08)" }}
+          />
+          <div
+            className="rounded"
+            style={{ width: 160, height: 12, background: "rgba(255,255,255,0.05)" }}
+          />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="rounded-xl border"
+                style={{
+                  height: 96,
+                  borderColor: "rgba(255,255,255,0.06)",
+                  background: "rgba(255,255,255,0.03)",
+                }}
+              />
+            ))}
+          </div>
+          <div
+            className="rounded-xl border"
+            style={{
+              height: 280,
+              borderColor: "rgba(255,255,255,0.06)",
+              background: "rgba(255,255,255,0.02)",
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Bottom nav rail (mobile) */}
+      <div
+        className="md:hidden fixed bottom-0 left-0 right-0 flex items-center justify-around border-t px-2"
+        style={{
+          height: 64,
+          borderColor: "rgba(255,255,255,0.06)",
+          background: "rgba(10,15,10,0.95)",
+        }}
+      >
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div
+            key={i}
+            className="rounded-md"
+            style={{ width: 36, height: 36, background: "rgba(255,255,255,0.05)" }}
+          />
+        ))}
+      </div>
     </div>
   );
 }
