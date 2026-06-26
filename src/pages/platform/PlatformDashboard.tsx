@@ -31,15 +31,16 @@ export default function PlatformDashboard() {
 
   const selectedBiz = businesses.find((b) => b.id === selectedBusinessId);
 
-  // Warm the Schedule page cache so tapping the bottom-nav Schedule tab is instant.
-  // Matches PlatformSchedule's Sunday-Saturday week range.
+  // Warm the dashboard's week-range cache so HeadlineSection / ScheduledValueChart
+  // hit a populated React Query cache instead of refetching on mount. Must match
+  // the weekStartsOn used by those components (Monday).
   useEffect(() => {
     if (!selectedBusinessId) return;
     const now = new Date();
     prefetchDashboardScheduledJobs(qc, {
       businessId: selectedBusinessId,
-      startDate: startOfWeek(now, { weekStartsOn: 0 }),
-      endDate: endOfWeek(now, { weekStartsOn: 0 }),
+      startDate: startOfWeek(now, { weekStartsOn: 1 }),
+      endDate: endOfWeek(now, { weekStartsOn: 1 }),
     });
   }, [qc, selectedBusinessId]);
 
