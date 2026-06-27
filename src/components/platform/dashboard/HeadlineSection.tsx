@@ -1,8 +1,9 @@
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
-import { useDashboardScheduledJobs } from "@/hooks/useDashboardScheduledJobs";
 import { fmtMoney } from "./primitives";
 import { Link } from "react-router-dom";
-import { startOfWeek, startOfMonth, endOfWeek, endOfMonth } from "date-fns";
+import { startOfWeek, startOfMonth, endOfWeek, endOfMonth, format } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { TrendingUp, DollarSign, Briefcase, Calendar } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -79,27 +80,37 @@ export default function HeadlineSection() {
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
 
-  const weekJobs = useDashboardScheduledJobs({
-    businessId: selectedBusinessId,
-    startDate: weekStart,
-    endDate: weekEnd,
+  const weekKey = format(weekStart, "yyyy-MM-dd") + "_" + format(weekEnd, "yyyy-MM-dd");
+  const monthKey = format(monthStart, "yyyy-MM-dd") + "_" + format(monthEnd, "yyyy-MM-dd");
+
+  const kpis = useQuery({
+    queryKey: ["dashboard-kpis", selectedBusinessId, weekKey, monthKey],
     enabled: !!selectedBusinessId,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_dashboard_kpis", {
+        p_business_id: selectedBusinessId as string,
+        p_week_start: format(weekStart, "yyyy-MM-dd"),
+        p_week_end: format(weekEnd, "yyyy-MM-dd"),
+        p_month_start: format(monthStart, "yyyy-MM-dd"),
+        p_month_end: format(monthEnd, "yyyy-MM-dd"),
+      });
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      return {
+        revenueWeek: Number(row?.revenue_week ?? 0),
+        jobsWeek: Number(row?.jobs_week ?? 0),
+        revenueMonth: Number(row?.revenue_month ?? 0),
+        jobsMonth: Number(row?.jobs_month ?? 0),
+      };
+    },
   });
 
-  const monthJobs = useDashboardScheduledJobs({
-    businessId: selectedBusinessId,
-    startDate: monthStart,
-    endDate: monthEnd,
-    enabled: !!selectedBusinessId,
-  });
-
-  const revenueWeek = weekJobs.summary.revenueTotal;
-  const revenueMonth = monthJobs.summary.revenueTotal;
-  const jobsWeek = weekJobs.summary.jobCount;
-  const jobsMonth = monthJobs.summary.jobCount;
-
-  const weekLoading = weekJobs.isPending;
-  const monthLoading = monthJobs.isPending;
+  const revenueWeek = kpis.data?.revenueWeek ?? 0;
+  const revenueMonth = kpis.data?.revenueMonth ?? 0;
+  const jobsWeek = kpis.data?.jobsWeek ?? 0;
+  const jobsMonth = kpis.data?.jobsMonth ?? 0;
+  const loading = kpis.isPending;
 
   return (
     <div className="grid grid-cols-2 gap-3">
@@ -107,28 +118,28 @@ export default function HeadlineSection() {
         label="Revenue This Week"
         value={fmtMoney(revenueWeek)}
         icon={TrendingUp}
-        loading={weekLoading}
+        loading={loading}
         to="/platform/payments"
       />
       <HeroTile
         label="Revenue This Month"
         value={fmtMoney(revenueMonth)}
         icon={DollarSign}
-        loading={monthLoading}
+        loading={loading}
         to="/platform/payments"
       />
       <HeroTile
         label="Jobs This Week"
         value={jobsWeek}
         icon={Briefcase}
-        loading={weekLoading}
+        loading={loading}
         to="/platform/schedule"
       />
       <HeroTile
         label="Jobs This Month"
         value={jobsMonth}
         icon={Calendar}
-        loading={monthLoading}
+        loading={loading}
         to="/platform/schedule"
       />
     </div>

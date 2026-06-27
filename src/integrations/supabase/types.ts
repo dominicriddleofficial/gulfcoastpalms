@@ -6489,6 +6489,21 @@ export type Database = {
         Args: { _business_id: string }
         Returns: string[]
       }
+      get_dashboard_kpis: {
+        Args: {
+          p_business_id: string
+          p_month_end: string
+          p_month_start: string
+          p_week_end: string
+          p_week_start: string
+        }
+        Returns: {
+          jobs_month: number
+          jobs_week: number
+          revenue_month: number
+          revenue_week: number
+        }[]
+      }
       get_email_send_log_filtered: {
         Args: {
           _from?: string
