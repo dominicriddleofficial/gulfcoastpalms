@@ -1315,7 +1315,9 @@ function JobDetail({
         job={job}
         onSaved={() => {
           setRescheduleOpen(false);
-          qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
+          // Fire-and-forget: do NOT await refetches — save button must release immediately.
+          void qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
+          void qc.invalidateQueries({ queryKey: ["dashboard-kpis"] });
         }}
       />
 
@@ -1326,7 +1328,8 @@ function JobDetail({
         onSaved={(changes) => {
           onJobChanged(changes);
           setEditOpen(false);
-          qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
+          void qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
+          void qc.invalidateQueries({ queryKey: ["dashboard-kpis"] });
         }}
       />
 
@@ -1337,7 +1340,8 @@ function JobDetail({
         jobLabel={job.title ?? job.client_name ?? "this visit"}
         onDeleted={() => {
           setDeleteOpen(false);
-          qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
+          void qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
+          void qc.invalidateQueries({ queryKey: ["dashboard-kpis"] });
           onClose();
         }}
       />
@@ -1693,7 +1697,14 @@ function EditJobSheet({
       }
 
       toast.success("Visit updated");
+      // Release the Save button BEFORE notifying the parent. The parent's
+      // onSaved closes the sheet and invalidates the heavy
+      // useDashboardScheduledJobs query mounted on PlatformSchedule (~6
+      // chained Supabase queries), and the resulting synchronous re-render
+      // can otherwise keep the button visibly stuck on "Saving…".
+      setSaving(false);
       onSaved({ title: trimmedTitle, internal_notes: trimmedNotes, total_amount: parsedPrice });
+      return;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Update failed";
       toast.error(message);
