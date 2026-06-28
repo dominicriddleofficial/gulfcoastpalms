@@ -1697,7 +1697,14 @@ function EditJobSheet({
       }
 
       toast.success("Visit updated");
+      // Release the Save button BEFORE notifying the parent. The parent's
+      // onSaved closes the sheet and invalidates the heavy
+      // useDashboardScheduledJobs query mounted on PlatformSchedule (~6
+      // chained Supabase queries), and the resulting synchronous re-render
+      // can otherwise keep the button visibly stuck on "Saving…".
+      setSaving(false);
       onSaved({ title: trimmedTitle, internal_notes: trimmedNotes, total_amount: parsedPrice });
+      return;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Update failed";
       toast.error(message);
