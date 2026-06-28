@@ -1334,6 +1334,7 @@ function JobDetail({
           // Fire-and-forget: do NOT await refetches — save button must release immediately.
           void qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
           void qc.invalidateQueries({ queryKey: ["dashboard-kpis"] });
+          void qc.invalidateQueries({ queryKey: ["schedule-jobs"] });
         }}
       />
 
@@ -1346,6 +1347,7 @@ function JobDetail({
           setEditOpen(false);
           void qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
           void qc.invalidateQueries({ queryKey: ["dashboard-kpis"] });
+          void qc.invalidateQueries({ queryKey: ["schedule-jobs"] });
         }}
       />
 
@@ -1358,6 +1360,7 @@ function JobDetail({
           setDeleteOpen(false);
           void qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
           void qc.invalidateQueries({ queryKey: ["dashboard-kpis"] });
+          void qc.invalidateQueries({ queryKey: ["schedule-jobs"] });
           onClose();
         }}
       />
