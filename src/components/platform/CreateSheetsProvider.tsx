@@ -6,6 +6,7 @@
  */
 import { createContext, useContext, useState, ReactNode, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 
 export type CreateKind = "job" | "customer" | "quote" | "invoice" | "lead";
 
@@ -66,11 +67,18 @@ const ROUTE_FOR: Record<CreateKind, string> = {
 export function CreateSheetsProvider({ children }: { children: ReactNode }) {
   const [createdTick, setCreatedTick] = useState(0);
   const navigate = useNavigate();
+  const qc = useQueryClient();
 
   const open = useCallback((kind: CreateKind, prefill?: JobPrefillState | InvoicePrefillState) => {
     navigate(ROUTE_FOR[kind], prefill ? { state: { prefill } } : undefined);
   }, [navigate]);
-  const notifyCreated = useCallback(() => setCreatedTick((t) => t + 1), []);
+  const notifyCreated = useCallback(() => {
+    setCreatedTick((t) => t + 1);
+    // Mark dashboard tiles + schedule cache stale so headline KPIs refresh
+    // after a new/edit/complete. Fire-and-forget — do NOT await refetches.
+    void qc.invalidateQueries({ queryKey: ["dashboard-kpis"] });
+    void qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
+  }, [qc]);
 
   return (
     <Ctx.Provider value={{ open, createdTick, notifyCreated }}>
