@@ -1315,7 +1315,9 @@ function JobDetail({
         job={job}
         onSaved={() => {
           setRescheduleOpen(false);
-          qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
+          // Fire-and-forget: do NOT await refetches — save button must release immediately.
+          void qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
+          void qc.invalidateQueries({ queryKey: ["dashboard-kpis"] });
         }}
       />
 
@@ -1326,7 +1328,8 @@ function JobDetail({
         onSaved={(changes) => {
           onJobChanged(changes);
           setEditOpen(false);
-          qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
+          void qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
+          void qc.invalidateQueries({ queryKey: ["dashboard-kpis"] });
         }}
       />
 
@@ -1337,7 +1340,8 @@ function JobDetail({
         jobLabel={job.title ?? job.client_name ?? "this visit"}
         onDeleted={() => {
           setDeleteOpen(false);
-          qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
+          void qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
+          void qc.invalidateQueries({ queryKey: ["dashboard-kpis"] });
           onClose();
         }}
       />
