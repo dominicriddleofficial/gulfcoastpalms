@@ -6530,6 +6530,34 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_schedule_jobs: {
+        Args: { p_business_id: string; p_end: string; p_start: string }
+        Returns: {
+          address: string
+          assigned_employee_names: string[]
+          business_id: string
+          client_name: string
+          client_phone: string
+          customer_email: string
+          customer_id: string
+          id: string
+          internal_notes: string
+          job_id: string
+          job_number: string
+          jobber_id: string
+          property_address: string
+          property_id: string
+          scheduled_end: string
+          scheduled_start: string
+          service_items: Json
+          source: string
+          status: string
+          title: string
+          total_amount: number
+          visit_id: string
+          visit_status: string
+        }[]
+      }
       get_user_business_ids: { Args: { _user_id: string }; Returns: string[] }
       get_user_role: {
         Args: { _business_id: string; _user_id: string }
