@@ -128,6 +128,7 @@ export function useVisitLifecycle() {
       // Fire-and-forget invalidations — never await refetches.
       void qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
       void qc.invalidateQueries({ queryKey: ["dashboard-kpis"] });
+      void qc.invalidateQueries({ queryKey: ["schedule-jobs"] });
       if (vars.nextStatus === "complete") {
         toast.success("Visit completed — review request queued for 2h");
       } else if (vars.nextStatus === "on_my_way") {
@@ -154,6 +155,7 @@ export function useVisitLifecycle() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
       void qc.invalidateQueries({ queryKey: ["dashboard-kpis"] });
+      void qc.invalidateQueries({ queryKey: ["schedule-jobs"] });
       toast.success("Visit reopened");
     },
   });
