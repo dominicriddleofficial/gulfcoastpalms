@@ -71,7 +71,6 @@ import { Label } from "@/components/ui/label";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useQueryClient } from "@tanstack/react-query";
 import { CalendarClock, Pencil, Trash2 } from "lucide-react";
-import { useDashboardScheduledJobs } from "@/hooks/useDashboardScheduledJobs";
 
 type ScheduleTab = "day" | "list" | "map" | "crew";
 
@@ -191,12 +190,29 @@ export default function PlatformSchedule() {
     retry: 2,
   });
 
-  // Jobber tab — scoped to active business, only scheduled jobs.
-  // Uses the shared dashboard scheduled jobs hook so KPIs, the Dashboard graph, and this
-  // page never drift out of sync.
-  const { jobs: jobberJobsRaw, isLoading: loading, refetch: refetchJobs } =
-    useDashboardScheduledJobs({ businessId: selectedBusinessId, startDate: weekRange.start, endDate: weekRange.end });
-  const jobberJobs = jobberJobsRaw as unknown as JobberJob[];
+  // Schedule rows come from a single server-side RPC that mirrors the dedupe
+  // rules used by useDashboardScheduledJobs (platform + jobber_import + jobber_synced).
+  const weekStartISO = weekRange.start.toISOString();
+  const weekEndISO = weekRange.end.toISOString();
+  const {
+    data: jobberJobsRaw,
+    isPending: loading,
+    refetch: refetchJobs,
+  } = useQuery({
+    queryKey: ["schedule-jobs", selectedBusinessId, weekStartISO, weekEndISO],
+    enabled: !!selectedBusinessId,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_schedule_jobs", {
+        p_business_id: selectedBusinessId as string,
+        p_start: weekStartISO,
+        p_end: weekEndISO,
+      });
+      if (error) throw error;
+      return (data ?? []) as unknown as JobberJob[];
+    },
+  });
+  const jobberJobs: JobberJob[] = jobberJobsRaw ?? [];
 
   // Per-day counts for the week strip indicators.
   const weekDayCounts = useMemo(() => {
