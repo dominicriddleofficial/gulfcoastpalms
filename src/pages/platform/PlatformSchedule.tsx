@@ -28,6 +28,7 @@ import {
   MoreHorizontal,
   FileText,
   Mail,
+  Star,
 } from "lucide-react";
 import {
   addDays,
@@ -44,6 +45,7 @@ import { toast } from "sonner";
 import { ContactCustomerSheet } from "@/components/platform/ContactCustomerSheet";
 import { useVisitLifecycle, type VisitStatus } from "@/hooks/useVisitLifecycle";
 import { OnMyWaySheet } from "@/components/platform/schedule/OnMyWaySheet";
+import { ReviewMessageSheet } from "@/components/platform/schedule/ReviewMessageSheet";
 import { ClockBar } from "@/components/platform/schedule/ClockBar";
 import { CrewTab } from "@/components/platform/schedule/CrewTab";
 import { MapTab, type MapTabJob } from "@/components/platform/schedule/MapTab";
@@ -843,6 +845,7 @@ function JobDetail({
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
   const navigate = useNavigate();
   const { advance, reopen } = useVisitLifecycle();
   const { isStaff } = useUserRole();
