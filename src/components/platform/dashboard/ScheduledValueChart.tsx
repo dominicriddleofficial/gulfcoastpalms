@@ -27,6 +27,11 @@ import {
 } from "recharts";
 import { CalendarDays } from "lucide-react";
 
+function prefersReducedMotion(): boolean {
+  if (typeof window === "undefined" || !window.matchMedia) return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 type DayBucket = {
   date: string;
   label: string;
@@ -109,6 +114,25 @@ export default function ScheduledValueChart() {
   const [showDebug, setShowDebug] = useState(false);
   const [period, setPeriod] = useState<Period>("week");
   const ready = !!selectedBusinessId;
+
+  // Intro / morph choreography ---------------------------------
+  // Mount count drives odometer replay + intro-only layers.
+  const mountedAtRef = useRef<number>(0);
+  if (mountedAtRef.current === 0) mountedAtRef.current = performance.now();
+  const [introPlayed, setIntroPlayed] = useState<boolean>(() =>
+    prefersReducedMotion(),
+  );
+  const [toggleTick, setToggleTick] = useState(0);
+  const plotRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (introPlayed) return;
+    const t = window.setTimeout(() => setIntroPlayed(true), 1600);
+    return () => window.clearTimeout(t);
+  }, [introPlayed]);
+
+  // Bloom pulse (0..1) — 1 on mount, bumped on period toggle
+  const [bloomKey, setBloomKey] = useState(0);
 
   const today = useMemo(() => new Date(), []);
   const { start, end, prevStart, prevEnd } = useMemo(() => {
@@ -267,6 +291,9 @@ export default function ScheduledValueChart() {
   const peakLabel = peak && peak.value > 0 ? peak.label : null;
   const todayKey = format(today, "yyyy-MM-dd");
   const todayBucket = buckets.find((b) => b.date === todayKey);
+  const peakIndex = peak
+    ? buckets.findIndex((b) => b.date === peak.date && peak.value > 0)
+    : -1;
 
   const toggle = (
     <div
@@ -286,7 +313,12 @@ export default function ScheduledValueChart() {
             type="button"
             role="tab"
             aria-selected={active}
-            onClick={() => setPeriod(p)}
+            onClick={() => {
+              if (period === p) return;
+              setPeriod(p);
+              setToggleTick((n) => n + 1);
+              setBloomKey((n) => n + 1);
+            }}
             className="font-body uppercase tracking-wider transition-colors"
             style={{
               minHeight: 32,
@@ -310,8 +342,70 @@ export default function ScheduledValueChart() {
   const showEmpty = !isLoading && visibleGraphTotal === 0;
   const showSkeleton = isLoading && buckets.length === 0;
 
+  // Odometer subtitle — headline total rolls into place
+  const subtitleNode = (
+    <span
+      className="font-body"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 4,
+        fontSize: 11,
+        color: "hsl(220 8% 50%)",
+      }}
+    >
+      {period === "week" ? "This week" : "This month"} · $
+      <Odometer
+        value={Math.max(0, visibleGraphTotal)}
+        fontSize={11}
+        color="hsl(220 8% 50%)"
+        playKey={`${toggleTick}-${period}`}
+      />{" "}
+      total
+    </span>
+  );
+
+  // Points for touch-scrub (from the DOM after mount)
+  const [scrubPoints, setScrubPoints] = useState<Array<{ x: number; y: number }>>(
+    [],
+  );
+  useEffect(() => {
+    if (showEmpty || showSkeleton) {
+      setScrubPoints([]);
+      return;
+    }
+    const container = plotRef.current;
+    if (!container) return;
+    // Read the rendered CORE line points after the intro settles
+    let raf1 = 0;
+    let raf2 = 0;
+    const read = () => {
+      const paths = container.querySelectorAll<SVGPathElement>(
+        ".recharts-area-curve",
+      );
+      const path = paths[paths.length - 1];
+      if (!path) return;
+      const total = path.getTotalLength();
+      if (!(total > 0)) return;
+      const n = Math.max(2, buckets.length);
+      const pts: Array<{ x: number; y: number }> = [];
+      for (let i = 0; i < n; i++) {
+        const p = path.getPointAtLength((i / (n - 1)) * total);
+        pts.push({ x: p.x, y: p.y });
+      }
+      setScrubPoints(pts);
+    };
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(read);
+    });
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
+  }, [buckets.length, showEmpty, showSkeleton, period, toggleTick]);
+
   return (
-    <SectionCard title={title} subtitle={subtitle} action={toggle}>
+    <SectionCard title={title} subtitle={subtitleNode} action={toggle}>
       {isOwner && hasMismatch && (
         <div
           className="rounded-md px-3 py-2 font-body"
@@ -332,6 +426,7 @@ export default function ScheduledValueChart() {
         animAvg={Math.round(animAvg)}
       />
       <div
+        ref={plotRef}
         className="rounded-xl overflow-hidden"
         style={{
           width: "100%",
@@ -344,7 +439,119 @@ export default function ScheduledValueChart() {
             "inset 0 0 0 1px rgba(var(--biz-accent-rgb),0.05), inset 0 0 40px rgba(var(--biz-accent-rgb),0.05)",
         }}
       >
+        {/* Ambient orbs — extremely slow, transform-only, low opacity */}
+        <div
+          aria-hidden
+          className="sched-orb sched-orb-1"
+          style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }}
+        />
+        <div
+          aria-hidden
+          className="sched-orb sched-orb-2"
+          style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }}
+        />
+        <div
+          aria-hidden
+          className="sched-orb sched-orb-3"
+          style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }}
+        />
         <style>{`
+          /* ---------- NEW intro / ambient / interaction layers ---------- */
+          @keyframes schedGridSweep {
+            from { transform: scaleX(0); opacity: 0; }
+            to   { transform: scaleX(1); opacity: 1; }
+          }
+          .sched-chart-mount .recharts-cartesian-grid-horizontal line {
+            transform-origin: left center;
+            animation: schedGridSweep 260ms cubic-bezier(0.22,1,0.36,1) both;
+          }
+          .sched-chart-mount .recharts-cartesian-grid-horizontal line:nth-child(1)  { animation-delay: 0ms; }
+          .sched-chart-mount .recharts-cartesian-grid-horizontal line:nth-child(2)  { animation-delay: 40ms; }
+          .sched-chart-mount .recharts-cartesian-grid-horizontal line:nth-child(3)  { animation-delay: 80ms; }
+          .sched-chart-mount .recharts-cartesian-grid-horizontal line:nth-child(4)  { animation-delay: 120ms; }
+          .sched-chart-mount .recharts-cartesian-grid-horizontal line:nth-child(5)  { animation-delay: 160ms; }
+          .sched-chart-mount .recharts-cartesian-grid-horizontal line:nth-child(6)  { animation-delay: 200ms; }
+          .sched-chart-mount .recharts-cartesian-grid-vertical line {
+            opacity: 0;
+            animation: schedGridSweep 260ms cubic-bezier(0.22,1,0.36,1) 220ms both;
+            transform-origin: center top;
+          }
+          @keyframes schedAxisRise {
+            from { opacity: 0; transform: translateY(4px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+          .sched-chart-mount .recharts-cartesian-axis-tick {
+            animation: schedAxisRise 260ms ease-out 120ms both;
+          }
+          /* Ghost prior-period line sketches in faintly */
+          @keyframes schedGhostIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+          }
+          .sched-chart-mount .recharts-area:nth-of-type(1) .recharts-area-curve {
+            animation: schedGhostIn 500ms ease-out 150ms both;
+          }
+          /* Milestone shockwave ring */
+          @keyframes schedShockwave {
+            0%   { r: 4;  opacity: 0.85; stroke-width: 2; }
+            60%  { opacity: 0.55; }
+            100% { r: 26; opacity: 0; stroke-width: 0.6; }
+          }
+          .sched-shockwave {
+            animation: schedShockwave 450ms cubic-bezier(0.22,1,0.36,1) forwards;
+          }
+          /* Lake reflection fade in */
+          @keyframes schedReflectionIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+          }
+          .sched-reflection {
+            animation: schedReflectionIn 300ms ease-out 1050ms both;
+          }
+          /* Ambient orbs — transform + opacity only, glacially slow */
+          .sched-orb {
+            background: radial-gradient(closest-side, rgba(var(--biz-accent-rgb),0.14), rgba(var(--biz-accent-rgb),0) 70%);
+            filter: blur(30px);
+            will-change: transform, opacity;
+          }
+          .sched-orb-1 {
+            transform: translate3d(-15%, 20%, 0) scale(1);
+            animation: schedOrb1 78s ease-in-out infinite;
+            opacity: 0.08;
+          }
+          .sched-orb-2 {
+            transform: translate3d(60%, -10%, 0) scale(0.9);
+            animation: schedOrb2 92s ease-in-out infinite;
+            opacity: 0.06;
+          }
+          .sched-orb-3 {
+            transform: translate3d(30%, 60%, 0) scale(1.1);
+            animation: schedOrb3 66s ease-in-out infinite;
+            opacity: 0.05;
+          }
+          @keyframes schedOrb1 {
+            0%,100% { transform: translate3d(-15%, 20%, 0) scale(1); }
+            50%     { transform: translate3d(10%, 5%, 0) scale(1.15); }
+          }
+          @keyframes schedOrb2 {
+            0%,100% { transform: translate3d(60%, -10%, 0) scale(0.9); }
+            50%     { transform: translate3d(35%, 25%, 0) scale(1.05); }
+          }
+          @keyframes schedOrb3 {
+            0%,100% { transform: translate3d(30%, 60%, 0) scale(1.1); }
+            50%     { transform: translate3d(55%, 40%, 0) scale(0.95); }
+          }
+          /* Bloom pulse — retriggered by data-bloom attr change */
+          @keyframes schedBloomPulse {
+            0%   { opacity: 0.4; }
+            60%  { opacity: 1;   }
+            100% { opacity: 1;   }
+          }
+          .sched-chart-mount .recharts-area-area {
+            animation: schedAreaFade 320ms ease-out 800ms both,
+                       schedBloomPulse 300ms ease-out both;
+          }
+          /* ---------- existing layers ---------- */
           @keyframes schedPeakPulse {
             0%, 100% { transform: scale(1); opacity: 0.55; }
             50% { transform: scale(1.8); opacity: 0.05; }
@@ -411,7 +618,17 @@ export default function ScheduledValueChart() {
             .sched-breath-mid,
             .sched-chart-mount,
             .sched-chart-mount .recharts-area-area,
-            .sched-stat-tile {
+            .sched-stat-tile,
+            .sched-chart-mount .recharts-cartesian-grid-horizontal line,
+            .sched-chart-mount .recharts-cartesian-grid-vertical line,
+            .sched-chart-mount .recharts-cartesian-axis-tick,
+            .sched-chart-mount .recharts-area:nth-of-type(1) .recharts-area-curve,
+            .sched-reflection,
+            .sched-shockwave,
+            .sched-orb,
+            .sched-orb-1,
+            .sched-orb-2,
+            .sched-orb-3 {
               animation: none !important;
               opacity: 1 !important;
               transform: none !important;
@@ -426,7 +643,10 @@ export default function ScheduledValueChart() {
           <EmptyState period={period} />
         )}
         {!showEmpty && !showSkeleton && (
-          <ResponsiveContainer key={period} className="sched-chart-mount">
+          <ResponsiveContainer
+            className="sched-chart-mount"
+            data-bloom={bloomKey}
+          >
             <AreaChart
               data={chartData}
               margin={{ top: 12, right: 12, left: -12, bottom: 0 }}
@@ -437,6 +657,14 @@ export default function ScheduledValueChart() {
                   <stop offset="45%" stopColor="rgba(var(--biz-accent-rgb),0.18)" />
                   <stop offset="100%" stopColor="rgba(var(--biz-accent-rgb),0)" />
                 </linearGradient>
+                {/* Vertical fade mask for the mirrored reflection */}
+                <linearGradient id="schedReflectionGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%"  stopColor="#fff" stopOpacity="1" />
+                  <stop offset="80%" stopColor="#fff" stopOpacity="0" />
+                </linearGradient>
+                <mask id="schedReflectionMask" maskUnits="userSpaceOnUse">
+                  <rect x="0" y="0" width="100%" height="100%" fill="url(#schedReflectionGrad)" />
+                </mask>
                 <filter id="schedAuraBlur" x="-20%" y="-20%" width="140%" height="140%">
                   <feGaussianBlur stdDeviation="7" />
                 </filter>
@@ -619,7 +847,7 @@ export default function ScheduledValueChart() {
                 }}
               />
               {/* Comet draw-head + live cursor — uses real rendered points */}
-              <Customized component={CometOverlay as never} />
+              {!introPlayed && <Customized component={CometOverlay as never} />}
               {peakLabel && peak && peak.value > 0 && (
                 <ReferenceDot
                   x={peakLabel}
@@ -653,6 +881,21 @@ export default function ScheduledValueChart() {
               )}
             </AreaChart>
           </ResponsiveContainer>
+        )}
+        {!showEmpty && !showSkeleton && (
+          <ParticleLayer
+            containerRef={plotRef}
+            playKey={bloomKey}
+            peakIndex={peakIndex}
+            totalPoints={buckets.length}
+            enabled={!introPlayed}
+          />
+        )}
+        {!showEmpty && !showSkeleton && (
+          <TouchScrubLayer containerRef={plotRef} points={scrubPoints} />
+        )}
+        {!showEmpty && !showSkeleton && scrubPoints.length >= 2 && (
+          <HtmlReflection points={scrubPoints} bloomKey={bloomKey} />
         )}
       </div>
 
@@ -936,5 +1179,539 @@ function CometOverlay(props: CometOverlayProps) {
         />
       </g>
     </g>
+  );
+}
+
+// ============================================================
+// NEW: Reflection layer — mirrored copy of the core line under
+// the baseline with a vertical gradient mask + reduced opacity.
+// Rendered as an HTML sibling overlay (positioned absolute
+// against the plot container) so the mirrored geometry isn't
+// clipped by the recharts SVG height.
+// ============================================================
+function HtmlReflection({
+  points,
+  bloomKey,
+}: {
+  points: Array<{ x: number; y: number }>;
+  bloomKey: number;
+}) {
+  // Assumes the plot container is 220px tall (matches inline height above).
+  const H = 220;
+  const reflectionBand = 44; // px below baseline where the mirror lives
+  // Compute a width from the last point x + some margin
+  const maxX = Math.max(...points.map((p) => p.x));
+  const W = Math.max(1, Math.ceil(maxX + 24));
+  // Build path in source coords, then mirror via scale(1,-1) around baseline
+  const d = points
+    .map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`)
+    .join(" ");
+  return (
+    <div
+      key={bloomKey}
+      aria-hidden
+      className="sched-reflection"
+      style={{
+        position: "absolute",
+        left: 0,
+        right: 0,
+        bottom: 0,
+        height: reflectionBand,
+        overflow: "hidden",
+        pointerEvents: "none",
+        zIndex: 1,
+        // vertical fade so it kisses the baseline and fades out below
+        WebkitMaskImage:
+          "linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.25) 55%, rgba(0,0,0,0) 100%)",
+        maskImage:
+          "linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.25) 55%, rgba(0,0,0,0) 100%)",
+        filter: "blur(0.6px)",
+      }}
+    >
+      {/* SVG sized to full plot; we translate it up so baseline aligns,
+          then scaleY(-1) so the line silhouette drops downward into the band. */}
+      <svg
+        width={W}
+        height={H + reflectionBand}
+        viewBox={`0 0 ${W} ${H + reflectionBand}`}
+        style={{
+          display: "block",
+          transform: `translateY(-${H - reflectionBand}px) scaleY(-1)`,
+          transformOrigin: "center top",
+          opacity: 0.14,
+        }}
+      >
+        <path
+          d={d}
+          fill="none"
+          stroke="rgb(var(--biz-accent-rgb))"
+          strokeWidth={1.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </div>
+  );
+}
+
+// ============================================================
+// NEW: Odometer — each digit is a vertical strip that rolls
+// into place. Non-digit chars (commas, $) don't roll.
+// ============================================================
+function Odometer({
+  value,
+  fontSize = 12,
+  color = "hsl(220 8% 50%)",
+  fontWeight = 400,
+  playKey,
+}: {
+  value: number;
+  fontSize?: number;
+  color?: string;
+  fontWeight?: number;
+  // Increment to replay the roll (e.g. mount count, period toggle count)
+  playKey: number | string;
+}) {
+  const reduce = useRef(prefersReducedMotion()).current;
+  const str = fmtMoney(Math.round(value));
+  // Two-phase render so the transition actually fires: start at 0, then
+  // set the real digit on the next frame.
+  const [armed, setArmed] = useState(reduce);
+  useEffect(() => {
+    if (reduce) {
+      setArmed(true);
+      return;
+    }
+    setArmed(false);
+    let r2 = 0;
+    const r1 = requestAnimationFrame(() => {
+      r2 = requestAnimationFrame(() => setArmed(true));
+    });
+    return () => {
+      cancelAnimationFrame(r1);
+      if (r2) cancelAnimationFrame(r2);
+    };
+  }, [playKey, str, reduce]);
+  const chars = str.split("");
+  // Delay so the roll finishes ~1050ms after mount, in sync with line draw.
+  // Right-to-left stagger.
+  return (
+    <span
+      key={playKey}
+      className="tabular-nums"
+      style={{
+        display: "inline-flex",
+        alignItems: "flex-end",
+        lineHeight: 1,
+        fontSize,
+        color,
+        fontWeight,
+        fontVariantNumeric: "tabular-nums",
+      }}
+    >
+      {chars.map((ch, i) => {
+        if (!/\d/.test(ch)) {
+          return (
+            <span
+              key={`${i}-${ch}`}
+              style={{ display: "inline-block", lineHeight: 1 }}
+            >
+              {ch}
+            </span>
+          );
+        }
+        const digit = parseInt(ch, 10);
+        // From right: last digit rolls first.
+        const fromRight = chars.length - 1 - i;
+        const delay = reduce ? 0 : Math.min(600, fromRight * 55);
+        const target = armed ? digit : 0;
+        return (
+          <span
+            key={`${i}-slot`}
+            aria-hidden
+            style={{
+              display: "inline-block",
+              height: `${fontSize}px`,
+              lineHeight: `${fontSize}px`,
+              overflow: "hidden",
+              verticalAlign: "bottom",
+            }}
+          >
+            <span
+              style={{
+                display: "block",
+                transform: `translateY(-${target * fontSize}px)`,
+                transition: reduce
+                  ? "none"
+                  : `transform 700ms cubic-bezier(0.22, 1, 0.36, 1) ${delay}ms`,
+                willChange: "transform",
+              }}
+            >
+              {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+                <span
+                  key={n}
+                  style={{
+                    display: "block",
+                    height: `${fontSize}px`,
+                    lineHeight: `${fontSize}px`,
+                  }}
+                >
+                  {n}
+                </span>
+              ))}
+            </span>
+          </span>
+        );
+      })}
+      <span className="sr-only">{str}</span>
+    </span>
+  );
+}
+
+// ============================================================
+// NEW: Particle canvas — samples the rendered SVG core-line
+// path over the comet's 800ms timeline, emits spark particles
+// at the moving head, fires a radial burst at the busiest day.
+// Runs ONLY during the intro window (≤ 1600ms) + burst tail.
+// ============================================================
+function ParticleLayer({
+  containerRef,
+  playKey,
+  peakIndex,
+  totalPoints,
+  enabled,
+}: {
+  containerRef: React.RefObject<HTMLDivElement>;
+  playKey: number;
+  peakIndex: number;
+  totalPoints: number;
+  enabled: boolean;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [ring, setRing] = useState<{ x: number; y: number; ts: number } | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (!enabled) return;
+    if (prefersReducedMotion()) return;
+    const container = containerRef.current;
+    const canvas = canvasRef.current;
+    if (!container || !canvas) return;
+
+    let raf = 0;
+    let cleanupTimer = 0;
+
+    // Wait one frame for recharts to render its paths, then grab the CORE line.
+    const startId = requestAnimationFrame(() => {
+      const paths = container.querySelectorAll<SVGPathElement>(
+        ".recharts-area-curve",
+      );
+      const path = paths[paths.length - 1];
+      if (!path) return;
+      const totalLen = path.getTotalLength();
+      if (!(totalLen > 0)) return;
+
+      const rect = container.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+      canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+      canvas.style.width = `${rect.width}px`;
+      canvas.style.height = `${rect.height}px`;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.scale(dpr, dpr);
+
+      type P = {
+        x: number;
+        y: number;
+        vx: number;
+        vy: number;
+        life: number;
+        max: number;
+        size: number;
+        white: boolean;
+      };
+      const particles: P[] = [];
+      const startTs = performance.now();
+      const cometDur = 800;
+      const peakT = totalPoints > 1 ? peakIndex / (totalPoints - 1) : 0;
+      let burstFired = peakIndex < 0;
+      let lastFrame = startTs;
+
+      const tick = (now: number) => {
+        const elapsed = now - startTs;
+        const dt = Math.min(48, now - lastFrame);
+        lastFrame = now;
+
+        ctx.clearRect(0, 0, rect.width, rect.height);
+
+        // Emit while comet is traveling
+        if (elapsed <= cometDur) {
+          const t = elapsed / cometDur;
+          let head: DOMPoint | { x: number; y: number };
+          try {
+            head = path.getPointAtLength(t * totalLen);
+          } catch {
+            head = { x: 0, y: 0 };
+          }
+          const n = 2 + Math.floor(Math.random() * 3);
+          for (let i = 0; i < n && particles.length < 60; i++) {
+            particles.push({
+              x: head.x + (Math.random() - 0.5) * 2,
+              y: head.y + (Math.random() - 0.5) * 2,
+              vx: (Math.random() - 0.5) * 0.6 - 0.15, // slight drift back
+              vy: Math.random() * 0.25 + 0.05,
+              life: 0,
+              max: 500 + Math.random() * 200,
+              size: 1.5 + Math.random() * 1.5,
+              white: Math.random() < 0.45,
+            });
+          }
+
+          if (!burstFired && t >= peakT) {
+            burstFired = true;
+            let pk: DOMPoint | { x: number; y: number };
+            try {
+              pk = path.getPointAtLength(peakT * totalLen);
+            } catch {
+              pk = head;
+            }
+            setRing({ x: pk.x, y: pk.y, ts: performance.now() });
+            for (let i = 0; i < 12; i++) {
+              const a = (i / 12) * Math.PI * 2;
+              const speed = 1.1 + Math.random() * 0.6;
+              particles.push({
+                x: pk.x,
+                y: pk.y,
+                vx: Math.cos(a) * speed,
+                vy: Math.sin(a) * speed,
+                life: 0,
+                max: 550 + Math.random() * 200,
+                size: 1.8 + Math.random() * 1.6,
+                white: i % 3 === 0,
+              });
+            }
+          }
+        }
+
+        // Update + draw
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.life += dt;
+          p.vy += 0.02; // mild gravity
+          p.x += p.vx;
+          p.y += p.vy;
+          const alpha = Math.max(0, 1 - p.life / p.max);
+          if (alpha <= 0) {
+            particles.splice(i, 1);
+            continue;
+          }
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fillStyle = p.white
+            ? `rgba(255,255,255,${alpha.toFixed(3)})`
+            : `rgba(0,200,83,${alpha.toFixed(3)})`;
+          ctx.fill();
+        }
+
+        if (elapsed < 1650 || particles.length > 0) {
+          raf = requestAnimationFrame(tick);
+        } else {
+          ctx.clearRect(0, 0, rect.width, rect.height);
+        }
+      };
+      raf = requestAnimationFrame(tick);
+
+      // Hard safety stop after 2s
+      cleanupTimer = window.setTimeout(() => {
+        cancelAnimationFrame(raf);
+        ctx.clearRect(0, 0, rect.width, rect.height);
+      }, 2200);
+    });
+
+    return () => {
+      cancelAnimationFrame(startId);
+      cancelAnimationFrame(raf);
+      if (cleanupTimer) window.clearTimeout(cleanupTimer);
+      const ctx = canvas.getContext("2d");
+      if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+    };
+  }, [containerRef, playKey, peakIndex, totalPoints, enabled]);
+
+  // Auto-clear the ring after its CSS animation ends
+  useEffect(() => {
+    if (!ring) return;
+    const t = window.setTimeout(() => setRing(null), 550);
+    return () => window.clearTimeout(t);
+  }, [ring]);
+
+  if (!enabled) return null;
+  return (
+    <>
+      <canvas
+        ref={canvasRef}
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          zIndex: 3,
+        }}
+      />
+      {ring && (
+        <svg
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            pointerEvents: "none",
+            zIndex: 4,
+          }}
+        >
+          <circle
+            cx={ring.x}
+            cy={ring.y}
+            r={4}
+            fill="none"
+            stroke="rgb(var(--biz-accent-rgb))"
+            strokeWidth={2}
+            className="sched-shockwave"
+          />
+        </svg>
+      )}
+    </>
+  );
+}
+
+// ============================================================
+// NEW: Touch scrub beam + magnetic dot. Uses rAF only while
+// a pointer is actively pressed; cancels on release.
+// ============================================================
+function TouchScrubLayer({
+  containerRef,
+  points,
+}: {
+  containerRef: React.RefObject<HTMLDivElement>;
+  points: Array<{ x: number; y: number }>;
+}) {
+  const [beam, setBeam] = useState<{
+    x: number;
+    snapX: number;
+    snapY: number;
+  } | null>(null);
+  const activeRef = useRef(false);
+  const rafRef = useRef(0);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const reduce = prefersReducedMotion();
+
+    const move = (clientX: number, clientY: number) => {
+      const rect = container.getBoundingClientRect();
+      const x = clientX - rect.left;
+      // ignore touches clearly outside the plot vertically
+      if (clientY < rect.top - 20 || clientY > rect.bottom + 20) return;
+      // find nearest data point
+      let best = points[0];
+      let bestD = Infinity;
+      for (const p of points) {
+        const d = Math.abs(p.x - x);
+        if (d < bestD) {
+          bestD = d;
+          best = p;
+        }
+      }
+      if (!best) return;
+      setBeam({ x, snapX: best.x, snapY: best.y });
+    };
+
+    const onDown = (e: PointerEvent) => {
+      if (e.pointerType !== "touch" && e.pointerType !== "pen") return;
+      activeRef.current = true;
+      move(e.clientX, e.clientY);
+    };
+    const onMove = (e: PointerEvent) => {
+      if (!activeRef.current) return;
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => move(e.clientX, e.clientY));
+    };
+    const onUp = () => {
+      activeRef.current = false;
+      cancelAnimationFrame(rafRef.current);
+      setBeam(null);
+    };
+    container.addEventListener("pointerdown", onDown);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+    return () => {
+      container.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+      cancelAnimationFrame(rafRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [containerRef, points.length]);
+
+  if (!beam) return null;
+  const reduce = prefersReducedMotion();
+  return (
+    <svg
+      aria-hidden
+      style={{
+        position: "absolute",
+        inset: 0,
+        pointerEvents: "none",
+        zIndex: 5,
+      }}
+    >
+      <defs>
+        <linearGradient id="schedBeamGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="rgba(var(--biz-accent-rgb),0)" />
+          <stop offset="50%" stopColor="rgba(var(--biz-accent-rgb),0.55)" />
+          <stop offset="100%" stopColor="rgba(var(--biz-accent-rgb),0)" />
+        </linearGradient>
+      </defs>
+      {/* soft glow band */}
+      <rect
+        x={beam.x - 6}
+        y={0}
+        width={12}
+        height="100%"
+        fill="url(#schedBeamGrad)"
+        style={{
+          transition: reduce ? "none" : "x 120ms linear",
+          opacity: 0.9,
+        }}
+      />
+      {/* crisp 1px core */}
+      <line
+        x1={beam.x}
+        x2={beam.x}
+        y1={0}
+        y2="100%"
+        stroke="rgba(255,255,255,0.75)"
+        strokeWidth={1}
+        style={{ transition: reduce ? "none" : "x1 120ms linear, x2 120ms linear" }}
+      />
+      {/* magnetic snap dot */}
+      <circle
+        cx={beam.snapX}
+        cy={beam.snapY}
+        r={6}
+        fill="rgb(var(--biz-accent-rgb))"
+        stroke="rgba(255,255,255,0.95)"
+        strokeWidth={1.5}
+        style={{
+          transition: reduce
+            ? "none"
+            : "cx 160ms cubic-bezier(0.34, 1.56, 0.64, 1), cy 160ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+          filter: "drop-shadow(0 0 6px rgba(0,200,83,0.65))",
+        }}
+      />
+    </svg>
   );
 }
