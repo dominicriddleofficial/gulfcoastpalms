@@ -7,7 +7,6 @@ import { prefetchDashboardScheduledJobs } from "@/hooks/useDashboardScheduledJob
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
 import TodaySection from "@/components/platform/dashboard/TodaySection";
 import ReliabilitySection from "@/components/platform/dashboard/ReliabilitySection";
-import QuickActionsBar from "@/components/platform/dashboard/QuickActionsBar";
 import HeadlineSection from "@/components/platform/dashboard/HeadlineSection";
 // Lazy-load the recharts-backed chart so the ~382KB chart chunk doesn't
 // block the KPI cards from painting on dashboard open.
@@ -92,7 +91,6 @@ export default function PlatformDashboard() {
             <ScheduledValueChart />
           </Suspense>
           <TodaySection />
-          <QuickActionsBar />
           <ReliabilitySection />
         </div>
       </div>
