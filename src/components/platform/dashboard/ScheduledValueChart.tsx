@@ -894,9 +894,9 @@ function CometOverlay(props: CometOverlayProps) {
         fill="rgb(var(--biz-accent-rgb))"
         opacity={0.55}
         filter="url(#schedAuraBlur)"
-        style={{ animation: "schedCometFade 1100ms ease-out both" }}
+        style={{ animation: "schedCometFade 900ms ease-out both" }}
       >
-        <animateMotion dur="1000ms" repeatCount="1" fill="freeze" begin="0s">
+        <animateMotion dur="800ms" repeatCount="1" fill="freeze" begin="0s">
           <mpath href={`#${pathId}`} />
         </animateMotion>
       </circle>
@@ -904,9 +904,9 @@ function CometOverlay(props: CometOverlayProps) {
       <circle
         r={3}
         fill="rgba(255,255,255,0.95)"
-        style={{ animation: "schedCometFade 1100ms ease-out both" }}
+        style={{ animation: "schedCometFade 900ms ease-out both" }}
       >
-        <animateMotion dur="1000ms" repeatCount="1" fill="freeze" begin="0s">
+        <animateMotion dur="800ms" repeatCount="1" fill="freeze" begin="0s">
           <mpath href={`#${pathId}`} />
         </animateMotion>
       </circle>
@@ -915,7 +915,7 @@ function CometOverlay(props: CometOverlayProps) {
         style={{
           opacity: 0,
           animation:
-            "schedCometFade 600ms ease-out 950ms forwards, schedLiveCursor 2.4s ease-in-out 1550ms infinite",
+            "schedCometFade 500ms ease-out 800ms forwards, schedLiveCursor 2.4s ease-in-out 1400ms infinite",
         }}
       >
         <circle
