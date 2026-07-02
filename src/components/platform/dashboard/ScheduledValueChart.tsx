@@ -943,3 +943,497 @@ function CometOverlay(props: CometOverlayProps) {
     </g>
   );
 }
+
+// ============================================================
+// NEW: Reflection layer — mirrored copy of the core line under
+// the baseline with a vertical gradient mask + reduced opacity.
+// Rendered via <Customized> so it sits inside the recharts SVG
+// and has access to the plot offset (baseline y).
+// ============================================================
+type ReflectionOverlayProps = CometOverlayProps & {
+  offset?: { top?: number; left?: number; width?: number; height?: number };
+};
+function ReflectionOverlay(props: ReflectionOverlayProps) {
+  const items = props.formattedGraphicalItems ?? [];
+  const valueItems = items.filter((it) => {
+    const k = it.item?.props?.dataKey ?? it.props?.dataKey;
+    return k === "value";
+  });
+  const target = valueItems[valueItems.length - 1] ?? items[items.length - 1];
+  const points = target?.props?.points ?? [];
+  const cleaned = points.filter(
+    (p) => Number.isFinite(p?.x) && Number.isFinite(p?.y),
+  );
+  if (cleaned.length < 2) return null;
+  const offset = props.offset ?? {};
+  const top = offset.top ?? 0;
+  const height = offset.height ?? 0;
+  const baseline = top + height; // y of x-axis
+  const d = cleaned
+    .map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`)
+    .join(" ");
+  return (
+    <g
+      className="sched-reflection"
+      transform={`translate(0, ${baseline * 2}) scale(1, -1)`}
+      style={{ pointerEvents: "none" }}
+      mask="url(#schedReflectionMask)"
+    >
+      <path
+        d={d}
+        fill="none"
+        stroke="rgb(var(--biz-accent-rgb))"
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity={0.12}
+        filter="url(#schedMidBlur)"
+      />
+    </g>
+  );
+}
+
+// ============================================================
+// NEW: Odometer — each digit is a vertical strip that rolls
+// into place. Non-digit chars (commas, $) don't roll.
+// ============================================================
+function Odometer({
+  value,
+  fontSize = 12,
+  color = "hsl(220 8% 50%)",
+  fontWeight = 400,
+  playKey,
+}: {
+  value: number;
+  fontSize?: number;
+  color?: string;
+  fontWeight?: number;
+  // Increment to replay the roll (e.g. mount count, period toggle count)
+  playKey: number | string;
+}) {
+  const reduce = useRef(prefersReducedMotion()).current;
+  const str = fmtMoney(Math.round(value));
+  const chars = str.split("");
+  // Delay so the roll finishes ~1050ms after mount, in sync with line draw.
+  // Right-to-left stagger.
+  return (
+    <span
+      key={playKey}
+      className="tabular-nums"
+      style={{
+        display: "inline-flex",
+        alignItems: "flex-end",
+        lineHeight: 1,
+        fontSize,
+        color,
+        fontWeight,
+        fontVariantNumeric: "tabular-nums",
+      }}
+    >
+      {chars.map((ch, i) => {
+        if (!/\d/.test(ch)) {
+          return (
+            <span
+              key={`${i}-${ch}`}
+              style={{ display: "inline-block", lineHeight: 1 }}
+            >
+              {ch}
+            </span>
+          );
+        }
+        const digit = parseInt(ch, 10);
+        // From right: last digit rolls first.
+        const fromRight = chars.length - 1 - i;
+        const delay = reduce ? 0 : Math.min(600, fromRight * 55);
+        return (
+          <span
+            key={`${i}-slot`}
+            aria-hidden
+            style={{
+              display: "inline-block",
+              height: `${fontSize}px`,
+              lineHeight: `${fontSize}px`,
+              overflow: "hidden",
+              verticalAlign: "bottom",
+            }}
+          >
+            <span
+              style={{
+                display: "block",
+                transform: reduce
+                  ? `translateY(-${digit * fontSize}px)`
+                  : `translateY(-${digit * fontSize}px)`,
+                transition: reduce
+                  ? "none"
+                  : `transform 700ms cubic-bezier(0.22, 1, 0.36, 1) ${delay}ms`,
+                willChange: "transform",
+              }}
+            >
+              {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+                <span
+                  key={n}
+                  style={{
+                    display: "block",
+                    height: `${fontSize}px`,
+                    lineHeight: `${fontSize}px`,
+                  }}
+                >
+                  {n}
+                </span>
+              ))}
+            </span>
+          </span>
+        );
+      })}
+      <span className="sr-only">{str}</span>
+    </span>
+  );
+}
+
+// ============================================================
+// NEW: Particle canvas — samples the rendered SVG core-line
+// path over the comet's 800ms timeline, emits spark particles
+// at the moving head, fires a radial burst at the busiest day.
+// Runs ONLY during the intro window (≤ 1600ms) + burst tail.
+// ============================================================
+function ParticleLayer({
+  containerRef,
+  playKey,
+  peakIndex,
+  totalPoints,
+  enabled,
+}: {
+  containerRef: React.RefObject<HTMLDivElement>;
+  playKey: number;
+  peakIndex: number;
+  totalPoints: number;
+  enabled: boolean;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [ring, setRing] = useState<{ x: number; y: number; ts: number } | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (!enabled) return;
+    if (prefersReducedMotion()) return;
+    const container = containerRef.current;
+    const canvas = canvasRef.current;
+    if (!container || !canvas) return;
+
+    let raf = 0;
+    let cleanupTimer = 0;
+
+    // Wait one frame for recharts to render its paths, then grab the CORE line.
+    const startId = requestAnimationFrame(() => {
+      const paths = container.querySelectorAll<SVGPathElement>(
+        ".recharts-area-curve",
+      );
+      const path = paths[paths.length - 1];
+      if (!path) return;
+      const totalLen = path.getTotalLength();
+      if (!(totalLen > 0)) return;
+
+      const rect = container.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+      canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+      canvas.style.width = `${rect.width}px`;
+      canvas.style.height = `${rect.height}px`;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.scale(dpr, dpr);
+
+      type P = {
+        x: number;
+        y: number;
+        vx: number;
+        vy: number;
+        life: number;
+        max: number;
+        size: number;
+        white: boolean;
+      };
+      const particles: P[] = [];
+      const startTs = performance.now();
+      const cometDur = 800;
+      const peakT = totalPoints > 1 ? peakIndex / (totalPoints - 1) : 0;
+      let burstFired = peakIndex < 0;
+      let lastFrame = startTs;
+
+      const tick = (now: number) => {
+        const elapsed = now - startTs;
+        const dt = Math.min(48, now - lastFrame);
+        lastFrame = now;
+
+        ctx.clearRect(0, 0, rect.width, rect.height);
+
+        // Emit while comet is traveling
+        if (elapsed <= cometDur) {
+          const t = elapsed / cometDur;
+          let head: DOMPoint | { x: number; y: number };
+          try {
+            head = path.getPointAtLength(t * totalLen);
+          } catch {
+            head = { x: 0, y: 0 };
+          }
+          const n = 2 + Math.floor(Math.random() * 3);
+          for (let i = 0; i < n && particles.length < 60; i++) {
+            particles.push({
+              x: head.x + (Math.random() - 0.5) * 2,
+              y: head.y + (Math.random() - 0.5) * 2,
+              vx: (Math.random() - 0.5) * 0.6 - 0.15, // slight drift back
+              vy: Math.random() * 0.25 + 0.05,
+              life: 0,
+              max: 500 + Math.random() * 200,
+              size: 1.5 + Math.random() * 1.5,
+              white: Math.random() < 0.45,
+            });
+          }
+
+          if (!burstFired && t >= peakT) {
+            burstFired = true;
+            let pk: DOMPoint | { x: number; y: number };
+            try {
+              pk = path.getPointAtLength(peakT * totalLen);
+            } catch {
+              pk = head;
+            }
+            setRing({ x: pk.x, y: pk.y, ts: performance.now() });
+            for (let i = 0; i < 12; i++) {
+              const a = (i / 12) * Math.PI * 2;
+              const speed = 1.1 + Math.random() * 0.6;
+              particles.push({
+                x: pk.x,
+                y: pk.y,
+                vx: Math.cos(a) * speed,
+                vy: Math.sin(a) * speed,
+                life: 0,
+                max: 550 + Math.random() * 200,
+                size: 1.8 + Math.random() * 1.6,
+                white: i % 3 === 0,
+              });
+            }
+          }
+        }
+
+        // Update + draw
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.life += dt;
+          p.vy += 0.02; // mild gravity
+          p.x += p.vx;
+          p.y += p.vy;
+          const alpha = Math.max(0, 1 - p.life / p.max);
+          if (alpha <= 0) {
+            particles.splice(i, 1);
+            continue;
+          }
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fillStyle = p.white
+            ? `rgba(255,255,255,${alpha.toFixed(3)})`
+            : `rgba(0,200,83,${alpha.toFixed(3)})`;
+          ctx.fill();
+        }
+
+        if (elapsed < 1650 || particles.length > 0) {
+          raf = requestAnimationFrame(tick);
+        } else {
+          ctx.clearRect(0, 0, rect.width, rect.height);
+        }
+      };
+      raf = requestAnimationFrame(tick);
+
+      // Hard safety stop after 2s
+      cleanupTimer = window.setTimeout(() => {
+        cancelAnimationFrame(raf);
+        ctx.clearRect(0, 0, rect.width, rect.height);
+      }, 2200);
+    });
+
+    return () => {
+      cancelAnimationFrame(startId);
+      cancelAnimationFrame(raf);
+      if (cleanupTimer) window.clearTimeout(cleanupTimer);
+      const ctx = canvas.getContext("2d");
+      if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+    };
+  }, [containerRef, playKey, peakIndex, totalPoints, enabled]);
+
+  // Auto-clear the ring after its CSS animation ends
+  useEffect(() => {
+    if (!ring) return;
+    const t = window.setTimeout(() => setRing(null), 550);
+    return () => window.clearTimeout(t);
+  }, [ring]);
+
+  if (!enabled) return null;
+  return (
+    <>
+      <canvas
+        ref={canvasRef}
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          zIndex: 3,
+        }}
+      />
+      {ring && (
+        <svg
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            pointerEvents: "none",
+            zIndex: 4,
+          }}
+        >
+          <circle
+            cx={ring.x}
+            cy={ring.y}
+            r={4}
+            fill="none"
+            stroke="rgb(var(--biz-accent-rgb))"
+            strokeWidth={2}
+            className="sched-shockwave"
+          />
+        </svg>
+      )}
+    </>
+  );
+}
+
+// ============================================================
+// NEW: Touch scrub beam + magnetic dot. Uses rAF only while
+// a pointer is actively pressed; cancels on release.
+// ============================================================
+function TouchScrubLayer({
+  containerRef,
+  points,
+}: {
+  containerRef: React.RefObject<HTMLDivElement>;
+  points: Array<{ x: number; y: number }>;
+}) {
+  const [beam, setBeam] = useState<{
+    x: number;
+    snapX: number;
+    snapY: number;
+  } | null>(null);
+  const activeRef = useRef(false);
+  const rafRef = useRef(0);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const reduce = prefersReducedMotion();
+
+    const move = (clientX: number, clientY: number) => {
+      const rect = container.getBoundingClientRect();
+      const x = clientX - rect.left;
+      // ignore touches clearly outside the plot vertically
+      if (clientY < rect.top - 20 || clientY > rect.bottom + 20) return;
+      // find nearest data point
+      let best = points[0];
+      let bestD = Infinity;
+      for (const p of points) {
+        const d = Math.abs(p.x - x);
+        if (d < bestD) {
+          bestD = d;
+          best = p;
+        }
+      }
+      if (!best) return;
+      setBeam({ x, snapX: best.x, snapY: best.y });
+    };
+
+    const onDown = (e: PointerEvent) => {
+      if (e.pointerType !== "touch" && e.pointerType !== "pen") return;
+      activeRef.current = true;
+      move(e.clientX, e.clientY);
+    };
+    const onMove = (e: PointerEvent) => {
+      if (!activeRef.current) return;
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => move(e.clientX, e.clientY));
+    };
+    const onUp = () => {
+      activeRef.current = false;
+      cancelAnimationFrame(rafRef.current);
+      setBeam(null);
+    };
+    container.addEventListener("pointerdown", onDown);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+    return () => {
+      container.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+      cancelAnimationFrame(rafRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [containerRef, points.length]);
+
+  if (!beam) return null;
+  const reduce = prefersReducedMotion();
+  return (
+    <svg
+      aria-hidden
+      style={{
+        position: "absolute",
+        inset: 0,
+        pointerEvents: "none",
+        zIndex: 5,
+      }}
+    >
+      <defs>
+        <linearGradient id="schedBeamGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="rgba(var(--biz-accent-rgb),0)" />
+          <stop offset="50%" stopColor="rgba(var(--biz-accent-rgb),0.55)" />
+          <stop offset="100%" stopColor="rgba(var(--biz-accent-rgb),0)" />
+        </linearGradient>
+      </defs>
+      {/* soft glow band */}
+      <rect
+        x={beam.x - 6}
+        y={0}
+        width={12}
+        height="100%"
+        fill="url(#schedBeamGrad)"
+        style={{
+          transition: reduce ? "none" : "x 120ms linear",
+          opacity: 0.9,
+        }}
+      />
+      {/* crisp 1px core */}
+      <line
+        x1={beam.x}
+        x2={beam.x}
+        y1={0}
+        y2="100%"
+        stroke="rgba(255,255,255,0.75)"
+        strokeWidth={1}
+        style={{ transition: reduce ? "none" : "x1 120ms linear, x2 120ms linear" }}
+      />
+      {/* magnetic snap dot */}
+      <circle
+        cx={beam.snapX}
+        cy={beam.snapY}
+        r={6}
+        fill="rgb(var(--biz-accent-rgb))"
+        stroke="rgba(255,255,255,0.95)"
+        strokeWidth={1.5}
+        style={{
+          transition: reduce
+            ? "none"
+            : "cx 160ms cubic-bezier(0.34, 1.56, 0.64, 1), cy 160ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+          filter: "drop-shadow(0 0 6px rgba(0,200,83,0.65))",
+        }}
+      />
+    </svg>
+  );
+}
