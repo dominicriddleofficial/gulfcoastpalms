@@ -77,7 +77,7 @@ function useCountUp(value: number, resetKey: string | number): number {
       setN(to);
       return;
     }
-    const dur = 850;
+    const dur = 800;
     const startTs = performance.now();
     let raf = 0;
     const tick = (now: number) => {
@@ -354,12 +354,33 @@ export default function ScheduledValueChart() {
             transform-box: fill-box;
             animation: schedPeakPulse 2s ease-in-out infinite;
           }
+          @keyframes schedTodayPulse {
+            0%, 100% { transform: scale(1); opacity: 0.45; }
+            50% { transform: scale(2.2); opacity: 0; }
+          }
+          .sched-today-pulse {
+            transform-origin: center;
+            transform-box: fill-box;
+            animation: schedTodayPulse 2.4s ease-in-out infinite;
+          }
           @keyframes schedAreaFade {
             from { opacity: 0; }
             to { opacity: 1; }
           }
           .sched-chart-mount {
             animation: schedAreaFade 900ms ease-out both;
+          }
+          /* Area gradient fade-in: reveals AFTER the line finishes drawing (~800ms) */
+          .sched-chart-mount .recharts-area-area {
+            animation: schedAreaFade 320ms ease-out 800ms both;
+          }
+          @keyframes schedTileRise {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+          .sched-stat-tile {
+            opacity: 0;
+            animation: schedTileRise 420ms ease-out both;
           }
           @keyframes schedBreath {
             0%, 100% { opacity: 0.82; }
@@ -376,6 +397,28 @@ export default function ScheduledValueChart() {
           @keyframes schedLiveCursor {
             0%, 100% { opacity: 0.85; }
             50% { opacity: 1; }
+          }
+          /* Smooth Recharts tooltip movement */
+          .sched-chart-mount .recharts-tooltip-wrapper {
+            transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
+                        left 160ms cubic-bezier(0.22, 1, 0.36, 1),
+                        top 160ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .sched-peak-pulse,
+            .sched-today-pulse,
+            .sched-breath-aura,
+            .sched-breath-mid,
+            .sched-chart-mount,
+            .sched-chart-mount .recharts-area-area,
+            .sched-stat-tile {
+              animation: none !important;
+              opacity: 1 !important;
+              transform: none !important;
+            }
+            .sched-chart-mount .recharts-tooltip-wrapper {
+              transition: none !important;
+            }
           }
         `}</style>
         {showSkeleton && <ChartSkeleton />}
@@ -467,6 +510,8 @@ export default function ScheduledValueChart() {
               <Tooltip
                 cursor={{ stroke: "rgba(var(--biz-accent-rgb),0.35)", strokeWidth: 1 }}
                 content={<ChartTooltip period={period} />}
+                animationDuration={180}
+                animationEasing="ease-out"
               />
               {todayBucket && (
                 <ReferenceLine
@@ -478,6 +523,29 @@ export default function ScheduledValueChart() {
                     position: "top",
                     fill: "rgba(var(--biz-accent-rgb),0.95)",
                     fontSize: 10,
+                  }}
+                />
+              )}
+              {todayBucket && (
+                <ReferenceDot
+                  x={todayBucket.label}
+                  y={todayBucket.value}
+                  r={4}
+                  isFront
+                  shape={(props: { cx?: number; cy?: number }) => {
+                    const cx = props.cx ?? 0;
+                    const cy = props.cy ?? 0;
+                    return (
+                      <g>
+                        <circle
+                          cx={cx}
+                          cy={cy}
+                          r={10}
+                          fill="rgb(var(--biz-accent-rgb))"
+                          className="sched-today-pulse"
+                        />
+                      </g>
+                    );
                   }}
                 />
               )}
@@ -505,7 +573,7 @@ export default function ScheduledValueChart() {
                 strokeWidth={10}
                 fill="none"
                 filter="url(#schedAuraBlur)"
-                animationDuration={1000}
+                animationDuration={800}
                 animationEasing="ease-out"
                 isAnimationActive
                 dot={false}
@@ -521,7 +589,7 @@ export default function ScheduledValueChart() {
                 strokeWidth={4}
                 fill="url(#schedValGrad)"
                 filter="url(#schedMidBlur)"
-                animationDuration={1000}
+                animationDuration={800}
                 animationEasing="ease-out"
                 isAnimationActive
                 dot={false}
@@ -539,7 +607,7 @@ export default function ScheduledValueChart() {
                 strokeLinejoin="round"
                 fill="none"
                 filter="url(#schedCoreGlow)"
-                animationDuration={1000}
+                animationDuration={800}
                 animationEasing="ease-out"
                 isAnimationActive
                 dot={false}
