@@ -941,6 +941,14 @@ function JobDetail({
                 <Pencil className="w-4 h-4" />
                 Edit visit
               </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setReviewOpen(true)}
+                disabled={!phone}
+                className="gap-2"
+              >
+                <Star className="w-4 h-4" />
+                Send review message
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => setDeleteOpen(true)}
