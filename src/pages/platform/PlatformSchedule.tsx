@@ -1083,6 +1083,20 @@ function JobDetail({
             </button>
           </>
         )}
+        {/* Send Review Message — always visible; prominent when the visit is complete */}
+        <button
+          type="button"
+          disabled={!phone}
+          onClick={() => setReviewOpen(true)}
+          className={
+            lifeStatus === "complete"
+              ? "w-full flex items-center justify-center gap-2 min-h-[56px] rounded-2xl bg-primary text-primary-foreground font-body font-bold text-[16px] hover:bg-primary/90 transition-colors disabled:opacity-50"
+              : "w-full flex items-center justify-center gap-2 min-h-[52px] rounded-2xl border border-border bg-secondary/40 text-foreground font-body font-semibold text-[15px] hover:bg-secondary/70 transition-colors disabled:opacity-50"
+          }
+        >
+          <Star className={lifeStatus === "complete" ? "w-5 h-5" : "w-4 h-4"} />
+          {phone ? "Send Review Message" : "No phone for review"}
+        </button>
       </div>
 
       {/* Tabs */}
