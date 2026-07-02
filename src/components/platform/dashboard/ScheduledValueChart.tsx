@@ -894,6 +894,9 @@ export default function ScheduledValueChart() {
         {!showEmpty && !showSkeleton && (
           <TouchScrubLayer containerRef={plotRef} points={scrubPoints} />
         )}
+        {!showEmpty && !showSkeleton && scrubPoints.length >= 2 && (
+          <HtmlReflection points={scrubPoints} bloomKey={bloomKey} />
+        )}
       </div>
 
       {isOwner && (
