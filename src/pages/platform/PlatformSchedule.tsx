@@ -1278,6 +1278,14 @@ function JobDetail({
         onConfirm={(smsSent) => doAdvance("on_my_way", smsSent)}
       />
 
+      <ReviewMessageSheet
+        open={reviewOpen}
+        onClose={() => setReviewOpen(false)}
+        customerName={job.client_name}
+        customerPhone={job.client_phone}
+        businessId={job.business_id ?? businessId}
+      />
+
       <CompleteVisitSheet
         open={completeOpen}
         onClose={() => setCompleteOpen(false)}
