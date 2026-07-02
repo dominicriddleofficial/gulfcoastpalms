@@ -700,8 +700,6 @@ export default function ScheduledValueChart() {
                   />
                 </linearGradient>
               </defs>
-              {/* Lake reflection under the baseline */}
-              <Customized component={ReflectionOverlay as never} />
               <CartesianGrid
                 strokeDasharray="2 4"
                 stroke="rgba(255,255,255,0.05)"
