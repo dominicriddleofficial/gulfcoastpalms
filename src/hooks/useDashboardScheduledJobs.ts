@@ -48,8 +48,6 @@ export type UseDashboardScheduledJobsOptions = {
   enabled?: boolean;
 };
 
-const EXCLUDED_STATUSES = new Set(["archived", "canceled", "cancelled", "deleted"]);
-
 type ScheduleJobsRpcRow = {
   id: string;
   source: string | null;
