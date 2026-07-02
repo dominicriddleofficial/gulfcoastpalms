@@ -50,94 +50,31 @@ export type UseDashboardScheduledJobsOptions = {
 
 const EXCLUDED_STATUSES = new Set(["archived", "canceled", "cancelled", "deleted"]);
 
-type PlatformCustomerRow = {
-  display_name: string | null;
-  phone: string | null;
-  email: string | null;
-};
-
-type PlatformPropertyRow = {
-  address_1: string | null;
-  address_2: string | null;
-  city: string | null;
-  state: string | null;
-  zip: string | null;
-};
-
-type PlatformJobShape = {
+type ScheduleJobsRpcRow = {
   id: string;
-  business_id: string | null;
-  customer_id: string | null;
-  property_id: string | null;
-  job_number: string | null;
-  title: string | null;
-  total: number | string | null;
-  status: string | null;
   source: string | null;
-  source_system: string | null;
-  source_record_id: string | null;
-  internal_notes: string | null;
-  deleted_at: string | null;
-  scheduled_start: string | null;
-  scheduled_end: string | null;
-  customer: PlatformCustomerRow | null;
-  property: PlatformPropertyRow | null;
-};
-
-type PlatformVisitRow = {
-  id: string;
-  business_id: string | null;
-  property_id: string | null;
-  title: string | null;
-  scheduled_date: string | null;
-  scheduled_start_time: string | null;
-  scheduled_end_time: string | null;
-  status: string | null;
-  internal_notes: string | null;
-  job: PlatformJobShape | null;
-};
-
-type JobberJobRow = {
-  id: string;
   jobber_id: string | null;
+  visit_id: string | null;
+  job_id: string | null;
+  customer_email: string | null;
+  address: string | null;
   title: string | null;
-  status: string | null;
-  scheduled_start: string | null;
-  scheduled_end: string | null;
-  client_id: string | null;
-  property_id: string | null;
+  customer_id: string | null;
   client_name: string | null;
   client_phone: string | null;
   property_address: string | null;
-  assigned_employee_names: string[] | null;
-  service_items: unknown;
-  internal_notes: string | null;
-  job_number: string | null;
-  total_amount: number | string | null;
+  status: string | null;
   visit_status: string | null;
+  scheduled_start: string;
+  scheduled_end: string | null;
+  total_amount: number | string | null;
+  job_number: string | null;
+  internal_notes: string | null;
+  assigned_employee_names: string[] | null;
   business_id: string | null;
+  property_id: string | null;
+  service_items: unknown;
 };
-
-type JobberClientRow = {
-  id: string;
-  display_name: string | null;
-  email: string | null;
-  phone: string | null;
-};
-
-type JobberPropertyRow = {
-  id: string;
-  street1: string | null;
-  street2: string | null;
-  city: string | null;
-  state: string | null;
-  zip: string | null;
-};
-
-function combineDateTime(date: string, time: string | null): string {
-  const t = time ?? "00:00:00";
-  return new Date(`${date}T${t}`).toISOString();
-}
 
 function toAmount(value: number | string | null): number {
   const n = Number(value ?? 0);
@@ -146,101 +83,6 @@ function toAmount(value: number | string | null): number {
 
 function cleanStatus(value: string | null): string {
   return (value ?? "scheduled").toLowerCase();
-}
-
-function isExcludedStatus(value: string | null): boolean {
-  return EXCLUDED_STATUSES.has(cleanStatus(value));
-}
-
-function platformAddress(property: PlatformPropertyRow | null): string | null {
-  if (!property) return null;
-  const cityStateZip = [property.city, property.state, property.zip].filter(Boolean).join(" ");
-  return [property.address_1, property.address_2, cityStateZip].filter(Boolean).join(", ") || null;
-}
-
-function jobberAddress(property: JobberPropertyRow | null): string | null {
-  if (!property) return null;
-  const cityStateZip = [property.city, property.state, property.zip].filter(Boolean).join(" ");
-  return [property.street1, property.street2, cityStateZip].filter(Boolean).join(", ") || null;
-}
-
-function isJobberImport(job: PlatformJobShape): boolean {
-  return job.source_system === "jobber" || job.source === "jobber" || Boolean(job.source_record_id);
-}
-
-function jobberImportId(job: PlatformJobShape): string | null {
-  return isJobberImport(job) ? job.source_record_id : null;
-}
-
-function buildPlatformItem(
-  job: PlatformJobShape,
-  visit: PlatformVisitRow | null,
-  importedJobberIds: Set<string>,
-  jobberFallback?: JobberJobRow | null,
-  jobberClient?: JobberClientRow | null,
-  jobberProperty?: JobberPropertyRow | null,
-): DashboardScheduledJob | null {
-  if (job.deleted_at || isExcludedStatus(job.status) || isExcludedStatus(visit?.status ?? null)) return null;
-
-  const scheduledDate = visit?.scheduled_date ?? job.scheduled_start;
-  if (!scheduledDate) return null;
-
-  const localDate = scheduledDate.slice(0, 10);
-  const scheduledStart = visit
-    ? combineDateTime(localDate, visit.scheduled_start_time)
-    : combineDateTime(localDate, null);
-  const scheduledEnd = visit?.scheduled_end_time
-    ? combineDateTime(localDate, visit.scheduled_end_time)
-    : job.scheduled_end
-      ? combineDateTime(job.scheduled_end.slice(0, 10), null)
-      : null;
-
-  const externalId = jobberImportId(job);
-  if (externalId) importedJobberIds.add(externalId);
-
-  const source: NormalizedScheduleSource = externalId ? "jobber_import" : "platform";
-  const address =
-    platformAddress(job.property) ??
-    jobberFallback?.property_address ??
-    jobberAddress(jobberProperty ?? null);
-  const amount = toAmount(job.total);
-  const visitStatus = cleanStatus(visit?.status ?? null);
-  const customerName =
-    job.customer?.display_name ?? jobberFallback?.client_name ?? jobberClient?.display_name ?? null;
-  const customerPhone =
-    job.customer?.phone ?? jobberFallback?.client_phone ?? jobberClient?.phone ?? null;
-  const customerEmail = job.customer?.email ?? jobberClient?.email ?? null;
-
-  return {
-    id: visit?.id ?? job.id,
-    source,
-    job_id: job.id,
-    visit_id: visit?.id ?? null,
-    jobber_id: externalId,
-    dedupe_key: externalId ? `jobber:${externalId}` : `platform:${job.id}:${visit?.id ?? "job"}`,
-    job_number: job.job_number,
-    title: visit?.title ?? job.title,
-    customer_id: job.customer_id,
-    customer_name: customerName,
-    customer_phone: customerPhone,
-    customer_email: customerEmail,
-    address,
-    scheduled_start: scheduledStart,
-    scheduled_end: scheduledEnd,
-    status: cleanStatus(job.status),
-    total_amount: amount,
-    business_id: visit?.business_id ?? job.business_id,
-    client_name: customerName,
-    client_phone: customerPhone,
-    property_address: address,
-    visit_status: visitStatus,
-    scheduled_local_date: localDate,
-    amount_counted: amount,
-    internal_notes: visit?.internal_notes ?? job.internal_notes,
-    assigned_employee_names: jobberFallback?.assigned_employee_names ?? null,
-    property_id: visit?.property_id ?? job.property_id ?? null,
-    service_items: jobberFallback?.service_items ?? null,
-  };
 }
 
 export function summarizeDashboardScheduledJobs(
