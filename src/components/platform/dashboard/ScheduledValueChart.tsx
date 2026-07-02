@@ -748,7 +748,7 @@ function StatsStrip({
   }
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-      {items.map((it) => {
+      {items.map((it, idx) => {
         const isDelta = it.label.startsWith("vs ");
         const valueColor = it.tone === "accent"
           ? "rgb(var(--biz-accent-rgb))"
@@ -760,10 +760,11 @@ function StatsStrip({
         return (
           <div
             key={it.label}
-            className="rounded-xl px-3 py-2"
+            className="rounded-xl px-3 py-2 sched-stat-tile"
             style={{
               background: "rgba(255,255,255,0.03)",
               border: "1px solid rgba(var(--biz-accent-rgb),0.10)",
+              animationDelay: `${idx * 80}ms`,
             }}
           >
             <div
