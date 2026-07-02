@@ -1185,49 +1185,72 @@ function CometOverlay(props: CometOverlayProps) {
 // ============================================================
 // NEW: Reflection layer — mirrored copy of the core line under
 // the baseline with a vertical gradient mask + reduced opacity.
-// Rendered via <Customized> so it sits inside the recharts SVG
-// and has access to the plot offset (baseline y).
+// Rendered as an HTML sibling overlay (positioned absolute
+// against the plot container) so the mirrored geometry isn't
+// clipped by the recharts SVG height.
 // ============================================================
-type ReflectionOverlayProps = CometOverlayProps & {
-  offset?: { top?: number; left?: number; width?: number; height?: number };
-};
-function ReflectionOverlay(props: ReflectionOverlayProps) {
-  const items = props.formattedGraphicalItems ?? [];
-  const valueItems = items.filter((it) => {
-    const k = it.item?.props?.dataKey ?? it.props?.dataKey;
-    return k === "value";
-  });
-  const target = valueItems[valueItems.length - 1] ?? items[items.length - 1];
-  const points = target?.props?.points ?? [];
-  const cleaned = points.filter(
-    (p) => Number.isFinite(p?.x) && Number.isFinite(p?.y),
-  );
-  if (cleaned.length < 2) return null;
-  const offset = props.offset ?? {};
-  const top = offset.top ?? 0;
-  const height = offset.height ?? 0;
-  const baseline = top + height; // y of x-axis
-  const d = cleaned
-    .map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`)
+function HtmlReflection({
+  points,
+  bloomKey,
+}: {
+  points: Array<{ x: number; y: number }>;
+  bloomKey: number;
+}) {
+  // Assumes the plot container is 220px tall (matches inline height above).
+  const H = 220;
+  const reflectionBand = 44; // px below baseline where the mirror lives
+  // Compute a width from the last point x + some margin
+  const maxX = Math.max(...points.map((p) => p.x));
+  const W = Math.max(1, Math.ceil(maxX + 24));
+  // Build path in source coords, then mirror via scale(1,-1) around baseline
+  const d = points
+    .map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`)
     .join(" ");
   return (
-    <g
+    <div
+      key={bloomKey}
+      aria-hidden
       className="sched-reflection"
-      transform={`translate(0, ${baseline * 2}) scale(1, -1)`}
-      style={{ pointerEvents: "none" }}
-      mask="url(#schedReflectionMask)"
+      style={{
+        position: "absolute",
+        left: 0,
+        right: 0,
+        bottom: 0,
+        height: reflectionBand,
+        overflow: "hidden",
+        pointerEvents: "none",
+        zIndex: 1,
+        // vertical fade so it kisses the baseline and fades out below
+        WebkitMaskImage:
+          "linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.25) 55%, rgba(0,0,0,0) 100%)",
+        maskImage:
+          "linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.25) 55%, rgba(0,0,0,0) 100%)",
+        filter: "blur(0.6px)",
+      }}
     >
-      <path
-        d={d}
-        fill="none"
-        stroke="rgb(var(--biz-accent-rgb))"
-        strokeWidth={1.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity={0.12}
-        filter="url(#schedMidBlur)"
-      />
-    </g>
+      {/* SVG sized to full plot; we translate it up so baseline aligns,
+          then scaleY(-1) so the line silhouette drops downward into the band. */}
+      <svg
+        width={W}
+        height={H + reflectionBand}
+        viewBox={`0 0 ${W} ${H + reflectionBand}`}
+        style={{
+          display: "block",
+          transform: `translateY(-${H - reflectionBand}px) scaleY(-1)`,
+          transformOrigin: "center top",
+          opacity: 0.14,
+        }}
+      >
+        <path
+          d={d}
+          fill="none"
+          stroke="rgb(var(--biz-accent-rgb))"
+          strokeWidth={1.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </div>
   );
 }
 
