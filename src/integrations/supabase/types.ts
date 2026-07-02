@@ -6361,6 +6361,7 @@ export type Database = {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
       }
+      email_queue_dispatch: { Args: never; Returns: undefined }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
@@ -6529,6 +6530,28 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      get_jobs_list: {
+        Args: { p_business_id: string }
+        Returns: {
+          assigned_employee_names: string[]
+          business_id: string
+          client_name: string
+          client_phone: string
+          id: string
+          internal_notes: string
+          job_number: string
+          jobber_id: string
+          missing_address: boolean
+          property_address: string
+          scheduled_end: string
+          scheduled_start: string
+          source: string
+          status: string
+          title: string
+          total_amount: number
+          visit_status: string
+        }[]
       }
       get_schedule_jobs: {
         Args: { p_business_id: string; p_end: string; p_start: string }
