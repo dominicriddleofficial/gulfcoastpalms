@@ -115,6 +115,25 @@ export default function ScheduledValueChart() {
   const [period, setPeriod] = useState<Period>("week");
   const ready = !!selectedBusinessId;
 
+  // Intro / morph choreography ---------------------------------
+  // Mount count drives odometer replay + intro-only layers.
+  const mountedAtRef = useRef<number>(0);
+  if (mountedAtRef.current === 0) mountedAtRef.current = performance.now();
+  const [introPlayed, setIntroPlayed] = useState<boolean>(() =>
+    prefersReducedMotion(),
+  );
+  const [toggleTick, setToggleTick] = useState(0);
+  const plotRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (introPlayed) return;
+    const t = window.setTimeout(() => setIntroPlayed(true), 1600);
+    return () => window.clearTimeout(t);
+  }, [introPlayed]);
+
+  // Bloom pulse (0..1) — 1 on mount, bumped on period toggle
+  const [bloomKey, setBloomKey] = useState(0);
+
   const today = useMemo(() => new Date(), []);
   const { start, end, prevStart, prevEnd } = useMemo(() => {
     if (period === "week") {
@@ -272,6 +291,9 @@ export default function ScheduledValueChart() {
   const peakLabel = peak && peak.value > 0 ? peak.label : null;
   const todayKey = format(today, "yyyy-MM-dd");
   const todayBucket = buckets.find((b) => b.date === todayKey);
+  const peakIndex = peak
+    ? buckets.findIndex((b) => b.date === peak.date && peak.value > 0)
+    : -1;
 
   const toggle = (
     <div
@@ -291,7 +313,12 @@ export default function ScheduledValueChart() {
             type="button"
             role="tab"
             aria-selected={active}
-            onClick={() => setPeriod(p)}
+            onClick={() => {
+              if (period === p) return;
+              setPeriod(p);
+              setToggleTick((n) => n + 1);
+              setBloomKey((n) => n + 1);
+            }}
             className="font-body uppercase tracking-wider transition-colors"
             style={{
               minHeight: 32,
@@ -315,8 +342,70 @@ export default function ScheduledValueChart() {
   const showEmpty = !isLoading && visibleGraphTotal === 0;
   const showSkeleton = isLoading && buckets.length === 0;
 
+  // Odometer subtitle — headline total rolls into place
+  const subtitleNode = (
+    <span
+      className="font-body"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 4,
+        fontSize: 11,
+        color: "hsl(220 8% 50%)",
+      }}
+    >
+      {period === "week" ? "This week" : "This month"} · $
+      <Odometer
+        value={Math.max(0, visibleGraphTotal)}
+        fontSize={11}
+        color="hsl(220 8% 50%)"
+        playKey={`${toggleTick}-${period}`}
+      />{" "}
+      total
+    </span>
+  );
+
+  // Points for touch-scrub (from the DOM after mount)
+  const [scrubPoints, setScrubPoints] = useState<Array<{ x: number; y: number }>>(
+    [],
+  );
+  useEffect(() => {
+    if (showEmpty || showSkeleton) {
+      setScrubPoints([]);
+      return;
+    }
+    const container = plotRef.current;
+    if (!container) return;
+    // Read the rendered CORE line points after the intro settles
+    let raf1 = 0;
+    let raf2 = 0;
+    const read = () => {
+      const paths = container.querySelectorAll<SVGPathElement>(
+        ".recharts-area-curve",
+      );
+      const path = paths[paths.length - 1];
+      if (!path) return;
+      const total = path.getTotalLength();
+      if (!(total > 0)) return;
+      const n = Math.max(2, buckets.length);
+      const pts: Array<{ x: number; y: number }> = [];
+      for (let i = 0; i < n; i++) {
+        const p = path.getPointAtLength((i / (n - 1)) * total);
+        pts.push({ x: p.x, y: p.y });
+      }
+      setScrubPoints(pts);
+    };
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(read);
+    });
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
+  }, [buckets.length, showEmpty, showSkeleton, period, toggleTick]);
+
   return (
-    <SectionCard title={title} subtitle={subtitle} action={toggle}>
+    <SectionCard title={title} subtitle={subtitleNode} action={toggle}>
       {isOwner && hasMismatch && (
         <div
           className="rounded-md px-3 py-2 font-body"
