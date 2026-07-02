@@ -1283,11 +1283,14 @@ function Odometer({
       return;
     }
     setArmed(false);
+    let r2 = 0;
     const r1 = requestAnimationFrame(() => {
-      const r2 = requestAnimationFrame(() => setArmed(true));
-      return () => cancelAnimationFrame(r2);
+      r2 = requestAnimationFrame(() => setArmed(true));
     });
-    return () => cancelAnimationFrame(r1);
+    return () => {
+      cancelAnimationFrame(r1);
+      if (r2) cancelAnimationFrame(r2);
+    };
   }, [playKey, str, reduce]);
   const chars = str.split("");
   // Delay so the roll finishes ~1050ms after mount, in sync with line draw.
