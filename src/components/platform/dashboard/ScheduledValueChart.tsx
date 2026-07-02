@@ -27,6 +27,11 @@ import {
 } from "recharts";
 import { CalendarDays } from "lucide-react";
 
+function prefersReducedMotion(): boolean {
+  if (typeof window === "undefined" || !window.matchMedia) return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 type DayBucket = {
   date: string;
   label: string;
