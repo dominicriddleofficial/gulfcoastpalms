@@ -426,6 +426,7 @@ export default function ScheduledValueChart() {
         animAvg={Math.round(animAvg)}
       />
       <div
+        ref={plotRef}
         className="rounded-xl overflow-hidden"
         style={{
           width: "100%",
@@ -438,7 +439,119 @@ export default function ScheduledValueChart() {
             "inset 0 0 0 1px rgba(var(--biz-accent-rgb),0.05), inset 0 0 40px rgba(var(--biz-accent-rgb),0.05)",
         }}
       >
+        {/* Ambient orbs — extremely slow, transform-only, low opacity */}
+        <div
+          aria-hidden
+          className="sched-orb sched-orb-1"
+          style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }}
+        />
+        <div
+          aria-hidden
+          className="sched-orb sched-orb-2"
+          style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }}
+        />
+        <div
+          aria-hidden
+          className="sched-orb sched-orb-3"
+          style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }}
+        />
         <style>{`
+          /* ---------- NEW intro / ambient / interaction layers ---------- */
+          @keyframes schedGridSweep {
+            from { transform: scaleX(0); opacity: 0; }
+            to   { transform: scaleX(1); opacity: 1; }
+          }
+          .sched-chart-mount .recharts-cartesian-grid-horizontal line {
+            transform-origin: left center;
+            animation: schedGridSweep 260ms cubic-bezier(0.22,1,0.36,1) both;
+          }
+          .sched-chart-mount .recharts-cartesian-grid-horizontal line:nth-child(1)  { animation-delay: 0ms; }
+          .sched-chart-mount .recharts-cartesian-grid-horizontal line:nth-child(2)  { animation-delay: 40ms; }
+          .sched-chart-mount .recharts-cartesian-grid-horizontal line:nth-child(3)  { animation-delay: 80ms; }
+          .sched-chart-mount .recharts-cartesian-grid-horizontal line:nth-child(4)  { animation-delay: 120ms; }
+          .sched-chart-mount .recharts-cartesian-grid-horizontal line:nth-child(5)  { animation-delay: 160ms; }
+          .sched-chart-mount .recharts-cartesian-grid-horizontal line:nth-child(6)  { animation-delay: 200ms; }
+          .sched-chart-mount .recharts-cartesian-grid-vertical line {
+            opacity: 0;
+            animation: schedGridSweep 260ms cubic-bezier(0.22,1,0.36,1) 220ms both;
+            transform-origin: center top;
+          }
+          @keyframes schedAxisRise {
+            from { opacity: 0; transform: translateY(4px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+          .sched-chart-mount .recharts-cartesian-axis-tick {
+            animation: schedAxisRise 260ms ease-out 120ms both;
+          }
+          /* Ghost prior-period line sketches in faintly */
+          @keyframes schedGhostIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+          }
+          .sched-chart-mount .recharts-area:nth-of-type(1) .recharts-area-curve {
+            animation: schedGhostIn 500ms ease-out 150ms both;
+          }
+          /* Milestone shockwave ring */
+          @keyframes schedShockwave {
+            0%   { r: 4;  opacity: 0.85; stroke-width: 2; }
+            60%  { opacity: 0.55; }
+            100% { r: 26; opacity: 0; stroke-width: 0.6; }
+          }
+          .sched-shockwave {
+            animation: schedShockwave 450ms cubic-bezier(0.22,1,0.36,1) forwards;
+          }
+          /* Lake reflection fade in */
+          @keyframes schedReflectionIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+          }
+          .sched-reflection {
+            animation: schedReflectionIn 300ms ease-out 1050ms both;
+          }
+          /* Ambient orbs — transform + opacity only, glacially slow */
+          .sched-orb {
+            background: radial-gradient(closest-side, rgba(var(--biz-accent-rgb),0.14), rgba(var(--biz-accent-rgb),0) 70%);
+            filter: blur(30px);
+            will-change: transform, opacity;
+          }
+          .sched-orb-1 {
+            transform: translate3d(-15%, 20%, 0) scale(1);
+            animation: schedOrb1 78s ease-in-out infinite;
+            opacity: 0.08;
+          }
+          .sched-orb-2 {
+            transform: translate3d(60%, -10%, 0) scale(0.9);
+            animation: schedOrb2 92s ease-in-out infinite;
+            opacity: 0.06;
+          }
+          .sched-orb-3 {
+            transform: translate3d(30%, 60%, 0) scale(1.1);
+            animation: schedOrb3 66s ease-in-out infinite;
+            opacity: 0.05;
+          }
+          @keyframes schedOrb1 {
+            0%,100% { transform: translate3d(-15%, 20%, 0) scale(1); }
+            50%     { transform: translate3d(10%, 5%, 0) scale(1.15); }
+          }
+          @keyframes schedOrb2 {
+            0%,100% { transform: translate3d(60%, -10%, 0) scale(0.9); }
+            50%     { transform: translate3d(35%, 25%, 0) scale(1.05); }
+          }
+          @keyframes schedOrb3 {
+            0%,100% { transform: translate3d(30%, 60%, 0) scale(1.1); }
+            50%     { transform: translate3d(55%, 40%, 0) scale(0.95); }
+          }
+          /* Bloom pulse — retriggered by data-bloom attr change */
+          @keyframes schedBloomPulse {
+            0%   { opacity: 0.4; }
+            60%  { opacity: 1;   }
+            100% { opacity: 1;   }
+          }
+          .sched-chart-mount .recharts-area-area {
+            animation: schedAreaFade 320ms ease-out 800ms both,
+                       schedBloomPulse 300ms ease-out both;
+          }
+          /* ---------- existing layers ---------- */
           @keyframes schedPeakPulse {
             0%, 100% { transform: scale(1); opacity: 0.55; }
             50% { transform: scale(1.8); opacity: 0.05; }
@@ -505,7 +618,17 @@ export default function ScheduledValueChart() {
             .sched-breath-mid,
             .sched-chart-mount,
             .sched-chart-mount .recharts-area-area,
-            .sched-stat-tile {
+            .sched-stat-tile,
+            .sched-chart-mount .recharts-cartesian-grid-horizontal line,
+            .sched-chart-mount .recharts-cartesian-grid-vertical line,
+            .sched-chart-mount .recharts-cartesian-axis-tick,
+            .sched-chart-mount .recharts-area:nth-of-type(1) .recharts-area-curve,
+            .sched-reflection,
+            .sched-shockwave,
+            .sched-orb,
+            .sched-orb-1,
+            .sched-orb-2,
+            .sched-orb-3 {
               animation: none !important;
               opacity: 1 !important;
               transform: none !important;
@@ -520,7 +643,10 @@ export default function ScheduledValueChart() {
           <EmptyState period={period} />
         )}
         {!showEmpty && !showSkeleton && (
-          <ResponsiveContainer key={period} className="sched-chart-mount">
+          <ResponsiveContainer
+            className="sched-chart-mount"
+            data-bloom={bloomKey}
+          >
             <AreaChart
               data={chartData}
               margin={{ top: 12, right: 12, left: -12, bottom: 0 }}
@@ -531,6 +657,14 @@ export default function ScheduledValueChart() {
                   <stop offset="45%" stopColor="rgba(var(--biz-accent-rgb),0.18)" />
                   <stop offset="100%" stopColor="rgba(var(--biz-accent-rgb),0)" />
                 </linearGradient>
+                {/* Vertical fade mask for the mirrored reflection */}
+                <linearGradient id="schedReflectionGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%"  stopColor="#fff" stopOpacity="1" />
+                  <stop offset="80%" stopColor="#fff" stopOpacity="0" />
+                </linearGradient>
+                <mask id="schedReflectionMask" maskUnits="userSpaceOnUse">
+                  <rect x="0" y="0" width="100%" height="100%" fill="url(#schedReflectionGrad)" />
+                </mask>
                 <filter id="schedAuraBlur" x="-20%" y="-20%" width="140%" height="140%">
                   <feGaussianBlur stdDeviation="7" />
                 </filter>
@@ -566,6 +700,8 @@ export default function ScheduledValueChart() {
                   />
                 </linearGradient>
               </defs>
+              {/* Lake reflection under the baseline */}
+              <Customized component={ReflectionOverlay as never} />
               <CartesianGrid
                 strokeDasharray="2 4"
                 stroke="rgba(255,255,255,0.05)"
@@ -713,7 +849,7 @@ export default function ScheduledValueChart() {
                 }}
               />
               {/* Comet draw-head + live cursor — uses real rendered points */}
-              <Customized component={CometOverlay as never} />
+              {!introPlayed && <Customized component={CometOverlay as never} />}
               {peakLabel && peak && peak.value > 0 && (
                 <ReferenceDot
                   x={peakLabel}
@@ -747,6 +883,18 @@ export default function ScheduledValueChart() {
               )}
             </AreaChart>
           </ResponsiveContainer>
+        )}
+        {!showEmpty && !showSkeleton && (
+          <ParticleLayer
+            containerRef={plotRef}
+            playKey={bloomKey}
+            peakIndex={peakIndex}
+            totalPoints={buckets.length}
+            enabled={!introPlayed}
+          />
+        )}
+        {!showEmpty && !showSkeleton && (
+          <TouchScrubLayer containerRef={plotRef} points={scrubPoints} />
         )}
       </div>
 
