@@ -41,9 +41,9 @@ export function buildReviewMessage(opts: {
   const link = getReviewLink(opts.businessId);
   const careLine =
     opts.businessId === GCP_BUSINESS_ID
-      ? "taking care of your palms today 🌴"
-      : "taking care of your property today";
-  return `Hi ${first}! This is ${businessName} — thank you for letting us take care of ${careLine === "taking care of your palms today 🌴" ? "your palms today 🌴" : "your property today"}. We take real pride in our work, and if you're happy with how everything turned out, it would mean the world to our small local crew if you took 30 seconds to share it in a quick Google review: ${link}\n\nYour review genuinely helps us grow more than anything else. Thank you again for trusting us!`;
+      ? "your palms today 🌴"
+      : "your property today";
+  return `Hi ${first}! This is ${businessName} — thank you for letting us take care of ${careLine}. We take real pride in our work, and if you're happy with how everything turned out, it would mean the world to our small local crew if you took 30 seconds to share it in a quick Google review: ${link}\n\nYour review genuinely helps us grow more than anything else. Thank you again for trusting us!`;
 }
 
 /** Strip to digits, drop leading US country code. Empty string if invalid. */
