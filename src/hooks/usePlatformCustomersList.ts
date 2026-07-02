@@ -27,23 +27,33 @@ export async function fetchPlatformCustomersList(
     supabase
       .from("jobber_clients")
       .select(
-        "id, jobber_id, display_name, first_name, last_name, company_name, email, phone, secondary_phone, created_at, synced_at, business_id",
+        "id, jobber_id, display_name, company_name, email, phone, secondary_phone, created_at, business_id",
       )
       .eq("business_id", businessId)
       .order("display_name", { ascending: true }),
     supabase
       .from("platform_customers")
       .select(
-        "id, business_id, display_name, first_name, last_name, company_name, email, phone, secondary_phone, created_at",
+        "id, business_id, display_name, company_name, email, phone, secondary_phone, created_at",
       )
       .eq("business_id", businessId)
       .order("display_name", { ascending: true }),
   ]);
   const jobberCustomers: UnifiedCustomerRow[] = (jobberRes.data || []).map(
-    (c: Record<string, unknown>) => ({ ...(c as UnifiedCustomerRow), source: "jobber" as const }),
+    (c: Record<string, unknown>) => ({
+      first_name: null,
+      last_name: null,
+      ...(c as UnifiedCustomerRow),
+      source: "jobber" as const,
+    }),
   );
   const platformCustomers: UnifiedCustomerRow[] = (platformRes.data || []).map(
-    (c: Record<string, unknown>) => ({ ...(c as UnifiedCustomerRow), source: "platform" as const }),
+    (c: Record<string, unknown>) => ({
+      first_name: null,
+      last_name: null,
+      ...(c as UnifiedCustomerRow),
+      source: "platform" as const,
+    }),
   );
   return [...platformCustomers, ...jobberCustomers];
 }
