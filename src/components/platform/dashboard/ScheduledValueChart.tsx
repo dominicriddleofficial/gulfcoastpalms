@@ -1250,6 +1250,21 @@ function Odometer({
 }) {
   const reduce = useRef(prefersReducedMotion()).current;
   const str = fmtMoney(Math.round(value));
+  // Two-phase render so the transition actually fires: start at 0, then
+  // set the real digit on the next frame.
+  const [armed, setArmed] = useState(reduce);
+  useEffect(() => {
+    if (reduce) {
+      setArmed(true);
+      return;
+    }
+    setArmed(false);
+    const r1 = requestAnimationFrame(() => {
+      const r2 = requestAnimationFrame(() => setArmed(true));
+      return () => cancelAnimationFrame(r2);
+    });
+    return () => cancelAnimationFrame(r1);
+  }, [playKey, str, reduce]);
   const chars = str.split("");
   // Delay so the roll finishes ~1050ms after mount, in sync with line draw.
   // Right-to-left stagger.
@@ -1282,6 +1297,7 @@ function Odometer({
         // From right: last digit rolls first.
         const fromRight = chars.length - 1 - i;
         const delay = reduce ? 0 : Math.min(600, fromRight * 55);
+        const target = armed ? digit : 0;
         return (
           <span
             key={`${i}-slot`}
@@ -1297,9 +1313,7 @@ function Odometer({
             <span
               style={{
                 display: "block",
-                transform: reduce
-                  ? `translateY(-${digit * fontSize}px)`
-                  : `translateY(-${digit * fontSize}px)`,
+                transform: `translateY(-${target * fontSize}px)`,
                 transition: reduce
                   ? "none"
                   : `transform 700ms cubic-bezier(0.22, 1, 0.36, 1) ${delay}ms`,
