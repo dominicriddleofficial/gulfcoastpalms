@@ -398,7 +398,7 @@ const BuyPalmTrees = () => {
                       <img
                         src={palm.image}
                         alt={palm.imageAlt}
-                        className="h-full w-full object-cover object-top"
+                        className="h-full w-full object-cover object-top transition-transform duration-[900ms] ease-out group-hover:scale-[1.06]"
                         loading="lazy"
                         decoding="async"
                         width={600}
