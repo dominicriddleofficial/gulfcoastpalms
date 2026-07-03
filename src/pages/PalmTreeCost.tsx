@@ -3,6 +3,7 @@ import { Phone, MessageSquare, DollarSign, TreePine, Ruler, MapPin, Scissors, Tr
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
+import { BreadcrumbJsonLd } from "@/components/JsonLd";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -25,7 +26,17 @@ const trimmingFactors = [
 const PalmTreeCost = () => {
   return (
     <Layout>
-      <SEOHead title="How Much Does Palm Tree Trimming Cost in Florida? | Gulf Coast Palms" description="Get a breakdown of palm tree trimming, removal, and installation costs in Florida. Factors that affect pricing and how to get a free estimate." canonicalUrl="/palm-tree-cost" />
+      <SEOHead
+        title="Palm Tree Trimming Cost — Instant Pricing | Gulf Coast Palms"
+        description="Get instant palm tree trimming, removal & install pricing across NW Florida. Text a photo for a same-day quote — free estimate at (850) 910-1290."
+        canonicalUrl="/palm-tree-cost"
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "https://gulfcoastpalmservices.com/" },
+          { name: "Palm Tree Cost", url: "https://gulfcoastpalmservices.com/palm-tree-cost" },
+        ]}
+      />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         "@context": "https://schema.org",
         "@type": "FAQPage",
