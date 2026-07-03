@@ -2,6 +2,8 @@ import { motion } from "framer-motion";
 import { Phone, MessageSquare, CheckCircle, Leaf, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
+import SEOHead from "@/components/SEOHead";
+import { BreadcrumbJsonLd } from "@/components/JsonLd";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -45,6 +47,18 @@ const services = [
 const LandscapingServices = () => {
   return (
     <Layout>
+      <SEOHead
+        title="Landscaping Services NW Florida — Mulch, Sod, Hedges | Gulf Coast Palms"
+        description="Hedge trimming, mulch, pine straw, sod install & bed cleanups across Pensacola, Navarre, Destin & the Emerald Coast. Free estimate — call (850) 910-1290."
+        canonicalUrl="/services/landscaping-services"
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "https://gulfcoastpalmservices.com/" },
+          { name: "Services", url: "https://gulfcoastpalmservices.com/services" },
+          { name: "Landscaping Services", url: "https://gulfcoastpalmservices.com/services/landscaping-services" },
+        ]}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
