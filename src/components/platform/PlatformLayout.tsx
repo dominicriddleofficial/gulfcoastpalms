@@ -10,6 +10,8 @@ import UniversalSearch from "./UniversalSearch";
 import PlatformBottomNav from "./PlatformBottomNav";
 import NotificationPanel from "./NotificationPanel";
 import InstallPrompt from "./InstallPrompt";
+import OutageBanner from "./OutageBanner";
+import { setMirrorContext } from "@/lib/offlineMirror";
 import { Button } from "@/components/ui/button";
 import { prefetchRoute, prefetchAllPlatformRoutes } from "@/lib/route-prefetch";
 import { platformCustomersKey, fetchPlatformCustomersList } from "@/hooks/usePlatformCustomersList";
