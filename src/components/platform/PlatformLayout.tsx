@@ -553,6 +553,7 @@ export default function PlatformLayout({ children }: Props) {
           </div>
           <NotificationPanel />
         </header>
+        <OutageBanner />
 
         <main className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full pb-20 lg:pb-6">{children}</main>
 
