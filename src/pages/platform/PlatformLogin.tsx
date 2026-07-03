@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, WifiOff } from "lucide-react";
 import gcpLogo from "@/assets/logo.png";
 import ppsLogo from "@/assets/logo-pps.png";
+import { isOutageError } from "@/lib/outageDetect";
+import { listMirroredBusinesses } from "@/lib/offlineMirror";
 
 export default function PlatformLogin() {
   const [email, setEmail] = useState("");
@@ -15,6 +17,8 @@ export default function PlatformLogin() {
   const [loading, setLoading] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [offlineAvailable, setOfflineAvailable] = useState(false);
+  const [outageMode, setOutageMode] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -29,6 +33,9 @@ export default function PlatformLogin() {
       if (cancelled || initialSessionLoaded) return;
       initialSessionLoaded = true;
       setCheckingSession(false);
+      // Treat a >8s stall as a probable outage: if we have a snapshot + mirror,
+      // offer the offline copy to the user.
+      setOutageMode(true);
     }, 8000);
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -65,12 +72,32 @@ export default function PlatformLogin() {
     };
   }, [navigate]);
 
+  // Detect whether an offline copy is available on this device.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const SNAPSHOT_PREFIX = "platform_access_snapshot:";
+        let hasSnapshot = false;
+        for (let i = 0; i < window.localStorage.length; i++) {
+          const k = window.localStorage.key(i);
+          if (k && k.startsWith(SNAPSHOT_PREFIX)) { hasSnapshot = true; break; }
+        }
+        if (!hasSnapshot) return;
+        const mirrored = await listMirroredBusinesses();
+        if (!cancelled && mirrored.length > 0) setOfflineAvailable(true);
+      } catch { /* ignore */ }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
+      if (isOutageError(error)) setOutageMode(true);
       toast({ title: "Login failed", description: error.message, variant: "destructive" });
       setLoading(false);
       return;
