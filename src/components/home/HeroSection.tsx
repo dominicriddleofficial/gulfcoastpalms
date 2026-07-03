@@ -35,14 +35,17 @@ const HeroSection = () => {
       </div>
 
       <div className="relative z-10 container mx-auto px-4 text-center">
-        <motion.p
+        <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="font-body text-palm-gold font-semibold uppercase tracking-[0.2em] text-[11px] md:text-sm mb-3 md:mb-4"
+          className="inline-flex items-center gap-2 mb-4 md:mb-5 px-3 md:px-4 py-1.5 rounded-full bg-palm-gold/12 border border-palm-gold/40 backdrop-blur-sm"
         >
-          Palm Tree Trimming & Professional Palm Services from Perdido Key to 30A
-        </motion.p>
+          <span className="w-1.5 h-1.5 rounded-full bg-palm-gold" aria-hidden />
+          <span className="font-body text-palm-gold font-semibold uppercase tracking-[0.18em] text-[10.5px] md:text-[12px]">
+            Serving Perdido Key to 30A
+          </span>
+        </motion.div>
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -78,13 +81,13 @@ const HeroSection = () => {
         >
           <QuoteRequestButton
             source="hero"
-            className="w-full sm:w-auto md:px-8 md:py-4 md:text-lg"
+            className="w-full sm:w-auto md:px-8 md:py-4 md:text-lg shadow-brand hover:-translate-y-0.5 transition-transform"
           >
             Get a Free Quote Online
           </QuoteRequestButton>
           <Link
             to="/services"
-            className="hidden md:inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl border-2 border-primary-foreground/30 text-primary-foreground font-body font-semibold text-lg hover:bg-primary-foreground/10 transition-all"
+            className="hidden md:inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl border border-primary-foreground/25 bg-primary-foreground/5 backdrop-blur-sm text-primary-foreground font-body font-semibold text-lg hover:bg-primary-foreground/12 hover:border-primary-foreground/50 transition-all"
           >
             View Our Services
             <ArrowRight className="w-5 h-5" />
@@ -125,9 +128,10 @@ const HeroSection = () => {
         >
           <Link
             to="/emergency-palm-service"
-            className="inline-flex items-center gap-1.5 md:gap-2 px-3 md:px-5 py-1.5 md:py-2 rounded-full bg-destructive/20 border border-destructive/40 text-primary-foreground font-body text-xs md:text-sm font-semibold hover:bg-destructive/30 transition-colors"
+            className="inline-flex items-center gap-1.5 md:gap-2 px-3 md:px-5 py-1.5 md:py-2 rounded-full bg-destructive/15 border border-destructive/40 backdrop-blur-sm text-primary-foreground font-body text-xs md:text-sm font-semibold hover:bg-destructive/25 transition-colors"
           >
-            🌀 Hurricane Season — Emergency Service
+            <span className="inline-block w-2 h-2 rounded-full bg-destructive animate-pulse" aria-hidden />
+            Hurricane Season — Emergency Service
             <span className="hidden md:inline"> Available</span>
           </Link>
         </motion.div>
