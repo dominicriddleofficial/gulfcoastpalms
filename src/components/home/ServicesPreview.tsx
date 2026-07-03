@@ -119,7 +119,7 @@ const ServicesPreview = () => (
       <div className="text-center mt-12">
         <Link
           to="/services"
-          className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-body font-semibold hover:bg-palm-light transition-colors"
+          className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-body font-semibold hover:bg-palm-light shadow-brand hover:-translate-y-0.5 transition-all"
         >
           View All Services <ArrowRight className="w-4 h-4" />
         </Link>
