@@ -9,6 +9,7 @@ import { BusinessProvider } from "@/contexts/BusinessContext";
 import { trackPageView } from "@/lib/analytics";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { CreateSheetsProvider } from "@/components/platform/CreateSheetsProvider";
+import { installQueryCacheMirror } from "@/lib/queryCacheMirror";
 
 import { MarketingRoutes } from "@/routes/MarketingRoutes";
 import { AdminRoutes } from "@/routes/AdminRoutes";
@@ -66,6 +67,10 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Install the passive offline-mirror + outage subscriber once, at module load.
+// Watches only a small allow-list of query keys — never modifies queries.
+installQueryCacheMirror(queryClient);
 
 /**
  * Static, zero-cost platform shell that paints immediately while the route
