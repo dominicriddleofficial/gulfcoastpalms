@@ -278,7 +278,7 @@ const BuyPalmTrees = () => {
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             {/* Nursery */}
-            <div className="rounded-2xl border border-border bg-card p-6">
+            <div className="group rounded-2xl border border-border bg-card p-6 shadow-elev-sm hover:shadow-elev-md hover:-translate-y-0.5 hover:border-primary/30 transition-all duration-300">
               <p className="mb-1 font-body text-xs font-bold uppercase tracking-wider text-muted-foreground">Option A</p>
               <h3 className="mb-4 font-display text-xl font-bold text-foreground">Buy from a Nursery</h3>
               <ul className="space-y-2.5 font-body text-sm">
@@ -303,7 +303,7 @@ const BuyPalmTrees = () => {
             </div>
 
             {/* Gulf Coast Palms — featured */}
-            <div className="relative rounded-2xl border-2 border-primary bg-card p-6 shadow-xl">
+            <div className="relative rounded-2xl border-2 border-primary bg-card p-6 shadow-elev-lg shadow-amber hover:-translate-y-1 transition-all duration-300 ring-1 ring-palm-gold/25">
               <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 font-body text-[11px] font-bold uppercase tracking-wider text-primary-foreground">
                 Recommended
               </span>
@@ -328,7 +328,7 @@ const BuyPalmTrees = () => {
             </div>
 
             {/* DIY */}
-            <div className="rounded-2xl border border-border bg-card p-6">
+            <div className="group rounded-2xl border border-border bg-card p-6 shadow-elev-sm hover:shadow-elev-md hover:-translate-y-0.5 hover:border-primary/30 transition-all duration-300">
               <p className="mb-1 font-body text-xs font-bold uppercase tracking-wider text-muted-foreground">Option C</p>
               <h3 className="mb-4 font-display text-xl font-bold text-foreground">DIY Install</h3>
               <ul className="space-y-2.5 font-body text-sm">
