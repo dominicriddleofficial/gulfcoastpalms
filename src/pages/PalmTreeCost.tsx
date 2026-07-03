@@ -182,6 +182,12 @@ const PalmTreeCost = () => {
       {/* Related Links */}
       <section className="section-padding bg-background">
         <div className="container mx-auto max-w-4xl">
+          <p className="font-body text-center text-muted-foreground mb-6">
+            Want the full breakdown by height & species?{" "}
+            <Link to="/learn/palm-tree-trimming-cost-florida" className="text-primary hover:underline font-semibold">
+              Read the full 2026 Florida palm-trimming cost guide →
+            </Link>
+          </p>
           <h3 className="font-display text-2xl font-bold text-foreground mb-6 text-center">
             Explore Our Services
           </h3>
