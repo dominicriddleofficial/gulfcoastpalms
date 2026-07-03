@@ -228,6 +228,17 @@ export default function PlatformLayout({ children }: Props) {
     prefetchAllPlatformRoutes();
   }, [auth.loading]);
 
+  // Keep the offline mirror in sync with the currently signed-in user so
+  // the passive queryCache subscriber knows whose data it is writing.
+  // Purely additive — never touches auth state.
+  useEffect(() => {
+    if (auth.userId) {
+      setMirrorContext({ userId: auth.userId, isOwner: auth.isOwner });
+    } else {
+      setMirrorContext(null);
+    }
+  }, [auth.userId, auth.isOwner]);
+
   // First-mount data prefetch (after auth + business selected) — warms the
   // three highest-value lists in parallel so the next tab visit is instant.
   const dataPrefetchTriggered = useRef<string | null>(null);
