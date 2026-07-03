@@ -45,6 +45,14 @@
     --font-display: 'Inter', sans-serif;
     --font-body: 'Outfit', sans-serif;
 
+    /* Elite shadow scale — soft, layered, brand-tinted */
+    --shadow-sm: 0 1px 2px hsl(150 40% 8% / 0.04), 0 1px 3px hsl(150 40% 8% / 0.05);
+    --shadow-md: 0 4px 8px -2px hsl(150 40% 8% / 0.06), 0 10px 20px -4px hsl(150 40% 8% / 0.08);
+    --shadow-lg: 0 8px 16px -4px hsl(150 40% 8% / 0.08), 0 20px 40px -8px hsl(150 40% 8% / 0.12);
+    --shadow-xl: 0 12px 24px -6px hsl(150 40% 8% / 0.10), 0 32px 64px -12px hsl(150 40% 8% / 0.18);
+    --shadow-brand: 0 8px 24px -6px hsl(var(--palm-green) / 0.28), 0 2px 6px -1px hsl(var(--palm-green) / 0.18);
+    --shadow-amber: 0 8px 24px -6px hsl(var(--palm-gold) / 0.30), 0 2px 6px -1px hsl(var(--palm-gold) / 0.20);
+
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -97,7 +105,59 @@
 
   h1, h2, h3, h4 {
     font-family: var(--font-display);
+    letter-spacing: -0.015em;
   }
+}
+
+/* Editorial display face for marketing pages (loaded from index.html) */
+:root {
+  --font-display: 'Fraunces', 'Outfit', serif;
+}
+
+@layer utilities {
+  .shadow-elev-sm { box-shadow: var(--shadow-sm); }
+  .shadow-elev-md { box-shadow: var(--shadow-md); }
+  .shadow-elev-lg { box-shadow: var(--shadow-lg); }
+  .shadow-elev-xl { box-shadow: var(--shadow-xl); }
+  .shadow-brand   { box-shadow: var(--shadow-brand); }
+  .shadow-amber   { box-shadow: var(--shadow-amber); }
+
+  /* Reusable card polish for interior pages */
+  .card-elev {
+    @apply bg-card border border-border rounded-2xl transition-all duration-300;
+    box-shadow: var(--shadow-md);
+  }
+  .card-elev:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+  }
+
+  /* Green-tinted icon chip for premium Lucide treatment */
+  .icon-chip {
+    @apply inline-flex items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0;
+    width: 2.5rem;
+    height: 2.5rem;
+    box-shadow: inset 0 0 0 1px hsl(var(--palm-green) / 0.15);
+  }
+  .icon-chip-amber {
+    @apply inline-flex items-center justify-center rounded-xl shrink-0;
+    width: 2.5rem;
+    height: 2.5rem;
+    background-color: hsl(var(--palm-gold) / 0.14);
+    color: hsl(var(--palm-gold));
+    box-shadow: inset 0 0 0 1px hsl(var(--palm-gold) / 0.22);
+  }
+
+  /* Amber underline divider — used sparingly */
+  .amber-rule {
+    background: linear-gradient(90deg, transparent, hsl(var(--palm-gold) / 0.6), transparent);
+    height: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-elev { transition: none; }
+  .card-elev:hover { transform: none; }
 }
 
 /* Platform dark tech theme — premium SaaS feel */

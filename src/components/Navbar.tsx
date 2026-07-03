@@ -63,14 +63,14 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden lg:flex items-center gap-5">
-          <Link to="/" className={`font-body font-medium text-sm uppercase tracking-wider transition-colors hover:text-primary ${location.pathname === "/" ? "text-primary" : "text-muted-foreground"}`}>
+        <nav className="hidden lg:flex items-center gap-4 xl:gap-6">
+          <Link to="/" className={`whitespace-nowrap font-body font-medium text-[13px] xl:text-sm uppercase tracking-wider transition-colors hover:text-primary ${location.pathname === "/" ? "text-primary" : "text-muted-foreground"}`}>
             Home
           </Link>
 
           {/* Services Dropdown */}
           <div className="relative group">
-            <Link to="/services" className={`font-body font-medium text-sm uppercase tracking-wider transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.startsWith("/services") ? "text-primary" : "text-muted-foreground"}`}>
+            <Link to="/services" className={`whitespace-nowrap font-body font-medium text-[13px] xl:text-sm uppercase tracking-wider transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.startsWith("/services") ? "text-primary" : "text-muted-foreground"}`}>
               Services <ChevronDown className="w-3.5 h-3.5" />
             </Link>
             <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
@@ -87,13 +87,13 @@ const Navbar = () => {
             </div>
           </div>
 
-          <Link to="/jobs" className={`font-body font-medium text-sm uppercase tracking-wider transition-colors hover:text-primary ${location.pathname === "/jobs" ? "text-primary" : "text-muted-foreground"}`}>
+          <Link to="/jobs" className={`whitespace-nowrap font-body font-medium text-[13px] xl:text-sm uppercase tracking-wider transition-colors hover:text-primary ${location.pathname === "/jobs" ? "text-primary" : "text-muted-foreground"}`}>
             Jobs Completed
           </Link>
 
           {/* Learn Dropdown */}
           <div className="relative group">
-            <span className={`font-body font-medium text-sm uppercase tracking-wider transition-colors hover:text-primary inline-flex items-center gap-1 cursor-pointer ${["/palm-trees", "/palm-tree-cost", "/hurricane-palm-preparation"].some((p) => location.pathname.startsWith(p)) ? "text-primary" : "text-muted-foreground"}`}>
+            <span className={`whitespace-nowrap font-body font-medium text-[13px] xl:text-sm uppercase tracking-wider transition-colors hover:text-primary inline-flex items-center gap-1 cursor-pointer ${["/palm-trees", "/palm-tree-cost", "/hurricane-palm-preparation"].some((p) => location.pathname.startsWith(p)) ? "text-primary" : "text-muted-foreground"}`}>
               Learn <ChevronDown className="w-3.5 h-3.5" />
             </span>
             <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
@@ -107,13 +107,13 @@ const Navbar = () => {
             </div>
           </div>
 
-          <Link to="/palm-trees/buy" className={`font-body font-medium text-sm uppercase tracking-wider transition-colors hover:text-primary ${location.pathname === "/palm-trees/buy" ? "text-primary" : "text-muted-foreground"}`}>
+          <Link to="/palm-trees/buy" className={`whitespace-nowrap font-body font-medium text-[13px] xl:text-sm uppercase tracking-wider transition-colors hover:text-primary ${location.pathname === "/palm-trees/buy" ? "text-primary" : "text-muted-foreground"}`}>
             Buy Palm Trees
           </Link>
 
           {/* Service Areas Dropdown */}
           <div className="relative group">
-            <Link to="/service-areas" className={`font-body font-medium text-sm uppercase tracking-wider transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.includes("palm-tree-trimming") || location.pathname === "/service-areas" ? "text-primary" : "text-muted-foreground"}`}>
+            <Link to="/service-areas" className={`whitespace-nowrap font-body font-medium text-[13px] xl:text-sm uppercase tracking-wider transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.includes("palm-tree-trimming") || location.pathname === "/service-areas" ? "text-primary" : "text-muted-foreground"}`}>
               Service Areas <ChevronDown className="w-3.5 h-3.5" />
             </Link>
             <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
@@ -127,22 +127,26 @@ const Navbar = () => {
             </div>
           </div>
 
-          <Link to="/about" className={`font-body font-medium text-sm uppercase tracking-wider transition-colors hover:text-primary ${location.pathname === "/about" ? "text-primary" : "text-muted-foreground"}`}>
+          <Link to="/about" className={`whitespace-nowrap font-body font-medium text-[13px] xl:text-sm uppercase tracking-wider transition-colors hover:text-primary ${location.pathname === "/about" ? "text-primary" : "text-muted-foreground"}`}>
             About
           </Link>
         </nav>
 
         {/* CTA buttons */}
-        <div className="hidden lg:flex items-center gap-3">
+        <div className="hidden lg:flex items-center gap-2">
+          <a
+            href={SMS_NUMBER}
+            onClick={() => trackEvent("text_us_click", { source: "navbar" })}
+            className="whitespace-nowrap inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-primary font-body font-semibold text-[13px] hover:bg-primary/10 transition-colors"
+          >
+            <MessageSquare className="w-4 h-4" /> Text a Photo
+          </a>
           <a
             href={PHONE_NUMBER_TEL}
             onClick={() => trackEvent("call_now_click", { source: "navbar" })}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-body font-semibold text-sm hover:bg-palm-light transition-colors"
+            className="whitespace-nowrap inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-body font-semibold text-[13px] hover:bg-palm-light shadow-brand transition-all"
           >
             <Phone className="w-4 h-4" /> {PHONE_NUMBER_DISPLAY}
-          </a>
-          <a href={SMS_NUMBER} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-primary text-primary font-body font-semibold text-sm hover:bg-primary hover:text-primary-foreground transition-colors">
-            <MessageSquare className="w-4 h-4" /> Text Us a Photo
           </a>
         </div>
 

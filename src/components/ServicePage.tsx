@@ -74,11 +74,13 @@ const ServicePage = ({ service }: ServicePageProps) => {
       <section className="section-padding bg-secondary">
         <div className="container mx-auto max-w-4xl">
           <motion.h2 initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0} className="font-display text-3xl md:text-4xl font-bold text-foreground mb-8 text-center">What's Included</motion.h2>
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
             {service.benefits.map((b, i) => (
-              <motion.div key={b} variants={fadeUp} custom={i} className="flex items-center gap-3 bg-card rounded-xl p-4 shadow-sm">
-                <Check className="w-5 h-5 text-primary shrink-0" />
-                <span className="font-body text-foreground">{b}</span>
+              <motion.div key={b} variants={fadeUp} custom={i} className="group flex items-center gap-4 bg-card rounded-2xl p-5 border border-border/70 shadow-elev-sm hover:shadow-elev-md hover:-translate-y-0.5 hover:border-primary/30 transition-all duration-300">
+                <span className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-primary/12 text-primary ring-1 ring-primary/20 shrink-0 group-hover:bg-primary/20 transition-colors" aria-hidden>
+                  <Check className="w-5 h-5" strokeWidth={2.75} />
+                </span>
+                <span className="font-body text-foreground font-medium">{b}</span>
               </motion.div>
             ))}
           </motion.div>

@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { Star } from "lucide-react";
+import { Award, Star, ShieldCheck, Scissors, Building2, Home } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -10,13 +11,13 @@ const fadeUp = {
   }),
 };
 
-const points = [
-  "Trusted by 500+ Emerald Coast Homeowners",
-  "5-Star Rated Across the Emerald Coast",
-  "Licensed & Insured Professionals",
-  "Diamond Cutting & Coastal Palm Specialists",
-  "Large Properties with 100+ Palms",
-  "Trusted by HOAs & Waterfront Estates",
+const points: { text: string; Icon: LucideIcon; amber?: boolean }[] = [
+  { text: "Trusted by 500+ Emerald Coast Homeowners", Icon: Award, amber: true },
+  { text: "5-Star Rated Across the Emerald Coast", Icon: Star, amber: true },
+  { text: "Licensed & Insured Professionals", Icon: ShieldCheck },
+  { text: "Diamond Cutting & Coastal Palm Specialists", Icon: Scissors },
+  { text: "Large Properties with 100+ Palms", Icon: Building2 },
+  { text: "Trusted by HOAs & Waterfront Estates", Icon: Home },
 ];
 
 const WhyChooseUs = () => (
@@ -39,19 +40,28 @@ const WhyChooseUs = () => (
         </motion.h2>
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 mb-12">
         {points.map((point, i) => (
           <motion.div
-            key={point}
+            key={point.text}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={fadeUp}
             custom={i}
-            className="flex items-start gap-3 p-5 rounded-xl border border-palm-green/20 bg-palm-dark"
+            className="group flex items-center gap-4 p-5 rounded-2xl border border-palm-green/25 bg-gradient-to-br from-palm-dark to-[hsl(150_40%_6%)] hover:border-palm-green/50 hover:-translate-y-0.5 transition-all duration-300 shadow-elev-md hover:shadow-elev-lg"
           >
-            <Star className="w-5 h-5 text-palm-gold shrink-0 mt-0.5" />
-            <p className="font-body text-primary-foreground font-medium">{point}</p>
+            <span
+              className={`inline-flex items-center justify-center w-11 h-11 rounded-xl shrink-0 ${
+                point.amber
+                  ? "bg-palm-gold/15 text-palm-gold ring-1 ring-palm-gold/30"
+                  : "bg-palm-green/15 text-palm-light ring-1 ring-palm-green/30"
+              }`}
+              aria-hidden
+            >
+              <point.Icon className="w-5 h-5" strokeWidth={2.25} />
+            </span>
+            <p className="font-body text-primary-foreground font-medium leading-snug">{point.text}</p>
           </motion.div>
         ))}
       </div>
