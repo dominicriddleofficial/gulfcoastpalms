@@ -43,7 +43,7 @@ const About = () => {
             transition={{ delay: 0.1 }}
             className="font-display text-4xl md:text-6xl font-bold text-primary-foreground mb-4"
           >
-            Gulf Coast Palms
+            About Gulf Coast Palms
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}

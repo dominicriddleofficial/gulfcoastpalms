@@ -30,7 +30,7 @@ const SEOHead = ({
       <title>{title}</title>
       <meta name="description" content={description} />
       {fullCanonical && <link rel="canonical" href={fullCanonical} />}
-      {noIndex && <meta name="robots" content="noindex, nofollow" />}
+      <meta name="robots" content={noIndex ? "noindex, nofollow" : "index, follow"} />
 
       {/* Open Graph */}
       <meta property="og:title" content={title} />

@@ -371,6 +371,14 @@ const LearnArticle = () => {
                 <Phone className="w-5 h-5" /> (850) 910-1290
               </a>
             </div>
+            {article.slug === "palm-tree-trimming-cost-florida" && (
+              <p className="font-body text-sm text-muted-foreground mt-6">
+                Prefer instant pricing?{" "}
+                <Link to="/palm-tree-cost" className="text-primary hover:underline font-semibold">
+                  Get your palm-trimming quote →
+                </Link>
+              </p>
+            )}
           </div>
         </div>
       </article>
