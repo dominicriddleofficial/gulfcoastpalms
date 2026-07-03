@@ -156,6 +156,14 @@ const Navbar = () => {
           >
             <Phone className="w-5 h-5" />
           </a>
+          <a
+            href={SMS_NUMBER}
+            onClick={() => trackEvent("text_us_click", { source: "navbar_mobile" })}
+            className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg border-2 border-primary text-primary"
+            aria-label="Text us a photo"
+          >
+            <MessageSquare className="w-5 h-5" />
+          </a>
           <Sheet open={sheetOpen} onOpenChange={(o) => {
             setSheetOpen(o);
             if (o) trackEvent("mobile_menu_opened", { source: "navbar" });
