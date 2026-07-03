@@ -298,6 +298,31 @@ export default function PlatformLogin() {
               </div>
             </form>
           </div>
+
+          {(outageMode && offlineAvailable) && (
+            <div className="mt-4 rounded-2xl border border-amber-400/30 bg-amber-500/10 backdrop-blur-xl p-4 text-left">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex-shrink-0 w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center">
+                  <WifiOff className="w-4 h-4 text-amber-300" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-display text-sm font-semibold text-amber-100">
+                    Servers are down (not your fault).
+                  </p>
+                  <p className="font-body text-xs text-amber-100/75 mt-1">
+                    A saved copy of your business is available on this device. View it read-only until service returns.
+                  </p>
+                  <Button
+                    type="button"
+                    onClick={() => navigate("/platform/offline")}
+                    className="mt-3 h-11 px-4 bg-amber-400 hover:bg-amber-300 text-black font-semibold"
+                  >
+                    View offline copy
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <p
