@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useBusinessContext } from "@/contexts/BusinessContext";
 import type { User } from "@supabase/supabase-js";
+import { wipeOfflineMirror } from "@/lib/offlineMirror";
 
 export interface BusinessAccess {
   id: string;
@@ -163,6 +164,9 @@ function clearAllSnapshots() {
   } catch {
     /* ignore */
   }
+  // Offline mirror trust follows the auth snapshot's lifetime — always
+  // wipe them together so a signed-out device can never show cached data.
+  wipeOfflineMirror();
 }
 
 function usePlatformAuthState(): PlatformAuthState {

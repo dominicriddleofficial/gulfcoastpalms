@@ -10,6 +10,8 @@ import UniversalSearch from "./UniversalSearch";
 import PlatformBottomNav from "./PlatformBottomNav";
 import NotificationPanel from "./NotificationPanel";
 import InstallPrompt from "./InstallPrompt";
+import OutageBanner from "./OutageBanner";
+import { setMirrorContext } from "@/lib/offlineMirror";
 import { Button } from "@/components/ui/button";
 import { prefetchRoute, prefetchAllPlatformRoutes } from "@/lib/route-prefetch";
 import { platformCustomersKey, fetchPlatformCustomersList } from "@/hooks/usePlatformCustomersList";
@@ -225,6 +227,17 @@ export default function PlatformLayout({ children }: Props) {
     if (auth.loading) return;
     prefetchAllPlatformRoutes();
   }, [auth.loading]);
+
+  // Keep the offline mirror in sync with the currently signed-in user so
+  // the passive queryCache subscriber knows whose data it is writing.
+  // Purely additive — never touches auth state.
+  useEffect(() => {
+    if (auth.userId) {
+      setMirrorContext({ userId: auth.userId, isOwner: auth.isOwner });
+    } else {
+      setMirrorContext(null);
+    }
+  }, [auth.userId, auth.isOwner]);
 
   // First-mount data prefetch (after auth + business selected) — warms the
   // three highest-value lists in parallel so the next tab visit is instant.
@@ -540,6 +553,7 @@ export default function PlatformLayout({ children }: Props) {
           </div>
           <NotificationPanel />
         </header>
+        <OutageBanner />
 
         <main className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full pb-20 lg:pb-6">{children}</main>
 

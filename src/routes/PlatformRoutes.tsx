@@ -35,6 +35,7 @@ const PlatformDocs = lazy(() => import("@/pages/platform/PlatformDocs"));
 const PlatformRelease = lazy(() => import("@/pages/platform/PlatformRelease"));
 const PlatformQAChecklist = lazy(() => import("@/pages/platform/PlatformQAChecklist"));
 const PlatformOfflineQueue = lazy(() => import("@/pages/platform/PlatformOfflineQueue"));
+const PlatformOffline = lazy(() => import("@/pages/platform/PlatformOffline"));
 const JobberOAuthCallback = lazy(() => import("@/pages/platform/JobberOAuthCallback"));
 
 const withPlatformAuth = (element: ReactNode) => (
@@ -44,6 +45,7 @@ const withPlatformAuth = (element: ReactNode) => (
 export const PlatformRoutes = () => (
   <>
     <Route path="/platform/login" element={<PlatformLogin />} />
+    <Route path="/platform/offline" element={<PlatformOffline />} />
     <Route path="/platform" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformDashboard /></RoleRoute>)} />
     <Route path="/platform/leads" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformLeads /></RoleRoute>)} />
     <Route path="/platform/customers" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformCustomers /></RoleRoute>)} />
