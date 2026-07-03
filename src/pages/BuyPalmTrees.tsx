@@ -391,7 +391,7 @@ const BuyPalmTrees = () => {
                   viewport={{ once: true }}
                   variants={fadeUp}
                   custom={i}
-                  className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card"
+                  className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-elev-md hover:shadow-elev-lg hover:-translate-y-1 hover:border-primary/30 transition-all duration-300"
                 >
                   <div className="p-4">
                     <div className="aspect-[3/4] w-full overflow-hidden rounded-xl bg-secondary">
