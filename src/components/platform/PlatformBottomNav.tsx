@@ -11,7 +11,7 @@ import {
   UserPlus, FileCheck2, Upload as UploadIcon, GraduationCap, BookOpen,
   ShieldCheck, FileSpreadsheet, Files,
   ClipboardCheck, Calculator,
-  Activity, ShieldAlert, BookText, Rocket, TestTube,
+  Activity, ShieldAlert, BookText, Rocket, TestTube, AlertCircle,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -32,6 +32,7 @@ const buildMoreItems = (shortcode: string | undefined, hideAnalytics: boolean): 
   { label: "Quotes", path: "/platform/quotes", icon: FileText },
   { label: "Jobs", path: "/platform/jobs", icon: Briefcase },
   { label: "Payments", path: "/platform/payments", icon: CreditCard },
+  ...(hideAnalytics ? [] : [{ label: "Unpaid Jobs", path: "/platform/unpaid", icon: AlertCircle } as MoreItem]),
   ...(hideAnalytics ? [] : [{ label: "Analytics", path: "/platform/analytics", icon: TrendingUp } as MoreItem]),
   { label: "Comms", path: "/platform/communications", icon: MessageSquare },
   { label: "Tasks", path: "/platform/tasks", icon: ClipboardList },
