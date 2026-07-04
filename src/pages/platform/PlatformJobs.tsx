@@ -35,6 +35,7 @@ import JobStatusProgress from "@/components/platform/jobs/JobStatusProgress";
 import AssignedCrewPicker from "@/components/platform/jobs/AssignedCrewPicker";
 import { useCreateSheets } from "@/components/platform/CreateSheetsProvider";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useInvalidateUnpaidJobs } from "@/hooks/useUnpaidJobs";
 import { enrollCompletedJobInDrip } from "@/lib/drip-enrollment";
 import AddressAutocomplete, { type VerifiedAddress } from "@/components/platform/AddressAutocomplete";
 import EditAddressDialog from "@/components/platform/EditAddressDialog";
@@ -320,6 +321,7 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
   const { selectedBusinessId } = usePlatformAuth();
   const { notifyCreated, open: openSheet } = useCreateSheets();
   const { isStaff } = useUserRole();
+  const invalidateUnpaid = useInvalidateUnpaidJobs();
   const [requestingReview, setRequestingReview] = useState(false);
   const [jobStatus, setJobStatus] = useState(job.visit_status || job.status || "scheduled");
   const [acting, setActing] = useState(false);
@@ -378,7 +380,7 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
 
   const finishUpdate = (error: { message: string } | null, successMsg: string) => {
     if (error) toast.error(error.message);
-    else { toast.success(successMsg); notifyCreated(); onChanged(); }
+    else { toast.success(successMsg); notifyCreated(); onChanged(); invalidateUnpaid(selectedBusinessId); }
     setActing(false);
   };
 
