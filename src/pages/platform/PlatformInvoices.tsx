@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { toast } from "sonner";
+import { useInvalidateUnpaidJobs } from "@/hooks/useUnpaidJobs";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -35,6 +36,7 @@ export default function PlatformInvoices() {
     invoices, loading, statusFilter, setStatusFilter,
     searchQuery, setSearchQuery, statusCounts, totals, refetch,
   } = usePlatformInvoices(selectedBusinessId);
+  const invalidateUnpaid = useInvalidateUnpaidJobs();
   const [selectedInvoice, setSelectedInvoice] = useState<PlatformInvoice | null>(null);
   const navigate = useNavigate();
 
@@ -274,6 +276,7 @@ export default function PlatformInvoices() {
                 await supabase.from("platform_invoices").update(updates).eq("id", selectedInvoice.id);
                 toast.success("Invoice updated");
                 refetch();
+                invalidateUnpaid(selectedBusinessId);
                 setSelectedInvoice(null);
               }}
               onRecordPayment={async (amount, method, notes, isDeposit) => {
@@ -304,6 +307,7 @@ export default function PlatformInvoices() {
                 await supabase.from("platform_invoices").update(invoiceUpdates).eq("id", selectedInvoice.id);
                 toast.success(`Payment of $${amount.toLocaleString()} recorded`);
                 refetch();
+                invalidateUnpaid(selectedBusinessId);
                 setSelectedInvoice(null);
               }}
             />
