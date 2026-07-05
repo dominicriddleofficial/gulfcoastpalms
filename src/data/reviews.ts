@@ -36,7 +36,7 @@ export const GOOGLE_REVIEW_URL =
  */
 export const aggregateRating = {
   score: 5.0,
-  count: 54,
+  count: 100,
 };
 
 export const reviews: GoogleReview[] = [

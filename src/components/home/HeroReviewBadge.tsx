@@ -18,7 +18,7 @@ const HeroReviewBadge = ({ compact }: HeroReviewBadgeProps) => (
       {aggregateRating.score.toFixed(1)}
     </span>
     <span className={`font-body text-palm-sand/70 ${compact ? "text-[11px]" : "text-xs"}`}>
-      · {aggregateRating.count} Google Reviews
+      · {aggregateRating.count}+ Google Reviews
     </span>
   </a>
 );

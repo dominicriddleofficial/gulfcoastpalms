@@ -49,10 +49,10 @@ function useDeferredMount() {
 const Layout = ({ children }: LayoutProps) => {
   const showChat = useDeferredMount();
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col overflow-x-clip">
       <SeasonalBanner />
       <Navbar />
-      <main className="flex-1 pt-16 md:pt-20 pb-[calc(env(safe-area-inset-bottom,0px)+4.5rem)] md:pb-0">
+      <main className="flex-1 pt-16 md:pt-20 pb-[calc(env(safe-area-inset-bottom,0px)+4.5rem)] md:pb-0 overflow-x-clip">
         {children}
       </main>
       <Footer />
