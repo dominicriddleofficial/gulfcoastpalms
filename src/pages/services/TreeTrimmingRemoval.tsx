@@ -97,7 +97,7 @@ const TREE_QUOTE_FACTORS = [
 const FAQS = [
   {
     q: "How much does tree trimming cost in Pensacola, FL?",
-    a: "Tree trimming in Pensacola typically costs $150–$600 depending on tree size and species. Small trees under 20ft run $150–$300. Medium trees (20–40ft) typically cost $300–$600. Large oak or pine removal starts at $800 and can run $2,500+ for difficult access situations. Gulf Coast Palms provides free on-site quotes with no obligation.",
+    a: "Tree trimming and removal are quoted per job based on size, condition, access, and hazards. Every quote is free, and there's no obligation. Texting a photo of the tree to (850) 910-1290 is the fastest way to get an estimate.",
   },
   {
     q: "Do you need a permit to remove a tree in Pensacola or Navarre?",
