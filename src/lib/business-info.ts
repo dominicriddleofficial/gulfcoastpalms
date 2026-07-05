@@ -47,7 +47,7 @@ export const GCP_BUSINESS = {
     "https://www.instagram.com/gulfcoastpalms",
   ] as string[],
   priceRange: "$$",
-  aggregateRating: { ratingValue: "5.0", reviewCount: "54" },
+  aggregateRating: { ratingValue: "5.0", reviewCount: "100" },
 } as const;
 
 /** Convenient href helpers */

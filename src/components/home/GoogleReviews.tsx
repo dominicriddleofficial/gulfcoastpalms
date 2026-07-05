@@ -52,7 +52,7 @@ const GoogleReviews = () => {
                 />
               ))}
             </div>
-            <span className="font-body text-sm text-muted-foreground">based on {aggregateRating.count} reviews</span>
+            <span className="font-body text-sm text-muted-foreground">based on {aggregateRating.count}+ reviews</span>
           </motion.div>
         </motion.div>
 

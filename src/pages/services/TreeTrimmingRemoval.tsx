@@ -86,30 +86,12 @@ const SERVICE_AREAS: { name: string; href: string }[] = [
   { name: "Navarre Beach", href: "/palm-tree-trimming-navarre-fl" },
 ];
 
-const PRICING = [
-  {
-    title: "Small Tree Trimming",
-    size: "Under 20 ft",
-    price: "$150 – $300",
-    examples: "Young oaks, crape myrtles, ornamental trees",
-    includes: "Crown thinning, hazard branch removal, debris cleanup",
-  },
-  {
-    title: "Medium Tree Trimming",
-    size: "20 – 40 ft",
-    price: "$300 – $600",
-    examples: "Mature crape myrtles, mid-size oaks, pine trees",
-    includes: "Crown thinning, structural pruning, full debris haul-away",
-    featured: true,
-  },
-  {
-    title: "Large Tree Removal",
-    size: "40 ft +",
-    price: "$800 – $2,500+",
-    examples: "Large live oaks, mature pines, storm-damaged trees",
-    includes: "Full removal, stump cutting to grade, complete debris haul-away",
-    note: "Large tree pricing varies significantly by access, lean direction, and proximity to structures. Free on-site estimate required.",
-  },
+const TREE_QUOTE_FACTORS = [
+  "Size & species of the tree",
+  "Overall condition & health",
+  "Access to the tree from the street or yard",
+  "Proximity to structures, fences & power lines",
+  "Hazards, lean direction & debris volume",
 ];
 
 const FAQS = [
@@ -329,53 +311,48 @@ const TreeTrimmingRemoval = () => {
         </div>
       </section>
 
-      {/* ============== PRICING ============== */}
+      {/* ============== PRICING (every tree is different) ============== */}
       <section className="section-padding bg-background">
-        <div className="container mx-auto max-w-6xl">
+        <div className="container mx-auto max-w-4xl">
           <div className="mb-10 text-center">
-            <p className="mb-3 font-body text-sm font-bold uppercase tracking-[0.2em] text-primary">Transparent Pricing</p>
-            <h2 className="font-display text-3xl font-bold text-foreground md:text-4xl">Tree Trimming Cost in NW Florida</h2>
+            <p className="mb-3 font-body text-sm font-bold uppercase tracking-[0.2em] text-primary">Honest Pricing</p>
+            <h2 className="font-display text-3xl font-bold text-foreground md:text-4xl">Every Tree Is Different</h2>
             <p className="mx-auto mt-3 max-w-2xl font-body text-muted-foreground">
-              Real starting prices — not the "call for a quote" runaround every other tree service gives you.
+              Tree trimming and removal are quoted per job — never one-size-fits-all. Every quote is free and there's no obligation.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            {PRICING.map((tier) => (
-              <div
-                key={tier.title}
-                className={`relative flex flex-col rounded-2xl border bg-card p-6 ${
-                  tier.featured ? "border-2 border-primary shadow-xl" : "border-border"
-                }`}
-              >
-                {tier.featured && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 font-body text-[11px] font-bold uppercase tracking-wider text-primary-foreground">
-                    Most Common
-                  </span>
-                )}
-                <p className="font-body text-xs font-bold uppercase tracking-wider text-muted-foreground">{tier.size}</p>
-                <h3 className="mt-1 font-display text-xl font-bold text-foreground">{tier.title}</h3>
-                <p className="mt-3 font-display text-3xl font-bold text-primary">{tier.price}</p>
-                <div className="mt-5 space-y-3 font-body text-sm">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Examples</p>
-                    <p className="text-foreground/80">{tier.examples}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Includes</p>
-                    <p className="text-foreground/80">{tier.includes}</p>
-                  </div>
-                  {tier.note && (
-                    <p className="rounded-lg bg-secondary/60 p-3 text-xs italic text-muted-foreground">{tier.note}</p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+          <div className="rounded-2xl border border-border bg-card p-6 md:p-8 shadow-sm">
+            <p className="font-body text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4">
+              What we look at
+            </p>
+            <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              {TREE_QUOTE_FACTORS.map((f) => (
+                <li key={f} className="flex items-start gap-2.5 font-body text-sm text-foreground/85">
+                  <Check className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
+                  <span>{f}</span>
+                </li>
+              ))}
+            </ul>
 
-          <p className="mx-auto mt-8 max-w-3xl text-center font-body text-xs italic text-muted-foreground">
-            Final prices depend on tree size, species, access to the tree, proximity to structures/utilities, and debris volume. All quotes are free and provided on-site.
-          </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <a
+                href="sms:8509101290"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-6 py-4 font-body text-base font-bold text-primary-foreground shadow-md transition-transform hover:scale-[1.02]"
+              >
+                <MessageSquare className="h-5 w-5" /> Text Us a Photo
+              </a>
+              <a
+                href="tel:+18509101290"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-border bg-background px-6 py-4 font-body text-base font-bold text-foreground transition-colors hover:border-primary hover:text-primary"
+              >
+                <Phone className="h-5 w-5" /> Get a Free Quote
+              </a>
+            </div>
+            <p className="mt-4 text-center font-body text-xs text-muted-foreground">
+              Texting a photo of the tree is the fastest way to a quick estimate.
+            </p>
+          </div>
         </div>
       </section>
 
