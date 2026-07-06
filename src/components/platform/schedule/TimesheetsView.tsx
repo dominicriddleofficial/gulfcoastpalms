@@ -318,7 +318,7 @@ export function TimesheetsView({
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5 text-xs text-muted-foreground font-body">
                       <span className="inline-flex items-center gap-1">
                         <CalendarDays className="w-3 h-3" />
-                        {format(new Date(r.schedule_date), "EEE, MMM d")}
+                        {format(parseDateOnlyLocal(r.schedule_date), "EEE, MMM d")}
                       </span>
                       <span className="inline-flex items-center gap-1">
                         <Clock className="w-3 h-3" />
