@@ -1,10 +1,11 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
-import { useUnpaidJobs, type UnpaidJob } from "@/hooks/useUnpaidJobs";
+import { useUnpaidJobs, useDismissUnpaidJob, type UnpaidJob } from "@/hooks/useUnpaidJobs";
 import { fmtMoney } from "@/components/platform/dashboard/primitives";
-import { AlertCircle, Phone, MessageSquare, ArrowUpRight, Briefcase } from "lucide-react";
+import { AlertCircle, Phone, MessageSquare, ArrowUpRight, Briefcase, X } from "lucide-react";
 
 function normalizePhone(p: string | null): string | null {
   if (!p) return null;
@@ -13,10 +14,20 @@ function normalizePhone(p: string | null): string | null {
   return digits.length === 10 ? `+1${digits}` : `+${digits}`;
 }
 
-function Row({ job }: { job: UnpaidJob }) {
+function Row({ job, businessId }: { job: UnpaidJob; businessId: string | null }) {
   const overdue = (job.days_since_completed ?? 0) >= 14;
   const partial = job.paid > 0;
   const tel = normalizePhone(job.customer_phone);
+  const dismiss = useDismissUnpaidJob(businessId);
+  const [confirming, setConfirming] = useState(false);
+
+  const onDismiss = () => {
+    if (!confirming) {
+      setConfirming(true);
+      return;
+    }
+    dismiss.mutate(job.id);
+  };
 
   return (
     <li
@@ -157,6 +168,24 @@ function Row({ job }: { job: UnpaidJob }) {
             </span>
           </>
         )}
+        <button
+          type="button"
+          onClick={onDismiss}
+          disabled={dismiss.isPending}
+          className="ml-auto inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-body font-medium transition-colors hover:bg-white/10 disabled:opacity-50"
+          style={{
+            fontSize: "12px",
+            color: confirming ? "rgb(248,113,113)" : "hsl(220 8% 65%)",
+            background: confirming ? "rgba(239,68,68,0.10)" : "rgba(255,255,255,0.04)",
+            border: confirming
+              ? "1px solid rgba(239,68,68,0.35)"
+              : "1px solid rgba(255,255,255,0.08)",
+          }}
+          title={confirming ? "Click again to confirm — this is permanent" : "Remove from the Unpaid tracker permanently"}
+        >
+          <X className="w-3.5 h-3.5" />
+          {dismiss.isPending ? "Dismissing…" : confirming ? "Click again to confirm" : "Dismiss"}
+        </button>
       </div>
     </li>
   );
@@ -240,7 +269,7 @@ export default function PlatformUnpaid() {
             ) : (
               <ul className="space-y-2">
                 {data.unpaid.map(j => (
-                  <Row key={j.id} job={j} />
+                  <Row key={j.id} job={j} businessId={selectedBusinessId} />
                 ))}
               </ul>
             )}
