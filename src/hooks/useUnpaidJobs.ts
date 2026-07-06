@@ -1,21 +1,28 @@
-import { useMemo } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Unpaid Jobs — presentation-layer aggregation over existing tables.
  *
+ * HARD RULES (owner request):
+ *   1. Only platform-originated jobs count. Anything with source='jobber'
+ *      (or any non-platform source) is permanently excluded.
+ *   2. Only jobs completed on/after UNPAID_TRACKING_START count. Older
+ *      completed jobs (legacy May/June work) are ignored forever.
+ *   3. Owners can dismiss individual jobs via platform_jobs.excluded_from_unpaid.
+ *
  * Definition of "unpaid":
  *   platform_jobs.status = 'completed'
+ *   AND source = 'platform'
+ *   AND completed_at >= UNPAID_TRACKING_START
+ *   AND excluded_from_unpaid = false
  *   AND job_total > 0  (jobs with total = 0/null are surfaced separately
  *                       as "no price set" — they are NOT counted as owed)
  *   AND owed = job_total - SUM(platform_invoices.amount_paid WHERE invoice.job_id = job.id) > 0
- *
- * Two efficient queries, no per-row loops:
- *   1. All completed jobs for the workspace (+ customer name/phone).
- *   2. All invoices for the workspace with job_id set (id, job_id, amount_paid).
- * The reduction happens once in JS.
  */
+
+/** Cutoff — nothing completed before this date is ever counted. */
+export const UNPAID_TRACKING_START = "2026-07-03";
 
 export type UnpaidJob = {
   id: string;
@@ -69,7 +76,10 @@ export async function fetchUnpaidJobs(businessId: string | null): Promise<Unpaid
         "id, job_number, title, customer_id, total, completed_at, platform_customers(display_name, phone)",
       )
       .eq("business_id", businessId)
-      .eq("status", "completed"),
+      .eq("status", "completed")
+      .eq("source", "platform")
+      .eq("excluded_from_unpaid", false)
+      .gte("completed_at", UNPAID_TRACKING_START),
     supabase
       .from("platform_invoices")
       .select("id, job_id, amount_paid")
@@ -170,4 +180,23 @@ export function useInvalidateUnpaidJobs() {
   const qc = useQueryClient();
   return (businessId: string | null) =>
     qc.invalidateQueries({ queryKey: unpaidJobsKey(businessId) });
+}
+
+/** Owner-only: permanently dismiss a job from the Unpaid Jobs tracker. */
+export async function dismissUnpaidJob(jobId: string): Promise<void> {
+  const { error } = await supabase
+    .from("platform_jobs")
+    .update({ excluded_from_unpaid: true })
+    .eq("id", jobId);
+  if (error) throw error;
+}
+
+export function useDismissUnpaidJob(businessId: string | null) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (jobId: string) => dismissUnpaidJob(jobId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: unpaidJobsKey(businessId) });
+    },
+  });
 }
