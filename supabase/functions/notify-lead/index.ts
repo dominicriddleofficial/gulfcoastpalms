@@ -21,19 +21,93 @@ function getCorsHeaders(req: Request) {
 }
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
-const OWNER_PHONE = "+18509101290";
+const OWNER_PHONE_FALLBACK = "+18509101290";
+
+/**
+ * Fail-silent SMS delivery.
+ * Tries a direct Twilio REST call first (TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN
+ * + TWILIO_FROM_NUMBER). If those aren't configured, falls back to the
+ * Lovable connector gateway. If nothing is configured OR Twilio errors,
+ * we log and return { skipped:true } — the lead still saves and the
+ * visitor still sees success.
+ */
+async function sendLeadSms(to: string, body: string): Promise<{ ok: boolean; sid?: string; reason?: string }> {
+  const accountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
+  const authToken = Deno.env.get("TWILIO_AUTH_TOKEN");
+  const directFrom = Deno.env.get("TWILIO_FROM_NUMBER");
+
+  // Path A — direct Twilio REST (preferred, matches requested secret names)
+  if (accountSid && authToken && directFrom) {
+    try {
+      const url = `https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(accountSid)}/Messages.json`;
+      const auth = btoa(`${accountSid}:${authToken}`);
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Authorization": `Basic ${auth}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({ To: to, From: directFrom, Body: body }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        console.error("notify-lead: direct Twilio REST failed", res.status, data);
+        return { ok: false, reason: `twilio_${res.status}` };
+      }
+      return { ok: true, sid: data?.sid };
+    } catch (err) {
+      console.error("notify-lead: direct Twilio REST threw", err);
+      return { ok: false, reason: "twilio_exception" };
+    }
+  }
+
+  // Path B — Lovable connector gateway (existing setup)
+  const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+  const gatewayKey = Deno.env.get("TWILIO_API_KEY");
+  if (lovableKey && gatewayKey) {
+    try {
+      const numbersRes = await fetch(`${GATEWAY_URL}/IncomingPhoneNumbers.json`, {
+        headers: {
+          "Authorization": `Bearer ${lovableKey}`,
+          "X-Connection-Api-Key": gatewayKey,
+        },
+      });
+      const numbersData = await numbersRes.json().catch(() => ({}));
+      const fromNumber = numbersData?.incoming_phone_numbers?.[0]?.phone_number;
+      if (!numbersRes.ok || !fromNumber) {
+        console.error("notify-lead: gateway lookup failed", numbersRes.status);
+        return { ok: false, reason: "gateway_no_number" };
+      }
+      const smsRes = await fetch(`${GATEWAY_URL}/Messages.json`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${lovableKey}`,
+          "X-Connection-Api-Key": gatewayKey,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({ To: to, From: fromNumber, Body: body }),
+      });
+      const smsData = await smsRes.json().catch(() => ({}));
+      if (!smsRes.ok) {
+        console.error("notify-lead: gateway send failed", smsRes.status, smsData);
+        return { ok: false, reason: `gateway_${smsRes.status}` };
+      }
+      return { ok: true, sid: smsData?.sid };
+    } catch (err) {
+      console.error("notify-lead: gateway threw", err);
+      return { ok: false, reason: "gateway_exception" };
+    }
+  }
+
+  console.warn("notify-lead: no SMS credentials configured; lead saved without alert");
+  return { ok: false, reason: "no_credentials" };
+}
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
-
-    const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
-    if (!TWILIO_API_KEY) throw new Error("TWILIO_API_KEY is not configured");
-
     const body = await req.json();
 
     // Server-side validation
@@ -109,20 +183,6 @@ serve(async (req) => {
       });
     }
 
-    const numbersRes = await fetch(`${GATEWAY_URL}/IncomingPhoneNumbers.json`, {
-      headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-        "X-Connection-Api-Key": TWILIO_API_KEY,
-      },
-    });
-    const numbersData = await numbersRes.json();
-    if (!numbersRes.ok) {
-      throw new Error("Failed to get phone numbers");
-    }
-
-    const fromNumber = numbersData?.incoming_phone_numbers?.[0]?.phone_number;
-    if (!fromNumber) throw new Error("No Twilio phone number found");
-
     // Sanitize inputs for SMS body
     const safeName = String(name).substring(0, 100);
     const safePhone = String(phone || "N/A").substring(0, 20);
@@ -133,29 +193,26 @@ serve(async (req) => {
 
     const smsBody = `🌴 NEW LEAD\nName: ${safeName}\nPhone: ${safePhone}\nEmail: ${safeEmail}\nService: ${safeService}\nLocation: ${safeLocation}\nMessage: ${safeMessage}`;
 
-    const smsRes = await fetch(`${GATEWAY_URL}/Messages.json`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-        "X-Connection-Api-Key": TWILIO_API_KEY,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({ To: OWNER_PHONE, From: fromNumber, Body: smsBody }),
-    });
+    const destination = Deno.env.get("LEAD_ALERT_PHONE") || OWNER_PHONE_FALLBACK;
+    const result = await sendLeadSms(destination, smsBody);
 
-    const smsData = await smsRes.json();
-    if (!smsRes.ok) {
-      throw new Error("SMS delivery failed");
-    }
-
-    return new Response(JSON.stringify({ success: true, sid: smsData.sid }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    // Fail-silent: always return success so the client-side lead flow never
+    // shows an error to the visitor when Twilio is misconfigured/down.
+    return new Response(
+      JSON.stringify(
+        result.ok
+          ? { success: true, sid: result.sid }
+          : { success: true, sid: null, sms_skipped: true, reason: result.reason }
+      ),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (error: unknown) {
-    console.error("notify-lead error:", error);
-    return new Response(JSON.stringify({ error: true, message: "An error occurred. Please try again.", code: "SERVER_ERROR" }), {
-      status: 500,
-      headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
-    });
+    // Fail-silent even for unexpected errors — the lead has already saved
+    // client-side; a broken SMS alert must never surface to the visitor.
+    console.error("notify-lead unhandled error:", error);
+    return new Response(
+      JSON.stringify({ success: true, sms_skipped: true, reason: "server_error" }),
+      { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+    );
   }
 });
