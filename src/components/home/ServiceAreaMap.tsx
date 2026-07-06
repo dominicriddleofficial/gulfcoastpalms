@@ -277,7 +277,7 @@ const ServiceAreaMap = () => {
             Served Across the Emerald Coast
           </h2>
           <p className="font-body text-muted-foreground max-w-2xl mx-auto">
-            Palms trimmed, removed, and installed across every city marked below — from Pensacola east to Santa Rosa Beach.
+            Palms trimmed, removed, and installed across every city marked below — from Perdido west to 30A east.
           </p>
         </div>
 
@@ -292,6 +292,25 @@ const ServiceAreaMap = () => {
               "0 30px 80px -20px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(244,168,37,0.10), inset 0 0 60px rgba(30,133,73,0.08)",
           }}
         >
+          {/* Header pill badge */}
+          <div
+            aria-hidden="true"
+            className="absolute top-3 left-3 z-10 flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wide"
+            style={{
+              background: "rgba(4,16,10,0.72)",
+              border: `1px solid ${BRAND_AMBER}55`,
+              color: "#eafff2",
+              backdropFilter: "blur(6px)",
+              WebkitBackdropFilter: "blur(6px)",
+            }}
+          >
+            <span
+              className="inline-block w-1.5 h-1.5 rounded-full"
+              style={{ background: BRAND_AMBER, boxShadow: `0 0 8px ${BRAND_AMBER}` }}
+            />
+            {PINS.length} cities · Pensacola → 30A
+          </div>
+
           {/* Vignette */}
           <div
             aria-hidden="true"
@@ -301,6 +320,10 @@ const ServiceAreaMap = () => {
                 "radial-gradient(ellipse 100% 80% at 50% 50%, transparent 55%, rgba(0,0,0,0.55) 100%)",
             }}
           />
+          {/* Water glint sweep */}
+          <div aria-hidden="true" className="scam-glint" />
+          {/* Final sheen sweep */}
+          <div aria-hidden="true" className="scam-sheen" />
 
           <svg
             viewBox="0 0 1000 500"
