@@ -40,7 +40,7 @@ export const servicesData: ServiceData[] = [
     secondaryContent: [
       "Many homeowners and even some tree services don't realize that improper palm trimming can cause permanent damage. Cutting live, green fronds reduces the palm's ability to photosynthesize and produce energy. This weakens the trunk over time and makes the tree more susceptible to disease, nutrient deficiency, and storm damage.",
       "At Gulf Coast Palms, we follow industry best practices: only removing dead, dying, or damaged fronds while preserving the healthy canopy. This approach keeps your palms looking great while maximizing their strength and lifespan.",
-      "We're trusted by property managers, HOA boards, and homeowners across the Emerald Coast — with over 500 palm jobs completed in 2025 alone."
+      "We're trusted by property managers, HOA boards, and homeowners across the Emerald Coast — with 500+ properties served and 100+ five-star Google reviews."
     ],
     ctaHeading: "Need Professional Palm Trimming?",
     ctaText: "Text us a photo of your palms for an instant quote. We serve the entire Emerald Coast from Pensacola to 30A.",

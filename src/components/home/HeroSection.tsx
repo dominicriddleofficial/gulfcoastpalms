@@ -61,7 +61,7 @@ const HeroSection = () => {
           transition={{ duration: 0.7, delay: 0.2 }}
           className="font-body text-sm md:text-lg text-palm-sand/80 max-w-2xl mx-auto mb-4"
         >
-          Licensed specialists trusted by 500+ Emerald Coast homeowners. Same-day estimates. No generalist crews.
+          Palm-tree specialists with 500+ properties served across the Emerald Coast. Same-day estimates. No generalist crews.
         </motion.p>
         {/* Review badge — above CTA on mobile */}
         <motion.div
