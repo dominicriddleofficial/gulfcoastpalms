@@ -6,7 +6,9 @@
  */
 
 export const SITE_ORIGIN = "https://gulfcoastpalmservices.com";
-export const DEFAULT_OG_IMAGE = `${SITE_ORIGIN}/og-image.png`;
+export const DEFAULT_OG_IMAGE = `${SITE_ORIGIN}/og-image.jpg`;
+export const DEFAULT_OG_IMAGE_ALT =
+  "Gulf Coast Palms — professional palm tree trimming, installation, and removal across Florida's Emerald Coast";
 
 export const rawRoutes = [
   { path: "/", title: "Gulf Coast Palms | Palm Tree Services in Navarre, FL", description: "Palm tree trimming, removal, installation & hurricane prep across Navarre, Gulf Breeze, Pensacola & Destin. 5.0★ · free quotes — call (850) 910-1290." },
@@ -31,6 +33,7 @@ export const rawRoutes = [
   { path: "/palm-tree-trimming-santa-rosa-beach-fl", title: "Palm Tree Trimming Santa Rosa Beach FL | 30A | Gulf Coast Palms", description: "Premium palm tree trimming in Santa Rosa Beach, FL — WaterColor, WaterSound & 30A luxury homes. 5.0★ · 100+ reviews · free quote — (850) 910-1290." },
   { path: "/palm-tree-trimming-pace-fl", title: "Palm Tree Trimming Pace FL | Gulf Coast Palms", description: "Palm tree trimming in Pace, FL. Serving Santa Rosa County's fastest-growing community. 5.0★ · 100+ reviews · free estimates — (850) 910-1290." },
   { path: "/palm-tree-trimming-milton-fl", title: "Palm Tree Trimming Milton FL | Gulf Coast Palms", description: "Palm tree trimming in Milton, FL — Blackwater River to Highway 90. 5.0★ · 100+ reviews · free estimates — call Gulf Coast Palms at (850) 910-1290." },
+  { path: "/palm-tree-trimming-crestview-fl", title: "Palm Tree Trimming Crestview FL | Gulf Coast Palms", description: "Palm tree trimming in Crestview, FL — Okaloosa County's largest inland city. Cold-hardy species, storm cleanup & precision cuts. 5.0★ · 100+ reviews — (850) 910-1290." },
   { path: "/palm-trees/types", title: "Palm Tree Types for Florida's Emerald Coast | Gulf Coast Palms", description: "Learn the most popular palm species for Florida's Emerald Coast — care, trimming & install tips for Sabal, Canary Island Date, Washingtonia & more." },
   { path: "/palm-trees/canary-island-date-palm", title: "Canary Island Date Palm — Care, Trimming & Removal Guide | Gulf Coast Palms", description: "The crown jewel of luxury coastal landscaping — care, trimming, diamond cutting & removal advice for Canary Island Date Palms. Free quote (850) 910-1290." },
   { path: "/palm-trees/sabal-palm", title: "Sabal Palm — Florida State Tree Care & Trimming Guide | Gulf Coast Palms", description: "Sabal Palm is Florida's official state tree — hardy, native, coastal-ready. Care, trimming, install & removal tips from Gulf Coast Palms. (850) 910-1290." },
@@ -61,6 +64,8 @@ export const rawRoutes = [
   { path: "/terms-of-service", title: "Terms of Service | Gulf Coast Palms", description: "Review the terms of service for Gulf Coast Palms palm tree trimming, removal & maintenance services across Northwest Florida." },
   { path: "/privacy-policy", title: "Privacy Policy | Gulf Coast Palms", description: "Read the Gulf Coast Palms privacy policy to understand how we collect, use & protect your personal information when you request service or a quote." },
   { path: "/text-consent", title: "SMS Text Consent | Gulf Coast Palms", description: "Opt in to receive text message updates from Gulf Coast Palms about your palm tree service appointments, estimates & scheduling in NW Florida." },
+  { path: "/quote", title: "Get a Free Palm Tree Service Quote | Gulf Coast Palms", description: "Request a free quote for palm trimming, removal, installation, or hurricane prep across NW Florida. Same-day response — call or text (850) 910-1290." },
+  { path: "/thank-you", title: "Thank You | Gulf Coast Palms", description: "Thanks for reaching out to Gulf Coast Palms. We typically respond within 15 minutes during business hours — (850) 910-1290.", noindex: true },
 ];
 
 export function buildRouteMeta() {
@@ -71,7 +76,9 @@ export function buildRouteMeta() {
     ogTitle: r.title,
     ogDescription: r.description,
     ogImage: DEFAULT_OG_IMAGE,
+    ogImageAlt: DEFAULT_OG_IMAGE_ALT,
     ogType: "website",
     canonical: `${SITE_ORIGIN}${r.path}`,
+    noindex: r.noindex === true,
   }));
 }

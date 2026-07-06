@@ -17,8 +17,10 @@ export const GCP_BUSINESS = {
   phoneDigits: "8509101290",
   email: "info@gulfcoastpalmservices.com",
   url: "https://gulfcoastpalmservices.com",
-  logo: "https://gulfcoastpalmservices.com/og-image.png",
-  ogImage: "https://gulfcoastpalmservices.com/og-image.png",
+  logo: "https://gulfcoastpalmservices.com/og-image.jpg",
+  ogImage: "https://gulfcoastpalmservices.com/og-image.jpg",
+  ogImageAlt:
+    "Gulf Coast Palms — professional palm tree trimming, installation, and removal across Florida's Emerald Coast",
   address: {
     streetAddress: "7371 Grand Navarre Blvd",
     addressLocality: "Navarre",
@@ -52,4 +54,15 @@ export const GCP_BUSINESS = {
 
 /** Convenient href helpers */
 export const TEL_HREF = `tel:${GCP_BUSINESS.phoneDigits}`;
-export const SMS_HREF = `sms:${GCP_BUSINESS.phoneDigits}`;
+/**
+ * Site-wide "Text Us a Photo" CTA body. Encoded once so links can be built
+ * without repeating the string. iOS Safari expects `sms:NUMBER&body=...`
+ * (Android also accepts `?body=` — iOS form works on both).
+ */
+export const SMS_BODY =
+  "Hi Gulf Coast Palms! I'd like a quote — here's a photo of my palms:";
+export const SMS_BODY_ENCODED = encodeURIComponent(SMS_BODY);
+/** Raw sms: href without body prefill — for admin / dynamic-recipient use. */
+export const SMS_HREF_RAW = `sms:${GCP_BUSINESS.phoneDigits}`;
+/** Public "Text Us a Photo" CTA link with body prefill. */
+export const SMS_HREF = `${SMS_HREF_RAW}&body=${SMS_BODY_ENCODED}`;
