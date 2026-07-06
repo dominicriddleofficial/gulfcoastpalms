@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
 import { locations } from "@/data/locations";
+import ServiceAreaMap from "@/components/home/ServiceAreaMap";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -37,6 +38,8 @@ const ServiceAreas = () => {
           </motion.div>
         </div>
       </section>
+
+      <ServiceAreaMap />
 
       <section className="section-padding bg-background">
         <div className="container mx-auto">
