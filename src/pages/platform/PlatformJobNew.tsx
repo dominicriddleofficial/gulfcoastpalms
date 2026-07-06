@@ -39,7 +39,7 @@ export default function PlatformJobNew() {
   const [customer, setCustomer] = useState<CustomerLite | null>(prefill?.customer ?? null);
   const [title, setTitle] = useState(prefill?.title ?? "");
   const [description, setDescription] = useState(prefill?.description ?? "");
-  const [date, setDate] = useState(() => prefill?.scheduledDate ?? new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(() => prefill?.scheduledDate ?? todayLocalKey());
   const [time, setTime] = useState("09:00");
   const [duration, setDuration] = useState(60);
   const [address, setAddress] = useState(prefill?.address ?? "");
