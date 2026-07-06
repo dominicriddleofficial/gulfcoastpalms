@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { PlatformLead } from "@/hooks/usePlatformLeads";
 import type { PlatformQuote } from "@/hooks/usePlatformQuotes";
+import { todayLocalKey } from "@/lib/localDate";
 
 /**
  * Convert a lead into a platform_customer, update lead status to "won",
