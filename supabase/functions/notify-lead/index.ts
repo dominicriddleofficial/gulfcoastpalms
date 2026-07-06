@@ -21,22 +21,63 @@ function getCorsHeaders(req: Request) {
 }
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
-const OWNER_PHONE_FALLBACK = "+18509101290";
+// Owner cell for lead alerts. Overridable via LEAD_ALERT_PHONE secret.
+const OWNER_PHONE_FALLBACK = "+18506049819";
 
 /**
- * Fail-silent SMS delivery.
- * Tries a direct Twilio REST call first (TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN
- * + TWILIO_FROM_NUMBER). If those aren't configured, falls back to the
- * Lovable connector gateway. If nothing is configured OR Twilio errors,
- * we log and return { skipped:true } — the lead still saves and the
- * visitor still sees success.
+ * SimpleTexting REST — preferred path when SIMPLETEXTING_API_KEY is set.
+ * Same pattern as supabase/functions/send-sms/index.ts: upsert the contact
+ * then send the message in AUTO mode. Fail-silent; never throws.
+ */
+async function sendViaSimpleTexting(to: string, body: string): Promise<{ ok: boolean; id?: string; reason?: string }> {
+  const key = Deno.env.get("SIMPLETEXTING_API_KEY");
+  if (!key) return { ok: false, reason: "no_simpletexting_key" };
+  const cleanPhone = to.replace(/[^\d+]/g, "");
+  try {
+    // Best-effort contact upsert. 201/204/409 are all fine.
+    await fetch("https://api-app2.simpletexting.com/v2/api/contacts", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ phone: cleanPhone }),
+    }).catch(() => null);
+
+    const res = await fetch("https://api-app2.simpletexting.com/v2/api/messages", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ contactPhone: cleanPhone, mode: "AUTO", text: body }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      console.error("notify-lead: SimpleTexting failed", res.status, data);
+      return { ok: false, reason: `simpletexting_${res.status}` };
+    }
+    return { ok: true, id: (data as { id?: string })?.id };
+  } catch (err) {
+    console.error("notify-lead: SimpleTexting threw", err);
+    return { ok: false, reason: "simpletexting_exception" };
+  }
+}
+
+/**
+ * Fail-silent SMS delivery. Order:
+ *   1. SimpleTexting REST (SIMPLETEXTING_API_KEY) — owner's primary SMS platform.
+ *   2. Direct Twilio REST (TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN + TWILIO_FROM_NUMBER).
+ *   3. Lovable connector gateway (LOVABLE_API_KEY + TWILIO_API_KEY).
+ * If nothing is configured or every provider errors we log and return
+ * { ok:false } — the lead still saves and the visitor still sees success.
  */
 async function sendLeadSms(to: string, body: string): Promise<{ ok: boolean; sid?: string; reason?: string }> {
+  // Path A — SimpleTexting (preferred)
+  const stResult = await sendViaSimpleTexting(to, body);
+  if (stResult.ok) return { ok: true, sid: stResult.id };
+  // Only fall through if SimpleTexting is unconfigured; a real API error
+  // still tries Twilio as a redundant backup path.
+
   const accountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
   const authToken = Deno.env.get("TWILIO_AUTH_TOKEN");
   const directFrom = Deno.env.get("TWILIO_FROM_NUMBER");
 
-  // Path A — direct Twilio REST (preferred, matches requested secret names)
+  // Path B — direct Twilio REST
   if (accountSid && authToken && directFrom) {
     try {
       const url = `https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(accountSid)}/Messages.json`;
@@ -61,7 +102,7 @@ async function sendLeadSms(to: string, body: string): Promise<{ ok: boolean; sid
     }
   }
 
-  // Path B — Lovable connector gateway (existing setup)
+  // Path C — Lovable connector gateway (existing setup)
   const lovableKey = Deno.env.get("LOVABLE_API_KEY");
   const gatewayKey = Deno.env.get("TWILIO_API_KEY");
   if (lovableKey && gatewayKey) {
@@ -100,7 +141,7 @@ async function sendLeadSms(to: string, body: string): Promise<{ ok: boolean; sid
   }
 
   console.warn("notify-lead: no SMS credentials configured; lead saved without alert");
-  return { ok: false, reason: "no_credentials" };
+  return { ok: false, reason: stResult.reason || "no_credentials" };
 }
 
 serve(async (req) => {
@@ -191,7 +232,8 @@ serve(async (req) => {
     const safeLocation = String(location || "N/A").substring(0, 200);
     const safeMessage = String(message || "N/A").substring(0, 500);
 
-    const smsBody = `🌴 NEW LEAD\nName: ${safeName}\nPhone: ${safePhone}\nEmail: ${safeEmail}\nService: ${safeService}\nLocation: ${safeLocation}\nMessage: ${safeMessage}`;
+    // Compact single-line alert (owner-preferred format).
+    const smsBody = `NEW GCP LEAD: ${safeName} · ${safePhone} · ${safeService} · ${safeLocation}. Reply fast!`;
 
     const destination = Deno.env.get("LEAD_ALERT_PHONE") || OWNER_PHONE_FALLBACK;
     const result = await sendLeadSms(destination, smsBody);

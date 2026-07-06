@@ -98,6 +98,7 @@ export const MarketingRoutes = () => (
     <Route path="/palm-tree-cost" element={<PalmTreeCost />} />
     <Route path="/hoa-commercial-palm-maintenance" element={<HoaCommercialMaintenance />} />
     <Route path="/commercial" element={<Commercial />} />
+    <Route path="/commercial-palm-tree-services" element={<Commercial />} />
     <Route path="/hurricane-palm-preparation" element={<HurricanePalmPreparation />} />
     <Route path="/emergency-palm-service" element={<EmergencyPalmService />} />
     <Route path="/holiday-lighting" element={<HolidayLighting />} />

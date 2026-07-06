@@ -7,6 +7,7 @@ import WhyChooseUs from "@/components/home/WhyChooseUs";
 import ServicesPreview from "@/components/home/ServicesPreview";
 import ServiceAreasSection from "@/components/home/ServiceAreasSection";
 import GalleryPreview from "@/components/home/GalleryPreview";
+import ServiceAreaMap from "@/components/home/ServiceAreaMap";
 import GoogleReviews from "@/components/home/GoogleReviews";
 import VideoTestimonials from "@/components/home/VideoTestimonials";
 import FAQ from "@/components/home/FAQ";
@@ -29,6 +30,7 @@ const Index = () => {
       <ServicesPreview />
       <ServiceAreasSection />
       <GalleryPreview />
+      <ServiceAreaMap />
       <GoogleReviews />
       <VideoTestimonials />
       {/* TODO: Update SEOHead description to mention video testimonials once real videos are added */}
