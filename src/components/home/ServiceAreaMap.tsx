@@ -21,7 +21,7 @@ type Pin = {
 
 // Ordered west → east so the traced route reads Perdido → 30A.
 const PINS: Pin[] = [
-  { city: "Perdido",           slug: "/palm-tree-trimming-perdido-key-fl",       x:  55, y: 310, labelPos: "below" },
+  { city: "Perdido",           slug: "/palm-tree-trimming-perdido-key-fl",       x:  55, y: 310, labelPos: "above" },
   { city: "Pensacola",         slug: "/palm-tree-trimming-pensacola-fl",         x: 135, y: 300, labelPos: "below" },
   { city: "Pace",              slug: "/palm-tree-trimming-pace-fl",              x: 180, y: 250, labelPos: "above" },
   { city: "Milton",            slug: "/palm-tree-trimming-milton-fl",            x: 220, y: 205, labelPos: "above" },
