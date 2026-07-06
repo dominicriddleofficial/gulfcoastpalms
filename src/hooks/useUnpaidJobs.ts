@@ -190,3 +190,13 @@ export async function dismissUnpaidJob(jobId: string): Promise<void> {
     .eq("id", jobId);
   if (error) throw error;
 }
+
+export function useDismissUnpaidJob(businessId: string | null) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (jobId: string) => dismissUnpaidJob(jobId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: unpaidJobsKey(businessId) });
+    },
+  });
+}
