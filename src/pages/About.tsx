@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Phone, MapPin, TreePalm, Heart, Users } from "lucide-react";
 import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
-import heroImage from "@/assets/hero-palms.jpg";
+import heroImage from "@img/hero-palms.jpg?format=webp&quality=75&w=1600";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
