@@ -359,8 +359,8 @@ const ServiceAreaMap = () => {
                 <stop offset="100%" stopColor={BRAND_GREEN_BRIGHT} stopOpacity="0.55" />
               </linearGradient>
               <linearGradient id="scam-wave-grad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%"   stopColor={BRAND_GREEN_BRIGHT} stopOpacity="0.14" />
-                <stop offset="100%" stopColor={BRAND_GREEN_BRIGHT} stopOpacity="0" />
+                <stop offset="0%"   stopColor="#7fe6b5" stopOpacity="0.30" />
+                <stop offset="100%" stopColor="#7fe6b5" stopOpacity="0" />
               </linearGradient>
               <radialGradient id="scam-core" cx="0.5" cy="0.5" r="0.5">
                 <stop offset="0%"   stopColor="#eafff2" />
