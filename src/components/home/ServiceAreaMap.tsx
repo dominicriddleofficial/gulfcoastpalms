@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 /**
  * Cinematic Emerald Coast service map — pure SVG + CSS animation.
@@ -19,23 +19,25 @@ type Pin = {
   labelPos: "above" | "below";
 };
 
-// Ordered west → east so the traced route reads Pensacola → Santa Rosa Beach.
+// Ordered west → east so the traced route reads Perdido → 30A.
 const PINS: Pin[] = [
-  { city: "Pensacola",         slug: "/palm-tree-trimming-pensacola-fl",         x: 130, y: 300, labelPos: "below" },
-  { city: "Pace",              slug: "/palm-tree-trimming-pace-fl",              x: 175, y: 250, labelPos: "above" },
-  { city: "Milton",            slug: "/palm-tree-trimming-milton-fl",            x: 215, y: 205, labelPos: "above" },
-  { city: "Gulf Breeze",       slug: "/palm-tree-trimming-gulf-breeze-fl",       x: 235, y: 345, labelPos: "below" },
+  { city: "Perdido",           slug: "/palm-tree-trimming-perdido-key-fl",       x:  55, y: 310, labelPos: "below" },
+  { city: "Pensacola",         slug: "/palm-tree-trimming-pensacola-fl",         x: 135, y: 300, labelPos: "below" },
+  { city: "Pace",              slug: "/palm-tree-trimming-pace-fl",              x: 180, y: 250, labelPos: "above" },
+  { city: "Milton",            slug: "/palm-tree-trimming-milton-fl",            x: 220, y: 205, labelPos: "above" },
+  { city: "Gulf Breeze",       slug: "/palm-tree-trimming-gulf-breeze-fl",       x: 240, y: 345, labelPos: "below" },
   { city: "Navarre",           slug: "/palm-tree-trimming-navarre-fl",           x: 340, y: 365, labelPos: "below" },
   { city: "Mary Esther",       slug: "/palm-tree-trimming-mary-esther-fl",       x: 445, y: 340, labelPos: "above" },
   { city: "Crestview",         slug: "/palm-tree-trimming-crestview-fl",         x: 520, y: 120, labelPos: "above" },
   { city: "Fort Walton Beach", slug: "/palm-tree-trimming-fort-walton-beach-fl", x: 510, y: 375, labelPos: "below" },
   { city: "Niceville",         slug: "/palm-tree-trimming-niceville-fl",         x: 590, y: 260, labelPos: "above" },
   { city: "Destin",            slug: "/palm-tree-trimming-destin-fl",            x: 680, y: 385, labelPos: "below" },
-  { city: "Santa Rosa Beach",  slug: "/palm-tree-trimming-santa-rosa-beach-fl",  x: 850, y: 390, labelPos: "below" },
+  { city: "Santa Rosa Beach",  slug: "/palm-tree-trimming-santa-rosa-beach-fl",  x: 840, y: 390, labelPos: "below" },
+  { city: "30A",               slug: "/palm-tree-trimming-30a-fl",               x: 945, y: 395, labelPos: "above" },
 ];
 
 // Route path (west → east, coastal cities only for a clean sweep).
-const ROUTE_CITIES = ["Pensacola", "Gulf Breeze", "Navarre", "Mary Esther", "Fort Walton Beach", "Destin", "Santa Rosa Beach"];
+const ROUTE_CITIES = ["Perdido", "Pensacola", "Gulf Breeze", "Navarre", "Mary Esther", "Fort Walton Beach", "Destin", "Santa Rosa Beach", "30A"];
 const ROUTE_POINTS = ROUTE_CITIES
   .map((c) => PINS.find((p) => p.city === c))
   .filter((p): p is Pin => Boolean(p));
@@ -61,6 +63,9 @@ const buildRoutePath = (): string => {
 };
 
 const ROUTE_D = buildRoutePath();
+
+// Total route length for stroke-dashoffset math (approx, tuned for our path).
+const ROUTE_LEN = 1550;
 
 const ServiceAreaMap = () => {
   const [visible, setVisible] = useState(false);
@@ -115,10 +120,46 @@ const ServiceAreaMap = () => {
           60%  { transform: scale(1.18); opacity: 1; }
           100% { transform: scale(1); opacity: 1; }
         }
+        @keyframes scam-wave {
+          from { transform: translateX(0); }
+          to   { transform: translateX(-200px); }
+        }
+        @keyframes scam-glint {
+          0%   { transform: translateX(-40%); opacity: 0; }
+          20%  { opacity: 0.6; }
+          80%  { opacity: 0.6; }
+          100% { transform: translateX(140%); opacity: 0; }
+        }
+        @keyframes scam-mote {
+          0%   { transform: translate(0,0); opacity: 0; }
+          20%  { opacity: 0.35; }
+          80%  { opacity: 0.35; }
+          100% { transform: translate(-60px,-24px); opacity: 0; }
+        }
+        @keyframes scam-ring {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+        @keyframes scam-land-fade {
+          from { opacity: 0; transform: translateY(6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes scam-sheen {
+          0%   { transform: translateX(-60%) skewX(-18deg); opacity: 0; }
+          40%  { opacity: 0.55; }
+          100% { transform: translateX(160%) skewX(-18deg); opacity: 0; }
+        }
+        @keyframes scam-head {
+          0%   { offset-distance: 0%; opacity: 0; }
+          6%   { opacity: 1; }
+          94%  { opacity: 1; }
+          100% { offset-distance: 100%; opacity: 0; }
+        }
 
         .scam-pin-group { transform-box: fill-box; transform-origin: center; opacity: 0; }
         .scam-visible .scam-pin-group {
           animation: scam-pop 520ms cubic-bezier(.34,1.56,.64,1) forwards;
+          animation-delay: var(--scam-pin-delay, 0ms);
         }
         .scam-ping {
           transform-box: fill-box;
@@ -127,8 +168,59 @@ const ServiceAreaMap = () => {
         }
         .scam-core { animation: scam-core 3.2s ease-in-out infinite; }
         .scam-shore { stroke-dasharray: 6 14; animation: scam-shimmer 6s linear infinite; }
+        .scam-beacon-ring {
+          transform-box: fill-box;
+          transform-origin: center;
+          animation: scam-ring 10s linear infinite;
+          opacity: 0.5;
+        }
+        .scam-pin-group.is-active .scam-beacon-ring {
+          animation-duration: 4s;
+          stroke: ${BRAND_AMBER};
+          opacity: 0.9;
+        }
+        .scam-land-back { opacity: 0; }
+        .scam-visible .scam-land-back {
+          animation: scam-land-fade 900ms ease-out .55s forwards;
+        }
+        .scam-land-main { opacity: 0; }
+        .scam-visible .scam-land-main {
+          animation: scam-land-fade 900ms ease-out .8s forwards;
+        }
+        .scam-wave-a { animation: scam-wave 22s linear infinite; }
+        .scam-wave-b { animation: scam-wave 34s linear infinite reverse; }
+        .scam-wave-c { animation: scam-wave 48s linear infinite; }
+        .scam-glint {
+          pointer-events: none;
+          position: absolute; left: 0; right: 0;
+          top: 66%; height: 20%;
+          background: linear-gradient(90deg, transparent 0%, rgba(234,255,242,0.10) 45%, rgba(244,168,37,0.14) 50%, rgba(234,255,242,0.10) 55%, transparent 100%);
+          transform: translateX(-40%);
+          mix-blend-mode: screen;
+          filter: blur(6px);
+          opacity: 0;
+        }
+        .scam-visible .scam-glint { animation: scam-glint 14s ease-in-out 1.5s infinite; }
+        .scam-sheen {
+          pointer-events: none;
+          position: absolute; inset: 0;
+          background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,0.10) 45%, rgba(244,168,37,0.10) 50%, rgba(255,255,255,0.10) 55%, transparent 70%);
+          mix-blend-mode: screen;
+          transform: translateX(-60%) skewX(-18deg);
+          opacity: 0;
+        }
+        .scam-visible .scam-sheen { animation: scam-sheen 1600ms ease-out 2.4s 1; }
+        .scam-mote { animation: scam-mote linear infinite; }
+        .scam-head {
+          offset-path: path("${ROUTE_D}");
+          offset-rotate: 0deg;
+          opacity: 0;
+        }
+        .scam-visible .scam-head {
+          animation: scam-head 5s linear 2.4s infinite;
+        }
         .scam-route-base { stroke-dasharray: var(--scam-len); stroke-dashoffset: var(--scam-len); }
-        .scam-visible .scam-route-base { animation: scam-draw 2.4s ease-out .3s forwards; }
+        .scam-visible .scam-route-base { animation: scam-draw 2.2s ease-out 1.4s forwards; }
         .scam-route-pulse {
           stroke-dasharray: 60 var(--scam-len);
           stroke-dashoffset: var(--scam-len);
@@ -136,7 +228,7 @@ const ServiceAreaMap = () => {
         }
         .scam-visible .scam-route-pulse {
           opacity: 1;
-          animation: scam-travel 5s linear 2.4s infinite;
+          animation: scam-travel 5s linear 3.6s infinite;
         }
         .scam-pin-hit { cursor: pointer; }
         .scam-pin-hit:hover .scam-core-dot,
@@ -149,6 +241,9 @@ const ServiceAreaMap = () => {
         .scam-pin-group.is-active .scam-halo { opacity: 0.55; }
         .scam-tooltip { pointer-events: none; opacity: 0; transition: opacity .18s ease-out; }
         .scam-pin-group.is-active .scam-tooltip { opacity: 1; }
+        .scam-shore-draw { stroke-dasharray: 1700; stroke-dashoffset: 1700; }
+        .scam-visible .scam-shore-draw { animation: scam-draw 1200ms ease-out .1s forwards; }
+        .scam-shore-draw { --scam-len: 1700; }
 
         @media (prefers-reduced-motion: reduce) {
           .scam-ping,
@@ -156,9 +251,14 @@ const ServiceAreaMap = () => {
           .scam-shore,
           .scam-route-base,
           .scam-route-pulse,
+          .scam-wave-a, .scam-wave-b, .scam-wave-c,
+          .scam-glint, .scam-sheen, .scam-mote,
+          .scam-beacon-ring, .scam-head,
+          .scam-land-back, .scam-land-main,
+          .scam-shore-draw,
           .scam-visible .scam-pin-group,
           .scam-pin-group { animation: none !important; opacity: 1 !important; stroke-dashoffset: 0 !important; }
-          .scam-route-pulse { opacity: 0 !important; }
+          .scam-route-pulse, .scam-head, .scam-mote, .scam-glint, .scam-sheen { opacity: 0 !important; }
         }
 
         .scam-chip-active {
@@ -177,7 +277,7 @@ const ServiceAreaMap = () => {
             Served Across the Emerald Coast
           </h2>
           <p className="font-body text-muted-foreground max-w-2xl mx-auto">
-            Palms trimmed, removed, and installed across every city marked below — from Pensacola east to Santa Rosa Beach.
+            Palms trimmed, removed, and installed across every city marked below — from Perdido west to 30A east.
           </p>
         </div>
 
@@ -192,6 +292,25 @@ const ServiceAreaMap = () => {
               "0 30px 80px -20px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(244,168,37,0.10), inset 0 0 60px rgba(30,133,73,0.08)",
           }}
         >
+          {/* Header pill badge */}
+          <div
+            aria-hidden="true"
+            className="absolute top-3 left-3 z-10 flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wide"
+            style={{
+              background: "rgba(4,16,10,0.72)",
+              border: `1px solid ${BRAND_AMBER}55`,
+              color: "#eafff2",
+              backdropFilter: "blur(6px)",
+              WebkitBackdropFilter: "blur(6px)",
+            }}
+          >
+            <span
+              className="inline-block w-1.5 h-1.5 rounded-full"
+              style={{ background: BRAND_AMBER, boxShadow: `0 0 8px ${BRAND_AMBER}` }}
+            />
+            {PINS.length} cities · Pensacola → 30A
+          </div>
+
           {/* Vignette */}
           <div
             aria-hidden="true"
@@ -201,6 +320,10 @@ const ServiceAreaMap = () => {
                 "radial-gradient(ellipse 100% 80% at 50% 50%, transparent 55%, rgba(0,0,0,0.55) 100%)",
             }}
           />
+          {/* Water glint sweep */}
+          <div aria-hidden="true" className="scam-glint" />
+          {/* Final sheen sweep */}
+          <div aria-hidden="true" className="scam-sheen" />
 
           <svg
             viewBox="0 0 1000 500"
@@ -215,6 +338,10 @@ const ServiceAreaMap = () => {
                 <stop offset="60%"  stopColor={BRAND_GREEN} stopOpacity="0.10" />
                 <stop offset="100%" stopColor={BRAND_GREEN} stopOpacity="0.02" />
               </linearGradient>
+              <linearGradient id="scam-land-back-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"   stopColor={BRAND_GREEN} stopOpacity="0.14" />
+                <stop offset="100%" stopColor={BRAND_GREEN} stopOpacity="0.02" />
+              </linearGradient>
               <linearGradient id="scam-gulf-grad" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%"   stopColor="#0a2418" stopOpacity="0.9" />
                 <stop offset="60%"  stopColor="#031008" stopOpacity="1" />
@@ -224,6 +351,15 @@ const ServiceAreaMap = () => {
                 <stop offset="0%"   stopColor={BRAND_GREEN_BRIGHT} stopOpacity="0.15" />
                 <stop offset="50%"  stopColor={BRAND_AMBER}        stopOpacity="0.7" />
                 <stop offset="100%" stopColor={BRAND_GREEN_BRIGHT} stopOpacity="0.15" />
+              </linearGradient>
+              <linearGradient id="scam-route-grad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%"   stopColor={BRAND_GREEN_BRIGHT} stopOpacity="0.55" />
+                <stop offset="50%"  stopColor={BRAND_AMBER}        stopOpacity="0.85" />
+                <stop offset="100%" stopColor={BRAND_GREEN_BRIGHT} stopOpacity="0.55" />
+              </linearGradient>
+              <linearGradient id="scam-wave-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"   stopColor={BRAND_GREEN_BRIGHT} stopOpacity="0.14" />
+                <stop offset="100%" stopColor={BRAND_GREEN_BRIGHT} stopOpacity="0" />
               </linearGradient>
               <radialGradient id="scam-core" cx="0.5" cy="0.5" r="0.5">
                 <stop offset="0%"   stopColor="#eafff2" />
@@ -241,16 +377,62 @@ const ServiceAreaMap = () => {
                   <feMergeNode in="SourceGraphic" />
                 </feMerge>
               </filter>
+              <filter id="scam-noise" x="0" y="0" width="100%" height="100%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" />
+                <feColorMatrix values="0 0 0 0 0.12  0 0 0 0 0.28  0 0 0 0 0.18  0 0 0 0.35 0" />
+                <feComposite in2="SourceGraphic" operator="in" />
+              </filter>
             </defs>
 
             {/* Gulf */}
             <rect x="0" y="330" width="1000" height="170" fill="url(#scam-gulf-grad)" />
 
-            {/* Land mass — Panhandle silhouette */}
+            {/* Layered animated waves (parallax) */}
+            <g aria-hidden="true">
+              <g className="scam-wave-c">
+                <path
+                  d="M-200,395 Q -100,388 0,395 T 200,395 T 400,395 T 600,395 T 800,395 T 1000,395 T 1200,395 T 1400,395 L 1400,410 L -200,410 Z"
+                  fill="url(#scam-wave-grad)"
+                  opacity="0.55"
+                />
+              </g>
+              <g className="scam-wave-b">
+                <path
+                  d="M-200,420 Q -100,412 0,420 T 200,420 T 400,420 T 600,420 T 800,420 T 1000,420 T 1200,420 T 1400,420 L 1400,438 L -200,438 Z"
+                  fill="url(#scam-wave-grad)"
+                  opacity="0.45"
+                />
+              </g>
+              <g className="scam-wave-a">
+                <path
+                  d="M-200,450 Q -100,440 0,450 T 200,450 T 400,450 T 600,450 T 800,450 T 1000,450 T 1200,450 T 1400,450 L 1400,470 L -200,470 Z"
+                  fill="url(#scam-wave-grad)"
+                  opacity="0.35"
+                />
+              </g>
+            </g>
+
+            {/* Distant hills (back land layer) */}
             <path
-              d="M0,110 C120,80 220,55 360,72 C500,92 620,55 780,78 C880,92 960,108 1000,128 L1000,335 C960,330 900,332 840,340 C760,352 700,358 620,372 C540,382 480,388 400,382 C320,374 240,355 160,332 C100,318 40,315 0,318 Z"
-              fill="url(#scam-land-grad)"
+              className="scam-land-back"
+              d="M0,150 C160,120 300,138 460,128 C620,118 760,150 900,142 C960,138 990,140 1000,142 L1000,300 L0,300 Z"
+              fill="url(#scam-land-back-grad)"
             />
+
+            {/* Land mass — Panhandle silhouette */}
+            <g className="scam-land-main">
+              <path
+                d="M0,110 C120,80 220,55 360,72 C500,92 620,55 780,78 C880,92 960,108 1000,128 L1000,335 C960,330 900,332 840,340 C760,352 700,358 620,372 C540,382 480,388 400,382 C320,374 240,355 160,332 C100,318 40,315 0,318 Z"
+                fill="url(#scam-land-grad)"
+              />
+              {/* Subtle grain overlay on land */}
+              <path
+                d="M0,110 C120,80 220,55 360,72 C500,92 620,55 780,78 C880,92 960,108 1000,128 L1000,335 C960,330 900,332 840,340 C760,352 700,358 620,372 C540,382 480,388 400,382 C320,374 240,355 160,332 C100,318 40,315 0,318 Z"
+                fill="#000"
+                filter="url(#scam-noise)"
+                opacity="0.35"
+              />
+            </g>
 
             {/* Topographic contour lines */}
             <g stroke={BRAND_GREEN} strokeOpacity="0.10" strokeWidth="1" fill="none">
@@ -260,12 +442,13 @@ const ServiceAreaMap = () => {
               <path d="M0,290 C300,282 620,300 1000,285" />
             </g>
 
-            {/* Glowing shoreline */}
+            {/* Glowing shoreline (draws in first) */}
             <path
+              className="scam-shore-draw"
               d="M0,318 C100,320 220,332 360,340 C500,348 640,340 780,332 C880,326 960,325 1000,328"
               fill="none"
               stroke={BRAND_GREEN_BRIGHT}
-              strokeOpacity="0.35"
+              strokeOpacity="0.55"
               strokeWidth="2"
             />
             <path
@@ -276,16 +459,47 @@ const ServiceAreaMap = () => {
               className="scam-shore"
             />
 
-            {/* Route line — settled green */}
+            {/* Motes over water (fireflies) */}
+            <g aria-hidden="true">
+              {[
+                { x: 120, y: 430, dur: 11, delay: 0 },
+                { x: 260, y: 455, dur: 14, delay: 2 },
+                { x: 380, y: 420, dur: 12, delay: 4 },
+                { x: 520, y: 445, dur: 15, delay: 1 },
+                { x: 640, y: 430, dur: 13, delay: 3 },
+                { x: 760, y: 460, dur: 16, delay: 5 },
+                { x: 880, y: 435, dur: 12, delay: 2.5 },
+                { x: 200, y: 470, dur: 17, delay: 6 },
+              ].map((m, i) => (
+                <circle
+                  key={i}
+                  cx={m.x}
+                  cy={m.y}
+                  r="1.6"
+                  fill={BRAND_AMBER}
+                  opacity="0"
+                  className="scam-mote"
+                  style={{
+                    transformBox: "fill-box",
+                    transformOrigin: "center",
+                    animationDuration: `${m.dur}s`,
+                    animationDelay: `${m.delay}s`,
+                    filter: "drop-shadow(0 0 3px rgba(244,168,37,0.7))",
+                  }}
+                />
+              ))}
+            </g>
+
+            {/* Route line — settled gradient */}
             <path
               d={ROUTE_D}
               fill="none"
-              stroke={BRAND_GREEN_BRIGHT}
-              strokeOpacity="0.55"
-              strokeWidth="2"
+              stroke="url(#scam-route-grad)"
+              strokeOpacity="0.9"
+              strokeWidth="2.2"
               strokeLinecap="round"
               className="scam-route-base"
-              style={{ ["--scam-len" as string]: 1400 }}
+              style={{ ["--scam-len" as string]: ROUTE_LEN }}
             />
             {/* Route line — amber traveling pulse */}
             <path
@@ -296,7 +510,15 @@ const ServiceAreaMap = () => {
               strokeLinecap="round"
               filter="url(#scam-glow)"
               className="scam-route-pulse"
-              style={{ ["--scam-len" as string]: 1400 }}
+              style={{ ["--scam-len" as string]: ROUTE_LEN }}
+            />
+            {/* Route head — bright leading dot */}
+            <circle
+              r="4"
+              fill="#fffbe6"
+              className="scam-head"
+              filter="url(#scam-glow)"
+              style={{ filter: `drop-shadow(0 0 8px ${BRAND_AMBER})` }}
             />
 
             {/* Pins */}
@@ -309,7 +531,7 @@ const ServiceAreaMap = () => {
                 <g
                   key={p.slug}
                   className={`scam-pin-group ${isActive ? "is-active" : ""}`}
-                  style={{ animationDelay: `${i * 90}ms` }}
+                  style={{ ["--scam-pin-delay" as string]: `${1600 + i * 90}ms` }}
                 >
                   {/* Ping */}
                   <circle
@@ -323,6 +545,17 @@ const ServiceAreaMap = () => {
                   />
                   {/* Halo */}
                   <circle cx={p.x} cy={p.y} r="22" fill="url(#scam-halo)" opacity="0.25" className="scam-halo" />
+                  {/* Rotating beacon ring */}
+                  <circle
+                    cx={p.x}
+                    cy={p.y}
+                    r="11"
+                    fill="none"
+                    stroke={BRAND_GREEN_BRIGHT}
+                    strokeWidth="1"
+                    strokeDasharray="3 5"
+                    className="scam-beacon-ring"
+                  />
                   {/* Core */}
                   <circle
                     cx={p.x}

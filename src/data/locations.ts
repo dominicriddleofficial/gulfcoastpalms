@@ -1543,6 +1543,120 @@ export const locations: LocationData[] = [
       },
     ],
   },
+  {
+    slug: "palm-tree-trimming-perdido-fl",
+    city: "Perdido",
+    state: "FL",
+    h1: "Palm Tree Trimming in Perdido, FL",
+    subheading: "Coastal Palm Care for Perdido, Innerarity Point & the Bay-Front Communities West of Pensacola",
+    introParagraphs: [
+      "Perdido is the westernmost gateway to Florida's Emerald Coast — a stretch of bay-front neighborhoods, waterfront homes, and quiet coastal communities tucked between Pensacola and the Alabama line. Gulf Coast Palms provides professional palm tree trimming, installation, and removal throughout Perdido, Innerarity Point, and the Perdido Bay corridor.",
+      "Waterfront palms in Perdido face constant salt spray, humid Gulf air, and unfiltered summer sun. Our trimming approach is built for those conditions — clean cuts, appropriate crown density, and species-specific care that protects long-term palm health instead of the aggressive overcuts that weaken storm-ready canopies.",
+      "We work with homeowners along Innerarity Point Road, Perdido Bay, Bauer Road, and the Lillian Highway corridor, plus HOAs and short-term rental managers who need reliable, camera-ready palm care between guest turnovers. Same crew, same standards, same clean cleanup every visit.",
+      "Perdido's proximity to the Gulf means storm prep isn't optional. We schedule pre-hurricane trimming from April through early June and provide priority response for wind-damaged or leaning palms after every named storm that impacts the western Panhandle.",
+    ],
+    services: [
+      "Professional palm trimming & pruning",
+      "Diamond cutting",
+      "Trunk skinning",
+      "Palm installations",
+      "Safe palm removals",
+      "Waterfront & HOA maintenance programs",
+    ],
+    whyChooseTitle: "Why Perdido Homeowners Choose Us",
+    whyChoosePoints: [
+      "500+ palms serviced across the Emerald Coast",
+      "Experienced with bay-front and salt-exposed properties",
+      "Licensed & insured",
+      "5-star rated across the Gulf Coast",
+      "Locally owned & operated out of Navarre Beach",
+    ],
+    whyChooseClosing:
+      "We treat Perdido palms the way we treat our own — properly thinned, cleanly cut, and set up for years of healthy growth. Whether you have a single Sabal in the front yard or a full waterfront row of Canary Island Date Palms, we handle it right.",
+    ctaHeading: "Need palm care in Perdido?",
+    ctaText: "Call or text today for a free quote.",
+    images: [
+      { src: job7, alt: "Palm trimming at a Perdido waterfront home" },
+      { src: job4, alt: "Professional palm care in Perdido, FL" },
+      { src: job8, alt: "Bay-front palm maintenance near Innerarity Point" },
+    ],
+    metaTitle: "Palm Tree Trimming Perdido FL | Gulf Coast Palms",
+    metaDescription:
+      "Palm tree trimming, installation & removal in Perdido, FL — Innerarity Point, Perdido Bay & the bay-front communities west of Pensacola. 5.0★ · (850) 910-1290.",
+    nearbyLinks: [
+      "palm-tree-trimming-perdido-key-fl",
+      "palm-tree-trimming-pensacola-fl",
+      "palm-tree-trimming-gulf-breeze-fl",
+    ],
+    geo: { latitude: 30.3691, longitude: -87.4392 },
+    neighborhoods: [
+      "Perdido",
+      "Innerarity Point",
+      "Perdido Bay",
+      "Bauer Road",
+      "Lillian Highway corridor",
+      "Southwind",
+      "Perdido Heights",
+    ],
+    pricingTiers: [
+      {
+        name: "Standard Palm Trimming",
+        price: "As low as $25 per palm",
+        bestFor:
+          "Perdido and Innerarity Point homes with 1–6 palms. Routine dead-frond removal and clean residential appearance.",
+      },
+      {
+        name: "Premium Diamond Cutting",
+        price: "Up to $250 per palm",
+        bestFor:
+          "Bay-front and waterfront estates wanting a polished cross-hatch finish on mature Canary Island Date Palms.",
+      },
+      {
+        name: "Waterfront & HOA Maintenance",
+        price: "Custom pricing",
+        bestFor:
+          "Perdido Bay communities, HOAs, and multi-property rental portfolios. Scheduled service, consolidated invoicing, and priority storm response.",
+      },
+    ],
+    pricingNote:
+      "Pricing reflects palm height, species, density, and property access. Waterfront and bay-front lots often require sectional rigging. Free on-site quotes anywhere in Perdido.",
+    testimonial: {
+      quote:
+        "Our place backs up to Perdido Bay and the palms take a beating from salt and wind. Gulf Coast Palms came out, trimmed everything up right, and gave us honest advice on which palms to keep and which to replace. Best palm crew we've hired in years.",
+      author: "Kevin S., Innerarity Point homeowner",
+      rating: 5,
+    },
+    ctaSubtext:
+      "No hard sell. No upsell. Just an honest estimate from Perdido's trusted palm specialists.",
+    ctaPrimaryLabel: "Text a Photo to (850) 910-1290",
+    ctaSecondaryLabel: "or call us directly",
+    faqs: [
+      {
+        q: "Do you service Perdido and Innerarity Point?",
+        a: "Yes — Perdido, Innerarity Point, and the Perdido Bay corridor are part of our regular western Panhandle route. We often batch Perdido jobs with Perdido Key and west Pensacola work so drive time doesn't inflate your invoice.",
+      },
+      {
+        q: "How much does palm trimming cost in Perdido?",
+        a: "Perdido palm trimming generally runs $25 to $250 per palm depending on height, species, density, and access. Most single-family Perdido and Innerarity Point homes run $100–$600 for a complete service with full cleanup.",
+      },
+      {
+        q: "Which palms handle Perdido's salt exposure best?",
+        a: "Sabal Palm, Canary Island Date Palm, Mediterranean Fan Palm, Pindo Palm, and Washingtonia Palm all handle bay-front and Gulf-adjacent salt exposure well. Coconut Palms don't survive long-term at this latitude. We're happy to advise on the best fit for your lot.",
+      },
+      {
+        q: "When should Perdido palms be trimmed for hurricane season?",
+        a: "April through early June is the ideal window — well before the June 1 start of Atlantic hurricane season. Removing dead, storm-vulnerable fronds early reduces wind-projectile risk and gives crowns time to stabilize.",
+      },
+      {
+        q: "Do you handle storm-damaged palms in Perdido after hurricanes?",
+        a: "Yes — Perdido is a priority response area for us after any named storm impacting the western Panhandle. We handle limb removal, full palm removal, hazard correction, and complete cleanup, with insurance-direct billing available when authorized by your carrier.",
+      },
+      {
+        q: "Do you work with Perdido HOAs and rental managers?",
+        a: "Yes — we maintain palms for HOAs, condo associations, and short-term rental portfolios throughout the Perdido area. Scheduled visits, consistent quality, single-invoice billing, and coordination with on-site managers between guest turnovers.",
+      },
+    ],
+  },
 ];
 
 export const getLocationBySlug = (slug: string): LocationData | undefined =>
