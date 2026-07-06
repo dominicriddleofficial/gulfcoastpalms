@@ -18,6 +18,7 @@ import { getOfflineDB, setMeta } from "@/lib/offline/db";
 import OfflineBanner from "@/components/platform/offline/OfflineBanner";
 import LastSyncedLabel from "@/components/platform/offline/LastSyncedLabel";
 import { usePullToRefresh } from "@/lib/offline/usePullToRefresh";
+import { startOfLocalDay, endOfLocalDay, toLocalDateKey } from "@/lib/localDate";
 
 type CrewJob = {
   id: string;
@@ -121,8 +122,10 @@ export default function PlatformCrew() {
 
     async function loadJobs() {
       setLoading(true);
-      const start = format(today, "yyyy-MM-dd");
-      const end = format(addDays(today, 7), "yyyy-MM-dd");
+      const start = toLocalDateKey(today);
+      const end = toLocalDateKey(addDays(today, 7));
+      const rangeStartIso = startOfLocalDay(today).toISOString();
+      const rangeEndIso = endOfLocalDay(addDays(today, 7)).toISOString();
 
       // 1. Native platform_jobs
       const { data: platformData } = await supabase
@@ -159,8 +162,8 @@ export default function PlatformCrew() {
         .from("jobber_jobs")
         .select("id, title, status, visit_status, scheduled_start, scheduled_end, client_name, client_phone, property_address, internal_notes, job_number, business_id")
         .eq("business_id", businessId)
-        .gte("scheduled_start", new Date(start).toISOString())
-        .lte("scheduled_start", new Date(end).toISOString() + "T23:59:59")
+        .gte("scheduled_start", rangeStartIso)
+        .lte("scheduled_start", rangeEndIso)
         .order("scheduled_start", { ascending: true });
       if (role === "crew") {
         if (!jobberAssignedIds) {
