@@ -295,7 +295,7 @@ const ServiceAreaMap = () => {
           {/* Header pill badge */}
           <div
             aria-hidden="true"
-            className="absolute top-3 left-3 z-10 flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wide"
+            className="absolute bottom-3 left-3 z-10 flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wide"
             style={{
               background: "rgba(4,16,10,0.72)",
               border: `1px solid ${BRAND_AMBER}55`,
