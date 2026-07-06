@@ -120,10 +120,46 @@ const ServiceAreaMap = () => {
           60%  { transform: scale(1.18); opacity: 1; }
           100% { transform: scale(1); opacity: 1; }
         }
+        @keyframes scam-wave {
+          from { transform: translateX(0); }
+          to   { transform: translateX(-200px); }
+        }
+        @keyframes scam-glint {
+          0%   { transform: translateX(-40%); opacity: 0; }
+          20%  { opacity: 0.6; }
+          80%  { opacity: 0.6; }
+          100% { transform: translateX(140%); opacity: 0; }
+        }
+        @keyframes scam-mote {
+          0%   { transform: translate(0,0); opacity: 0; }
+          20%  { opacity: 0.35; }
+          80%  { opacity: 0.35; }
+          100% { transform: translate(-60px,-24px); opacity: 0; }
+        }
+        @keyframes scam-ring {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+        @keyframes scam-land-fade {
+          from { opacity: 0; transform: translateY(6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes scam-sheen {
+          0%   { transform: translateX(-60%) skewX(-18deg); opacity: 0; }
+          40%  { opacity: 0.55; }
+          100% { transform: translateX(160%) skewX(-18deg); opacity: 0; }
+        }
+        @keyframes scam-head {
+          0%   { offset-distance: 0%; opacity: 0; }
+          6%   { opacity: 1; }
+          94%  { opacity: 1; }
+          100% { offset-distance: 100%; opacity: 0; }
+        }
 
         .scam-pin-group { transform-box: fill-box; transform-origin: center; opacity: 0; }
         .scam-visible .scam-pin-group {
           animation: scam-pop 520ms cubic-bezier(.34,1.56,.64,1) forwards;
+          animation-delay: var(--scam-pin-delay, 0ms);
         }
         .scam-ping {
           transform-box: fill-box;
@@ -132,8 +168,59 @@ const ServiceAreaMap = () => {
         }
         .scam-core { animation: scam-core 3.2s ease-in-out infinite; }
         .scam-shore { stroke-dasharray: 6 14; animation: scam-shimmer 6s linear infinite; }
+        .scam-beacon-ring {
+          transform-box: fill-box;
+          transform-origin: center;
+          animation: scam-ring 10s linear infinite;
+          opacity: 0.5;
+        }
+        .scam-pin-group.is-active .scam-beacon-ring {
+          animation-duration: 4s;
+          stroke: ${BRAND_AMBER};
+          opacity: 0.9;
+        }
+        .scam-land-back { opacity: 0; }
+        .scam-visible .scam-land-back {
+          animation: scam-land-fade 900ms ease-out .55s forwards;
+        }
+        .scam-land-main { opacity: 0; }
+        .scam-visible .scam-land-main {
+          animation: scam-land-fade 900ms ease-out .8s forwards;
+        }
+        .scam-wave-a { animation: scam-wave 22s linear infinite; }
+        .scam-wave-b { animation: scam-wave 34s linear infinite reverse; }
+        .scam-wave-c { animation: scam-wave 48s linear infinite; }
+        .scam-glint {
+          pointer-events: none;
+          position: absolute; left: 0; right: 0;
+          top: 66%; height: 20%;
+          background: linear-gradient(90deg, transparent 0%, rgba(234,255,242,0.10) 45%, rgba(244,168,37,0.14) 50%, rgba(234,255,242,0.10) 55%, transparent 100%);
+          transform: translateX(-40%);
+          mix-blend-mode: screen;
+          filter: blur(6px);
+          opacity: 0;
+        }
+        .scam-visible .scam-glint { animation: scam-glint 14s ease-in-out 1.5s infinite; }
+        .scam-sheen {
+          pointer-events: none;
+          position: absolute; inset: 0;
+          background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,0.10) 45%, rgba(244,168,37,0.10) 50%, rgba(255,255,255,0.10) 55%, transparent 70%);
+          mix-blend-mode: screen;
+          transform: translateX(-60%) skewX(-18deg);
+          opacity: 0;
+        }
+        .scam-visible .scam-sheen { animation: scam-sheen 1600ms ease-out 2.4s 1; }
+        .scam-mote { animation: scam-mote linear infinite; }
+        .scam-head {
+          offset-path: path("${ROUTE_D}");
+          offset-rotate: 0deg;
+          opacity: 0;
+        }
+        .scam-visible .scam-head {
+          animation: scam-head 5s linear 2.4s infinite;
+        }
         .scam-route-base { stroke-dasharray: var(--scam-len); stroke-dashoffset: var(--scam-len); }
-        .scam-visible .scam-route-base { animation: scam-draw 2.4s ease-out .3s forwards; }
+        .scam-visible .scam-route-base { animation: scam-draw 2.2s ease-out 1.4s forwards; }
         .scam-route-pulse {
           stroke-dasharray: 60 var(--scam-len);
           stroke-dashoffset: var(--scam-len);
@@ -141,7 +228,7 @@ const ServiceAreaMap = () => {
         }
         .scam-visible .scam-route-pulse {
           opacity: 1;
-          animation: scam-travel 5s linear 2.4s infinite;
+          animation: scam-travel 5s linear 3.6s infinite;
         }
         .scam-pin-hit { cursor: pointer; }
         .scam-pin-hit:hover .scam-core-dot,
@@ -154,6 +241,9 @@ const ServiceAreaMap = () => {
         .scam-pin-group.is-active .scam-halo { opacity: 0.55; }
         .scam-tooltip { pointer-events: none; opacity: 0; transition: opacity .18s ease-out; }
         .scam-pin-group.is-active .scam-tooltip { opacity: 1; }
+        .scam-shore-draw { stroke-dasharray: 1700; stroke-dashoffset: 1700; }
+        .scam-visible .scam-shore-draw { animation: scam-draw 1200ms ease-out .1s forwards; }
+        .scam-shore-draw { --scam-len: 1700; }
 
         @media (prefers-reduced-motion: reduce) {
           .scam-ping,
@@ -161,9 +251,14 @@ const ServiceAreaMap = () => {
           .scam-shore,
           .scam-route-base,
           .scam-route-pulse,
+          .scam-wave-a, .scam-wave-b, .scam-wave-c,
+          .scam-glint, .scam-sheen, .scam-mote,
+          .scam-beacon-ring, .scam-head,
+          .scam-land-back, .scam-land-main,
+          .scam-shore-draw,
           .scam-visible .scam-pin-group,
           .scam-pin-group { animation: none !important; opacity: 1 !important; stroke-dashoffset: 0 !important; }
-          .scam-route-pulse { opacity: 0 !important; }
+          .scam-route-pulse, .scam-head, .scam-mote, .scam-glint, .scam-sheen { opacity: 0 !important; }
         }
 
         .scam-chip-active {
