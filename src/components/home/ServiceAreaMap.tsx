@@ -338,6 +338,10 @@ const ServiceAreaMap = () => {
                 <stop offset="60%"  stopColor={BRAND_GREEN} stopOpacity="0.10" />
                 <stop offset="100%" stopColor={BRAND_GREEN} stopOpacity="0.02" />
               </linearGradient>
+              <linearGradient id="scam-land-back-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"   stopColor={BRAND_GREEN} stopOpacity="0.14" />
+                <stop offset="100%" stopColor={BRAND_GREEN} stopOpacity="0.02" />
+              </linearGradient>
               <linearGradient id="scam-gulf-grad" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%"   stopColor="#0a2418" stopOpacity="0.9" />
                 <stop offset="60%"  stopColor="#031008" stopOpacity="1" />
@@ -347,6 +351,15 @@ const ServiceAreaMap = () => {
                 <stop offset="0%"   stopColor={BRAND_GREEN_BRIGHT} stopOpacity="0.15" />
                 <stop offset="50%"  stopColor={BRAND_AMBER}        stopOpacity="0.7" />
                 <stop offset="100%" stopColor={BRAND_GREEN_BRIGHT} stopOpacity="0.15" />
+              </linearGradient>
+              <linearGradient id="scam-route-grad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%"   stopColor={BRAND_GREEN_BRIGHT} stopOpacity="0.55" />
+                <stop offset="50%"  stopColor={BRAND_AMBER}        stopOpacity="0.85" />
+                <stop offset="100%" stopColor={BRAND_GREEN_BRIGHT} stopOpacity="0.55" />
+              </linearGradient>
+              <linearGradient id="scam-wave-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"   stopColor={BRAND_GREEN_BRIGHT} stopOpacity="0.14" />
+                <stop offset="100%" stopColor={BRAND_GREEN_BRIGHT} stopOpacity="0" />
               </linearGradient>
               <radialGradient id="scam-core" cx="0.5" cy="0.5" r="0.5">
                 <stop offset="0%"   stopColor="#eafff2" />
@@ -364,16 +377,62 @@ const ServiceAreaMap = () => {
                   <feMergeNode in="SourceGraphic" />
                 </feMerge>
               </filter>
+              <filter id="scam-noise" x="0" y="0" width="100%" height="100%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" />
+                <feColorMatrix values="0 0 0 0 0.12  0 0 0 0 0.28  0 0 0 0 0.18  0 0 0 0.35 0" />
+                <feComposite in2="SourceGraphic" operator="in" />
+              </filter>
             </defs>
 
             {/* Gulf */}
             <rect x="0" y="330" width="1000" height="170" fill="url(#scam-gulf-grad)" />
 
-            {/* Land mass — Panhandle silhouette */}
+            {/* Layered animated waves (parallax) */}
+            <g aria-hidden="true">
+              <g className="scam-wave-c">
+                <path
+                  d="M-200,395 Q -100,388 0,395 T 200,395 T 400,395 T 600,395 T 800,395 T 1000,395 T 1200,395 T 1400,395 L 1400,410 L -200,410 Z"
+                  fill="url(#scam-wave-grad)"
+                  opacity="0.55"
+                />
+              </g>
+              <g className="scam-wave-b">
+                <path
+                  d="M-200,420 Q -100,412 0,420 T 200,420 T 400,420 T 600,420 T 800,420 T 1000,420 T 1200,420 T 1400,420 L 1400,438 L -200,438 Z"
+                  fill="url(#scam-wave-grad)"
+                  opacity="0.45"
+                />
+              </g>
+              <g className="scam-wave-a">
+                <path
+                  d="M-200,450 Q -100,440 0,450 T 200,450 T 400,450 T 600,450 T 800,450 T 1000,450 T 1200,450 T 1400,450 L 1400,470 L -200,470 Z"
+                  fill="url(#scam-wave-grad)"
+                  opacity="0.35"
+                />
+              </g>
+            </g>
+
+            {/* Distant hills (back land layer) */}
             <path
-              d="M0,110 C120,80 220,55 360,72 C500,92 620,55 780,78 C880,92 960,108 1000,128 L1000,335 C960,330 900,332 840,340 C760,352 700,358 620,372 C540,382 480,388 400,382 C320,374 240,355 160,332 C100,318 40,315 0,318 Z"
-              fill="url(#scam-land-grad)"
+              className="scam-land-back"
+              d="M0,150 C160,120 300,138 460,128 C620,118 760,150 900,142 C960,138 990,140 1000,142 L1000,300 L0,300 Z"
+              fill="url(#scam-land-back-grad)"
             />
+
+            {/* Land mass — Panhandle silhouette */}
+            <g className="scam-land-main">
+              <path
+                d="M0,110 C120,80 220,55 360,72 C500,92 620,55 780,78 C880,92 960,108 1000,128 L1000,335 C960,330 900,332 840,340 C760,352 700,358 620,372 C540,382 480,388 400,382 C320,374 240,355 160,332 C100,318 40,315 0,318 Z"
+                fill="url(#scam-land-grad)"
+              />
+              {/* Subtle grain overlay on land */}
+              <path
+                d="M0,110 C120,80 220,55 360,72 C500,92 620,55 780,78 C880,92 960,108 1000,128 L1000,335 C960,330 900,332 840,340 C760,352 700,358 620,372 C540,382 480,388 400,382 C320,374 240,355 160,332 C100,318 40,315 0,318 Z"
+                fill="#000"
+                filter="url(#scam-noise)"
+                opacity="0.35"
+              />
+            </g>
 
             {/* Topographic contour lines */}
             <g stroke={BRAND_GREEN} strokeOpacity="0.10" strokeWidth="1" fill="none">
@@ -383,12 +442,13 @@ const ServiceAreaMap = () => {
               <path d="M0,290 C300,282 620,300 1000,285" />
             </g>
 
-            {/* Glowing shoreline */}
+            {/* Glowing shoreline (draws in first) */}
             <path
+              className="scam-shore-draw"
               d="M0,318 C100,320 220,332 360,340 C500,348 640,340 780,332 C880,326 960,325 1000,328"
               fill="none"
               stroke={BRAND_GREEN_BRIGHT}
-              strokeOpacity="0.35"
+              strokeOpacity="0.55"
               strokeWidth="2"
             />
             <path
@@ -399,16 +459,47 @@ const ServiceAreaMap = () => {
               className="scam-shore"
             />
 
-            {/* Route line — settled green */}
+            {/* Motes over water (fireflies) */}
+            <g aria-hidden="true">
+              {[
+                { x: 120, y: 430, dur: 11, delay: 0 },
+                { x: 260, y: 455, dur: 14, delay: 2 },
+                { x: 380, y: 420, dur: 12, delay: 4 },
+                { x: 520, y: 445, dur: 15, delay: 1 },
+                { x: 640, y: 430, dur: 13, delay: 3 },
+                { x: 760, y: 460, dur: 16, delay: 5 },
+                { x: 880, y: 435, dur: 12, delay: 2.5 },
+                { x: 200, y: 470, dur: 17, delay: 6 },
+              ].map((m, i) => (
+                <circle
+                  key={i}
+                  cx={m.x}
+                  cy={m.y}
+                  r="1.6"
+                  fill={BRAND_AMBER}
+                  opacity="0"
+                  className="scam-mote"
+                  style={{
+                    transformBox: "fill-box",
+                    transformOrigin: "center",
+                    animationDuration: `${m.dur}s`,
+                    animationDelay: `${m.delay}s`,
+                    filter: "drop-shadow(0 0 3px rgba(244,168,37,0.7))",
+                  }}
+                />
+              ))}
+            </g>
+
+            {/* Route line — settled gradient */}
             <path
               d={ROUTE_D}
               fill="none"
-              stroke={BRAND_GREEN_BRIGHT}
-              strokeOpacity="0.55"
-              strokeWidth="2"
+              stroke="url(#scam-route-grad)"
+              strokeOpacity="0.9"
+              strokeWidth="2.2"
               strokeLinecap="round"
               className="scam-route-base"
-              style={{ ["--scam-len" as string]: 1400 }}
+              style={{ ["--scam-len" as string]: ROUTE_LEN }}
             />
             {/* Route line — amber traveling pulse */}
             <path
@@ -419,7 +510,15 @@ const ServiceAreaMap = () => {
               strokeLinecap="round"
               filter="url(#scam-glow)"
               className="scam-route-pulse"
-              style={{ ["--scam-len" as string]: 1400 }}
+              style={{ ["--scam-len" as string]: ROUTE_LEN }}
+            />
+            {/* Route head — bright leading dot */}
+            <circle
+              r="4"
+              fill="#fffbe6"
+              className="scam-head"
+              filter="url(#scam-glow)"
+              style={{ filter: `drop-shadow(0 0 8px ${BRAND_AMBER})` }}
             />
 
             {/* Pins */}
@@ -432,7 +531,7 @@ const ServiceAreaMap = () => {
                 <g
                   key={p.slug}
                   className={`scam-pin-group ${isActive ? "is-active" : ""}`}
-                  style={{ animationDelay: `${i * 90}ms` }}
+                  style={{ ["--scam-pin-delay" as string]: `${1600 + i * 90}ms` }}
                 >
                   {/* Ping */}
                   <circle
@@ -446,6 +545,17 @@ const ServiceAreaMap = () => {
                   />
                   {/* Halo */}
                   <circle cx={p.x} cy={p.y} r="22" fill="url(#scam-halo)" opacity="0.25" className="scam-halo" />
+                  {/* Rotating beacon ring */}
+                  <circle
+                    cx={p.x}
+                    cy={p.y}
+                    r="11"
+                    fill="none"
+                    stroke={BRAND_GREEN_BRIGHT}
+                    strokeWidth="1"
+                    strokeDasharray="3 5"
+                    className="scam-beacon-ring"
+                  />
                   {/* Core */}
                   <circle
                     cx={p.x}
