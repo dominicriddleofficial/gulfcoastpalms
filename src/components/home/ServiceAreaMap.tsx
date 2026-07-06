@@ -308,7 +308,7 @@ const ServiceAreaMap = () => {
               className="inline-block w-1.5 h-1.5 rounded-full"
               style={{ background: BRAND_AMBER, boxShadow: `0 0 8px ${BRAND_AMBER}` }}
             />
-            {PINS.length} cities · Pensacola → 30A
+            {PINS.length} cities · Perdido → 30A
           </div>
 
           {/* Vignette */}
