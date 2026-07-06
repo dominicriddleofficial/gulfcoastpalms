@@ -1,9 +1,9 @@
 import { motion } from "framer-motion";
-import { Phone, Check, ArrowRight, Shield, Package } from "lucide-react";
+import { Phone, Check, ArrowRight, Shield, Package, HelpCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
-import { ServiceJsonLd, BreadcrumbJsonLd } from "@/components/JsonLd";
+import { ServiceJsonLd, BreadcrumbJsonLd, FAQPageJsonLd } from "@/components/JsonLd";
 import { GCP_BUSINESS, TEL_HREF } from "@/lib/business-info";
 import type { ServiceData } from "@/data/services";
 
@@ -49,6 +49,9 @@ const ServicePage = ({ service }: ServicePageProps) => {
           { name: service.title, url: `${BASE_URL}${canonicalUrl}` },
         ]}
       />
+      {service.faqs && service.faqs.length > 0 && (
+        <FAQPageJsonLd questions={service.faqs} />
+      )}
 
       {/* Hero */}
       <section className="bg-palm-dark section-padding text-center">
@@ -152,6 +155,42 @@ const ServicePage = ({ service }: ServicePageProps) => {
           </motion.div>
         </div>
       </section>
+
+      {/* FAQs — visible + matches FAQPage JSON-LD above */}
+      {service.faqs && service.faqs.length > 0 && (
+        <section className="section-padding bg-background">
+          <div className="container mx-auto max-w-4xl">
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-10">
+              <motion.p variants={fadeUp} custom={0} className="font-body text-sm uppercase tracking-[0.2em] text-palm-gold font-semibold mb-3">
+                <HelpCircle className="inline w-4 h-4 mr-1.5 -mt-0.5" />
+                Frequently Asked
+              </motion.p>
+              <motion.h2 variants={fadeUp} custom={1} className="font-display text-3xl md:text-4xl font-bold text-foreground">
+                {service.title} — Common Questions
+              </motion.h2>
+            </motion.div>
+            <div className="space-y-4">
+              {service.faqs.map((faq, i) => (
+                <motion.details
+                  key={faq.q}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  variants={fadeUp}
+                  custom={i}
+                  className="group rounded-xl border border-border bg-card p-5 open:border-primary/40 open:shadow-md transition-all"
+                >
+                  <summary className="cursor-pointer list-none flex items-start justify-between gap-4 font-display text-lg font-semibold text-foreground">
+                    <span>{faq.q}</span>
+                    <span className="text-primary shrink-0 mt-1 transition-transform group-open:rotate-45">+</span>
+                  </summary>
+                  <p className="font-body text-muted-foreground leading-relaxed mt-3">{faq.a}</p>
+                </motion.details>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Related Links */}
       {service.relatedLinks.length > 0 && (

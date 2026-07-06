@@ -3,6 +3,8 @@ import { BookOpen, ArrowRight, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
+import { BreadcrumbJsonLd } from "@/components/JsonLd";
+import { GCP_BUSINESS } from "@/lib/business-info";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -43,6 +45,12 @@ const LearnHub = () => (
       title="Palm Tree Care Guides & Resources | Gulf Coast Palms NW Florida"
       description="Expert palm tree care guides for NW Florida homeowners. Learn when to trim, how to identify problems, hurricane prep tips, and more from Gulf Coast Palms."
       canonicalUrl="/learn"
+    />
+    <BreadcrumbJsonLd
+      items={[
+        { name: "Home", url: GCP_BUSINESS.url },
+        { name: "Learn", url: `${GCP_BUSINESS.url}/learn` },
+      ]}
     />
 
     <section className="py-20 md:py-28 bg-palm-dark">

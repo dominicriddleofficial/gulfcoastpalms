@@ -3,6 +3,8 @@ import { Phone, MessageSquare, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
+import { BreadcrumbJsonLd } from "@/components/JsonLd";
+import { GCP_BUSINESS } from "@/lib/business-info";
 import { palmTypes } from "@/data/palmTypes";
 
 const fadeUp = {
@@ -17,6 +19,12 @@ const PalmTreeTypes = () => {
   return (
     <Layout>
       <SEOHead title="Palm Tree Types for Florida's Emerald Coast | Gulf Coast Palms" description="Learn about the most popular palm tree species for the Emerald Coast including care guides, trimming recommendations, and installation tips." canonicalUrl="/palm-trees/types" />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: GCP_BUSINESS.url },
+          { name: "Palm Tree Types", url: `${GCP_BUSINESS.url}/palm-trees/types` },
+        ]}
+      />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         "@context": "https://schema.org",
         "@type": "CollectionPage",

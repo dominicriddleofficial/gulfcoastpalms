@@ -54,6 +54,24 @@ export const servicesData: ServiceData[] = [
       { label: "Palm Care Guides", to: "/palm-trees/guides" },
       { label: "Palm Tree Cost", to: "/palm-tree-cost" },
     ],
+    faqs: [
+      {
+        q: "How often should palm trees be trimmed in Florida?",
+        a: "Most Florida palms need trimming once a year — typically April through early June — to remove dead fronds, seed pods, and flower stalks before summer storm season. Some species (like Canary Island Date Palms) benefit from a second light cleanup in the fall.",
+      },
+      {
+        q: "Is hurricane cutting bad for palms?",
+        a: "Yes. Over-trimming — sometimes marketed as \"hurricane cutting\" — removes healthy green fronds the tree needs for energy, which weakens the trunk over time and actually increases storm vulnerability. Proper trimming removes only dead, dying, or damaged fronds and preserves the healthy canopy.",
+      },
+      {
+        q: "Do you trim palms for HOAs and commercial properties?",
+        a: "Yes — HOAs, condo associations, resorts, and commercial properties across the Emerald Coast are a large part of what we do. We provide scheduled service, multi-palm discounts, single-invoice billing, and consistent crew assignments.",
+      },
+      {
+        q: "How fast can I get a palm trimming quote?",
+        a: "Fastest is a text photo to (850) 910-1290 — most photo quotes come back the same day. Free on-site estimates are also available and typically scheduled within 3–7 days.",
+      },
+    ],
   },
   {
     slug: "palm-tree-installation",
@@ -111,6 +129,24 @@ export const servicesData: ServiceData[] = [
         "Warranty terms require following our recommended watering and care guidelines provided at installation."
       ],
     },
+    faqs: [
+      {
+        q: "Which palm species do you install on the Emerald Coast?",
+        a: "We install Sabal, Canary Island Date, Mule, Pindo, Washingtonia, Mediterranean Fan, and other palms proven for NW Florida's coastal and inland conditions. We match species to your property's soil, salt exposure, sun, and cold tolerance.",
+      },
+      {
+        q: "How much does palm installation cost?",
+        a: "Installed cost depends on species, size, quantity, delivery distance, and site access. Sabal Palms typically start around $350 installed; Canary Island Date Palms are priced individually based on specimen and trunk height. Every quote is free.",
+      },
+      {
+        q: "What's included in the 1-year establishment warranty?",
+        a: "If a palm we install fails to establish due to installation-related issues within 12 months, we replace it at no additional cost. Warranty requires following the watering and care instructions we provide at planting.",
+      },
+      {
+        q: "Do you deliver and plant, or delivery only?",
+        a: "Every install includes delivery, staging, hand-planting at correct depth, root ball securing, initial watering, and soil conditioning — not just drop-off. Delivery-only isn't a service we offer for palm safety reasons.",
+      },
+    ],
   },
   {
     slug: "palm-tree-removal",
@@ -143,6 +179,24 @@ export const servicesData: ServiceData[] = [
       { label: "Palm Tree Installation", to: "/services/palm-tree-installation" },
       { label: "Palm Tree Trimming", to: "/services/palm-tree-trimming" },
       { label: "Palm Tree Cost", to: "/palm-tree-cost" },
+    ],
+    faqs: [
+      {
+        q: "How much does palm tree removal cost?",
+        a: "Palm removal is priced per job based on palm height, trunk diameter, species, property access, and whether stump grinding is included. Most residential removals fall between $200 and $1,500. Free on-site quotes are available.",
+      },
+      {
+        q: "Do you handle storm-damaged or leaning palms?",
+        a: "Yes — we provide priority emergency response across the Emerald Coast for storm-damaged, split, or dangerously leaning palms. We handle the removal, cleanup, and can provide documentation for insurance claims when authorized.",
+      },
+      {
+        q: "Do you grind the stump too?",
+        a: "Stump grinding is available as an add-on to any palm removal — most homeowners choose it so the site is ready for replanting or landscaping. Ask when you request your quote.",
+      },
+      {
+        q: "Can a dying palm be saved instead of removed?",
+        a: "Sometimes — it depends on the cause. Nutrient deficiency and improper trimming damage can often be corrected. Lethal yellowing, advanced trunk rot, and Ganoderma butt rot cannot. We'll assess and give you an honest recommendation.",
+      },
     ],
   },
   {
@@ -178,6 +232,24 @@ export const servicesData: ServiceData[] = [
       { label: "Palm Tree Types", to: "/palm-trees/types" },
       { label: "Palm Tree Cost", to: "/palm-tree-cost" },
     ],
+    faqs: [
+      {
+        q: "What is palm diamond cutting?",
+        a: "Diamond cutting is a specialized trimming technique that sculpts the leaf-base stubs on a palm trunk into a clean diamond / cross-hatch pattern. It's the signature look you see on Canary Island Date Palms at luxury resorts.",
+      },
+      {
+        q: "How much does diamond cutting cost?",
+        a: "Diamond cutting is priced per foot of trunk height being cleaned, and varies with species, boot density, and access. Most single-palm jobs run $150–$500. Every quote is free.",
+      },
+      {
+        q: "Which palms can be diamond cut?",
+        a: "Diamond cutting is most striking on Canary Island Date Palms and other species with prominent trunk boots — Sylvester and mature Sabal Palms are also candidates. Smooth-trunked palms (Royal, Washingtonia) aren't suitable.",
+      },
+      {
+        q: "How long does a diamond cut last?",
+        a: "A properly done diamond cut typically holds its clean look for 12–24 months before touch-ups are needed, depending on growth rate and species.",
+      },
+    ],
   },
   {
     slug: "palm-tree-trunk-skinning",
@@ -211,6 +283,24 @@ export const servicesData: ServiceData[] = [
       { label: "Palm Tree Trimming", to: "/services/palm-tree-trimming" },
       { label: "Palm Tree Types", to: "/palm-trees/types" },
       { label: "Palm Tree Cost", to: "/palm-tree-cost" },
+    ],
+    faqs: [
+      {
+        q: "What is palm trunk skinning?",
+        a: "Trunk skinning removes the old leaf-base \"boots\" from the palm trunk, revealing the smooth inner bark beneath. It gives palms a clean, resort-grade appearance and removes hiding places for rodents and insects.",
+      },
+      {
+        q: "How much does trunk skinning cost?",
+        a: "Trunk skinning is priced per foot of trunk height being cleaned. Most single-palm jobs run $100–$400 depending on trunk height, species, and boot density. Every quote is free.",
+      },
+      {
+        q: "Will skinning hurt the palm?",
+        a: "Not when done correctly. Skinning removes only the dead outer boot material — cutting too deep can damage the trunk's vascular tissue, which is why proper technique matters. Our crews are experienced with this specific service.",
+      },
+      {
+        q: "Should I combine skinning with trimming or diamond cutting?",
+        a: "Yes — combining trunk skinning with a crown trim and (on suitable species) diamond cutting delivers the full \"resort makeover\" look in a single visit and usually reduces the per-service cost.",
+      },
     ],
   },
 ];
