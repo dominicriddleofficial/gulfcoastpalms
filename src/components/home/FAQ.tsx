@@ -39,6 +39,54 @@ const faqs = [
     q: "What's the best time of year to install new palm trees?",
     a: "In the Gulf Coast region, spring and early summer are ideal for palm installations since the warm temperatures and regular rainfall help new palms establish strong root systems. However, palms can be planted year-round in Florida with proper care. We source palms suited for our coastal climate and ensure proper planting for long-term health.",
   },
+  {
+    q: "Do you haul away all the debris?",
+    a: "Yes. Full cleanup and haul-off are included on every job unless you specifically ask us to leave fronds or logs on-site. When we leave, the driveway is blown off and the property looks better than when we arrived.",
+  },
+  {
+    q: "Do I need to be home when you work?",
+    a: "No, you do not need to be home. Most palm and tree work happens outside and we can complete the job as long as we have access to the palms. We'll send before/after photos and a text when the crew is finished.",
+  },
+  {
+    q: "How fast can you come out?",
+    a: "Most standard palm and tree jobs are scheduled within a few days of the quote. Emergency work (storm damage, hangers over a house, blocked driveways) is prioritized — call (850) 910-1290 and we'll do everything we can to get a crew there the same day or next morning.",
+  },
+  {
+    q: "When should I schedule hurricane prep for my palms?",
+    a: "The ideal window is May through early June, before named storms typically form. Waiting until a storm is already in the Gulf means every tree service in Florida is booked. Managed maintenance customers get automatic pre-season trimming.",
+  },
+  {
+    q: "Do you offer stump grinding?",
+    a: "For palm stumps and small tree stumps we handle it in-house on the same visit as the removal. For very large hardwood stumps we sometimes coordinate with a stump-grinding partner. Call or text (850) 910-1290 with a photo and we'll tell you honestly what we can do.",
+  },
+  {
+    q: "How does the text-a-photo quote work?",
+    a: "Snap a clear photo showing the whole palm or tree from the base up, text it to (850) 910-1290 with your address and what you need, and we'll usually reply with a price the same day. Photos beat guesswork — no site visit required for most jobs.",
+  },
+  {
+    q: "Do you work with HOAs and property managers?",
+    a: "Yes. We serve HOAs, condo associations, property management companies, and commercial properties across NW Florida with volume pricing, photo documentation on every job, direct invoicing, and priority hurricane response. See our commercial page for details.",
+  },
+  {
+    q: "Do you take before and after photos?",
+    a: "Yes, on every job. Photos are attached to the invoice so you, your board, or your property owner can see exactly what was completed — even if you were not on-site during the work.",
+  },
+  {
+    q: "Do you also trim regular trees, not just palms?",
+    a: "Yes. We regularly handle oaks, pines, magnolias, crape myrtles, and other common Florida trees — trimming, deadwood removal, and full removals. Pricing for tree work is quoted per job based on size, condition, access, and hazards; every quote is free.",
+  },
+  {
+    q: "Can I get on a recurring maintenance schedule?",
+    a: "Absolutely. Recurring plans typically run once or twice a year for residential palms, or quarterly for HOAs and commercial properties. You get priority scheduling, locked-in pricing, and automatic pre-hurricane prep.",
+  },
+  {
+    q: "How do payments work?",
+    a: "We accept card, ACH, and check. Most residential jobs are paid on completion; approved commercial and HOA accounts can be set up on monthly invoicing with Net-30 terms.",
+  },
+  {
+    q: "What happens if a storm knocks a palm onto my house or driveway?",
+    a: "Call or text (850) 910-1290 immediately with a photo. Storm-response jobs move to the front of the schedule. We work with insurance-claim customers routinely and can provide photo documentation for adjusters.",
+  },
 ];
 
 const fadeUp = {
