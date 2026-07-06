@@ -64,6 +64,9 @@ const buildRoutePath = (): string => {
 
 const ROUTE_D = buildRoutePath();
 
+// Total route length for stroke-dashoffset math (approx, tuned for our path).
+const ROUTE_LEN = 1550;
+
 const ServiceAreaMap = () => {
   const [visible, setVisible] = useState(false);
   const [active, setActive] = useState<string | null>(null);
