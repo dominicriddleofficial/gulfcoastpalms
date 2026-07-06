@@ -182,3 +182,12 @@ export function useInvalidateUnpaidJobs() {
   return (businessId: string | null) =>
     qc.invalidateQueries({ queryKey: unpaidJobsKey(businessId) });
 }
+
+/** Owner-only: permanently dismiss a job from the Unpaid Jobs tracker. */
+export async function dismissUnpaidJob(jobId: string): Promise<void> {
+  const { error } = await supabase
+    .from("platform_jobs")
+    .update({ excluded_from_unpaid: true })
+    .eq("id", jobId);
+  if (error) throw error;
+}
