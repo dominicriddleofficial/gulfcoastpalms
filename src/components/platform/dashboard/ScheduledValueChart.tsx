@@ -26,6 +26,7 @@ import {
   Customized,
 } from "recharts";
 import { CalendarDays } from "lucide-react";
+import { parseDateOnlyLocal } from "@/lib/localDate";
 
 function prefersReducedMotion(): boolean {
   if (typeof window === "undefined" || !window.matchMedia) return false;
@@ -224,7 +225,7 @@ export default function ScheduledValueChart() {
     const total = visibleGraphTotal;
     const daysElapsed = Math.max(
       1,
-      buckets.filter((b) => new Date(b.date + "T00:00:00") <= today).length,
+      buckets.filter((b) => parseDateOnlyLocal(b.date) <= today).length,
     );
     const avgPerDay = Math.round(total / daysElapsed);
     const busiest = buckets.reduce<DayBucket | null>(
@@ -1040,7 +1041,7 @@ function ChartTooltip({
 }) {
   if (!active || !payload || !payload.length) return null;
   const p = payload[0].payload;
-  const d = new Date(p.date + "T00:00:00");
+  const d = parseDateOnlyLocal(p.date);
   const dateLabel =
     period === "week" ? format(d, "EEE, MMM d") : format(d, "MMM d");
   return (
