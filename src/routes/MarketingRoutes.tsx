@@ -20,6 +20,7 @@ const SantaRosaBeach = lazy(() => import("@/pages/locations/SantaRosaBeach"));
 const Pace = lazy(() => import("@/pages/locations/Pace"));
 const Milton = lazy(() => import("@/pages/locations/Milton"));
 const Crestview = lazy(() => import("@/pages/locations/Crestview"));
+const Perdido = lazy(() => import("@/pages/locations/Perdido"));
 
 const About = lazy(() => import("@/pages/About"));
 const Jobs = lazy(() => import("@/pages/Jobs"));
@@ -85,6 +86,7 @@ export const MarketingRoutes = () => (
     <Route path="/palm-tree-trimming-destin-fl" element={<Destin />} />
     <Route path="/palm-tree-trimming-30a-fl" element={<ThirtyA />} />
     <Route path="/palm-tree-trimming-perdido-key-fl" element={<PerdidoKey />} />
+    <Route path="/palm-tree-trimming-perdido-fl" element={<Perdido />} />
     <Route path="/palm-tree-trimming-niceville-fl" element={<Niceville />} />
     <Route path="/palm-tree-trimming-mary-esther-fl" element={<MaryEsther />} />
     <Route path="/palm-tree-trimming-santa-rosa-beach-fl" element={<SantaRosaBeach />} />
