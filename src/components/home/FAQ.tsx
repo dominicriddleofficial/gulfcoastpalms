@@ -87,6 +87,18 @@ const faqs = [
     q: "What happens if a storm knocks a palm onto my house or driveway?",
     a: "Call or text (850) 910-1290 immediately with a photo. Storm-response jobs move to the front of the schedule. We work with insurance-claim customers routinely and can provide photo documentation for adjusters.",
   },
+  {
+    q: "If you trim a palm, will the fronds grow back?",
+    a: "Yes. Palms grow new fronds from the center crown all year long, so a properly trimmed palm keeps pushing out fresh green fronds. We never cut into the crown or remove healthy green fronds — that would slow growth and can even kill the tree.",
+  },
+  {
+    q: "How do I know if my palm tree is dying?",
+    a: "Warning signs are a drooping or collapsing center spear, brown or yellow fronds spreading from the crown downward, a soft or oozing trunk, or a sudden lean. Send us a photo at (850) 910-1290 and we'll tell you honestly if it can be saved or if removal is the safer call.",
+  },
+  {
+    q: "Do you work weekends?",
+    a: "Yes. Most work happens Monday through Saturday, and we take emergency and storm-response calls seven days a week. If you need a Sunday visit, call or text (850) 910-1290 and we'll do our best to fit you in.",
+  },
 ];
 
 const fadeUp = {
