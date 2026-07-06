@@ -1,14 +1,16 @@
-import job1 from "@/assets/gallery/job-1.jpeg";
-import job2 from "@/assets/gallery/job-2.jpeg";
-import job3 from "@/assets/gallery/job-3.jpeg";
-import job4 from "@/assets/gallery/job-4.jpeg";
-import job5 from "@/assets/gallery/job-5.jpeg";
-import job6 from "@/assets/gallery/job-6.jpeg";
-import job7 from "@/assets/gallery/job-7.jpeg";
-import job8 from "@/assets/gallery/job-8.jpeg";
-import job9 from "@/assets/gallery/job-9.jpeg";
-import job10 from "@/assets/gallery/job-10.jpeg";
-import job11 from "@/assets/gallery/job-11.jpeg";
+// Route gallery imports through vite-imagetools so the shipped bundle serves
+// resized WebP (~1200w) instead of the raw ~250–500KB source JPEGs.
+import job1 from "@img/gallery/job-1.jpeg?format=webp&quality=75&w=1200";
+import job2 from "@img/gallery/job-2.jpeg?format=webp&quality=75&w=1200";
+import job3 from "@img/gallery/job-3.jpeg?format=webp&quality=75&w=1200";
+import job4 from "@img/gallery/job-4.jpeg?format=webp&quality=75&w=1200";
+import job5 from "@img/gallery/job-5.jpeg?format=webp&quality=75&w=1200";
+import job6 from "@img/gallery/job-6.jpeg?format=webp&quality=75&w=1200";
+import job7 from "@img/gallery/job-7.jpeg?format=webp&quality=75&w=1200";
+import job8 from "@img/gallery/job-8.jpeg?format=webp&quality=75&w=1200";
+import job9 from "@img/gallery/job-9.jpeg?format=webp&quality=75&w=1200";
+import job10 from "@img/gallery/job-10.jpeg?format=webp&quality=75&w=1200";
+import job11 from "@img/gallery/job-11.jpeg?format=webp&quality=75&w=1200";
 
 export interface LocationData {
   slug: string;
@@ -81,7 +83,7 @@ export const locations: LocationData[] = [
       { src: job8, alt: "Diamond cut palms at Pensacola property" },
     ],
     metaTitle: "Palm Tree Trimming Pensacola FL | Gulf Coast Palms",
-    metaDescription: "Professional palm tree trimming in Pensacola, FL. Diamond cutting, trunk skinning, installations & removals. 5.0★ · 46 reviews · Free estimates. (850) 910-1290.",
+    metaDescription: "Professional palm tree trimming in Pensacola, FL. Diamond cutting, trunk skinning, installations & removals. 5.0★ · 100+ reviews · Free estimates. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-gulf-breeze-fl", "palm-tree-trimming-perdido-key-fl", "palm-tree-trimming-navarre-fl"],
     geo: { latitude: 30.4213, longitude: -87.2169 },
     neighborhoods: [
@@ -195,7 +197,7 @@ export const locations: LocationData[] = [
       { src: job9, alt: "Palm trimming at Gulf Breeze residential property" },
     ],
     metaTitle: "Palm Tree Trimming Gulf Breeze FL | Gulf Coast Palms",
-    metaDescription: "Expert palm tree trimming in Gulf Breeze, FL. Resort-quality diamond cutting, trunk skinning & coastal palm care. 5.0★ · 46 reviews. Call (850) 910-1290.",
+    metaDescription: "Expert palm tree trimming in Gulf Breeze, FL. Resort-quality diamond cutting, trunk skinning & coastal palm care. 5.0★ · 100+ reviews. Call (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-pensacola-fl", "palm-tree-trimming-navarre-fl", "palm-tree-trimming-fort-walton-beach-fl"],
     geo: { latitude: 30.3574, longitude: -87.1639 },
     neighborhoods: [
@@ -310,7 +312,7 @@ export const locations: LocationData[] = [
       { src: job7, alt: "Professional palm trimming in Navarre Florida" },
     ],
     metaTitle: "Palm Tree Trimming Navarre FL | Gulf Coast Palms",
-    metaDescription: "Leading palm tree trimming in Navarre, FL. Diamond cutting, trunk skinning & large-scale palm care. 5.0★ · 46 reviews · Free estimates. (850) 910-1290.",
+    metaDescription: "Leading palm tree trimming in Navarre, FL. Diamond cutting, trunk skinning & large-scale palm care. 5.0★ · 100+ reviews · Free estimates. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-gulf-breeze-fl", "palm-tree-trimming-fort-walton-beach-fl", "palm-tree-trimming-destin-fl"],
     geo: { latitude: 30.4019, longitude: -86.8620 },
     neighborhoods: [
@@ -424,7 +426,7 @@ export const locations: LocationData[] = [
       { src: job10, alt: "Professional palm services in Fort Walton Beach" },
     ],
     metaTitle: "Palm Tree Trimming Fort Walton Beach FL | Gulf Coast Palms",
-    metaDescription: "Professional palm tree trimming in Fort Walton Beach, FL. Diamond cutting, trunk skinning & condo palm care. 5.0★ · 46 reviews. Call (850) 910-1290.",
+    metaDescription: "Professional palm tree trimming in Fort Walton Beach, FL. Diamond cutting, trunk skinning & condo palm care. 5.0★ · 100+ reviews. Call (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-navarre-fl", "palm-tree-trimming-destin-fl", "palm-tree-trimming-gulf-breeze-fl"],
     geo: { latitude: 30.4058, longitude: -86.6187 },
     neighborhoods: [
@@ -538,7 +540,7 @@ export const locations: LocationData[] = [
       { src: job1, alt: "Diamond cut palms at Destin waterfront estate" },
     ],
     metaTitle: "Palm Tree Trimming Destin FL | Diamond Cutting | Gulf Coast Palms",
-    metaDescription: "Professional palm tree trimming in Destin, FL. Diamond cutting specialists for luxury homes, HOAs & vacation rentals. 5.0★ · 46 reviews · Free estimates. (850) 910-1290.",
+    metaDescription: "Professional palm tree trimming in Destin, FL. Diamond cutting specialists for luxury homes, HOAs & vacation rentals. 5.0★ · 100+ reviews · Free estimates. (850) 910-1290.",
     nearbyLinks: [
       "palm-tree-trimming-fort-walton-beach-fl",
       "palm-tree-trimming-30a-fl",
@@ -773,7 +775,7 @@ export const locations: LocationData[] = [
       { src: job4, alt: "Waterfront palm maintenance at Perdido Key property" },
     ],
     metaTitle: "Palm Tree Trimming Perdido Key FL | Gulf Coast Palms",
-    metaDescription: "Professional palm tree trimming on Perdido Key, FL. Diamond cutting & condo palm care for barrier island properties. 5.0★ · 46 reviews. (850) 910-1290.",
+    metaDescription: "Professional palm tree trimming on Perdido Key, FL. Diamond cutting & condo palm care for barrier island properties. 5.0★ · 100+ reviews. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-pensacola-fl", "palm-tree-trimming-gulf-breeze-fl", "palm-tree-trimming-navarre-fl"],
     geo: { latitude: 30.3127, longitude: -87.4361 },
     neighborhoods: [
@@ -887,7 +889,7 @@ export const locations: LocationData[] = [
       { src: job11, alt: "Diamond cut palms at Bluewater Bay Niceville" },
     ],
     metaTitle: "Palm Tree Trimming Niceville FL | Gulf Coast Palms",
-    metaDescription: "Professional palm tree trimming in Niceville, FL. Bluewater Bay, Rocky Bayou & Twin Cities. 5.0★ · 46 reviews · Free estimates. (850) 910-1290.",
+    metaDescription: "Professional palm tree trimming in Niceville, FL. Bluewater Bay, Rocky Bayou & Twin Cities. 5.0★ · 100+ reviews · Free estimates. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-fort-walton-beach-fl", "palm-tree-trimming-destin-fl", "palm-tree-trimming-navarre-fl"],
     geo: { latitude: 30.5169, longitude: -86.4823 },
     neighborhoods: [
@@ -1001,7 +1003,7 @@ export const locations: LocationData[] = [
       { src: job9, alt: "Waterfront palm maintenance in Mary Esther" },
     ],
     metaTitle: "Palm Tree Trimming Mary Esther FL | Gulf Coast Palms",
-    metaDescription: "Professional palm tree trimming in Mary Esther, FL. Trusted by military families & property managers near Hurlburt Field. 5.0★ · 46 reviews. (850) 910-1290.",
+    metaDescription: "Professional palm tree trimming in Mary Esther, FL. Trusted by military families & property managers near Hurlburt Field. 5.0★ · 100+ reviews. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-fort-walton-beach-fl", "palm-tree-trimming-navarre-fl", "palm-tree-trimming-destin-fl"],
     geo: { latitude: 30.4099, longitude: -86.6604 },
     neighborhoods: [
@@ -1115,7 +1117,7 @@ export const locations: LocationData[] = [
       { src: job2, alt: "Diamond cut palms at Santa Rosa Beach property" },
     ],
     metaTitle: "Palm Tree Trimming Santa Rosa Beach FL | 30A | Gulf Coast Palms",
-    metaDescription: "Premium palm tree trimming in Santa Rosa Beach, FL. WaterColor, WaterSound & 30A luxury homes. 5.0★ · 46 reviews · Free estimates. (850) 910-1290.",
+    metaDescription: "Premium palm tree trimming in Santa Rosa Beach, FL. WaterColor, WaterSound & 30A luxury homes. 5.0★ · 100+ reviews · Free estimates. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-30a-fl", "palm-tree-trimming-destin-fl", "palm-tree-trimming-fort-walton-beach-fl"],
     geo: { latitude: 30.3658, longitude: -86.2161 },
     neighborhoods: [
@@ -1229,7 +1231,7 @@ export const locations: LocationData[] = [
       { src: job10, alt: "Palm maintenance in Pace Santa Rosa County" },
     ],
     metaTitle: "Palm Tree Trimming Pace FL | Gulf Coast Palms",
-    metaDescription: "Professional palm tree trimming in Pace, FL. Serving Santa Rosa County's fastest-growing community. 5.0★ · 46 reviews · Free estimates. (850) 910-1290.",
+    metaDescription: "Professional palm tree trimming in Pace, FL. Serving Santa Rosa County's fastest-growing community. 5.0★ · 100+ reviews · Free estimates. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-pensacola-fl", "palm-tree-trimming-navarre-fl", "palm-tree-trimming-gulf-breeze-fl"],
     geo: { latitude: 30.5994, longitude: -87.1614 },
     neighborhoods: [
@@ -1343,7 +1345,7 @@ export const locations: LocationData[] = [
       { src: job3, alt: "Palm maintenance in Milton Santa Rosa County" },
     ],
     metaTitle: "Palm Tree Trimming Milton FL | Gulf Coast Palms",
-    metaDescription: "Professional palm tree trimming in Milton, FL. Serving Santa Rosa County's seat from Blackwater River to Highway 90. 5.0★ · 46 reviews. (850) 910-1290.",
+    metaDescription: "Professional palm tree trimming in Milton, FL. Serving Santa Rosa County's seat from Blackwater River to Highway 90. 5.0★ · 100+ reviews. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-pace-fl", "palm-tree-trimming-pensacola-fl", "palm-tree-trimming-navarre-fl"],
     geo: { latitude: 30.6327, longitude: -87.0397 },
     neighborhoods: [
@@ -1417,6 +1419,127 @@ export const locations: LocationData[] = [
       {
         q: "How quickly can you schedule palm service in Milton?",
         a: "Routine trimming in Milton is typically scheduled within 3–7 days. Peak season runs 1–2 weeks. Storm and emergency calls get same-day or next-day response. Texting a photo of your palms is the fastest way to get a quote.",
+      },
+    ],
+  },
+  {
+    slug: "palm-tree-trimming-crestview-fl",
+    city: "Crestview",
+    state: "FL",
+    h1: "Palm Tree Trimming in Crestview, FL",
+    subheading: "Cold-Hardy Palm Care, Diamond Cutting & Storm Cleanup for Okaloosa County's Largest Inland City",
+    introParagraphs: [
+      "Gulf Coast Palms serves homeowners, HOAs, and commercial properties throughout Crestview, FL — the county seat of Okaloosa County and the largest city in the region's inland corridor. From the established neighborhoods off Ferdon Boulevard and PJ Adams Parkway to the newer developments near Duke Field and along Highway 90, our crew delivers precise, professional palm care that keeps Crestview properties looking sharp year-round.",
+      "Crestview sits roughly 25 miles inland from the coast, which changes what proper palm care looks like. Winters are colder than in Destin or Fort Walton Beach, salt exposure is much lower, and soils are heavier and more clay-rich. Cold-hardy species — Sabal, Windmill, Pindo, and Mediterranean Fan Palms — thrive here, while more tropical varieties often struggle without protection. Our team knows which palms perform well in 32536 and 32539, and we trim, feed, and protect them accordingly.",
+      "Storm cleanup is another key part of what we do in Crestview. Tropical systems that reach this far inland typically arrive as heavy rain and wind bands rather than direct hits, but downed fronds, leaning palms, and split trunks are still common after severe weather. We provide priority emergency response across Crestview and the surrounding Okaloosa County corridor — Baker, Laurel Hill, Milligan, and the North Okaloosa area — with insurance-direct billing available when authorized.",
+      "Whether you own a single Sabal at your Crestview home, manage a commercial property along Highway 85 or Highway 90, or oversee a residential HOA, Gulf Coast Palms brings the same expertise, equipment, and attention to detail that has made us the trusted palm care provider across the entire Emerald Coast — from Perdido Key east to 30A and now north into Crestview and inland Okaloosa County.",
+    ],
+    services: [
+      "Palm tree trimming & pruning",
+      "Diamond cutting",
+      "Trunk skinning",
+      "Cold-hardy palm installations",
+      "Safe palm removals",
+      "Post-storm cleanup & insurance documentation",
+    ],
+    whyChooseTitle: "Why Crestview Property Owners Choose Gulf Coast Palms",
+    whyChoosePoints: [
+      "500+ properties served across the Emerald Coast",
+      "Experienced with cold-hardy inland palm species",
+      "Licensed & insured professionals",
+      "5-star rated across NW Florida — 100+ Google reviews",
+      "Priority storm & emergency response into Okaloosa County",
+    ],
+    whyChooseClosing:
+      "Crestview may be a drive from the coast, but inland palms deserve the same expert care as the ones lining 30A. Our crew brings coastal-grade precision and full commercial equipment to every Crestview property — no shortcuts, no over-cutting, no surprises on the invoice.",
+    ctaHeading: "Need palm tree trimming in Crestview?",
+    ctaText: "Call or text today for a free quote — we serve Crestview, Baker, Laurel Hill, and North Okaloosa County.",
+    images: [
+      { src: job7, alt: "Palm tree trimming at a Crestview FL property" },
+      { src: job4, alt: "Cold-hardy Sabal Palm care in Crestview Florida" },
+      { src: job11, alt: "Palm maintenance in Crestview Okaloosa County" },
+    ],
+    metaTitle: "Palm Tree Trimming Crestview FL | Gulf Coast Palms",
+    metaDescription:
+      "Palm tree trimming in Crestview, FL. Cold-hardy species, storm cleanup, diamond cutting & precision inland palm care. 5.0★ · 100+ reviews · (850) 910-1290.",
+    nearbyLinks: [
+      "palm-tree-trimming-niceville-fl",
+      "palm-tree-trimming-fort-walton-beach-fl",
+      "palm-tree-trimming-milton-fl",
+    ],
+    geo: { latitude: 30.7621, longitude: -86.5708 },
+    neighborhoods: [
+      "Crestview",
+      "Downtown Crestview",
+      "Ferdon Boulevard",
+      "PJ Adams Parkway",
+      "Highway 85",
+      "Highway 90",
+      "Duke Field",
+      "Baker",
+      "Laurel Hill",
+      "North Okaloosa",
+    ],
+    pricingTiers: [
+      {
+        name: "Standard Palm Trimming",
+        price: "As low as $25 per palm",
+        bestFor:
+          "Crestview homes with 1–6 cold-hardy palms. Routine dead-frond removal, clean residential appearance, and pre-summer cleanup.",
+      },
+      {
+        name: "Premium Diamond Cutting",
+        price: "Up to $250 per palm",
+        bestFor:
+          "Established Crestview estates and Highway 85 commercial properties wanting a polished, resort-grade Canary Island Date Palm finish.",
+      },
+      {
+        name: "HOA & Commercial Maintenance",
+        price: "Custom pricing",
+        bestFor:
+          "Crestview HOAs, retail centers, and offices along Highway 90. Scheduled service, single-invoice billing, and after-hours work when needed.",
+      },
+    ],
+    pricingNote:
+      "Pricing reflects palm height, species, density, and access. Free on-site quotes anywhere in Crestview, Baker, Laurel Hill, and North Okaloosa County.",
+    testimonial: {
+      quote:
+        "We're 30 minutes off the coast and most palm companies wouldn't drive out. Gulf Coast Palms showed up on time, did a clean, professional job on our Sabals, and hauled everything away. Fair price, no upsell — we'll definitely have them back.",
+      author: "Danielle W., Crestview homeowner",
+      rating: 5,
+    },
+    ctaSubtext:
+      "No hard sell. No upsell. Just an honest estimate from Okaloosa County's trusted palm specialists.",
+    ctaPrimaryLabel: "Text a Photo to (850) 910-1290",
+    ctaSecondaryLabel: "or call us directly",
+    faqs: [
+      {
+        q: "How much does palm tree trimming cost in Crestview?",
+        a: "Crestview palm trimming generally runs $25 to $250 per palm depending on height, species, density, and access. Most single-family Crestview homes run $100–$500 for a complete service. All quotes are free and on-site with no hidden fees.",
+      },
+      {
+        q: "Do you actually service Crestview, or just the coast?",
+        a: "Yes — Crestview and North Okaloosa County are part of our regular route. We schedule Crestview jobs alongside Niceville and Fort Walton Beach work so drive time doesn't inflate your invoice.",
+      },
+      {
+        q: "Which palm species do best in Crestview's inland climate?",
+        a: "Cold-hardy species handle Crestview's winters best: Sabal Palm (Florida's state tree), Windmill Palm, Pindo Palm, Mediterranean Fan Palm, and Needle Palm. Coconut Palms and other tropical species aren't a good fit long-term this far inland.",
+      },
+      {
+        q: "When should Crestview palms be trimmed?",
+        a: "April through early June is ideal. That timing removes dead fronds before summer storms and thunderstorm season, and gives palms plenty of energy for a strong growing season. Avoid heavy trimming during winter cold snaps.",
+      },
+      {
+        q: "Can you diamond-cut palms in Crestview?",
+        a: "Yes — diamond cutting is available across Crestview and is a popular choice for the mature Canary Island Date Palms found at established estates and commercial entrances.",
+      },
+      {
+        q: "Do you handle storm-damaged palms in Crestview?",
+        a: "Yes — we provide priority emergency response across Crestview and Okaloosa County after tropical systems, straight-line wind events, and severe thunderstorms. We handle limb removal, full palm removals, lean correction, and complete cleanup, with insurance-direct billing available.",
+      },
+      {
+        q: "How quickly can you schedule a Crestview job?",
+        a: "Routine trimming in Crestview is typically scheduled within 5–10 days. Peak season runs 1–2 weeks. Storm and emergency calls get same-day or next-day response. Texting a photo of your palms is the fastest way to get a quote.",
       },
     ],
   },

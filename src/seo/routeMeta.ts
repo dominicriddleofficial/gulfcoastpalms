@@ -4,7 +4,7 @@
  * script (`scripts/prerender-meta.mjs`) so both sides stay in sync.
  */
 
-import { buildRouteMeta, SITE_ORIGIN, DEFAULT_OG_IMAGE } from "./routes.data.mjs";
+import { buildRouteMeta, SITE_ORIGIN, DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGE_ALT } from "./routes.data.mjs";
 
 export interface RouteMeta {
   path: string;
@@ -13,11 +13,13 @@ export interface RouteMeta {
   ogTitle: string;
   ogDescription: string;
   ogImage: string;
+  ogImageAlt: string;
   canonical: string;
   ogType: string;
+  noindex: boolean;
 }
 
-export { SITE_ORIGIN, DEFAULT_OG_IMAGE };
+export { SITE_ORIGIN, DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGE_ALT };
 
 export const routeMeta: RouteMeta[] = buildRouteMeta() as RouteMeta[];
 

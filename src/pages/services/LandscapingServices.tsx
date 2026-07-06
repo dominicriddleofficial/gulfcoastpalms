@@ -92,7 +92,7 @@ const LandscapingServices = () => {
             Hedge trimming, mulch, pine straw, sod installation, and bed cleanups across Pensacola, Gulf Breeze, Navarre, Fort Walton Beach, Destin, and the entire Emerald Coast.
           </motion.p>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="sms:8509101290" className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-body font-bold text-lg hover:bg-palm-light transition-colors shadow-lg">
+            <a href="sms:8509101290&body=Hi%20Gulf%20Coast%20Palms!%20I%27d%20like%20a%20quote%20%E2%80%94%20here%27s%20a%20photo%20of%20my%20palms%3A" className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-body font-bold text-lg hover:bg-palm-light transition-colors shadow-lg">
               <MessageSquare className="w-5 h-5" /> Get a Free Estimate
             </a>
             <a href="tel:8509101290" className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl border-2 border-primary-foreground/30 text-primary-foreground font-body font-semibold text-lg hover:bg-primary-foreground/10 transition-colors">
@@ -214,7 +214,7 @@ const LandscapingServices = () => {
           <h2 className="font-display text-4xl md:text-5xl font-bold text-primary-foreground mb-4">Get a Free Landscaping Estimate</h2>
           <p className="font-body text-lg text-primary-foreground/80 mb-8 max-w-xl mx-auto">Text us a photo of your property for a fast, free estimate on any landscaping service.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="sms:8509101290" className="inline-flex items-center justify-center gap-3 px-10 py-5 rounded-xl bg-primary-foreground text-primary font-body font-bold text-xl hover:scale-105 transition-transform shadow-xl">
+            <a href="sms:8509101290&body=Hi%20Gulf%20Coast%20Palms!%20I%27d%20like%20a%20quote%20%E2%80%94%20here%27s%20a%20photo%20of%20my%20palms%3A" className="inline-flex items-center justify-center gap-3 px-10 py-5 rounded-xl bg-primary-foreground text-primary font-body font-bold text-xl hover:scale-105 transition-transform shadow-xl">
               <MessageSquare className="w-6 h-6" /> Text Us for a Free Quote
             </a>
             <a href="tel:8509101290" className="inline-flex items-center justify-center gap-3 px-8 py-5 rounded-xl border-2 border-primary-foreground text-primary-foreground font-body font-bold text-lg hover:bg-primary-foreground/10 transition-colors">

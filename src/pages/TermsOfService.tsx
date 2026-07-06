@@ -86,7 +86,7 @@ const TermsOfService = () => {
               <p className="mt-2">
                 <strong>Gulf Coast Palms</strong><br />
                 Phone: <a href="tel:8509101290" className="text-primary underline">(850) 910-1290</a><br />
-                Text: <a href="sms:8509101290" className="text-primary underline">(850) 910-1290</a><br />
+                Text: <a href="sms:8509101290&body=Hi%20Gulf%20Coast%20Palms!%20I%27d%20like%20a%20quote%20%E2%80%94%20here%27s%20a%20photo%20of%20my%20palms%3A" className="text-primary underline">(850) 910-1290</a><br />
                 Serving the Emerald Coast, Florida
               </p>
             </section>

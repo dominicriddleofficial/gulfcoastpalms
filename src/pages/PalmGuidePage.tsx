@@ -107,7 +107,7 @@ const PalmGuidePage = () => {
               For professional palm trimming or installation throughout the Emerald Coast.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <a href="sms:8509101290" className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-body font-bold hover:bg-palm-light transition-colors">
+              <a href="sms:8509101290&body=Hi%20Gulf%20Coast%20Palms!%20I%27d%20like%20a%20quote%20%E2%80%94%20here%27s%20a%20photo%20of%20my%20palms%3A" className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-body font-bold hover:bg-palm-light transition-colors">
                 <MessageSquare className="w-5 h-5" /> Text Us a Photo for Instant Quote
               </a>
               <a href="tel:8509101290" className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border-2 border-primary text-primary font-body font-bold hover:bg-primary hover:text-primary-foreground transition-colors">

@@ -3,6 +3,8 @@ import { Phone, MessageSquare, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
+import { BreadcrumbJsonLd } from "@/components/JsonLd";
+import { GCP_BUSINESS } from "@/lib/business-info";
 import { palmTypes } from "@/data/palmTypes";
 
 const fadeUp = {
@@ -17,6 +19,12 @@ const PalmTreeTypes = () => {
   return (
     <Layout>
       <SEOHead title="Palm Tree Types for Florida's Emerald Coast | Gulf Coast Palms" description="Learn about the most popular palm tree species for the Emerald Coast including care guides, trimming recommendations, and installation tips." canonicalUrl="/palm-trees/types" />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: GCP_BUSINESS.url },
+          { name: "Palm Tree Types", url: `${GCP_BUSINESS.url}/palm-trees/types` },
+        ]}
+      />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         "@context": "https://schema.org",
         "@type": "CollectionPage",
@@ -92,7 +100,7 @@ const PalmTreeTypes = () => {
             <a href="tel:8509101290" className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-primary-foreground text-primary font-body font-bold text-lg hover:scale-105 transition-transform shadow-xl">
               <Phone className="w-5 h-5" /> (850) 910-1290
             </a>
-            <a href="sms:8509101290" className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl border-2 border-primary-foreground text-primary-foreground font-body font-bold text-lg hover:bg-primary-foreground/10 transition-colors">
+            <a href="sms:8509101290&body=Hi%20Gulf%20Coast%20Palms!%20I%27d%20like%20a%20quote%20%E2%80%94%20here%27s%20a%20photo%20of%20my%20palms%3A" className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl border-2 border-primary-foreground text-primary-foreground font-body font-bold text-lg hover:bg-primary-foreground/10 transition-colors">
               <MessageSquare className="w-5 h-5" /> Text Us
             </a>
           </motion.div>

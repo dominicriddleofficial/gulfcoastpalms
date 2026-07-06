@@ -224,7 +224,7 @@ const TreeTrimmingRemoval = () => {
             className="mx-auto mt-8 flex max-w-md flex-col gap-3"
           >
             <a
-              href="sms:8509101290"
+              href="sms:8509101290&body=Hi%20Gulf%20Coast%20Palms!%20I%27d%20like%20a%20quote%20%E2%80%94%20here%27s%20a%20photo%20of%20my%20palms%3A"
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-4 font-body text-base font-bold text-primary-foreground shadow-xl transition-transform hover:scale-[1.02]"
             >
               <MessageSquare className="h-5 w-5" /> Get a Free Tree Trimming Quote →
@@ -337,7 +337,7 @@ const TreeTrimmingRemoval = () => {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <a
-                href="sms:8509101290"
+                href="sms:8509101290&body=Hi%20Gulf%20Coast%20Palms!%20I%27d%20like%20a%20quote%20%E2%80%94%20here%27s%20a%20photo%20of%20my%20palms%3A"
                 className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-6 py-4 font-body text-base font-bold text-primary-foreground shadow-md transition-transform hover:scale-[1.02]"
               >
                 <MessageSquare className="h-5 w-5" /> Text Us a Photo
@@ -468,7 +468,7 @@ const TreeTrimmingRemoval = () => {
           </p>
           <div className="flex flex-col justify-center gap-4 sm:flex-row">
             <a
-              href="sms:8509101290"
+              href="sms:8509101290&body=Hi%20Gulf%20Coast%20Palms!%20I%27d%20like%20a%20quote%20%E2%80%94%20here%27s%20a%20photo%20of%20my%20palms%3A"
               className="inline-flex items-center justify-center gap-3 rounded-xl bg-primary-foreground px-8 py-4 font-body text-lg font-bold text-primary shadow-xl transition-transform hover:scale-105"
             >
               <MessageSquare className="h-5 w-5" /> Get a Free Quote Online →
@@ -481,7 +481,7 @@ const TreeTrimmingRemoval = () => {
             </a>
           </div>
           <a
-            href="sms:8509101290"
+            href="sms:8509101290&body=Hi%20Gulf%20Coast%20Palms!%20I%27d%20like%20a%20quote%20%E2%80%94%20here%27s%20a%20photo%20of%20my%20palms%3A"
             className="mt-4 inline-block font-body text-sm text-primary-foreground/80 underline-offset-4 hover:underline"
           >
             or text us a photo of the tree
