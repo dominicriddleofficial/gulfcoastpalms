@@ -1,3 +1,4 @@
+import { todayLocalKey } from "@/lib/localDate";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -128,7 +129,7 @@ export default function PayrollPanel({ businessId }: { businessId: string }) {
         notes: p.notes ?? "",
       };
     });
-    downloadCSV(`payroll-history-${new Date().toISOString().slice(0, 10)}.csv`, rows);
+    downloadCSV(`payroll-history-${todayLocalKey()}.csv`, rows);
   };
 
   return (
@@ -524,7 +525,7 @@ function AddHoursForm({
   member: Member;
   onSaved: () => void;
 }) {
-  const [work_date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [work_date, setDate] = useState(todayLocalKey());
   const [hoursStr, setHours] = useState("");
   const [flatStr, setFlat] = useState("");
   const [notes, setNotes] = useState("");
@@ -600,7 +601,7 @@ function PayMemberForm({
   hours: HoursRow[];
   onSaved: () => void;
 }) {
-  const [pay_date, setPayDate] = useState(new Date().toISOString().slice(0, 10));
+  const [pay_date, setPayDate] = useState(todayLocalKey());
   const [payment_method, setMethod] = useState<string>(PAYROLL_PAYMENT_METHODS[0]);
   const [notes, setNotes] = useState("");
   const [amountStr, setAmount] = useState(total.toFixed(2));

@@ -1,3 +1,4 @@
+import { todayLocalKey } from "@/lib/localDate";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -204,7 +205,7 @@ function Stat({ label, value, highlight, muted }: { label: string; value: string
 }
 
 function AddIncomeForm({ businessId, onSaved }: { businessId: string; onSaved: () => void }) {
-  const [income_date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [income_date, setDate] = useState(todayLocalKey());
   const [customer_name, setCustomer] = useState("");
   const [amountStr, setAmount] = useState("");
   const [service_type, setService] = useState("");
