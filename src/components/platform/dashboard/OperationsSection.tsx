@@ -2,14 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { SectionCard, MetricTile } from "./primitives";
-import { addDays } from "date-fns";
+import { addLocalDays, toLocalDateKey, todayLocalKey } from "@/lib/localDate";
 
 export default function OperationsSection() {
   const { selectedBusinessId, userId, loading } = usePlatformAuth();
   const ready = !loading && !!userId && !!selectedBusinessId;
 
-  const today = new Date().toISOString().slice(0, 10);
-  const next7 = addDays(new Date(), 7).toISOString().slice(0, 10);
+  const today = todayLocalKey();
+  const next7 = toLocalDateKey(addLocalDays(new Date(), 7));
 
   const crewWorkload = useQuery({
     queryKey: ["dash-ops-workload", selectedBusinessId, today, next7],
@@ -93,7 +93,7 @@ export default function OperationsSection() {
       const filled = new Set((data ?? []).map((r) => r.scheduled_date));
       let gaps = 0;
       for (let i = 0; i <= 7; i++) {
-        const d = addDays(new Date(), i).toISOString().slice(0, 10);
+        const d = toLocalDateKey(addLocalDays(new Date(), i));
         if (!filled.has(d)) gaps++;
       }
       return gaps;
