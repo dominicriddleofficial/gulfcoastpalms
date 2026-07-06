@@ -81,7 +81,7 @@ export const locations: LocationData[] = [
       { src: job8, alt: "Diamond cut palms at Pensacola property" },
     ],
     metaTitle: "Palm Tree Trimming Pensacola FL | Gulf Coast Palms",
-    metaDescription: "Professional palm tree trimming in Pensacola, FL. Diamond cutting, trunk skinning, installations & removals. 5.0★ · 46 reviews · Free estimates. (850) 910-1290.",
+    metaDescription: "Professional palm tree trimming in Pensacola, FL. Diamond cutting, trunk skinning, installations & removals. 5.0★ · 100+ reviews · Free estimates. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-gulf-breeze-fl", "palm-tree-trimming-perdido-key-fl", "palm-tree-trimming-navarre-fl"],
     geo: { latitude: 30.4213, longitude: -87.2169 },
     neighborhoods: [
@@ -195,7 +195,7 @@ export const locations: LocationData[] = [
       { src: job9, alt: "Palm trimming at Gulf Breeze residential property" },
     ],
     metaTitle: "Palm Tree Trimming Gulf Breeze FL | Gulf Coast Palms",
-    metaDescription: "Expert palm tree trimming in Gulf Breeze, FL. Resort-quality diamond cutting, trunk skinning & coastal palm care. 5.0★ · 46 reviews. Call (850) 910-1290.",
+    metaDescription: "Expert palm tree trimming in Gulf Breeze, FL. Resort-quality diamond cutting, trunk skinning & coastal palm care. 5.0★ · 100+ reviews. Call (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-pensacola-fl", "palm-tree-trimming-navarre-fl", "palm-tree-trimming-fort-walton-beach-fl"],
     geo: { latitude: 30.3574, longitude: -87.1639 },
     neighborhoods: [
@@ -310,7 +310,7 @@ export const locations: LocationData[] = [
       { src: job7, alt: "Professional palm trimming in Navarre Florida" },
     ],
     metaTitle: "Palm Tree Trimming Navarre FL | Gulf Coast Palms",
-    metaDescription: "Leading palm tree trimming in Navarre, FL. Diamond cutting, trunk skinning & large-scale palm care. 5.0★ · 46 reviews · Free estimates. (850) 910-1290.",
+    metaDescription: "Leading palm tree trimming in Navarre, FL. Diamond cutting, trunk skinning & large-scale palm care. 5.0★ · 100+ reviews · Free estimates. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-gulf-breeze-fl", "palm-tree-trimming-fort-walton-beach-fl", "palm-tree-trimming-destin-fl"],
     geo: { latitude: 30.4019, longitude: -86.8620 },
     neighborhoods: [
@@ -424,7 +424,7 @@ export const locations: LocationData[] = [
       { src: job10, alt: "Professional palm services in Fort Walton Beach" },
     ],
     metaTitle: "Palm Tree Trimming Fort Walton Beach FL | Gulf Coast Palms",
-    metaDescription: "Professional palm tree trimming in Fort Walton Beach, FL. Diamond cutting, trunk skinning & condo palm care. 5.0★ · 46 reviews. Call (850) 910-1290.",
+    metaDescription: "Professional palm tree trimming in Fort Walton Beach, FL. Diamond cutting, trunk skinning & condo palm care. 5.0★ · 100+ reviews. Call (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-navarre-fl", "palm-tree-trimming-destin-fl", "palm-tree-trimming-gulf-breeze-fl"],
     geo: { latitude: 30.4058, longitude: -86.6187 },
     neighborhoods: [
@@ -538,7 +538,7 @@ export const locations: LocationData[] = [
       { src: job1, alt: "Diamond cut palms at Destin waterfront estate" },
     ],
     metaTitle: "Palm Tree Trimming Destin FL | Diamond Cutting | Gulf Coast Palms",
-    metaDescription: "Professional palm tree trimming in Destin, FL. Diamond cutting specialists for luxury homes, HOAs & vacation rentals. 5.0★ · 46 reviews · Free estimates. (850) 910-1290.",
+    metaDescription: "Professional palm tree trimming in Destin, FL. Diamond cutting specialists for luxury homes, HOAs & vacation rentals. 5.0★ · 100+ reviews · Free estimates. (850) 910-1290.",
     nearbyLinks: [
       "palm-tree-trimming-fort-walton-beach-fl",
       "palm-tree-trimming-30a-fl",
@@ -773,7 +773,7 @@ export const locations: LocationData[] = [
       { src: job4, alt: "Waterfront palm maintenance at Perdido Key property" },
     ],
     metaTitle: "Palm Tree Trimming Perdido Key FL | Gulf Coast Palms",
-    metaDescription: "Professional palm tree trimming on Perdido Key, FL. Diamond cutting & condo palm care for barrier island properties. 5.0★ · 46 reviews. (850) 910-1290.",
+    metaDescription: "Professional palm tree trimming on Perdido Key, FL. Diamond cutting & condo palm care for barrier island properties. 5.0★ · 100+ reviews. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-pensacola-fl", "palm-tree-trimming-gulf-breeze-fl", "palm-tree-trimming-navarre-fl"],
     geo: { latitude: 30.3127, longitude: -87.4361 },
     neighborhoods: [
@@ -887,7 +887,7 @@ export const locations: LocationData[] = [
       { src: job11, alt: "Diamond cut palms at Bluewater Bay Niceville" },
     ],
     metaTitle: "Palm Tree Trimming Niceville FL | Gulf Coast Palms",
-    metaDescription: "Professional palm tree trimming in Niceville, FL. Bluewater Bay, Rocky Bayou & Twin Cities. 5.0★ · 46 reviews · Free estimates. (850) 910-1290.",
+    metaDescription: "Professional palm tree trimming in Niceville, FL. Bluewater Bay, Rocky Bayou & Twin Cities. 5.0★ · 100+ reviews · Free estimates. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-fort-walton-beach-fl", "palm-tree-trimming-destin-fl", "palm-tree-trimming-navarre-fl"],
     geo: { latitude: 30.5169, longitude: -86.4823 },
     neighborhoods: [
@@ -1001,7 +1001,7 @@ export const locations: LocationData[] = [
       { src: job9, alt: "Waterfront palm maintenance in Mary Esther" },
     ],
     metaTitle: "Palm Tree Trimming Mary Esther FL | Gulf Coast Palms",
-    metaDescription: "Professional palm tree trimming in Mary Esther, FL. Trusted by military families & property managers near Hurlburt Field. 5.0★ · 46 reviews. (850) 910-1290.",
+    metaDescription: "Professional palm tree trimming in Mary Esther, FL. Trusted by military families & property managers near Hurlburt Field. 5.0★ · 100+ reviews. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-fort-walton-beach-fl", "palm-tree-trimming-navarre-fl", "palm-tree-trimming-destin-fl"],
     geo: { latitude: 30.4099, longitude: -86.6604 },
     neighborhoods: [
@@ -1115,7 +1115,7 @@ export const locations: LocationData[] = [
       { src: job2, alt: "Diamond cut palms at Santa Rosa Beach property" },
     ],
     metaTitle: "Palm Tree Trimming Santa Rosa Beach FL | 30A | Gulf Coast Palms",
-    metaDescription: "Premium palm tree trimming in Santa Rosa Beach, FL. WaterColor, WaterSound & 30A luxury homes. 5.0★ · 46 reviews · Free estimates. (850) 910-1290.",
+    metaDescription: "Premium palm tree trimming in Santa Rosa Beach, FL. WaterColor, WaterSound & 30A luxury homes. 5.0★ · 100+ reviews · Free estimates. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-30a-fl", "palm-tree-trimming-destin-fl", "palm-tree-trimming-fort-walton-beach-fl"],
     geo: { latitude: 30.3658, longitude: -86.2161 },
     neighborhoods: [
@@ -1229,7 +1229,7 @@ export const locations: LocationData[] = [
       { src: job10, alt: "Palm maintenance in Pace Santa Rosa County" },
     ],
     metaTitle: "Palm Tree Trimming Pace FL | Gulf Coast Palms",
-    metaDescription: "Professional palm tree trimming in Pace, FL. Serving Santa Rosa County's fastest-growing community. 5.0★ · 46 reviews · Free estimates. (850) 910-1290.",
+    metaDescription: "Professional palm tree trimming in Pace, FL. Serving Santa Rosa County's fastest-growing community. 5.0★ · 100+ reviews · Free estimates. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-pensacola-fl", "palm-tree-trimming-navarre-fl", "palm-tree-trimming-gulf-breeze-fl"],
     geo: { latitude: 30.5994, longitude: -87.1614 },
     neighborhoods: [
@@ -1343,7 +1343,7 @@ export const locations: LocationData[] = [
       { src: job3, alt: "Palm maintenance in Milton Santa Rosa County" },
     ],
     metaTitle: "Palm Tree Trimming Milton FL | Gulf Coast Palms",
-    metaDescription: "Professional palm tree trimming in Milton, FL. Serving Santa Rosa County's seat from Blackwater River to Highway 90. 5.0★ · 46 reviews. (850) 910-1290.",
+    metaDescription: "Professional palm tree trimming in Milton, FL. Serving Santa Rosa County's seat from Blackwater River to Highway 90. 5.0★ · 100+ reviews. (850) 910-1290.",
     nearbyLinks: ["palm-tree-trimming-pace-fl", "palm-tree-trimming-pensacola-fl", "palm-tree-trimming-navarre-fl"],
     geo: { latitude: 30.6327, longitude: -87.0397 },
     neighborhoods: [
