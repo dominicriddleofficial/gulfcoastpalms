@@ -22,8 +22,11 @@ const projectRoot = path.resolve(__dirname, "..");
 const distDir = path.join(projectRoot, "dist");
 const indexPath = path.join(distDir, "index.html");
 
-const { rawRoutes, SITE_ORIGIN, DEFAULT_OG_IMAGE } = await import(
+const { rawRoutes, SITE_ORIGIN, DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGE_ALT } = await import(
   path.join(projectRoot, "src", "seo", "routes.data.mjs")
+);
+const { writeSitemap } = await import(
+  path.join(projectRoot, "scripts", "generate-sitemap.mjs")
 );
 
 function escapeAttr(value) {
@@ -47,7 +50,9 @@ function rewriteHead(html, meta) {
   const ogTitle = escapeAttr(meta.title);
   const ogDescription = escapeAttr(meta.description);
   const ogImage = escapeAttr(meta.ogImage || DEFAULT_OG_IMAGE);
+  const ogImageAlt = escapeAttr(meta.ogImageAlt || DEFAULT_OG_IMAGE_ALT);
   const canonical = escapeAttr(meta.canonical);
+  const robots = meta.noindex ? "noindex, nofollow" : "index, follow";
 
   let out = html;
 
@@ -69,7 +74,7 @@ function rewriteHead(html, meta) {
   out = upsertMeta(
     out,
     /<meta\s+name=["']robots["'][^>]*>/i,
-    `<meta name="robots" content="index, follow">`,
+    `<meta name="robots" content="${robots}">`,
   );
 
   // canonical
@@ -94,6 +99,11 @@ function rewriteHead(html, meta) {
     out,
     /<meta\s+property=["']og:image["'](?![^>]*:)[^>]*>/i,
     `<meta property="og:image" content="${ogImage}">`,
+  );
+  out = upsertMeta(
+    out,
+    /<meta\s+property=["']og:image:alt["'][^>]*>/i,
+    `<meta property="og:image:alt" content="${ogImageAlt}">`,
   );
   out = upsertMeta(
     out,
@@ -122,6 +132,11 @@ function rewriteHead(html, meta) {
     /<meta\s+name=["']twitter:image["'](?![^>]*:)[^>]*>/i,
     `<meta name="twitter:image" content="${ogImage}">`,
   );
+  out = upsertMeta(
+    out,
+    /<meta\s+name=["']twitter:image:alt["'][^>]*>/i,
+    `<meta name="twitter:image:alt" content="${ogImageAlt}">`,
+  );
 
   return out;
 }
@@ -139,8 +154,10 @@ async function main() {
     title: r.title,
     description: r.description,
     ogImage: DEFAULT_OG_IMAGE,
+    ogImageAlt: DEFAULT_OG_IMAGE_ALT,
     canonical: `${SITE_ORIGIN}${r.path}`,
     ogType: "website",
+    noindex: r.noindex === true,
   }));
 
   // Sanity: unique descriptions/paths
@@ -165,6 +182,12 @@ async function main() {
   console.log(
     `[prerender-meta] wrote ${written} per-route index.html files (of ${meta.length} routes)`,
   );
+
+  // Also (re)generate the sitemap into dist/ from the same source of truth,
+  // so the shipped bundle matches whatever routes just got prerendered.
+  const sitemapPath = path.join(distDir, "sitemap.xml");
+  const sitemapXml = await writeSitemap({ outFile: sitemapPath });
+  console.log(`[prerender-meta] wrote dist/sitemap.xml (${sitemapXml.entries} entries)`);
 }
 
 main().catch((err) => {
