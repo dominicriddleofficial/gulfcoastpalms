@@ -44,6 +44,7 @@ const Footer = () => {
               <Link to="/palm-trees/types" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Palm Tree Types</Link>
               <Link to="/palm-trees/buy" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Buy Palm Trees</Link>
               <Link to="/palm-tree-cost" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Palm Tree Cost</Link>
+              <Link to="/commercial" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Commercial & Property Managers</Link>
               <Link to="/referral" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Referral Program</Link>
               <Link to="/payments" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Payments</Link>
               <a href={GOOGLE_REVIEW_URL} target="_blank" rel="noopener noreferrer" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">
