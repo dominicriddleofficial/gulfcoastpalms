@@ -526,8 +526,8 @@ const ServiceAreaMap = () => {
             {PINS.map((p, i) => {
               const isActive = active === p.slug;
               const above = p.labelPos === "above";
-              const labelY = above ? p.y - 22 : p.y + 26;
-              const pillW = Math.max(72, p.city.length * 7.4 + 16);
+              const labelY = above ? p.y - 24 : p.y + 30;
+              const pillW = Math.max(94, p.city.length * 8.6 + 20);
               return (
                 <g
                   key={p.slug}
@@ -538,19 +538,19 @@ const ServiceAreaMap = () => {
                   <circle
                     cx={p.x}
                     cy={p.y}
-                    r="10"
+                    r="13"
                     fill={BRAND_GREEN_BRIGHT}
                     fillOpacity="0.35"
                     className="scam-ping"
                     style={{ animationDelay: `${(i % 5) * 400}ms` }}
                   />
                   {/* Halo */}
-                  <circle cx={p.x} cy={p.y} r="22" fill="url(#scam-halo)" opacity="0.25" className="scam-halo" />
+                  <circle cx={p.x} cy={p.y} r="27" fill="url(#scam-halo)" opacity="0.25" className="scam-halo" />
                   {/* Rotating beacon ring */}
                   <circle
                     cx={p.x}
                     cy={p.y}
-                    r="11"
+                    r="14"
                     fill="none"
                     stroke={BRAND_GREEN_BRIGHT}
                     strokeWidth="1"
@@ -561,7 +561,7 @@ const ServiceAreaMap = () => {
                   <circle
                     cx={p.x}
                     cy={p.y}
-                    r="6"
+                    r="8"
                     fill="url(#scam-core)"
                     stroke="#eafff2"
                     strokeWidth="1.2"
@@ -573,10 +573,10 @@ const ServiceAreaMap = () => {
                   <g>
                     <rect
                       x={p.x - pillW / 2}
-                      y={labelY - 12}
+                      y={labelY - 14}
                       width={pillW}
-                      height={20}
-                      rx="10"
+                      height={24}
+                      rx="12"
                       fill="#04100a"
                       fillOpacity="0.78"
                       stroke={BRAND_GREEN}
@@ -585,9 +585,9 @@ const ServiceAreaMap = () => {
                     />
                     <text
                       x={p.x}
-                      y={labelY + 2}
+                      y={labelY + 3}
                       textAnchor="middle"
-                      fontSize="12"
+                      fontSize="14"
                       fontWeight={600}
                       fill="#eafff2"
                       style={{ letterSpacing: "0.01em" }}
@@ -618,7 +618,7 @@ const ServiceAreaMap = () => {
                     <circle
                       cx={p.x}
                       cy={p.y}
-                      r="22"
+                      r="26"
                       fill="transparent"
                       className="scam-pin-hit"
                       onMouseEnter={() => setActive(p.slug)}
