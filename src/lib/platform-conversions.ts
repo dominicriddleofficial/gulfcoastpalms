@@ -103,7 +103,7 @@ export async function convertQuoteToJob(quote: PlatformQuote): Promise<{ jobId: 
     visit_number: 1,
     title: `Visit 1 - ${quote.quote_number}`,
     status: "scheduled",
-    scheduled_date: new Date().toISOString().split("T")[0],
+    scheduled_date: todayLocalKey(),
   });
 
   // Update quote status
