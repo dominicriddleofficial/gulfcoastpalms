@@ -15,57 +15,57 @@ type Pin = {
   city: string;
   slug: string;
   x: number; // 0-1000 viewBox
-  y: number; // 0-500 viewBox
+  y: number; // 0-560 viewBox
   labelPos: "above" | "below";
 };
 
-// Ordered west → east so the traced route reads Perdido → 30A.
+// Ordered west → east. Positions map to the stylized Panhandle geography:
+// mainland spans y≈60-360 with two bay indentations (Pensacola Bay + Choctawhatchee Bay);
+// a thin barrier island runs y≈420-438; open Gulf below.
 const PINS: Pin[] = [
-  { city: "Perdido",           slug: "/palm-tree-trimming-perdido-key-fl",       x:  55, y: 310, labelPos: "below" },
-  { city: "Pensacola",         slug: "/palm-tree-trimming-pensacola-fl",         x: 135, y: 300, labelPos: "below" },
-  { city: "Pace",              slug: "/palm-tree-trimming-pace-fl",              x: 180, y: 250, labelPos: "above" },
-  { city: "Milton",            slug: "/palm-tree-trimming-milton-fl",            x: 220, y: 205, labelPos: "above" },
-  { city: "Gulf Breeze",       slug: "/palm-tree-trimming-gulf-breeze-fl",       x: 240, y: 345, labelPos: "below" },
-  { city: "Navarre",           slug: "/palm-tree-trimming-navarre-fl",           x: 340, y: 365, labelPos: "below" },
-  { city: "Mary Esther",       slug: "/palm-tree-trimming-mary-esther-fl",       x: 445, y: 340, labelPos: "above" },
-  { city: "Crestview",         slug: "/palm-tree-trimming-crestview-fl",         x: 520, y: 120, labelPos: "above" },
-  { city: "Fort Walton Beach", slug: "/palm-tree-trimming-fort-walton-beach-fl", x: 510, y: 375, labelPos: "below" },
-  { city: "Niceville",         slug: "/palm-tree-trimming-niceville-fl",         x: 590, y: 260, labelPos: "above" },
-  { city: "Destin",            slug: "/palm-tree-trimming-destin-fl",            x: 680, y: 385, labelPos: "below" },
-  { city: "Santa Rosa Beach",  slug: "/palm-tree-trimming-santa-rosa-beach-fl",  x: 840, y: 390, labelPos: "below" },
-  { city: "30A",               slug: "/palm-tree-trimming-30a-fl",               x: 945, y: 395, labelPos: "above" },
+  { city: "Perdido",           slug: "/palm-tree-trimming-perdido-key-fl",       x:  45, y: 345, labelPos: "above" },
+  { city: "Pensacola",         slug: "/palm-tree-trimming-pensacola-fl",         x: 140, y: 335, labelPos: "above" },
+  { city: "Pace",              slug: "/palm-tree-trimming-pace-fl",              x: 205, y: 230, labelPos: "above" },
+  { city: "Milton",            slug: "/palm-tree-trimming-milton-fl",            x: 260, y: 175, labelPos: "above" },
+  { city: "Gulf Breeze",       slug: "/palm-tree-trimming-gulf-breeze-fl",       x: 220, y: 395, labelPos: "below" },
+  { city: "Navarre",           slug: "/palm-tree-trimming-navarre-fl",           x: 355, y: 428, labelPos: "below" },
+  { city: "Mary Esther",       slug: "/palm-tree-trimming-mary-esther-fl",       x: 455, y: 350, labelPos: "above" },
+  { city: "Fort Walton Beach", slug: "/palm-tree-trimming-fort-walton-beach-fl", x: 525, y: 355, labelPos: "below" },
+  { city: "Crestview",         slug: "/palm-tree-trimming-crestview-fl",         x: 585, y: 105, labelPos: "above" },
+  { city: "Niceville",         slug: "/palm-tree-trimming-niceville-fl",         x: 645, y: 270, labelPos: "above" },
+  { city: "Destin",            slug: "/palm-tree-trimming-destin-fl",            x: 735, y: 395, labelPos: "below" },
+  { city: "Santa Rosa Beach",  slug: "/palm-tree-trimming-santa-rosa-beach-fl",  x: 855, y: 415, labelPos: "above" },
+  { city: "30A",               slug: "/palm-tree-trimming-30a-fl",               x: 955, y: 428, labelPos: "below" },
 ];
 
-// Route path (west → east, coastal cities only for a clean sweep).
-const ROUTE_CITIES = ["Perdido", "Pensacola", "Gulf Breeze", "Navarre", "Mary Esther", "Fort Walton Beach", "Destin", "Santa Rosa Beach", "30A"];
-const ROUTE_POINTS = ROUTE_CITIES
-  .map((c) => PINS.find((p) => p.city === c))
-  .filter((p): p is Pin => Boolean(p));
+// Offshore flight-path arc — smooth, independent of pin coordinates, sitting
+// in the open Gulf just south of the barrier island. Reads instantly as
+// "our coastline service route", not a squiggle through cities.
+const ROUTE_D = "M 30 505 C 260 470, 740 470, 970 505";
+const ROUTE_LEN = 970;
 
-// Smooth cardinal-ish spline through the route points.
-const buildRoutePath = (): string => {
-  if (ROUTE_POINTS.length < 2) return "";
-  const pts = ROUTE_POINTS;
-  let d = `M ${pts[0].x} ${pts[0].y}`;
-  for (let i = 0; i < pts.length - 1; i++) {
-    const p0 = pts[i - 1] ?? pts[i];
-    const p1 = pts[i];
-    const p2 = pts[i + 1];
-    const p3 = pts[i + 2] ?? p2;
-    const t = 0.2;
-    const cp1x = p1.x + (p2.x - p0.x) * t;
-    const cp1y = p1.y + (p2.y - p0.y) * t;
-    const cp2x = p2.x - (p3.x - p1.x) * t;
-    const cp2y = p2.y - (p3.y - p1.y) * t;
-    d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
-  }
-  return d;
-};
+// Composite south coast (mainland shore w/ Pensacola Bay + Choctawhatchee Bay indents)
+const COAST_D =
+  "M 0,360 L 95,360 " +
+  "C 92,340 100,300 148,285 C 208,270 258,275 272,302 C 285,325 292,355 292,360 " +
+  "L 555,360 C 555,355 558,325 572,302 C 590,272 645,265 700,285 C 750,302 776,345 790,360 " +
+  "L 1000,360";
 
-const ROUTE_D = buildRoutePath();
+// Full mainland silhouette (top edge + right + composite coast + left)
+const LAND_D =
+  "M 0,80 C 150,55 300,70 480,60 C 660,52 820,75 1000,68 L 1000,360 L 790,360 " +
+  "C 776,345 750,302 700,285 C 645,265 590,272 572,302 C 558,325 555,355 555,360 " +
+  "L 292,360 C 292,355 285,325 272,302 C 258,275 208,270 148,285 C 100,300 92,340 95,360 " +
+  "L 0,360 Z";
 
-// Total route length for stroke-dashoffset math (approx, tuned for our path).
-const ROUTE_LEN = 1550;
+// Distant hills (back land layer, slightly north)
+const HILLS_D =
+  "M 0,95 C 180,68 340,88 520,72 C 700,58 840,88 1000,78 L 1000,180 L 0,180 Z";
+
+// Thin barrier island (Santa Rosa Island feel)
+const BARRIER_D =
+  "M 15,420 C 200,412 400,425 500,420 C 620,415 800,425 985,418 " +
+  "L 985,440 C 800,447 620,435 500,442 C 400,447 200,432 15,438 Z";
 
 const ServiceAreaMap = () => {
   const [visible, setVisible] = useState(false);
