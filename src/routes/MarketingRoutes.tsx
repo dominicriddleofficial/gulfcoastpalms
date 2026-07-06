@@ -19,6 +19,7 @@ const MaryEsther = lazy(() => import("@/pages/locations/MaryEsther"));
 const SantaRosaBeach = lazy(() => import("@/pages/locations/SantaRosaBeach"));
 const Pace = lazy(() => import("@/pages/locations/Pace"));
 const Milton = lazy(() => import("@/pages/locations/Milton"));
+const Crestview = lazy(() => import("@/pages/locations/Crestview"));
 
 const About = lazy(() => import("@/pages/About"));
 const Jobs = lazy(() => import("@/pages/Jobs"));
@@ -88,6 +89,7 @@ export const MarketingRoutes = () => (
     <Route path="/palm-tree-trimming-santa-rosa-beach-fl" element={<SantaRosaBeach />} />
     <Route path="/palm-tree-trimming-pace-fl" element={<Pace />} />
     <Route path="/palm-tree-trimming-milton-fl" element={<Milton />} />
+    <Route path="/palm-tree-trimming-crestview-fl" element={<Crestview />} />
 
     <Route path="/about" element={<About />} />
     <Route path="/jobs" element={<Jobs />} />
