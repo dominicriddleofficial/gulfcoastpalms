@@ -3719,6 +3719,7 @@ export type Database = {
           deposit_collected: number | null
           description: string | null
           estimated_duration_minutes: number | null
+          excluded_from_unpaid: boolean
           id: string
           internal_notes: string | null
           is_read_only: boolean
@@ -3757,6 +3758,7 @@ export type Database = {
           deposit_collected?: number | null
           description?: string | null
           estimated_duration_minutes?: number | null
+          excluded_from_unpaid?: boolean
           id?: string
           internal_notes?: string | null
           is_read_only?: boolean
@@ -3795,6 +3797,7 @@ export type Database = {
           deposit_collected?: number | null
           description?: string | null
           estimated_duration_minutes?: number | null
+          excluded_from_unpaid?: boolean
           id?: string
           internal_notes?: string | null
           is_read_only?: boolean
