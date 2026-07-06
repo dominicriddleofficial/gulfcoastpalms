@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 /**
  * Cinematic Emerald Coast service map — pure SVG + CSS animation.
@@ -19,23 +19,25 @@ type Pin = {
   labelPos: "above" | "below";
 };
 
-// Ordered west → east so the traced route reads Pensacola → Santa Rosa Beach.
+// Ordered west → east so the traced route reads Perdido → 30A.
 const PINS: Pin[] = [
-  { city: "Pensacola",         slug: "/palm-tree-trimming-pensacola-fl",         x: 130, y: 300, labelPos: "below" },
-  { city: "Pace",              slug: "/palm-tree-trimming-pace-fl",              x: 175, y: 250, labelPos: "above" },
-  { city: "Milton",            slug: "/palm-tree-trimming-milton-fl",            x: 215, y: 205, labelPos: "above" },
-  { city: "Gulf Breeze",       slug: "/palm-tree-trimming-gulf-breeze-fl",       x: 235, y: 345, labelPos: "below" },
+  { city: "Perdido",           slug: "/palm-tree-trimming-perdido-key-fl",       x:  55, y: 310, labelPos: "below" },
+  { city: "Pensacola",         slug: "/palm-tree-trimming-pensacola-fl",         x: 135, y: 300, labelPos: "below" },
+  { city: "Pace",              slug: "/palm-tree-trimming-pace-fl",              x: 180, y: 250, labelPos: "above" },
+  { city: "Milton",            slug: "/palm-tree-trimming-milton-fl",            x: 220, y: 205, labelPos: "above" },
+  { city: "Gulf Breeze",       slug: "/palm-tree-trimming-gulf-breeze-fl",       x: 240, y: 345, labelPos: "below" },
   { city: "Navarre",           slug: "/palm-tree-trimming-navarre-fl",           x: 340, y: 365, labelPos: "below" },
   { city: "Mary Esther",       slug: "/palm-tree-trimming-mary-esther-fl",       x: 445, y: 340, labelPos: "above" },
   { city: "Crestview",         slug: "/palm-tree-trimming-crestview-fl",         x: 520, y: 120, labelPos: "above" },
   { city: "Fort Walton Beach", slug: "/palm-tree-trimming-fort-walton-beach-fl", x: 510, y: 375, labelPos: "below" },
   { city: "Niceville",         slug: "/palm-tree-trimming-niceville-fl",         x: 590, y: 260, labelPos: "above" },
   { city: "Destin",            slug: "/palm-tree-trimming-destin-fl",            x: 680, y: 385, labelPos: "below" },
-  { city: "Santa Rosa Beach",  slug: "/palm-tree-trimming-santa-rosa-beach-fl",  x: 850, y: 390, labelPos: "below" },
+  { city: "Santa Rosa Beach",  slug: "/palm-tree-trimming-santa-rosa-beach-fl",  x: 840, y: 390, labelPos: "below" },
+  { city: "30A",               slug: "/palm-tree-trimming-30a-fl",               x: 945, y: 395, labelPos: "above" },
 ];
 
 // Route path (west → east, coastal cities only for a clean sweep).
-const ROUTE_CITIES = ["Pensacola", "Gulf Breeze", "Navarre", "Mary Esther", "Fort Walton Beach", "Destin", "Santa Rosa Beach"];
+const ROUTE_CITIES = ["Perdido", "Pensacola", "Gulf Breeze", "Navarre", "Mary Esther", "Fort Walton Beach", "Destin", "Santa Rosa Beach", "30A"];
 const ROUTE_POINTS = ROUTE_CITIES
   .map((c) => PINS.find((p) => p.city === c))
   .filter((p): p is Pin => Boolean(p));
