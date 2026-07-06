@@ -3,12 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { SectionCard, MetricTile, fmtMoney } from "./primitives";
 import { subDays } from "date-fns";
+import { toLocalDateKey, todayLocalKey } from "@/lib/localDate";
 
 export default function MoneySection() {
   const { selectedBusinessId, userId, loading } = usePlatformAuth();
   const ready = !loading && !!userId && !!selectedBusinessId;
-  const today = new Date().toISOString().slice(0, 10);
-  const since30d = subDays(new Date(), 30).toISOString().slice(0, 10);
+  const today = todayLocalKey();
+  const since30d = toLocalDateKey(subDays(new Date(), 30));
 
   const invoices = useQuery({
     queryKey: ["dash-money-invoices", selectedBusinessId],

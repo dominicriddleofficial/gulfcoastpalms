@@ -2,12 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { SectionCard, MetricTile, fmtMoney } from "./primitives";
+import { todayLocalKey } from "@/lib/localDate";
 
 export default function TodaySection() {
   const { selectedBusinessId } = usePlatformAuth();
   const ready = !!selectedBusinessId;
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayLocalKey();
 
   const jobsScheduled = useQuery({
     queryKey: ["dash-today-jobs-scheduled", selectedBusinessId, today],

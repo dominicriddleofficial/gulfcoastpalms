@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toLocalDateKey } from "@/lib/localDate";
 
 export const JOB_STATUSES = [
   { value: "draft", label: "Draft", color: "#6b7280" },
@@ -169,7 +170,7 @@ export function usePlatformSchedule(businessId: string | null, selectedDate: Dat
 
   const fetchVisits = useCallback(async () => {
     setLoading(true);
-    const dateStr = selectedDate.toISOString().split("T")[0];
+    const dateStr = toLocalDateKey(selectedDate);
 
     let query = supabase
       .from("platform_job_visits")

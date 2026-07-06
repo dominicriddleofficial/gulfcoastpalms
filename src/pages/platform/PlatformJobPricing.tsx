@@ -1,3 +1,4 @@
+import { todayLocalKey } from "@/lib/localDate";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PlatformLayout from "@/components/platform/PlatformLayout";
@@ -242,7 +243,7 @@ function EstimatorView({
   const { toast } = useToast();
   const [sqft, setSqft] = useState<number>(400);
   const [customer, setCustomer] = useState("");
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(() => todayLocalKey());
   const [whiteBase, setWhiteBase] = useState(false);
   const [saving, setSaving] = useState(false);
 

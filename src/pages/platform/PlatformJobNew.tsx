@@ -13,6 +13,7 @@ import { Briefcase, User, Calendar as CalIcon, FileText, X } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import AddressAutocomplete, { type VerifiedAddress } from "@/components/platform/AddressAutocomplete";
+import { todayLocalKey } from "@/lib/localDate";
 
 function SectionHeader({ icon: Icon, label }: { icon: React.ComponentType<{ className?: string }>; label: string }) {
   return (
@@ -39,7 +40,7 @@ export default function PlatformJobNew() {
   const [customer, setCustomer] = useState<CustomerLite | null>(prefill?.customer ?? null);
   const [title, setTitle] = useState(prefill?.title ?? "");
   const [description, setDescription] = useState(prefill?.description ?? "");
-  const [date, setDate] = useState(() => prefill?.scheduledDate ?? new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(() => prefill?.scheduledDate ?? todayLocalKey());
   const [time, setTime] = useState("09:00");
   const [duration, setDuration] = useState(60);
   const [address, setAddress] = useState(prefill?.address ?? "");

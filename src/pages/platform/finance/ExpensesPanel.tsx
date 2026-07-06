@@ -1,3 +1,4 @@
+import { todayLocalKey } from "@/lib/localDate";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -179,7 +180,7 @@ export default function ExpensesPanel({ businessId }: { businessId: string }) {
 function AddExpenseForm({
   businessId, workspaceId, onSaved,
 }: { businessId: string; workspaceId: string; onSaved: () => void }) {
-  const [expense_date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [expense_date, setDate] = useState(todayLocalKey());
   const [amountStr, setAmount] = useState("");
   const [category, setCategory] = useState<string>("Misc");
   const [subcategory, setSub] = useState("");

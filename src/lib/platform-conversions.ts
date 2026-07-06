@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { PlatformLead } from "@/hooks/usePlatformLeads";
 import type { PlatformQuote } from "@/hooks/usePlatformQuotes";
+import { todayLocalKey } from "@/lib/localDate";
 
 /**
  * Convert a lead into a platform_customer, update lead status to "won",
@@ -103,7 +104,7 @@ export async function convertQuoteToJob(quote: PlatformQuote): Promise<{ jobId: 
     visit_number: 1,
     title: `Visit 1 - ${quote.quote_number}`,
     status: "scheduled",
-    scheduled_date: new Date().toISOString().split("T")[0],
+    scheduled_date: todayLocalKey(),
   });
 
   // Update quote status
