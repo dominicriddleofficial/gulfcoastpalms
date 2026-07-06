@@ -26,6 +26,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { downloadCSV } from "@/lib/finance";
+import { parseDateOnlyLocal } from "@/lib/localDate";
 import { useTimesheets, type TimesheetRow, type TimesheetStatus } from "@/hooks/useTimesheets";
 import { TimesheetDetailSheet } from "./TimesheetDetailSheet";
 import { supabase } from "@/integrations/supabase/client";
