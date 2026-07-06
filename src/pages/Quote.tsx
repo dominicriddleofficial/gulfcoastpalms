@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2, Send, Phone, MessageSquare } from "lucide-react";
 import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
@@ -12,6 +12,7 @@ import { toast } from "@/hooks/use-toast";
 
 const Quote = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const renderTime = useRef(Date.now());
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
@@ -19,15 +20,15 @@ const Quote = () => {
     phone: "",
     email: "",
     address: "",
-    service: "",
+    service: searchParams.get("service") || "",
     location: "",
-    message: "",
+    message: searchParams.get("message") || "",
     website: "", // honeypot
   });
 
   useEffect(() => {
-    trackEvent("quote_request_started", { source: "quote_page" });
-  }, []);
+    trackEvent("quote_request_started", { source: searchParams.get("source") || "quote_page" });
+  }, [searchParams]);
 
   const update = (key: keyof typeof form, val: string) =>
     setForm((f) => ({ ...f, [key]: val }));
