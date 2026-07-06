@@ -14,6 +14,9 @@ export interface ServiceData {
   procesSteps?: { step: string; description: string }[];
   bundleSection?: { heading: string; content: string[] };
   warrantySection?: { heading: string; content: string[] };
+  /** Optional FAQ block. When present, ServicePage renders it visually AND
+   *  emits matching FAQPage JSON-LD sourced from the same array. */
+  faqs?: { q: string; a: string }[];
 }
 
 export const servicesData: ServiceData[] = [
