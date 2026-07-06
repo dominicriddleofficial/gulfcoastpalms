@@ -256,7 +256,7 @@ const BuyPalmTrees = () => {
               <Phone className="h-5 w-5" /> Get a Free Installation Quote →
             </a>
             <a
-              href="sms:8509101290"
+              href="sms:8509101290&body=Hi%20Gulf%20Coast%20Palms!%20I%27d%20like%20a%20quote%20%E2%80%94%20here%27s%20a%20photo%20of%20my%20palms%3A"
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-primary-foreground/40 px-6 py-3.5 font-body text-base font-semibold text-primary-foreground transition-colors hover:bg-primary-foreground/10"
             >
               <MessageSquare className="h-5 w-5" /> Text a Photo of Your Property
@@ -441,7 +441,7 @@ const BuyPalmTrees = () => {
                         <Phone className="h-4 w-4" /> Call
                       </a>
                       <a
-                        href="sms:8509101290"
+                        href="sms:8509101290&body=Hi%20Gulf%20Coast%20Palms!%20I%27d%20like%20a%20quote%20%E2%80%94%20here%27s%20a%20photo%20of%20my%20palms%3A"
                         className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border-2 border-primary px-4 py-3 font-body text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
                       >
                         <MessageSquare className="h-4 w-4" /> Text
@@ -575,7 +575,7 @@ const BuyPalmTrees = () => {
               <Phone className="h-5 w-5" /> (850) 910-1290
             </a>
             <a
-              href="sms:8509101290"
+              href="sms:8509101290&body=Hi%20Gulf%20Coast%20Palms!%20I%27d%20like%20a%20quote%20%E2%80%94%20here%27s%20a%20photo%20of%20my%20palms%3A"
               className="inline-flex items-center justify-center gap-3 rounded-xl border-2 border-primary-foreground px-8 py-4 font-body text-lg font-bold text-primary-foreground transition-colors hover:bg-primary-foreground/10"
             >
               <MessageSquare className="h-5 w-5" /> Text Us
