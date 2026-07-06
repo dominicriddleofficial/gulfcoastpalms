@@ -13,6 +13,7 @@ import { Briefcase, User, Calendar as CalIcon, FileText, X } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import AddressAutocomplete, { type VerifiedAddress } from "@/components/platform/AddressAutocomplete";
+import { todayLocalKey } from "@/lib/localDate";
 
 function SectionHeader({ icon: Icon, label }: { icon: React.ComponentType<{ className?: string }>; label: string }) {
   return (
