@@ -41,6 +41,7 @@ import {
   subDays,
 } from "date-fns";
 import { cn } from "@/lib/utils";
+import { parseDateOnlyLocal } from "@/lib/localDate";
 import { toast } from "sonner";
 import { ContactCustomerSheet } from "@/components/platform/ContactCustomerSheet";
 import { useVisitLifecycle, type VisitStatus } from "@/hooks/useVisitLifecycle";
@@ -647,7 +648,7 @@ function DayHeader({ dateKey, jobs }: { dateKey: string; jobs: JobberJob[] }) {
     <div className="space-y-1">
       <div className="flex items-center justify-between gap-2">
         <h3 className="font-body text-xs text-muted-foreground uppercase tracking-wider">
-          {format(new Date(dateKey), "EEEE, MMMM d, yyyy")}
+          {format(parseDateOnlyLocal(dateKey), "EEEE, MMMM d, yyyy")}
         </h3>
         <span className="font-body text-[11px] font-semibold text-foreground tabular-nums">
           {done}/{total} done
