@@ -35,13 +35,13 @@ const ServiceAreaMap = () => (
     <div className="container mx-auto max-w-6xl">
       <div className="text-center mb-10">
         <p className="font-body text-sm uppercase tracking-[0.2em] text-palm-gold font-semibold mb-3">
-          Where We Work
+          Where We've Worked
         </p>
         <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-3">
-          Across the Emerald Coast
+          Served Across the Emerald Coast
         </h2>
         <p className="font-body text-muted-foreground max-w-2xl mx-auto">
-          500+ properties served across the Emerald Coast — from Pensacola east to Santa Rosa Beach.
+          Palms trimmed, removed, and installed across every city marked below — from Pensacola east to Santa Rosa Beach.
         </p>
       </div>
 
@@ -135,7 +135,7 @@ const ServiceAreaMap = () => (
             to={p.slug}
             className="px-4 py-2 rounded-full bg-secondary text-secondary-foreground font-body font-medium text-sm hover:bg-primary hover:text-primary-foreground transition-colors"
           >
-            {p.city}
+            <span aria-hidden="true" className="text-palm-green mr-1.5">✓</span>{p.city}
           </Link>
         ))}
       </div>
