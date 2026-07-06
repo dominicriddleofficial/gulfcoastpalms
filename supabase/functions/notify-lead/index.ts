@@ -232,7 +232,8 @@ serve(async (req) => {
     const safeLocation = String(location || "N/A").substring(0, 200);
     const safeMessage = String(message || "N/A").substring(0, 500);
 
-    const smsBody = `🌴 NEW LEAD\nName: ${safeName}\nPhone: ${safePhone}\nEmail: ${safeEmail}\nService: ${safeService}\nLocation: ${safeLocation}\nMessage: ${safeMessage}`;
+    // Compact single-line alert (owner-preferred format).
+    const smsBody = `NEW GCP LEAD: ${safeName} · ${safePhone} · ${safeService} · ${safeLocation}. Reply fast!`;
 
     const destination = Deno.env.get("LEAD_ALERT_PHONE") || OWNER_PHONE_FALLBACK;
     const result = await sendLeadSms(destination, smsBody);
