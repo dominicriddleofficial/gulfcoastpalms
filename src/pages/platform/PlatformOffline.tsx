@@ -17,6 +17,8 @@ import {
   type MirrorRecord,
 } from "@/lib/offlineMirror";
 import { pingSupabase } from "@/lib/outageDetect";
+import { filterTodayJobs, filterWeekJobs } from "@/lib/offlineJobFilters";
+import { runOfflineMirrorPrefetch } from "@/lib/offlineMirrorPrefetch";
 
 type OfflineJob = {
   id?: string;
@@ -31,6 +33,8 @@ type OfflineJob = {
   customer_phone?: string | null;
   property_address?: string | null;
   address?: string | null;
+  address_1?: string | null;
+  city?: string | null;
   total_amount?: number | string | null;
 };
 
@@ -65,36 +69,6 @@ function formatTimeRange(start?: string | null, end?: string | null): string {
   } catch {
     return "—";
   }
-}
-
-function jobDateKey(start?: string | null): string {
-  if (!start) return "";
-  try {
-    const d = new Date(start);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  } catch {
-    return "";
-  }
-}
-
-function todayKey(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
-function weekKeys(): Set<string> {
-  const set = new Set<string>();
-  const now = new Date();
-  const day = now.getDay(); // 0=Sun
-  const mondayOffset = day === 0 ? -6 : 1 - day;
-  const start = new Date(now);
-  start.setDate(now.getDate() + mondayOffset);
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(start);
-    d.setDate(start.getDate() + i);
-    set.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`);
-  }
-  return set;
 }
 
 function mapsUrl(address: string): string {
@@ -210,13 +184,11 @@ export default function PlatformOffline() {
   }, [schedule]);
 
   const todayJobs = useMemo(() => {
-    const key = todayKey();
-    return jobs.filter((j) => jobDateKey(j.scheduled_start) === key);
+    return filterTodayJobs(jobs);
   }, [jobs]);
 
   const weekJobs = useMemo(() => {
-    const wk = weekKeys();
-    return jobs.filter((j) => wk.has(jobDateKey(j.scheduled_start)));
+    return filterWeekJobs(jobs);
   }, [jobs]);
 
   const filteredCustomers = useMemo(() => {
@@ -243,6 +215,11 @@ export default function PlatformOffline() {
         const { error } = await supabase.auth.getSession();
         ok = !error;
       } catch { ok = false; }
+    }
+    // Fire a forced offline prefetch so a successful retry always refreshes
+    // the snapshot before the user leaves this screen.
+    if (ok && businessId) {
+      void runOfflineMirrorPrefetch(businessId, { force: true });
     }
     setRetrying(false);
     if (ok) navigate("/platform", { replace: true });
@@ -406,8 +383,12 @@ function JobList({ jobs, isOwner, emptyLabel }: { jobs: OfflineJob[]; isOwner: b
       {jobs.map((j, i) => {
         const name = j.client_name ?? j.customer_name ?? "Customer";
         const phone = j.client_phone ?? j.customer_phone ?? null;
-        const address = j.property_address ?? j.address ?? null;
+        const addrLine = j.property_address ?? j.address ?? j.address_1 ?? null;
+        const address = addrLine && j.city && !addrLine.includes(j.city)
+          ? `${addrLine}, ${j.city}`
+          : addrLine;
         const amt = Number(j.total_amount ?? 0);
+        const status = (j.visit_status ?? j.status ?? "").toString();
         return (
           <li
             key={j.id ?? `${name}-${i}`}
@@ -425,6 +406,14 @@ function JobList({ jobs, isOwner, emptyLabel }: { jobs: OfflineJob[]; isOwner: b
               {readOnlyBadge()}
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
+              {status && (
+                <span
+                  className="inline-flex items-center rounded-full px-2.5 min-h-[24px] text-[11px] font-body font-semibold uppercase tracking-wide"
+                  style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.75)" }}
+                >
+                  {status.replace(/_/g, " ")}
+                </span>
+              )}
               {phone && (
                 <a
                   href={`tel:${phone}`}

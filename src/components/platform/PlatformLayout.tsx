@@ -12,6 +12,7 @@ import NotificationPanel from "./NotificationPanel";
 import InstallPrompt from "./InstallPrompt";
 import OutageBanner from "./OutageBanner";
 import { setMirrorContext } from "@/lib/offlineMirror";
+import { runOfflineMirrorPrefetch } from "@/lib/offlineMirrorPrefetch";
 import { Button } from "@/components/ui/button";
 import { prefetchRoute, prefetchAllPlatformRoutes } from "@/lib/route-prefetch";
 import { platformCustomersKey, fetchPlatformCustomersList } from "@/hooks/usePlatformCustomersList";
@@ -238,6 +239,22 @@ export default function PlatformLayout({ children }: Props) {
       setMirrorContext(null);
     }
   }, [auth.userId, auth.isOwner]);
+
+  // Proactively refresh the offline mirror (jobs -30d..+90d + customers)
+  // whenever the app opens or the tab regains focus. Throttled to 15 min
+  // inside runOfflineMirrorPrefetch, so this is cheap to call.
+  useEffect(() => {
+    if (auth.loading || !auth.userId || !auth.selectedBusinessId) return;
+    const bizId = auth.selectedBusinessId;
+    void runOfflineMirrorPrefetch(bizId);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        void runOfflineMirrorPrefetch(bizId);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [auth.loading, auth.userId, auth.selectedBusinessId]);
 
   // First-mount data prefetch (after auth + business selected) — warms the
   // three highest-value lists in parallel so the next tab visit is instant.
