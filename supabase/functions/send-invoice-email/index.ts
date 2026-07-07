@@ -5,9 +5,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const DEFAULT_SENDER_DOMAIN = "notify.prestigeflservices.com";
-const DEFAULT_FROM_EMAIL = "invoices@prestigeflservices.com";
 const JSON_HEADERS = { ...corsHeaders, "Content-Type": "application/json" };
+// Default Resend sender that works WITHOUT domain verification — good for
+// immediate use. Owner can override by adding a verified domain and setting
+// per-business `from_email` on the businesses table.
+const DEFAULT_FROM_EMAIL = "Gulf Coast Palms <onboarding@resend.dev>";
 
 function escapeHtml(value: string | null | undefined): string {
   return (value ?? "")
@@ -31,65 +33,53 @@ function jsonResponse(body: Record<string, unknown>, status = 200): Response {
   });
 }
 
-async function flushEmailQueue(supabaseUrl: string, serviceKey: string): Promise<void> {
-  const response = await fetch(`${supabaseUrl}/functions/v1/process-email-queue`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${serviceKey}`,
-      apikey: serviceKey,
-      "Content-Type": "application/json",
-    },
-  });
+// Send via Resend HTTP API directly. Returns { ok, id?, error? }.
+// Exported for unit tests (see __sendViaResend below).
+export async function sendViaResend(params: {
+  apiKey: string;
+  from: string;
+  to: string;
+  cc?: string | null;
+  replyTo?: string | null;
+  subject: string;
+  html: string;
+  text: string;
+  fetchImpl?: typeof fetch;
+}): Promise<{ ok: boolean; id?: string; error?: string; status?: number }> {
+  const f = params.fetchImpl ?? fetch;
+  const body: Record<string, unknown> = {
+    from: params.from,
+    to: [params.to],
+    subject: params.subject,
+    html: params.html,
+    text: params.text,
+  };
+  if (params.cc) body.cc = [params.cc];
+  if (params.replyTo) body.reply_to = params.replyTo;
 
-  const text = await response.text();
-
-  if (!response.ok) {
-    throw new Error(`Queue processor failed (${response.status}): ${text || response.statusText}`);
-  }
-}
-
-async function waitForMessageResult(
-  supabase: any,
-  messageId: string,
-  timeoutMs = 8000,
-): Promise<{ status: string; error_message: string | null } | null> {
-  const deadline = Date.now() + timeoutMs;
-
-  while (Date.now() < deadline) {
-    const { data, error } = await supabase
-      .from("email_send_log")
-      .select("status, error_message")
-      .eq("message_id", messageId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (error) {
-      throw new Error(`Failed to read email status: ${error.message}`);
-    }
-
-    if (data && data.status !== "pending") {
-      return data;
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, 500));
+  let res: Response;
+  try {
+    res = await f("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${params.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+  } catch (err) {
+    return { ok: false, error: `Network error contacting Resend: ${(err as Error).message}` };
   }
 
-  return null;
-}
+  const raw = await res.text();
+  let parsed: any = null;
+  try { parsed = raw ? JSON.parse(raw) : null; } catch { /* keep raw */ }
 
-async function getOrCreateUnsubToken(supabase: any, email: string): Promise<string> {
-  const { data: existing } = await supabase
-    .from("email_unsubscribe_tokens")
-    .select("token")
-    .eq("email", email)
-    .is("used_at", null)
-    .limit(1)
-    .single();
-  if (existing?.token) return existing.token;
-  const token = crypto.randomUUID();
-  await supabase.from("email_unsubscribe_tokens").insert({ email, token });
-  return token;
+  if (!res.ok) {
+    const msg = parsed?.message || parsed?.error || raw || res.statusText;
+    return { ok: false, error: `Resend ${res.status}: ${msg}`, status: res.status };
+  }
+  return { ok: true, id: parsed?.id, status: res.status };
 }
 
 Deno.serve(async (req) => {
@@ -98,21 +88,41 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { invoiceId, recipientEmail, recipientName, subject, message, businessName, invoiceNumber, total, dueDate, paymentUrl, ccEmail, ownerEmail } = await req.json();
+    const {
+      invoiceId,
+      recipientEmail,
+      recipientName,
+      subject,
+      message,
+      businessName,
+      invoiceNumber,
+      total,
+      dueDate,
+      paymentUrl,
+      ccEmail,
+      ownerEmail,
+    } = await req.json();
 
     if (!recipientEmail || !invoiceNumber) {
       return jsonResponse({ error: "Missing recipientEmail or invoiceNumber" }, 400);
     }
 
+    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+    if (!RESEND_API_KEY) {
+      return jsonResponse({
+        error:
+          "Email is not configured: RESEND_API_KEY is missing. Add it in Project Settings → Secrets, then try again.",
+      }, 500);
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
-    const queuedAt = new Date().toISOString();
 
-    // Per-business sender lookup (falls back to default)
-    let SENDER_DOMAIN = DEFAULT_SENDER_DOMAIN;
+    // Per-business sender lookup (falls back to default Resend sandbox sender)
     let FROM_EMAIL = DEFAULT_FROM_EMAIL;
     let resolvedBusinessName = businessName || "Invoice";
+    let replyToEmail: string | null = null;
     if (invoiceId) {
       const { data: invRow } = await supabase
         .from("platform_invoices")
@@ -122,12 +132,15 @@ Deno.serve(async (req) => {
       if (invRow?.business_id) {
         const { data: biz } = await supabase
           .from("businesses")
-          .select("public_brand_name, legal_name, sender_domain, from_email")
+          .select("public_brand_name, legal_name, from_email, contact_email")
           .eq("id", invRow.business_id)
           .maybeSingle();
         if (biz) {
-          if (biz.sender_domain) SENDER_DOMAIN = biz.sender_domain;
-          if (biz.from_email) FROM_EMAIL = biz.from_email;
+          if (biz.from_email) {
+            const brand = biz.public_brand_name || biz.legal_name || "Invoice";
+            FROM_EMAIL = `${brand} <${biz.from_email}>`;
+          }
+          replyToEmail = biz.contact_email || null;
           resolvedBusinessName = businessName || biz.public_brand_name || biz.legal_name || "Invoice";
         }
       }
@@ -179,129 +192,57 @@ Deno.serve(async (req) => {
 </body>
 </html>`;
 
-    const emailSubject = subject || `Invoice ${invoiceNumber} from ${businessName}`;
+    const emailSubject = subject || `Invoice ${invoiceNumber} from ${resolvedBusinessName}`;
     const messageId = `invoice-${invoiceId || invoiceNumber}-${Date.now()}`;
+    const plainText = `Hi ${recipientName || "there"},\n\n${message || "Please find your invoice details below."}\n\nInvoice: ${invoiceNumber}\nAmount Due: $${Number(total || 0).toFixed(2)}\n${dueDate ? `Due Date: ${dueDate}\n` : ""}${paymentUrl ? `\nPay online: ${paymentUrl}\n` : ""}\nThank you for your business! — ${resolvedBusinessName}`;
 
-    // Log as pending in email_send_log
+    // Log as pending
     await supabase.from("email_send_log").insert({
       message_id: messageId,
       template_name: "invoice",
       recipient_email: recipientEmail,
       status: "pending",
-      metadata: { invoiceNumber, total, businessName },
+      metadata: { invoiceNumber, total, businessName: resolvedBusinessName },
     });
 
-    // Get or create unsubscribe token for recipient
-    const unsubToken = await getOrCreateUnsubToken(supabase, recipientEmail);
-
-    const plainText = `Hi ${recipientName || "there"},\n\n${message || "Please find your invoice details below."}\n\nInvoice: ${invoiceNumber}\nAmount Due: $${Number(total || 0).toFixed(2)}\n${dueDate ? `Due Date: ${dueDate}\n` : ""}${paymentUrl ? `\nPay online: ${paymentUrl}\n` : ""}\nThank you for your business! — ${businessName}`;
-
-    const emailPayload = {
+    // Send to customer via Resend
+    const customerResult = await sendViaResend({
+      apiKey: RESEND_API_KEY,
+      from: FROM_EMAIL,
       to: recipientEmail,
-      from: `${businessName || "Invoices"} <${FROM_EMAIL}>`,
+      cc: ccEmail || null,
+      replyTo: replyToEmail,
       subject: emailSubject,
       html,
       text: plainText,
-      sender_domain: SENDER_DOMAIN,
-      message_id: messageId,
-      idempotency_key: messageId,
-      label: "invoice",
-      purpose: "transactional",
-      queued_at: queuedAt,
-      unsubscribe_token: unsubToken,
-    };
-
-    const { error: enqueueError } = await supabase.rpc("enqueue_email", {
-      queue_name: "transactional_emails",
-      payload: emailPayload,
     });
 
-    if (enqueueError) {
-      console.error("Failed to enqueue invoice email:", enqueueError);
-      // Update send log to failed
+    if (!customerResult.ok) {
       await supabase.from("email_send_log").insert({
         message_id: messageId,
         template_name: "invoice",
         recipient_email: recipientEmail,
         status: "failed",
-        error_message: enqueueError.message,
+        error_message: customerResult.error || "Unknown Resend error",
       });
-      return jsonResponse({ error: `Failed to send email: ${enqueueError.message}` }, 500);
-    }
-
-    console.log(`Invoice email enqueued for: ${recipientEmail}, subject: ${emailSubject}`);
-
-    // Send owner notification email
-    let ownerMessageId: string | null = null;
-    if (ownerEmail) {
-      const ownerSubject = `Invoice ${invoiceNumber} sent to ${recipientName || recipientEmail}`;
-      const ownerHtml = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,sans-serif;">
-  <div style="max-width:560px;margin:40px auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e4e4e7;">
-    <div style="background:#0a0f0a;padding:20px 24px;">
-      <h1 style="margin:0;color:#22c55e;font-size:18px;">Invoice Sent ✓</h1>
-    </div>
-    <div style="padding:24px;">
-      <p style="margin:0 0 12px;color:#27272a;font-size:14px;">Invoice <strong>${invoiceNumber}</strong> was sent to <strong>${recipientName || recipientEmail}</strong>.</p>
-      <p style="margin:0;color:#52525b;font-size:13px;">Amount: <strong>$${Number(total || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong></p>
-    </div>
-  </div>
-</body>
-</html>`;
-
-      ownerMessageId = `invoice-owner-${invoiceId || invoiceNumber}-${Date.now()}`;
-      const ownerUnsubToken = await getOrCreateUnsubToken(supabase, ownerEmail);
-      await supabase.from("email_send_log").insert({
-        message_id: ownerMessageId,
-        template_name: "invoice-owner",
-        recipient_email: ownerEmail,
-        status: "pending",
-        metadata: { invoiceNumber, total, businessName },
-      });
-      await supabase.rpc("enqueue_email", {
-        queue_name: "transactional_emails",
-        payload: {
-          to: ownerEmail,
-          from: `${businessName || "Invoices"} <${FROM_EMAIL}>`,
-          subject: ownerSubject,
-          html: ownerHtml,
-          text: `Invoice ${invoiceNumber} was sent to ${recipientName || recipientEmail}. Amount: $${Number(total || 0).toFixed(2)}`,
-          sender_domain: SENDER_DOMAIN,
-          message_id: ownerMessageId,
-          idempotency_key: ownerMessageId,
-          label: "invoice-owner",
-          purpose: "transactional",
-          queued_at: queuedAt,
-          unsubscribe_token: ownerUnsubToken,
-        },
-      });
-    }
-
-    let queueFlushError: string | null = null;
-
-    try {
-      await flushEmailQueue(supabaseUrl, serviceKey);
-    } catch (error) {
-      queueFlushError = error instanceof Error ? error.message : String(error);
-      console.error("Failed to trigger immediate email queue flush:", queueFlushError);
-    }
-
-    const customerResult = await waitForMessageResult(supabase, messageId);
-
-    if (!customerResult || customerResult.status !== "sent") {
       return jsonResponse({
         success: false,
-        deliveryStatus: customerResult?.status || "pending",
-        deliveryError: customerResult?.error_message || queueFlushError || null,
-        error: customerResult?.error_message || queueFlushError || "Invoice email is still pending and was not confirmed as sent.",
+        deliveryStatus: "failed",
+        deliveryError: customerResult.error,
+        error: customerResult.error || "Email failed to send",
         messageId,
       }, 502);
     }
 
-    // Log to comm_logs and update invoice status only after actual send success
+    // Mark as sent ONLY after provider accepted the send
+    await supabase.from("email_send_log").insert({
+      message_id: messageId,
+      template_name: "invoice",
+      recipient_email: recipientEmail,
+      status: "sent",
+      provider_message_id: customerResult.id || null,
+    });
+
     if (invoiceId) {
       const { data: inv } = await supabase
         .from("platform_invoices")
@@ -318,7 +259,7 @@ Deno.serve(async (req) => {
           subject: emailSubject,
           body: `Invoice ${invoiceNumber} sent to ${recipientEmail}. Amount: $${total}`,
           sent_at: new Date().toISOString(),
-        });
+        }).then(() => {}, () => {});
 
         await supabase.from("platform_invoices").update({
           status: "sent",
@@ -327,21 +268,29 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Owner notification (best-effort; warn if it fails, don't fail the whole call)
     let ownerNotificationWarning: string | null = null;
-    if (ownerMessageId) {
-      const ownerResult = await waitForMessageResult(supabase, ownerMessageId, 4000);
-      if (ownerResult && ownerResult.status !== "sent") {
-        ownerNotificationWarning = ownerResult.error_message || "Owner notification email was not confirmed as sent.";
-      } else if (!ownerResult && queueFlushError) {
-        ownerNotificationWarning = queueFlushError;
-      }
+    if (ownerEmail) {
+      const ownerSubject = `Invoice ${invoiceNumber} sent to ${recipientName || recipientEmail}`;
+      const ownerHtml = `<div style="font-family:Arial,sans-serif"><p>Invoice <strong>${escapeHtml(invoiceNumber)}</strong> was sent to <strong>${escapeHtml(recipientName || recipientEmail)}</strong>.</p><p>Amount: <strong>$${Number(total || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong></p></div>`;
+      const ownerResult = await sendViaResend({
+        apiKey: RESEND_API_KEY,
+        from: FROM_EMAIL,
+        to: ownerEmail,
+        subject: ownerSubject,
+        html: ownerHtml,
+        text: `Invoice ${invoiceNumber} sent to ${recipientName || recipientEmail}. Amount: $${Number(total || 0).toFixed(2)}`,
+      });
+      if (!ownerResult.ok) ownerNotificationWarning = ownerResult.error || null;
     }
 
     return jsonResponse({
       success: true,
-      deliveryStatus: customerResult.status,
+      deliveryStatus: "sent",
       message: `Invoice email sent to ${recipientEmail}`,
       messageId,
+      providerMessageId: customerResult.id || null,
+      sentAt: new Date().toISOString(),
       ownerNotificationWarning,
     });
 
