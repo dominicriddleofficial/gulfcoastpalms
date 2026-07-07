@@ -235,3 +235,46 @@ export function wipeOfflineMirror(): void {
     dbPromise = null;
   }
 }
+
+/**
+ * Force-write a fresh dataset for the given store, bypassing the passive
+ * 2-minute throttle used by `mirrorData`. Called by the proactive offline
+ * prefetcher so a successful background refresh always updates the
+ * snapshot + saved-at timestamp.
+ */
+export async function mirrorDataForce<T>(
+  store: Exclude<OfflineStore, "meta">,
+  businessId: string,
+  data: T,
+): Promise<void> {
+  if (!isBrowser() || !businessId) return;
+  const ctx = currentContext;
+  if (!ctx) return;
+  const db = await openDb();
+  if (!db) return;
+  const now = Date.now();
+  lastWriteAt[store] = now;
+  try {
+    const tx = db.transaction([store, "meta"], "readwrite");
+    const rec: MirrorRecord<T> = {
+      key: businessId,
+      businessId,
+      userId: ctx.userId,
+      isOwner: ctx.isOwner,
+      savedAt: now,
+      data,
+    };
+    tx.objectStore(store).put(rec);
+    const meta: MirrorRecord<MirrorMeta> = {
+      key: `${store}:${businessId}`,
+      businessId,
+      userId: ctx.userId,
+      isOwner: ctx.isOwner,
+      savedAt: now,
+      data: { savedAt: now, businessId, userId: ctx.userId, isOwner: ctx.isOwner },
+    };
+    tx.objectStore("meta").put(meta);
+  } catch {
+    /* ignore — mirror is best-effort */
+  }
+}
