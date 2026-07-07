@@ -383,8 +383,12 @@ function JobList({ jobs, isOwner, emptyLabel }: { jobs: OfflineJob[]; isOwner: b
       {jobs.map((j, i) => {
         const name = j.client_name ?? j.customer_name ?? "Customer";
         const phone = j.client_phone ?? j.customer_phone ?? null;
-        const address = j.property_address ?? j.address ?? null;
+        const addrLine = j.property_address ?? j.address ?? j.address_1 ?? null;
+        const address = addrLine && j.city && !addrLine.includes(j.city)
+          ? `${addrLine}, ${j.city}`
+          : addrLine;
         const amt = Number(j.total_amount ?? 0);
+        const status = (j.visit_status ?? j.status ?? "").toString();
         return (
           <li
             key={j.id ?? `${name}-${i}`}
@@ -402,6 +406,14 @@ function JobList({ jobs, isOwner, emptyLabel }: { jobs: OfflineJob[]; isOwner: b
               {readOnlyBadge()}
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
+              {status && (
+                <span
+                  className="inline-flex items-center rounded-full px-2.5 min-h-[24px] text-[11px] font-body font-semibold uppercase tracking-wide"
+                  style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.75)" }}
+                >
+                  {status.replace(/_/g, " ")}
+                </span>
+              )}
               {phone && (
                 <a
                   href={`tel:${phone}`}
