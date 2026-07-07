@@ -61,11 +61,52 @@ export default function PlatformInvoices() {
   };
 
   const markSent = async (inv: PlatformInvoice) => {
-    await supabase.from("platform_invoices").update({
-      status: "sent", sent_at: new Date().toISOString(),
-    }).eq("id", inv.id);
-    toast.success("Invoice marked as sent");
-    refetch();
+    if (!inv.customer_id) {
+      toast.error("No customer linked to this invoice");
+      return;
+    }
+    const { data: cust } = await supabase
+      .from("platform_customers")
+      .select("email, display_name")
+      .eq("id", inv.customer_id)
+      .single();
+    if (!cust?.email) {
+      toast.error("No email on file for this customer");
+      return;
+    }
+    const biz = getBiz(inv.business_id);
+    const shortcode = inv.invoice_number?.split("-")[0]?.toLowerCase() || "gcp";
+    const paymentUrl = `${window.location.origin}/pay/${shortcode}/${inv.id}`;
+    const t = toast.loading(`Sending invoice to ${cust.email}…`);
+    try {
+      const { data: fnRes, error: fnErr } = await supabase.functions.invoke(
+        "send-invoice-email",
+        {
+          body: {
+            invoiceId: inv.id,
+            recipientEmail: cust.email,
+            recipientName: cust.display_name || inv.customer_name || "there",
+            businessName: biz?.public_brand_name || "Gulf Coast Palms",
+            invoiceNumber: inv.invoice_number,
+            total: inv.total,
+            dueDate: inv.due_date,
+            paymentUrl,
+          },
+        },
+      );
+      const delivered = fnRes?.deliveryStatus === "sent";
+      const errMsg = fnRes?.deliveryError || fnRes?.error || fnErr?.message;
+      toast.dismiss(t);
+      if (delivered) {
+        toast.success(`Invoice emailed to ${cust.email}`);
+        refetch();
+      } else {
+        toast.error(`Email failed to send — ${errMsg || "try again"}. Invoice NOT marked as sent.`);
+      }
+    } catch (e: any) {
+      toast.dismiss(t);
+      toast.error(`Email failed to send — ${e?.message || "try again"}. Invoice NOT marked as sent.`);
+    }
   };
 
   const sendOverdueReminder = async (inv: PlatformInvoice) => {
@@ -362,16 +403,30 @@ function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayme
     const amount = Number(invoice.balance_due || invoice.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2 });
     const payUrl = getPaymentUrl();
     try {
-      const { error } = await supabase.functions.invoke("send-invoice-email", {
-        body: {
-          to: email,
-          subject: `Pay your invoice ${invoice.invoice_number} — $${amount}`,
-          html: `<p>Hi ${invoice.customer_name || "there"},</p><p>Here's your payment link from ${bizName} for <strong>$${amount}</strong>:</p><p><a href="${payUrl}" style="color:var(--accent-color);font-weight:bold;">${payUrl}</a></p><p>Thank you for your business!</p>`,
-          text: `Hi ${invoice.customer_name || "there"}, here's your payment link from ${bizName} for $${amount}: ${payUrl}`,
+      const { data: fnRes, error: fnErr } = await supabase.functions.invoke(
+        "send-invoice-email",
+        {
+          body: {
+            invoiceId: invoice.id,
+            recipientEmail: email,
+            recipientName: invoice.customer_name || "there",
+            subject: `Pay your invoice ${invoice.invoice_number} — $${amount}`,
+            message: `Here's your payment link from ${bizName} for $${amount}.`,
+            businessName: bizName,
+            invoiceNumber: invoice.invoice_number,
+            total: invoice.balance_due || invoice.total,
+            dueDate: invoice.due_date,
+            paymentUrl: payUrl,
+          },
         },
-      });
-      if (error) toast.error("Failed to send email"); else toast.success(`Payment link emailed to ${email}`);
-    } catch { toast.error("Email failed"); }
+      );
+      const delivered = fnRes?.deliveryStatus === "sent";
+      const errMsg = fnRes?.deliveryError || fnRes?.error || fnErr?.message;
+      if (delivered) toast.success(`Payment link emailed to ${email}`);
+      else toast.error(`Email failed to send — ${errMsg || "try again"}`);
+    } catch (e: any) {
+      toast.error(`Email failed to send — ${e?.message || "try again"}`);
+    }
   };
 
   return (
