@@ -74,6 +74,7 @@ import { Label } from "@/components/ui/label";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useQueryClient } from "@tanstack/react-query";
 import { CalendarClock, Pencil, Trash2 } from "lucide-react";
+import YearlyTrimmingToggle from "@/components/platform/schedule/YearlyTrimmingToggle";
 
 type ScheduleTab = "day" | "list" | "map" | "crew";
 
@@ -1238,6 +1239,11 @@ function JobDetail({
               </p>
             )}
           </DetailSection>
+
+          <YearlyTrimmingToggle
+            customerId={job.customer_id}
+            customerName={job.client_name}
+          />
         </div>
       )}
 
