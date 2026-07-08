@@ -12,6 +12,7 @@ import {
   ShieldCheck, FileSpreadsheet, Files,
   ClipboardCheck, Calculator,
   Activity, ShieldAlert, BookText, Rocket, TestTube, AlertCircle,
+  Sparkles, ClipboardCheck as ClipboardCheckIcon,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -36,6 +37,8 @@ const buildMoreItems = (shortcode: string | undefined, hideAnalytics: boolean): 
   ...(hideAnalytics ? [] : [{ label: "Analytics", path: "/platform/analytics", icon: TrendingUp } as MoreItem]),
   { label: "Comms", path: "/platform/communications", icon: MessageSquare },
   { label: "Tasks", path: "/platform/tasks", icon: ClipboardList },
+  { label: "Yearly Clients", path: "/platform/yearly-clients", icon: Sparkles },
+  { label: "EOD Report", path: "/platform/eod-report", icon: ClipboardCheckIcon },
   ...(shortcode === "PPS"
     ? [
         { label: "Job Checklists", path: "/platform/job-checklists", icon: ClipboardCheck } as MoreItem,
