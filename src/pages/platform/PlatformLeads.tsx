@@ -33,11 +33,20 @@ function LeadStatusBadge({ status }: { status: string }) {
   );
 }
 
-function UrgencyDot({ createdAt }: { createdAt: string }) {
+function UrgencyDot({ createdAt, status }: { createdAt: string; status: string }) {
   const mins = (Date.now() - new Date(createdAt).getTime()) / 60000;
+  const isNew = status === "new";
+  if (isNew) {
+    return (
+      <span className="relative inline-flex w-2.5 h-2.5" title="New lead">
+        <span className="absolute inset-0 rounded-full bg-primary animate-ping opacity-60" />
+        <span className="relative inline-flex w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]" />
+      </span>
+    );
+  }
   if (mins > 60) return <span className="w-2 h-2 rounded-full bg-destructive inline-block" title="Over 1 hour old" />;
   if (mins > 15) return <span className="w-2 h-2 rounded-full bg-yellow-500 inline-block" title="Over 15 min" />;
-  return <span className="w-2 h-2 rounded-full bg-primary inline-block" title="Fresh lead" />;
+  return <span className="w-2 h-2 rounded-full bg-muted-foreground/50 inline-block" />;
 }
 
 export default function PlatformLeads() {
