@@ -131,51 +131,74 @@ export default function PlatformLeads() {
           <div className="space-y-2">
             {leads.map(lead => {
               const biz = getBizInfo(lead.business_id);
+              const statusMeta = LEAD_STATUSES.find(s => s.value === lead.lead_status);
+              const accent = statusMeta?.color || "hsl(var(--muted-foreground))";
               return (
-                <button
+                <div
                   key={lead.id}
-                  onClick={() => setSelectedLead(lead)}
-                  className="w-full bg-card border border-border rounded-xl p-4 hover:border-primary/30 transition-all text-left"
+                  className="group relative w-full bg-card border border-border rounded-xl overflow-hidden hover:border-primary/40 transition-all"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0 space-y-1.5">
-                      <div className="flex items-center gap-2">
-                        <UrgencyDot createdAt={lead.created_at} />
-                        <span className="font-body text-sm font-medium text-foreground truncate">
-                          {lead.inquiry_name}
-                        </span>
-                        {biz && <InlineBadge shortcode={biz.shortcode} color={biz.default_business_color} />}
-                      </div>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground font-body">
-                        {lead.inquiry_phone && (
-                          <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{lead.inquiry_phone}</span>
-                        )}
-                        {lead.inquiry_email && (
-                          <span className="flex items-center gap-1 truncate"><Mail className="w-3 h-3" />{lead.inquiry_email}</span>
-                        )}
+                  {/* status accent edge */}
+                  <span
+                    className="absolute left-0 top-0 bottom-0 w-1"
+                    style={{ background: accent, boxShadow: `0 0 12px ${accent}55` }}
+                  />
+                  <button
+                    onClick={() => setSelectedLead(lead)}
+                    className="w-full text-left pl-4 pr-3 py-3.5"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0 space-y-1.5">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <UrgencyDot createdAt={lead.created_at} status={lead.lead_status} />
+                          <span className="font-display text-base font-semibold text-foreground truncate">
+                            {lead.inquiry_name}
+                          </span>
+                          {biz && <InlineBadge shortcode={biz.shortcode} color={biz.default_business_color} />}
+                        </div>
                         {lead.requested_service && (
-                          <span className="flex items-center gap-1"><Tag className="w-3 h-3" />{lead.requested_service}</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-muted-foreground/70 font-body">
-                          {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
-                        </span>
-                        {lead.source_name && (
-                          <span className="text-[10px] text-muted-foreground/70 flex items-center gap-0.5">
-                            <Globe className="w-2.5 h-2.5" />{lead.source_name}
+                          <span
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-body font-medium bg-secondary text-foreground/80 border border-border"
+                          >
+                            <Tag className="w-2.5 h-2.5" />
+                            {lead.requested_service}
                           </span>
                         )}
+                        {lead.message && (
+                          <p className="font-body text-xs text-muted-foreground italic line-clamp-1">
+                            "{lead.message}"
+                          </p>
+                        )}
+                        <div className="flex items-center gap-3 text-[11px] text-muted-foreground/80 font-body">
+                          <span className="font-medium text-foreground/70">
+                            {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
+                          </span>
+                          {lead.source_name && (
+                            <span className="flex items-center gap-0.5 truncate">
+                              <Globe className="w-2.5 h-2.5" />{lead.source_name}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-2 shrink-0">
+                        <LeadStatusBadge status={lead.lead_status} />
+                        {lead.urgency_level === "urgent" && (
+                          <AlertTriangle className="w-3.5 h-3.5 text-destructive" />
+                        )}
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-1.5 shrink-0">
-                      <LeadStatusBadge status={lead.lead_status} />
-                      {lead.urgency_level === "urgent" && (
-                        <AlertTriangle className="w-3.5 h-3.5 text-destructive" />
-                      )}
-                    </div>
-                  </div>
-                </button>
+                  </button>
+                  {lead.inquiry_phone && (
+                    <a
+                      href={`tel:${lead.inquiry_phone}`}
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label={`Call ${lead.inquiry_name}`}
+                      className="absolute right-3 bottom-3 inline-flex items-center justify-center w-9 h-9 rounded-full bg-primary/15 border border-primary/30 text-primary hover:bg-primary/25 transition-colors"
+                    >
+                      <Phone className="w-4 h-4" />
+                    </a>
+                  )}
+                </div>
               );
             })}
           </div>
