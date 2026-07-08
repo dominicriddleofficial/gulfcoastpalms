@@ -9,6 +9,7 @@ import TodaySection from "@/components/platform/dashboard/TodaySection";
 import ReliabilitySection from "@/components/platform/dashboard/ReliabilitySection";
 import HeadlineSection from "@/components/platform/dashboard/HeadlineSection";
 import UnpaidJobsTile from "@/components/platform/dashboard/UnpaidJobsTile";
+import YearlyClientsTile from "@/components/platform/dashboard/YearlyClientsTile";
 // Lazy-load the recharts-backed chart so the ~382KB chart chunk doesn't
 // block the KPI cards from painting on dashboard open.
 const ScheduledValueChart = lazy(
@@ -89,6 +90,7 @@ export default function PlatformDashboard() {
 
           <HeadlineSection />
           <UnpaidJobsTile />
+          <YearlyClientsTile />
           <Suspense fallback={<ScheduledValueChartSkeleton />}>
             <ScheduledValueChart />
           </Suspense>

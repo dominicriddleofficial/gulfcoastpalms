@@ -37,6 +37,8 @@ const PlatformQAChecklist = lazy(() => import("@/pages/platform/PlatformQACheckl
 const PlatformOfflineQueue = lazy(() => import("@/pages/platform/PlatformOfflineQueue"));
 const PlatformOffline = lazy(() => import("@/pages/platform/PlatformOffline"));
 const PlatformUnpaid = lazy(() => import("@/pages/platform/PlatformUnpaid"));
+const PlatformYearlyClients = lazy(() => import("@/pages/platform/PlatformYearlyClients"));
+const PlatformEODReport = lazy(() => import("@/pages/platform/PlatformEODReport"));
 const JobberOAuthCallback = lazy(() => import("@/pages/platform/JobberOAuthCallback"));
 
 const withPlatformAuth = (element: ReactNode) => (
@@ -76,6 +78,8 @@ export const PlatformRoutes = () => (
     <Route path="/platform/qa-checklist" element={withPlatformAuth(<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformQAChecklist /></RoleRoute>)} />
     <Route path="/platform/offline-queue" element={withPlatformAuth(<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformOfflineQueue /></RoleRoute>)} />
     <Route path="/platform/unpaid" element={withPlatformAuth(<RoleRoute allow={["owner"]} redirectTo="/platform"><PlatformUnpaid /></RoleRoute>)} />
+    <Route path="/platform/yearly-clients" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformYearlyClients /></RoleRoute>)} />
+    <Route path="/platform/eod-report" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager"]}><PlatformEODReport /></RoleRoute>)} />
     <Route path="/platform/integrations/jobber/callback" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager"]}><JobberOAuthCallback /></RoleRoute>)} />
 
     {/* Full-page creation editors */}

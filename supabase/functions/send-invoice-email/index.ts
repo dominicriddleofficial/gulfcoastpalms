@@ -11,6 +11,33 @@ const JSON_HEADERS = { ...corsHeaders, "Content-Type": "application/json" };
 // per-business `from_email` on the businesses table.
 const DEFAULT_FROM_EMAIL = "Gulf Coast Palms <onboarding@resend.dev>";
 
+// Owner cell — receives an SMS if the customer invoice email fails.
+const OWNER_ALERT_PHONE = "+18508897255";
+
+/**
+ * Fail-silent SMS alert via SimpleTexting (mirrors notify-lead path A).
+ * Never throws; never blocks the caller.
+ */
+async function sendOwnerFailureSms(body: string): Promise<void> {
+  try {
+    const key = Deno.env.get("SIMPLETEXTING_API_KEY");
+    if (!key) return;
+    const cleanPhone = OWNER_ALERT_PHONE.replace(/[^\d+]/g, "");
+    await fetch("https://api-app2.simpletexting.com/v2/api/contacts", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ phone: cleanPhone }),
+    }).catch(() => null);
+    await fetch("https://api-app2.simpletexting.com/v2/api/messages", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ contactPhone: cleanPhone, mode: "AUTO", text: body }),
+    }).catch(() => null);
+  } catch (err) {
+    console.error("send-invoice-email: owner SMS alert failed silently", err);
+  }
+}
+
 function escapeHtml(value: string | null | undefined): string {
   return (value ?? "")
     .replaceAll("&", "&amp;")
@@ -225,6 +252,11 @@ Deno.serve(async (req) => {
         status: "failed",
         error_message: customerResult.error || "Unknown Resend error",
       });
+      // Fire owner SMS alert (fail-silent; never blocks the response).
+      const shortReason = (customerResult.error || "unknown error").slice(0, 120);
+      await sendOwnerFailureSms(
+        `⚠️ INVOICE EMAIL FAILED: ${invoiceNumber} to ${recipientEmail} — ${shortReason}. Resend from the app.`,
+      );
       return jsonResponse({
         success: false,
         deliveryStatus: "failed",

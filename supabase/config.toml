@@ -62,3 +62,6 @@ verify_jwt = false
 
 [functions.create-platform-job]
 verify_jwt = false
+
+[functions.eod-nudge]
+verify_jwt = false
