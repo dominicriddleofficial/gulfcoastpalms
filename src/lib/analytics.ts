@@ -19,6 +19,7 @@ export type ConversionEvent =
   | "text_us_click"
   | "sticky_bar_call_click"
   | "sticky_bar_text_click"
+  | "call_tap"
   | "chat_opened"
   | "chat_message_sent"
   | "chat_lead_captured"
