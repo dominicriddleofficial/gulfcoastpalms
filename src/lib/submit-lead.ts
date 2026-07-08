@@ -135,6 +135,12 @@ export async function submitLead(data: LeadData): Promise<{ success: boolean; er
         ...pageContext,
       });
     const platformInsertError = platformInsertRes.error;
+    if (platformInsertError) throw platformInsertError;
+
+    if (skipInsert) {
+      if (import.meta.env.DEV) console.info("[lead dedupe] skipped duplicate lead within 10min window");
+      return { success: true };
+    }
 
     if (platformInsertError) throw platformInsertError;
 
