@@ -831,6 +831,50 @@ export default function PlatformAnalytics() {
             <p className="font-display text-lg font-bold text-foreground">{thisMonthJobs}</p>
           </div>
         </div>
+
+        {/* SECTION 9 — Website Call Taps (owner-only) */}
+        {isOwner && callTaps && (
+          <ChartSection
+            title="Website Call Taps"
+            subtitle="Taps on tel: links across the public website. Google Maps calls live in Google Business Profile."
+          >
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="rounded-lg p-4" style={{ background: "rgba(var(--biz-accent-rgb),0.05)", border: `1px solid ${CARD_BORDER}` }}>
+                <p className="font-body text-[10px] uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                  <Phone className="w-3 h-3" /> Last 7 days
+                </p>
+                <p className="font-display text-3xl font-bold text-primary mt-1">{callTaps.week}</p>
+              </div>
+              <div className="rounded-lg p-4" style={{ background: "rgba(255,255,255,0.02)", border: `1px solid ${CARD_BORDER}` }}>
+                <p className="font-body text-[10px] uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                  <Phone className="w-3 h-3" /> Last 30 days
+                </p>
+                <p className="font-display text-3xl font-bold text-foreground mt-1">{callTaps.month}</p>
+              </div>
+            </div>
+            {callTaps.topPages.length === 0 ? (
+              <p className="font-body text-xs text-muted-foreground text-center py-4">No call taps recorded yet.</p>
+            ) : (
+              <div className="space-y-2">
+                <p className="font-body text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Top pages (30d)</p>
+                {callTaps.topPages.map(p => {
+                  const max = callTaps.topPages[0].count || 1;
+                  return (
+                    <div key={p.page} className="space-y-1">
+                      <div className="flex justify-between items-baseline">
+                        <span className="font-mono text-[11px] text-foreground truncate max-w-[70%]">{p.page}</span>
+                        <span className="font-body text-[10px] text-muted-foreground">{p.count} taps</span>
+                      </div>
+                      <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
+                        <div className="h-full rounded-full" style={{ width: `${(p.count / max) * 100}%`, background: GREEN }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </ChartSection>
+        )}
       </div>
     </PlatformLayout>
   );
