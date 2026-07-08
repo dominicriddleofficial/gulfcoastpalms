@@ -258,19 +258,77 @@ function LeadDetail({ lead, biz, onStatusChange, onClose }: {
   };
 
   return (
-    <div className="space-y-6 pt-2">
+    <div className="space-y-5 pt-2">
+      {/* Header: name + big status pill */}
       <SheetHeader>
-        <div className="flex items-center gap-2">
-          {biz && <InlineBadge shortcode={biz.shortcode} color={biz.default_business_color} />}
-          <SheetTitle className="font-display text-lg text-foreground">{lead.inquiry_name}</SheetTitle>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              {biz && <InlineBadge shortcode={biz.shortcode} color={biz.default_business_color} />}
+              <span className="text-[11px] text-muted-foreground font-body">
+                {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
+              </span>
+            </div>
+            <SheetTitle className="font-display text-2xl font-bold text-foreground">
+              {lead.inquiry_name}
+            </SheetTitle>
+          </div>
+          <div className="shrink-0"><LeadStatusBadge status={lead.lead_status} /></div>
         </div>
       </SheetHeader>
 
-      {/* Status selector */}
+      {/* PRIMARY ACTIONS — above the fold */}
+      {(lead.inquiry_phone || lead.inquiry_email) && (
+        <div className="grid grid-cols-2 gap-2">
+          {lead.inquiry_phone && (
+            <a
+              href={`tel:${lead.inquiry_phone}`}
+              className="inline-flex items-center justify-center gap-2 h-12 rounded-xl bg-primary text-primary-foreground font-body font-bold text-sm shadow-[0_0_18px_hsl(var(--primary)/0.35)] hover:brightness-110 transition"
+            >
+              <Phone className="w-4 h-4" /> Call
+            </a>
+          )}
+          {lead.inquiry_phone && (
+            <a
+              href={`sms:${lead.inquiry_phone}`}
+              className="inline-flex items-center justify-center gap-2 h-12 rounded-xl bg-secondary border border-primary/30 text-primary font-body font-bold text-sm hover:bg-primary/10 transition"
+            >
+              <MessageSquare className="w-4 h-4" /> Text
+            </a>
+          )}
+        </div>
+      )}
+
+      {/* Contact */}
       <div className="space-y-2">
-        <p className="font-body text-xs text-muted-foreground uppercase tracking-wider">Status</p>
+        {lead.inquiry_phone && (
+          <a href={`tel:${lead.inquiry_phone}`} className="flex items-center gap-2 text-sm text-foreground font-body hover:text-primary">
+            <Phone className="w-4 h-4 text-primary" /> {lead.inquiry_phone}
+          </a>
+        )}
+        {lead.inquiry_email && (
+          <a href={`mailto:${lead.inquiry_email}`} className="flex items-center gap-2 text-sm text-foreground font-body hover:text-primary break-all">
+            <Mail className="w-4 h-4 text-primary" /> {lead.inquiry_email}
+          </a>
+        )}
+      </div>
+
+      {/* MESSAGE — the money content */}
+      {lead.message && (
+        <div className="relative rounded-xl border border-primary/30 bg-primary/5 p-4 overflow-hidden">
+          <span className="absolute left-0 top-0 bottom-0 w-1 bg-primary shadow-[0_0_10px_hsl(var(--primary))]" />
+          <p className="font-body text-[10px] text-primary uppercase tracking-wider mb-1.5 font-bold">Customer message</p>
+          <p className="font-body text-[15px] leading-relaxed text-foreground whitespace-pre-wrap">
+            {lead.message}
+          </p>
+        </div>
+      )}
+
+      {/* Status */}
+      <div className="space-y-1.5">
+        <p className="font-body text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Status</p>
         <Select value={lead.lead_status} onValueChange={onStatusChange}>
-          <SelectTrigger className="bg-secondary border-border">
+          <SelectTrigger className="bg-secondary border-border h-10">
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-card border-border">
@@ -281,25 +339,10 @@ function LeadDetail({ lead, biz, onStatusChange, onClose }: {
         </Select>
       </div>
 
-      {/* Contact info */}
+      {/* Details grid */}
       <div className="space-y-3">
-        <p className="font-body text-xs text-muted-foreground uppercase tracking-wider">Contact</p>
-        {lead.inquiry_phone && (
-          <a href={`tel:${lead.inquiry_phone}`} className="flex items-center gap-2 text-sm text-primary font-body hover:underline">
-            <Phone className="w-4 h-4" /> {lead.inquiry_phone}
-          </a>
-        )}
-        {lead.inquiry_email && (
-          <a href={`mailto:${lead.inquiry_email}`} className="flex items-center gap-2 text-sm text-primary font-body hover:underline">
-            <Mail className="w-4 h-4" /> {lead.inquiry_email}
-          </a>
-        )}
-      </div>
-
-      {/* Details */}
-      <div className="space-y-3">
-        <p className="font-body text-xs text-muted-foreground uppercase tracking-wider">Details</p>
-        <div className="grid grid-cols-2 gap-3">
+        <p className="font-body text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Details</p>
+        <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-secondary/50 border border-border">
           <DetailItem label="Service" value={lead.requested_service} />
           <DetailItem label="Urgency" value={lead.urgency_level} />
           <DetailItem label="Source" value={lead.source_name} />
@@ -309,23 +352,16 @@ function LeadDetail({ lead, biz, onStatusChange, onClose }: {
         </div>
       </div>
 
-      {lead.message && (
-        <div className="space-y-2">
-          <p className="font-body text-xs text-muted-foreground uppercase tracking-wider">Message</p>
-          <p className="font-body text-sm text-foreground bg-secondary rounded-lg p-3">{lead.message}</p>
-        </div>
-      )}
-
       {lead.lost_reason && (
         <div className="space-y-2">
-          <p className="font-body text-xs text-muted-foreground uppercase tracking-wider">Lost Reason</p>
+          <p className="font-body text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Lost Reason</p>
           <p className="font-body text-sm text-destructive">{lead.lost_reason}</p>
         </div>
       )}
 
       {/* Timeline */}
       <div className="space-y-2">
-        <p className="font-body text-xs text-muted-foreground uppercase tracking-wider">Timeline</p>
+        <p className="font-body text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Timeline</p>
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-xs font-body text-muted-foreground">
             <Clock className="w-3 h-3" />
@@ -340,20 +376,21 @@ function LeadDetail({ lead, biz, onStatusChange, onClose }: {
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex gap-2 pt-2">
+      {/* Secondary actions */}
+      <div className="flex gap-2 pt-3 border-t border-border">
         <Button
-          size="sm"
-          variant="outline"
-          className="flex-1 gap-1.5 border-border"
+          className="flex-1 gap-1.5 bg-primary text-primary-foreground hover:brightness-110 font-semibold h-11"
           disabled={converting || lead.lead_status === "won"}
           onClick={handleConvert}
         >
-          <ArrowRight className="w-3.5 h-3.5" />
-          {converting ? "Converting..." : lead.lead_status === "won" ? "Already Converted" : "Convert to Customer"}
+          <ArrowRight className="w-4 h-4" />
+          {converting ? "Converting..." : lead.lead_status === "won" ? "Converted" : "Convert to Customer"}
         </Button>
-        <Button size="sm" variant="outline" className="flex-1 gap-1.5 border-border">
-          <MessageSquare className="w-3.5 h-3.5" /> Add Note
+        <Button
+          variant="outline"
+          className="flex-1 gap-1.5 border-primary/40 text-foreground hover:bg-primary/10 h-11 font-semibold"
+        >
+          <MessageSquare className="w-4 h-4" /> Add Note
         </Button>
       </div>
     </div>
