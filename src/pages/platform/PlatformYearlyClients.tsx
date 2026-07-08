@@ -25,12 +25,6 @@ function fmtMoney(v: number): string {
   return v.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 }
 
-function normPhone(p: string | null | undefined): string {
-  if (!p) return "";
-  const d = p.replace(/\D/g, "");
-  return d.length >= 10 ? d.slice(-10) : "";
-}
-
 export default function PlatformYearlyClients() {
   const { selectedBusinessId } = usePlatformAuth();
   const { isOwner } = useUserRole();
@@ -39,156 +33,25 @@ export default function PlatformYearlyClients() {
     queryKey: ["yearly-clients", selectedBusinessId],
     queryFn: async (): Promise<YearlyRow[]> => {
       if (!selectedBusinessId) return [];
-      const { data: custs, error } = await supabase
-        .from("platform_customers")
-        .select("id, display_name, phone, yearly_trimming_source, yearly_trimming_added_at")
-        .eq("business_id", selectedBusinessId)
-        .eq("yearly_trimming", true)
-        .order("yearly_trimming_added_at", { ascending: false });
-      if (error) throw error;
-      if (!custs || custs.length === 0) return [];
-
-      const ids = custs.map((c) => c.id);
-      const { data: jobs } = await supabase
-        .from("platform_jobs")
-        .select("customer_id, status, total, scheduled_start, property_id, deleted_at")
-        .in("customer_id", ids)
-        .is("deleted_at", null);
-
-      const { data: props } = await supabase
-        .from("platform_properties")
-        .select("customer_id, city")
-        .in("customer_id", ids);
-
-      // Phone-matched jobber_jobs history
-      const phones = Array.from(
-        new Set(custs.map((c) => normPhone(c.phone)).filter((p) => p.length === 10)),
-      );
-      const { data: jobberJobs } = phones.length
-        ? await supabase
-            .from("jobber_jobs")
-            .select("client_phone, scheduled_start, total_amount, status")
-            .eq("business_id", selectedBusinessId)
-        : { data: [] as Array<{ client_phone: string | null; scheduled_start: string | null; total_amount: number | null; status: string | null }> };
-
-      const jobberByPhone = new Map<
-        string,
-        Array<{ scheduled_start: string | null; total_amount: number | null }>
-      >();
-      for (const jj of jobberJobs ?? []) {
-        const np = normPhone(jj.client_phone);
-        if (!np) continue;
-        const arr = jobberByPhone.get(np) ?? [];
-        arr.push({ scheduled_start: jj.scheduled_start, total_amount: jj.total_amount });
-        jobberByPhone.set(np, arr);
-      }
-
-      const cityByCustomer = new Map<string, string>();
-      for (const p of props ?? []) {
-        if (!cityByCustomer.has(p.customer_id) && p.city) {
-          cityByCustomer.set(p.customer_id, p.city);
-        }
-      }
-
-      // Per-customer platform-only stats
-      const perCust = custs.map((c) => {
-        const pRows = (jobs ?? []).filter(
-          (j) =>
-            j.customer_id === c.id &&
-            ["completed", "scheduled"].includes(String(j.status ?? "").toLowerCase()),
-        );
-        const pRev = pRows.reduce((s, j) => s + (Number(j.total) || 0), 0);
-        const pDates = pRows
-          .map((j) => j.scheduled_start)
-          .filter((v): v is string => Boolean(v));
-        return {
-          c,
-          np: normPhone(c.phone),
-          pCount: pRows.length,
-          pRev,
-          pLast: pDates.length ? pDates.sort().pop() ?? null : null,
-        };
+      const { data: rpc, error } = await supabase.rpc("get_yearly_trimming_roster", {
+        _business_id: selectedBusinessId,
       });
-
-      const isPlaceholderName = (n: string | null | undefined): boolean => {
-        const t = (n ?? "").trim().toLowerCase();
-        return !t || t === "na" || t === "n/a" || t === "unknown";
-      };
-
-      // Group by phone (10-digit). No phone => individual.
-      const groups = new Map<string, typeof perCust>();
-      const singles: typeof perCust = [];
-      for (const row of perCust) {
-        if (row.np) {
-          const arr = groups.get(row.np) ?? [];
-          arr.push(row);
-          groups.set(row.np, arr);
-        } else {
-          singles.push(row);
-        }
-      }
-
-      const merged: YearlyRow[] = [];
-
-      const buildFromGroup = (np: string, members: typeof perCust): YearlyRow => {
-        // Prefer real-named row as face
-        const named = members.find((m) => !isPlaceholderName(m.c.display_name));
-        const face = named ?? members[0];
-        const pCount = members.reduce((s, m) => s + m.pCount, 0);
-        const pRev = members.reduce((s, m) => s + m.pRev, 0);
-        const pDates = members.map((m) => m.pLast).filter((v): v is string => Boolean(v));
-        const jRows = jobberByPhone.get(np) ?? [];
-        const jRev = jRows.reduce((s, j) => s + (Number(j.total_amount) || 0), 0);
-        const jDates = jRows
-          .map((j) => j.scheduled_start)
-          .filter((v): v is string => Boolean(v));
-        const allDates = [...pDates, ...jDates].sort();
-        const cityCandidate =
-          cityByCustomer.get(face.c.id) ??
-          members.map((m) => cityByCustomer.get(m.c.id)).find((v): v is string => Boolean(v)) ??
-          null;
-        // If any twin is manual, treat as manual
-        const source: "manual" | "auto" | null = members.some(
-          (m) => m.c.yearly_trimming_source === "manual",
-        )
-          ? "manual"
-          : (face.c.yearly_trimming_source as "manual" | "auto" | null) ?? null;
-        const addedAt =
-          members
-            .map((m) => m.c.yearly_trimming_added_at as string | null)
-            .filter((v): v is string => Boolean(v))
-            .sort()
-            .pop() ?? null;
-        return {
-          customer_id: face.c.id,
-          display_name: face.c.display_name,
-          phone: face.c.phone,
-          city: cityCandidate,
-          source,
-          added_at: addedAt,
-          jobs_count: pCount + jRows.length,
-          last_job_at: allDates.length ? allDates[allDates.length - 1] : null,
-          total_revenue: pRev + jRev,
-        };
-      };
-
-      for (const [np, members] of groups) merged.push(buildFromGroup(np, members));
-      for (const s of singles) {
-        merged.push({
-          customer_id: s.c.id,
-          display_name: s.c.display_name,
-          phone: s.c.phone,
-          city: cityByCustomer.get(s.c.id) ?? null,
-          source: (s.c.yearly_trimming_source as "manual" | "auto" | null) ?? null,
-          added_at: s.c.yearly_trimming_added_at as string | null,
-          jobs_count: s.pCount,
-          last_job_at: s.pLast,
-          total_revenue: s.pRev,
-        });
-      }
-      return merged;
+      if (error) throw error;
+      return (rpc ?? []).map((r): YearlyRow => ({
+        customer_id: r.face_customer_id,
+        display_name: r.display_name ?? "",
+        phone: r.phone,
+        city: r.city,
+        source: (r.source as "manual" | "auto" | null) ?? null,
+        added_at: r.added_at,
+        jobs_count: Number(r.jobs_count ?? 0),
+        last_job_at: r.last_job_at,
+        total_revenue: Number(r.total_revenue ?? 0),
+      }));
     },
     enabled: !!selectedBusinessId,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
 
   const rows = useMemo(() => {
