@@ -21,8 +21,9 @@ function getCorsHeaders(req: Request) {
 }
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
-// Owner cell for lead alerts. Overridable via LEAD_ALERT_PHONE secret.
-const OWNER_PHONE_FALLBACK = "+18506049819";
+// Owner + office manager cells for lead alerts.
+// Overridable via LEAD_ALERT_PHONES (comma-separated) or legacy LEAD_ALERT_PHONE.
+const LEAD_ALERT_PHONE_FALLBACKS = ["+18506049819", "+18507127850"];
 
 /**
  * SimpleTexting REST — preferred path when SIMPLETEXTING_API_KEY is set.
@@ -227,24 +228,46 @@ serve(async (req) => {
     // Sanitize inputs for SMS body
     const safeName = String(name).substring(0, 100);
     const safePhone = String(phone || "N/A").substring(0, 20);
-    const safeEmail = String(email || "N/A").substring(0, 255);
     const safeService = String(service || "N/A").substring(0, 100);
     const safeLocation = String(location || "N/A").substring(0, 200);
-    const safeMessage = String(message || "N/A").substring(0, 500);
+    const rawMessage = String(message || "").trim();
+    const safeMessage = rawMessage.length > 200 ? rawMessage.slice(0, 197) + "..." : rawMessage;
+    const safeUrgency = String(body.urgency || "normal").substring(0, 20);
 
-    // Compact single-line alert (owner-preferred format).
-    const smsBody = `NEW GCP LEAD: ${safeName} · ${safePhone} · ${safeService} · ${safeLocation}. Reply fast!`;
+    const parts = [
+      `NEW GCP LEAD 🌴 ${safeName}`,
+      safePhone,
+      safeService,
+      location ? safeLocation : null,
+      `Urgency: ${safeUrgency}`,
+    ].filter(Boolean).join(" · ");
+    const smsBody = safeMessage
+      ? `${parts}. Msg: ${safeMessage}. Reply fast!`
+      : `${parts}. Reply fast!`;
 
-    const destination = Deno.env.get("LEAD_ALERT_PHONE") || OWNER_PHONE_FALLBACK;
-    const result = await sendLeadSms(destination, smsBody);
+    // Resolve recipients: LEAD_ALERT_PHONES (comma-separated) overrides,
+    // then legacy single LEAD_ALERT_PHONE, then the built-in owner + manager list.
+    const configured = Deno.env.get("LEAD_ALERT_PHONES");
+    const legacySingle = Deno.env.get("LEAD_ALERT_PHONE");
+    const destinations = configured
+      ? configured.split(",").map(s => s.trim()).filter(Boolean)
+      : legacySingle
+        ? [legacySingle]
+        : LEAD_ALERT_PHONE_FALLBACKS;
+
+    // Send independently; one failing must not block the other.
+    const results = await Promise.all(destinations.map(dest => sendLeadSms(dest, smsBody)));
+    const anyOk = results.some(r => r.ok);
+    const sids = results.filter(r => r.ok).map(r => r.sid).filter(Boolean);
+    const reasons = results.filter(r => !r.ok).map(r => r.reason);
 
     // Fail-silent: always return success so the client-side lead flow never
     // shows an error to the visitor when Twilio is misconfigured/down.
     return new Response(
       JSON.stringify(
-        result.ok
-          ? { success: true, sid: result.sid }
-          : { success: true, sid: null, sms_skipped: true, reason: result.reason }
+        anyOk
+          ? { success: true, sids, sent_to: destinations.length, failed_reasons: reasons }
+          : { success: true, sids: [], sms_skipped: true, reasons }
       ),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

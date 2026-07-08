@@ -94,7 +94,26 @@ export async function submitLead(data: LeadData): Promise<{ success: boolean; er
         }
       : {};
 
-    const { error: platformInsertError } = await supabase
+    // Idempotency guard: skip if an identical lead (same business + phone
+    // + source) was created in the last 10 minutes. Prevents duplicates
+    // from double-taps, browser back/resubmit, or accidental retries.
+    let skipInsert = false;
+    if (clean.phone) {
+      const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+      const { data: recent } = await supabase
+        .from("platform_leads")
+        .select("id")
+        .eq("business_id", GCP_BUSINESS_ID)
+        .eq("inquiry_phone", clean.phone)
+        .eq("source_name", clean.source || "website")
+        .gte("created_at", tenMinAgo)
+        .limit(1);
+      if (recent && recent.length > 0) skipInsert = true;
+    }
+
+    const platformInsertRes = skipInsert
+      ? { error: null as null | { message: string } }
+      : await supabase
       .from("platform_leads")
       .insert({
         business_id: GCP_BUSINESS_ID,
@@ -115,8 +134,13 @@ export async function submitLead(data: LeadData): Promise<{ success: boolean; er
         },
         ...pageContext,
       });
-
+    const platformInsertError = platformInsertRes.error;
     if (platformInsertError) throw platformInsertError;
+
+    if (skipInsert) {
+      if (import.meta.env.DEV) console.info("[lead dedupe] skipped duplicate lead within 10min window");
+      return { success: true };
+    }
 
     // Keep the legacy raw lead record for existing admin/reporting flows.
     const { data: lead, error: insertError } = await supabase

@@ -33,11 +33,20 @@ function LeadStatusBadge({ status }: { status: string }) {
   );
 }
 
-function UrgencyDot({ createdAt }: { createdAt: string }) {
+function UrgencyDot({ createdAt, status }: { createdAt: string; status: string }) {
   const mins = (Date.now() - new Date(createdAt).getTime()) / 60000;
+  const isNew = status === "new";
+  if (isNew) {
+    return (
+      <span className="relative inline-flex w-2.5 h-2.5" title="New lead">
+        <span className="absolute inset-0 rounded-full bg-primary animate-ping opacity-60" />
+        <span className="relative inline-flex w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]" />
+      </span>
+    );
+  }
   if (mins > 60) return <span className="w-2 h-2 rounded-full bg-destructive inline-block" title="Over 1 hour old" />;
   if (mins > 15) return <span className="w-2 h-2 rounded-full bg-yellow-500 inline-block" title="Over 15 min" />;
-  return <span className="w-2 h-2 rounded-full bg-primary inline-block" title="Fresh lead" />;
+  return <span className="w-2 h-2 rounded-full bg-muted-foreground/50 inline-block" />;
 }
 
 export default function PlatformLeads() {
@@ -122,51 +131,74 @@ export default function PlatformLeads() {
           <div className="space-y-2">
             {leads.map(lead => {
               const biz = getBizInfo(lead.business_id);
+              const statusMeta = LEAD_STATUSES.find(s => s.value === lead.lead_status);
+              const accent = statusMeta?.color || "hsl(var(--muted-foreground))";
               return (
-                <button
+                <div
                   key={lead.id}
-                  onClick={() => setSelectedLead(lead)}
-                  className="w-full bg-card border border-border rounded-xl p-4 hover:border-primary/30 transition-all text-left"
+                  className="group relative w-full bg-card border border-border rounded-xl overflow-hidden hover:border-primary/40 transition-all"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0 space-y-1.5">
-                      <div className="flex items-center gap-2">
-                        <UrgencyDot createdAt={lead.created_at} />
-                        <span className="font-body text-sm font-medium text-foreground truncate">
-                          {lead.inquiry_name}
-                        </span>
-                        {biz && <InlineBadge shortcode={biz.shortcode} color={biz.default_business_color} />}
-                      </div>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground font-body">
-                        {lead.inquiry_phone && (
-                          <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{lead.inquiry_phone}</span>
-                        )}
-                        {lead.inquiry_email && (
-                          <span className="flex items-center gap-1 truncate"><Mail className="w-3 h-3" />{lead.inquiry_email}</span>
-                        )}
+                  {/* status accent edge */}
+                  <span
+                    className="absolute left-0 top-0 bottom-0 w-1"
+                    style={{ background: accent, boxShadow: `0 0 12px ${accent}55` }}
+                  />
+                  <button
+                    onClick={() => setSelectedLead(lead)}
+                    className="w-full text-left pl-4 pr-3 py-3.5"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0 space-y-1.5">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <UrgencyDot createdAt={lead.created_at} status={lead.lead_status} />
+                          <span className="font-display text-base font-semibold text-foreground truncate">
+                            {lead.inquiry_name}
+                          </span>
+                          {biz && <InlineBadge shortcode={biz.shortcode} color={biz.default_business_color} />}
+                        </div>
                         {lead.requested_service && (
-                          <span className="flex items-center gap-1"><Tag className="w-3 h-3" />{lead.requested_service}</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-muted-foreground/70 font-body">
-                          {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
-                        </span>
-                        {lead.source_name && (
-                          <span className="text-[10px] text-muted-foreground/70 flex items-center gap-0.5">
-                            <Globe className="w-2.5 h-2.5" />{lead.source_name}
+                          <span
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-body font-medium bg-secondary text-foreground/80 border border-border"
+                          >
+                            <Tag className="w-2.5 h-2.5" />
+                            {lead.requested_service}
                           </span>
                         )}
+                        {lead.message && (
+                          <p className="font-body text-xs text-muted-foreground italic line-clamp-1">
+                            "{lead.message}"
+                          </p>
+                        )}
+                        <div className="flex items-center gap-3 text-[11px] text-muted-foreground/80 font-body">
+                          <span className="font-medium text-foreground/70">
+                            {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
+                          </span>
+                          {lead.source_name && (
+                            <span className="flex items-center gap-0.5 truncate">
+                              <Globe className="w-2.5 h-2.5" />{lead.source_name}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-2 shrink-0">
+                        <LeadStatusBadge status={lead.lead_status} />
+                        {lead.urgency_level === "urgent" && (
+                          <AlertTriangle className="w-3.5 h-3.5 text-destructive" />
+                        )}
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-1.5 shrink-0">
-                      <LeadStatusBadge status={lead.lead_status} />
-                      {lead.urgency_level === "urgent" && (
-                        <AlertTriangle className="w-3.5 h-3.5 text-destructive" />
-                      )}
-                    </div>
-                  </div>
-                </button>
+                  </button>
+                  {lead.inquiry_phone && (
+                    <a
+                      href={`tel:${lead.inquiry_phone}`}
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label={`Call ${lead.inquiry_name}`}
+                      className="absolute right-3 bottom-3 inline-flex items-center justify-center w-9 h-9 rounded-full bg-primary/15 border border-primary/30 text-primary hover:bg-primary/25 transition-colors"
+                    >
+                      <Phone className="w-4 h-4" />
+                    </a>
+                  )}
+                </div>
               );
             })}
           </div>
@@ -226,19 +258,77 @@ function LeadDetail({ lead, biz, onStatusChange, onClose }: {
   };
 
   return (
-    <div className="space-y-6 pt-2">
+    <div className="space-y-5 pt-2">
+      {/* Header: name + big status pill */}
       <SheetHeader>
-        <div className="flex items-center gap-2">
-          {biz && <InlineBadge shortcode={biz.shortcode} color={biz.default_business_color} />}
-          <SheetTitle className="font-display text-lg text-foreground">{lead.inquiry_name}</SheetTitle>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              {biz && <InlineBadge shortcode={biz.shortcode} color={biz.default_business_color} />}
+              <span className="text-[11px] text-muted-foreground font-body">
+                {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
+              </span>
+            </div>
+            <SheetTitle className="font-display text-2xl font-bold text-foreground">
+              {lead.inquiry_name}
+            </SheetTitle>
+          </div>
+          <div className="shrink-0"><LeadStatusBadge status={lead.lead_status} /></div>
         </div>
       </SheetHeader>
 
-      {/* Status selector */}
+      {/* PRIMARY ACTIONS — above the fold */}
+      {(lead.inquiry_phone || lead.inquiry_email) && (
+        <div className="grid grid-cols-2 gap-2">
+          {lead.inquiry_phone && (
+            <a
+              href={`tel:${lead.inquiry_phone}`}
+              className="inline-flex items-center justify-center gap-2 h-12 rounded-xl bg-primary text-primary-foreground font-body font-bold text-sm shadow-[0_0_18px_hsl(var(--primary)/0.35)] hover:brightness-110 transition"
+            >
+              <Phone className="w-4 h-4" /> Call
+            </a>
+          )}
+          {lead.inquiry_phone && (
+            <a
+              href={`sms:${lead.inquiry_phone}`}
+              className="inline-flex items-center justify-center gap-2 h-12 rounded-xl bg-secondary border border-primary/30 text-primary font-body font-bold text-sm hover:bg-primary/10 transition"
+            >
+              <MessageSquare className="w-4 h-4" /> Text
+            </a>
+          )}
+        </div>
+      )}
+
+      {/* Contact */}
       <div className="space-y-2">
-        <p className="font-body text-xs text-muted-foreground uppercase tracking-wider">Status</p>
+        {lead.inquiry_phone && (
+          <a href={`tel:${lead.inquiry_phone}`} className="flex items-center gap-2 text-sm text-foreground font-body hover:text-primary">
+            <Phone className="w-4 h-4 text-primary" /> {lead.inquiry_phone}
+          </a>
+        )}
+        {lead.inquiry_email && (
+          <a href={`mailto:${lead.inquiry_email}`} className="flex items-center gap-2 text-sm text-foreground font-body hover:text-primary break-all">
+            <Mail className="w-4 h-4 text-primary" /> {lead.inquiry_email}
+          </a>
+        )}
+      </div>
+
+      {/* MESSAGE — the money content */}
+      {lead.message && (
+        <div className="relative rounded-xl border border-primary/30 bg-primary/5 p-4 overflow-hidden">
+          <span className="absolute left-0 top-0 bottom-0 w-1 bg-primary shadow-[0_0_10px_hsl(var(--primary))]" />
+          <p className="font-body text-[10px] text-primary uppercase tracking-wider mb-1.5 font-bold">Customer message</p>
+          <p className="font-body text-[15px] leading-relaxed text-foreground whitespace-pre-wrap">
+            {lead.message}
+          </p>
+        </div>
+      )}
+
+      {/* Status */}
+      <div className="space-y-1.5">
+        <p className="font-body text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Status</p>
         <Select value={lead.lead_status} onValueChange={onStatusChange}>
-          <SelectTrigger className="bg-secondary border-border">
+          <SelectTrigger className="bg-secondary border-border h-10">
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-card border-border">
@@ -249,25 +339,10 @@ function LeadDetail({ lead, biz, onStatusChange, onClose }: {
         </Select>
       </div>
 
-      {/* Contact info */}
+      {/* Details grid */}
       <div className="space-y-3">
-        <p className="font-body text-xs text-muted-foreground uppercase tracking-wider">Contact</p>
-        {lead.inquiry_phone && (
-          <a href={`tel:${lead.inquiry_phone}`} className="flex items-center gap-2 text-sm text-primary font-body hover:underline">
-            <Phone className="w-4 h-4" /> {lead.inquiry_phone}
-          </a>
-        )}
-        {lead.inquiry_email && (
-          <a href={`mailto:${lead.inquiry_email}`} className="flex items-center gap-2 text-sm text-primary font-body hover:underline">
-            <Mail className="w-4 h-4" /> {lead.inquiry_email}
-          </a>
-        )}
-      </div>
-
-      {/* Details */}
-      <div className="space-y-3">
-        <p className="font-body text-xs text-muted-foreground uppercase tracking-wider">Details</p>
-        <div className="grid grid-cols-2 gap-3">
+        <p className="font-body text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Details</p>
+        <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-secondary/50 border border-border">
           <DetailItem label="Service" value={lead.requested_service} />
           <DetailItem label="Urgency" value={lead.urgency_level} />
           <DetailItem label="Source" value={lead.source_name} />
@@ -277,23 +352,16 @@ function LeadDetail({ lead, biz, onStatusChange, onClose }: {
         </div>
       </div>
 
-      {lead.message && (
-        <div className="space-y-2">
-          <p className="font-body text-xs text-muted-foreground uppercase tracking-wider">Message</p>
-          <p className="font-body text-sm text-foreground bg-secondary rounded-lg p-3">{lead.message}</p>
-        </div>
-      )}
-
       {lead.lost_reason && (
         <div className="space-y-2">
-          <p className="font-body text-xs text-muted-foreground uppercase tracking-wider">Lost Reason</p>
+          <p className="font-body text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Lost Reason</p>
           <p className="font-body text-sm text-destructive">{lead.lost_reason}</p>
         </div>
       )}
 
       {/* Timeline */}
       <div className="space-y-2">
-        <p className="font-body text-xs text-muted-foreground uppercase tracking-wider">Timeline</p>
+        <p className="font-body text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Timeline</p>
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-xs font-body text-muted-foreground">
             <Clock className="w-3 h-3" />
@@ -308,20 +376,21 @@ function LeadDetail({ lead, biz, onStatusChange, onClose }: {
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex gap-2 pt-2">
+      {/* Secondary actions */}
+      <div className="flex gap-2 pt-3 border-t border-border">
         <Button
-          size="sm"
-          variant="outline"
-          className="flex-1 gap-1.5 border-border"
+          className="flex-1 gap-1.5 bg-primary text-primary-foreground hover:brightness-110 font-semibold h-11"
           disabled={converting || lead.lead_status === "won"}
           onClick={handleConvert}
         >
-          <ArrowRight className="w-3.5 h-3.5" />
-          {converting ? "Converting..." : lead.lead_status === "won" ? "Already Converted" : "Convert to Customer"}
+          <ArrowRight className="w-4 h-4" />
+          {converting ? "Converting..." : lead.lead_status === "won" ? "Converted" : "Convert to Customer"}
         </Button>
-        <Button size="sm" variant="outline" className="flex-1 gap-1.5 border-border">
-          <MessageSquare className="w-3.5 h-3.5" /> Add Note
+        <Button
+          variant="outline"
+          className="flex-1 gap-1.5 border-primary/40 text-foreground hover:bg-primary/10 h-11 font-semibold"
+        >
+          <MessageSquare className="w-4 h-4" /> Add Note
         </Button>
       </div>
     </div>
