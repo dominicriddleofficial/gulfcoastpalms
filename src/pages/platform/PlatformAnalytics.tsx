@@ -483,6 +483,7 @@ const customTooltipStyle = {
 export default function PlatformAnalytics() {
   const { selectedBusinessId } = useBusinessContext();
   const queryClient = useQueryClient();
+  const { isOwner } = useUserRole();
   const currentActualYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentActualYear);
   const [syncing, setSyncing] = useState(false);
