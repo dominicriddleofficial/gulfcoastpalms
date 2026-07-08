@@ -94,12 +94,9 @@ export async function submitLead(data: LeadData): Promise<{ success: boolean; er
         }
       : {};
 
-    const { error: platformInsertError } = await supabase
-      // Idempotency guard: skip if an identical lead (same business + phone
-      // + source) was created in the last 10 minutes. Prevents duplicates
-      // from double-taps, browser back/resubmit, or accidental retries.
-      ? null : null;
-
+    // Idempotency guard: skip if an identical lead (same business + phone
+    // + source) was created in the last 10 minutes. Prevents duplicates
+    // from double-taps, browser back/resubmit, or accidental retries.
     let skipInsert = false;
     if (clean.phone) {
       const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
@@ -114,8 +111,8 @@ export async function submitLead(data: LeadData): Promise<{ success: boolean; er
       if (recent && recent.length > 0) skipInsert = true;
     }
 
-    const { error: platformInsertError } = skipInsert
-      ? { error: null }
+    const platformInsertRes = skipInsert
+      ? { error: null as null | { message: string } }
       : await supabase
       .from("platform_leads")
       .insert({
@@ -137,6 +134,7 @@ export async function submitLead(data: LeadData): Promise<{ success: boolean; er
         },
         ...pageContext,
       });
+    const platformInsertError = platformInsertRes.error;
 
     if (platformInsertError) throw platformInsertError;
 
