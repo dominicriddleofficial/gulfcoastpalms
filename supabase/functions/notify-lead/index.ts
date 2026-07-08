@@ -23,7 +23,7 @@ function getCorsHeaders(req: Request) {
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
 // Owner + office manager cells for lead alerts.
 // Overridable via LEAD_ALERT_PHONES (comma-separated) or legacy LEAD_ALERT_PHONE.
-const LEAD_ALERT_PHONE_FALLBACKS = ["+18506049819", "+18507127850"];
+const LEAD_ALERT_PHONE_FALLBACKS = ["+18508897255", "+18507127850"];
 
 /**
  * SimpleTexting REST — preferred path when SIMPLETEXTING_API_KEY is set.
