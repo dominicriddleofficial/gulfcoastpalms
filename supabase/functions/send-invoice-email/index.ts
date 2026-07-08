@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
       if (invRow?.business_id) {
         const { data: biz } = await supabase
           .from("businesses")
-          .select("public_brand_name, legal_name, from_email, contact_email")
+          .select("public_brand_name, legal_name, from_email, support_email")
           .eq("id", invRow.business_id)
           .maybeSingle();
         if (biz) {
@@ -140,7 +140,7 @@ Deno.serve(async (req) => {
             const brand = biz.public_brand_name || biz.legal_name || "Invoice";
             FROM_EMAIL = `${brand} <${biz.from_email}>`;
           }
-          replyToEmail = biz.contact_email || null;
+          replyToEmail = biz.support_email || null;
           resolvedBusinessName = businessName || biz.public_brand_name || biz.legal_name || "Invoice";
         }
       }
