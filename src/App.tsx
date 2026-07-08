@@ -22,6 +22,28 @@ const RouteTracker = () => {
   useEffect(() => {
     trackPageView(location.pathname);
   }, [location.pathname]);
+  // Global tap tracking on tel: links — public site only (skip /platform, /portal, /admin).
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      const anchor = target.closest("a[href^='tel:']") as HTMLAnchorElement | null;
+      if (!anchor) return;
+      const path = window.location.pathname;
+      if (path.startsWith("/platform") || path.startsWith("/portal") || path.startsWith("/admin")) return;
+      const label =
+        anchor.getAttribute("data-call-source") ||
+        (anchor.textContent || "").trim().slice(0, 60) ||
+        "unknown";
+      trackEvent("call_tap", {
+        page_path: path,
+        click_location: label,
+        source: "public_site",
+      });
+    };
+    document.addEventListener("click", onClick, { capture: true });
+    return () => document.removeEventListener("click", onClick, { capture: true } as EventListenerOptions);
+  }, []);
   useEffect(() => {
     const path = location.pathname;
     let manifestHref = "/manifest.json";
