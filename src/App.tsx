@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider, keepPreviousData } from "@tanstack/re
 import { BrowserRouter, Routes, useLocation } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { BusinessProvider } from "@/contexts/BusinessContext";
-import { trackPageView } from "@/lib/analytics";
+import { trackPageView, trackEvent } from "@/lib/analytics";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { CreateSheetsProvider } from "@/components/platform/CreateSheetsProvider";
 import { installQueryCacheMirror } from "@/lib/queryCacheMirror";
