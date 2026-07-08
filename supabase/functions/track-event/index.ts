@@ -33,6 +33,7 @@ const KNOWN_EVENTS = new Set([
   "quote_request_submitted", "quote_request_abandoned",
   "call_now_click", "text_us_click",
   "sticky_bar_call_click", "sticky_bar_text_click",
+  "call_tap",
   "chat_opened", "chat_message_sent", "chat_lead_captured",
   "mobile_menu_opened", "mobile_menu_link_clicked",
   "service_page_cta_click", "location_page_cta_click",
