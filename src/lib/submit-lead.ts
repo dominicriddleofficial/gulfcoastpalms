@@ -142,8 +142,6 @@ export async function submitLead(data: LeadData): Promise<{ success: boolean; er
       return { success: true };
     }
 
-    if (platformInsertError) throw platformInsertError;
-
     // Keep the legacy raw lead record for existing admin/reporting flows.
     const { data: lead, error: insertError } = await supabase
       .from("leads")
