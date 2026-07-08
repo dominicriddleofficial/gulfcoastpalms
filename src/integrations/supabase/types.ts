@@ -1179,6 +1179,50 @@ export type Database = {
         }
         Relationships: []
       }
+      eod_reports: {
+        Row: {
+          answers: Json
+          business_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          report_date: string
+          submitted_at: string
+          submitted_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          answers?: Json
+          business_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          report_date: string
+          submitted_at?: string
+          submitted_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          answers?: Json
+          business_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          report_date?: string
+          submitted_at?: string
+          submitted_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eod_reports_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       error_logs: {
         Row: {
           component_stack: string | null
@@ -3034,6 +3078,9 @@ export type Database = {
           tags: Json | null
           updated_at: string
           vip_flag: boolean | null
+          yearly_trimming: boolean
+          yearly_trimming_added_at: string | null
+          yearly_trimming_source: string | null
         }
         Insert: {
           business_id: string
@@ -3059,6 +3106,9 @@ export type Database = {
           tags?: Json | null
           updated_at?: string
           vip_flag?: boolean | null
+          yearly_trimming?: boolean
+          yearly_trimming_added_at?: string | null
+          yearly_trimming_source?: string | null
         }
         Update: {
           business_id?: string
@@ -3084,6 +3134,9 @@ export type Database = {
           tags?: Json | null
           updated_at?: string
           vip_flag?: boolean | null
+          yearly_trimming?: boolean
+          yearly_trimming_added_at?: string | null
+          yearly_trimming_source?: string | null
         }
         Relationships: [
           {
@@ -6395,6 +6448,9 @@ export type Database = {
           tags: Json | null
           updated_at: string
           vip_flag: boolean | null
+          yearly_trimming: boolean
+          yearly_trimming_added_at: string | null
+          yearly_trimming_source: string | null
         }[]
         SetofOptions: {
           from: "*"
