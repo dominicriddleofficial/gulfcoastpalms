@@ -6,8 +6,8 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Dashboard quick-link card showing count of Yearly Trimming clients.
- * Visible to owner + manager.
+ * Dashboard quick-link card showing the deduplicated count of Yearly Trimming
+ * clients via the get_yearly_trimming_count RPC. Visible to owner + manager.
  */
 export default function YearlyClientsTile() {
   const { selectedBusinessId } = usePlatformAuth();
@@ -18,14 +18,14 @@ export default function YearlyClientsTile() {
     queryKey: ["yearly-clients-count", selectedBusinessId],
     queryFn: async () => {
       if (!selectedBusinessId) return 0;
-      const { count } = await supabase
-        .from("platform_customers")
-        .select("id", { head: true, count: "exact" })
-        .eq("business_id", selectedBusinessId)
-        .eq("yearly_trimming", true);
-      return count ?? 0;
+      const { data, error } = await supabase.rpc("get_yearly_trimming_count", {
+        _business_id: selectedBusinessId,
+      });
+      if (error) throw error;
+      return (data as number) ?? 0;
     },
     enabled: !!selectedBusinessId && allowed,
+    staleTime: 60 * 1000,
   });
 
   if (isLoading || !allowed) return null;

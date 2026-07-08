@@ -6645,6 +6645,10 @@ export type Database = {
         Args: { _business_id: string; _user_id: string }
         Returns: string
       }
+      get_yearly_trimming_count: {
+        Args: { _business_id: string }
+        Returns: number
+      }
       get_yearly_trimming_roster: {
         Args: { _business_id: string }
         Returns: {
