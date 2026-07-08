@@ -497,6 +497,40 @@ export default function PlatformAnalytics() {
     refetchOnWindowFocus: true,
   });
 
+  // Owner-only: website tel: tap analytics from analytics_events.
+  const { data: callTaps } = useQuery({
+    queryKey: ["call-taps", selectedBusinessId],
+    enabled: !!selectedBusinessId && isOwner,
+    queryFn: async () => {
+      const since = new Date();
+      since.setDate(since.getDate() - 30);
+      const { data: rows, error } = await supabase
+        .from("analytics_events")
+        .select("created_at,page_path")
+        .eq("event_name", "call_tap")
+        .gte("created_at", since.toISOString())
+        .limit(5000);
+      if (error) throw error;
+      const now = Date.now();
+      const weekMs = 7 * 24 * 60 * 60 * 1000;
+      let week = 0;
+      const monthCount = rows?.length ?? 0;
+      const byPage = new Map<string, number>();
+      for (const r of rows ?? []) {
+        const t = new Date(r.created_at).getTime();
+        if (now - t <= weekMs) week++;
+        const p = r.page_path || "/";
+        byPage.set(p, (byPage.get(p) ?? 0) + 1);
+      }
+      const topPages = Array.from(byPage.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([page, count]) => ({ page, count }));
+      return { week, month: monthCount, topPages };
+    },
+    staleTime: 60_000,
+  });
+
   const handleSyncHistorical = async () => {
     setSyncing(true);
     try {
