@@ -1,8 +1,6 @@
-import { supabase } from "@/integrations/supabase/client";
 import { trackEvent } from "@/lib/analytics";
-import { leadFormSchema, sanitizeText } from "@/lib/validation";
-
-const GCP_BUSINESS_ID = "b0000000-0000-0000-0000-000000000001";
+import { leadFormSchema } from "@/lib/validation";
+import { invokeEdge } from "@/lib/invoke-edge";
 
 export interface LeadData {
   name: string;
@@ -79,8 +77,6 @@ export async function submitLead(data: LeadData): Promise<{ success: boolean; er
 
     const leadSource = detectLeadSource(clean.source);
 
-    // Insert into the platform workspace lead pipeline first so quote-form leads
-    // are visible in Platform → Leads immediately.
     const pageContext = typeof window !== "undefined"
       ? {
           website_origin: window.location.origin,
@@ -94,95 +90,31 @@ export async function submitLead(data: LeadData): Promise<{ success: boolean; er
         }
       : {};
 
-    // Idempotency guard: skip if an identical lead (same business + phone
-    // + source) was created in the last 10 minutes. Prevents duplicates
-    // from double-taps, browser back/resubmit, or accidental retries.
-    let skipInsert = false;
-    if (clean.phone) {
-      const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-      const { data: recent } = await supabase
-        .from("platform_leads")
-        .select("id")
-        .eq("business_id", GCP_BUSINESS_ID)
-        .eq("inquiry_phone", clean.phone)
-        .eq("source_name", clean.source || "website")
-        .gte("created_at", tenMinAgo)
-        .limit(1);
-      if (recent && recent.length > 0) skipInsert = true;
-    }
-
-    const platformInsertRes = skipInsert
-      ? { error: null as null | { message: string } }
-      : await supabase
-      .from("platform_leads")
-      .insert({
-        business_id: GCP_BUSINESS_ID,
-        inquiry_name: clean.name,
-        inquiry_phone: clean.phone || null,
-        inquiry_email: clean.email || null,
-        requested_service: clean.service || null,
-        requested_service_category: clean.service || null,
-        message: clean.message || null,
-        source_name: clean.source || "website",
-        urgency_level: "normal",
-        lead_status: "new",
-        lead_source: leadSource,
-        raw_payload_json: {
-          location: clean.location || null,
-          sqft: clean.sqft || null,
-          source: clean.source || "website",
-        },
-        ...pageContext,
-      });
-    const platformInsertError = platformInsertRes.error;
-    if (platformInsertError) throw platformInsertError;
-
-    if (skipInsert) {
-      if (import.meta.env.DEV) console.info("[lead dedupe] skipped duplicate lead within 10min window");
-      return { success: true };
-    }
-
-    // Keep the legacy raw lead record for existing admin/reporting flows.
-    const { data: lead, error: insertError } = await supabase
-      .from("leads")
-      .insert({
-        name: clean.name,
-        phone: clean.phone || null,
-        email: clean.email || null,
-        source: clean.source || "website",
-        service: clean.service || null,
-        location: clean.location || null,
-        message: clean.message || null,
-        sqft: clean.sqft || null,
-        lead_source: leadSource,
-      })
-      .select("id")
-      .single();
-
-    if (insertError) throw insertError;
-
-    // Enroll in post-lead drip sequence
-    const nextSend = new Date();
-    nextSend.setMinutes(nextSend.getMinutes() + 5); // First email in 5 min
-    await supabase.from("email_drip_enrollments").insert({
-      lead_id: lead.id,
-      sequence_type: "post_lead",
-      current_step: 0,
-      next_send_at: nextSend.toISOString(),
-      status: "active",
+    // All DB writes + dedupe + SMS run server-side in the submit-lead edge
+    // function (service role). Anon can't SELECT the lead tables under RLS,
+    // so any direct .select() from the browser 401s and blocks the submit.
+    const { data: result, error: fnErr } = await invokeEdge<{
+      success: boolean;
+      error?: string;
+      id?: string;
+      duplicate?: boolean;
+    }>("submit-lead", {
+      name: clean.name,
+      phone: clean.phone,
+      email: clean.email,
+      source: clean.source || "website",
+      service: clean.service,
+      location: clean.location,
+      message: clean.message,
+      sqft: clean.sqft,
+      lead_source: leadSource,
+      page_context: pageContext,
     });
 
-    // Fire SMS notification (non-blocking)
-    supabase.functions.invoke("notify-lead", {
-      body: {
-        name: data.name,
-        phone: data.phone,
-        email: data.email,
-        service: data.service,
-        location: data.location,
-        message: data.message,
-      },
-    }).catch(console.error);
+    if (fnErr || !result?.success) {
+      const msg = result?.error || fnErr?.message || "Failed to submit";
+      return { success: false, error: msg };
+    }
 
     // Track conversion in GA4
     trackEvent("lead_form_submit", {
