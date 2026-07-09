@@ -212,10 +212,16 @@ const EmergencyPalmService = () => {
               />
               <button
                 type="submit"
-                className="w-full py-4 rounded-xl bg-destructive text-primary-foreground font-body font-bold text-lg hover:bg-destructive/90 transition-colors"
+                disabled={submitting}
+                className="w-full py-4 rounded-xl bg-destructive text-primary-foreground font-body font-bold text-lg hover:bg-destructive/90 transition-colors disabled:opacity-60"
               >
-                Submit Emergency Request
+                {submitting ? "Submitting…" : "Submit Emergency Request"}
               </button>
+              {errorMsg ? (
+                <p role="alert" className="text-sm font-body text-destructive text-center">
+                  {errorMsg}
+                </p>
+              ) : null}
             </form>
           )}
         </div>
