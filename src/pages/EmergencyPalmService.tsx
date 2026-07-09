@@ -18,16 +18,22 @@ const fadeUp = {
 const EmergencyPalmService = () => {
   const [form, setForm] = useState({ name: "", phone: "", address: "", damage: "" });
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
+    setErrorMsg(null);
     const parsed = emergencyFormSchema.safeParse(form);
     if (!parsed.success) {
-      return; // HTML5 validation handles display
+      setErrorMsg(parsed.error.errors[0]?.message || "Please check the form and try again.");
+      return;
     }
+    setSubmitting(true);
     try {
       const { submitLead } = await import("@/lib/submit-lead");
-      await submitLead({
+      const result = await submitLead({
         name: parsed.data.name,
         phone: parsed.data.phone,
         message: `EMERGENCY — ${parsed.data.address} — ${parsed.data.damage || ""}`,
@@ -35,9 +41,15 @@ const EmergencyPalmService = () => {
         source: "emergency-page",
         location: parsed.data.address,
       });
-      setSubmitted(true);
-    } catch {
-      setSubmitted(true);
+      if (result.success) {
+        setSubmitted(true);
+      } else {
+        setErrorMsg(result.error || "Could not submit. Please call (850) 910-1290.");
+      }
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Could not submit. Please call (850) 910-1290.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
