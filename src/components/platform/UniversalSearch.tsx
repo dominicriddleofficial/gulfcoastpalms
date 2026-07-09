@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, X, Users, FileText, Briefcase, Receipt, MapPin, Phone, Target, Activity } from "lucide-react";
+import {
+  Search, X, Users, FileText, Briefcase, Receipt, MapPin, Target, Activity,
+  RefreshCw, SearchX,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
@@ -44,6 +47,90 @@ const TYPE_META: Record<string, { label: string; icon: typeof Users }> = {
   property: { label: "Properties", icon: MapPin },
   crew: { label: "Crew", icon: Users },
 };
+
+// Distinct subtle tints per entity type — dark surface, colored halo/icon.
+const TYPE_TINT: Record<string, { bg: string; fg: string; ring: string }> = {
+  customer: { bg: "rgba(var(--biz-accent-rgb),0.14)", fg: "var(--accent-color)", ring: "rgba(var(--biz-accent-rgb),0.30)" },
+  lead:     { bg: "rgba(var(--biz-accent-rgb),0.14)", fg: "var(--accent-color)", ring: "rgba(var(--biz-accent-rgb),0.30)" },
+  job:      { bg: "rgba(59,130,246,0.14)",  fg: "#60a5fa", ring: "rgba(59,130,246,0.30)" },
+  quote:    { bg: "rgba(168,85,247,0.14)",  fg: "#c084fc", ring: "rgba(168,85,247,0.30)" },
+  invoice:  { bg: "rgba(245,158,11,0.14)",  fg: "#fbbf24", ring: "rgba(245,158,11,0.30)" },
+  property: { bg: "rgba(6,182,212,0.14)",   fg: "#22d3ee", ring: "rgba(6,182,212,0.30)" },
+  crew:     { bg: "rgba(255,255,255,0.06)", fg: "#e5e7eb", ring: "rgba(255,255,255,0.18)" },
+};
+
+function tintFor(type: string) {
+  return TYPE_TINT[type] ?? TYPE_TINT.crew;
+}
+
+function escapeRegex(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function Highlight({ text, term }: { text: string; term: string }) {
+  if (!term || term.length < 2) return <>{text}</>;
+  try {
+    const parts = text.split(new RegExp(`(${escapeRegex(term)})`, "ig"));
+    return (
+      <>
+        {parts.map((p, i) =>
+          p.toLowerCase() === term.toLowerCase() ? (
+            <mark
+              key={i}
+              className="bg-transparent px-0"
+              style={{ color: "var(--accent-color)", background: "rgba(var(--biz-accent-rgb),0.14)", borderRadius: 3 }}
+            >
+              {p}
+            </mark>
+          ) : (
+            <span key={i}>{p}</span>
+          )
+        )}
+      </>
+    );
+  } catch {
+    return <>{text}</>;
+  }
+}
+
+function TypeIconTile({ type }: { type: string }) {
+  const t = tintFor(type);
+  const Icon = TYPE_META[type]?.icon ?? Users;
+  return (
+    <span
+      className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center"
+      style={{ background: t.bg, boxShadow: `inset 0 0 0 1px ${t.ring}` }}
+    >
+      <Icon className="w-4 h-4" style={{ color: t.fg }} />
+    </span>
+  );
+}
+
+function SkeletonCard() {
+  return (
+    <div
+      className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
+      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}
+    >
+      <div className="w-9 h-9 rounded-lg bg-white/[0.06] animate-pulse" />
+      <div className="flex-1 space-y-1.5">
+        <div className="h-3 w-2/3 rounded bg-white/[0.06] animate-pulse" />
+        <div className="h-2.5 w-1/2 rounded bg-white/[0.04] animate-pulse" />
+      </div>
+    </div>
+  );
+}
+
+function activityDateBucket(iso: string): "today" | "yesterday" | "earlier" {
+  const d = new Date(iso);
+  const now = new Date();
+  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const startYest = startToday - 86400000;
+  const t = d.getTime();
+  if (t >= startToday) return "today";
+  if (t >= startYest) return "yesterday";
+  return "earlier";
+}
 
 const RECENT_KEY = "platform_recent_searches";
 
@@ -324,25 +411,42 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
       {/* Trigger button (mobile) / inline input (desktop) */}
       <div
         className={cn(
-          "flex items-center gap-2 rounded-lg border border-border bg-secondary/30 px-3 py-1.5 cursor-text transition-all",
-          open ? "w-full md:w-80 ring-2 ring-primary/20" : "w-10 md:w-64"
+          "flex items-center gap-2 rounded-xl cursor-text transition-all",
+          embedded ? "px-3.5 py-3" : "px-3 py-1.5",
+          open ? "w-full md:w-80" : "w-10 md:w-64"
         )}
+        style={{
+          background: "rgba(255,255,255,0.04)",
+          border: "1px solid rgba(var(--biz-accent-rgb),0.18)",
+          boxShadow: open
+            ? "inset 0 0 0 1px rgba(var(--biz-accent-rgb),0.35), 0 0 24px -8px rgba(var(--biz-accent-rgb),0.35)"
+            : "none",
+        }}
         onClick={() => { setOpen(true); setTimeout(() => inputRef.current?.focus(), 50); }}
       >
-        <Search className="w-4 h-4 text-muted-foreground shrink-0" />
+        <Search
+          className={cn("shrink-0", embedded ? "w-4 h-4" : "w-4 h-4")}
+          style={{ color: open ? "var(--accent-color)" : "hsl(220 8% 55%)" }}
+        />
         <input
           ref={inputRef}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setOpen(true)}
-          placeholder="Search… ⌘K"
+          placeholder={embedded ? "Search customers, jobs, invoices…" : "Search… ⌘K"}
+          style={{ caretColor: "var(--accent-color)" }}
           className={cn(
-            "bg-transparent border-none outline-none font-body text-sm text-foreground placeholder:text-muted-foreground flex-1 min-w-0",
+            "bg-transparent border-none outline-none font-body text-foreground placeholder:text-muted-foreground flex-1 min-w-0",
+            embedded ? "text-[15px]" : "text-sm",
             !embedded && !open && "hidden md:block"
           )}
         />
         {open && query && (
-          <button onClick={() => { setQuery(""); setResults([]); }} className="text-muted-foreground hover:text-foreground">
+          <button
+            onClick={() => { setQuery(""); setResults([]); }}
+            className="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-white/5"
+            aria-label="Clear search"
+          >
             <X className="w-3.5 h-3.5" />
           </button>
         )}
@@ -350,123 +454,224 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
 
       {/* Dropdown */}
       {open && (
-        <div className={cn(
-          "bg-card border border-border rounded-xl overflow-y-auto",
-          embedded
-            ? "mt-2 max-h-[70vh]"
-            : "absolute top-full left-0 right-0 mt-1 shadow-xl z-[70] max-h-[60vh] min-w-[280px] md:min-w-[360px]"
-        )}>
+        <div
+          className={cn(
+            "rounded-2xl overflow-y-auto motion-safe:animate-fade-in",
+            embedded
+              ? "mt-3 max-h-[75vh]"
+              : "absolute top-full left-0 right-0 mt-2 z-[70] max-h-[65vh] min-w-[280px] md:min-w-[380px]"
+          )}
+          style={{
+            background: "rgba(14,17,15,0.96)",
+            border: "1px solid rgba(var(--biz-accent-rgb),0.14)",
+            boxShadow: "0 24px 60px -20px rgba(0,0,0,0.6)",
+            backdropFilter: "blur(12px)",
+          }}
+        >
           {loading && (
-            <div className="px-4 py-3 text-sm text-muted-foreground font-body">Searching…</div>
+            <div className="p-2 space-y-2" aria-live="polite" aria-busy="true">
+              <SkeletonCard />
+              <SkeletonCard />
+              <SkeletonCard />
+            </div>
           )}
 
           {!loading && !query && recentSearches.length > 0 && (
-            <div className="p-2">
-              <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">Recent Searches</p>
-              {recentSearches.map((r) => (
-                <button
-                  key={r}
-                  onClick={() => handleRecentClick(r)}
-                  className="w-full text-left px-3 py-2 min-h-[44px] text-sm font-body text-foreground hover:bg-secondary/50 rounded-lg transition-colors"
-                >
-                  {r}
-                </button>
-              ))}
+            <div className="px-2 pt-2 pb-1">
+              <SectionLabel>Recent Searches</SectionLabel>
+              <div className="flex flex-wrap gap-1.5 px-1 pb-1">
+                {recentSearches.map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => handleRecentClick(r)}
+                    className="px-2.5 py-1 rounded-full text-[12px] font-body text-foreground/90 hover:text-foreground transition-colors"
+                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
           {!query && (activityLoading || recentActivity.length > 0) && (
-            <div className="p-2 border-b border-border/40">
-              <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50 flex items-center gap-1.5">
-                <Activity className="w-3 h-3" />
-                Recent Activity
-              </p>
+            <div className="p-2 space-y-3">
+              <div className="flex items-center gap-1.5 px-2 pt-1">
+                <Activity className="w-3 h-3" style={{ color: "hsl(220 8% 55%)" }} />
+                <SectionLabel inline>Recent Activity</SectionLabel>
+              </div>
               {activityLoading && recentActivity.length === 0 && (
-                <div className="px-3 py-2 text-xs text-muted-foreground font-body">Loading…</div>
+                <div className="space-y-2 px-1">
+                  <SkeletonCard /><SkeletonCard /><SkeletonCard />
+                </div>
               )}
-              {recentActivity.map((item) => {
-                const Icon = activityIcon(item.kind);
-                const numberPart = item.number ? `${item.kind === "job" ? "Job" : item.kind === "invoice" ? "Invoice" : "Quote"} ${item.number}` : item.title;
-                const titleLine = item.number && item.title && item.title !== item.number
-                  ? `${numberPart} — ${item.title}`
-                  : numberPart;
-                const when = (() => {
-                  try {
-                    return formatDistanceToNow(new Date(item.createdAt), { addSuffix: true });
-                  } catch {
-                    return "";
-                  }
-                })();
-                const showAmount = isOwner && (item.kind === "invoice" || item.kind === "quote") && item.total != null && item.total > 0;
+              {(["today", "yesterday", "earlier"] as const).map((bucket) => {
+                const items = recentActivity.filter((i) => activityDateBucket(i.createdAt) === bucket);
+                if (items.length === 0) return null;
                 return (
-                  <button
-                    key={`${item.kind}-${item.id}`}
-                    onClick={() => handleActivityClick(item)}
-                    className="w-full text-left px-3 py-2 min-h-[44px] rounded-lg hover:bg-secondary/50 transition-colors flex items-center gap-2"
-                  >
-                    <Icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                    <span className="flex-1 min-w-0">
-                      <span className="block text-sm font-medium font-body text-foreground truncate">
-                        {titleLine}
-                      </span>
-                      <span className="block text-[11px] text-muted-foreground truncate">
-                        {activityActor(item)} · {when}
-                      </span>
-                    </span>
-                    {showAmount && (
-                      <span className="ml-auto text-xs font-body font-semibold text-foreground shrink-0">
-                        ${item.total!.toLocaleString()}
-                      </span>
-                    )}
-                  </button>
+                  <div key={bucket} className="space-y-1">
+                    <p
+                      className="px-2 text-[9.5px] font-display font-semibold uppercase"
+                      style={{ color: "hsl(220 8% 45%)", letterSpacing: "0.14em" }}
+                    >
+                      {bucket === "today" ? "Today" : bucket === "yesterday" ? "Yesterday" : "Earlier"}
+                    </p>
+                    <div className="space-y-1 px-1">
+                      {items.map((item, idx) => {
+                        const numberPart = item.number
+                          ? `${item.kind === "job" ? "Job" : item.kind === "invoice" ? "Invoice" : "Quote"} ${item.number}`
+                          : item.title;
+                        const titleLine =
+                          item.number && item.title && item.title !== item.number
+                            ? `${numberPart} — ${item.title}`
+                            : numberPart;
+                        const when = (() => {
+                          try { return formatDistanceToNow(new Date(item.createdAt), { addSuffix: true }); }
+                          catch { return ""; }
+                        })();
+                        const showAmount =
+                          isOwner &&
+                          (item.kind === "invoice" || item.kind === "quote") &&
+                          item.total != null && item.total > 0;
+                        const isSync = !item.createdByUserId && item.sourceSystem === "jobber";
+                        return (
+                          <button
+                            key={`${item.kind}-${item.id}`}
+                            onClick={() => handleActivityClick(item)}
+                            className={cn(
+                              "w-full text-left flex items-center gap-3 px-2.5 py-2 rounded-xl transition-all",
+                              "hover:bg-white/[0.05] active:scale-[0.98] motion-safe:animate-fade-in",
+                              isSync && "opacity-70"
+                            )}
+                            style={{
+                              border: "1px solid rgba(255,255,255,0.04)",
+                              animationDelay: `${Math.min(idx * 30, 240)}ms`,
+                            }}
+                          >
+                            <TypeIconTile type={item.kind} />
+                            <span className="flex-1 min-w-0">
+                              <span className="flex items-center gap-1.5">
+                                <span className="block text-[13px] font-body font-semibold text-foreground truncate">
+                                  {titleLine}
+                                </span>
+                                {isSync && (
+                                  <RefreshCw
+                                    className="w-3 h-3 shrink-0"
+                                    style={{ color: "hsl(220 8% 45%)" }}
+                                    aria-label="Synced from Jobber"
+                                  />
+                                )}
+                              </span>
+                              <span className="block text-[11px] text-muted-foreground truncate mt-0.5">
+                                {activityActor(item)} · {when}
+                              </span>
+                            </span>
+                            {showAmount && (
+                              <span
+                                className="ml-auto shrink-0 px-2 py-0.5 rounded-md text-[11px] font-display font-semibold"
+                                style={{
+                                  color: "var(--accent-color)",
+                                  background: "rgba(var(--biz-accent-rgb),0.10)",
+                                  border: "1px solid rgba(var(--biz-accent-rgb),0.20)",
+                                }}
+                              >
+                                ${item.total!.toLocaleString()}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 );
               })}
             </div>
           )}
 
           {!loading && query.length >= 2 && results.length === 0 && (
-            <div className="px-4 py-6 text-center">
-              <p className="text-sm text-muted-foreground font-body">No results for "{query}"</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">Try a phone number, address, or name</p>
+            <div className="px-4 py-10 text-center">
+              <div
+                className="mx-auto w-11 h-11 rounded-2xl flex items-center justify-center mb-3"
+                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
+              >
+                <SearchX className="w-5 h-5" style={{ color: "hsl(220 8% 50%)" }} />
+              </div>
+              <p className="font-display text-[13px] font-semibold text-foreground">No matches for "{query}"</p>
+              <p className="text-[11px] text-muted-foreground mt-1 font-body">Try a name, phone, or job #</p>
             </div>
           )}
 
           {!loading && Object.keys(grouped).length > 0 && (
-            <div className="p-1.5">
+            <div className="p-2 space-y-3">
               {Object.entries(grouped).map(([type, items]) => {
                 const meta = TYPE_META[type];
                 const Icon = meta?.icon || Users;
+                const tint = tintFor(type);
                 return (
-                  <div key={type} className="mb-1">
-                    <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50 flex items-center gap-1.5">
-                      <Icon className="w-3 h-3" />
-                      {meta?.label || type} ({items.length})
-                    </p>
-                    {items.map((item) => (
-                      <button
-                        key={item.id}
-                        onClick={() => handleSelect(item)}
-                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-secondary/50 transition-colors group flex items-center gap-2"
+                  <div key={type} className="space-y-1">
+                    <div className="flex items-center gap-1.5 px-2">
+                      <Icon className="w-3 h-3" style={{ color: tint.fg }} />
+                      <p
+                        className="text-[9.5px] font-display font-semibold uppercase"
+                        style={{ color: "hsl(220 8% 50%)", letterSpacing: "0.14em" }}
                       >
-                        <span className="text-sm font-medium font-body text-foreground truncate">{item.title}</span>
-                        {item.subtitle && (
-                          <span className="text-xs text-muted-foreground truncate">{item.subtitle}</span>
-                        )}
-                        {item.meta?.statusLabel && (
-                          <span
-                            className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-body font-medium shrink-0"
-                            style={{ backgroundColor: item.meta.statusBg, color: item.meta.statusText }}
-                          >
-                            {item.meta.statusLabel}
+                        {meta?.label || type}
+                      </p>
+                      <span
+                        className="text-[9.5px] font-display font-semibold px-1.5 rounded-full"
+                        style={{
+                          color: tint.fg,
+                          background: tint.bg,
+                        }}
+                      >
+                        {items.length}
+                      </span>
+                    </div>
+                    <div className="space-y-1 px-1">
+                      {items.map((item, idx) => (
+                        <button
+                          key={item.id}
+                          onClick={() => handleSelect(item)}
+                          className="w-full text-left flex items-center gap-3 px-2.5 py-2 rounded-xl transition-all hover:bg-white/[0.05] active:scale-[0.98] motion-safe:animate-fade-in"
+                          style={{
+                            border: "1px solid rgba(255,255,255,0.04)",
+                            animationDelay: `${Math.min(idx * 30, 240)}ms`,
+                          }}
+                        >
+                          <TypeIconTile type={item.type} />
+                          <span className="flex-1 min-w-0">
+                            <span className="block text-[13px] font-body font-semibold text-foreground truncate">
+                              <Highlight text={item.title} term={query} />
+                            </span>
+                            {item.subtitle && (
+                              <span className="block text-[11px] text-muted-foreground truncate mt-0.5">
+                                <Highlight text={item.subtitle} term={query} />
+                              </span>
+                            )}
                           </span>
-                        )}
-                        {item.meta?.amount != null && item.meta.amount > 0 && (
-                          <span className="ml-auto text-xs font-body font-semibold text-foreground shrink-0">
-                            ${item.meta.amount.toLocaleString()}
-                          </span>
-                        )}
-                      </button>
-                    ))}
+                          {item.meta?.statusLabel && (
+                            <span
+                              className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-display font-semibold shrink-0"
+                              style={{ backgroundColor: item.meta.statusBg, color: item.meta.statusText }}
+                            >
+                              {item.meta.statusLabel}
+                            </span>
+                          )}
+                          {item.meta?.amount != null && item.meta.amount > 0 && (
+                            <span
+                              className="ml-auto shrink-0 px-2 py-0.5 rounded-md text-[11px] font-display font-semibold"
+                              style={{
+                                color: "var(--accent-color)",
+                                background: "rgba(var(--biz-accent-rgb),0.10)",
+                                border: "1px solid rgba(var(--biz-accent-rgb),0.20)",
+                              }}
+                            >
+                              ${item.meta.amount.toLocaleString()}
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 );
               })}
@@ -475,5 +680,23 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
         </div>
       )}
     </div>
+  );
+}
+
+function SectionLabel({ children, inline = false }: { children: React.ReactNode; inline?: boolean }) {
+  return (
+    <p
+      className={cn(
+        "font-display font-semibold uppercase",
+        inline ? "" : "px-2 py-1"
+      )}
+      style={{
+        fontSize: "9.5px",
+        letterSpacing: "0.14em",
+        color: "hsl(220 8% 50%)",
+      }}
+    >
+      {children}
+    </p>
   );
 }
