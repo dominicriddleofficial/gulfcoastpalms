@@ -237,6 +237,8 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
     setLoading(true);
 
     const like = `%${q}%`;
+    const phoneLike = phoneLikePattern(q);
+    const phoneOr = phoneLike ?? like;
     const allResults: SearchResult[] = [];
 
     try {
@@ -255,7 +257,7 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
       ] = await Promise.all([
         // Jobber clients — display_name, phone, email
         supabase.from("jobber_clients").select("id, display_name, phone, email, business_id")
-          .eq("business_id", businessId).or(`display_name.ilike.${like},phone.ilike.${like},email.ilike.${like}`).limit(6),
+          .eq("business_id", businessId).or(`display_name.ilike.${like},phone.ilike.${phoneOr},email.ilike.${like}`).limit(6),
         // Jobber jobs — title, job_number, client_name, property_address
         supabase.from("jobber_jobs").select("id, title, job_number, status, client_name, property_address, total_amount, business_id")
           .eq("business_id", businessId).or(`title.ilike.${like},job_number.ilike.${like},client_name.ilike.${like},property_address.ilike.${like}`).limit(6),
@@ -264,13 +266,13 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
           .eq("business_id", businessId).or(`street1.ilike.${like},city.ilike.${like}`).limit(4),
         // Platform customers
         supabase.from("platform_customers").select("id, display_name, email, phone")
-          .eq("business_id", businessId).or(`display_name.ilike.${like},email.ilike.${like},phone.ilike.${like}`).limit(4),
+          .eq("business_id", businessId).or(`display_name.ilike.${like},email.ilike.${like},phone.ilike.${phoneOr}`).limit(4),
         // Platform invoices
         supabase.from("platform_invoices").select("id, invoice_number, total, status")
           .eq("business_id", businessId).ilike("invoice_number", like).limit(3),
         // Crew members
         supabase.from("platform_crew_members").select("id, display_name, phone")
-          .eq("business_id", businessId).or(`display_name.ilike.${like},phone.ilike.${like}`).limit(5),
+          .eq("business_id", businessId).or(`display_name.ilike.${like},phone.ilike.${phoneOr}`).limit(5),
         // Platform jobs (native, separate from jobber sync)
         supabase.from("platform_jobs").select("id, title, job_number, status, internal_notes, total")
           .eq("business_id", businessId)
@@ -282,7 +284,7 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
         // Platform leads
         supabase.from("platform_leads").select("id, inquiry_name, inquiry_phone, inquiry_email, requested_service, lead_status")
           .eq("business_id", businessId)
-          .or(`inquiry_name.ilike.${like},inquiry_phone.ilike.${like},inquiry_email.ilike.${like}`).limit(4),
+          .or(`inquiry_name.ilike.${like},inquiry_phone.ilike.${phoneOr},inquiry_email.ilike.${like}`).limit(4),
         // Platform properties
         supabase.from("platform_properties").select("id, address_1, city, zip")
           .eq("business_id", businessId)
@@ -385,13 +387,21 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
       // Silently fail
     }
 
-    setResults(allResults);
+    // Dedup by type+id — the same record can appear via multiple table sources.
+    const seenKey = new Set<string>();
+    const deduped = allResults.filter((r) => {
+      const k = `${r.type}::${r.id}`;
+      if (seenKey.has(k)) return false;
+      seenKey.add(k);
+      return true;
+    });
+    setResults(deduped);
     setLoading(false);
   }, [businessId, isOwner]);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => search(query), 300);
+    debounceRef.current = setTimeout(() => search(query), 250);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [query, search]);
 
