@@ -477,9 +477,9 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setOpen(true)}
           placeholder={embedded ? "Search customers, jobs, invoices…" : "Search… ⌘K"}
-          style={{ caretColor: "var(--accent-color)" }}
+          style={{ caretColor: "var(--accent-color)", color: T.primary }}
           className={cn(
-            "bg-transparent border-none outline-none font-body text-foreground placeholder:text-muted-foreground flex-1 min-w-0",
+            "bg-transparent border-none outline-none font-body flex-1 min-w-0 placeholder:text-[color:var(--ph)]",
             embedded ? "text-[15px]" : "text-sm",
             !embedded && !open && "hidden md:block"
           )}
@@ -487,7 +487,8 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
         {open && query && (
           <button
             onClick={() => { setQuery(""); setResults([]); }}
-            className="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-white/5"
+            className="p-1 rounded-md hover:bg-white/5"
+            style={{ color: T.muted }}
             aria-label="Clear search"
           >
             <X className="w-3.5 h-3.5" />
