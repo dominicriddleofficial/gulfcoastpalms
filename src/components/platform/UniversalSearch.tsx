@@ -479,7 +479,7 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
           placeholder={embedded ? "Search customers, jobs, invoices…" : "Search… ⌘K"}
           style={{ caretColor: "var(--accent-color)", color: T.primary }}
           className={cn(
-            "bg-transparent border-none outline-none font-body flex-1 min-w-0 placeholder:text-[color:var(--ph)]",
+            "bg-transparent border-none outline-none font-body flex-1 min-w-0 placeholder:text-[#7a8088]",
             embedded ? "text-[15px]" : "text-sm",
             !embedded && !open && "hidden md:block"
           )}
