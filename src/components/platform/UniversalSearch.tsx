@@ -433,6 +433,12 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
     return "Added";
   };
 
+  const activityMetaLine = (item: RecentActivityItem, when: string) => {
+    // Build the "Added by X · about 15 hours ago" line, dropping either half
+    // cleanly if it's missing so we never render a dangling " · ".
+    return [activityActor(item), when].filter((s) => !!s && s.length > 0).join(" · ");
+  };
+
   const handleRecentClick = (recent: string) => {
     setQuery(recent);
   };
