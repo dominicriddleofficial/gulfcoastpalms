@@ -267,19 +267,33 @@ export default function PlatformBottomNav({ businessId, onSignOut, workspaceShor
       <Sheet open={searchOpen} onOpenChange={setSearchOpen}>
         <SheetContent
           side="top"
-          className="bg-card border-b border-border p-4 h-auto max-h-[90vh] overflow-y-auto"
+          className="ops-theme p-0 h-auto max-h-[92vh] overflow-hidden border-0"
+          style={{
+            background: "#0e110f",
+            boxShadow: "0 24px 60px -20px rgba(0,0,0,0.7)",
+            borderBottom: "1px solid rgba(0,200,83,0.18)",
+          }}
         >
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-display text-sm font-semibold text-foreground tracking-tight">Search</h3>
+          <div
+            className="flex items-center justify-between px-4 pt-4 pb-3"
+            style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+          >
+            <h3
+              className="font-display text-[15px] font-semibold tracking-tight"
+              style={{ color: "#f3f4f6" }}
+            >
+              Search
+            </h3>
             <button
               onClick={() => setSearchOpen(false)}
-              className="text-muted-foreground hover:text-foreground p-1.5 rounded-lg hover:bg-secondary/50"
+              className="p-1.5 rounded-lg transition-colors"
+              style={{ color: "#9ca3af" }}
               aria-label="Close search"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
-          <div className="w-full">
+          <div className="px-4 pt-3 pb-4 overflow-y-auto max-h-[calc(92vh-56px)]">
             <UniversalSearch businessId={businessId} autoOpen embedded />
           </div>
         </SheetContent>
