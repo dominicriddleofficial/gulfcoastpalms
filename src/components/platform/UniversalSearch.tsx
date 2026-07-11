@@ -146,6 +146,33 @@ function addRecentSearch(q: string) {
   localStorage.setItem(RECENT_KEY, JSON.stringify(recent.slice(0, 5)));
 }
 
+/**
+ * If the query looks like a phone number (mostly digits, 7+), return a LIKE
+ * pattern that places `%` between every digit so it matches formatted phone
+ * numbers stored as e.g. "(850) 529-3801". Returns null otherwise.
+ */
+function phoneLikePattern(q: string): string | null {
+  const digits = q.replace(/\D/g, "");
+  if (digits.length < 7) return null;
+  // Only treat as phone if the raw query is essentially digits + separators.
+  const nonDigitCount = q.length - digits.length;
+  if (nonDigitCount > q.length - digits.length + 6) return null;
+  return `%${digits.split("").join("%")}%`;
+}
+
+// Text tokens hardcoded for the portaled sheet (which renders outside
+// `.ops-theme`, so semantic `text-foreground` would fall back to the light
+// `:root` palette and become invisible on our dark surface).
+const T = {
+  primary: "#f3f4f6",       // near-white, main text
+  secondary: "#a1a7ae",     // secondary readable gray (WCAG AA on #0e110f)
+  muted: "#7a8088",         // tertiary / timestamps
+  faint: "#5b6169",         // section labels
+  divider: "rgba(255,255,255,0.06)",
+  surface: "rgba(255,255,255,0.03)",
+  surfaceHover: "rgba(255,255,255,0.06)",
+};
+
 interface Props {
   businessId: string | null;
   autoOpen?: boolean;
@@ -210,6 +237,8 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
     setLoading(true);
 
     const like = `%${q}%`;
+    const phoneLike = phoneLikePattern(q);
+    const phoneOr = phoneLike ?? like;
     const allResults: SearchResult[] = [];
 
     try {
@@ -228,7 +257,7 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
       ] = await Promise.all([
         // Jobber clients — display_name, phone, email
         supabase.from("jobber_clients").select("id, display_name, phone, email, business_id")
-          .eq("business_id", businessId).or(`display_name.ilike.${like},phone.ilike.${like},email.ilike.${like}`).limit(6),
+          .eq("business_id", businessId).or(`display_name.ilike.${like},phone.ilike.${phoneOr},email.ilike.${like}`).limit(6),
         // Jobber jobs — title, job_number, client_name, property_address
         supabase.from("jobber_jobs").select("id, title, job_number, status, client_name, property_address, total_amount, business_id")
           .eq("business_id", businessId).or(`title.ilike.${like},job_number.ilike.${like},client_name.ilike.${like},property_address.ilike.${like}`).limit(6),
@@ -237,13 +266,13 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
           .eq("business_id", businessId).or(`street1.ilike.${like},city.ilike.${like}`).limit(4),
         // Platform customers
         supabase.from("platform_customers").select("id, display_name, email, phone")
-          .eq("business_id", businessId).or(`display_name.ilike.${like},email.ilike.${like},phone.ilike.${like}`).limit(4),
+          .eq("business_id", businessId).or(`display_name.ilike.${like},email.ilike.${like},phone.ilike.${phoneOr}`).limit(4),
         // Platform invoices
         supabase.from("platform_invoices").select("id, invoice_number, total, status")
           .eq("business_id", businessId).ilike("invoice_number", like).limit(3),
         // Crew members
         supabase.from("platform_crew_members").select("id, display_name, phone")
-          .eq("business_id", businessId).or(`display_name.ilike.${like},phone.ilike.${like}`).limit(5),
+          .eq("business_id", businessId).or(`display_name.ilike.${like},phone.ilike.${phoneOr}`).limit(5),
         // Platform jobs (native, separate from jobber sync)
         supabase.from("platform_jobs").select("id, title, job_number, status, internal_notes, total")
           .eq("business_id", businessId)
@@ -255,7 +284,7 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
         // Platform leads
         supabase.from("platform_leads").select("id, inquiry_name, inquiry_phone, inquiry_email, requested_service, lead_status")
           .eq("business_id", businessId)
-          .or(`inquiry_name.ilike.${like},inquiry_phone.ilike.${like},inquiry_email.ilike.${like}`).limit(4),
+          .or(`inquiry_name.ilike.${like},inquiry_phone.ilike.${phoneOr},inquiry_email.ilike.${like}`).limit(4),
         // Platform properties
         supabase.from("platform_properties").select("id, address_1, city, zip")
           .eq("business_id", businessId)
@@ -358,13 +387,21 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
       // Silently fail
     }
 
-    setResults(allResults);
+    // Dedup by type+id — the same record can appear via multiple table sources.
+    const seenKey = new Set<string>();
+    const deduped = allResults.filter((r) => {
+      const k = `${r.type}::${r.id}`;
+      if (seenKey.has(k)) return false;
+      seenKey.add(k);
+      return true;
+    });
+    setResults(deduped);
     setLoading(false);
   }, [businessId, isOwner]);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => search(query), 300);
+    debounceRef.current = setTimeout(() => search(query), 250);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [query, search]);
 
@@ -394,6 +431,12 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
     if (!item.createdByUserId && item.sourceSystem === "jobber") return "Synced from Jobber";
     if (item.createdByName) return `Added by ${item.createdByName}`;
     return "Added";
+  };
+
+  const activityMetaLine = (item: RecentActivityItem, when: string) => {
+    // Build the "Added by X · about 15 hours ago" line, dropping either half
+    // cleanly if it's missing so we never render a dangling " · ".
+    return [activityActor(item), when].filter((s) => !!s && s.length > 0).join(" · ");
   };
 
   const handleRecentClick = (recent: string) => {
@@ -434,9 +477,9 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setOpen(true)}
           placeholder={embedded ? "Search customers, jobs, invoices…" : "Search… ⌘K"}
-          style={{ caretColor: "var(--accent-color)" }}
+          style={{ caretColor: "var(--accent-color)", color: T.primary }}
           className={cn(
-            "bg-transparent border-none outline-none font-body text-foreground placeholder:text-muted-foreground flex-1 min-w-0",
+            "bg-transparent border-none outline-none font-body flex-1 min-w-0 placeholder:text-[#7a8088]",
             embedded ? "text-[15px]" : "text-sm",
             !embedded && !open && "hidden md:block"
           )}
@@ -444,7 +487,8 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
         {open && query && (
           <button
             onClick={() => { setQuery(""); setResults([]); }}
-            className="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-white/5"
+            className="p-1 rounded-md hover:bg-white/5"
+            style={{ color: T.muted }}
             aria-label="Clear search"
           >
             <X className="w-3.5 h-3.5" />
@@ -484,8 +528,12 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
                   <button
                     key={r}
                     onClick={() => handleRecentClick(r)}
-                    className="px-2.5 py-1 rounded-full text-[12px] font-body text-foreground/90 hover:text-foreground transition-colors"
-                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
+                    className="px-2.5 py-1 rounded-full text-[12px] font-body transition-colors"
+                    style={{
+                      background: "rgba(255,255,255,0.06)",
+                      border: "1px solid rgba(255,255,255,0.10)",
+                      color: T.primary,
+                    }}
                   >
                     {r}
                   </button>
@@ -497,7 +545,7 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
           {!query && (activityLoading || recentActivity.length > 0) && (
             <div className="p-2 space-y-3">
               <div className="flex items-center gap-1.5 px-2 pt-1">
-                <Activity className="w-3 h-3" style={{ color: "hsl(220 8% 55%)" }} />
+                <Activity className="w-3 h-3" style={{ color: T.faint }} />
                 <SectionLabel inline>Recent Activity</SectionLabel>
               </div>
               {activityLoading && recentActivity.length === 0 && (
@@ -512,7 +560,7 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
                   <div key={bucket} className="space-y-1">
                     <p
                       className="px-2 text-[9.5px] font-display font-semibold uppercase"
-                      style={{ color: "hsl(220 8% 45%)", letterSpacing: "0.14em" }}
+                      style={{ color: T.faint, letterSpacing: "0.14em" }}
                     >
                       {bucket === "today" ? "Today" : bucket === "yesterday" ? "Yesterday" : "Earlier"}
                     </p>
@@ -539,7 +587,7 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
                             key={`${item.kind}-${item.id}`}
                             onClick={() => handleActivityClick(item)}
                             className={cn(
-                              "w-full text-left flex items-center gap-3 px-2.5 py-2 rounded-xl transition-all",
+                              "w-full text-left flex items-center gap-3 px-2.5 py-2.5 min-h-[52px] rounded-xl transition-all",
                               "hover:bg-white/[0.05] active:scale-[0.98] motion-safe:animate-fade-in",
                               isSync && "opacity-70"
                             )}
@@ -551,19 +599,25 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
                             <TypeIconTile type={item.kind} />
                             <span className="flex-1 min-w-0">
                               <span className="flex items-center gap-1.5">
-                                <span className="block text-[13px] font-body font-semibold text-foreground truncate">
+                                <span
+                                  className="block text-[13px] font-body font-semibold truncate"
+                                  style={{ color: T.primary }}
+                                >
                                   {titleLine}
                                 </span>
                                 {isSync && (
                                   <RefreshCw
                                     className="w-3 h-3 shrink-0"
-                                    style={{ color: "hsl(220 8% 45%)" }}
+                                    style={{ color: T.muted }}
                                     aria-label="Synced from Jobber"
                                   />
                                 )}
                               </span>
-                              <span className="block text-[11px] text-muted-foreground truncate mt-0.5">
-                                {activityActor(item)} · {when}
+                              <span
+                                className="block text-[11.5px] truncate mt-0.5"
+                                style={{ color: T.secondary }}
+                              >
+                                {activityMetaLine(item, when)}
                               </span>
                             </span>
                             {showAmount && (
@@ -594,10 +648,14 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
                 className="mx-auto w-11 h-11 rounded-2xl flex items-center justify-center mb-3"
                 style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
               >
-                <SearchX className="w-5 h-5" style={{ color: "hsl(220 8% 50%)" }} />
+                <SearchX className="w-5 h-5" style={{ color: T.muted }} />
               </div>
-              <p className="font-display text-[13px] font-semibold text-foreground">No matches for "{query}"</p>
-              <p className="text-[11px] text-muted-foreground mt-1 font-body">Try a name, phone, or job #</p>
+              <p className="font-display text-[13px] font-semibold" style={{ color: T.primary }}>
+                No matches for "{query}"
+              </p>
+              <p className="text-[12px] mt-1 font-body" style={{ color: T.secondary }}>
+                Check spelling, or try a name, phone, or job #
+              </p>
             </div>
           )}
 
@@ -613,7 +671,7 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
                       <Icon className="w-3 h-3" style={{ color: tint.fg }} />
                       <p
                         className="text-[9.5px] font-display font-semibold uppercase"
-                        style={{ color: "hsl(220 8% 50%)", letterSpacing: "0.14em" }}
+                        style={{ color: T.faint, letterSpacing: "0.14em" }}
                       >
                         {meta?.label || type}
                       </p>
@@ -632,7 +690,7 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
                         <button
                           key={item.id}
                           onClick={() => handleSelect(item)}
-                          className="w-full text-left flex items-center gap-3 px-2.5 py-2 rounded-xl transition-all hover:bg-white/[0.05] active:scale-[0.98] motion-safe:animate-fade-in"
+                          className="w-full text-left flex items-center gap-3 px-2.5 py-2.5 min-h-[52px] rounded-xl transition-all hover:bg-white/[0.05] active:scale-[0.98] motion-safe:animate-fade-in"
                           style={{
                             border: "1px solid rgba(255,255,255,0.04)",
                             animationDelay: `${Math.min(idx * 30, 240)}ms`,
@@ -640,11 +698,17 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
                         >
                           <TypeIconTile type={item.type} />
                           <span className="flex-1 min-w-0">
-                            <span className="block text-[13px] font-body font-semibold text-foreground truncate">
+                            <span
+                              className="block text-[13px] font-body font-semibold truncate"
+                              style={{ color: T.primary }}
+                            >
                               <Highlight text={item.title} term={query} />
                             </span>
                             {item.subtitle && (
-                              <span className="block text-[11px] text-muted-foreground truncate mt-0.5">
+                              <span
+                                className="block text-[11.5px] truncate mt-0.5"
+                                style={{ color: T.secondary }}
+                              >
                                 <Highlight text={item.subtitle} term={query} />
                               </span>
                             )}
@@ -693,7 +757,7 @@ function SectionLabel({ children, inline = false }: { children: React.ReactNode;
       style={{
         fontSize: "9.5px",
         letterSpacing: "0.14em",
-        color: "hsl(220 8% 50%)",
+        color: "#5b6169",
       }}
     >
       {children}
