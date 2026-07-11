@@ -146,6 +146,33 @@ function addRecentSearch(q: string) {
   localStorage.setItem(RECENT_KEY, JSON.stringify(recent.slice(0, 5)));
 }
 
+/**
+ * If the query looks like a phone number (mostly digits, 7+), return a LIKE
+ * pattern that places `%` between every digit so it matches formatted phone
+ * numbers stored as e.g. "(850) 529-3801". Returns null otherwise.
+ */
+function phoneLikePattern(q: string): string | null {
+  const digits = q.replace(/\D/g, "");
+  if (digits.length < 7) return null;
+  // Only treat as phone if the raw query is essentially digits + separators.
+  const nonDigitCount = q.length - digits.length;
+  if (nonDigitCount > q.length - digits.length + 6) return null;
+  return `%${digits.split("").join("%")}%`;
+}
+
+// Text tokens hardcoded for the portaled sheet (which renders outside
+// `.ops-theme`, so semantic `text-foreground` would fall back to the light
+// `:root` palette and become invisible on our dark surface).
+const T = {
+  primary: "#f3f4f6",       // near-white, main text
+  secondary: "#a1a7ae",     // secondary readable gray (WCAG AA on #0e110f)
+  muted: "#7a8088",         // tertiary / timestamps
+  faint: "#5b6169",         // section labels
+  divider: "rgba(255,255,255,0.06)",
+  surface: "rgba(255,255,255,0.03)",
+  surfaceHover: "rgba(255,255,255,0.06)",
+};
+
 interface Props {
   businessId: string | null;
   autoOpen?: boolean;
