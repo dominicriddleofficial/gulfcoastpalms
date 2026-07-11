@@ -528,8 +528,12 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
                   <button
                     key={r}
                     onClick={() => handleRecentClick(r)}
-                    className="px-2.5 py-1 rounded-full text-[12px] font-body text-foreground/90 hover:text-foreground transition-colors"
-                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
+                    className="px-2.5 py-1 rounded-full text-[12px] font-body transition-colors"
+                    style={{
+                      background: "rgba(255,255,255,0.06)",
+                      border: "1px solid rgba(255,255,255,0.10)",
+                      color: T.primary,
+                    }}
                   >
                     {r}
                   </button>
@@ -541,7 +545,7 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
           {!query && (activityLoading || recentActivity.length > 0) && (
             <div className="p-2 space-y-3">
               <div className="flex items-center gap-1.5 px-2 pt-1">
-                <Activity className="w-3 h-3" style={{ color: "hsl(220 8% 55%)" }} />
+                <Activity className="w-3 h-3" style={{ color: T.faint }} />
                 <SectionLabel inline>Recent Activity</SectionLabel>
               </div>
               {activityLoading && recentActivity.length === 0 && (
@@ -556,7 +560,7 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
                   <div key={bucket} className="space-y-1">
                     <p
                       className="px-2 text-[9.5px] font-display font-semibold uppercase"
-                      style={{ color: "hsl(220 8% 45%)", letterSpacing: "0.14em" }}
+                      style={{ color: T.faint, letterSpacing: "0.14em" }}
                     >
                       {bucket === "today" ? "Today" : bucket === "yesterday" ? "Yesterday" : "Earlier"}
                     </p>
@@ -583,7 +587,7 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
                             key={`${item.kind}-${item.id}`}
                             onClick={() => handleActivityClick(item)}
                             className={cn(
-                              "w-full text-left flex items-center gap-3 px-2.5 py-2 rounded-xl transition-all",
+                              "w-full text-left flex items-center gap-3 px-2.5 py-2.5 min-h-[52px] rounded-xl transition-all",
                               "hover:bg-white/[0.05] active:scale-[0.98] motion-safe:animate-fade-in",
                               isSync && "opacity-70"
                             )}
@@ -595,19 +599,25 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
                             <TypeIconTile type={item.kind} />
                             <span className="flex-1 min-w-0">
                               <span className="flex items-center gap-1.5">
-                                <span className="block text-[13px] font-body font-semibold text-foreground truncate">
+                                <span
+                                  className="block text-[13px] font-body font-semibold truncate"
+                                  style={{ color: T.primary }}
+                                >
                                   {titleLine}
                                 </span>
                                 {isSync && (
                                   <RefreshCw
                                     className="w-3 h-3 shrink-0"
-                                    style={{ color: "hsl(220 8% 45%)" }}
+                                    style={{ color: T.muted }}
                                     aria-label="Synced from Jobber"
                                   />
                                 )}
                               </span>
-                              <span className="block text-[11px] text-muted-foreground truncate mt-0.5">
-                                {activityActor(item)} · {when}
+                              <span
+                                className="block text-[11.5px] truncate mt-0.5"
+                                style={{ color: T.secondary }}
+                              >
+                                {activityMetaLine(item, when)}
                               </span>
                             </span>
                             {showAmount && (
@@ -638,10 +648,14 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
                 className="mx-auto w-11 h-11 rounded-2xl flex items-center justify-center mb-3"
                 style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
               >
-                <SearchX className="w-5 h-5" style={{ color: "hsl(220 8% 50%)" }} />
+                <SearchX className="w-5 h-5" style={{ color: T.muted }} />
               </div>
-              <p className="font-display text-[13px] font-semibold text-foreground">No matches for "{query}"</p>
-              <p className="text-[11px] text-muted-foreground mt-1 font-body">Try a name, phone, or job #</p>
+              <p className="font-display text-[13px] font-semibold" style={{ color: T.primary }}>
+                No matches for "{query}"
+              </p>
+              <p className="text-[12px] mt-1 font-body" style={{ color: T.secondary }}>
+                Check spelling, or try a name, phone, or job #
+              </p>
             </div>
           )}
 
@@ -657,7 +671,7 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
                       <Icon className="w-3 h-3" style={{ color: tint.fg }} />
                       <p
                         className="text-[9.5px] font-display font-semibold uppercase"
-                        style={{ color: "hsl(220 8% 50%)", letterSpacing: "0.14em" }}
+                        style={{ color: T.faint, letterSpacing: "0.14em" }}
                       >
                         {meta?.label || type}
                       </p>
@@ -676,7 +690,7 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
                         <button
                           key={item.id}
                           onClick={() => handleSelect(item)}
-                          className="w-full text-left flex items-center gap-3 px-2.5 py-2 rounded-xl transition-all hover:bg-white/[0.05] active:scale-[0.98] motion-safe:animate-fade-in"
+                          className="w-full text-left flex items-center gap-3 px-2.5 py-2.5 min-h-[52px] rounded-xl transition-all hover:bg-white/[0.05] active:scale-[0.98] motion-safe:animate-fade-in"
                           style={{
                             border: "1px solid rgba(255,255,255,0.04)",
                             animationDelay: `${Math.min(idx * 30, 240)}ms`,
@@ -684,11 +698,17 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
                         >
                           <TypeIconTile type={item.type} />
                           <span className="flex-1 min-w-0">
-                            <span className="block text-[13px] font-body font-semibold text-foreground truncate">
+                            <span
+                              className="block text-[13px] font-body font-semibold truncate"
+                              style={{ color: T.primary }}
+                            >
                               <Highlight text={item.title} term={query} />
                             </span>
                             {item.subtitle && (
-                              <span className="block text-[11px] text-muted-foreground truncate mt-0.5">
+                              <span
+                                className="block text-[11.5px] truncate mt-0.5"
+                                style={{ color: T.secondary }}
+                              >
                                 <Highlight text={item.subtitle} term={query} />
                               </span>
                             )}
@@ -737,7 +757,7 @@ function SectionLabel({ children, inline = false }: { children: React.ReactNode;
       style={{
         fontSize: "9.5px",
         letterSpacing: "0.14em",
-        color: "hsl(220 8% 50%)",
+        color: "#5b6169",
       }}
     >
       {children}
