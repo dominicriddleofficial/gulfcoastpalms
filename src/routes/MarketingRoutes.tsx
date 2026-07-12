@@ -56,6 +56,7 @@ const TeamLeaderCareers = lazy(() => import("@/pages/careers/TeamLeader"));
 const GroundsmanCareers = lazy(() => import("@/pages/careers/Groundsman"));
 const SalesOperationsCareers = lazy(() => import("@/pages/careers/SalesOperations"));
 const CareersThankYou = lazy(() => import("@/pages/careers/CareersThankYou"));
+const PalmTreeTrimmerCareers = lazy(() => import("@/pages/careers/PalmTreeTrimmer"));
 
 const SOPTeamLeader = lazy(() => import("@/pages/employee/SOPTeamLeader"));
 const SOPGroundsman = lazy(() => import("@/pages/employee/SOPGroundsman"));
@@ -119,6 +120,7 @@ export const MarketingRoutes = () => (
     <Route path="/careers/gulf-coast-palms/team-leader" element={<TeamLeaderCareers />} />
     <Route path="/careers/gulf-coast-palms/groundsman" element={<GroundsmanCareers />} />
     <Route path="/careers/gulf-coast-palms/sales-operations" element={<SalesOperationsCareers />} />
+    <Route path="/careers/palm-tree-trimmer" element={<PalmTreeTrimmerCareers />} />
     <Route path="/careers/thank-you" element={<CareersThankYou />} />
 
     <Route path="/employee/gulf-coast-palms/sop/team-leader" element={<SOPTeamLeader />} />

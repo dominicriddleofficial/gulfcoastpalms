@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import SEOHead from "@/components/SEOHead";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeEdge } from "@/lib/invoke-edge";
 import { trackEvent } from "@/lib/analytics";
 import { careerApplicationSchema } from "@/lib/validation";
 import Layout from "@/components/Layout";
@@ -75,6 +76,15 @@ const SalesOperationsCareers = () => {
         acknowledged: form.acknowledged,
       });
       if (error) throw error;
+      // Fire-and-forget SMS alert to Dominic — must never block navigation.
+      invokeEdge("submit-application", {
+        notify_only: true,
+        full_name: form.full_name,
+        phone: form.phone,
+        position: "Sales & Operations Coordinator",
+        has_transportation: form.has_transportation === "yes",
+        has_experience: form.has_experience || null,
+      }).catch((err) => console.error("applicant SMS failed:", err));
       trackEvent("job_application_submit", { position: "Sales & Operations Coordinator" });
       navigate("/careers/thank-you");
     } catch (err) {
