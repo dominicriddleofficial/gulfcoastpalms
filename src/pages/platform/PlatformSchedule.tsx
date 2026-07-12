@@ -75,6 +75,8 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { useQueryClient } from "@tanstack/react-query";
 import { CalendarClock, Pencil, Trash2 } from "lucide-react";
 import YearlyTrimmingToggle from "@/components/platform/schedule/YearlyTrimmingToggle";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 
 type ScheduleTab = "day" | "list" | "map" | "crew";
 
