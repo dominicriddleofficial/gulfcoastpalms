@@ -39,7 +39,7 @@ const DEAL_POINTS: Array<{ icon: React.ComponentType<{ className?: string }>; ti
   { icon: Truck, emoji: "🚚", title: "Bring your own truck", body: "You supply your truck. We supply the trailer, saws, climbers, everything else." },
   { icon: Sun, emoji: "☀️", title: "Handle the Florida sun", body: "Full days outside on the Emerald Coast. Hot, humid, real work." },
   { icon: TreePalm, emoji: "🪜", title: "Climbers & riggers go to the front", body: "Climbing, rigging & removal experience puts you at the top of our list — that's where the biggest paydays live. Solid landscaping experience still works: we train, you climb later." },
-  { icon: DollarSign, emoji: "🪓", title: "Removals are the big money", body: "Removals run $2,100–$3,350 per job — trimmers who can run removals take home $500–800+ on those days." },
+  { icon: DollarSign, emoji: "🪓", title: "Removals are the big money", body: "The biggest paydays on our schedule go to climbers who can rig and drop — not just trim. If you can run removals, you'll out-earn a trim-only trimmer by a wide margin." },
   { icon: GraduationCap, emoji: "📋", title: "Paid training week — $200/day", body: "One full paid week learning exactly how we run jobs before you lead your own." },
   { icon: Users, emoji: "👷", title: "We send $25/hr helpers on big jobs", body: "You run the show. We supply the groundsmen so you focus on the tree work." },
   { icon: Star, emoji: "⭐", title: "Join the #1 rated palm crew", body: "100+ five-star Google reviews on the Emerald Coast. We stay booked out." },
