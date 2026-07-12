@@ -1020,6 +1020,14 @@ function JobDetail({
         </div>
       )}
 
+      {/* Yearly Trimming — prominent, near the top */}
+      <YearlyTrimmingToggle
+        customerId={(job as unknown as { customer_id?: string | null }).customer_id ?? null}
+        jobberJobId={job.id}
+        sourceJobId={(job as unknown as { job_id?: string | null }).job_id ?? null}
+        customerName={job.client_name}
+      />
+
       {/* Quick actions: Directions + Contact (single row, no duplicates) */}
       <div className="grid grid-cols-2 gap-3">
         <button
@@ -1239,12 +1247,6 @@ function JobDetail({
               </p>
             )}
           </DetailSection>
-
-          <YearlyTrimmingToggle
-            customerId={(job as unknown as { customer_id?: string | null }).customer_id ?? null}
-            jobberJobId={job.id}
-            customerName={job.client_name}
-          />
         </div>
       )}
 

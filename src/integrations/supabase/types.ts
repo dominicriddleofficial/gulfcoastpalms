@@ -3779,6 +3779,7 @@ export type Database = {
           job_number: string
           job_type: string | null
           lead_id: string | null
+          origin: string | null
           priority: string | null
           property_id: string | null
           quote_id: string | null
@@ -3818,6 +3819,7 @@ export type Database = {
           job_number: string
           job_type?: string | null
           lead_id?: string | null
+          origin?: string | null
           priority?: string | null
           property_id?: string | null
           quote_id?: string | null
@@ -3857,6 +3859,7 @@ export type Database = {
           job_number?: string
           job_type?: string | null
           lead_id?: string | null
+          origin?: string | null
           priority?: string | null
           property_id?: string | null
           quote_id?: string | null
@@ -6380,6 +6383,41 @@ export type Database = {
         }
         Relationships: []
       }
+      yearly_reminder_log: {
+        Row: {
+          error: string | null
+          id: string
+          job_id: string
+          kind: string
+          phone: string | null
+          sent_at: string
+        }
+        Insert: {
+          error?: string | null
+          id?: string
+          job_id: string
+          kind: string
+          phone?: string | null
+          sent_at?: string
+        }
+        Update: {
+          error?: string | null
+          id?: string
+          job_id?: string
+          kind?: string
+          phone?: string | null
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "yearly_reminder_log_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "platform_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -6412,6 +6450,14 @@ export type Database = {
           _type: string
         }
         Returns: undefined
+      }
+      create_yearly_auto_job: {
+        Args: { _source_job_id: string }
+        Returns: {
+          out_created: boolean
+          out_job_id: string
+          out_scheduled_date: string
+        }[]
       }
       delete_email: {
         Args: { message_id: number; queue_name: string }
@@ -6703,11 +6749,18 @@ export type Database = {
       refresh_business_kpi_snapshots: { Args: never; Returns: number }
       run_jobber_auto_sync: { Args: never; Returns: undefined }
       set_yearly_trimming_for_job: {
-        Args: { _customer_id: string; _jobber_job_id: string; _value: boolean }
+        Args: {
+          _customer_id: string
+          _jobber_job_id: string
+          _source_job_id?: string
+          _value: boolean
+        }
         Returns: {
-          customer_id: string
-          enabled: boolean
-          source: string
+          out_customer_id: string
+          out_enabled: boolean
+          out_next_job_id: string
+          out_next_visit_date: string
+          out_source: string
         }[]
       }
       sms_upsert_conversation: {
