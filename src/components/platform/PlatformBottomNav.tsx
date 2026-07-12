@@ -51,7 +51,7 @@ const buildMoreItems = (shortcode: string | undefined, hideAnalytics: boolean): 
   ...(hideAnalytics ? [] : [{ label: "Release Checklist", path: "/platform/release", icon: Rocket } as MoreItem]),
   ...(hideAnalytics ? [] : [{ label: "QA Checklist", path: "/platform/qa-checklist", icon: TestTube } as MoreItem]),
     { label: "Docs & Runbooks", path: "/platform/docs", icon: BookText },
-  { label: "Applicants", path: "/admin/applicants", icon: UserPlus, external: true, group: "Team & HR" },
+  { label: "Applicants", path: "/platform/applicants", icon: UserPlus, group: "Team & HR" },
   { label: "SOP Acknowledgements", path: "/admin/sop-acknowledgments", icon: FileCheck2, external: true, group: "Team & HR" },
   { label: "Uploads", path: "/admin/uploads", icon: UploadIcon, external: true, group: "Team & HR" },
   { label: "Job Listings", path: "/careers/gulf-coast-palms", icon: GraduationCap, external: true, group: "Team & HR" },
