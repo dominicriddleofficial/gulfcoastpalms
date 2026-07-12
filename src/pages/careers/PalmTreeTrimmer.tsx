@@ -290,7 +290,7 @@ export default function PalmTreeTrimmer() {
             <p className="font-body text-xs uppercase tracking-[0.25em] text-primary font-semibold mb-3">Apply</p>
             <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">Get in the truck.</h2>
             <p className="font-body text-muted-foreground mt-3">
-              We call serious applicants the same day. Takes about 2 minutes.
+              We reach out to serious applicants fast. Takes about 2 minutes.
             </p>
           </div>
 
@@ -454,7 +454,7 @@ export default function PalmTreeTrimmer() {
                 </>
               ) : (
                 <>
-                  <Send className="w-5 h-5" /> Apply — Get a call today
+                  <Send className="w-5 h-5" /> Apply — We'll reach out fast
                 </>
               )}
             </Button>
