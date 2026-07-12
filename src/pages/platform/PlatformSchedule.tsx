@@ -1247,12 +1247,6 @@ function JobDetail({
               </p>
             )}
           </DetailSection>
-
-          <YearlyTrimmingToggle
-            customerId={(job as unknown as { customer_id?: string | null }).customer_id ?? null}
-            jobberJobId={job.id}
-            customerName={job.client_name}
-          />
         </div>
       )}
 
