@@ -11,6 +11,30 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // Auth gate — require a valid user JWT (or the service-role key for
+    // internal calls). Without this, anyone could spam review-request SMS.
+    const authHeader = req.headers.get("Authorization") || "";
+    const bearer = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    if (!bearer) {
+      return new Response(JSON.stringify({ error: true, message: "Unauthorized", code: "AUTH_REQUIRED" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (bearer !== serviceRoleKey) {
+      const authClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+        { global: { headers: { Authorization: `Bearer ${bearer}` } } },
+      );
+      const { data: userData, error: userErr } = await authClient.auth.getUser(bearer);
+      if (userErr || !userData?.user) {
+        return new Response(JSON.stringify({ error: true, message: "Unauthorized", code: "AUTH_REQUIRED" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 

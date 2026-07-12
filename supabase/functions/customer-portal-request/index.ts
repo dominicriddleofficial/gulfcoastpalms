@@ -11,6 +11,19 @@ const FROM_EMAIL = "portal@prestigeflservices.com";
 const TOKEN_TTL_MIN = 30;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Allowlist of origins that may appear in outbound portal magic links.
+// Prevents an attacker from calling this endpoint with a phishing origin
+// and receiving a legitimate-looking email pointing at attacker.com/portal.
+const ALLOWED_PORTAL_ORIGINS = new Set([
+  "https://gulfcoastpalmservices.com",
+  "https://www.gulfcoastpalmservices.com",
+  "https://gulfcoastpalms.lovable.app",
+  "https://id-preview--2e9a44f0-ac4c-4ebd-ad4f-dd591d732484.lovable.app",
+  "http://localhost:5173",
+  "http://localhost:8080",
+]);
+const DEFAULT_PORTAL_ORIGIN = "https://gulfcoastpalmservices.com";
+
 function escapeHtml(v: string): string {
   return v.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
 }
@@ -64,7 +77,9 @@ Deno.serve(async (req) => {
       user_agent: req.headers.get("user-agent") || null,
     });
 
-    const baseOrigin = (typeof origin === "string" && origin.startsWith("http")) ? origin : "https://gulfcoastpalmservices.com";
+    const baseOrigin = (typeof origin === "string" && ALLOWED_PORTAL_ORIGINS.has(origin))
+      ? origin
+      : DEFAULT_PORTAL_ORIGIN;
     const portalUrl = `${baseOrigin}/portal?token=${token}`;
 
     // Business branding
