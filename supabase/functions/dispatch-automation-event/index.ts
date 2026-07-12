@@ -29,6 +29,34 @@ Deno.serve(async (req) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+  // Auth gate — accept either the service-role key (server-to-server / cron)
+  // or a valid user JWT belonging to the target business. Otherwise anyone
+  // on the internet could fire automation rules for any business.
+  const authHeader = req.headers.get("Authorization") || "";
+  const bearer = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!bearer) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  const isServiceRole = bearer === serviceKey;
+  let callerUserId: string | null = null;
+  if (!isServiceRole) {
+    const authClient = createClient(
+      supabaseUrl,
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: `Bearer ${bearer}` } } },
+    );
+    const { data: userData, error: userErr } = await authClient.auth.getUser(bearer);
+    if (userErr || !userData?.user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    callerUserId = userData.user.id;
+  }
+
   const supabase = createClient(supabaseUrl, serviceKey);
 
   let body: EventBody;
@@ -37,6 +65,19 @@ Deno.serve(async (req) => {
   }
   if (!body?.business_id || !body?.event_name) {
     return new Response(JSON.stringify({ error: "business_id and event_name required" }), { status: 400, headers: corsHeaders });
+  }
+
+  // Non-service-role callers must have access to the target business.
+  if (!isServiceRole && callerUserId) {
+    const { data: hasAccess } = await supabase.rpc("has_business_access", {
+      _user_id: callerUserId,
+      _business_id: body.business_id,
+    });
+    if (!hasAccess) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
   }
 
   const ctx = { ...(body.payload || {}), business_id: body.business_id, event_name: body.event_name };
