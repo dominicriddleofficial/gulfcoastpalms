@@ -81,7 +81,7 @@ export default function YearlyTrimmingToggle({ customerId, customerName, jobberJ
     const row = Array.isArray(data) ? data[0] : null;
     if (row?.customer_id) setResolvedCustomerId(row.customer_id);
     qc.invalidateQueries({ queryKey: ["yearly-clients"] });
-    qc.invalidateQueries({ queryKey: ["yearly-trimming-count"] });
+    qc.invalidateQueries({ queryKey: ["yearly-clients-count"] });
     if (next) {
       toast.success("Added to Yearly Trimming roster", {
         description: customerName ?? undefined,
