@@ -115,6 +115,27 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Auth gate — require a valid user JWT (or the platform service-role key
+    // for internal server-to-server calls). Without this, anyone on the
+    // internet could POST and send emails from our sending domain.
+    const authHeader = req.headers.get("Authorization") || "";
+    const bearer = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    if (!bearer) {
+      return jsonResponse({ error: "Unauthorized" }, 401);
+    }
+    if (bearer !== serviceRoleKey) {
+      const authClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+        { global: { headers: { Authorization: `Bearer ${bearer}` } } },
+      );
+      const { data: userData, error: userErr } = await authClient.auth.getUser(bearer);
+      if (userErr || !userData?.user) {
+        return jsonResponse({ error: "Unauthorized" }, 401);
+      }
+    }
+
     const {
       invoiceId,
       recipientEmail,
