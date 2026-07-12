@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Sparkles, Loader2, CalendarCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,8 @@ interface Props {
   customerId: string | null;
   customerName: string | null;
   jobberJobId?: string | null;
+  /** Platform job id being viewed. Used to clone forward one year. */
+  sourceJobId?: string | null;
 }
 
 /**
@@ -19,11 +21,12 @@ interface Props {
  * Works for both platform jobs (customerId provided) and Jobber-synced jobs
  * (only jobberJobId is known — the RPC resolves the platform customer).
  */
-export default function YearlyTrimmingToggle({ customerId, customerName, jobberJobId }: Props) {
+export default function YearlyTrimmingToggle({ customerId, customerName, jobberJobId, sourceJobId }: Props) {
   const qc = useQueryClient();
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [source, setSource] = useState<string | null>(null);
   const [resolvedCustomerId, setResolvedCustomerId] = useState<string | null>(customerId ?? null);
+  const [nextVisitDate, setNextVisitDate] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -47,6 +50,21 @@ export default function YearlyTrimmingToggle({ customerId, customerName, jobberJ
         setResolvedCustomerId(row.customer_id ?? null);
         setEnabled(Boolean(row.enabled));
         setSource((row.source as string | null) ?? null);
+        // Look up an existing next-year auto job for this customer
+        if (row.customer_id) {
+          const { data: nj } = await supabase
+            .from("platform_jobs")
+            .select("scheduled_start")
+            .eq("customer_id", row.customer_id)
+            .eq("origin", "yearly_auto")
+            .eq("status", "scheduled")
+            .is("deleted_at", null)
+            .gte("scheduled_start", new Date().toISOString().slice(0, 10))
+            .order("scheduled_start", { ascending: true })
+            .limit(1)
+            .maybeSingle();
+          if (!cancelled) setNextVisitDate((nj?.scheduled_start as string | null) ?? null);
+        }
       } else {
         setEnabled(false);
       }
@@ -70,6 +88,7 @@ export default function YearlyTrimmingToggle({ customerId, customerName, jobberJ
       _jobber_job_id: jobberJobId ?? null,
       _customer_id: resolvedCustomerId ?? null,
       _value: next,
+      _source_job_id: sourceJobId ?? null,
     });
     setSaving(false);
     if (error) {
@@ -78,14 +97,25 @@ export default function YearlyTrimmingToggle({ customerId, customerName, jobberJ
       toast.error("Could not update yearly trimming", { description: error.message });
       return;
     }
-    const row = Array.isArray(data) ? data[0] : null;
-    if (row?.customer_id) setResolvedCustomerId(row.customer_id);
+    const row = (Array.isArray(data) ? data[0] : null) as
+      | {
+          out_customer_id?: string | null;
+          out_next_job_id?: string | null;
+          out_next_visit_date?: string | null;
+        }
+      | null;
+    if (row?.out_customer_id) setResolvedCustomerId(row.out_customer_id);
+    const newDate = next ? (row?.out_next_visit_date ?? null) : null;
+    setNextVisitDate(newDate);
     qc.invalidateQueries({ queryKey: ["yearly-clients"] });
     qc.invalidateQueries({ queryKey: ["yearly-clients-count"] });
+    qc.invalidateQueries({ queryKey: ["schedule-jobs"] });
     if (next) {
-      toast.success("Added to Yearly Trimming roster", {
-        description: customerName ?? undefined,
-      });
+      const label = newDate ? formatFriendlyDate(newDate) : null;
+      toast.success(
+        label ? `Added — next visit booked for ${label}` : "Added to Yearly Trimming roster",
+        { description: customerName ?? undefined },
+      );
     } else {
       toast(`${customerName || "Customer"} removed from Yearly Trimming clients`);
     }
