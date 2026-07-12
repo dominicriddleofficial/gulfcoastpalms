@@ -46,9 +46,10 @@ const DEAL_POINTS: Array<{ icon: React.ComponentType<{ className?: string }>; ti
 ];
 
 const EARNINGS_ROWS = [
-  { day: "$1,500 day", cut: "$375" },
-  { day: "$2,500 day", cut: "$625" },
-  { day: "$5,000 day", cut: "$1,250" },
+  { day: "Starting out (learning pace) · $800–1,200 days", cut: "$200–300" },
+  { day: "At our pace · $1,500 days", cut: "$375" },
+  { day: "Strong days · $2,500", cut: "$625" },
+  { day: "Best days · $5,000", cut: "$1,250" },
 ];
 
 export default function PalmTreeTrimmer() {
@@ -189,9 +190,9 @@ export default function PalmTreeTrimmer() {
             <span className="text-palm-gold">25%</span> of every job you run.
           </p>
           <p className="font-body text-lg md:text-xl text-white/80 mb-8 max-w-2xl leading-relaxed">
-            Our average day runs <span className="text-white font-semibold">$1,500</span>. Good days hit
-            {" "}<span className="text-white font-semibold">$2,000–$3,000</span>. Best days —
-            {" "}<span className="text-palm-gold font-bold">$5,000</span>. Do the math.
+            Our jobs average <span className="text-white font-semibold">$1,500/day</span> at our pace — strong days
+            run {" "}<span className="text-white font-semibold">$2,000–$3,000</span>, our best days hit
+            {" "}<span className="text-palm-gold font-bold">$5,000</span>. Your speed sets your pay.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3">
@@ -253,7 +254,7 @@ export default function PalmTreeTrimmer() {
           <div className="text-center mb-10">
             <p className="font-body text-xs uppercase tracking-[0.25em] text-palm-gold font-semibold mb-3">Do the Math</p>
             <h2 className="font-display text-3xl md:text-5xl font-bold text-white">
-              25% of the day is yours.
+              Your pace is your paycheck.
             </h2>
           </div>
 
@@ -265,7 +266,7 @@ export default function PalmTreeTrimmer() {
                   i > 0 ? "border-t border-white/10" : ""
                 }`}
               >
-                <div className="font-display text-xl md:text-2xl text-white/80">{row.day}</div>
+                <div className="font-display text-lg md:text-2xl text-white/80">{row.day}</div>
                 <div className="flex items-center gap-3">
                   <div className="hidden sm:block h-px w-10 bg-palm-gold/40" />
                   <div className="font-display text-2xl md:text-4xl font-bold text-palm-gold">{row.cut}</div>
@@ -275,8 +276,8 @@ export default function PalmTreeTrimmer() {
           </div>
 
           <p className="font-body text-sm text-white/50 mt-6 text-center max-w-2xl mx-auto">
-            Illustrative math based on 25% commission. Your take-home depends on the jobs you actually run and complete —
-            we don't guarantee income.
+            These are our real numbers at our speed, built over years in the Florida heat. Most new trimmers start
+            slower and build up — how fast you get here is up to you.
           </p>
         </div>
       </section>
