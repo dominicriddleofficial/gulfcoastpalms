@@ -21,6 +21,7 @@ const trimmerSchema = z.object({
   city: z.string().trim().max(100).optional().or(z.literal("")),
   years_experience: z.string().min(1, "Select experience"),
   own_truck: z.enum(["yes", "no"], { errorMap: () => ({ message: "Select yes or no" }) }),
+  can_tow: z.enum(["yes", "no"], { errorMap: () => ({ message: "Select yes or no" }) }),
   why_good_fit: z.string().trim().max(2000).optional().or(z.literal("")),
   resume_link: z.string().trim().max(500).optional().or(z.literal("")),
 });
@@ -36,13 +37,13 @@ const EXPERIENCE_OPTIONS = [
 
 const DEAL_POINTS: Array<{ icon: React.ComponentType<{ className?: string }>; title: string; body: string; emoji: string }> = [
   { icon: DollarSign, emoji: "💰", title: "25% commission on job revenue", body: "You run the job, you earn a real cut. No made-up hourly ceiling." },
-  { icon: Truck, emoji: "🚚", title: "Bring your own truck", body: "You supply your truck. We supply the trailer, saws, climbers, everything else." },
+  { icon: Truck, emoji: "🚚", title: "Bring your own truck — tow-capable", body: "Bring your own truck — and be able to tow a trailer, or be willing to learn. You'll be hauling our equipment trailer to jobs." },
   { icon: Sun, emoji: "☀️", title: "Handle the Florida sun", body: "Full days outside on the Emerald Coast. Hot, humid, real work." },
-  { icon: TreePalm, emoji: "🪜", title: "Climbers & riggers go to the front", body: "Climbing, rigging & removal experience puts you at the top of our list — that's where the biggest paydays live. Solid landscaping experience still works: we train, you climb later." },
-  { icon: DollarSign, emoji: "🪓", title: "Removals are the big money", body: "The biggest paydays on our schedule go to climbers who can rig and drop — not just trim. If you can run removals, you'll out-earn a trim-only trimmer by a wide margin." },
+  { icon: TreePalm, emoji: "🪜", title: "Trimming experience preferred", body: "Tree/palm trimming experience preferred — solid landscaping experience works too. We train." },
   { icon: GraduationCap, emoji: "📋", title: "Paid training week — $200/day", body: "One full paid week learning exactly how we run jobs before you lead your own." },
   { icon: Users, emoji: "👷", title: "We send $25/hr helpers on big jobs", body: "You run the show. We supply the groundsmen so you focus on the tree work." },
   { icon: Star, emoji: "⭐", title: "Join the #1 rated palm crew", body: "100+ five-star Google reviews on the Emerald Coast. We stay booked out." },
+  { icon: DollarSign, emoji: "🪓", title: "Bonus: removal-capable earns more", body: "Can you climb, rig, and drop palms safely? Say so in your application — removal-capable trimmers run our biggest jobs and out-earn trim-only trimmers by a wide margin." },
 ];
 
 const EARNINGS_ROWS = [
@@ -67,6 +68,7 @@ export default function PalmTreeTrimmer() {
     city: "",
     years_experience: "",
     own_truck: "" as FormShape["own_truck"],
+    can_tow: "" as FormShape["can_tow"],
     why_good_fit: "",
     resume_link: "",
   });
@@ -124,6 +126,7 @@ export default function PalmTreeTrimmer() {
           position: "Palm Tree Trimmer / Team Lead",
           years_experience: parsed.data.years_experience,
           own_truck: parsed.data.own_truck,
+          can_tow: parsed.data.can_tow,
           why_good_fit: [
             sanitizeText(parsed.data.why_good_fit || ""),
             parsed.data.resume_link ? `Resume link: ${sanitizeText(parsed.data.resume_link)}` : "",
@@ -189,9 +192,8 @@ export default function PalmTreeTrimmer() {
             <span className="text-palm-gold">25%</span> of every job you run.
           </p>
           <p className="font-body text-lg md:text-xl text-white/80 mb-8 max-w-2xl leading-relaxed">
-            If you can <span className="text-white font-semibold">climb, rig, and drop palms safely</span>, you'll
-            run our biggest jobs — and make a lot more than a trim-only trimmer.{" "}
-            <span className="text-white font-semibold">25% of every job is yours</span>. Your speed and skill set your pay.
+            Run your own jobs for the <span className="text-white font-semibold">#1 rated palm crew on the Emerald Coast</span>.{" "}
+            <span className="text-white font-semibold">25% of every job you run</span> — your speed and skill set your pay.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3">
@@ -381,6 +383,29 @@ export default function PalmTreeTrimmer() {
                     >
                       {active && <CheckCircle2 className="inline w-4 h-4 mr-1.5 -mt-0.5" />}
                       {v === "yes" ? "Yes, I have a truck" : "No"}
+                    </button>
+                  );
+                })}
+              </div>
+            </Field>
+
+            <Field label="Can you tow a trailer?" error={errors.can_tow} required>
+              <div className="grid grid-cols-2 gap-3">
+                {(["yes", "no"] as const).map((v) => {
+                  const active = values.can_tow === v;
+                  return (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => setField("can_tow", v)}
+                      className={`h-12 rounded-lg border font-body text-sm font-semibold transition-colors ${
+                        active
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border bg-background text-foreground hover:border-primary/40"
+                      }`}
+                    >
+                      {active && <CheckCircle2 className="inline w-4 h-4 mr-1.5 -mt-0.5" />}
+                      {v === "yes" ? "Yes, I can tow" : "Willing to learn"}
                     </button>
                   );
                 })}
