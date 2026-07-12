@@ -1,43 +1,52 @@
 import { useEffect, useState } from "react";
 import { Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 
 interface Props {
   customerId: string | null;
   customerName: string | null;
+  jobberJobId?: string | null;
 }
 
 /**
  * Toggle displayed on a job's detail sheet that flips the CUSTOMER's
  * `yearly_trimming` flag (source='manual' when set from here).
  * Manual flag always wins over the auto-flag trigger.
+ *
+ * Works for both platform jobs (customerId provided) and Jobber-synced jobs
+ * (only jobberJobId is known — the RPC resolves the platform customer).
  */
-export default function YearlyTrimmingToggle({ customerId, customerName }: Props) {
+export default function YearlyTrimmingToggle({ customerId, customerName, jobberJobId }: Props) {
+  const qc = useQueryClient();
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [source, setSource] = useState<string | null>(null);
+  const [resolvedCustomerId, setResolvedCustomerId] = useState<string | null>(customerId ?? null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    if (!customerId) {
+    setResolvedCustomerId(customerId ?? null);
+    if (!customerId && !jobberJobId) {
       setEnabled(null);
       setLoading(false);
       return;
     }
     setLoading(true);
     (async () => {
-      const { data, error } = await supabase
-        .from("platform_customers")
-        .select("yearly_trimming, yearly_trimming_source")
-        .eq("id", customerId)
-        .maybeSingle();
+      const { data, error } = await supabase.rpc("get_yearly_trimming_for_job", {
+        _jobber_job_id: jobberJobId ?? null,
+        _customer_id: customerId ?? null,
+      });
       if (cancelled) return;
-      if (!error && data) {
-        setEnabled(Boolean(data.yearly_trimming));
-        setSource((data.yearly_trimming_source as string | null) ?? null);
+      const row = Array.isArray(data) ? data[0] : null;
+      if (!error && row) {
+        setResolvedCustomerId(row.customer_id ?? null);
+        setEnabled(Boolean(row.enabled));
+        setSource((row.source as string | null) ?? null);
       } else {
         setEnabled(false);
       }
@@ -46,41 +55,43 @@ export default function YearlyTrimmingToggle({ customerId, customerName }: Props
     return () => {
       cancelled = true;
     };
-  }, [customerId]);
+  }, [customerId, jobberJobId]);
 
   const onToggle = async (next: boolean) => {
-    if (!customerId || saving) return;
+    if (saving) return;
+    if (!resolvedCustomerId && !jobberJobId) return;
     setSaving(true);
-    const patch = next
-      ? {
-          yearly_trimming: true,
-          yearly_trimming_source: "manual",
-          yearly_trimming_added_at: new Date().toISOString(),
-        }
-      : {
-          yearly_trimming: false,
-          yearly_trimming_source: null,
-          yearly_trimming_added_at: null,
-        };
-    const { error } = await supabase
-      .from("platform_customers")
-      .update(patch)
-      .eq("id", customerId);
+    // Optimistic
+    const prevEnabled = enabled;
+    const prevSource = source;
+    setEnabled(next);
+    setSource("manual");
+    const { data, error } = await supabase.rpc("set_yearly_trimming_for_job", {
+      _jobber_job_id: jobberJobId ?? null,
+      _customer_id: resolvedCustomerId ?? null,
+      _value: next,
+    });
     setSaving(false);
     if (error) {
+      setEnabled(prevEnabled);
+      setSource(prevSource);
       toast.error("Could not update yearly trimming", { description: error.message });
       return;
     }
-    setEnabled(next);
-    setSource(next ? "manual" : null);
+    const row = Array.isArray(data) ? data[0] : null;
+    if (row?.customer_id) setResolvedCustomerId(row.customer_id);
+    qc.invalidateQueries({ queryKey: ["yearly-clients"] });
+    qc.invalidateQueries({ queryKey: ["yearly-clients-count"] });
     if (next) {
-      toast.success(`${customerName || "Customer"} added to Yearly Trimming clients`);
+      toast.success("Added to Yearly Trimming roster", {
+        description: customerName ?? undefined,
+      });
     } else {
       toast(`${customerName || "Customer"} removed from Yearly Trimming clients`);
     }
   };
 
-  if (!customerId) {
+  if (!customerId && !jobberJobId) {
     return (
       <div className="rounded-2xl border border-border/60 bg-secondary/20 p-4">
         <div className="flex items-center gap-2 mb-1">

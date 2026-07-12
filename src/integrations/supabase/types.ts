@@ -6649,6 +6649,14 @@ export type Database = {
         Args: { _business_id: string }
         Returns: number
       }
+      get_yearly_trimming_for_job: {
+        Args: { _customer_id: string; _jobber_job_id: string }
+        Returns: {
+          customer_id: string
+          enabled: boolean
+          source: string
+        }[]
+      }
       get_yearly_trimming_roster: {
         Args: { _business_id: string }
         Returns: {
@@ -6694,6 +6702,14 @@ export type Database = {
       }
       refresh_business_kpi_snapshots: { Args: never; Returns: number }
       run_jobber_auto_sync: { Args: never; Returns: undefined }
+      set_yearly_trimming_for_job: {
+        Args: { _customer_id: string; _jobber_job_id: string; _value: boolean }
+        Returns: {
+          customer_id: string
+          enabled: boolean
+          source: string
+        }[]
+      }
       sms_upsert_conversation: {
         Args: {
           _business_id: string
