@@ -17,6 +17,10 @@ serve(async (req) => {
     log("ERROR: STRIPE_SECRET_KEY not set");
     return new Response("Server configuration error", { status: 500 });
   }
+  if (!webhookSecret) {
+    log("ERROR: STRIPE_WEBHOOK_SECRET not set — refusing to process events");
+    return new Response("Webhook secret not configured", { status: 500 });
+  }
 
   const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
   const supabaseAdmin = createClient(
@@ -28,22 +32,19 @@ serve(async (req) => {
   const body = await req.text();
   let event: Stripe.Event;
 
-  // Verify signature if webhook secret is set
-  if (webhookSecret) {
-    const signature = req.headers.get("stripe-signature");
-    if (!signature) {
-      log("ERROR: Missing stripe-signature header");
-      return new Response("Missing signature", { status: 400 });
-    }
-    try {
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-    } catch (err) {
-      log("ERROR: Signature verification failed", { message: err.message });
-      return new Response(`Webhook signature verification failed: ${err.message}`, { status: 400 });
-    }
-  } else {
-    log("WARNING: No STRIPE_WEBHOOK_SECRET set, skipping signature verification");
-    event = JSON.parse(body);
+  // Verify signature — STRIPE_WEBHOOK_SECRET is required (checked above).
+  // Never fall back to unsigned JSON.parse: that would allow attackers to
+  // forge checkout.session.completed events and flip invoices to paid.
+  const signature = req.headers.get("stripe-signature");
+  if (!signature) {
+    log("ERROR: Missing stripe-signature header");
+    return new Response("Missing signature", { status: 400 });
+  }
+  try {
+    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+  } catch (err) {
+    log("ERROR: Signature verification failed", { message: (err as Error).message });
+    return new Response(`Webhook signature verification failed: ${(err as Error).message}`, { status: 400 });
   }
 
   log("Event received", { type: event.type, id: event.id });
