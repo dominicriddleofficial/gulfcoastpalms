@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Sparkles, Phone, Trash2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
@@ -28,6 +28,7 @@ function fmtMoney(v: number): string {
 export default function PlatformYearlyClients() {
   const { selectedBusinessId } = usePlatformAuth();
   const { isOwner } = useUserRole();
+  const qc = useQueryClient();
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["yearly-clients", selectedBusinessId],
@@ -51,7 +52,9 @@ export default function PlatformYearlyClients() {
     },
     enabled: !!selectedBusinessId,
     staleTime: 60_000,
-    refetchOnWindowFocus: false,
+    // Standard platform freshness pattern: refetch on tab focus so a toggle
+    // flipped in another tab / from Schedule shows up when the owner returns.
+    refetchOnWindowFocus: true,
   });
 
   const rows = useMemo(() => {
@@ -84,6 +87,10 @@ export default function PlatformYearlyClients() {
       return;
     }
     toast.success(`${name} removed from Yearly Trimming`);
+    // Refetch this page's roster + the dashboard count tile.
+    // Prefix invalidation catches business-id-suffixed keys.
+    qc.invalidateQueries({ queryKey: ["yearly-clients"] });
+    qc.invalidateQueries({ queryKey: ["yearly-clients-count"] });
     refetch();
   };
 
