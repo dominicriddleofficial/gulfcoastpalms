@@ -66,6 +66,10 @@ export function classifyError(err: unknown): ErrorClass {
     "permission denied",
     "not authorized",
     "jwt expired",
+    // App-raised guards (e.g. SECURITY DEFINER RPCs RAISE EXCEPTION 'forbidden')
+    // are NOT outages — they mean the user is signed in but not entitled to the
+    // row set. Never trip the "connection lost" banner on these.
+    "forbidden",
   ];
   if (authKeywords.some((k) => message.includes(k))) return "normal";
 
