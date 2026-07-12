@@ -45,6 +45,8 @@ interface ApplicationInput {
   // Anti-spam
   website?: string;
   formRenderTime?: number;
+  // When true, ONLY send the SMS alert (the row was already inserted by the caller).
+  notify_only?: boolean;
 }
 
 function json(status: number, body: unknown, headers: HeadersInit) {
@@ -185,15 +187,18 @@ Deno.serve(async (req) => {
     acknowledged: !!body.acknowledged,
   };
 
-  const { data: inserted, error: insertErr } = await supabase
-    .from("job_applications")
-    .insert(insertRow)
-    .select("id")
-    .single();
-
-  if (insertErr) {
-    console.error("submit-application: insert failed", insertErr);
-    return json(500, { success: false, error: "Could not save application. Please try again." }, cors);
+  let insertedId: string | null = null;
+  if (!body.notify_only) {
+    const { data: inserted, error: insertErr } = await supabase
+      .from("job_applications")
+      .insert(insertRow)
+      .select("id")
+      .single();
+    if (insertErr) {
+      console.error("submit-application: insert failed", insertErr);
+      return json(500, { success: false, error: "Could not save application. Please try again." }, cors);
+    }
+    insertedId = inserted?.id ?? null;
   }
 
   // Fire SMS — never blocks / never fails the response.
@@ -212,5 +217,5 @@ Deno.serve(async (req) => {
     console.error("submit-application: SMS threw", err);
   }
 
-  return json(200, { success: true, id: inserted?.id ?? null }, cors);
+  return json(200, { success: true, id: insertedId }, cors);
 });
