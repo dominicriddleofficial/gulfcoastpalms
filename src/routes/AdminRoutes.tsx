@@ -10,7 +10,6 @@ const AdminEmployees = lazy(() => import("@/pages/admin/AdminEmployees"));
 const AdminReviews = lazy(() => import("@/pages/admin/AdminReviews"));
 const AdminLeaderboards = lazy(() => import("@/pages/admin/AdminLeaderboards"));
 const AdminUploads = lazy(() => import("@/pages/admin/AdminUploads"));
-const AdminApplicants = lazy(() => import("@/pages/admin/AdminApplicants"));
 const AdminSOPAcknowledgments = lazy(() => import("@/pages/admin/AdminSOPAcknowledgments"));
 const AdminPerformance = lazy(() => import("@/pages/admin/AdminPerformance"));
 const AdminCrews = lazy(() => import("@/pages/admin/AdminCrews"));
@@ -30,7 +29,6 @@ export const AdminRoutes = () => (
     <Route path="/admin/reviews" element={<AdminReviews />} />
     <Route path="/admin/leaderboards" element={<AdminLeaderboards />} />
     <Route path="/admin/uploads" element={<AdminUploads />} />
-    <Route path="/admin/applicants" element={<AdminApplicants />} />
     <Route path="/admin/sop-acknowledgments" element={<AdminSOPAcknowledgments />} />
     <Route path="/admin/performance" element={<AdminPerformance />} />
     <Route path="/admin/crews" element={<AdminCrews />} />
