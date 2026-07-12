@@ -126,7 +126,7 @@ const buildNavSections = (
       {
         label: "Team & HR",
         items: [
-          { label: "Applicants", path: "/admin/applicants", icon: UserPlus, external: true },
+          { label: "Applicants", path: "/platform/applicants", icon: UserPlus },
           { label: "SOP Acknowledgements", path: "/admin/sop-acknowledgments", icon: FileCheck2, external: true },
           { label: "Uploads", path: "/admin/uploads", icon: UploadIcon, external: true },
           { label: "Job Listings", path: "/careers/gulf-coast-palms", icon: GraduationCap, external: true },
