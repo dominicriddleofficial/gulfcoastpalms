@@ -163,7 +163,7 @@ export default function YearlyTrimmingToggle({ customerId, customerName, jobberJ
           </div>
           <p className="font-body text-[13px] text-muted-foreground leading-snug">
             {enabled
-              ? `On the yearly list${source === "manual" ? " (manual)" : source === "auto" ? " (auto)" : ""}. We reach out next year.`
+              ? `On the yearly list${source === "manual" ? " (manual)" : source === "auto" ? " (auto)" : ""}.`
               : "Ask the customer: “Want us back every year?” Flip on if yes."}
           </p>
           {enabled && nextVisitDate && (
