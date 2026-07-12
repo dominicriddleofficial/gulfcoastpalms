@@ -42,6 +42,7 @@ interface ApplicationInput {
   // New-page fields (stored in why_good_fit / work_experience or notes)
   own_truck?: boolean | string | null;
   years_experience?: string | null;
+  can_tow?: boolean | string | null;
   // Anti-spam
   website?: string;
   formRenderTime?: number;
@@ -160,10 +161,12 @@ Deno.serve(async (req) => {
   // Include Trimmer-form extras in why_good_fit / notes so they persist without a schema change.
   const yearsExp = typeof body.years_experience === "string" ? body.years_experience.trim() : "";
   const hasTruck = truthy(body.own_truck ?? body.has_transportation);
+  const canTow = truthy(body.can_tow);
   const whyFit = typeof body.why_good_fit === "string" ? body.why_good_fit.trim() : "";
   const composedWhy = [
     yearsExp ? `Years experience: ${yearsExp}` : null,
     body.own_truck != null ? `Own truck: ${hasTruck ? "Yes" : "No"}` : null,
+    body.can_tow != null ? `Can tow trailer: ${canTow ? "Yes" : "Willing to learn"}` : null,
     whyFit || null,
   ].filter(Boolean).join("\n\n");
 
@@ -208,8 +211,9 @@ Deno.serve(async (req) => {
   const truckLabel = body.own_truck != null || body.has_transportation != null
     ? (hasTruck ? "Yes" : "No")
     : "?";
+  const towLabel = body.can_tow != null ? (canTow ? "Yes" : "Learning") : "?";
   const yearsLabel = yearsExp || (typeof body.has_experience === "string" ? body.has_experience : "") || "n/a";
-  const smsBody = `👷 NEW JOB APPLICANT: ${safeName} · ${safePhone} · ${safePosition} · Truck: ${truckLabel} · ${yearsLabel}. Call while they're hot.`;
+  const smsBody = `👷 NEW JOB APPLICANT: ${safeName} · ${safePhone} · ${safePosition} · Truck: ${truckLabel} · Tow: ${towLabel} · ${yearsLabel}. Call while they're hot.`;
 
   try {
     await sendSms(APPLICANT_ALERT_PHONE, smsBody);
