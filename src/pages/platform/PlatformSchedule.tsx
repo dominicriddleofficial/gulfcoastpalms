@@ -75,6 +75,8 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { useQueryClient } from "@tanstack/react-query";
 import { CalendarClock, Pencil, Trash2 } from "lucide-react";
 import YearlyTrimmingToggle from "@/components/platform/schedule/YearlyTrimmingToggle";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 
 type ScheduleTab = "day" | "list" | "map" | "crew";
 
@@ -568,14 +570,39 @@ export default function PlatformSchedule() {
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <button
-                onClick={() => setSelectedDate(new Date())}
-                className="flex-1 font-display text-base sm:text-lg font-extrabold text-foreground hover:text-primary px-2 py-1 transition-colors text-center truncate"
-              >
-                {scheduleTab === "list"
-                  ? `${format(selectedRange.start, "MMM d")} – ${format(selectedRange.end, "MMM d, yyyy")}`
-                  : format(selectedDate, "EEE, MMM d, yyyy")}
-              </button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    className="flex-1 font-display text-base sm:text-lg font-extrabold text-foreground hover:text-primary px-2 py-1 transition-colors text-center truncate"
+                    aria-label="Jump to date"
+                  >
+                    {scheduleTab === "list"
+                      ? `${format(selectedRange.start, "MMM d")} – ${format(selectedRange.end, "MMM d, yyyy")}`
+                      : format(selectedDate, "EEE, MMM d, yyyy")}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="center" className="w-auto p-0 bg-card border-border">
+                  <div className="p-2 flex items-center justify-between gap-2 border-b border-border">
+                    <span className="font-body text-xs text-muted-foreground px-2">Jump to date</span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 font-body text-xs"
+                      onClick={() => setSelectedDate(new Date())}
+                    >
+                      Today
+                    </Button>
+                  </div>
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(d) => d && setSelectedDate(d)}
+                    defaultMonth={selectedDate}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
               <button
                 onClick={() => setSelectedDate((d) => addDays(d, scheduleTab === "list" ? 7 : 1))}
                 className="p-3 rounded-xl hover:bg-secondary text-foreground/80 hover:text-primary transition-colors"
