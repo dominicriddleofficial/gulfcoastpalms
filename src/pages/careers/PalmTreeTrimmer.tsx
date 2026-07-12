@@ -48,8 +48,7 @@ const DEAL_POINTS: Array<{ icon: React.ComponentType<{ className?: string }>; ti
 const EARNINGS_ROWS = [
   { day: "Starting out (learning pace) · $800–1,200 days", cut: "$200–300" },
   { day: "At our pace · $1,500 days", cut: "$375" },
-  { day: "Strong days · $2,500", cut: "$625" },
-  { day: "Removal days · $2,500–5,000", cut: "$625–1,250" },
+  { day: "Strong days · $2,500+", cut: "$625+" },
 ];
 
 export default function PalmTreeTrimmer() {
@@ -191,9 +190,8 @@ export default function PalmTreeTrimmer() {
           </p>
           <p className="font-body text-lg md:text-xl text-white/80 mb-8 max-w-2xl leading-relaxed">
             If you can <span className="text-white font-semibold">climb, rig, and drop palms safely</span>, you'll
-            run our biggest jobs — removals pay {" "}
-            <span className="text-palm-gold font-bold">$2,000–$5,000 a day</span> and{" "}
-            <span className="text-white font-semibold">25% of that is yours</span>. Your speed and skill set your pay.
+            run our biggest jobs — and make a lot more than a trim-only trimmer.{" "}
+            <span className="text-white font-semibold">25% of every job is yours</span>. Your speed and skill set your pay.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3">
@@ -278,7 +276,7 @@ export default function PalmTreeTrimmer() {
 
           <p className="font-body text-sm text-white/50 mt-6 text-center max-w-2xl mx-auto">
             These are our real numbers at our speed, built over years in the Florida heat. Most new trimmers start
-            slower and build up — how fast you get here is up to you.
+            slower and build up — how fast you get here is up to you. Removal-capable climbers see the biggest days.
           </p>
         </div>
       </section>
