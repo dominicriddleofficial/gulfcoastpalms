@@ -28,18 +28,18 @@ const trimmerSchema = z.object({
 type FormShape = z.infer<typeof trimmerSchema>;
 
 const EXPERIENCE_OPTIONS = [
-  { value: "none", label: "No tree/landscape experience (open to training)" },
-  { value: "under_1", label: "Landscaping / outdoor work — under 1 year" },
-  { value: "1_2", label: "1–2 years landscape/tree experience" },
-  { value: "3_5", label: "3–5 years tree or palm experience" },
-  { value: "5_plus", label: "5+ years professional tree/palm crew" },
+  { value: "climber_rigging_removal", label: "Experienced climber — rigging & removals" },
+  { value: "climb_trim_learning", label: "Climb & trim, learning rigging" },
+  { value: "ground_crew", label: "Tree ground crew experience" },
+  { value: "landscape_no_tree", label: "Landscaping/outdoor work — no tree experience yet" },
 ];
 
 const DEAL_POINTS: Array<{ icon: React.ComponentType<{ className?: string }>; title: string; body: string; emoji: string }> = [
   { icon: DollarSign, emoji: "💰", title: "25% commission on job revenue", body: "You run the job, you earn a real cut. No made-up hourly ceiling." },
   { icon: Truck, emoji: "🚚", title: "Bring your own truck", body: "You supply your truck. We supply the trailer, saws, climbers, everything else." },
   { icon: Sun, emoji: "☀️", title: "Handle the Florida sun", body: "Full days outside on the Emerald Coast. Hot, humid, real work." },
-  { icon: TreePalm, emoji: "🪜", title: "Tree/palm experience preferred", body: "Solid landscaping experience works too — if you can work, we can train." },
+  { icon: TreePalm, emoji: "🪜", title: "Climbers & riggers go to the front", body: "Climbing, rigging & removal experience puts you at the top of our list — that's where the biggest paydays live. Solid landscaping experience still works: we train, you climb later." },
+  { icon: DollarSign, emoji: "🪓", title: "Removals are the big money", body: "Removals run $2,100–$3,350 per job — trimmers who can run removals take home $500–800+ on those days." },
   { icon: GraduationCap, emoji: "📋", title: "Paid training week — $200/day", body: "One full paid week learning exactly how we run jobs before you lead your own." },
   { icon: Users, emoji: "👷", title: "We send $25/hr helpers on big jobs", body: "You run the show. We supply the groundsmen so you focus on the tree work." },
   { icon: Star, emoji: "⭐", title: "Join the #1 rated palm crew", body: "100+ five-star Google reviews on the Emerald Coast. We stay booked out." },
@@ -49,7 +49,7 @@ const EARNINGS_ROWS = [
   { day: "Starting out (learning pace) · $800–1,200 days", cut: "$200–300" },
   { day: "At our pace · $1,500 days", cut: "$375" },
   { day: "Strong days · $2,500", cut: "$625" },
-  { day: "Best days · $5,000", cut: "$1,250" },
+  { day: "Removal days · $2,500–5,000", cut: "$625–1,250" },
 ];
 
 export default function PalmTreeTrimmer() {
@@ -190,9 +190,10 @@ export default function PalmTreeTrimmer() {
             <span className="text-palm-gold">25%</span> of every job you run.
           </p>
           <p className="font-body text-lg md:text-xl text-white/80 mb-8 max-w-2xl leading-relaxed">
-            Our jobs average <span className="text-white font-semibold">$1,500/day</span> at our pace — strong days
-            run {" "}<span className="text-white font-semibold">$2,000–$3,000</span>, our best days hit
-            {" "}<span className="text-palm-gold font-bold">$5,000</span>. Your speed sets your pay.
+            If you can <span className="text-white font-semibold">climb, rig, and drop palms safely</span>, you'll
+            run our biggest jobs — removals pay {" "}
+            <span className="text-palm-gold font-bold">$2,000–$5,000 a day</span> and{" "}
+            <span className="text-white font-semibold">25% of that is yours</span>. Your speed and skill set your pay.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3">
