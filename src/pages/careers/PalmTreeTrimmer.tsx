@@ -48,6 +48,7 @@ const DEAL_POINTS: Array<{ icon: React.ComponentType<{ className?: string }>; ti
 const EARNINGS_ROWS = [
   { day: "Starting out (learning pace) · $800–1,200 days", cut: "$200–300" },
   { day: "At our pace · $1,500 days", cut: "$375" },
+  { day: "Strong days · $2,500", cut: "$625" },
   { day: "Removal days · $2,500–5,000", cut: "$625–1,250" },
 ];
 
