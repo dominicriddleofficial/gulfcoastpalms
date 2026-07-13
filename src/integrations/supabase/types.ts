@@ -6738,6 +6738,13 @@ export type Database = {
         }
         Returns: number
       }
+      process_yearly_autoschedule: {
+        Args: never
+        Returns: {
+          created_count: number
+          skipped_count: number
+        }[]
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
