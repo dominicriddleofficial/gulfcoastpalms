@@ -255,11 +255,73 @@ serve(async (req) => {
         ? [legacySingle]
         : LEAD_ALERT_PHONE_FALLBACKS;
 
-    // Send independently; one failing must not block the other.
-    const results = await Promise.all(destinations.map(dest => sendLeadSms(dest, smsBody)));
+    // Sequential per-recipient sends, each in its own try/catch, with a small
+    // gap between recipients (SimpleTexting rate-limits rapid back-to-back
+    // calls) and one retry on failure. If a recipient still fails, log to
+    // error_logs and fire a fallback SMS to the owner so a silent miss can
+    // never happen again.
+    const OWNER_FALLBACK = "+18508897255";
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } },
+    );
+    const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+    const results: Array<{ recipient: string; ok: boolean; sid?: string; reason?: string; attempts: number }> = [];
+    for (let i = 0; i < destinations.length; i++) {
+      const dest = destinations[i];
+      if (i > 0) await sleep(500); // gap between recipients
+      let attempt = 0;
+      let r: { ok: boolean; sid?: string; reason?: string } = { ok: false };
+      try {
+        r = await sendLeadSms(dest, smsBody);
+        attempt = 1;
+        if (!r.ok) {
+          await sleep(2000);
+          r = await sendLeadSms(dest, smsBody);
+          attempt = 2;
+        }
+      } catch (err) {
+        console.error(`notify-lead: sendLeadSms threw for ${dest}`, err);
+        r = { ok: false, reason: err instanceof Error ? err.message : "throw" };
+      }
+      results.push({ recipient: dest, ok: r.ok, sid: r.sid, reason: r.reason, attempts: attempt });
+
+      if (!r.ok) {
+        // Log the miss
+        try {
+          await supabaseAdmin.from("error_logs").insert({
+            error_type: "lead_alert_sms_failed",
+            error_message: `Lead alert SMS to ${dest} failed after ${attempt} attempt(s): ${r.reason ?? "unknown"}`,
+            context: {
+              recipient: dest,
+              reason: r.reason,
+              attempts: attempt,
+              lead_name: safeName,
+              lead_phone: safePhone,
+              lead_service: safeService,
+            },
+          });
+        } catch (logErr) {
+          console.error("notify-lead: error_logs insert failed", logErr);
+        }
+        // Fallback alert to owner (skip if the failing recipient IS the owner)
+        if (dest !== OWNER_FALLBACK) {
+          try {
+            await sendLeadSms(
+              OWNER_FALLBACK,
+              `⚠️ Lead alert to ${dest} FAILED — ${safeName} ${safePhone}`,
+            );
+          } catch (fbErr) {
+            console.error("notify-lead: fallback owner SMS threw", fbErr);
+          }
+        }
+      }
+    }
     const anyOk = results.some(r => r.ok);
     const sids = results.filter(r => r.ok).map(r => r.sid).filter(Boolean);
-    const reasons = results.filter(r => !r.ok).map(r => r.reason);
+    const reasons = results.filter(r => !r.ok).map(r => `${r.recipient}:${r.reason}`);
 
     // Fail-silent: always return success so the client-side lead flow never
     // shows an error to the visitor when Twilio is misconfigured/down.
