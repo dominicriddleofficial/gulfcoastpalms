@@ -292,16 +292,8 @@ serve(async (req) => {
         // Log the miss
         try {
           await supabaseAdmin.from("error_logs").insert({
-            error_type: "lead_alert_sms_failed",
-            error_message: `Lead alert SMS to ${dest} failed after ${attempt} attempt(s): ${r.reason ?? "unknown"}`,
-            context: {
-              recipient: dest,
-              reason: r.reason,
-              attempts: attempt,
-              lead_name: safeName,
-              lead_phone: safePhone,
-              lead_service: safeService,
-            },
+            error_message: `lead_alert_sms_failed: to=${dest} attempts=${attempt} reason=${r.reason ?? "unknown"} lead=${safeName} ${safePhone} service=${safeService}`,
+            page_url: "edge:notify-lead",
           });
         } catch (logErr) {
           console.error("notify-lead: error_logs insert failed", logErr);
