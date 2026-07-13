@@ -24,6 +24,11 @@ const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
 // Owner + office manager cells for lead alerts.
 // Overridable via LEAD_ALERT_PHONES (comma-separated) or legacy LEAD_ALERT_PHONE.
 const LEAD_ALERT_PHONE_FALLBACKS = ["+18508897255", "+18507127850"];
+// SimpleTexting sending number — must NEVER appear as a destination.
+const SENDING_NUMBER_DIGITS = "8506049819";
+function isSendingNumber(n: string): boolean {
+  return n.replace(/\D/g, "").endsWith(SENDING_NUMBER_DIGITS);
+}
 
 /**
  * SimpleTexting REST — preferred path when SIMPLETEXTING_API_KEY is set.
@@ -254,6 +259,14 @@ serve(async (req) => {
       : legacySingle
         ? [legacySingle]
         : LEAD_ALERT_PHONE_FALLBACKS;
+    // Hard guard: strip the SimpleTexting sending number if it ever appears.
+    const filteredDestinations = destinations.filter(d => {
+      if (isSendingNumber(d)) {
+        console.warn(`notify-lead: dropping sending-number destination ${d}`);
+        return false;
+      }
+      return true;
+    });
 
     // Sequential per-recipient sends, each in its own try/catch, with a small
     // gap between recipients (SimpleTexting rate-limits rapid back-to-back
@@ -269,8 +282,8 @@ serve(async (req) => {
     const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
     const results: Array<{ recipient: string; ok: boolean; sid?: string; reason?: string; attempts: number }> = [];
-    for (let i = 0; i < destinations.length; i++) {
-      const dest = destinations[i];
+    for (let i = 0; i < filteredDestinations.length; i++) {
+      const dest = filteredDestinations[i];
       if (i > 0) await sleep(500); // gap between recipients
       let attempt = 0;
       let r: { ok: boolean; sid?: string; reason?: string } = { ok: false };
@@ -320,7 +333,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify(
         anyOk
-          ? { success: true, sids, sent_to: destinations.length, failed_reasons: reasons }
+          ? { success: true, sids, sent_to: filteredDestinations.length, failed_reasons: reasons }
           : { success: true, sids: [], sms_skipped: true, reasons }
       ),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
