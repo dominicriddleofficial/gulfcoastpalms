@@ -13,9 +13,11 @@ import PaymentActionPanel from "@/components/platform/billing/PaymentActionPanel
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Search, Plus, Receipt, DollarSign, Clock, User,
-  AlertTriangle, Send, Link2, ExternalLink, Trash2, Edit, Copy, Download,
+  AlertTriangle, Send, Link2, ExternalLink, Trash2, Edit, Copy, Download, ClipboardCopy,
   MoreHorizontal, MessageSquare, Eye,
 } from "lucide-react";
 import { format, formatDistanceToNow, parseISO } from "date-fns";
@@ -38,6 +40,7 @@ export default function PlatformInvoices() {
   } = usePlatformInvoices(selectedBusinessId);
   const invalidateUnpaid = useInvalidateUnpaidJobs();
   const [selectedInvoice, setSelectedInvoice] = useState<PlatformInvoice | null>(null);
+  const [manualCopyText, setManualCopyText] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const getBiz = (bizId: string) => businesses.find(b => b.id === bizId);
@@ -50,6 +53,29 @@ export default function PlatformInvoices() {
   const copyPaymentLink = (inv: PlatformInvoice) => {
     navigator.clipboard.writeText(getPaymentUrl(inv));
     toast.success("Payment link copied");
+  };
+
+  const buildInvoiceMessage = (inv: PlatformInvoice) => {
+    const biz = getBiz(inv.business_id);
+    const bizName = biz?.public_brand_name || "Gulf Coast Palms";
+    const firstName = (inv.customer_name || "there").trim().split(/\s+/)[0];
+    const totalStr = `$${Number(inv.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const link = getPaymentUrl(inv);
+    return `Hi ${firstName}, here's your invoice from ${bizName} — ${inv.invoice_number} for ${totalStr}. View and pay here: ${link}\nThank you for your business!`;
+  };
+
+  const copyInvoiceMessage = async (inv: PlatformInvoice) => {
+    const text = buildInvoiceMessage(inv);
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        toast.success("Invoice message copied");
+        return;
+      }
+      throw new Error("clipboard unavailable");
+    } catch {
+      setManualCopyText(text);
+    }
   };
 
   const deleteInvoice = async (inv: PlatformInvoice) => {
@@ -284,6 +310,9 @@ export default function PlatformInvoices() {
                           <DropdownMenuItem className="font-body text-xs" onClick={() => copyPaymentLink(inv)}>
                             <Copy className="w-3.5 h-3.5 mr-2" /> Copy Payment Link
                           </DropdownMenuItem>
+                          <DropdownMenuItem className="font-body text-xs" onClick={() => copyInvoiceMessage(inv)}>
+                            <ClipboardCopy className="w-3.5 h-3.5 mr-2" /> Copy Invoice
+                          </DropdownMenuItem>
                           <DropdownMenuItem className="font-body text-xs text-destructive" onClick={() => deleteInvoice(inv)}>
                             <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete
                           </DropdownMenuItem>
@@ -305,6 +334,7 @@ export default function PlatformInvoices() {
             <InvoiceDetailPanel
               invoice={selectedInvoice}
               businesses={businesses}
+              onCopyInvoiceMessage={() => copyInvoiceMessage(selectedInvoice)}
               onStatusChange={async (newStatus) => {
                 const updates: PlatformInvoiceUpdate = { status: newStatus };
                 if (newStatus === "sent") updates.sent_at = new Date().toISOString();
@@ -356,16 +386,38 @@ export default function PlatformInvoices() {
         </SheetContent>
       </Sheet>
 
+      {/* Manual-copy fallback for browsers without clipboard access */}
+      <Dialog open={!!manualCopyText} onOpenChange={(open) => { if (!open) setManualCopyText(null); }}>
+        <DialogContent className="ops-theme bg-background border-border max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-foreground">Copy invoice message</DialogTitle>
+            <DialogDescription className="font-body text-xs text-muted-foreground">
+              Long-press or select all, then copy.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={manualCopyText || ""}
+            readOnly
+            rows={6}
+            className="bg-card border-border font-body text-sm text-foreground"
+            onFocus={(e) => e.currentTarget.select()}
+            autoFocus
+          />
+          <Button size="sm" className="font-body text-xs" onClick={() => setManualCopyText(null)}>Done</Button>
+        </DialogContent>
+      </Dialog>
+
     </PlatformLayout>
   );
 }
 
 /* ─── Invoice Detail ─── */
-function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayment }: {
+function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayment, onCopyInvoiceMessage }: {
   invoice: PlatformInvoice;
   businesses: Array<{ id: string; public_brand_name: string; shortcode: string; default_business_color?: string }>;
   onStatusChange: (status: string) => void;
   onRecordPayment: (amount: number, method: string, notes: string, isDeposit: boolean) => void;
+  onCopyInvoiceMessage: () => void;
 }) {
   const biz = businesses.find(b => b.id === invoice.business_id);
   const isVoid = invoice.status === "void";
@@ -438,6 +490,10 @@ function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayme
       {/* Preview Invoice button */}
       <Button size="sm" variant="outline" className="w-full gap-2 border-primary/30 text-primary text-xs" onClick={() => window.open(getPaymentUrl(), "_blank")}>
         <Eye className="w-3.5 h-3.5" /> Preview Invoice (Customer View)
+      </Button>
+
+      <Button size="sm" variant="outline" className="w-full gap-2 border-border text-foreground text-xs" onClick={onCopyInvoiceMessage}>
+        <ClipboardCopy className="w-3.5 h-3.5" /> Copy Invoice (paste anywhere)
       </Button>
 
       <BillingSummaryCard
