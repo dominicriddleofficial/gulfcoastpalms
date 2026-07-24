@@ -1109,22 +1109,83 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
         />
       )}
 
-      {/* Manual-copy fallback dialog — shown when navigator.clipboard is unavailable. */}
-      <Sheet open={!!manualCopyText} onOpenChange={(open) => { if (!open) setManualCopyText(null); }}>
+      {/* Post-save copy sheet — iOS-safe: clipboard write happens inside a fresh
+          user tap on the "Copy message" button below, never after an awaited insert. */}
+      <Sheet
+        open={!!manualCopyText}
+        onOpenChange={(open) => {
+          if (!open) {
+            const wasOpen = !!manualCopyText;
+            setManualCopyText(null);
+            setSavedCopyInvoiceNumber(null);
+            if (wasOpen) onCreated();
+          }
+        }}
+      >
         <SheetContent side="bottom" className="ops-theme bg-background border-border max-w-md mx-auto rounded-t-2xl">
           <SheetHeader>
-            <SheetTitle className="font-display text-foreground">Copy invoice message</SheetTitle>
+            <SheetTitle className="font-display text-foreground">
+              {savedCopyInvoiceNumber ? `Invoice ${savedCopyInvoiceNumber} saved` : "Copy invoice message"}
+            </SheetTitle>
           </SheetHeader>
-          <p className="font-body text-xs text-muted-foreground mt-1">Long-press or select all, then copy.</p>
+          <p className="font-body text-xs text-muted-foreground mt-1" data-testid="copy-sheet-hint">
+            Tap “Copy message”, then paste anywhere (Messenger, email, notes).
+          </p>
           <Textarea
+            data-testid="copy-invoice-textarea"
             value={manualCopyText || ""}
             readOnly
             rows={6}
             className="bg-card border-border font-body text-sm text-foreground mt-3"
             onFocus={(e) => e.currentTarget.select()}
-            autoFocus
           />
-          <Button size="sm" className="font-body text-xs mt-3" onClick={() => setManualCopyText(null)}>Done</Button>
+          <div className="flex gap-2 mt-3">
+            <Button
+              data-testid="copy-invoice-copy-btn"
+              className="flex-1 font-body text-sm"
+              onClick={async () => {
+                const text = manualCopyText || "";
+                try {
+                  if (navigator?.clipboard?.writeText) {
+                    await navigator.clipboard.writeText(text);
+                    toast.success("Copied — paste it anywhere");
+                    return;
+                  }
+                } catch {
+                  /* fall through */
+                }
+                // Legacy fallback: execCommand within the same tap
+                try {
+                  const ta = document.createElement("textarea");
+                  ta.value = text;
+                  ta.style.position = "fixed";
+                  ta.style.opacity = "0";
+                  document.body.appendChild(ta);
+                  ta.focus();
+                  ta.select();
+                  const ok = document.execCommand("copy");
+                  document.body.removeChild(ta);
+                  if (ok) toast.success("Copied — paste it anywhere");
+                  else toast.error("Couldn't copy — long-press the message to copy manually");
+                } catch {
+                  toast.error("Couldn't copy — long-press the message to copy manually");
+                }
+              }}
+            >
+              Copy message
+            </Button>
+            <Button
+              variant="outline"
+              className="font-body text-sm"
+              onClick={() => {
+                setManualCopyText(null);
+                setSavedCopyInvoiceNumber(null);
+                onCreated();
+              }}
+            >
+              Done
+            </Button>
+          </div>
         </SheetContent>
       </Sheet>
     </>
