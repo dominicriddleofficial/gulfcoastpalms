@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Send, Mail, Smartphone } from "lucide-react";
+import { Send, Mail, Smartphone, ClipboardCopy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -16,6 +16,7 @@ interface SendInvoiceModalProps {
   businessName: string;
   shortcode: string;
   onSend: (data: { email: string; subject: string; message: string; ccEmail: string; sendEmail: boolean; sendSms: boolean; smsMessage: string }) => Promise<void>;
+  onCopy: () => Promise<void>;
   onClose: () => void;
   saving: boolean;
 }
@@ -23,7 +24,7 @@ interface SendInvoiceModalProps {
 export default function SendInvoiceModal({
   customerName, customerEmail, customerPhone,
   invoiceNumber, dueDate, businessName, shortcode,
-  onSend, onClose, saving,
+  onSend, onCopy, onClose, saving,
 }: SendInvoiceModalProps) {
   const [email, setEmail] = useState(customerEmail);
   const [ccEmail, setCcEmail] = useState("");
@@ -141,6 +142,24 @@ export default function SendInvoiceModal({
             {saving ? "Sending…" : "Send Invoice"}
           </Button>
         </DialogFooter>
+
+        {/* Third option: create the invoice without sending, and copy a customer-ready
+            message to the clipboard. Used when the customer has no email or phone. */}
+        <div className="mt-3 pt-3 border-t border-border">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCopy}
+            disabled={saving}
+            className="w-full font-body text-sm justify-center"
+          >
+            <ClipboardCopy className="w-3.5 h-3.5 mr-1.5" />
+            {saving ? "Saving…" : "Copy Invoice (no contact info)"}
+          </Button>
+          <p className="font-body text-[10px] text-muted-foreground mt-1.5 text-center">
+            Saves the invoice and copies a ready-to-paste message — for Messenger or any other channel.
+          </p>
+        </div>
       </DialogContent>
     </Dialog>
   );

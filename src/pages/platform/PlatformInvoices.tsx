@@ -26,6 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import { useInvalidateUnpaidJobs } from "@/hooks/useUnpaidJobs";
+import { buildInvoiceMessage as buildInvoiceMessageShared, getInvoicePaymentUrl, copyTextToClipboard } from "@/lib/invoice-message";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -46,8 +47,12 @@ export default function PlatformInvoices() {
   const getBiz = (bizId: string) => businesses.find(b => b.id === bizId);
 
   const getPaymentUrl = (inv: PlatformInvoice) => {
-    const shortcode = inv.invoice_number?.split("-")[0]?.toLowerCase() || "gcp";
-    return `${window.location.origin}/pay/${shortcode}/${inv.id}`;
+    const biz = getBiz(inv.business_id);
+    return getInvoicePaymentUrl({
+      invoiceId: inv.id,
+      invoiceNumber: inv.invoice_number,
+      shortcode: biz?.shortcode,
+    });
   };
 
   const copyPaymentLink = (inv: PlatformInvoice) => {
@@ -57,25 +62,21 @@ export default function PlatformInvoices() {
 
   const buildInvoiceMessage = (inv: PlatformInvoice) => {
     const biz = getBiz(inv.business_id);
-    const bizName = biz?.public_brand_name || "Gulf Coast Palms";
-    const firstName = (inv.customer_name || "there").trim().split(/\s+/)[0];
-    const totalStr = `$${Number(inv.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    const link = getPaymentUrl(inv);
-    return `Hi ${firstName}, here's your invoice from ${bizName} — ${inv.invoice_number} for ${totalStr}. View and pay here: ${link}\nThank you for your business!`;
+    return buildInvoiceMessageShared({
+      invoiceId: inv.id,
+      invoiceNumber: inv.invoice_number,
+      customerName: inv.customer_name,
+      total: inv.total,
+      businessName: biz?.public_brand_name,
+      shortcode: biz?.shortcode,
+    });
   };
 
   const copyInvoiceMessage = async (inv: PlatformInvoice) => {
     const text = buildInvoiceMessage(inv);
-    try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(text);
-        toast.success("Invoice message copied");
-        return;
-      }
-      throw new Error("clipboard unavailable");
-    } catch {
-      setManualCopyText(text);
-    }
+    const ok = await copyTextToClipboard(text);
+    if (ok) toast.success("Invoice message copied");
+    else setManualCopyText(text);
   };
 
   const deleteInvoice = async (inv: PlatformInvoice) => {
