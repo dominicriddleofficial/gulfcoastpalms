@@ -40,7 +40,7 @@ export default function SendInvoiceModal({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="ops-theme max-w-md bg-background border-border">
+      <DialogContent className="ops-theme max-w-md max-h-[calc(100dvh-1rem)] overflow-y-auto bg-background border-border">
         <DialogHeader>
           <DialogTitle className="font-display text-foreground">Send Invoice</DialogTitle>
         </DialogHeader>
@@ -84,6 +84,18 @@ export default function SendInvoiceModal({
               {!customerPhone && <span className="text-[10px]">(no phone)</span>}
             </button>
           </div>
+
+          {/* Save without sending and copy a customer-ready message for Messenger or any other channel. */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCopy}
+            disabled={saving}
+            className="w-full h-12 font-body text-sm justify-center border-primary/40 text-primary hover:text-primary"
+          >
+            <ClipboardCopy className="w-4 h-4 mr-1.5" />
+            {saving ? "Saving…" : "Copy Invoice (no contact info)"}
+          </Button>
 
           {sendEmail && (
             <>
@@ -143,23 +155,6 @@ export default function SendInvoiceModal({
           </Button>
         </DialogFooter>
 
-        {/* Third option: create the invoice without sending, and copy a customer-ready
-            message to the clipboard. Used when the customer has no email or phone. */}
-        <div className="mt-3 pt-3 border-t border-border">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCopy}
-            disabled={saving}
-            className="w-full font-body text-sm justify-center"
-          >
-            <ClipboardCopy className="w-3.5 h-3.5 mr-1.5" />
-            {saving ? "Saving…" : "Copy Invoice (no contact info)"}
-          </Button>
-          <p className="font-body text-[10px] text-muted-foreground mt-1.5 text-center">
-            Saves the invoice and copies a ready-to-paste message — for Messenger or any other channel.
-          </p>
-        </div>
       </DialogContent>
     </Dialog>
   );
