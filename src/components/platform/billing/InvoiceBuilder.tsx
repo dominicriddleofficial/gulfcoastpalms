@@ -127,6 +127,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
   const [showSendModal, setShowSendModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [manualCopyText, setManualCopyText] = useState<string | null>(null);
+  const [savedCopyInvoiceNumber, setSavedCopyInvoiceNumber] = useState<string | null>(null);
 
   const activeBiz = businesses.find(b => b.id === bizId);
 
@@ -670,24 +671,22 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
       }))
     );
 
+    const savedNumber = inv.invoice_number || invoiceNumber;
     const message = buildInvoiceMessage({
       invoiceId: inv.id,
-      invoiceNumber,
+      invoiceNumber: savedNumber,
       customerName,
       total,
       businessName: activeBiz?.public_brand_name,
       shortcode: activeBiz?.shortcode,
     });
-    const ok = await copyTextToClipboard(message);
-    if (ok) {
-      toast.success("Invoice message copied");
-    } else {
-      setManualCopyText(message);
-    }
-
+    // iOS Safari invalidates the user-gesture window after awaited network calls,
+    // so writing to the clipboard here would fail silently. Instead show a
+    // confirmation sheet with a fresh-tap Copy button that always works.
     setSaving(false);
     setShowSendModal(false);
-    onCreated();
+    setSavedCopyInvoiceNumber(savedNumber);
+    setManualCopyText(message);
   };
 
   return (
