@@ -17,6 +17,7 @@ import SendInvoiceModal from "./SendInvoiceModal";
 import { useQuery } from "@tanstack/react-query";
 import type { InvoicePrefillState } from "@/components/platform/CreateSheetsProvider";
 import { downloadElementAsPdf } from "@/lib/download-pdf";
+import { buildInvoiceMessage, copyTextToClipboard } from "@/lib/invoice-message";
 
 interface LineItem {
   id: string;
@@ -125,6 +126,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
   const mobilePreviewRef = useRef<HTMLDivElement>(null);
   const [showSendModal, setShowSendModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [manualCopyText, setManualCopyText] = useState<string | null>(null);
 
   const activeBiz = businesses.find(b => b.id === bizId);
 
@@ -571,6 +573,123 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
     onCreated();
   };
 
+  /**
+   * Copy path — save the invoice as "sent" (so it lands in the list / Money Center
+   * like an emailed one) but skip email/SMS, then copy the customer-ready message
+   * to the clipboard. Used when the customer has no phone AND no email.
+   */
+  const handleSaveAndCopy = async () => {
+    if (!bizId) return;
+    if (!customerId) { toast.error("Please select a customer"); return; }
+    const validLines = lineItems.filter(l => l.description.trim());
+    if (validLines.length === 0) { toast.error("Add at least one line item"); return; }
+
+    setSaving(true);
+
+    let resolvedCustomerId = customerId;
+    if (customerSource === "jobber" && customerId) {
+      const { data: existing } = await supabase
+        .from("platform_customers")
+        .select("id")
+        .eq("business_id", bizId)
+        .eq("source_system", "jobber")
+        .eq("source_record_id", customerId)
+        .maybeSingle();
+      if (existing) {
+        resolvedCustomerId = existing.id;
+      } else {
+        const { data: newCust, error: custErr } = await supabase
+          .from("platform_customers")
+          .insert({
+            business_id: bizId,
+            display_name: customerName,
+            email: customerEmail || null,
+            phone: customerPhone || null,
+            source_system: "jobber",
+            source_record_id: customerId,
+          })
+          .select("id")
+          .single();
+        if (custErr || !newCust) {
+          toast.error("Failed to create customer record");
+          setSaving(false);
+          return;
+        }
+        resolvedCustomerId = newCust.id;
+      }
+    }
+
+    const nowIso = new Date().toISOString();
+    const { data: inv, error } = await supabase.from("platform_invoices").insert({
+      business_id: bizId,
+      invoice_number: invoiceNumber,
+      customer_id: resolvedCustomerId,
+      job_id: prefill?.fromJobId ?? null,
+      property_id: servicePropertyId,
+      status: "sent",
+      sent_at: nowIso,
+      terms,
+      issue_date: issueDate,
+      due_date: dueDate,
+      subtotal,
+      tax_rate: taxEnabled ? Number(taxRate) : 0,
+      tax_total: taxAmount,
+      discount_total: discountAmount,
+      total,
+      balance_due: total,
+      amount_paid: 0,
+      public_notes: publicNotes || null,
+      internal_notes: internalNotes || null,
+      created_by_user_id: userId,
+      service_address_line1: serviceLine1 || null,
+      service_address_line2: serviceLine2 || null,
+      service_city: serviceCity || null,
+      service_state: serviceState || null,
+      service_zip: serviceZip || null,
+      service_formatted_address: serviceFormatted,
+      service_latitude: serviceLat,
+      service_longitude: serviceLng,
+      service_place_id: servicePlaceId,
+    }).select().single();
+
+    if (error || !inv) {
+      toast.error(error?.message || "Failed to create invoice");
+      setSaving(false);
+      return;
+    }
+
+    await supabase.from("platform_invoice_line_items").insert(
+      validLines.map((l, i) => ({
+        business_id: bizId,
+        invoice_id: inv.id,
+        description: l.description,
+        quantity: Number(l.qty) || 1,
+        unit_price: Number(l.price) || 0,
+        line_total: (Number(l.qty) || 1) * (Number(l.price) || 0),
+        sort_order: i,
+      }))
+    );
+
+    const message = buildInvoiceMessage({
+      invoiceId: inv.id,
+      invoiceNumber,
+      customerName,
+      total,
+      businessName: activeBiz?.public_brand_name,
+      shortcode: activeBiz?.shortcode,
+    });
+    const ok = await copyTextToClipboard(message);
+    if (ok) {
+      toast.success("Invoice message copied");
+    } else {
+      setManualCopyText(message);
+    }
+
+    setSaving(false);
+    setShowSendModal(false);
+    onCreated();
+  };
+
   return (
     <>
       <div className="ops-theme fixed inset-0 z-50 bg-background text-foreground flex flex-col invoice-form">
@@ -985,10 +1104,30 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
             await handleSave(true, emailData);
             setShowSendModal(false);
           }}
+          onCopy={handleSaveAndCopy}
           onClose={() => setShowSendModal(false)}
           saving={saving}
         />
       )}
+
+      {/* Manual-copy fallback dialog — shown when navigator.clipboard is unavailable. */}
+      <Sheet open={!!manualCopyText} onOpenChange={(open) => { if (!open) setManualCopyText(null); }}>
+        <SheetContent side="bottom" className="ops-theme bg-background border-border max-w-md mx-auto rounded-t-2xl">
+          <SheetHeader>
+            <SheetTitle className="font-display text-foreground">Copy invoice message</SheetTitle>
+          </SheetHeader>
+          <p className="font-body text-xs text-muted-foreground mt-1">Long-press or select all, then copy.</p>
+          <Textarea
+            value={manualCopyText || ""}
+            readOnly
+            rows={6}
+            className="bg-card border-border font-body text-sm text-foreground mt-3"
+            onFocus={(e) => e.currentTarget.select()}
+            autoFocus
+          />
+          <Button size="sm" className="font-body text-xs mt-3" onClick={() => setManualCopyText(null)}>Done</Button>
+        </SheetContent>
+      </Sheet>
     </>
   );
 }
