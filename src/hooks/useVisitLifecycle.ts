@@ -146,17 +146,43 @@ export function useVisitLifecycle() {
   });
 
   const reopen = useMutation({
-    mutationFn: async (params: { jobberJobId: string; businessId: string }) => {
-      const { error } = await supabase.functions.invoke("update-visit-status", {
-        body: { jobber_job_id: params.jobberJobId, action: "reopen_visit" },
+    mutationFn: async (params: { jobberJobId: string; businessId: string; visitId?: string | null }) => {
+      const { data, error } = await supabase.functions.invoke("update-visit-status", {
+        body: {
+          jobber_job_id: params.jobberJobId,
+          visit_id: params.visitId ?? null,
+          action: "reopen_visit",
+        },
       });
-      if (error) throw error;
+      if (error) {
+        let detail = "";
+        try {
+          const ctx = (error as { context?: Response }).context;
+          if (ctx && typeof ctx.text === "function") {
+            const txt = await ctx.text();
+            try {
+              const json = JSON.parse(txt);
+              detail = json?.error || json?.message || txt;
+            } catch {
+              detail = txt;
+            }
+          }
+        } catch { /* noop */ }
+        throw new Error(detail || error.message || "Unable to reopen visit.");
+      }
+      if (data && typeof data === "object" && "error" in data && data.error) {
+        throw new Error(String(data.error));
+      }
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
       void qc.invalidateQueries({ queryKey: ["dashboard-kpis"] });
       void qc.invalidateQueries({ queryKey: ["schedule-jobs"] });
       toast.success("Visit reopened");
+    },
+    onError: (err: unknown) => {
+      const msg = err instanceof Error ? err.message : "Unable to reopen visit";
+      toast.error(msg);
     },
   });
 

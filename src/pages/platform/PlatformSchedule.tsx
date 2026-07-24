@@ -1112,7 +1112,24 @@ function JobDetail({
             <button
               type="button"
               disabled={busy}
-              onClick={() => businessId && reopen.mutate({ jobberJobId: job.id, businessId })}
+              onClick={() => {
+                if (!businessId) return;
+                // Optimistic UI: flip the sheet back to in_progress immediately.
+                onJobChanged({ visit_status: "in_progress" });
+                reopen.mutate(
+                  {
+                    jobberJobId: job.job_id ?? job.id,
+                    visitId: job.visit_id ?? null,
+                    businessId,
+                  },
+                  {
+                    onError: () => {
+                      // Roll back on failure
+                      onJobChanged({ visit_status: "complete" });
+                    },
+                  },
+                );
+              }}
               className="w-full flex items-center justify-center gap-2 min-h-[44px] rounded-xl bg-secondary/40 text-foreground font-body font-medium text-sm hover:bg-secondary/70 transition-colors disabled:opacity-50"
             >
               <RotateCcw className="w-4 h-4" />
