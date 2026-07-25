@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,16 @@ import ppsLogo from "@/assets/logo-pps.png";
 import { isOutageError } from "@/lib/outageDetect";
 import { listMirroredBusinesses } from "@/lib/offlineMirror";
 
+/**
+ * Only same-origin relative paths are honored, so a crafted `next` cannot
+ * bounce the user to another site after sign-in.
+ */
+function safeNext(raw: string | null): string {
+  if (!raw) return "/platform";
+  if (!raw.startsWith("/") || raw.startsWith("//")) return "/platform";
+  return raw;
+}
+
 export default function PlatformLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,6 +30,8 @@ export default function PlatformLogin() {
   const [offlineAvailable, setOfflineAvailable] = useState(false);
   const [outageMode, setOutageMode] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const nextPath = safeNext(searchParams.get("next"));
   const { toast } = useToast();
 
   // If a remembered session exists, skip the login screen.
@@ -45,7 +57,7 @@ export default function PlatformLogin() {
         initialSessionLoaded = true;
         hadSession = !!session;
         if (session) {
-          navigate("/platform", { replace: true });
+          navigate(nextPath, { replace: true });
         } else {
           setCheckingSession(false);
         }
@@ -54,7 +66,7 @@ export default function PlatformLogin() {
 
       if (event === "SIGNED_IN" && session) {
         hadSession = true;
-        navigate("/platform", { replace: true });
+        navigate(nextPath, { replace: true });
         return;
       }
 
@@ -70,7 +82,7 @@ export default function PlatformLogin() {
       window.clearTimeout(fallbackTimer);
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, nextPath]);
 
   // Detect whether an offline copy is available on this device.
   useEffect(() => {
@@ -103,7 +115,7 @@ export default function PlatformLogin() {
       return;
     }
 
-    navigate("/platform");
+    navigate(nextPath);
   };
 
   if (checkingSession) {
