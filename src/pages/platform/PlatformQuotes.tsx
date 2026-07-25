@@ -279,7 +279,7 @@ async function handleConvertToInvoice(quote: PlatformQuote, businesses: Array<Re
 
     // Copy line items
     if (lineItems && lineItems.length > 0) {
-      await supabase.from("platform_invoice_line_items").insert(
+      const { error: lineErr } = await supabase.from("platform_invoice_line_items").insert(
         lineItems.map((li: Record<string, unknown>, i: number) => ({
           business_id: quote.business_id,
           invoice_id: inv.id,
@@ -290,10 +290,12 @@ async function handleConvertToInvoice(quote: PlatformQuote, businesses: Array<Re
           sort_order: i,
         }))
       );
+      if (lineErr) throw new Error(`Invoice ${invNum} created but line items failed to copy: ${lineErr.message}`);
     }
 
     // Update quote status
-    await supabase.from("platform_quotes").update({ status: "won" }).eq("id", quote.id);
+    const { error: statusErr } = await supabase.from("platform_quotes").update({ status: "won" }).eq("id", quote.id);
+    if (statusErr) throw new Error(`Invoice ${invNum} created but quote status was not updated: ${statusErr.message}`);
 
     toast.success(`Invoice ${invNum} created from quote ${quote.quote_number}`);
     refetch();
@@ -444,7 +446,9 @@ function QuoteDetail({ quote, biz, businesses, onUpdate, onClose }: {
             variant="outline"
             className="gap-1 text-xs"
             onClick={async () => {
-              const t = toast.loading("Sending approval SMS...");
+              // This notifies the OWNER's phone that this quote was approved — it does
+              // NOT text the customer. Kept as-is per cleanup scope; only the label lied.
+              const t = toast.loading("Resending owner approval alert...");
               const { data, error } = await supabase.functions.invoke("resend-approval-sms", {
                 body: { quote_id: quote.id },
               });
@@ -453,11 +457,11 @@ function QuoteDetail({ quote, biz, businesses, onUpdate, onClose }: {
                 const msg = error?.message || (data as { error?: string })?.error || "Failed to send SMS";
                 toast.error(msg);
               } else {
-                toast.success("Approval SMS sent");
+                toast.success("Owner approval alert sent");
               }
             }}
           >
-            <MessageSquare className="w-3 h-3" /> Resend Approval SMS
+            <MessageSquare className="w-3 h-3" /> Resend Owner Alert
           </Button>
           </>
         )}

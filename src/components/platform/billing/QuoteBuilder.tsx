@@ -234,7 +234,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
     if (error || !quote) { toast.error(error?.message || "Failed to create quote"); setSaving(false); return; }
 
     // Insert line items
-    await supabase.from("platform_quote_line_items").insert(
+    const { error: lineErr } = await supabase.from("platform_quote_line_items").insert(
       validLines.map((l, i) => ({
         business_id: bizId, quote_id: quote.id, description: l.description,
         quantity: Number(l.qty) || 1, unit: "each", unit_price: Number(l.price) || 0,
@@ -242,13 +242,22 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
         line_total: (Number(l.qty) || 1) * (Number(l.price) || 0), sort_order: i,
       }))
     );
+    if (lineErr) {
+      toast.error(`Quote saved but line items failed to save: ${lineErr.message}. Not sending — fix the quote before it goes out.`);
+      setSaving(false);
+      return;
+    }
 
     // Save initial version
-    await supabase.from("platform_quote_versions").insert([{
+    const { error: versionErr } = await supabase.from("platform_quote_versions").insert([{
       quote_id: quote.id, business_id: bizId, version_number: 1,
       snapshot_json: JSON.parse(JSON.stringify({ quote, line_items: validLines })),
       created_by_user_id: userId,
     }]);
+    if (versionErr) {
+      console.error("[Quote] version snapshot failed:", versionErr);
+      toast.error(`Quote and line items saved, but the version history snapshot failed: ${versionErr.message}`);
+    }
 
     if (sendAfter && sendData) {
       const shortcode = activeBiz?.shortcode || "gcp";

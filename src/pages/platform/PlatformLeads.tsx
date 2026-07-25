@@ -6,6 +6,7 @@ import { InlineBadge } from "@/components/platform/BusinessSwitcher";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "@/hooks/use-toast";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
 } from "@/components/ui/sheet";
@@ -425,7 +426,7 @@ function CreateLeadForm({ businesses, selectedBusinessId, onCreated }: {
     e.preventDefault();
     setSubmitting(true);
     const { supabase } = await import("@/integrations/supabase/client");
-    await supabase.from("platform_leads").insert({
+    const { error } = await supabase.from("platform_leads").insert({
       business_id: bizId,
       inquiry_name: name,
       inquiry_phone: phone || null,
@@ -437,6 +438,12 @@ function CreateLeadForm({ businesses, selectedBusinessId, onCreated }: {
       lead_status: "new",
     });
     setSubmitting(false);
+
+    if (error) {
+      toast({ title: "Failed to create lead", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Lead created" });
     onCreated();
   };
 

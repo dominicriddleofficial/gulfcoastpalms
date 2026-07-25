@@ -28,8 +28,6 @@ interface BizSettings {
   default_quote_expiration_days: number | null;
   default_deposit_type: string | null;
   default_deposit_value: number | null;
-  payments_enabled: boolean | null;
-  automation_enabled: boolean | null;
 }
 
 interface SyncLog {
@@ -105,8 +103,6 @@ export default function PlatformSettings() {
                   <SettingItem label="Quote Expiration" value={`${settings.default_quote_expiration_days || 30} days`} />
                   <SettingItem label="Deposit Type" value={settings.default_deposit_type || "percentage"} />
                   <SettingItem label="Deposit Value" value={`${settings.default_deposit_value || 50}${settings.default_deposit_type === "percentage" ? "%" : ""}`} />
-                  <SettingItem label="Payments" value={settings.payments_enabled ? "Enabled" : "Disabled"} />
-                  <SettingItem label="Automation" value={settings.automation_enabled ? "Enabled" : "Disabled"} />
                 </div>
               </SettingsSection>
             )}

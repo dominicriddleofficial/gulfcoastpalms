@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { DOMINIC_PHONE, RYAN_PHONE } from "../_shared/constants.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,8 +8,6 @@ const corsHeaders = {
 
 // Gulf Coast Palms business id — nudges are GCP-specific per owner spec.
 const GCP_BUSINESS_ID = "b0000000-0000-0000-0000-000000000001";
-const RYAN_PHONE = "+18507127850";
-const DOMINIC_PHONE = "+18508897255";
 
 async function sendSimpleTexting(to: string, body: string): Promise<{ ok: boolean; id?: string; reason?: string }> {
   const key = Deno.env.get("SIMPLETEXTING_API_KEY");

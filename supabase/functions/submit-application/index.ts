@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { DOMINIC_PHONE } from "../_shared/constants.ts";
 
 const ALLOWED_ORIGINS = [
   "https://gulfcoastpalmservices.com",
@@ -21,7 +22,7 @@ function corsHeadersFor(req: Request) {
 }
 
 // Dominic ONLY per product requirement — do not add Ryan / office manager here.
-const APPLICANT_ALERT_PHONE = "+18508897255";
+const APPLICANT_ALERT_PHONE = DOMINIC_PHONE;
 
 interface ApplicationInput {
   full_name?: string;

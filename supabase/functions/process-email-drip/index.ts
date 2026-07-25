@@ -16,12 +16,6 @@ const SEQUENCES: Record<string, { delay_hours: number; subject: string; type: st
     { delay_hours: 24, subject: "Following up on your palm service request", type: "follow_up" },
     { delay_hours: 72, subject: "Special offer: 10% off your first service", type: "discount" },
   ],
-  post_job: [
-    { delay_hours: 24, subject: "Thank you for choosing Gulf Coast Palms!", type: "thank_you" },
-    { delay_hours: 72, subject: "How was your experience? Leave us a review", type: "review_request" },
-    { delay_hours: 168, subject: "Know someone who needs palm services? Earn $100", type: "referral_ask" },
-    { delay_hours: 2160, subject: "Time for your 90-day palm maintenance check", type: "maintenance_reminder" },
-  ],
 };
 
 serve(async (req) => {

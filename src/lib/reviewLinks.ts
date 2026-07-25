@@ -1,15 +1,16 @@
+import { GOOGLE_REVIEW_URL } from "@/data/reviews";
+
 /**
  * Per-business Google review links used by the "Send Review Message" flow
  * in the Schedule tab. Keyed by platform business_id.
  *
- * GCP link mirrors the canonical marketing link in src/data/reviews.ts and
- * src/lib/business-info.ts (g.page/r/CVI5xmZYC-NAEBM). PPS does not yet have
- * a review URL in the codebase — leave as placeholder until provided.
+ * GCP link imports the canonical marketing link from src/data/reviews.ts
+ * (single source of truth) rather than keeping its own copy. PPS does not
+ * yet have a review URL in the codebase — leave as placeholder until provided.
  */
 export const REVIEW_LINKS: Record<string, string> = {
   // Gulf Coast Palms
-  "b0000000-0000-0000-0000-000000000001":
-    "https://g.page/r/CVI5xmZYC-NAEBM/review",
+  "b0000000-0000-0000-0000-000000000001": GOOGLE_REVIEW_URL,
   // Prestige Property Services — no link found in codebase
   "b0000000-0000-0000-0000-000000000002": "REPLACE_WITH_GOOGLE_REVIEW_LINK",
 };

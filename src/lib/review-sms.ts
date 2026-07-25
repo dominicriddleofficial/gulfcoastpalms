@@ -4,12 +4,15 @@
  * (supabase/functions/process-review-queue) keeps its own copy of the
  * same logic because Deno functions cannot import from src/.
  */
+import { GOOGLE_REVIEW_URL } from "@/data/reviews";
 
 export const DEFAULT_REVIEW_TEMPLATE =
   "Hi {first_name}! Hope everything looks great — thanks again for having Gulf Coast Palms out. We're trying to reach 200 Google reviews by the end of the season, and every single one gets us a little closer. Here's the link to make it easy: {review_link} Thanks again and see you next time 👍";
 
-// Verified working Google review form redirect (search.google.com/local/writereview).
-export const FALLBACK_REVIEW_LINK = "https://g.page/r/CVI5xmZYC-NAEBM/review";
+// Single source of truth is GOOGLE_REVIEW_URL in src/data/reviews.ts (verified working
+// Google review form redirect). Re-exported here under this file's existing name so
+// callers don't need to change.
+export const FALLBACK_REVIEW_LINK = GOOGLE_REVIEW_URL;
 
 /**
  * LEGAL / CARRIER REQUIREMENT — the opt-out sentence is not editable.

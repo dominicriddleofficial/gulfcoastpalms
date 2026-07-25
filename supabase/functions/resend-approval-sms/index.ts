@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { GCP_OWNER_PHONE } from "../_shared/constants.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -63,7 +64,7 @@ Deno.serve(async (req) => {
       if (cust) customerName = cust.display_name;
     }
 
-    const ownerPhone = "8509101290";
+    const ownerPhone = GCP_OWNER_PHONE;
     const adminOrigin = req.headers.get("origin") || "https://gulfcoastpalmservices.com";
     const adminQuoteUrl = `${adminOrigin}/platform/quotes`;
     const totalStr = quote.total

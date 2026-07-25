@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { DOMINIC_PHONE, RYAN_PHONE } from "../_shared/constants.ts";
 
 const ALLOWED_ORIGINS = [
   "https://gulfcoastpalmservices.com",
@@ -23,7 +24,7 @@ function getCorsHeaders(req: Request) {
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
 // Owner + office manager cells for lead alerts.
 // Overridable via LEAD_ALERT_PHONES (comma-separated) or legacy LEAD_ALERT_PHONE.
-const LEAD_ALERT_PHONE_FALLBACKS = ["+18508897255", "+18507127850"];
+const LEAD_ALERT_PHONE_FALLBACKS = [DOMINIC_PHONE, RYAN_PHONE];
 // SimpleTexting sending number — must NEVER appear as a destination.
 const SENDING_NUMBER_DIGITS = "8506049819";
 function isSendingNumber(n: string): boolean {
@@ -273,7 +274,7 @@ serve(async (req) => {
     // calls) and one retry on failure. If a recipient still fails, log to
     // error_logs and fire a fallback SMS to the owner so a silent miss can
     // never happen again.
-    const OWNER_FALLBACK = "+18508897255";
+    const OWNER_FALLBACK = DOMINIC_PHONE;
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",

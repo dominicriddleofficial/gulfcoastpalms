@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { GCP_OWNER_PHONE } from "../_shared/constants.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -86,7 +87,7 @@ Deno.serve(async (req) => {
       if (cust) customerName = cust.display_name;
     }
 
-    const ownerPhone = "8509101290";
+    const ownerPhone = GCP_OWNER_PHONE;
 
     // Public origin used to build the dashboard link in the SMS
     const adminOrigin = req.headers.get("origin") || "https://gulfcoastpalmservices.com";
@@ -228,7 +229,16 @@ Deno.serve(async (req) => {
         // Mark quote as won since invoice was created
         await supabase.from("platform_quotes").update({ status: "won" }).eq("id", quote_id);
       }
-    } catch { /* Invoice creation is best-effort — owner can still convert manually */ }
+    } catch (e) {
+      // Invoice creation is best-effort — owner can still convert manually — but log it,
+      // unlike before, so a failure here doesn't vanish with zero trace anywhere.
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error(`[approve-quote] auto-invoice creation failed for ${quote?.quote_number}:`, msg);
+      await supabase.from("error_logs").insert({
+        error_message: `approve-quote auto-invoice creation failed for ${quote?.quote_number}: ${msg.substring(0, 300)}`,
+        page_url: "/edge/approve-quote",
+      }).then(() => null, () => null);
+    }
 
     // ── Send SMS to owner about approval (idempotent: only once per quote) ──
     console.log(`[approve-quote] approval_sms_sent (before) = ${quote?.approval_sms_sent}`);

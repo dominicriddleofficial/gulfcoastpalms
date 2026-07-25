@@ -26,7 +26,7 @@ function fmtMoney(n: number): string {
 
 export default function KpiSnapshotWidget() {
   const { selectedBusinessId } = useBusinessContext();
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["kpi-snapshot", selectedBusinessId],
     queryFn: async (): Promise<KpiRow | null> => {
       if (!selectedBusinessId) return null;
@@ -43,7 +43,21 @@ export default function KpiSnapshotWidget() {
     refetchInterval: 5 * 60_000,
   });
 
-  if (!data) return null;
+  if (!selectedBusinessId || isLoading) return null;
+
+  if (!data) {
+    return (
+      <Card className="p-4 bg-card border-border">
+        <div className="flex items-center gap-2 mb-1">
+          <Activity className="h-4 w-4 text-muted-foreground" />
+          <h3 className="text-sm font-semibold">Snapshot</h3>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          No snapshot data yet — the KPI refresh job hasn't run for this business.
+        </p>
+      </Card>
+    );
+  }
 
   return (
     <Card className="p-4 bg-card border-border">

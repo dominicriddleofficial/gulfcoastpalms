@@ -360,7 +360,11 @@ export default function PlatformInvoices() {
                   updates.amount_paid = selectedInvoice.total;
                   updates.balance_due = 0;
                 }
-                await supabase.from("platform_invoices").update(updates).eq("id", selectedInvoice.id);
+                const { error } = await supabase.from("platform_invoices").update(updates).eq("id", selectedInvoice.id);
+                if (error) {
+                  toast.error(`Could not update invoice: ${error.message}`);
+                  return;
+                }
                 toast.success("Invoice updated");
                 refetch();
                 invalidateUnpaid(selectedBusinessId);
@@ -371,7 +375,7 @@ export default function PlatformInvoices() {
                   _business_id: selectedInvoice.business_id,
                   _record_type: "payment",
                 });
-                await supabase.from("platform_payments").insert({
+                const { error: paymentError } = await supabase.from("platform_payments").insert({
                   business_id: selectedInvoice.business_id,
                   payment_number: numData || "P-TEMP",
                   invoice_id: selectedInvoice.id,
@@ -382,6 +386,10 @@ export default function PlatformInvoices() {
                   is_deposit: isDeposit,
                   recorded_by_user_id: userId,
                 });
+                if (paymentError) {
+                  toast.error(`Could not record payment: ${paymentError.message}. Invoice status NOT changed.`);
+                  return;
+                }
                 const newPaid = (Number(selectedInvoice.amount_paid) || 0) + amount;
                 const newBalance = (Number(selectedInvoice.total) || 0) - newPaid;
                 const invoiceUpdates: PlatformInvoiceUpdate = {
@@ -391,7 +399,18 @@ export default function PlatformInvoices() {
                 };
                 if (newBalance <= 0) invoiceUpdates.paid_at = new Date().toISOString();
                 if (isDeposit) invoiceUpdates.deposit_paid = true;
-                await supabase.from("platform_invoices").update(invoiceUpdates).eq("id", selectedInvoice.id);
+                const { error: invoiceError } = await supabase
+                  .from("platform_invoices")
+                  .update(invoiceUpdates)
+                  .eq("id", selectedInvoice.id);
+                if (invoiceError) {
+                  toast.error(
+                    `Payment was recorded but the invoice status could not be updated: ${invoiceError.message}. Fix the invoice status manually.`
+                  );
+                  refetch();
+                  invalidateUnpaid(selectedBusinessId);
+                  return;
+                }
                 toast.success(`Payment of $${amount.toLocaleString()} recorded`);
                 refetch();
                 invalidateUnpaid(selectedBusinessId);

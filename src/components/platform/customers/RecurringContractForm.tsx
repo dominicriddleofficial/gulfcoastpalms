@@ -53,7 +53,6 @@ export default function RecurringContractForm({ customerId, businessId }: Recurr
   const [frequency, setFrequency] = useState("quarterly");
   const [startDate, setStartDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [contractLength, setContractLength] = useState("12");
-  const [autoRenew, setAutoRenew] = useState(true);
 
   useEffect(() => {
     fetchContracts();
@@ -96,7 +95,9 @@ export default function RecurringContractForm({ customerId, businessId }: Recurr
       start_date: startDate,
       end_date: endDate,
       next_scheduled_date: getNextDate(startDate, frequency),
-      auto_renew: autoRenew,
+      // Auto-renew is not wired up yet — nothing advances next_scheduled_date or creates
+      // the next job. Always insert false so this form can't imply otherwise.
+      auto_renew: false,
       status: "active",
     });
     if (error) toast.error("Failed to create contract");
@@ -175,9 +176,14 @@ export default function RecurringContractForm({ customerId, businessId }: Recurr
               <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
                 className="bg-card border-border font-body text-xs h-8" />
             </div>
-            <div className="flex items-center justify-between pt-4">
-              <label className="font-body text-[10px] text-muted-foreground">Auto-Renew</label>
-              <Switch checked={autoRenew} onCheckedChange={setAutoRenew} />
+            <div className="flex flex-col gap-1 pt-4">
+              <div className="flex items-center justify-between">
+                <label className="font-body text-[10px] text-muted-foreground">Auto-Renew</label>
+                <Switch checked={false} disabled />
+              </div>
+              <p className="font-body text-[10px] text-muted-foreground/60">
+                Not yet active — nothing automatically schedules the next visit or renews this contract. Do it manually for now.
+              </p>
             </div>
           </div>
           <div className="flex gap-2">

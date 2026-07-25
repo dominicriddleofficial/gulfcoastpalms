@@ -51,7 +51,12 @@ export default function JobStatusProgress({ jobId, businessId, currentStatus, on
         complete: "completed",
       };
       const newStatus = statusMap[step.key];
-      await supabase.from("jobber_jobs").update({ visit_status: newStatus }).eq("id", jobId);
+      const { error: statusErr } = await supabase.from("jobber_jobs").update({ visit_status: newStatus }).eq("id", jobId);
+      if (statusErr) {
+        toast.error(`Could not update status: ${statusErr.message}`);
+        setUpdating(false);
+        return;
+      }
 
       // Persist timestamps so the live visit timer + completed duration work
       if (businessId && (step.key === "in_progress" || step.key === "complete" || step.key === "on_my_way" || step.key === "on_site")) {
@@ -72,17 +77,24 @@ export default function JobStatusProgress({ jobId, businessId, currentStatus, on
           .select("id, started_at")
           .eq("jobber_job_id", jobId)
           .maybeSingle();
+        let eventErr: { message: string } | null = null;
         if (existing) {
           // Don't overwrite an existing started_at on later transitions
           const safePatch: typeof patch = { ...patch };
           if (step.key !== "in_progress" && existing.started_at) delete safePatch.started_at;
-          await supabase.from("job_visit_events").update(safePatch).eq("id", existing.id);
+          ({ error: eventErr } = await supabase.from("job_visit_events").update(safePatch).eq("id", existing.id));
         } else {
-          await supabase.from("job_visit_events").insert({
+          ({ error: eventErr } = await supabase.from("job_visit_events").insert({
             jobber_job_id: jobId,
             business_id: businessId,
             ...patch,
-          });
+          }));
+        }
+        if (eventErr) {
+          // Status already changed successfully — this is timer/audit bookkeeping only,
+          // so surface it but don't block the step from advancing.
+          console.error("[JobStatusProgress] timestamp write failed:", eventErr);
+          toast.error(`Status updated, but visit timer data failed to save: ${eventErr.message}`);
         }
       }
 
@@ -101,7 +113,8 @@ export default function JobStatusProgress({ jobId, businessId, currentStatus, on
 
       onStatusChange?.(newStatus);
     } catch (e) {
-      toast.error("Failed to update status");
+      const msg = e instanceof Error ? e.message : "Failed to update status";
+      toast.error(msg);
     }
     setUpdating(false);
   };
