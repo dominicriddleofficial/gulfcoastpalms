@@ -149,6 +149,8 @@ Deno.serve(async (req) => {
       paymentUrl,
       ccEmail,
       ownerEmail,
+      paymentMethod,
+      remitBlock,
     } = await req.json();
 
     if (!recipientEmail || !invoiceNumber) {
@@ -199,6 +201,22 @@ Deno.serve(async (req) => {
     const safeInvoiceNumber = escapeHtml(invoiceNumber);
     const safeDueDate = dueDate ? escapeHtml(dueDate) : "";
     const safePaymentUrl = paymentUrl ? escapeHtml(paymentUrl) : "";
+    const isCheck = paymentMethod === "check";
+    const remitText: string = typeof remitBlock === "string" && remitBlock.trim()
+      ? remitBlock
+      : `Please make checks payable to: ${resolvedBusinessName}\nMail to: 7371 Grand Navarre Blvd, Navarre, FL 32566\nReference: ${invoiceNumber}`;
+    const safeRemitHtml = escapeHtml(remitText).replace(/\n/g, "<br/>");
+    const payBlockHtml = isCheck
+      ? `
+      <div style="background:#f9fafb;border:1px solid #e4e4e7;border-radius:8px;padding:18px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#71717a;margin-bottom:8px;">Pay by check</div>
+        <div style="color:#27272a;font-size:14px;line-height:1.6;">${safeRemitHtml}</div>
+      </div>
+      ${safePaymentUrl ? `<p style="margin:16px 0 0;text-align:center;font-size:13px;"><a href="${safePaymentUrl}" style="color:#16a34a;">View your invoice</a></p>` : ""}`
+      : (safePaymentUrl ? `
+      <a href="${safePaymentUrl}" style="display:block;text-align:center;background:#22c55e;color:#fff;text-decoration:none;padding:14px 24px;border-radius:8px;font-size:15px;font-weight:600;">
+        Pay Now
+      </a>` : "");
 
     // Build the HTML email
     const html = `
@@ -228,10 +246,7 @@ Deno.serve(async (req) => {
           ${safeDueDate ? `<tr><td style="color:#71717a;font-size:12px;padding:4px 0;">Due Date</td><td style="text-align:right;color:#18181b;font-size:13px;">${safeDueDate}</td></tr>` : ""}
         </table>
       </div>
-      ${safePaymentUrl ? `
-      <a href="${safePaymentUrl}" style="display:block;text-align:center;background:#22c55e;color:#fff;text-decoration:none;padding:14px 24px;border-radius:8px;font-size:15px;font-weight:600;">
-        Pay Now
-      </a>` : ""}
+      ${payBlockHtml}
       <p style="margin:24px 0 0;color:#a1a1aa;font-size:11px;">
         Thank you for your business! — ${safeBusinessName}
       </p>
@@ -242,7 +257,10 @@ Deno.serve(async (req) => {
 
     const emailSubject = subject || `Invoice ${invoiceNumber} from ${resolvedBusinessName}`;
     const messageId = `invoice-${invoiceId || invoiceNumber}-${Date.now()}`;
-    const plainText = `Hi ${recipientName || "there"},\n\n${message || "Please find your invoice details below."}\n\nInvoice: ${invoiceNumber}\nAmount Due: $${Number(total || 0).toFixed(2)}\n${dueDate ? `Due Date: ${dueDate}\n` : ""}${paymentUrl ? `\nPay online: ${paymentUrl}\n` : ""}\nThank you for your business! — ${resolvedBusinessName}`;
+    const plainPayLine = isCheck
+      ? `${paymentUrl ? `\nView your invoice here: ${paymentUrl}\n` : ""}\n${remitText}\n`
+      : `${paymentUrl ? `\nPay online: ${paymentUrl}\n` : ""}`;
+    const plainText = `Hi ${recipientName || "there"},\n\n${message || "Please find your invoice details below."}\n\nInvoice: ${invoiceNumber}\nAmount Due: $${Number(total || 0).toFixed(2)}\n${dueDate ? `Due Date: ${dueDate}\n` : ""}${plainPayLine}\nThank you for your business! — ${resolvedBusinessName}`;
 
     // Log as pending
     await supabase.from("email_send_log").insert({
