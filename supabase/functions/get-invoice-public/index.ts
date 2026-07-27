@@ -164,6 +164,7 @@ serve(async (req) => {
       total: data.total,
       balance_due: data.balance_due,
       status: data.status,
+      payment_method: (data as any).payment_method || "card",
       deposit_required: data.deposit_required,
       deposit_amount: data.deposit_amount,
       deposit_paid: data.deposit_paid,

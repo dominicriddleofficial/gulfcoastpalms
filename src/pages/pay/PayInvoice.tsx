@@ -4,7 +4,7 @@ import { CreditCard, CheckCircle, XCircle, Loader2, Shield, AlertCircle, Downloa
 import { toast } from "@/hooks/use-toast";
 import DocumentBrandMark from "@/components/platform/billing/DocumentBrandMark";
 import { downloadElementAsPdf } from "@/lib/download-pdf";
-import { buildRemitBlock } from "@/lib/invoice-message";
+import { buildRemitBlock, CHECK_REMIT } from "@/lib/invoice-message";
 
 type InvoiceData = {
   id: string;
@@ -293,6 +293,17 @@ export default function PayInvoice() {
                   </div>
                 </div>
               </div>
+
+              {/* Pay To (check invoices only) */}
+              {invoice.payment_method === "check" && (
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: "#71717a", marginBottom: 4 }}>PAY TO</div>
+                  <p style={{ color: "#fff", fontWeight: 700, fontSize: 15, marginBottom: 2 }}>
+                    {invoice.business_name || CHECK_REMIT.payableTo}
+                  </p>
+                  <p style={{ color: "#fff", fontWeight: 600, fontSize: 15 }}>{CHECK_REMIT.address}</p>
+                </div>
+              )}
 
               {/* Customer info */}
               <div>
