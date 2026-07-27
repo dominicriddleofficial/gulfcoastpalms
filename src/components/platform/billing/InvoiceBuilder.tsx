@@ -773,14 +773,40 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
                 <div className="flex items-center justify-between">
                   <p className="font-body text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Bill To</p>
                   {customerId && (
-                    <button className="font-body text-[10px] text-primary hover:underline" onClick={() => { setCustomerId(null); setCustomerName(""); clearServiceAddress(); setShowCustomerSearch(true); }}>
+                    <button className="font-body text-[10px] text-primary hover:underline" onClick={() => { setCustomerId(null); setCustomerName(""); setBillingName(""); setEditingBillingName(false); clearServiceAddress(); setShowCustomerSearch(true); }}>
                       Change
                     </button>
                   )}
                 </div>
                 {customerId ? (
                   <div>
-                    <p className="font-body text-sm font-semibold text-foreground">{customerName}</p>
+                    <div className="space-y-1">
+                      <label className="font-body text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Billing name</label>
+                      {editingBillingName ? (
+                        <Input
+                          autoFocus
+                          value={billingName}
+                          onChange={(e) => setBillingName(e.target.value)}
+                          onBlur={() => setEditingBillingName(false)}
+                          placeholder={customerName}
+                          className="bg-secondary/50 border-border font-body text-sm"
+                          data-testid="billing-name-input"
+                        />
+                      ) : (
+                        <button
+                          type="button"
+                          data-testid="billing-name-edit"
+                          onClick={() => setEditingBillingName(true)}
+                          className="w-full flex items-center gap-2 text-left group"
+                        >
+                          <span className="font-body text-sm font-semibold text-foreground">{billTo || customerName}</span>
+                          <Pencil className="w-3 h-3 text-muted-foreground group-hover:text-primary shrink-0" />
+                        </button>
+                      )}
+                      <p className="font-body text-[10px] text-muted-foreground">
+                        Saved with this invoice — customer record unchanged
+                      </p>
+                    </div>
                     {customerEmail && <p className="font-body text-xs text-muted-foreground">{customerEmail}</p>}
                     {customerPhone && <p className="font-body text-xs text-muted-foreground">{customerPhone}</p>}
                   </div>
