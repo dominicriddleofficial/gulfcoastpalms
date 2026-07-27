@@ -517,6 +517,7 @@ function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayme
             deposit_paid: invoice.deposit_paid,
             deposit_amount: invoice.deposit_amount,
             status: invoice.status,
+            payment_method: invoice.payment_method,
           }}
           businessId={invoice.business_id}
           customerId={invoice.customer_id || undefined}
