@@ -466,6 +466,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
       property_id: servicePropertyId,
       status: "draft",
       terms,
+      payment_method: paymentMethod,
       issue_date: issueDate,
       due_date: dueDate,
       subtotal,
@@ -649,6 +650,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
       status: "sent",
       sent_at: nowIso,
       terms,
+      payment_method: paymentMethod,
       issue_date: issueDate,
       due_date: dueDate,
       subtotal,
@@ -698,6 +700,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
       total,
       businessName: activeBiz?.public_brand_name,
       shortcode: activeBiz?.shortcode,
+      paymentMethod,
     });
     // iOS Safari invalidates the user-gesture window after awaited network calls,
     // so writing to the clipboard here would fail silently. Instead show a
@@ -894,6 +897,44 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
                     {opt.label}
                   </button>
                 ))}
+              </div>
+
+              {/* Payment method — card (online link) vs check (mail-in) */}
+              <div>
+                <label className="font-body text-[10px] font-medium text-muted-foreground mb-1 block">Payment method</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("card")}
+                    aria-pressed={paymentMethod === "card"}
+                    className={cn(
+                      "flex-1 py-2 rounded-lg border text-[11px] font-body font-semibold transition-all",
+                      paymentMethod === "card"
+                        ? "bg-primary/15 text-primary border-primary"
+                        : "bg-secondary text-muted-foreground border-border hover:text-foreground"
+                    )}
+                  >
+                    Card (online payment link)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("check")}
+                    aria-pressed={paymentMethod === "check"}
+                    className={cn(
+                      "flex-1 py-2 rounded-lg border text-[11px] font-body font-semibold transition-all",
+                      paymentMethod === "check"
+                        ? "bg-primary/15 text-primary border-primary"
+                        : "bg-secondary text-muted-foreground border-border hover:text-foreground"
+                    )}
+                  >
+                    Check (mail-in)
+                  </button>
+                </div>
+                {paymentMethod === "check" && (
+                  <p className="font-body text-[10px] text-muted-foreground mt-1.5 whitespace-pre-line bg-card border border-border rounded-md p-2">
+                    {buildRemitBlock(invoiceNumber, activeBiz?.public_brand_name)}
+                  </p>
+                )}
               </div>
             </section>
 
@@ -1118,6 +1159,8 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
           dueDate={dueDate}
           businessName={activeBiz?.public_brand_name || ""}
           shortcode={activeBiz?.shortcode || "gcp"}
+          paymentMethod={paymentMethod}
+          onPaymentMethodChange={setPaymentMethod}
           onSend={async (emailData) => {
             await handleSave(true, emailData);
             setShowSendModal(false);
