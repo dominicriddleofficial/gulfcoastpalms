@@ -41,7 +41,7 @@ serve(async (req) => {
 
     const { data, error } = await supabaseAdmin
       .from("platform_invoices")
-      .select("id, invoice_number, total, balance_due, status, payment_method, deposit_required, deposit_amount, deposit_paid, business_id, customer_id, property_id, job_id, issue_date, due_date, subtotal, tax_total, tax_rate, public_notes, service_address_line1, service_address_line2, service_city, service_state, service_zip, service_formatted_address, platform_customers(display_name, email, phone), platform_properties(address_1, address_2, city, state, zip), businesses(shortcode, public_brand_name, support_phone, support_email, website_url, logo_url)")
+      .select("id, invoice_number, billing_name, total, balance_due, status, payment_method, deposit_required, deposit_amount, deposit_paid, business_id, customer_id, property_id, job_id, issue_date, due_date, subtotal, tax_total, tax_rate, public_notes, service_address_line1, service_address_line2, service_city, service_state, service_zip, service_formatted_address, platform_customers(display_name, email, phone), platform_properties(address_1, address_2, city, state, zip), businesses(shortcode, public_brand_name, support_phone, support_email, website_url, logo_url)")
       .eq("id", invoice_id)
       .single();
 
@@ -174,7 +174,8 @@ serve(async (req) => {
       tax_rate: data.tax_rate,
       public_notes: data.public_notes,
       line_items: lineItems || [],
-      customer_name: cust?.display_name || "Customer",
+      customer_name: (data as any).billing_name || cust?.display_name || "Customer",
+      billing_name: (data as any).billing_name || null,
       customer_email: cust?.email || null,
       customer_phone: cust?.phone || null,
       customer_address: customerAddress,

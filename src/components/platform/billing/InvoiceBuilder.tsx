@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Search, Plus, X, ChevronDown, Calendar, User, Building2, FileText,
-  Eye, Save, Send, Trash2, Package,
+  Eye, Save, Send, Trash2, Package, Pencil,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -79,6 +79,10 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
   const [customerId, setCustomerId] = useState<string | null>(prefill?.customer?.id ?? null);
   const [customerSource, setCustomerSource] = useState<"platform" | "jobber">("platform");
   const [customerName, setCustomerName] = useState(prefill?.customer?.display_name ?? "");
+  // Invoice-only billing name override (e.g. HOA / condo association / company).
+  // Never written back to platform_customers.
+  const [billingName, setBillingName] = useState(prefill?.customer?.display_name ?? "");
+  const [editingBillingName, setEditingBillingName] = useState(false);
   const [customerEmail, setCustomerEmail] = useState(prefill?.customer?.email ?? "");
   const [customerPhone, setCustomerPhone] = useState(prefill?.customer?.phone ?? "");
   // Service/property address snapshot for the invoice — frozen from job/property at creation time.
@@ -366,6 +370,8 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
     setCustomerId(c.id);
     setCustomerSource((c.source as "platform" | "jobber") || "platform");
     setCustomerName(c.display_name);
+    setBillingName(c.display_name);
+    setEditingBillingName(false);
     setCustomerEmail(c.email || "");
     setCustomerPhone(c.phone || "");
     setShowCustomerSearch(false);
@@ -383,11 +389,16 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
   };
 
   // Preview data
+  /** Name shown on the invoice — the override when set, else the customer's name. */
+  const billTo = billingName.trim() || customerName;
+  /** Only persisted when it actually differs from the customer record. */
+  const billingNameToSave = billTo && billTo !== customerName ? billTo : null;
+
   const previewData = useMemo(() => ({
     invoiceNumber,
     issueDate,
     dueDate,
-    customerName: customerName || "Customer Name",
+    customerName: billTo || "Customer Name",
     customerEmail,
     customerPhone,
     customerAddress: {
@@ -413,7 +424,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
     shortcode: activeBiz?.shortcode || "gcp",
     isDraft: true,
     logoUrl: logoUrl,
-  }), [invoiceNumber, issueDate, dueDate, customerName, customerEmail, customerPhone, serviceLine1, serviceLine2, serviceCity, serviceState, serviceZip, lineItems, subtotal, taxEnabled, taxRate, taxAmount, discountAmount, total, publicNotes, activeBiz, logoUrl]);
+  }), [invoiceNumber, issueDate, dueDate, billTo, customerEmail, customerPhone, serviceLine1, serviceLine2, serviceCity, serviceState, serviceZip, lineItems, subtotal, taxEnabled, taxRate, taxAmount, discountAmount, total, publicNotes, activeBiz, logoUrl]);
 
   // Save invoice
   const handleSave = async (sendAfter: boolean = false, sendData: SendInvoiceData | null = null) => {
@@ -466,6 +477,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
       property_id: servicePropertyId,
       status: "draft",
       terms,
+      billing_name: billingNameToSave,
       payment_method: paymentMethod,
       issue_date: issueDate,
       due_date: dueDate,
@@ -519,7 +531,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
             body: {
               invoiceId: inv.id,
               recipientEmail: sendData.email,
-              recipientName: customerName,
+              recipientName: billTo,
               subject: sendData.subject,
               message: sendData.message,
               businessName: activeBiz?.public_brand_name || "",
@@ -539,7 +551,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
             console.warn("send-invoice-email owner notification warning:", fnRes.ownerNotificationWarning);
           }
           if (deliveryStatus === "sent") {
-            toast.success(`Invoice sent to ${customerName} at ${sendData.email}`);
+            toast.success(`Invoice sent to ${billTo} at ${sendData.email}`);
           } else if (deliveryStatus === "pending" || (!deliveryStatus && !deliveryError)) {
             toast.warning(
               `Invoice queued — delivery is taking longer than usual. Check Email Activity in a few minutes.`,
@@ -564,9 +576,9 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
           try {
             const template = sendData.smsMessage?.trim()
               ? sendData.smsMessage
-              : `Hi ${customerName}, your invoice from ${activeBiz?.public_brand_name || "us"} is ready. Pay online here: [PAYMENT_LINK]. Reply STOP to unsubscribe.`;
+              : `Hi ${billTo}, your invoice from ${activeBiz?.public_brand_name || "us"} is ready. Pay online here: [PAYMENT_LINK]. Reply STOP to unsubscribe.`;
             const smsMessage = template.replace(/\[PAYMENT_LINK\]/g, paymentUrl);
-            console.log("[SMS] sending invoice text", { to: customerPhone, customerName, paymentUrl });
+            console.log("[SMS] sending invoice text", { to: customerPhone, customerName: billTo, paymentUrl });
             const { error: smsErr } = await supabase.functions.invoke("send-sms", {
               body: { to: customerPhone, message: smsMessage },
             });
@@ -650,6 +662,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
       status: "sent",
       sent_at: nowIso,
       terms,
+      billing_name: billingNameToSave,
       payment_method: paymentMethod,
       issue_date: issueDate,
       due_date: dueDate,
@@ -696,7 +709,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
     const message = buildInvoiceMessage({
       invoiceId: inv.id,
       invoiceNumber: savedNumber,
-      customerName,
+      customerName: billTo,
       total,
       businessName: activeBiz?.public_brand_name,
       shortcode: activeBiz?.shortcode,
@@ -760,14 +773,40 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
                 <div className="flex items-center justify-between">
                   <p className="font-body text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Bill To</p>
                   {customerId && (
-                    <button className="font-body text-[10px] text-primary hover:underline" onClick={() => { setCustomerId(null); setCustomerName(""); clearServiceAddress(); setShowCustomerSearch(true); }}>
+                    <button className="font-body text-[10px] text-primary hover:underline" onClick={() => { setCustomerId(null); setCustomerName(""); setBillingName(""); setEditingBillingName(false); clearServiceAddress(); setShowCustomerSearch(true); }}>
                       Change
                     </button>
                   )}
                 </div>
                 {customerId ? (
                   <div>
-                    <p className="font-body text-sm font-semibold text-foreground">{customerName}</p>
+                    <div className="space-y-1">
+                      <label className="font-body text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Billing name</label>
+                      {editingBillingName ? (
+                        <Input
+                          autoFocus
+                          value={billingName}
+                          onChange={(e) => setBillingName(e.target.value)}
+                          onBlur={() => setEditingBillingName(false)}
+                          placeholder={customerName}
+                          className="bg-secondary/50 border-border font-body text-sm"
+                          data-testid="billing-name-input"
+                        />
+                      ) : (
+                        <button
+                          type="button"
+                          data-testid="billing-name-edit"
+                          onClick={() => setEditingBillingName(true)}
+                          className="w-full flex items-center gap-2 text-left group"
+                        >
+                          <span className="font-body text-sm font-semibold text-foreground">{billTo || customerName}</span>
+                          <Pencil className="w-3 h-3 text-muted-foreground group-hover:text-primary shrink-0" />
+                        </button>
+                      )}
+                      <p className="font-body text-[10px] text-muted-foreground">
+                        Saved with this invoice — customer record unchanged
+                      </p>
+                    </div>
                     {customerEmail && <p className="font-body text-xs text-muted-foreground">{customerEmail}</p>}
                     {customerPhone && <p className="font-body text-xs text-muted-foreground">{customerPhone}</p>}
                   </div>
@@ -1152,7 +1191,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
       {/* Send Modal */}
       {showSendModal && (
         <SendInvoiceModal
-          customerName={customerName}
+          customerName={billTo}
           customerEmail={customerEmail}
           customerPhone={customerPhone}
           invoiceNumber={invoiceNumber}

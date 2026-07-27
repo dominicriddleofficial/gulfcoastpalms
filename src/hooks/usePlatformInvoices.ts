@@ -50,6 +50,7 @@ export type PlatformInvoice = {
   public_notes: string | null;
   internal_notes: string | null;
   payment_instructions: string | null;
+  billing_name: string | null;
   created_at: string;
   updated_at: string;
   customer_name?: string;
@@ -105,7 +106,7 @@ export async function fetchPlatformInvoices(businessId: string | null): Promise<
   if (error || !data) return [];
   return data.map((inv: any) => ({
     ...inv,
-    customer_name: inv.platform_customers?.display_name || null,
+    customer_name: inv.billing_name || inv.platform_customers?.display_name || null,
     property_address: inv.platform_properties ? `${inv.platform_properties.address_1}, ${inv.platform_properties.city}` : null,
     job_number: inv.platform_jobs?.job_number || null,
   })) as PlatformInvoice[];

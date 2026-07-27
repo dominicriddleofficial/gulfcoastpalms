@@ -1,0 +1,1 @@
+ALTER TABLE public.platform_invoices ADD COLUMN IF NOT EXISTS billing_name text;
