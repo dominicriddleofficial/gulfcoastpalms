@@ -424,7 +424,8 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
     shortcode: activeBiz?.shortcode || "gcp",
     isDraft: true,
     logoUrl: logoUrl,
-  }), [invoiceNumber, issueDate, dueDate, billTo, customerEmail, customerPhone, serviceLine1, serviceLine2, serviceCity, serviceState, serviceZip, lineItems, subtotal, taxEnabled, taxRate, taxAmount, discountAmount, total, publicNotes, activeBiz, logoUrl]);
+    paymentMethod,
+  }), [invoiceNumber, issueDate, dueDate, billTo, customerEmail, customerPhone, serviceLine1, serviceLine2, serviceCity, serviceState, serviceZip, lineItems, subtotal, taxEnabled, taxRate, taxAmount, discountAmount, total, publicNotes, activeBiz, logoUrl, paymentMethod]);
 
   // Save invoice
   const handleSave = async (sendAfter: boolean = false, sendData: SendInvoiceData | null = null) => {
