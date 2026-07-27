@@ -3393,6 +3393,7 @@ export type Database = {
         Row: {
           amount_paid: number | null
           balance_due: number | null
+          billing_name: string | null
           business_id: string
           created_at: string
           created_by_user_id: string | null
@@ -3443,6 +3444,7 @@ export type Database = {
         Insert: {
           amount_paid?: number | null
           balance_due?: number | null
+          billing_name?: string | null
           business_id: string
           created_at?: string
           created_by_user_id?: string | null
@@ -3493,6 +3495,7 @@ export type Database = {
         Update: {
           amount_paid?: number | null
           balance_due?: number | null
+          billing_name?: string | null
           business_id?: string
           created_at?: string
           created_by_user_id?: string | null
