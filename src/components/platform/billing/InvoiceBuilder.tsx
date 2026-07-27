@@ -17,7 +17,7 @@ import SendInvoiceModal from "./SendInvoiceModal";
 import { useQuery } from "@tanstack/react-query";
 import type { InvoicePrefillState } from "@/components/platform/CreateSheetsProvider";
 import { downloadElementAsPdf } from "@/lib/download-pdf";
-import { buildInvoiceMessage, copyTextToClipboard } from "@/lib/invoice-message";
+import { buildInvoiceMessage, copyTextToClipboard, buildRemitBlock } from "@/lib/invoice-message";
 
 interface LineItem {
   id: string;
@@ -115,6 +115,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
   const [publicNotes, setPublicNotes] = useState("");
   const [internalNotes, setInternalNotes] = useState("");
   const [terms, setTerms] = useState("Due on receipt");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "check">("card");
 
   // UI state
   const [customerSearch, setCustomerSearch] = useState("");
@@ -303,6 +304,22 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
       setPublicNotes(`Thank you for choosing ${activeBiz?.public_brand_name || "us"}! We appreciate your business.`);
     }
   }, [activeBiz?.public_brand_name]);
+
+  // Customer-level default: HOAs / commercial accounts flagged "prefers check"
+  // pre-select the mail-in method (still editable per invoice).
+  useEffect(() => {
+    if (!customerId || customerSource !== "platform") return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("platform_customers")
+        .select("prefers_check")
+        .eq("id", customerId)
+        .maybeSingle();
+      if (!cancelled && data?.prefers_check) setPaymentMethod("check");
+    })();
+    return () => { cancelled = true; };
+  }, [customerId, customerSource]);
 
   // Calculations
   const subtotal = useMemo(() =>
@@ -511,6 +528,8 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
               paymentUrl,
               ccEmail: sendData.ccEmail || null,
               ownerEmail: "dominicriddleofficial@gmail.com",
+              paymentMethod,
+              remitBlock: paymentMethod === "check" ? buildRemitBlock(invoiceNumber, activeBiz?.public_brand_name) : null,
             },
           });
           const deliveryStatus = fnRes?.deliveryStatus;
