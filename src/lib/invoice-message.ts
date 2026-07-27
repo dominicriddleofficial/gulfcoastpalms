@@ -12,6 +12,27 @@ export interface InvoiceMessageInput {
   businessName: string | null | undefined;
   shortcode: string | null | undefined;
   origin?: string;
+  /** 'card' (default) uses the online pay link wording; 'check' adds remit-to instructions. */
+  paymentMethod?: string | null;
+}
+
+/** Mail-in remit address for Gulf Coast Palms check payments. */
+export const CHECK_REMIT = {
+  payableTo: "Gulf Coast Palms",
+  address: "7371 Grand Navarre Blvd, Navarre, FL 32566",
+} as const;
+
+/**
+ * Plain-text remit-to block shown on check invoices across every channel
+ * (email, SMS, copied message, hosted invoice page).
+ */
+export function buildRemitBlock(invoiceNumber: string, businessName?: string | null): string {
+  const payable = businessName || CHECK_REMIT.payableTo;
+  return `Please make checks payable to: ${payable}\nMail to: ${CHECK_REMIT.address}\nReference: ${invoiceNumber}`;
+}
+
+export function isCheckMethod(method: string | null | undefined): boolean {
+  return method === "check";
 }
 
 export function getInvoicePaymentUrl(input: {
@@ -33,6 +54,9 @@ export function buildInvoiceMessage(input: InvoiceMessageInput): string {
   })}`;
   const bizName = input.businessName || "Gulf Coast Palms";
   const link = getInvoicePaymentUrl(input);
+  if (isCheckMethod(input.paymentMethod)) {
+    return `Hi ${firstName}, here's your invoice from ${bizName} — ${input.invoiceNumber} for ${totalStr}. View your invoice here: ${link}\n\n${buildRemitBlock(input.invoiceNumber, bizName)}\n\nThank you for your business!`;
+  }
   return `Hi ${firstName}, here's your invoice from ${bizName} — ${input.invoiceNumber} for ${totalStr}. View and pay here: ${link}\nThank you for your business!`;
 }
 

@@ -4,6 +4,7 @@ import { CreditCard, CheckCircle, XCircle, Loader2, Shield, AlertCircle, Downloa
 import { toast } from "@/hooks/use-toast";
 import DocumentBrandMark from "@/components/platform/billing/DocumentBrandMark";
 import { downloadElementAsPdf } from "@/lib/download-pdf";
+import { buildRemitBlock } from "@/lib/invoice-message";
 
 type InvoiceData = {
   id: string;
@@ -11,6 +12,7 @@ type InvoiceData = {
   total: number;
   balance_due: number;
   status: string;
+  payment_method?: string | null;
   deposit_required: boolean;
   deposit_amount: number;
   deposit_paid: boolean;
@@ -370,8 +372,20 @@ export default function PayInvoice() {
               </div>
             </div>
 
+            {/* ── CHECK / MAIL-IN REMIT ── */}
+            {!isPaid && invoice.payment_method === "check" && (
+              <div style={{ padding: "20px 20px 24px" }}>
+                <div style={{ background: "#0f0f0f", border: `1px solid ${cardBorder}`, borderRadius: 12, padding: 20 }}>
+                  <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: accent, marginBottom: 10 }}>PAY BY CHECK</div>
+                  <div style={{ fontSize: 14, color: "#fff", lineHeight: 1.7, whiteSpace: "pre-line" }}>
+                    {buildRemitBlock(invoice.invoice_number, invoice.business_name)}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* ── PAY NOW ── */}
-            {!isPaid && (
+            {!isPaid && invoice.payment_method !== "check" && (
               <div className="no-print" style={{ padding: "20px 20px 24px" }}>
                 <div style={{ background: "#0f0f0f", border: `1px solid ${cardBorder}`, borderRadius: 12, padding: 20, textAlign: "center" }}>
                   <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: accent, marginBottom: 4 }}>SECURE ONLINE PAYMENT</div>

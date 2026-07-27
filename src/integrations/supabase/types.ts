@@ -3069,6 +3069,7 @@ export type Database = {
           master_person_id: string | null
           phone: string | null
           preferred_contact_method: string | null
+          prefers_check: boolean
           referral_source: string | null
           secondary_phone: string | null
           source: string | null
@@ -3097,6 +3098,7 @@ export type Database = {
           master_person_id?: string | null
           phone?: string | null
           preferred_contact_method?: string | null
+          prefers_check?: boolean
           referral_source?: string | null
           secondary_phone?: string | null
           source?: string | null
@@ -3125,6 +3127,7 @@ export type Database = {
           master_person_id?: string | null
           phone?: string | null
           preferred_contact_method?: string | null
+          prefers_check?: boolean
           referral_source?: string | null
           secondary_phone?: string | null
           source?: string | null
@@ -3409,6 +3412,7 @@ export type Database = {
           overdue_notified_at: string | null
           paid_at: string | null
           payment_instructions: string | null
+          payment_method: string
           property_id: string | null
           public_notes: string | null
           quote_id: string | null
@@ -3458,6 +3462,7 @@ export type Database = {
           overdue_notified_at?: string | null
           paid_at?: string | null
           payment_instructions?: string | null
+          payment_method?: string
           property_id?: string | null
           public_notes?: string | null
           quote_id?: string | null
@@ -3507,6 +3512,7 @@ export type Database = {
           overdue_notified_at?: string | null
           paid_at?: string | null
           payment_instructions?: string | null
+          payment_method?: string
           property_id?: string | null
           public_notes?: string | null
           quote_id?: string | null
@@ -6485,6 +6491,7 @@ export type Database = {
           master_person_id: string | null
           phone: string | null
           preferred_contact_method: string | null
+          prefers_check: boolean
           referral_source: string | null
           secondary_phone: string | null
           source: string | null

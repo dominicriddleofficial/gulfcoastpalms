@@ -29,6 +29,7 @@ export type PlatformInvoice = {
   job_id: string | null;
   quote_id: string | null;
   status: string;
+  payment_method?: string | null;
   issue_date: string | null;
   due_date: string | null;
   terms: string | null;
