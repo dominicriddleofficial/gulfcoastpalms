@@ -113,7 +113,7 @@ export default function PlatformInvoices() {
           body: {
             invoiceId: inv.id,
             recipientEmail: cust.email,
-            recipientName: cust.display_name || inv.customer_name || "there",
+            recipientName: inv.customer_name || cust.display_name || "there",
             businessName: biz?.public_brand_name || "Gulf Coast Palms",
             invoiceNumber: inv.invoice_number,
             total: inv.total,
