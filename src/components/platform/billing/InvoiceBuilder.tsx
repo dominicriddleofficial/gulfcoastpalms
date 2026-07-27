@@ -79,6 +79,10 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
   const [customerId, setCustomerId] = useState<string | null>(prefill?.customer?.id ?? null);
   const [customerSource, setCustomerSource] = useState<"platform" | "jobber">("platform");
   const [customerName, setCustomerName] = useState(prefill?.customer?.display_name ?? "");
+  // Invoice-only billing name override (e.g. HOA / condo association / company).
+  // Never written back to platform_customers.
+  const [billingName, setBillingName] = useState(prefill?.customer?.display_name ?? "");
+  const [editingBillingName, setEditingBillingName] = useState(false);
   const [customerEmail, setCustomerEmail] = useState(prefill?.customer?.email ?? "");
   const [customerPhone, setCustomerPhone] = useState(prefill?.customer?.phone ?? "");
   // Service/property address snapshot for the invoice — frozen from job/property at creation time.
@@ -366,6 +370,8 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
     setCustomerId(c.id);
     setCustomerSource((c.source as "platform" | "jobber") || "platform");
     setCustomerName(c.display_name);
+    setBillingName(c.display_name);
+    setEditingBillingName(false);
     setCustomerEmail(c.email || "");
     setCustomerPhone(c.phone || "");
     setShowCustomerSearch(false);
