@@ -42,6 +42,7 @@ export default function PlatformCustomerNew() {
   const [stateField, setStateField] = useState("FL");
   const [zip, setZip] = useState("");
   const [notes, setNotes] = useState("");
+  const [prefersCheck, setPrefersCheck] = useState(false);
   const [saving, setSaving] = useState(false);
   const [verified, setVerified] = useState<VerifiedAddress | null>(null);
 
@@ -67,6 +68,7 @@ export default function PlatformCustomerNew() {
       email: email || null,
       internal_notes: notes || null,
       customer_status: "active",
+      prefers_check: prefersCheck,
     }).select("id").single();
     if (error || !cust) { toast.error(error?.message || "Could not create customer"); setSaving(false); return; }
     if (address.trim()) {
@@ -121,6 +123,18 @@ export default function PlatformCustomerNew() {
           </div>
           <div><Label>Phone</Label><Input inputMode="tel" value={phone} onChange={(e) => setPhone(fmtPhone(e.target.value))} placeholder="(850) 555-1234" /></div>
           <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+          <label className="flex items-start gap-2 pt-1 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={prefersCheck}
+              onChange={(e) => setPrefersCheck(e.target.checked)}
+              className="mt-1 accent-primary w-4 h-4"
+            />
+            <span className="text-xs text-muted-foreground leading-snug">
+              Prefers check / invoice by mail-in
+              <span className="block text-[10px] opacity-70">New invoices for this customer will default to check payment.</span>
+            </span>
+          </label>
         </section>
 
         <section className="bg-card/40 border border-border rounded-xl p-4 mb-4 space-y-3">

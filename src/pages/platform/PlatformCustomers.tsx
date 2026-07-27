@@ -189,6 +189,7 @@ function CreateCustomerForm({ businesses, selectedBusinessId, onCreated }: {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [contactMethod, setContactMethod] = useState("phone");
+  const [prefersCheck, setPrefersCheck] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -208,6 +209,7 @@ function CreateCustomerForm({ businesses, selectedBusinessId, onCreated }: {
       preferred_contact_method: contactMethod,
       customer_status: "active",
       source: "manual",
+      prefers_check: prefersCheck,
     });
     setSubmitting(false);
 
@@ -269,6 +271,18 @@ function CreateCustomerForm({ businesses, selectedBusinessId, onCreated }: {
             </SelectContent>
           </Select>
         </div>
+        <label className="flex items-start gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={prefersCheck}
+            onChange={(e) => setPrefersCheck(e.target.checked)}
+            className="mt-1 accent-primary w-4 h-4"
+          />
+          <span className="text-xs text-muted-foreground leading-snug">
+            Prefers check / invoice by mail-in
+            <span className="block text-[10px] opacity-70">New invoices default to check payment.</span>
+          </span>
+        </label>
         <Button type="submit" disabled={submitting} className="w-full">
           {submitting ? "Creating..." : "Create Customer"}
         </Button>
