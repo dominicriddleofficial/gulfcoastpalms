@@ -389,11 +389,16 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
   };
 
   // Preview data
+  /** Name shown on the invoice — the override when set, else the customer's name. */
+  const billTo = billingName.trim() || customerName;
+  /** Only persisted when it actually differs from the customer record. */
+  const billingNameToSave = billTo && billTo !== customerName ? billTo : null;
+
   const previewData = useMemo(() => ({
     invoiceNumber,
     issueDate,
     dueDate,
-    customerName: customerName || "Customer Name",
+    customerName: billTo || "Customer Name",
     customerEmail,
     customerPhone,
     customerAddress: {
@@ -419,7 +424,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
     shortcode: activeBiz?.shortcode || "gcp",
     isDraft: true,
     logoUrl: logoUrl,
-  }), [invoiceNumber, issueDate, dueDate, customerName, customerEmail, customerPhone, serviceLine1, serviceLine2, serviceCity, serviceState, serviceZip, lineItems, subtotal, taxEnabled, taxRate, taxAmount, discountAmount, total, publicNotes, activeBiz, logoUrl]);
+  }), [invoiceNumber, issueDate, dueDate, billTo, customerEmail, customerPhone, serviceLine1, serviceLine2, serviceCity, serviceState, serviceZip, lineItems, subtotal, taxEnabled, taxRate, taxAmount, discountAmount, total, publicNotes, activeBiz, logoUrl]);
 
   // Save invoice
   const handleSave = async (sendAfter: boolean = false, sendData: SendInvoiceData | null = null) => {
