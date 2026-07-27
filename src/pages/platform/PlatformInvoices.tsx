@@ -69,6 +69,7 @@ export default function PlatformInvoices() {
       total: inv.total,
       businessName: biz?.public_brand_name,
       shortcode: biz?.shortcode,
+      paymentMethod: (inv as unknown as { payment_method?: string | null }).payment_method,
     });
   };
 
