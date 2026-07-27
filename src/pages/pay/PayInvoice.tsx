@@ -17,6 +17,7 @@ type InvoiceData = {
   deposit_amount: number;
   deposit_paid: boolean;
   customer_name: string;
+  billing_name?: string | null;
   business_name: string;
   shortcode: string;
   issue_date?: string;
@@ -186,6 +187,7 @@ export default function PayInvoice() {
   const isOverdue = invoice.status === "overdue" || (invoice.due_date && new Date(invoice.due_date) < new Date() && !isPaid && invoice.status !== "draft" && invoice.status !== "void");
   const isDraft = invoice.status === "draft";
   const dueNow = invoice.deposit_required && !invoice.deposit_paid && invoice.deposit_amount > 0 ? invoice.deposit_amount : invoice.balance_due;
+  const billToName = (invoice.billing_name || invoice.customer_name || "").trim() || null;
   const billToAddress = hasRealAddress(invoice.customer_address) ? invoice.customer_address.trim() : null;
 
   const statusBadge = () => {
@@ -295,6 +297,9 @@ export default function PayInvoice() {
               {/* Customer info */}
               <div>
                 <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: "#71717a", marginBottom: 4 }}>BILL TO</div>
+                {billToName && (
+                  <p style={{ color: "#fff", fontWeight: 700, fontSize: 15, marginBottom: 2 }}>{billToName}</p>
+                )}
                 <p style={{ color: billToAddress ? "#fff" : labelColor, fontWeight: billToAddress ? 600 : 400, fontSize: billToAddress ? 15 : 13, fontStyle: billToAddress ? "normal" : "italic" }}>
                   {billToAddress || "No service address"}
                 </p>
