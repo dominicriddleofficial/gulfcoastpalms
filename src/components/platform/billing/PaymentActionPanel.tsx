@@ -24,6 +24,7 @@ interface Props {
     deposit_paid: boolean | null;
     deposit_amount: number | null;
     status: string;
+    payment_method?: string | null;
   };
   onRecordPayment: (amount: number, method: string, notes: string, isDeposit: boolean) => void;
   onOpenPaymentPage: () => void;
@@ -109,6 +110,7 @@ export default function PaymentActionPanel({
         suggestedAmount={suggestedAmount}
         suggestedLabel={suggestedLabel}
         maxAmount={balance}
+        checkMode={invoice.payment_method === "check"}
         depositRequired={!!invoice.deposit_required && !invoice.deposit_paid}
         depositAmount={Number(invoice.deposit_amount || 0)}
         payAmount={payAmount}
@@ -164,6 +166,24 @@ export default function PaymentActionPanel({
 
       {/* Opinionated helper text */}
       <p className="font-body text-[11px] text-muted-foreground leading-snug mb-2">{primary.description}</p>
+
+      {/* Check invoices: recording the mailed-in check is the primary action */}
+      {!primary.isPaid && invoice.payment_method === "check" && (
+        <Button
+          className="w-full h-12 font-body font-semibold text-sm justify-between"
+          onClick={() => {
+            setPayMethod("check");
+            setPayAmount(String(balance));
+            setIsDeposit(false);
+            setStep("record");
+          }}
+        >
+          <span className="flex items-center gap-2">
+            <Banknote className="w-4.5 h-4.5" /> Record check payment
+          </span>
+          <ChevronRight className="w-4 h-4 opacity-70" />
+        </Button>
+      )}
 
       {/* PRIMARY: Context-aware dominant button */}
       {primary.isPaid ? (
@@ -391,7 +411,7 @@ function CollectOption({ icon: Icon, title, desc, onClick }: {
 function RecordPaymentForm({
   suggestedAmount, suggestedLabel, maxAmount, depositRequired, depositAmount,
   payAmount, setPayAmount, payMethod, setPayMethod, payNotes, setPayNotes,
-  isDeposit, setIsDeposit, onBack, onConfirm,
+  isDeposit, setIsDeposit, onBack, onConfirm, checkMode = false,
 }: {
   suggestedAmount: number; suggestedLabel: string; maxAmount: number;
   depositRequired: boolean; depositAmount: number;
@@ -400,14 +420,23 @@ function RecordPaymentForm({
   payNotes: string; setPayNotes: (v: string) => void;
   isDeposit: boolean; setIsDeposit: (v: boolean) => void;
   onBack: () => void; onConfirm: () => void;
+  checkMode?: boolean;
 }) {
   const amt = Number(payAmount) || 0;
   const isValid = amt > 0 && amt <= maxAmount;
+  const [checkNumber, setCheckNumber] = useState("");
+  const [checkDate, setCheckDate] = useState(() => new Date().toISOString().slice(0, 10));
+
+  const syncCheckNotes = (num: string, date: string) => {
+    setPayNotes(`Check #${num || "—"} received ${date}`);
+  };
 
   return (
     <div className="bg-card border border-border rounded-xl p-5 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-display text-sm font-bold text-foreground">Record Offline Payment</h3>
+        <h3 className="font-display text-sm font-bold text-foreground">
+          {checkMode ? "Record Check Payment" : "Record Offline Payment"}
+        </h3>
         <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={onBack}><X className="w-4 h-4" /></Button>
       </div>
 
@@ -465,6 +494,29 @@ function RecordPaymentForm({
           </SelectContent>
         </Select>
       </div>
+
+      {checkMode && (
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="font-body text-xs font-medium text-foreground mb-1.5 block">Check #</label>
+            <Input
+              value={checkNumber}
+              onChange={e => { setCheckNumber(e.target.value); syncCheckNotes(e.target.value, checkDate); }}
+              placeholder="1042"
+              className="bg-background border-border font-body text-sm h-10"
+            />
+          </div>
+          <div>
+            <label className="font-body text-xs font-medium text-foreground mb-1.5 block">Date received</label>
+            <Input
+              type="date"
+              value={checkDate}
+              onChange={e => { setCheckDate(e.target.value); syncCheckNotes(checkNumber, e.target.value); }}
+              className="bg-background border-border font-body text-sm h-10"
+            />
+          </div>
+        </div>
+      )}
 
       <div>
         <label className="font-body text-xs font-medium text-foreground mb-1.5 block">Notes / Reference Number</label>
