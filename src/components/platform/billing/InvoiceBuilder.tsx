@@ -477,6 +477,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
       property_id: servicePropertyId,
       status: "draft",
       terms,
+      billing_name: billingNameToSave,
       payment_method: paymentMethod,
       issue_date: issueDate,
       due_date: dueDate,
@@ -530,7 +531,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
             body: {
               invoiceId: inv.id,
               recipientEmail: sendData.email,
-              recipientName: customerName,
+              recipientName: billTo,
               subject: sendData.subject,
               message: sendData.message,
               businessName: activeBiz?.public_brand_name || "",
@@ -550,7 +551,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
             console.warn("send-invoice-email owner notification warning:", fnRes.ownerNotificationWarning);
           }
           if (deliveryStatus === "sent") {
-            toast.success(`Invoice sent to ${customerName} at ${sendData.email}`);
+            toast.success(`Invoice sent to ${billTo} at ${sendData.email}`);
           } else if (deliveryStatus === "pending" || (!deliveryStatus && !deliveryError)) {
             toast.warning(
               `Invoice queued — delivery is taking longer than usual. Check Email Activity in a few minutes.`,
@@ -575,9 +576,9 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
           try {
             const template = sendData.smsMessage?.trim()
               ? sendData.smsMessage
-              : `Hi ${customerName}, your invoice from ${activeBiz?.public_brand_name || "us"} is ready. Pay online here: [PAYMENT_LINK]. Reply STOP to unsubscribe.`;
+              : `Hi ${billTo}, your invoice from ${activeBiz?.public_brand_name || "us"} is ready. Pay online here: [PAYMENT_LINK]. Reply STOP to unsubscribe.`;
             const smsMessage = template.replace(/\[PAYMENT_LINK\]/g, paymentUrl);
-            console.log("[SMS] sending invoice text", { to: customerPhone, customerName, paymentUrl });
+            console.log("[SMS] sending invoice text", { to: customerPhone, customerName: billTo, paymentUrl });
             const { error: smsErr } = await supabase.functions.invoke("send-sms", {
               body: { to: customerPhone, message: smsMessage },
             });
@@ -661,6 +662,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
       status: "sent",
       sent_at: nowIso,
       terms,
+      billing_name: billingNameToSave,
       payment_method: paymentMethod,
       issue_date: issueDate,
       due_date: dueDate,
@@ -707,7 +709,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
     const message = buildInvoiceMessage({
       invoiceId: inv.id,
       invoiceNumber: savedNumber,
-      customerName,
+      customerName: billTo,
       total,
       businessName: activeBiz?.public_brand_name,
       shortcode: activeBiz?.shortcode,
@@ -1163,7 +1165,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
       {/* Send Modal */}
       {showSendModal && (
         <SendInvoiceModal
-          customerName={customerName}
+          customerName={billTo}
           customerEmail={customerEmail}
           customerPhone={customerPhone}
           invoiceNumber={invoiceNumber}
