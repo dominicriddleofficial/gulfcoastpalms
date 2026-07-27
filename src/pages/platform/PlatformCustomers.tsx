@@ -297,6 +297,33 @@ function CustomerDetail({ customer }: { customer: UnifiedCustomer }) {
   const [properties, setProperties] = useState<JobberProperty[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<JobberProperty | null>(null);
+  const [prefersCheck, setPrefersCheck] = useState(false);
+
+  useEffect(() => {
+    if (customer.source === "jobber") return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("platform_customers")
+        .select("prefers_check")
+        .eq("id", customer.id)
+        .maybeSingle();
+      if (!cancelled) setPrefersCheck(!!data?.prefers_check);
+    })();
+    return () => { cancelled = true; };
+  }, [customer.id, customer.source]);
+
+  const togglePrefersCheck = async (value: boolean) => {
+    setPrefersCheck(value);
+    const { error } = await supabase
+      .from("platform_customers")
+      .update({ prefers_check: value })
+      .eq("id", customer.id);
+    if (error) {
+      setPrefersCheck(!value);
+      toast({ title: "Could not update", description: error.message, variant: "destructive" });
+    }
+  };
 
   const fetchProperties = async () => {
       setLoading(true);
@@ -395,6 +422,20 @@ function CustomerDetail({ customer }: { customer: UnifiedCustomer }) {
 
         <div className="space-y-2 pt-4 border-t border-border">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Details</h3>
+          {customer.source !== "jobber" && (
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={prefersCheck}
+                onChange={(e) => togglePrefersCheck(e.target.checked)}
+                className="mt-0.5 accent-primary w-4 h-4"
+              />
+              <span className="text-xs text-muted-foreground leading-snug">
+                Prefers check / invoice by mail-in
+                <span className="block text-[10px] opacity-70">New invoices default to check payment.</span>
+              </span>
+            </label>
+          )}
           {customer.jobber_id && <p className="text-xs text-muted-foreground">Jobber ID: {customer.jobber_id}</p>}
           <p className="text-xs text-muted-foreground">Created {format(new Date(customer.created_at), "MMM d, yyyy")}</p>
         </div>
