@@ -74,6 +74,20 @@ export default function PlatformInvoices() {
   };
 
   const copyInvoiceMessage = async (inv: PlatformInvoice) => {
+    // Copying an invoice message means the customer is about to receive the link.
+    // A draft invoice must be promoted to "sent" (with sent_at) FIRST — otherwise
+    // the customer gets a link to an invoice that never entered the sent pipeline.
+    if (inv.status === "draft") {
+      const { error: statusErr } = await supabase
+        .from("platform_invoices")
+        .update({ status: "sent", sent_at: new Date().toISOString() })
+        .eq("id", inv.id);
+      if (statusErr) {
+        toast.error(`Could not mark invoice as sent — nothing copied. ${statusErr.message}`);
+        return;
+      }
+      refetch();
+    }
     const text = buildInvoiceMessage(inv);
     const ok = await copyTextToClipboard(text);
     if (ok) toast.success("Invoice message copied");
