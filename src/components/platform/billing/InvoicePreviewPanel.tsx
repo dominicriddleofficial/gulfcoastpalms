@@ -4,7 +4,7 @@
  * Prestige: dark monochrome + white accents.
  */
 import { getBusinessLogo } from "@/lib/business-logos";
-import { CHECK_REMIT } from "@/lib/invoice-message";
+import { CHECK_REMIT, buildOfflinePaymentBlock } from "@/lib/invoice-message";
 
 const BRAND: Record<string, {
   name: string;
@@ -94,6 +94,8 @@ export default function InvoicePreviewPanel({ data }: { data: PreviewData }) {
   const isPaid = data.status === "paid";
   const isOverdue = data.status === "overdue";
   const isCheck = data.paymentMethod === "check";
+  const isP2p = data.paymentMethod === "p2p";
+  const offlineBlock = buildOfflinePaymentBlock(data.paymentMethod, data.invoiceNumber, data.businessName);
 
   const statusBadge = () => {
     if (isPaid) return { label: "PAID", bg: "rgba(34,197,94,0.15)", color: "#22c55e" };
@@ -208,7 +210,7 @@ export default function InvoicePreviewPanel({ data }: { data: PreviewData }) {
       <div style={{ padding: "28px 32px", display: "flex", justifyContent: "space-between", gap: "24px", flexWrap: "wrap" }}>
         {/* Pay To / Bill To */}
         <div style={{ flex: "1 1 50%" }}>
-          {isCheck && (
+          {(isCheck || isP2p) && (
             <div style={{ marginBottom: "16px" }}>
               <div style={{
                 fontSize: "10px", fontWeight: 600, letterSpacing: "0.2em",
@@ -219,9 +221,11 @@ export default function InvoicePreviewPanel({ data }: { data: PreviewData }) {
               <div style={{ fontSize: "15px", fontWeight: 700, color: "#fff", lineHeight: 1.5 }}>
                 {data.businessName || brand.name}
               </div>
-              <div style={{ fontSize: "13px", color: "#fff", lineHeight: 1.5 }}>
-                {CHECK_REMIT.address}
-              </div>
+              {isCheck && (
+                <div style={{ fontSize: "13px", color: "#fff", lineHeight: 1.5 }}>
+                  {CHECK_REMIT.address}
+                </div>
+              )}
             </div>
           )}
           <div style={{
@@ -393,7 +397,7 @@ export default function InvoicePreviewPanel({ data }: { data: PreviewData }) {
 
       {/* Payment CTA */}
       <div style={{ padding: "0 32px 24px" }}>
-        {isCheck ? (
+        {offlineBlock ? (
         <div style={{
           background: `rgba(${brand.accentRgb}, 0.08)`,
           border: `1px solid rgba(${brand.accentRgb}, 0.2)`,
@@ -403,10 +407,10 @@ export default function InvoicePreviewPanel({ data }: { data: PreviewData }) {
             fontSize: "10px", fontWeight: 600, letterSpacing: "0.15em",
             textTransform: "uppercase", color: brand.accent, marginBottom: "10px",
           }}>
-            PAY BY CHECK
+            {isCheck ? "PAY BY CHECK" : "PAY BY ZELLE / VENMO / CASH APP"}
           </div>
           <div style={{ fontSize: "13px", color: "#fff", lineHeight: 1.7, whiteSpace: "pre-line" }}>
-            {`Please make checks payable to: ${data.businessName || brand.name}\nMail to: ${CHECK_REMIT.address}\nReference: ${data.invoiceNumber}`}
+            {offlineBlock}
           </div>
         </div>
         ) : (
