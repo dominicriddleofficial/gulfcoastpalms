@@ -4,7 +4,7 @@ import { CreditCard, CheckCircle, XCircle, Loader2, Shield, AlertCircle, Downloa
 import { toast } from "@/hooks/use-toast";
 import DocumentBrandMark from "@/components/platform/billing/DocumentBrandMark";
 import { downloadElementAsPdf } from "@/lib/download-pdf";
-import { buildRemitBlock, CHECK_REMIT } from "@/lib/invoice-message";
+import { CHECK_REMIT, buildOfflinePaymentBlock } from "@/lib/invoice-message";
 
 type InvoiceData = {
   id: string;
@@ -184,6 +184,7 @@ export default function PayInvoice() {
   if (!invoice) return null;
 
   const isPaid = invoice.status === "paid";
+  const offlineBlock = buildOfflinePaymentBlock(invoice.payment_method, invoice.invoice_number, invoice.business_name);
   const isOverdue = invoice.status === "overdue" || (invoice.due_date && new Date(invoice.due_date) < new Date() && !isPaid && invoice.status !== "draft" && invoice.status !== "void");
   const isDraft = invoice.status === "draft";
   const dueNow = invoice.deposit_required && !invoice.deposit_paid && invoice.deposit_amount > 0 ? invoice.deposit_amount : invoice.balance_due;
@@ -295,13 +296,15 @@ export default function PayInvoice() {
               </div>
 
               {/* Pay To (check invoices only) */}
-              {invoice.payment_method === "check" && (
+              {(invoice.payment_method === "check" || invoice.payment_method === "p2p") && (
                 <div style={{ marginBottom: 14 }}>
                   <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: "#71717a", marginBottom: 4 }}>PAY TO</div>
                   <p style={{ color: "#fff", fontWeight: 700, fontSize: 15, marginBottom: 2 }}>
                     {invoice.business_name || CHECK_REMIT.payableTo}
                   </p>
-                  <p style={{ color: "#fff", fontWeight: 600, fontSize: 15 }}>{CHECK_REMIT.address}</p>
+                  {invoice.payment_method === "check" && (
+                    <p style={{ color: "#fff", fontWeight: 600, fontSize: 15 }}>{CHECK_REMIT.address}</p>
+                  )}
                 </div>
               )}
 
@@ -389,19 +392,21 @@ export default function PayInvoice() {
             </div>
 
             {/* ── CHECK / MAIL-IN REMIT ── */}
-            {!isPaid && invoice.payment_method === "check" && (
+            {!isPaid && offlineBlock && (
               <div style={{ padding: "20px 20px 24px" }}>
                 <div style={{ background: "#0f0f0f", border: `1px solid ${cardBorder}`, borderRadius: 12, padding: 20 }}>
-                  <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: accent, marginBottom: 10 }}>PAY BY CHECK</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: accent, marginBottom: 10 }}>
+                    {invoice.payment_method === "check" ? "PAY BY CHECK" : "PAY BY ZELLE / VENMO / CASH APP"}
+                  </div>
                   <div style={{ fontSize: 14, color: "#fff", lineHeight: 1.7, whiteSpace: "pre-line" }}>
-                    {buildRemitBlock(invoice.invoice_number, invoice.business_name)}
+                    {offlineBlock}
                   </div>
                 </div>
               </div>
             )}
 
             {/* ── PAY NOW ── */}
-            {!isPaid && invoice.payment_method !== "check" && (
+            {!isPaid && !offlineBlock && (
               <div className="no-print" style={{ padding: "20px 20px 24px" }}>
                 <div style={{ background: "#0f0f0f", border: `1px solid ${cardBorder}`, borderRadius: 12, padding: 20, textAlign: "center" }}>
                   <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: accent, marginBottom: 4 }}>SECURE ONLINE PAYMENT</div>

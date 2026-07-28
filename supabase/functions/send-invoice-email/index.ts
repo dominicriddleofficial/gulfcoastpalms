@@ -202,14 +202,19 @@ Deno.serve(async (req) => {
     const safeDueDate = dueDate ? escapeHtml(dueDate) : "";
     const safePaymentUrl = paymentUrl ? escapeHtml(paymentUrl) : "";
     const isCheck = paymentMethod === "check";
+    const isP2p = paymentMethod === "p2p";
+    const isOffline = isCheck || isP2p;
+    const defaultRemit = isP2p
+      ? `PAY WITH ZELLE, VENMO, OR CASH APP\nZelle: (850) 910-1290 or gulfcoastpalmsllc@gmail.com\nVenmo: @GulfCoastPalmz\nCash App: $GulfCoastPalmz\nPlease include invoice ${invoiceNumber} in the payment note.`
+      : `Please make checks payable to: ${resolvedBusinessName}\nMail to: 7371 Grand Navarre Blvd, Navarre, FL 32566\nReference: ${invoiceNumber}`;
     const remitText: string = typeof remitBlock === "string" && remitBlock.trim()
       ? remitBlock
-      : `Please make checks payable to: ${resolvedBusinessName}\nMail to: 7371 Grand Navarre Blvd, Navarre, FL 32566\nReference: ${invoiceNumber}`;
+      : defaultRemit;
     const safeRemitHtml = escapeHtml(remitText).replace(/\n/g, "<br/>");
-    const payBlockHtml = isCheck
+    const payBlockHtml = isOffline
       ? `
       <div style="background:#f9fafb;border:1px solid #e4e4e7;border-radius:8px;padding:18px;">
-        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#71717a;margin-bottom:8px;">Pay by check</div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#71717a;margin-bottom:8px;">${isCheck ? "Pay by check" : "Pay by Zelle, Venmo, or Cash App"}</div>
         <div style="color:#27272a;font-size:14px;line-height:1.6;">${safeRemitHtml}</div>
       </div>
       ${safePaymentUrl ? `<p style="margin:16px 0 0;text-align:center;font-size:13px;"><a href="${safePaymentUrl}" style="color:#16a34a;">View your invoice</a></p>` : ""}`
@@ -257,7 +262,7 @@ Deno.serve(async (req) => {
 
     const emailSubject = subject || `Invoice ${invoiceNumber} from ${resolvedBusinessName}`;
     const messageId = `invoice-${invoiceId || invoiceNumber}-${Date.now()}`;
-    const plainPayLine = isCheck
+    const plainPayLine = isOffline
       ? `${paymentUrl ? `\nView your invoice here: ${paymentUrl}\n` : ""}\n${remitText}\n`
       : `${paymentUrl ? `\nPay online: ${paymentUrl}\n` : ""}`;
     const plainText = `Hi ${recipientName || "there"},\n\n${message || "Please find your invoice details below."}\n\nInvoice: ${invoiceNumber}\nAmount Due: $${Number(total || 0).toFixed(2)}\n${dueDate ? `Due Date: ${dueDate}\n` : ""}${plainPayLine}\nThank you for your business! — ${resolvedBusinessName}`;
