@@ -17,7 +17,7 @@ import SendInvoiceModal from "./SendInvoiceModal";
 import { useQuery } from "@tanstack/react-query";
 import type { InvoicePrefillState } from "@/components/platform/CreateSheetsProvider";
 import { downloadElementAsPdf } from "@/lib/download-pdf";
-import { buildInvoiceMessage, copyTextToClipboard, buildRemitBlock } from "@/lib/invoice-message";
+import { buildInvoiceMessage, copyTextToClipboard, buildOfflinePaymentBlock } from "@/lib/invoice-message";
 
 interface LineItem {
   id: string;
@@ -119,7 +119,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
   const [publicNotes, setPublicNotes] = useState("");
   const [internalNotes, setInternalNotes] = useState("");
   const [terms, setTerms] = useState("Due on receipt");
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "check">("card");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "check" | "p2p">("card");
 
   // UI state
   const [customerSearch, setCustomerSearch] = useState("");
@@ -543,7 +543,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
               ccEmail: sendData.ccEmail || null,
               ownerEmail: "dominicriddleofficial@gmail.com",
               paymentMethod,
-              remitBlock: paymentMethod === "check" ? buildRemitBlock(invoiceNumber, activeBiz?.public_brand_name) : null,
+              remitBlock: buildOfflinePaymentBlock(paymentMethod, invoiceNumber, activeBiz?.public_brand_name),
             },
           });
           const deliveryStatus = fnRes?.deliveryStatus;
@@ -939,40 +939,34 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
                 ))}
               </div>
 
-              {/* Payment method — card (online link) vs check (mail-in) */}
+              {/* Payment method — card (online link) vs check (mail-in) vs p2p apps */}
               <div>
                 <label className="font-body text-[10px] font-medium text-muted-foreground mb-1 block">Payment method</label>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod("card")}
-                    aria-pressed={paymentMethod === "card"}
-                    className={cn(
-                      "flex-1 py-2 rounded-lg border text-[11px] font-body font-semibold transition-all",
-                      paymentMethod === "card"
-                        ? "bg-primary/15 text-primary border-primary"
-                        : "bg-secondary text-muted-foreground border-border hover:text-foreground"
-                    )}
-                  >
-                    Card (online payment link)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod("check")}
-                    aria-pressed={paymentMethod === "check"}
-                    className={cn(
-                      "flex-1 py-2 rounded-lg border text-[11px] font-body font-semibold transition-all",
-                      paymentMethod === "check"
-                        ? "bg-primary/15 text-primary border-primary"
-                        : "bg-secondary text-muted-foreground border-border hover:text-foreground"
-                    )}
-                  >
-                    Check (mail-in)
-                  </button>
+                <div className="grid grid-cols-3 gap-2">
+                  {([
+                    { value: "card", label: "Card (online payment link)" },
+                    { value: "check", label: "Check (mail-in)" },
+                    { value: "p2p", label: "Zelle / Venmo / Cash App" },
+                  ] as const).map(opt => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setPaymentMethod(opt.value)}
+                      aria-pressed={paymentMethod === opt.value}
+                      className={cn(
+                        "py-2 px-1 rounded-lg border text-[10px] leading-tight font-body font-semibold transition-all",
+                        paymentMethod === opt.value
+                          ? "bg-primary/15 text-primary border-primary"
+                          : "bg-secondary text-muted-foreground border-border hover:text-foreground"
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
                 </div>
-                {paymentMethod === "check" && (
+                {buildOfflinePaymentBlock(paymentMethod, invoiceNumber, activeBiz?.public_brand_name) && (
                   <p className="font-body text-[10px] text-muted-foreground mt-1.5 whitespace-pre-line bg-card border border-border rounded-md p-2">
-                    {buildRemitBlock(invoiceNumber, activeBiz?.public_brand_name)}
+                    {buildOfflinePaymentBlock(paymentMethod, invoiceNumber, activeBiz?.public_brand_name)}
                   </p>
                 )}
               </div>
