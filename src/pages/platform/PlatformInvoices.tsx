@@ -26,7 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import { useInvalidateUnpaidJobs } from "@/hooks/useUnpaidJobs";
-import { buildInvoiceMessage as buildInvoiceMessageShared, getInvoicePaymentUrl, copyTextToClipboard, buildRemitBlock } from "@/lib/invoice-message";
+import { buildInvoiceMessage as buildInvoiceMessageShared, getInvoicePaymentUrl, copyTextToClipboard, buildOfflinePaymentBlock } from "@/lib/invoice-message";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -441,9 +441,9 @@ function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayme
     if (!phone) { toast.error("No phone number on file for this customer"); return; }
     const bizName = biz?.public_brand_name || "our company";
     const amount = Number(invoice.balance_due || invoice.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2 });
-    const isCheck = invoice.payment_method === "check";
-    const msg = isCheck
-      ? `Hi ${invoice.customer_name || "there"}, here's your invoice from ${bizName} for $${amount}: ${getPaymentUrl()} ${buildRemitBlock(invoice.invoice_number, bizName).replace(/\n/g, " ")} Questions? Call (850) 910-1290.`
+    const offlineBlock = buildOfflinePaymentBlock(invoice.payment_method, invoice.invoice_number, bizName);
+    const msg = offlineBlock
+      ? `Hi ${invoice.customer_name || "there"}, here's your invoice from ${bizName} for $${amount}: ${getPaymentUrl()} ${offlineBlock.replace(/\n/g, " ")} Questions? Call (850) 910-1290.`
       : `Hi ${invoice.customer_name || "there"}, here's your payment link from ${bizName} for $${amount}: ${getPaymentUrl()} Questions? Call (850) 910-1290.`;
     try {
       const { error } = await supabase.functions.invoke("send-sms", { body: { to: phone, message: msg } });
@@ -459,7 +459,8 @@ function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayme
     const bizName = biz?.public_brand_name || "our company";
     const amount = Number(invoice.balance_due || invoice.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2 });
     const payUrl = getPaymentUrl();
-    const isCheckEmail = invoice.payment_method === "check";
+    const offlineEmailBlock = buildOfflinePaymentBlock(invoice.payment_method, invoice.invoice_number, bizName);
+    const isCheckEmail = !!offlineEmailBlock;
     try {
       const { data: fnRes, error: fnErr } = await supabase.functions.invoke(
         "send-invoice-email",
@@ -472,7 +473,7 @@ function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayme
               ? `Your invoice ${invoice.invoice_number} — $${amount}`
               : `Pay your invoice ${invoice.invoice_number} — $${amount}`,
             message: isCheckEmail
-              ? `Here's your invoice from ${bizName} for $${amount}. This invoice is payable by check.`
+              ? `Here's your invoice from ${bizName} for $${amount}. ${invoice.payment_method === "check" ? "This invoice is payable by check." : "This invoice is payable by Zelle, Venmo, or Cash App."}`
               : `Here's your payment link from ${bizName} for $${amount}.`,
             businessName: bizName,
             invoiceNumber: invoice.invoice_number,
@@ -480,7 +481,7 @@ function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayme
             dueDate: invoice.due_date,
             paymentUrl: payUrl,
             paymentMethod: invoice.payment_method || "card",
-            remitBlock: isCheckEmail ? buildRemitBlock(invoice.invoice_number, bizName) : null,
+            remitBlock: offlineEmailBlock,
           },
         },
       );
