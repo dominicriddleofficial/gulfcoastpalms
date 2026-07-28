@@ -3,12 +3,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Send, Mail, Smartphone, ClipboardCopy, CreditCard, Landmark } from "lucide-react";
+import { Send, Mail, Smartphone, ClipboardCopy, CreditCard, Landmark, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { buildRemitBlock } from "@/lib/invoice-message";
+import { buildOfflinePaymentBlock } from "@/lib/invoice-message";
 
-export type InvoicePaymentMethod = "card" | "check";
+export type InvoicePaymentMethod = "card" | "check" | "p2p";
 
 interface SendInvoiceModalProps {
   customerName: string;
@@ -33,24 +33,30 @@ export default function SendInvoiceModal({
   onSend, onCopy, onClose, saving,
 }: SendInvoiceModalProps) {
   const isCheck = paymentMethod === "check";
-  const remitBlock = buildRemitBlock(invoiceNumber, businessName);
+  const isP2p = paymentMethod === "p2p";
+  const offlineBlock = buildOfflinePaymentBlock(paymentMethod, invoiceNumber, businessName);
 
-  const defaultMessage = (check: boolean) =>
-    check
-      ? `Hi ${customerName},\n\nPlease find your invoice attached. This invoice is payable by check.\n\n${remitBlock}\n\nThank you for your business!`
-      : `Hi ${customerName},\n\nPlease find your invoice attached. You can pay online using the link below.\n\nThank you for your business!`;
-  const defaultSms = (check: boolean) =>
-    check
-      ? `Hi ${customerName}, your invoice from ${businessName} is ready. View it here: [PAYMENT_LINK]. ${remitBlock.replace(/\n/g, " ")} Reply STOP to unsubscribe.`
-      : `Hi ${customerName}, your invoice from ${businessName} is ready. Pay online here: [PAYMENT_LINK]. Reply STOP to unsubscribe.`;
+  const defaultMessage = (method: InvoicePaymentMethod) => {
+    const block = buildOfflinePaymentBlock(method, invoiceNumber, businessName);
+    if (!block) return `Hi ${customerName},\n\nPlease find your invoice attached. You can pay online using the link below.\n\nThank you for your business!`;
+    const lead = method === "check"
+      ? "This invoice is payable by check."
+      : "This invoice is payable by Zelle, Venmo, or Cash App.";
+    return `Hi ${customerName},\n\nPlease find your invoice attached. ${lead}\n\n${block}\n\nThank you for your business!`;
+  };
+  const defaultSms = (method: InvoicePaymentMethod) => {
+    const block = buildOfflinePaymentBlock(method, invoiceNumber, businessName);
+    if (!block) return `Hi ${customerName}, your invoice from ${businessName} is ready. Pay online here: [PAYMENT_LINK]. Reply STOP to unsubscribe.`;
+    return `Hi ${customerName}, your invoice from ${businessName} is ready. View it here: [PAYMENT_LINK]. ${block.replace(/\n/g, " ")} Reply STOP to unsubscribe.`;
+  };
 
   const [email, setEmail] = useState(customerEmail);
   const [ccEmail, setCcEmail] = useState("");
   const [subject, setSubject] = useState(`Invoice ${invoiceNumber} from ${businessName} — Due ${dueDate}`);
-  const [message, setMessage] = useState(defaultMessage(isCheck));
+  const [message, setMessage] = useState(defaultMessage(paymentMethod));
   const [sendEmail, setSendEmail] = useState(true);
   const [sendSms, setSendSms] = useState(false);
-  const [smsMessage, setSmsMessage] = useState(defaultSms(isCheck));
+  const [smsMessage, setSmsMessage] = useState(defaultSms(paymentMethod));
 
   // Re-template the email/SMS body when the payment method changes so check
   // invoices carry the remit-to block instead of pay-online wording.
@@ -58,8 +64,8 @@ export default function SendInvoiceModal({
   useEffect(() => {
     if (lastMethod.current === paymentMethod) return;
     lastMethod.current = paymentMethod;
-    setMessage(defaultMessage(paymentMethod === "check"));
-    setSmsMessage(defaultSms(paymentMethod === "check"));
+    setMessage(defaultMessage(paymentMethod));
+    setSmsMessage(defaultSms(paymentMethod));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentMethod]);
 
@@ -74,14 +80,14 @@ export default function SendInvoiceModal({
           {/* Payment method */}
           <div>
             <label className="font-body text-[10px] font-medium text-muted-foreground mb-1 block uppercase tracking-wider">Payment method</label>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() => onPaymentMethodChange("card")}
-                aria-pressed={!isCheck}
+                aria-pressed={paymentMethod === "card"}
                 className={cn(
-                  "flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg border text-xs font-body font-semibold transition-all",
-                  !isCheck ? "bg-primary/15 text-primary border-primary" : "bg-card text-muted-foreground border-border"
+                  "flex flex-col items-center justify-center gap-1 py-2.5 px-1 rounded-lg border text-[10px] leading-tight text-center font-body font-semibold transition-all",
+                  paymentMethod === "card" ? "bg-primary/15 text-primary border-primary" : "bg-card text-muted-foreground border-border"
                 )}
               >
                 <CreditCard className="w-3.5 h-3.5" /> Card (online link)
@@ -91,16 +97,27 @@ export default function SendInvoiceModal({
                 onClick={() => onPaymentMethodChange("check")}
                 aria-pressed={isCheck}
                 className={cn(
-                  "flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg border text-xs font-body font-semibold transition-all",
+                  "flex flex-col items-center justify-center gap-1 py-2.5 px-1 rounded-lg border text-[10px] leading-tight text-center font-body font-semibold transition-all",
                   isCheck ? "bg-primary/15 text-primary border-primary" : "bg-card text-muted-foreground border-border"
                 )}
               >
                 <Landmark className="w-3.5 h-3.5" /> Check (mail-in)
               </button>
+              <button
+                type="button"
+                onClick={() => onPaymentMethodChange("p2p")}
+                aria-pressed={isP2p}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-1 py-2.5 px-1 rounded-lg border text-[10px] leading-tight text-center font-body font-semibold transition-all",
+                  isP2p ? "bg-primary/15 text-primary border-primary" : "bg-card text-muted-foreground border-border"
+                )}
+              >
+                <Wallet className="w-3.5 h-3.5" /> Zelle / Venmo / Cash App
+              </button>
             </div>
-            {isCheck && (
+            {offlineBlock && (
               <p className="font-body text-[10px] text-muted-foreground mt-1.5 whitespace-pre-line bg-card border border-border rounded-md p-2">
-                {remitBlock}
+                {offlineBlock}
               </p>
             )}
           </div>
