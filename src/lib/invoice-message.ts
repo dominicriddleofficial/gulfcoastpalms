@@ -22,6 +22,28 @@ export const CHECK_REMIT = {
   address: "7371 Grand Navarre Blvd, Navarre, FL 32566",
 } as const;
 
+/** Peer-to-peer payment handles for Gulf Coast Palms (Zelle / Venmo / Cash App). */
+export const P2P_REMIT = {
+  zellePhone: "(850) 910-1290",
+  zelleEmail: "gulfcoastpalmsllc@gmail.com",
+  venmo: "@GulfCoastPalmz",
+  cashApp: "$GulfCoastPalmz",
+} as const;
+
+/**
+ * Plain-text Zelle / Venmo / Cash App block shown on p2p invoices across every
+ * channel (email, SMS, copied message, hosted invoice page, PDF preview).
+ */
+export function buildP2pBlock(invoiceNumber: string): string {
+  return [
+    "PAY WITH ZELLE, VENMO, OR CASH APP",
+    `Zelle: ${P2P_REMIT.zellePhone} or ${P2P_REMIT.zelleEmail}`,
+    `Venmo: ${P2P_REMIT.venmo}`,
+    `Cash App: ${P2P_REMIT.cashApp}`,
+    `Please include invoice ${invoiceNumber} in the payment note.`,
+  ].join("\n");
+}
+
 /**
  * Plain-text remit-to block shown on check invoices across every channel
  * (email, SMS, copied message, hosted invoice page).
@@ -33,6 +55,28 @@ export function buildRemitBlock(invoiceNumber: string, businessName?: string | n
 
 export function isCheckMethod(method: string | null | undefined): boolean {
   return method === "check";
+}
+
+export function isP2pMethod(method: string | null | undefined): boolean {
+  return method === "p2p";
+}
+
+/** True for any non-card (offline) payment method. */
+export function isOfflineMethod(method: string | null | undefined): boolean {
+  return isCheckMethod(method) || isP2pMethod(method);
+}
+
+/**
+ * Returns the instruction block for an offline payment method, or null for card.
+ */
+export function buildOfflinePaymentBlock(
+  method: string | null | undefined,
+  invoiceNumber: string,
+  businessName?: string | null,
+): string | null {
+  if (isCheckMethod(method)) return buildRemitBlock(invoiceNumber, businessName);
+  if (isP2pMethod(method)) return buildP2pBlock(invoiceNumber);
+  return null;
 }
 
 export function getInvoicePaymentUrl(input: {
@@ -54,8 +98,9 @@ export function buildInvoiceMessage(input: InvoiceMessageInput): string {
   })}`;
   const bizName = input.businessName || "Gulf Coast Palms";
   const link = getInvoicePaymentUrl(input);
-  if (isCheckMethod(input.paymentMethod)) {
-    return `Hi ${firstName}, here's your invoice from ${bizName} — ${input.invoiceNumber} for ${totalStr}. View your invoice here: ${link}\n\n${buildRemitBlock(input.invoiceNumber, bizName)}\n\nThank you for your business!`;
+  const offlineBlock = buildOfflinePaymentBlock(input.paymentMethod, input.invoiceNumber, bizName);
+  if (offlineBlock) {
+    return `Hi ${firstName}, here's your invoice from ${bizName} — ${input.invoiceNumber} for ${totalStr}. View your invoice here: ${link}\n\n${offlineBlock}\n\nThank you for your business!`;
   }
   return `Hi ${firstName}, here's your invoice from ${bizName} — ${input.invoiceNumber} for ${totalStr}. View and pay here: ${link}\nThank you for your business!`;
 }
