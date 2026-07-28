@@ -110,7 +110,7 @@ export default function PaymentActionPanel({
         suggestedAmount={suggestedAmount}
         suggestedLabel={suggestedLabel}
         maxAmount={balance}
-        checkMode={invoice.payment_method === "check"}
+        offlineMode={invoice.payment_method === "check" || invoice.payment_method === "p2p"}
         depositRequired={!!invoice.deposit_required && !invoice.deposit_paid}
         depositAmount={Number(invoice.deposit_amount || 0)}
         payAmount={payAmount}
@@ -168,18 +168,18 @@ export default function PaymentActionPanel({
       <p className="font-body text-[11px] text-muted-foreground leading-snug mb-2">{primary.description}</p>
 
       {/* Check invoices: recording the mailed-in check is the primary action */}
-      {!primary.isPaid && invoice.payment_method === "check" && (
+      {!primary.isPaid && (invoice.payment_method === "check" || invoice.payment_method === "p2p") && (
         <Button
           className="w-full h-12 font-body font-semibold text-sm justify-between"
           onClick={() => {
-            setPayMethod("check");
+            setPayMethod(invoice.payment_method === "check" ? "check" : "zelle");
             setPayAmount(String(balance));
             setIsDeposit(false);
             setStep("record");
           }}
         >
           <span className="flex items-center gap-2">
-            <Banknote className="w-4.5 h-4.5" /> Record check payment
+            <Banknote className="w-4.5 h-4.5" /> Record payment received
           </span>
           <ChevronRight className="w-4 h-4 opacity-70" />
         </Button>
@@ -411,7 +411,7 @@ function CollectOption({ icon: Icon, title, desc, onClick }: {
 function RecordPaymentForm({
   suggestedAmount, suggestedLabel, maxAmount, depositRequired, depositAmount,
   payAmount, setPayAmount, payMethod, setPayMethod, payNotes, setPayNotes,
-  isDeposit, setIsDeposit, onBack, onConfirm, checkMode = false,
+  isDeposit, setIsDeposit, onBack, onConfirm, offlineMode = false,
 }: {
   suggestedAmount: number; suggestedLabel: string; maxAmount: number;
   depositRequired: boolean; depositAmount: number;
@@ -420,7 +420,7 @@ function RecordPaymentForm({
   payNotes: string; setPayNotes: (v: string) => void;
   isDeposit: boolean; setIsDeposit: (v: boolean) => void;
   onBack: () => void; onConfirm: () => void;
-  checkMode?: boolean;
+  offlineMode?: boolean;
 }) {
   const amt = Number(payAmount) || 0;
   const isValid = amt > 0 && amt <= maxAmount;
@@ -435,7 +435,7 @@ function RecordPaymentForm({
     <div className="bg-card border border-border rounded-xl p-5 space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="font-display text-sm font-bold text-foreground">
-          {checkMode ? "Record Check Payment" : "Record Offline Payment"}
+          {offlineMode ? "Record Payment Received" : "Record Offline Payment"}
         </h3>
         <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={onBack}><X className="w-4 h-4" /></Button>
       </div>
@@ -495,7 +495,7 @@ function RecordPaymentForm({
         </Select>
       </div>
 
-      {checkMode && (
+      {payMethod === "check" && (
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="font-body text-xs font-medium text-foreground mb-1.5 block">Check #</label>
