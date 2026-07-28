@@ -184,6 +184,7 @@ export default function PayInvoice() {
   if (!invoice) return null;
 
   const isPaid = invoice.status === "paid";
+  const offlineBlock = buildOfflinePaymentBlock(invoice.payment_method, invoice.invoice_number, invoice.business_name);
   const isOverdue = invoice.status === "overdue" || (invoice.due_date && new Date(invoice.due_date) < new Date() && !isPaid && invoice.status !== "draft" && invoice.status !== "void");
   const isDraft = invoice.status === "draft";
   const dueNow = invoice.deposit_required && !invoice.deposit_paid && invoice.deposit_amount > 0 ? invoice.deposit_amount : invoice.balance_due;
