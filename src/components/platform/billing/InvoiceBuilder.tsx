@@ -509,7 +509,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
       return;
     }
 
-    await supabase.from("platform_invoice_line_items").insert(
+    const { error: lineErr } = await supabase.from("platform_invoice_line_items").insert(
       validLines.map((l, i) => ({
         business_id: bizId,
         invoice_id: inv.id,
@@ -520,6 +520,11 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
         sort_order: i,
       }))
     );
+    if (lineErr) {
+      toast.error(`Invoice saved but line items failed. ${lineErr.message}`);
+      setSaving(false);
+      return;
+    }
 
     if (sendAfter && sendData) {
       const shortcode = activeBiz?.shortcode || "gcp";
@@ -694,7 +699,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
       return;
     }
 
-    await supabase.from("platform_invoice_line_items").insert(
+    const { error: copyLineErr } = await supabase.from("platform_invoice_line_items").insert(
       validLines.map((l, i) => ({
         business_id: bizId,
         invoice_id: inv.id,
@@ -705,6 +710,35 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
         sort_order: i,
       }))
     );
+    if (copyLineErr) {
+      toast.error(`Line items failed to save — nothing copied. ${copyLineErr.message}`);
+      setSaving(false);
+      return;
+    }
+
+    // The customer is about to receive this link, so confirm the row really
+    // persisted as "sent" (with sent_at) before showing the copy sheet.
+    const { data: verified, error: verifyErr } = await supabase
+      .from("platform_invoices")
+      .select("status, sent_at")
+      .eq("id", inv.id)
+      .single();
+    if (verifyErr || !verified) {
+      toast.error("Could not confirm the invoice saved — nothing copied. Please retry.");
+      setSaving(false);
+      return;
+    }
+    if (verified.status === "draft" || !verified.sent_at) {
+      const { error: fixErr } = await supabase
+        .from("platform_invoices")
+        .update({ status: "sent", sent_at: verified.sent_at || nowIso })
+        .eq("id", inv.id);
+      if (fixErr) {
+        toast.error(`Invoice is still a draft — nothing copied. ${fixErr.message}`);
+        setSaving(false);
+        return;
+      }
+    }
 
     const savedNumber = inv.invoice_number || invoiceNumber;
     const message = buildInvoiceMessage({
