@@ -183,6 +183,20 @@ export default function PayInvoice() {
 
   if (!invoice) return null;
 
+  // Safety net: a draft invoice whose link is already in a customer's hands must
+  // render exactly like a sent one. Only voided invoices get the not-found state.
+  if (invoice.status === "void") {
+    return (
+      <div style={{ background: fullBg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+        <div style={{ textAlign: "center" }}>
+          <XCircle className="w-14 h-14 mx-auto mb-4" style={{ color: "#f87171" }} />
+          <h1 style={{ color: "#fff", fontSize: 20, fontWeight: 700, marginBottom: 8, fontFamily: "'Inter', sans-serif" }}>Invoice Not Found</h1>
+          <p style={{ color: labelColor, fontSize: 14 }}>This invoice is no longer available. Please contact us for an updated copy.</p>
+        </div>
+      </div>
+    );
+  }
+
   const isPaid = invoice.status === "paid";
   const offlineBlock = buildOfflinePaymentBlock(invoice.payment_method, invoice.invoice_number, invoice.business_name);
   const isOverdue = invoice.status === "overdue" || (invoice.due_date && new Date(invoice.due_date) < new Date() && !isPaid && invoice.status !== "draft" && invoice.status !== "void");
