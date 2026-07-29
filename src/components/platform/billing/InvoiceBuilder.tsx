@@ -521,33 +521,9 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
       }))
     );
     if (lineErr) {
-      toast.error(`Invoice saved but line items failed — nothing copied. ${lineErr.message}`);
+      toast.error(`Invoice saved but line items failed. ${lineErr.message}`);
       setSaving(false);
       return;
-    }
-
-    // Belt-and-braces: re-read the persisted row and confirm it is really "sent"
-    // before showing the copy sheet, so we never hand out a link to a draft.
-    const { data: verified, error: verifyErr } = await supabase
-      .from("platform_invoices")
-      .select("status, sent_at")
-      .eq("id", inv.id)
-      .single();
-    if (verifyErr || !verified) {
-      toast.error("Could not confirm the invoice saved — nothing copied. Please retry.");
-      setSaving(false);
-      return;
-    }
-    if (verified.status === "draft" || !verified.sent_at) {
-      const { error: fixErr } = await supabase
-        .from("platform_invoices")
-        .update({ status: "sent", sent_at: verified.sent_at || nowIso })
-        .eq("id", inv.id);
-      if (fixErr) {
-        toast.error(`Invoice is still a draft — nothing copied. ${fixErr.message}`);
-        setSaving(false);
-        return;
-      }
     }
 
     if (sendAfter && sendData) {
