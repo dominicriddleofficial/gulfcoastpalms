@@ -200,14 +200,13 @@ export default function PayInvoice() {
   const isPaid = invoice.status === "paid";
   const offlineBlock = buildOfflinePaymentBlock(invoice.payment_method, invoice.invoice_number, invoice.business_name);
   const isOverdue = invoice.status === "overdue" || (invoice.due_date && new Date(invoice.due_date) < new Date() && !isPaid && invoice.status !== "draft" && invoice.status !== "void");
-  const isDraft = invoice.status === "draft";
+  // Drafts are presented to the customer as a normal (sent) invoice — see safety net above.
   const dueNow = invoice.deposit_required && !invoice.deposit_paid && invoice.deposit_amount > 0 ? invoice.deposit_amount : invoice.balance_due;
   const billToName = (invoice.billing_name || invoice.customer_name || "").trim() || null;
   const billToAddress = hasRealAddress(invoice.customer_address) ? invoice.customer_address.trim() : null;
 
   const statusBadge = () => {
     if (isPaid) return { label: "Paid", bg: `rgba(${accentRgb}, 0.15)`, color: accent, border: `rgba(${accentRgb}, 0.3)` };
-    if (isDraft) return { label: "Draft", bg: "rgba(255,255,255,0.08)", color: "#71717a", border: "rgba(255,255,255,0.15)" };
     if (isOverdue) return { label: "Overdue", bg: "rgba(239,68,68,0.15)", color: "#f87171", border: "rgba(239,68,68,0.3)" };
     return { label: "Sent", bg: "rgba(59,130,246,0.15)", color: "#3b82f6", border: "rgba(59,130,246,0.3)" };
   };
