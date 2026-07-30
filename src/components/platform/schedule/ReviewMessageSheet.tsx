@@ -3,7 +3,9 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { MessageSquare, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
-import { buildReviewMessage, buildSmsHref, getReviewLink } from "@/lib/reviewLinks";
+import { supabase } from "@/integrations/supabase/client";
+import { buildSmsHref, getReviewBusinessName } from "@/lib/reviewLinks";
+import { buildReviewMessage, FALLBACK_REVIEW_LINK } from "@/lib/review-sms";
 
 interface ReviewMessageSheetProps {
   open: boolean;
@@ -20,24 +22,47 @@ export function ReviewMessageSheet({
   customerPhone,
   businessId,
 }: ReviewMessageSheetProps) {
-  const defaultMessage = buildReviewMessage({ customerName, businessId });
-  const [message, setMessage] = useState(defaultMessage);
+  const [message, setMessage] = useState("");
+  const [link, setLink] = useState(FALLBACK_REVIEW_LINK);
   const [copied, setCopied] = useState(false);
 
-  // Reset message when the sheet is (re)opened for a different job.
+  // Load the owner-editable template + link when the sheet OPENS, then hold the
+  // rendered message in state. The copy handler stays synchronous against this
+  // state — iOS invalidates clipboard permission after an await.
   useEffect(() => {
-    if (open) {
-      setMessage(buildReviewMessage({ customerName, businessId }));
-      setCopied(false);
-    }
+    if (!open) return;
+    let active = true;
+    setCopied(false);
+    const businessName = getReviewBusinessName(businessId);
+    // Render defaults immediately so the sheet is never blank.
+    setMessage(buildReviewMessage({ customerName, businessName }));
+    (async () => {
+      if (!businessId) return;
+      const { data } = await supabase
+        .from("business_settings")
+        .select("review_request_template, review_request_link")
+        .eq("business_id", businessId)
+        .maybeSingle();
+      if (!active) return;
+      setLink(data?.review_request_link ?? FALLBACK_REVIEW_LINK);
+      setMessage(
+        buildReviewMessage({
+          customerName,
+          businessName,
+          template: data?.review_request_template ?? null,
+          reviewLink: data?.review_request_link ?? null,
+        })
+      );
+    })();
+    return () => { active = false; };
   }, [open, customerName, businessId]);
 
-  const link = getReviewLink(businessId);
   const isPlaceholder = link === "REPLACE_WITH_GOOGLE_REVIEW_LINK";
 
-  const handleCopy = async () => {
+  // Synchronous with respect to the clipboard write — no await before writeText.
+  const handleCopy = () => {
     try {
-      await navigator.clipboard.writeText(message);
+      navigator.clipboard.writeText(message);
       setCopied(true);
       toast.success("Message copied");
       setTimeout(() => setCopied(false), 1500);
@@ -67,8 +92,8 @@ export function ReviewMessageSheet({
 
         {isPlaceholder && (
           <div className="mb-3 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs font-body text-destructive">
-            No Google review link configured for this business yet. Edit
-            src/lib/reviewLinks.ts to add one.
+            No Google review link configured for this business yet. Add one in
+            Settings → Review Request Text.
           </div>
         )}
 
