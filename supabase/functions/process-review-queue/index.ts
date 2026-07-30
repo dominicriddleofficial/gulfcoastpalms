@@ -5,6 +5,42 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Kept in sync with src/lib/review-sms.ts (Deno functions can't import src/).
+const DEFAULT_REVIEW_TEMPLATE =
+  "Hi {first_name}! Hope everything looks great — thanks again for having Gulf Coast Palms out. We're trying to reach 200 Google reviews by the end of the season, and every single one gets us a little closer. Here's the link to make it easy: {review_link} Thanks again and see you next time 👍";
+const FALLBACK_REVIEW_LINK = "https://g.page/r/CWzVK9t91qF_EAE/review";
+
+/**
+ * LEGAL / CARRIER REQUIREMENT: the opt-out sentence is NOT editable by the
+ * owner. TCPA + carrier 10DLC rules require an opt-out instruction on every
+ * automated marketing SMS, so it is always appended when the rendered
+ * template does not already contain it.
+ */
+const OPT_OUT_SUFFIX = " Reply STOP to opt out.";
+
+function buildReviewMessage(input: {
+  customerName?: string | null;
+  businessName?: string | null;
+  template?: string | null;
+  reviewLink?: string | null;
+}): string {
+  const template = (input.template ?? "").trim() || DEFAULT_REVIEW_TEMPLATE;
+  const link = (input.reviewLink ?? "").trim() || FALLBACK_REVIEW_LINK;
+  const raw = (input.customerName ?? "").trim();
+  const isBlank = !raw || raw.toLowerCase() === "na";
+  const fullName = isBlank ? "there" : raw;
+  const firstName = isBlank ? "there" : (raw.split(/\s+/)[0] || "there");
+
+  let msg = template
+    .split("{first_name}").join(firstName)
+    .split("{full_name}").join(fullName)
+    .split("{business_name}").join((input.businessName ?? "").trim() || "Gulf Coast Palms")
+    .split("{review_link}").join(link);
+
+  if (!msg.includes("Reply STOP to opt out.")) msg = `${msg.trimEnd()}${OPT_OUT_SUFFIX}`;
+  return msg;
+}
+
 // Process Review Queue — runs on a schedule (every 15 minutes via pg_cron).
 // Finds pending review_requests that are due and sends SMS via SimpleTexting.
 // Set up cron: SELECT cron.schedule('process-review-queue', '*/15 * * * *', ...);
@@ -37,12 +73,42 @@ Deno.serve(async (req) => {
       });
     }
 
-    const GOOGLE_REVIEW_URL = "https://g.page/r/CWzVK9t91qF_EAE/review";
     let processed = 0;
 
+    // Cache business_settings lookups per business_id for this run.
+    const settingsCache = new Map<string, { template: string | null; link: string | null; name: string | null }>();
+    async function loadSettings(businessId: string | null) {
+      const key = businessId ?? "__none__";
+      const cached = settingsCache.get(key);
+      if (cached) return cached;
+      let entry = { template: null as string | null, link: null as string | null, name: null as string | null };
+      if (businessId) {
+        const [{ data: bs }, { data: biz }] = await Promise.all([
+          supabase
+            .from("business_settings")
+            .select("review_request_template, review_request_link")
+            .eq("business_id", businessId)
+            .maybeSingle(),
+          supabase.from("businesses").select("public_brand_name").eq("id", businessId).maybeSingle(),
+        ]);
+        entry = {
+          template: bs?.review_request_template ?? null,
+          link: bs?.review_request_link ?? null,
+          name: biz?.public_brand_name ?? null,
+        };
+      }
+      settingsCache.set(key, entry);
+      return entry;
+    }
+
     for (const request of dueRequests || []) {
-      const firstName = request.customer_name?.split(" ")[0] || "there";
-      const message = `Hi ${firstName}! The team at Gulf Coast Palms just finished up at your property. If we did a great job today we'd really appreciate a quick Google review — it takes less than 60 seconds and means the world to us 🌴 ${GOOGLE_REVIEW_URL} Reply STOP to opt out.`;
+      const s = await loadSettings(request.business_id ?? null);
+      const message = buildReviewMessage({
+        customerName: request.customer_name,
+        businessName: s.name,
+        template: s.template,
+        reviewLink: s.link,
+      });
 
       try {
         const smsRes = await fetch(`${supabaseUrl}/functions/v1/send-sms`, {

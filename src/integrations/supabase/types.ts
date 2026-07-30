@@ -437,6 +437,8 @@ export type Database = {
           quote_notes_default: string | null
           quote_prefix: string | null
           review_request_enabled: boolean | null
+          review_request_link: string | null
+          review_request_template: string | null
           route_mode_defaults: string | null
           scheduling_enabled: boolean | null
           sms_sender_name: string | null
@@ -470,6 +472,8 @@ export type Database = {
           quote_notes_default?: string | null
           quote_prefix?: string | null
           review_request_enabled?: boolean | null
+          review_request_link?: string | null
+          review_request_template?: string | null
           route_mode_defaults?: string | null
           scheduling_enabled?: boolean | null
           sms_sender_name?: string | null
@@ -503,6 +507,8 @@ export type Database = {
           quote_notes_default?: string | null
           quote_prefix?: string | null
           review_request_enabled?: boolean | null
+          review_request_link?: string | null
+          review_request_template?: string | null
           route_mode_defaults?: string | null
           scheduling_enabled?: boolean | null
           sms_sender_name?: string | null
