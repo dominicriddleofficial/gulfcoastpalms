@@ -37,7 +37,6 @@ import AssignedCrewPicker from "@/components/platform/jobs/AssignedCrewPicker";
 import { useCreateSheets } from "@/components/platform/CreateSheetsProvider";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useInvalidateUnpaidJobs } from "@/hooks/useUnpaidJobs";
-import { enrollCompletedJobInDrip } from "@/lib/drip-enrollment";
 import AddressAutocomplete, { type VerifiedAddress } from "@/components/platform/AddressAutocomplete";
 import EditAddressDialog from "@/components/platform/EditAddressDialog";
 import VisitTimer from "@/components/platform/jobs/VisitTimer";
@@ -387,20 +386,9 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
 
   const markComplete = async () => {
     setActing(true);
-    const { data: row, error } = await supabase.from("platform_jobs")
+    const { error } = await supabase.from("platform_jobs")
       .update({ status: "completed", completed_at: new Date().toISOString() })
-      .eq("id", job.id)
-      .select("business_id, customer_id")
-      .maybeSingle();
-    if (!error && row?.business_id && row?.customer_id) {
-      enrollCompletedJobInDrip({
-        businessId: row.business_id,
-        customerId: row.customer_id,
-        jobId: job.id,
-      }).catch((err) => {
-        if (import.meta.env.DEV) console.error("[drip] enroll failed", err);
-      });
-    }
+      .eq("id", job.id);
     finishUpdate(error, "Job marked complete");
   };
 

@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { enrollCompletedJobInDrip } from "@/lib/drip-enrollment";
 import { enqueueMutation } from "@/lib/offline/queue";
 import { processQueueOnce, startSyncEngine } from "@/lib/offline/sync";
 import { getOfflineDB, setMeta } from "@/lib/offline/db";
@@ -314,15 +313,6 @@ export default function PlatformCrew() {
     });
     void processQueueOnce();
 
-    if ((status === "completed" || status === "complete") && job.business_id && job.customer_id) {
-      enrollCompletedJobInDrip({
-        businessId: job.business_id,
-        customerId: job.customer_id,
-        jobId: job.id,
-      }).catch((err) => {
-        if (import.meta.env.DEV) console.error("[drip] enroll failed", err);
-      });
-    }
     toast({
       title: navigator.onLine
         ? status === "in_progress"
