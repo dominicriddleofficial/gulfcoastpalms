@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
+import { buildReviewMessage } from "@/lib/review-sms";
 import { InlineBadge } from "@/components/platform/BusinessSwitcher";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -596,8 +597,19 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
     }
     setRequestingReview(true);
     try {
-      const firstName = job.client_name?.split(" ")[0] || "there";
-      const message = `Hi ${firstName}! The team at Gulf Coast Palms just finished up at your property. If we did a great job today we'd really appreciate a quick Google review — it takes less than 60 seconds and means the world to us 🌴 https://g.page/r/CWzVK9t91qF_EAE/review Reply STOP to opt out.`;
+      // Single source of truth: owner-editable template + link from business_settings.
+      const { data: settings } = job.business_id
+        ? await supabase
+            .from("business_settings")
+            .select("review_request_template, review_request_link")
+            .eq("business_id", job.business_id)
+            .maybeSingle()
+        : { data: null };
+      const message = buildReviewMessage({
+        customerName: job.client_name,
+        template: settings?.review_request_template ?? null,
+        reviewLink: settings?.review_request_link ?? null,
+      });
       const { error } = await supabase.functions.invoke("send-sms", {
         body: { to: job.client_phone, message },
       });
