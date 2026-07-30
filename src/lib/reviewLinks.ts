@@ -32,19 +32,10 @@ export function getReviewBusinessName(businessId: string | null | undefined): st
 
 export const GCP_BUSINESS_ID = "b0000000-0000-0000-0000-000000000001";
 
-export function buildReviewMessage(opts: {
-  customerName: string | null | undefined;
-  businessId: string | null | undefined;
-}): string {
-  const first = (opts.customerName ?? "").trim().split(/\s+/)[0] || "there";
-  const businessName = getReviewBusinessName(opts.businessId);
-  const link = getReviewLink(opts.businessId);
-  const careLine =
-    opts.businessId === GCP_BUSINESS_ID
-      ? "your palms today 🌴"
-      : "your property today";
-  return `Hi ${first}! This is ${businessName} — thank you for letting us take care of ${careLine}. We take real pride in our work, and if you're happy with how everything turned out, it would mean the world to our small local crew if you took 30 seconds to share it in a quick Google review: ${link}\n\nYour review genuinely helps us grow more than anything else. Thank you again for trusting us!`;
-}
+// NOTE: the review message body now lives in src/lib/review-sms.ts
+// (buildReviewMessage), rendered from the owner-editable business_settings
+// template. The old hardcoded paragraph was removed — it contained conditional
+// solicitation ("if you're happy…"), which Google's policy prohibits.
 
 /** Strip to digits, drop leading US country code. Empty string if invalid. */
 export function smsDigits(phone: string | null | undefined): string {
