@@ -5,6 +5,42 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Kept in sync with src/lib/review-sms.ts (Deno functions can't import src/).
+const DEFAULT_REVIEW_TEMPLATE =
+  "Hi {first_name}! Hope everything looks great — thanks again for having Gulf Coast Palms out. We're trying to reach 200 Google reviews by the end of the season, and every single one gets us a little closer. Here's the link to make it easy: {review_link} Thanks again and see you next time 👍";
+const FALLBACK_REVIEW_LINK = "https://g.page/r/CWzVK9t91qF_EAE/review";
+
+/**
+ * LEGAL / CARRIER REQUIREMENT: the opt-out sentence is NOT editable by the
+ * owner. TCPA + carrier 10DLC rules require an opt-out instruction on every
+ * automated marketing SMS, so it is always appended when the rendered
+ * template does not already contain it.
+ */
+const OPT_OUT_SUFFIX = " Reply STOP to opt out.";
+
+function buildReviewMessage(input: {
+  customerName?: string | null;
+  businessName?: string | null;
+  template?: string | null;
+  reviewLink?: string | null;
+}): string {
+  const template = (input.template ?? "").trim() || DEFAULT_REVIEW_TEMPLATE;
+  const link = (input.reviewLink ?? "").trim() || FALLBACK_REVIEW_LINK;
+  const raw = (input.customerName ?? "").trim();
+  const isBlank = !raw || raw.toLowerCase() === "na";
+  const fullName = isBlank ? "there" : raw;
+  const firstName = isBlank ? "there" : (raw.split(/\s+/)[0] || "there");
+
+  let msg = template
+    .split("{first_name}").join(firstName)
+    .split("{full_name}").join(fullName)
+    .split("{business_name}").join((input.businessName ?? "").trim() || "Gulf Coast Palms")
+    .split("{review_link}").join(link);
+
+  if (!msg.includes("Reply STOP to opt out.")) msg = `${msg.trimEnd()}${OPT_OUT_SUFFIX}`;
+  return msg;
+}
+
 // Process Review Queue — runs on a schedule (every 15 minutes via pg_cron).
 // Finds pending review_requests that are due and sends SMS via SimpleTexting.
 // Set up cron: SELECT cron.schedule('process-review-queue', '*/15 * * * *', ...);
