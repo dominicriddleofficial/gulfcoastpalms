@@ -17,6 +17,7 @@ import { format } from "date-fns";
 import TeamMembersSection from "@/components/platform/settings/TeamMembersSection";
 import { CrewTrackingSection } from "@/components/platform/settings/CrewTrackingSection";
 import DataExportSection from "@/components/platform/settings/DataExportSection";
+import ReviewRequestTextSection from "@/components/platform/settings/ReviewRequestTextSection";
 
 interface BizSettings {
   id: string;
@@ -131,6 +132,9 @@ export default function PlatformSettings() {
 
             {/* Data Export — owner only (self-gated inside the component) */}
             <DataExportSection />
+
+            {/* Review Request Text — owner only (self-gated inside the component) */}
+            <ReviewRequestTextSection />
 
             {/* Integrations */}
             <SettingsSection title="Integrations" icon={Zap}>
