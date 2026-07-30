@@ -1,6 +1,5 @@
 import { lazy } from "react";
 import { Route } from "react-router-dom";
-import ReviewTextHarness from "@/pages/__dev/ReviewTextHarness";
 
 const ThankYou = lazy(() => import("@/pages/ThankYou"));
 const Referral = lazy(() => import("@/pages/Referral"));
@@ -16,7 +15,6 @@ const NotFound = lazy(() => import("@/pages/NotFound"));
  */
 export const PublicRoutes = () => (
   <>
-    <Route path="/__dev/review-text" element={<ReviewTextHarness />} />
     <Route path="/thank-you" element={<ThankYou />} />
     <Route path="/referral" element={<Referral />} />
     <Route path="/payments" element={<Payments />} />
