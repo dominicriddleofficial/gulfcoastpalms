@@ -3,8 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider, keepPreviousData } from "@tanstack/react-query";
-import TmpReviewSheet from "./pages/__TmpReviewSheet";
-import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, useLocation } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { BusinessProvider } from "@/contexts/BusinessContext";
 import { trackPageView, trackEvent } from "@/lib/analytics";
@@ -228,7 +227,6 @@ const App = () => (
                 <RouteTracker />
                 <Suspense fallback={<RouteSuspenseFallback />}>
                   <Routes>
-                    <Route path="/__tmp-review-sheet" element={<TmpReviewSheet />} />
                     {MarketingRoutes()}
                     {AdminRoutes()}
                     {PlatformRoutes()}
