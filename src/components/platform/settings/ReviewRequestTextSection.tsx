@@ -29,7 +29,6 @@ export default function ReviewRequestTextSection() {
   const [link, setLink] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const areaRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -53,28 +52,6 @@ export default function ReviewRequestTextSection() {
 
   const businessName = businesses.find((b) => b.id === selectedBusinessId)?.public_brand_name ?? "Gulf Coast Palms";
 
-  const insertToken = (token: string) => {
-    const el = areaRef.current;
-    if (!el) { setTemplate((t) => t + token); return; }
-    const start = el.selectionStart ?? template.length;
-    const end = el.selectionEnd ?? template.length;
-    const next = template.slice(0, start) + token + template.slice(end);
-    setTemplate(next);
-    requestAnimationFrame(() => {
-      el.focus();
-      const pos = start + token.length;
-      el.setSelectionRange(pos, pos);
-    });
-  };
-
-  const preview = buildReviewMessage({
-    customerName: "Sarah Jenkins",
-    businessName,
-    template,
-    reviewLink: link,
-  });
-  const info = analyzeSms(preview);
-
   const save = async () => {
     if (!selectedBusinessId) { toast.error("Select a business workspace first."); return; }
     setSaving(true);
@@ -88,6 +65,50 @@ export default function ReviewRequestTextSection() {
   };
 
   return (
+    <ReviewRequestTextForm
+      businessName={businessName}
+      template={template}
+      setTemplate={setTemplate}
+      link={link}
+      setLink={setLink}
+      loading={loading}
+      saving={saving}
+      onSave={save}
+    />
+  );
+}
+
+interface FormProps {
+  businessName: string;
+  template: string;
+  setTemplate: (v: string) => void;
+  link: string;
+  setLink: (v: string) => void;
+  loading: boolean;
+  saving: boolean;
+  onSave: () => void;
+}
+
+/** Presentational form — exported so it can be rendered without auth in dev harnesses. */
+export function ReviewRequestTextForm({ businessName, template, setTemplate, link, setLink, loading, saving, onSave }: FormProps) {
+  const areaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const insertToken = (token: string) => {
+    const el = areaRef.current;
+    if (!el) { setTemplate(template + token); return; }
+    const start = el.selectionStart ?? template.length;
+    const end = el.selectionEnd ?? template.length;
+    setTemplate(template.slice(0, start) + token + template.slice(end));
+    requestAnimationFrame(() => {
+      el.focus();
+      const pos = start + token.length;
+      el.setSelectionRange(pos, pos);
+    });
+  };
+
+  const preview = buildReviewMessage({ customerName: "Sarah Jenkins", businessName, template, reviewLink: link });
+  const info = analyzeSms(preview);
+
     <div className="platform-card rounded-xl p-5 space-y-4">
       <div className="flex items-center gap-2">
         <MessageSquare className="w-4 h-4 text-primary" />
