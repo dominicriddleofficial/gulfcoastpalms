@@ -116,12 +116,9 @@ export function useVisitLifecycle() {
         });
       }
 
-      // On complete: queue review request + enroll drip
+      // On complete: enroll drip. Review requests are MANUAL ONLY — nothing is enqueued.
       if (params.nextStatus === "complete") {
         await handleCompletionSideEffects(params);
-        await upsertEvent(params.jobberJobId, params.businessId, {
-          review_queued_at: new Date().toISOString(),
-        });
       }
     },
     onSuccess: (_data, vars) => {
@@ -130,7 +127,7 @@ export function useVisitLifecycle() {
       void qc.invalidateQueries({ queryKey: ["dashboard-kpis"] });
       void qc.invalidateQueries({ queryKey: ["schedule-jobs"] });
       if (vars.nextStatus === "complete") {
-        toast.success("Visit completed — review request queued for 2h");
+        toast.success("Visit completed");
       } else if (vars.nextStatus === "on_my_way") {
         toast.success(vars.smsSent ? "Customer notified — on your way" : "Marked on your way");
       } else if (vars.nextStatus === "in_progress") {
@@ -190,30 +187,6 @@ export function useVisitLifecycle() {
 }
 
 async function handleCompletionSideEffects(params: AdvanceParams): Promise<void> {
-  // Queue 2-hour delayed review request (idempotent: skip if pending exists in last 24h)
-  if (params.customerPhone) {
-    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const { data: existing } = await supabase
-      .from("review_requests")
-      .select("id")
-      .eq("business_id", params.businessId)
-      .eq("customer_phone", params.customerPhone)
-      .eq("status", "pending")
-      .gte("created_at", since)
-      .maybeSingle();
-
-    if (!existing) {
-      const scheduledFor = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
-      await supabase.from("review_requests").insert({
-        business_id: params.businessId,
-        customer_name: params.customerName ?? null,
-        customer_phone: params.customerPhone,
-        scheduled_for: scheduledFor,
-        status: "pending",
-      });
-    }
-  }
-
   // Try to enroll drip if a matching platform_jobs row exists
   const { data: platformJob } = await supabase
     .from("platform_jobs")

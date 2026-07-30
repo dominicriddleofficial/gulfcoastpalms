@@ -1,3 +1,7 @@
+// AUTOMATIC SENDING IS INTENTIONALLY DISABLED: the pg_cron job 'process-review-queue'
+// is inactive and no code path enqueues rows into review_requests. Review requests are
+// sent MANUALLY from the job screen. This function is kept only so automation can be
+// switched back on later if the owner wants it.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {

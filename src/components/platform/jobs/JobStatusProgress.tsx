@@ -30,7 +30,7 @@ function mapStatusToStep(status: string): number {
   return idx >= 0 ? idx : -1;
 }
 
-export default function JobStatusProgress({ jobId, businessId, clientName, clientPhone, currentStatus, onStatusChange }: JobStatusProgressProps) {
+export default function JobStatusProgress({ jobId, businessId, currentStatus, onStatusChange }: JobStatusProgressProps) {
   const currentStep = mapStatusToStep(currentStatus);
   const [updating, setUpdating] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -93,22 +93,8 @@ export default function JobStatusProgress({ jobId, businessId, clientName, clien
       } else if (step.key === "complete") {
         setPhotoType("after");
         fileInputRef.current?.click();
-
-        // Schedule review request
-        if (clientPhone && businessId) {
-          const scheduledFor = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
-          await supabase.from("review_requests").insert({
-            job_id: jobId,
-            business_id: businessId,
-            customer_name: clientName,
-            customer_phone: clientPhone,
-            scheduled_for: scheduledFor,
-            status: "pending",
-          });
-          toast.success(`Job complete! Review request scheduled for ${clientName || "customer"}`);
-        } else {
-          toast.success("Job marked complete!");
-        }
+        // Review requests are MANUAL ONLY — no automatic enqueue on completion.
+        toast.success("Job marked complete!");
       } else {
         toast.success(`Status → ${step.label}`);
       }
