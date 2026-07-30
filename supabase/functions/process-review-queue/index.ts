@@ -37,12 +37,42 @@ Deno.serve(async (req) => {
       });
     }
 
-    const GOOGLE_REVIEW_URL = "https://g.page/r/CWzVK9t91qF_EAE/review";
     let processed = 0;
 
+    // Cache business_settings lookups per business_id for this run.
+    const settingsCache = new Map<string, { template: string | null; link: string | null; name: string | null }>();
+    async function loadSettings(businessId: string | null) {
+      const key = businessId ?? "__none__";
+      const cached = settingsCache.get(key);
+      if (cached) return cached;
+      let entry = { template: null as string | null, link: null as string | null, name: null as string | null };
+      if (businessId) {
+        const [{ data: bs }, { data: biz }] = await Promise.all([
+          supabase
+            .from("business_settings")
+            .select("review_request_template, review_request_link")
+            .eq("business_id", businessId)
+            .maybeSingle(),
+          supabase.from("businesses").select("public_brand_name").eq("id", businessId).maybeSingle(),
+        ]);
+        entry = {
+          template: bs?.review_request_template ?? null,
+          link: bs?.review_request_link ?? null,
+          name: biz?.public_brand_name ?? null,
+        };
+      }
+      settingsCache.set(key, entry);
+      return entry;
+    }
+
     for (const request of dueRequests || []) {
-      const firstName = request.customer_name?.split(" ")[0] || "there";
-      const message = `Hi ${firstName}! The team at Gulf Coast Palms just finished up at your property. If we did a great job today we'd really appreciate a quick Google review — it takes less than 60 seconds and means the world to us 🌴 ${GOOGLE_REVIEW_URL} Reply STOP to opt out.`;
+      const s = await loadSettings(request.business_id ?? null);
+      const message = buildReviewMessage({
+        customerName: request.customer_name,
+        businessName: s.name,
+        template: s.template,
+        reviewLink: s.link,
+      });
 
       try {
         const smsRes = await fetch(`${supabaseUrl}/functions/v1/send-sms`, {
