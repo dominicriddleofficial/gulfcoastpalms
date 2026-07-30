@@ -624,27 +624,6 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
     setRequestingReview(false);
   };
 
-  const scheduleReview = async () => {
-    if (!job.client_phone || !job.business_id) {
-      toast.error("Missing phone or business info");
-      return;
-    }
-    const scheduledFor = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
-    const { error } = await supabase.from("review_requests").insert({
-      job_id: job.id,
-      business_id: job.business_id,
-      customer_name: job.client_name,
-      customer_phone: job.client_phone,
-      scheduled_for: scheduledFor,
-      status: "pending",
-    });
-    if (error) {
-      toast.error("Failed to schedule review request");
-    } else {
-      toast.success("Review request scheduled for 2 hours from now");
-    }
-  };
-
   const isCompleted = jobStatus.toLowerCase() === "completed" || jobStatus.toLowerCase() === "complete";
 
   return (
@@ -745,9 +724,6 @@ function JobDetailPanel({ job, onClose, onChanged }: { job: JobberJob; onClose: 
         <div className="flex gap-2">
           <Button size="sm" className="flex-1 font-body text-xs" onClick={requestReview} disabled={requestingReview}>
             <Star className="w-3.5 h-3.5 mr-1" /> {requestingReview ? "Sending…" : "Request Review Now"}
-          </Button>
-          <Button size="sm" variant="outline" className="font-body text-xs" onClick={scheduleReview}>
-            <Clock className="w-3.5 h-3.5 mr-1" /> Schedule (2hr)
           </Button>
         </div>
       )}
