@@ -109,6 +109,7 @@ export function ReviewRequestTextForm({ businessName, template, setTemplate, lin
   const preview = buildReviewMessage({ customerName: "Sarah Jenkins", businessName, template, reviewLink: link });
   const info = analyzeSms(preview);
 
+  return (
     <div className="platform-card rounded-xl p-5 space-y-4">
       <div className="flex items-center gap-2">
         <MessageSquare className="w-4 h-4 text-primary" />
@@ -183,7 +184,7 @@ export function ReviewRequestTextForm({ businessName, template, setTemplate, lin
             </p>
           </div>
 
-          <Button onClick={save} disabled={saving} className="w-full font-body text-sm">
+          <Button onClick={onSave} disabled={saving} className="w-full font-body text-sm">
             {saving ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving…</>) : "Save review text"}
           </Button>
         </div>
