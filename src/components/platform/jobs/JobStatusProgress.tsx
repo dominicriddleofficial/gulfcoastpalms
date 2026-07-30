@@ -30,7 +30,7 @@ function mapStatusToStep(status: string): number {
   return idx >= 0 ? idx : -1;
 }
 
-export default function JobStatusProgress({ jobId, businessId, clientName, clientPhone, currentStatus, onStatusChange }: JobStatusProgressProps) {
+export default function JobStatusProgress({ jobId, businessId, currentStatus, onStatusChange }: JobStatusProgressProps) {
   const currentStep = mapStatusToStep(currentStatus);
   const [updating, setUpdating] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
