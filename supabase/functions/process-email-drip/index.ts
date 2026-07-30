@@ -1,3 +1,6 @@
+// NOTE: post_job enrollment was intentionally removed from the app — nothing
+// enqueues sequence_type 'post_job' any more. post_lead is still active and is
+// still enrolled (submit-lead) and processed here.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 

@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { enrollCompletedJobInDrip } from "@/lib/drip-enrollment";
 import { toast } from "sonner";
 
 export type VisitStatus =
@@ -116,10 +115,8 @@ export function useVisitLifecycle() {
         });
       }
 
-      // On complete: enroll drip. Review requests are MANUAL ONLY — nothing is enqueued.
-      if (params.nextStatus === "complete") {
-        await handleCompletionSideEffects(params);
-      }
+      // On complete: no automatic customer-facing messaging. Review requests and
+      // follow-up emails are MANUAL ONLY — nothing is enqueued here.
     },
     onSuccess: (_data, vars) => {
       // Fire-and-forget invalidations — never await refetches.
