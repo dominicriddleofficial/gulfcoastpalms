@@ -8,7 +8,8 @@ const corsHeaders = {
 // Kept in sync with src/lib/review-sms.ts (Deno functions can't import src/).
 const DEFAULT_REVIEW_TEMPLATE =
   "Hi {first_name}! Hope everything looks great — thanks again for having Gulf Coast Palms out. We're trying to reach 200 Google reviews by the end of the season, and every single one gets us a little closer. Here's the link to make it easy: {review_link} Thanks again and see you next time 👍";
-const FALLBACK_REVIEW_LINK = "https://g.page/r/CWzVK9t91qF_EAE/review";
+// Verified working Google review form redirect (search.google.com/local/writereview).
+const FALLBACK_REVIEW_LINK = "https://g.page/r/CVI5xmZYC-NAEBM/review";
 
 /**
  * LEGAL / CARRIER REQUIREMENT: the opt-out sentence is NOT editable by the
