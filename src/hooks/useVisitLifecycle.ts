@@ -182,21 +182,3 @@ export function useVisitLifecycle() {
 
   return { advance, reopen };
 }
-
-async function handleCompletionSideEffects(params: AdvanceParams): Promise<void> {
-  // Try to enroll drip if a matching platform_jobs row exists
-  const { data: platformJob } = await supabase
-    .from("platform_jobs")
-    .select("id, customer_id")
-    .eq("source_record_id", params.jobberJobId)
-    .eq("business_id", params.businessId)
-    .maybeSingle();
-
-  if (platformJob?.customer_id) {
-    await enrollCompletedJobInDrip({
-      businessId: params.businessId,
-      customerId: platformJob.customer_id,
-      jobId: platformJob.id,
-    });
-  }
-}
