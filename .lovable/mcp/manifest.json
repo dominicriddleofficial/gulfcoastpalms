@@ -42,26 +42,24 @@
           "openWorldHint": false
         },
         "inputSchema": {
-          "$schema": "http://json-schema.org/draft-07/schema#",
           "type": "object",
           "properties": {
             "business_id": {
-              "description": "Limit to one business (see list_businesses).",
               "type": "string",
               "format": "uuid",
-              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              "description": "Limit to one business (see list_businesses)."
             },
             "lead_status": {
-              "description": "Filter by lead status, e.g. new, contacted, quoted, won, lost.",
-              "type": "string"
+              "type": "string",
+              "description": "Filter by lead status, e.g. new, contacted, quoted, won, lost."
             },
             "limit": {
-              "description": "Max leads to return, 1-100. Default 20.",
               "type": "integer",
-              "minimum": -9007199254740991,
-              "maximum": 9007199254740991
+              "description": "Max leads to return, 1-100. Default 20."
             }
-          }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
         },
         "outputSchema": null
       },
@@ -75,7 +73,6 @@
           "openWorldHint": false
         },
         "inputSchema": {
-          "$schema": "http://json-schema.org/draft-07/schema#",
           "type": "object",
           "properties": {
             "inquiry_name": {
@@ -84,35 +81,36 @@
               "description": "Contact name."
             },
             "business_id": {
-              "description": "Target business id.",
               "type": "string",
               "format": "uuid",
-              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              "description": "Target business id."
             },
             "inquiry_phone": {
-              "description": "Contact phone number.",
-              "type": "string"
+              "type": "string",
+              "description": "Contact phone number."
             },
             "inquiry_email": {
-              "description": "Contact email address.",
-              "type": "string"
+              "type": "string",
+              "description": "Contact email address."
             },
             "requested_service": {
-              "description": "Service the lead asked about.",
-              "type": "string"
+              "type": "string",
+              "description": "Service the lead asked about."
             },
             "message": {
-              "description": "Notes or the customer's message.",
-              "type": "string"
+              "type": "string",
+              "description": "Notes or the customer's message."
             },
             "lead_source": {
-              "description": "Where the lead came from. Defaults to 'mcp'.",
-              "type": "string"
+              "type": "string",
+              "description": "Where the lead came from. Defaults to 'mcp'."
             }
           },
           "required": [
             "inquiry_name"
-          ]
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
         },
         "outputSchema": null
       },
@@ -126,7 +124,6 @@
           "openWorldHint": false
         },
         "inputSchema": {
-          "$schema": "http://json-schema.org/draft-07/schema#",
           "type": "object",
           "properties": {
             "query": {
@@ -135,21 +132,20 @@
               "description": "Name, company, phone or email fragment to search for."
             },
             "business_id": {
-              "description": "Limit to one business (see list_businesses).",
               "type": "string",
               "format": "uuid",
-              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              "description": "Limit to one business (see list_businesses)."
             },
             "limit": {
-              "description": "Max customers to return, 1-50. Default 15.",
               "type": "integer",
-              "minimum": -9007199254740991,
-              "maximum": 9007199254740991
+              "description": "Max customers to return, 1-50. Default 15."
             }
           },
           "required": [
             "query"
-          ]
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
         },
         "outputSchema": null
       },
@@ -163,34 +159,32 @@
           "openWorldHint": false
         },
         "inputSchema": {
-          "$schema": "http://json-schema.org/draft-07/schema#",
           "type": "object",
           "properties": {
             "business_id": {
-              "description": "Limit to one business (see list_businesses).",
               "type": "string",
               "format": "uuid",
-              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              "description": "Limit to one business (see list_businesses)."
             },
             "status": {
-              "description": "Filter by job status, e.g. scheduled, in_progress, completed.",
-              "type": "string"
+              "type": "string",
+              "description": "Filter by job status, e.g. scheduled, in_progress, completed."
             },
             "from_date": {
-              "description": "Start date, YYYY-MM-DD. Defaults to today.",
-              "type": "string"
+              "type": "string",
+              "description": "Start date, YYYY-MM-DD. Defaults to today."
             },
             "to_date": {
-              "description": "End date, YYYY-MM-DD. Defaults to 7 days after the start date.",
-              "type": "string"
+              "type": "string",
+              "description": "End date, YYYY-MM-DD. Defaults to 7 days after the start date."
             },
             "limit": {
-              "description": "Max jobs to return, 1-100. Default 25.",
               "type": "integer",
-              "minimum": -9007199254740991,
-              "maximum": 9007199254740991
+              "description": "Max jobs to return, 1-100. Default 25."
             }
-          }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
         },
         "outputSchema": null
       },
@@ -204,22 +198,20 @@
           "openWorldHint": false
         },
         "inputSchema": {
-          "$schema": "http://json-schema.org/draft-07/schema#",
           "type": "object",
           "properties": {
             "business_id": {
-              "description": "Limit to one business (see list_businesses).",
               "type": "string",
               "format": "uuid",
-              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              "description": "Limit to one business (see list_businesses)."
             },
             "limit": {
-              "description": "Max invoices to return, 1-100. Default 25.",
               "type": "integer",
-              "minimum": -9007199254740991,
-              "maximum": 9007199254740991
+              "description": "Max invoices to return, 1-100. Default 25."
             }
-          }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
         },
         "outputSchema": null
       },
@@ -233,22 +225,20 @@
           "openWorldHint": false
         },
         "inputSchema": {
-          "$schema": "http://json-schema.org/draft-07/schema#",
           "type": "object",
           "properties": {
             "business_id": {
-              "description": "Limit to one business (see list_businesses).",
               "type": "string",
               "format": "uuid",
-              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              "description": "Limit to one business (see list_businesses)."
             },
             "limit": {
-              "description": "Max customers to return, 1-200. Default 50.",
               "type": "integer",
-              "minimum": -9007199254740991,
-              "maximum": 9007199254740991
+              "description": "Max customers to return, 1-200. Default 50."
             }
-          }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
         },
         "outputSchema": null
       }
