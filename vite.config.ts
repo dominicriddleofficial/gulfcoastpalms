@@ -4,6 +4,7 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { imagetools } from "vite-imagetools";
 import { visualizer } from "rollup-plugin-visualizer";
+import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/supabase/vite";
 
 // Cold-start Wave 3 — Fix #1 + Fix #2.
 //
@@ -159,6 +160,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     imagetools(),
     mode === "development" && componentTagger(),
+    mcpPlugin(),
     platformPreloadAndManifestPlugin(),
     // Bundle analyzer — outputs dist/stats.html when ANALYZE=1 is set.
     // Run with: ANALYZE=1 bun run build
