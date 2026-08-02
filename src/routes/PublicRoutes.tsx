@@ -7,6 +7,7 @@ const Payments = lazy(() => import("@/pages/Payments"));
 const TextConsent = lazy(() => import("@/pages/TextConsent"));
 const TermsOfService = lazy(() => import("@/pages/TermsOfService"));
 const PrivacyPolicy = lazy(() => import("@/pages/PrivacyPolicy"));
+const OAuthConsent = lazy(() => import("@/pages/OAuthConsent"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 
 /**
@@ -21,6 +22,7 @@ export const PublicRoutes = () => (
     <Route path="/text-consent" element={<TextConsent />} />
     <Route path="/terms-of-service" element={<TermsOfService />} />
     <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+    <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
     <Route path="*" element={<NotFound />} />
   </>
 );
