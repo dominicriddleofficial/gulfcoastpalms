@@ -57,7 +57,7 @@ export default function PlatformLogin() {
         initialSessionLoaded = true;
         hadSession = !!session;
         if (session) {
-          navigate("/platform", { replace: true });
+          navigate(nextPath, { replace: true });
         } else {
           setCheckingSession(false);
         }
@@ -66,7 +66,7 @@ export default function PlatformLogin() {
 
       if (event === "SIGNED_IN" && session) {
         hadSession = true;
-        navigate("/platform", { replace: true });
+        navigate(nextPath, { replace: true });
         return;
       }
 
@@ -82,7 +82,7 @@ export default function PlatformLogin() {
       window.clearTimeout(fallbackTimer);
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, nextPath]);
 
   // Detect whether an offline copy is available on this device.
   useEffect(() => {
@@ -115,7 +115,7 @@ export default function PlatformLogin() {
       return;
     }
 
-    navigate("/platform");
+    navigate(nextPath);
   };
 
   if (checkingSession) {
