@@ -1,0 +1,257 @@
+{
+  "version": 1,
+  "sdk_version": "0.26.1",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://qczcwyqpnxknqbmwpvna.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "gulf-coast-palms",
+      "version": "0.1.0",
+      "title": "Gulf Coast Palms"
+    },
+    "tools": [
+      {
+        "name": "list_businesses",
+        "title": "List businesses",
+        "description": "List the businesses (tenants) the signed-in user can access, with their ids. Use an id as business_id for other tools.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_leads",
+        "title": "List leads",
+        "description": "List recent leads (newest first), optionally filtered by lead status or business. Returns name, phone, email, service requested, status and created date.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "business_id": {
+              "description": "Limit to one business (see list_businesses).",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "lead_status": {
+              "description": "Filter by lead status, e.g. new, contacted, quoted, won, lost.",
+              "type": "string"
+            },
+            "limit": {
+              "description": "Max leads to return, 1-100. Default 20.",
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_lead",
+        "title": "Create lead",
+        "description": "Create a new lead for a business. Provide business_id from list_businesses; if omitted and the user can access exactly one business, that one is used.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "inquiry_name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Contact name."
+            },
+            "business_id": {
+              "description": "Target business id.",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "inquiry_phone": {
+              "description": "Contact phone number.",
+              "type": "string"
+            },
+            "inquiry_email": {
+              "description": "Contact email address.",
+              "type": "string"
+            },
+            "requested_service": {
+              "description": "Service the lead asked about.",
+              "type": "string"
+            },
+            "message": {
+              "description": "Notes or the customer's message.",
+              "type": "string"
+            },
+            "lead_source": {
+              "description": "Where the lead came from. Defaults to 'mcp'.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "inquiry_name"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "search_customers",
+        "title": "Search customers",
+        "description": "Search customers by name, company, phone or email. Returns contact details plus yearly-trimming and check-preference flags.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Name, company, phone or email fragment to search for."
+            },
+            "business_id": {
+              "description": "Limit to one business (see list_businesses).",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "limit": {
+              "description": "Max customers to return, 1-50. Default 15.",
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "query"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_jobs",
+        "title": "List jobs",
+        "description": "List jobs scheduled in a date range (defaults to the next 7 days), optionally filtered by status or business. Returns job number, title, status, schedule and total.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "business_id": {
+              "description": "Limit to one business (see list_businesses).",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "status": {
+              "description": "Filter by job status, e.g. scheduled, in_progress, completed.",
+              "type": "string"
+            },
+            "from_date": {
+              "description": "Start date, YYYY-MM-DD. Defaults to today.",
+              "type": "string"
+            },
+            "to_date": {
+              "description": "End date, YYYY-MM-DD. Defaults to 7 days after the start date.",
+              "type": "string"
+            },
+            "limit": {
+              "description": "Max jobs to return, 1-100. Default 25.",
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_unpaid_invoices",
+        "title": "List unpaid invoices",
+        "description": "List invoices that are not paid or voided, oldest issue date first, with balance due, payment method and due date.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "business_id": {
+              "description": "Limit to one business (see list_businesses).",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "limit": {
+              "description": "Max invoices to return, 1-100. Default 25.",
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_yearly_trimming_clients",
+        "title": "List yearly trimming clients",
+        "description": "List customers flagged as yearly trimming (recurring annual) clients, newest additions first, with how they were flagged.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "business_id": {
+              "description": "Limit to one business (see list_businesses).",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "limit": {
+              "description": "Max customers to return, 1-200. Default 50.",
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
