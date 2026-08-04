@@ -26,7 +26,7 @@ interface Props {
     status: string;
     payment_method?: string | null;
   };
-  onRecordPayment: (amount: number, method: string, notes: string, isDeposit: boolean) => void;
+  onRecordPayment: (amount: number, method: string, notes: string, isDeposit: boolean, tipAmount: number) => void;
   onOpenPaymentPage: () => void;
   onCopyPaymentLink: () => void;
   onSendPaymentLink?: () => void;
@@ -73,6 +73,7 @@ export default function PaymentActionPanel({
   const [payAmount, setPayAmount] = useState(String(suggestedAmount));
   const [payMethod, setPayMethod] = useState("cash");
   const [payNotes, setPayNotes] = useState("");
+  const [payTip, setPayTip] = useState("");
   const [isDeposit, setIsDeposit] = useState(!!invoice.deposit_required && !invoice.deposit_paid);
   const { toast } = useToast();
 
@@ -119,6 +120,8 @@ export default function PaymentActionPanel({
         setPayMethod={setPayMethod}
         payNotes={payNotes}
         setPayNotes={setPayNotes}
+        payTip={payTip}
+        setPayTip={setPayTip}
         isDeposit={isDeposit}
         setIsDeposit={setIsDeposit}
         onBack={() => setStep("collect")}
@@ -129,6 +132,7 @@ export default function PaymentActionPanel({
 
   if (step === "confirm") {
     const amt = Number(payAmount) || 0;
+    const tipAmt = Math.max(0, Number(payTip) || 0);
     return (
       <div className="bg-card border border-border rounded-xl p-5 space-y-4">
         <div className="flex items-center gap-2">
@@ -137,6 +141,7 @@ export default function PaymentActionPanel({
         </div>
         <div className="bg-secondary/60 rounded-lg p-4 space-y-2">
           <ConfirmRow label="Amount" value={`$${amt.toLocaleString()}`} />
+          {tipAmt > 0 && <ConfirmRow label="Tip" value={`$${tipAmt.toLocaleString()}`} />}
           <ConfirmRow label="Method" value={PAYMENT_METHODS.find(m => m.value === payMethod)?.label || payMethod} />
           <ConfirmRow label="Type" value={isDeposit ? "Deposit Payment" : "Invoice Payment"} />
           {payNotes && <ConfirmRow label="Notes" value={payNotes} />}
@@ -146,7 +151,7 @@ export default function PaymentActionPanel({
         </p>
         <div className="flex gap-2">
           <Button className="flex-1 h-11 font-body font-semibold" onClick={() => {
-            onRecordPayment(amt, payMethod, payNotes, isDeposit);
+            onRecordPayment(amt, payMethod, payNotes, isDeposit, tipAmt);
             setStep("menu");
           }}>
             <CheckCircle className="w-4 h-4 mr-1.5" /> Confirm Payment
@@ -411,13 +416,14 @@ function CollectOption({ icon: Icon, title, desc, onClick }: {
 function RecordPaymentForm({
   suggestedAmount, suggestedLabel, maxAmount, depositRequired, depositAmount,
   payAmount, setPayAmount, payMethod, setPayMethod, payNotes, setPayNotes,
-  isDeposit, setIsDeposit, onBack, onConfirm, offlineMode = false,
+  payTip, setPayTip, isDeposit, setIsDeposit, onBack, onConfirm, offlineMode = false,
 }: {
   suggestedAmount: number; suggestedLabel: string; maxAmount: number;
   depositRequired: boolean; depositAmount: number;
   payAmount: string; setPayAmount: (v: string) => void;
   payMethod: string; setPayMethod: (v: string) => void;
   payNotes: string; setPayNotes: (v: string) => void;
+  payTip: string; setPayTip: (v: string) => void;
   isDeposit: boolean; setIsDeposit: (v: boolean) => void;
   onBack: () => void; onConfirm: () => void;
   offlineMode?: boolean;
