@@ -89,6 +89,18 @@ export default function PayInvoice() {
   const cardBorder = "#1e1e1e";
   const labelColor = "#a1a1aa";
 
+  // Tip math. Tips are charged on top of the invoice and never reduce the balance.
+  const tipsOn = !!invoice?.tips_enabled;
+  const tipPresets = (invoice?.tip_presets ?? []).filter((n) => Number.isFinite(n) && n > 0);
+  const tipOtherValue = Math.max(0, Math.round((Number(tipOther) || 0) * 100) / 100);
+  const tipValue = !tipsOn
+    ? 0
+    : tipChoice === "other"
+      ? (tipOtherValue >= 1 ? tipOtherValue : 0)
+      : typeof tipChoice === "number"
+        ? tipChoice
+        : 0;
+
   useEffect(() => {
     async function load() {
       if (!invoiceId) { setError("No invoice specified"); setLoading(false); return; }
