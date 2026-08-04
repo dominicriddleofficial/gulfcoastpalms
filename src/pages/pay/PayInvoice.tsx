@@ -34,6 +34,8 @@ type InvoiceData = {
   customer_email?: string;
   customer_phone?: string;
   customer_address?: string;
+  tips_enabled?: boolean;
+  tip_presets?: number[];
 };
 
 const BRAND_INFO: Record<string, { name: string; tagline: string; footer: string }> = {
@@ -68,6 +70,9 @@ export default function PayInvoice() {
   const [error, setError] = useState<string | null>(null);
   const invoiceCardRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
+  // Tip selection: null = nothing chosen yet (nothing is preselected).
+  const [tipChoice, setTipChoice] = useState<number | "other" | "none" | null>(null);
+  const [tipOther, setTipOther] = useState("");
   const cancelled = searchParams.get("cancelled") === "true";
 
   const brandKey = shortcode?.toLowerCase() || "gcp";
@@ -83,6 +88,18 @@ export default function PayInvoice() {
   const cardBg = "#141414";
   const cardBorder = "#1e1e1e";
   const labelColor = "#a1a1aa";
+
+  // Tip math. Tips are charged on top of the invoice and never reduce the balance.
+  const tipsOn = !!invoice?.tips_enabled;
+  const tipPresets = (invoice?.tip_presets ?? []).filter((n) => Number.isFinite(n) && n > 0);
+  const tipOtherValue = Math.max(0, Math.round((Number(tipOther) || 0) * 100) / 100);
+  const tipValue = !tipsOn
+    ? 0
+    : tipChoice === "other"
+      ? (tipOtherValue >= 1 ? tipOtherValue : 0)
+      : typeof tipChoice === "number"
+        ? tipChoice
+        : 0;
 
   useEffect(() => {
     async function load() {
@@ -133,7 +150,7 @@ export default function PayInvoice() {
       const resp = await fetch(`${baseUrl}/create-checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ invoice_id: invoice.id, origin_url: window.location.origin }),
+        body: JSON.stringify({ invoice_id: invoice.id, origin_url: window.location.origin, tip_amount: tipValue }),
       });
       const result = await resp.json();
       if (result.error) throw new Error(result.error);
@@ -421,6 +438,89 @@ export default function PayInvoice() {
             {/* ── PAY NOW ── */}
             {!isPaid && !offlineBlock && (
               <div className="no-print" style={{ padding: "20px 20px 24px" }}>
+                {/* ── OPTIONAL TIP (only when the business enables tips) ── */}
+                {tipsOn && (
+                  <div style={{ background: "#0f0f0f", border: `1px solid ${cardBorder}`, borderRadius: 12, padding: 16, marginBottom: 12 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: "#fff", marginBottom: 10 }}>Add a tip?</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                      {tipPresets.map((preset) => {
+                        const active = tipChoice === preset;
+                        return (
+                          <button
+                            key={preset}
+                            onClick={() => { setTipChoice(preset); setTipOther(""); }}
+                            style={{
+                              minHeight: 44, minWidth: 76, padding: "0 16px", borderRadius: 10,
+                              border: `1px solid ${active ? accent : cardBorder}`,
+                              background: active ? `rgba(${accentRgb}, 0.14)` : "rgba(255,255,255,0.04)",
+                              color: active ? accent : "#fff", fontSize: 15, fontWeight: 600,
+                              cursor: "pointer", fontFamily: "'Inter', sans-serif",
+                            }}
+                          >
+                            ${preset}
+                          </button>
+                        );
+                      })}
+                      <button
+                        onClick={() => setTipChoice("other")}
+                        style={{
+                          minHeight: 44, minWidth: 76, padding: "0 16px", borderRadius: 10,
+                          border: `1px solid ${tipChoice === "other" ? accent : cardBorder}`,
+                          background: tipChoice === "other" ? `rgba(${accentRgb}, 0.14)` : "rgba(255,255,255,0.04)",
+                          color: tipChoice === "other" ? accent : "#fff", fontSize: 15, fontWeight: 600,
+                          cursor: "pointer", fontFamily: "'Inter', sans-serif",
+                        }}
+                      >
+                        Other
+                      </button>
+                      <button
+                        onClick={() => { setTipChoice("none"); setTipOther(""); }}
+                        style={{
+                          minHeight: 44, padding: "0 16px", borderRadius: 10,
+                          border: `1px solid ${tipChoice === "none" ? accent : cardBorder}`,
+                          background: tipChoice === "none" ? `rgba(${accentRgb}, 0.14)` : "rgba(255,255,255,0.04)",
+                          color: tipChoice === "none" ? accent : labelColor, fontSize: 15, fontWeight: 600,
+                          cursor: "pointer", fontFamily: "'Inter', sans-serif",
+                        }}
+                      >
+                        No thanks
+                      </button>
+                    </div>
+
+                    {tipChoice === "other" && (
+                      <input
+                        type="number"
+                        min={1}
+                        step="1"
+                        inputMode="decimal"
+                        value={tipOther}
+                        onChange={(e) => setTipOther(e.target.value)}
+                        placeholder="Tip amount"
+                        aria-label="Tip amount in dollars"
+                        style={{
+                          marginTop: 10, width: "100%", minHeight: 44, padding: "0 14px",
+                          borderRadius: 10, border: `1px solid ${cardBorder}`, background: "#141414",
+                          color: "#fff", fontSize: 16, fontFamily: "'Inter', sans-serif",
+                        }}
+                      />
+                    )}
+
+                    <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${cardBorder}`, display: "flex", flexDirection: "column", gap: 6 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
+                        <span style={{ color: labelColor }}>Invoice total</span>
+                        <span style={{ color: "#fff" }}>${fmt(dueNow)}</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
+                        <span style={{ color: labelColor }}>Tip</span>
+                        <span style={{ color: "#fff" }}>${fmt(tipValue)}</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 15, fontWeight: 700 }}>
+                        <span style={{ color: "#fff" }}>Total</span>
+                        <span style={{ color: accent }}>${fmt(dueNow + tipValue)}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div style={{ background: "#0f0f0f", border: `1px solid ${cardBorder}`, borderRadius: 12, padding: 20, textAlign: "center" }}>
                   <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: accent, marginBottom: 4 }}>SECURE ONLINE PAYMENT</div>
                   <div style={{ fontSize: 12, color: labelColor, marginBottom: 14 }}>Pay securely via credit card, Apple Pay, or Google Pay</div>
@@ -439,7 +539,7 @@ export default function PayInvoice() {
                     }}
                   >
                     {paying ? <Loader2 className="w-5 h-5 animate-spin" /> : <CreditCard className="w-5 h-5" />}
-                    {paying ? "Redirecting…" : `Pay Now — $${fmt(dueNow)}`}
+                    {paying ? "Redirecting…" : `Pay Now — $${fmt(dueNow + tipValue)}`}
                   </button>
                 </div>
               </div>

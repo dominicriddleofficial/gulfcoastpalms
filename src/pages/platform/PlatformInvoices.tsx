@@ -370,7 +370,7 @@ export default function PlatformInvoices() {
                 invalidateUnpaid(selectedBusinessId);
                 setSelectedInvoice(null);
               }}
-              onRecordPayment={async (amount, method, notes, isDeposit) => {
+              onRecordPayment={async (amount, method, notes, isDeposit, tipAmount) => {
                 const { data: numData } = await supabase.rpc("generate_next_number", {
                   _business_id: selectedInvoice.business_id,
                   _record_type: "payment",
@@ -381,6 +381,7 @@ export default function PlatformInvoices() {
                   invoice_id: selectedInvoice.id,
                   customer_id: selectedInvoice.customer_id,
                   amount,
+                  tip_amount: Math.max(0, Number(tipAmount) || 0),
                   method,
                   notes: notes || null,
                   is_deposit: isDeposit,
@@ -451,7 +452,7 @@ function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayme
   invoice: PlatformInvoice;
   businesses: Array<{ id: string; public_brand_name: string; shortcode: string; default_business_color?: string }>;
   onStatusChange: (status: string) => void;
-  onRecordPayment: (amount: number, method: string, notes: string, isDeposit: boolean) => void;
+  onRecordPayment: (amount: number, method: string, notes: string, isDeposit: boolean, tipAmount: number) => void;
   onCopyInvoiceMessage: () => void;
 }) {
   const biz = businesses.find(b => b.id === invoice.business_id);

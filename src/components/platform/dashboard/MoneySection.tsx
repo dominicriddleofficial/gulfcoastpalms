@@ -6,7 +6,7 @@ import { subDays } from "date-fns";
 import { toLocalDateKey, todayLocalKey } from "@/lib/localDate";
 
 export default function MoneySection() {
-  const { selectedBusinessId, userId, loading } = usePlatformAuth();
+  const { selectedBusinessId, userId, loading, isOwner } = usePlatformAuth();
   const ready = !loading && !!userId && !!selectedBusinessId;
   const today = todayLocalKey();
   const since30d = toLocalDateKey(subDays(new Date(), 30));
@@ -50,6 +50,20 @@ export default function MoneySection() {
         .eq("business_id", selectedBusinessId!)
         .gte("payment_date", since30d);
       return (data ?? []).reduce((s, r) => s + (Number(r.amount) || 0), 0);
+    },
+  });
+
+  // Tips are tracked separately from revenue — owner-only visibility.
+  const tips30d = useQuery({
+    queryKey: ["dash-money-tips-30", selectedBusinessId, since30d],
+    enabled: ready && isOwner,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("platform_payments")
+        .select("tip_amount")
+        .eq("business_id", selectedBusinessId!)
+        .gte("payment_date", since30d);
+      return (data ?? []).reduce((s, r) => s + (Number(r.tip_amount) || 0), 0);
     },
   });
 
@@ -105,6 +119,14 @@ export default function MoneySection() {
           loading={grossRevenue30d.isPending}
           to="/platform/finance"
         />
+        {isOwner && (
+          <MetricTile
+            label="Tips 30d"
+            value={fmtMoney(tips30d.data ?? 0)}
+            loading={tips30d.isPending}
+            hint="Not job revenue"
+          />
+        )}
       </div>
     </SectionCard>
   );

@@ -442,6 +442,8 @@ export type Database = {
           route_mode_defaults: string | null
           scheduling_enabled: boolean | null
           sms_sender_name: string | null
+          tip_presets: number[]
+          tips_enabled: boolean
           updated_at: string
         }
         Insert: {
@@ -477,6 +479,8 @@ export type Database = {
           route_mode_defaults?: string | null
           scheduling_enabled?: boolean | null
           sms_sender_name?: string | null
+          tip_presets?: number[]
+          tips_enabled?: boolean
           updated_at?: string
         }
         Update: {
@@ -512,6 +516,8 @@ export type Database = {
           route_mode_defaults?: string | null
           scheduling_enabled?: boolean | null
           sms_sender_name?: string | null
+          tip_presets?: number[]
+          tips_enabled?: boolean
           updated_at?: string
         }
         Relationships: [
@@ -4255,6 +4261,7 @@ export type Database = {
           recorded_by_user_id: string | null
           reference_number: string | null
           status: string
+          tip_amount: number
           updated_at: string
         }
         Insert: {
@@ -4273,6 +4280,7 @@ export type Database = {
           recorded_by_user_id?: string | null
           reference_number?: string | null
           status?: string
+          tip_amount?: number
           updated_at?: string
         }
         Update: {
@@ -4291,6 +4299,7 @@ export type Database = {
           recorded_by_user_id?: string | null
           reference_number?: string | null
           status?: string
+          tip_amount?: number
           updated_at?: string
         }
         Relationships: [

@@ -88,6 +88,19 @@ serve(async (req) => {
     const prop = (data as any).platform_properties;
     const biz = (data as any).businesses;
 
+    // Tip settings live on business_settings. Tips are opt-in per business; when
+    // disabled the pay page must render exactly as it did before tips existed.
+    const { data: bizSettings } = await supabaseAdmin
+      .from("business_settings")
+      .select("tips_enabled, tip_presets")
+      .eq("business_id", (data as any).business_id)
+      .maybeSingle();
+    const tipsEnabled = !!(bizSettings as any)?.tips_enabled;
+    const rawPresets = (bizSettings as any)?.tip_presets;
+    const tipPresets: number[] = Array.isArray(rawPresets)
+      ? rawPresets.map((n: unknown) => Number(n)).filter((n: number) => Number.isFinite(n) && n > 0)
+      : [20, 50, 100];
+
     // Resolve address with priority:
     // 1) snapshot fields stored on the invoice
     // 2) linked property (platform_properties)
@@ -187,6 +200,8 @@ serve(async (req) => {
       business_website: biz?.website_url || null,
       logo_url: biz?.logo_url || null,
       shortcode: invoiceShortcode,
+      tips_enabled: tipsEnabled,
+      tip_presets: tipPresets,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

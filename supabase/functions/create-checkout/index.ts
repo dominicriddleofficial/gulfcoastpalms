@@ -154,7 +154,14 @@ serve(async (req) => {
     );
 
     const body = await req.json();
-    let { invoice_id, quote_id, origin_url } = body;
+    let { invoice_id, quote_id, origin_url, tip_amount } = body;
+
+    // Optional customer tip. Never trusted beyond "is a sane positive number";
+    // it is charged on top of the invoice balance as a separate line item.
+    const rawTip = Number(tip_amount);
+    const tipAmount = Number.isFinite(rawTip) && rawTip > 0
+      ? Math.min(Math.round(rawTip * 100) / 100, 10000)
+      : 0;
 
     // ── Quote-based checkout: create deposit invoice on the fly ──
     if (!invoice_id && quote_id) {
@@ -222,23 +229,46 @@ serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const baseUrl = origin_url || "https://gulfcoastpalms.lovable.app";
 
+    // Tips must ride on the SAME Checkout Session as a second line item so the
+    // customer sees one charge and we pay one Stripe fee.
+    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
+      {
+        price_data: {
+          currency: "usd",
+          product_data: {
+            name: `${businessName} - Invoice ${invoice.invoice_number}`,
+            description: `Payment for ${customerName}`,
+          },
+          unit_amount: Math.round(balanceDue * 100),
+        },
+        quantity: 1,
+      },
+    ];
+    let effectiveTip = 0;
+    if (tipAmount > 0) {
+      const { data: tipSettings } = await supabaseAdmin
+        .from("business_settings")
+        .select("tips_enabled")
+        .eq("business_id", invoice.business_id)
+        .maybeSingle();
+      if (tipSettings?.tips_enabled) {
+        effectiveTip = tipAmount;
+        lineItems.push({
+          price_data: {
+            currency: "usd",
+            product_data: { name: "Tip for the crew", description: "Optional gratuity" },
+            unit_amount: Math.round(tipAmount * 100),
+          },
+          quantity: 1,
+        });
+      }
+    }
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
       customer_email: customerEmail,
-      line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: `${businessName} - Invoice ${invoice.invoice_number}`,
-              description: `Payment for ${customerName}`,
-            },
-            unit_amount: Math.round(balanceDue * 100),
-          },
-          quantity: 1,
-        },
-      ],
+      line_items: lineItems,
       metadata: {
         business_id: invoice.business_id,
         invoice_id: invoice.id,
@@ -247,13 +277,15 @@ serve(async (req) => {
         shortcode: shortcode,
         payment_type: invoice.deposit_required && !invoice.deposit_paid ? "deposit" : "balance",
         quote_id: invoice.quote_id || quote_id || "",
+        invoice_amount: String(balanceDue),
+        tip_amount: String(effectiveTip),
         platform_environment: "production",
       },
       success_url: `${baseUrl}/pay/${shortcode.toLowerCase()}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/pay/${shortcode.toLowerCase()}/${invoice.id}?cancelled=true`,
     });
 
-    log("Checkout session created", { sessionId: session.id });
+    log("Checkout session created", { sessionId: session.id, tip: effectiveTip, items: lineItems.length });
 
     await supabaseAdmin.from("payment_intents").insert({
       business_id: invoice.business_id,
