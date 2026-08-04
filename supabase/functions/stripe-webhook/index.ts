@@ -112,7 +112,16 @@ serve(async (req) => {
         relatedEntityType = "invoice";
         relatedEntityId = meta.invoice_id;
 
-        const amountPaid = (session.amount_total || 0) / 100;
+        const totalCharged = (session.amount_total || 0) / 100;
+
+        // Split the charge into invoice payment vs. tip.
+        // Tips are NOT job revenue: only `amount` reduces the invoice balance.
+        // If metadata is missing we never guess — everything counts as `amount`.
+        const rawTip = Number(meta.tip_amount);
+        const tipAmount = Number.isFinite(rawTip) && rawTip > 0
+          ? Math.min(rawTip, totalCharged)
+          : 0;
+        const amountPaid = Math.round((totalCharged - tipAmount) * 100) / 100;
         const isDeposit = meta.payment_type === "deposit";
 
         // Generate payment number
@@ -128,6 +137,7 @@ serve(async (req) => {
           invoice_id: meta.invoice_id,
           customer_id: meta.customer_id || null,
           amount: amountPaid,
+          tip_amount: tipAmount,
           method: "card",
           reference_number: session.payment_intent as string || session.id,
           status: "completed",
@@ -164,7 +174,7 @@ serve(async (req) => {
             .update(updateData)
             .eq("id", meta.invoice_id);
 
-          log("Invoice updated", { invoiceId: meta.invoice_id, newBalance, status: updateData.status });
+          log("Invoice updated", { invoiceId: meta.invoice_id, newBalance, status: updateData.status, amountPaid, tipAmount });
         }
 
         // Update payment intent record
