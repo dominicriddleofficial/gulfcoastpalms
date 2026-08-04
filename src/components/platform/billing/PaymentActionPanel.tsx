@@ -252,7 +252,7 @@ export default function PaymentActionPanel({
                 `Mark invoice ${invoice.invoice_number} as PAID? This will record a $${balance.toLocaleString()} payment and set the balance due to $0.00.`
               );
               if (!ok) return;
-              onRecordPayment(balance, "other", "Marked as paid", false);
+              onRecordPayment(balance, "other", "Marked as paid", false, 0);
               toast({ title: "Marked as paid", description: `Balance set to $0.00.` });
             }}
           >
@@ -532,6 +532,22 @@ function RecordPaymentForm({
           placeholder="Check #, Zelle confirmation, etc."
           className="bg-background border-border font-body text-sm h-10"
         />
+      </div>
+
+      {/* Optional tip — recorded on the payment, never applied to the balance. */}
+      <div>
+        <label className="font-body text-xs font-medium text-foreground mb-1.5 block">Tip (optional)</label>
+        <Input
+          type="number"
+          min={0}
+          value={payTip}
+          onChange={e => setPayTip(e.target.value)}
+          placeholder="0.00"
+          className="bg-background border-border font-body text-sm h-10"
+        />
+        <p className="font-body text-[11px] text-muted-foreground mt-1">
+          Tips are tracked separately and do not reduce the invoice balance.
+        </p>
       </div>
 
       <Button className="w-full h-11 font-body font-semibold" disabled={!isValid} onClick={onConfirm}>
