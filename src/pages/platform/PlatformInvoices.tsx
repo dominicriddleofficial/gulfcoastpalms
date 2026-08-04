@@ -452,7 +452,7 @@ function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayme
   invoice: PlatformInvoice;
   businesses: Array<{ id: string; public_brand_name: string; shortcode: string; default_business_color?: string }>;
   onStatusChange: (status: string) => void;
-  onRecordPayment: (amount: number, method: string, notes: string, isDeposit: boolean) => void;
+  onRecordPayment: (amount: number, method: string, notes: string, isDeposit: boolean, tipAmount: number) => void;
   onCopyInvoiceMessage: () => void;
 }) {
   const biz = businesses.find(b => b.id === invoice.business_id);
