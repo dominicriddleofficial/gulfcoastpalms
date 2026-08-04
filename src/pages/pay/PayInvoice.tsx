@@ -34,6 +34,8 @@ type InvoiceData = {
   customer_email?: string;
   customer_phone?: string;
   customer_address?: string;
+  tips_enabled?: boolean;
+  tip_presets?: number[];
 };
 
 const BRAND_INFO: Record<string, { name: string; tagline: string; footer: string }> = {
@@ -68,6 +70,9 @@ export default function PayInvoice() {
   const [error, setError] = useState<string | null>(null);
   const invoiceCardRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
+  // Tip selection: null = nothing chosen yet (nothing is preselected).
+  const [tipChoice, setTipChoice] = useState<number | "other" | "none" | null>(null);
+  const [tipOther, setTipOther] = useState("");
   const cancelled = searchParams.get("cancelled") === "true";
 
   const brandKey = shortcode?.toLowerCase() || "gcp";
@@ -133,7 +138,7 @@ export default function PayInvoice() {
       const resp = await fetch(`${baseUrl}/create-checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ invoice_id: invoice.id, origin_url: window.location.origin }),
+        body: JSON.stringify({ invoice_id: invoice.id, origin_url: window.location.origin, tip_amount: tipValue }),
       });
       const result = await resp.json();
       if (result.error) throw new Error(result.error);
