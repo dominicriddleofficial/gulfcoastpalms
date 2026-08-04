@@ -18,6 +18,7 @@ import TeamMembersSection from "@/components/platform/settings/TeamMembersSectio
 import { CrewTrackingSection } from "@/components/platform/settings/CrewTrackingSection";
 import DataExportSection from "@/components/platform/settings/DataExportSection";
 import ReviewRequestTextSection from "@/components/platform/settings/ReviewRequestTextSection";
+import TipsSection from "@/components/platform/settings/TipsSection";
 
 interface BizSettings {
   id: string;
@@ -131,6 +132,9 @@ export default function PlatformSettings() {
 
             {/* Review Request Text — owner only (self-gated inside the component) */}
             <ReviewRequestTextSection />
+
+            {/* Customer Tips — owner only (self-gated inside the component) */}
+            <TipsSection />
 
             {/* Integrations */}
             <SettingsSection title="Integrations" icon={Zap}>
