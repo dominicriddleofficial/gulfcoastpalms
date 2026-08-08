@@ -7,6 +7,10 @@ import { GCP_BUSINESS, TEL_HREF } from "@/lib/business-info";
 const GREEN = "#1E8549";
 const AMBER = "#F4A825";
 
+/** Own description for the catch-all route — never the homepage's. */
+const NOT_FOUND_DESCRIPTION =
+  "This page doesn't exist. Find palm tree trimming, removal, and hurricane prep for NW Florida on the Gulf Coast Palms site.";
+
 /**
  * Catch-all (`path="*"`) route.
  *
@@ -69,16 +73,10 @@ const NotFound = () => {
     <main className="min-h-screen flex items-center justify-center px-5 py-16" style={{ background: "#0c1410" }}>
       <Helmet>
         <title>Page Not Found | Gulf Coast Palms</title>
-        <meta
-          name="description"
-          content="This page doesn't exist. Find palm tree trimming, removal, and hurricane prep for NW Florida on the Gulf Coast Palms site."
-        />
+        <meta name="description" content={NOT_FOUND_DESCRIPTION} />
         <meta name="robots" content="noindex, nofollow" />
         <meta property="og:title" content="Page Not Found | Gulf Coast Palms" />
-        <meta
-          property="og:description"
-          content="This page doesn't exist. Find palm tree trimming, removal, and hurricane prep for NW Florida on the Gulf Coast Palms site."
-        />
+        <meta property="og:description" content={NOT_FOUND_DESCRIPTION} />
         <meta name="twitter:title" content="Page Not Found | Gulf Coast Palms" />
       </Helmet>
 
