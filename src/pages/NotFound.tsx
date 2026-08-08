@@ -30,16 +30,26 @@ const NotFound = () => {
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);
   }, [location.pathname]);
 
-  // Strip the homepage canonical / og:url that ship in the static index.html
-  // head, and restore them when navigating away to a real page.
+  // The static index.html head ships `robots: index, follow`, the homepage
+  // description, a homepage canonical and og:url. react-helmet-async appends
+  // its own tags rather than replacing these, and crawlers read the first
+  // match — so override them in place here and restore on unmount.
   useEffect(() => {
+    const robots = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
+    const description = document.querySelector<HTMLMetaElement>('meta[name="description"]');
     const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
     const ogUrl = document.querySelector<HTMLMetaElement>('meta[property="og:url"]');
+    const prevRobots = robots?.getAttribute("content") ?? null;
+    const prevDescription = description?.getAttribute("content") ?? null;
     const canonicalHref = canonical?.getAttribute("href") ?? null;
     const ogUrlContent = ogUrl?.getAttribute("content") ?? null;
+    robots?.setAttribute("content", "noindex, nofollow");
+    description?.setAttribute("content", NOT_FOUND_DESCRIPTION);
     canonical?.remove();
     ogUrl?.remove();
     return () => {
+      if (robots && prevRobots) robots.setAttribute("content", prevRobots);
+      if (description && prevDescription) description.setAttribute("content", prevDescription);
       if (canonicalHref && !document.querySelector('link[rel="canonical"]')) {
         const link = document.createElement("link");
         link.setAttribute("rel", "canonical");
