@@ -318,7 +318,19 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
     sendData: { email: string; subject: string; message: string; sendEmail: boolean; sendSms: boolean; smsMessage?: string },
   ) => {
       setSaving(true);
-      const quoteUrl = getQuotePublicUrl({ quoteId: saved.id, quoteNumber: saved.quote_number, shortcode: activeBiz?.shortcode });
+      let quoteUrl: string;
+      try {
+        quoteUrl = getQuotePublicUrl({ quoteId: saved.id, quoteNumber: saved.quote_number, shortcode: activeBiz?.shortcode });
+      } catch {
+        toast.error("The quote link isn't ready yet — nothing was sent. Save the quote and try again.");
+        setSaving(false);
+        return false;
+      }
+      if (/\/(pending|undefined|null)\b/i.test(quoteUrl)) {
+        toast.error("Refusing to send: the quote link is incomplete.");
+        setSaving(false);
+        return false;
+      }
       let anySuccess = false;
 
       // Send email
@@ -326,7 +338,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
         try {
           const { data: fnRes, error: fnErr } = await supabase.functions.invoke("send-quote-email", {
             body: {
-              quoteId: saved.id, recipientEmail: sendData.email, recipientName: customerName,
+              quoteId: saved.id, recipientEmail: sendData.email, recipientName: displayToName,
               subject: sendData.subject, message: sendData.message,
               businessName: activeBiz?.public_brand_name || "", quoteNumber: saved.quote_number,
               quoteUrl,
@@ -335,7 +347,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
           });
           const functionError = fnErr?.message || fnRes?.error;
           if (functionError) { toast.error(`Quote created but email failed: ${functionError}`); }
-          else { anySuccess = true; toast.success(`Quote sent to ${customerName} at ${sendData.email}`); }
+          else { anySuccess = true; toast.success(`Quote sent to ${displayToName} at ${sendData.email}`); }
         } catch (e: unknown) {
           const msg = e instanceof Error ? e.message : "Unknown error";
           toast.error(`Quote created but email failed: ${msg}`);
@@ -350,8 +362,8 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
           try {
             const smsMessage = sendData.smsMessage?.trim()
               ? sendData.smsMessage
-              : `Hi ${customerName}, ${activeBiz?.public_brand_name || "Gulf Coast Palms"} has sent you a quote for $${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}. View and approve here: ${quoteUrl} Reply STOP to unsubscribe.`;
-            console.log("[SMS] sending quote text", { to: customerPhone, customerName, quoteUrl });
+              : `Hi ${displayToName}, ${activeBiz?.public_brand_name || "Gulf Coast Palms"} has sent you a quote for $${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}. View and approve here: ${quoteUrl} Reply STOP to unsubscribe.`;
+            console.log("[SMS] sending quote text", { to: customerPhone, name: displayToName, quoteUrl });
             const { error: smsErr } = await supabase.functions.invoke("send-sms", {
               body: { to: customerPhone, message: smsMessage },
             });
@@ -398,14 +410,21 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
       setSaving(false);
       return;
     }
-    const message = buildQuoteMessage({
-      quoteId: saved.id,
-      quoteNumber: saved.quote_number,
-      customerName,
-      total,
-      businessName: activeBiz?.public_brand_name,
-      shortcode: activeBiz?.shortcode,
-    });
+    let message: string;
+    try {
+      message = buildQuoteMessage({
+        quoteId: saved.id,
+        quoteNumber: saved.quote_number,
+        customerName: displayToName,
+        total,
+        businessName: activeBiz?.public_brand_name,
+        shortcode: activeBiz?.shortcode,
+      });
+    } catch {
+      toast.error("The quote link isn't ready yet — nothing copied.");
+      setSaving(false);
+      return;
+    }
     setSaving(false);
     setShowSendModal(false);
     setSavedCopyQuoteNumber(saved.quote_number);
@@ -456,12 +475,38 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                 <div className="flex items-center justify-between">
                   <p className="font-body text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Prepared For</p>
                   {customerId && (
-                    <button className="font-body text-[10px] text-primary hover:underline" onClick={() => { setCustomerId(null); setCustomerName(""); setShowCustomerSearch(true); }}>Change</button>
+                    <button className="font-body text-[10px] text-primary hover:underline" onClick={() => { setCustomerId(null); setCustomerName(""); setRecipientName(""); setEditingRecipientName(false); setShowCustomerSearch(true); }}>Change</button>
                   )}
                 </div>
                 {customerId ? (
                   <div>
-                    <p className="font-body text-sm font-semibold text-foreground">{customerName}</p>
+                    <div className="space-y-1">
+                      <label className="font-body text-[10px] font-medium text-muted-foreground uppercase tracking-wider">To</label>
+                      {editingRecipientName ? (
+                        <Input
+                          autoFocus
+                          value={recipientName}
+                          onChange={(e) => setRecipientName(e.target.value)}
+                          onBlur={() => setEditingRecipientName(false)}
+                          placeholder={customerName}
+                          className="bg-secondary/50 border-border font-body text-sm"
+                          data-testid="quote-recipient-name-input"
+                        />
+                      ) : (
+                        <button
+                          type="button"
+                          data-testid="quote-recipient-name-edit"
+                          onClick={() => setEditingRecipientName(true)}
+                          className="w-full flex items-center gap-2 text-left group"
+                        >
+                          <span className="font-body text-sm font-semibold text-foreground">{displayToName}</span>
+                          <Pencil className="w-3 h-3 text-muted-foreground group-hover:text-primary shrink-0" />
+                        </button>
+                      )}
+                      <p className="font-body text-[10px] text-muted-foreground">
+                        Saved with this quote — customer record unchanged
+                      </p>
+                    </div>
                     {customerEmail && <p className="font-body text-xs text-muted-foreground">{customerEmail}</p>}
                     {customerPhone && <p className="font-body text-xs text-muted-foreground">{customerPhone}</p>}
                   </div>
