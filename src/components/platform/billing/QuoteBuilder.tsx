@@ -747,7 +747,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
       {/* Send Modal */}
       {showSendModal && savedQuote && (
         <SendQuoteModal
-          customerName={customerName} customerEmail={customerEmail} customerPhone={customerPhone}
+          customerName={displayToName} customerEmail={customerEmail} customerPhone={customerPhone}
           quoteNumber={savedQuote.quote_number} validUntil={validUntil}
           businessName={activeBiz?.public_brand_name || ""} shortcode={activeBiz?.shortcode || "gcp"}
           total={total}
