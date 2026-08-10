@@ -70,9 +70,14 @@ async function loadStaticContent() {
             path: args.path,
             namespace: "asset-stub",
           }));
-          b.onResolve({ filter: /^@\// }, (args) => ({
-            path: path.join(projectRoot, "src", args.path.slice(2)),
-          }));
+          b.onResolve({ filter: /^@\// }, async (args) => {
+            const result = await b.resolve("./" + args.path.slice(2), {
+              resolveDir: path.join(projectRoot, "src"),
+              kind: "import-statement",
+            });
+            if (result.errors.length) return { errors: result.errors };
+            return { path: result.path, external: result.external };
+          });
         },
       },
     ],
