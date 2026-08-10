@@ -16,6 +16,7 @@ import SendQuoteModal from "./SendQuoteModal";
 import { useQuery } from "@tanstack/react-query";
 import { generateQuoteNumber, calculateQuoteTotals } from "@/hooks/usePlatformQuotes";
 import { downloadElementAsPdf } from "@/lib/download-pdf";
+import { buildQuoteMessage, getQuotePublicUrl } from "@/lib/quote-message";
 
 interface LineItem {
   id: string;
@@ -93,6 +94,11 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   const mobilePreviewRef = useRef<HTMLDivElement>(null);
   const [showSendModal, setShowSendModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  /** The persisted quote, available only AFTER a successful save. The public
+   *  link is derived from this — never from an unsaved placeholder. */
+  const [savedQuote, setSavedQuote] = useState<{ id: string; quote_number: string } | null>(null);
+  const [manualCopyText, setManualCopyText] = useState<string | null>(null);
+  const [savedCopyQuoteNumber, setSavedCopyQuoteNumber] = useState<string | null>(null);
 
   // Fetch logo
   const { data: brandAssets } = useQuery({
@@ -195,12 +201,17 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
     isDraft: true, logoUrl,
   }), [quoteNumber, quoteDate, validUntil, customerName, customerEmail, customerPhone, lineItems, subtotal, taxEnabled, taxRate, taxAmount, discountAmount, total, depositEnabled, depositAmount, scopeOfWork, publicNotes, activeBiz, logoUrl]);
 
-  // Save quote
-  const handleSave = async (sendAfter: boolean = false, sendData: { email: string; subject: string; message: string; sendEmail: boolean; sendSms: boolean; smsMessage?: string } | null = null) => {
-    if (!bizId) return;
-    if (!customerId) { toast.error("Please select a customer"); return; }
+  /**
+   * Persist the quote (draft) and return the saved row. The quote MUST exist
+   * before any share link is generated — the old flow built the link from a
+   * "PENDING" placeholder and could text a dead URL.
+   */
+  const persistQuote = async (): Promise<{ id: string; quote_number: string } | null> => {
+    if (savedQuote) return savedQuote;
+    if (!bizId) return null;
+    if (!customerId) { toast.error("Please select a customer"); return null; }
     const validLines = lineItems.filter(l => l.description.trim());
-    if (validLines.length === 0) { toast.error("Add at least one line item"); return; }
+    if (validLines.length === 0) { toast.error("Add at least one line item"); return null; }
 
     setSaving(true);
 
@@ -215,7 +226,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
           business_id: bizId, display_name: customerName, email: customerEmail || null,
           phone: customerPhone || null, source_system: "jobber", source_record_id: customerId,
         }).select("id").single();
-        if (custErr || !newCust) { toast.error("Failed to create customer record"); setSaving(false); return; }
+        if (custErr || !newCust) { toast.error("Failed to create customer record"); setSaving(false); return null; }
         resolvedCustomerId = newCust.id;
       }
     }
@@ -231,7 +242,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
       created_by_user_id: userId, last_modified_by_user_id: userId,
     }).select().single();
 
-    if (error || !quote) { toast.error(error?.message || "Failed to create quote"); setSaving(false); return; }
+    if (error || !quote) { toast.error(error?.message || "Failed to create quote"); setSaving(false); return null; }
 
     // Insert line items
     const { error: lineErr } = await supabase.from("platform_quote_line_items").insert(
@@ -245,7 +256,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
     if (lineErr) {
       toast.error(`Quote saved but line items failed to save: ${lineErr.message}. Not sending — fix the quote before it goes out.`);
       setSaving(false);
-      return;
+      return null;
     }
 
     // Save initial version
@@ -259,25 +270,61 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
       toast.error(`Quote and line items saved, but the version history snapshot failed: ${versionErr.message}`);
     }
 
-    if (sendAfter && sendData) {
-      const shortcode = activeBiz?.shortcode || "gcp";
-      const quoteUrl = `${window.location.origin}/quote/${shortcode}/${quote.id}`;
+    // Confirm the row really persisted before anyone builds a link to it.
+    const { data: verified, error: verifyErr } = await supabase
+      .from("platform_quotes")
+      .select("id, quote_number")
+      .eq("id", quote.id)
+      .single();
+    if (verifyErr || !verified?.id) {
+      toast.error("Could not confirm the quote saved. Nothing was sent — please retry.");
+      setSaving(false);
+      return null;
+    }
+
+    const saved = { id: verified.id, quote_number: verified.quote_number || quoteNumber };
+    setSavedQuote(saved);
+    setSaving(false);
+    return saved;
+  };
+
+  const handleSaveDraft = async () => {
+    const saved = await persistQuote();
+    if (!saved) return;
+    toast.success("Quote created");
+    onCreated();
+  };
+
+  const openSendModal = async () => {
+    const saved = await persistQuote();
+    if (!saved) return;
+    setShowSendModal(true);
+  };
+
+  /** Send an already-saved quote. Only marks it sent when a channel succeeded. */
+  const sendQuote = async (
+    saved: { id: string; quote_number: string },
+    sendData: { email: string; subject: string; message: string; sendEmail: boolean; sendSms: boolean; smsMessage?: string },
+  ) => {
+      setSaving(true);
+      const quoteUrl = getQuotePublicUrl({ quoteId: saved.id, quoteNumber: saved.quote_number, shortcode: activeBiz?.shortcode });
+      let anySuccess = false;
 
       // Send email
       if (sendData.sendEmail && sendData.email) {
         try {
           const { data: fnRes, error: fnErr } = await supabase.functions.invoke("send-quote-email", {
             body: {
-              quoteId: quote.id, recipientEmail: sendData.email, recipientName: customerName,
+              quoteId: saved.id, recipientEmail: sendData.email, recipientName: customerName,
               subject: sendData.subject, message: sendData.message,
-              businessName: activeBiz?.public_brand_name || "", quoteNumber,
+              businessName: activeBiz?.public_brand_name || "", quoteNumber: saved.quote_number,
               quoteUrl,
               ownerEmail: "dominicriddleofficial@gmail.com",
             },
           });
           const functionError = fnErr?.message || fnRes?.error;
           if (functionError) { toast.error(`Quote created but email failed: ${functionError}`); }
-          else { toast.success(`Quote sent to ${customerName} at ${sendData.email}`); }
+          else { anySuccess = true; toast.success(`Quote sent to ${customerName} at ${sendData.email}`); }
         } catch (e: unknown) {
           const msg = e instanceof Error ? e.message : "Unknown error";
           toast.error(`Quote created but email failed: ${msg}`);
@@ -291,7 +338,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
         } else {
           try {
             const smsMessage = sendData.smsMessage?.trim()
-              ? sendData.smsMessage.replace(/\/quote\/([^/]+)\/PENDING/g, `/quote/$1/${quote.id}`)
+              ? sendData.smsMessage
               : `Hi ${customerName}, ${activeBiz?.public_brand_name || "Gulf Coast Palms"} has sent you a quote for $${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}. View and approve here: ${quoteUrl} Reply STOP to unsubscribe.`;
             console.log("[SMS] sending quote text", { to: customerPhone, customerName, quoteUrl });
             const { error: smsErr } = await supabase.functions.invoke("send-sms", {
@@ -301,6 +348,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
               console.error("[SMS] send error:", smsErr);
               toast.error(`SMS failed: ${smsErr.message || "Unknown error"}`);
             } else {
+              anySuccess = true;
               toast.success(`Text sent to ${customerPhone}`);
             }
           } catch (e: unknown) {
@@ -311,14 +359,46 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
         }
       }
 
-      // Update status to sent
-      await supabase.from("platform_quotes").update({ status: "sent", sent_at: new Date().toISOString() }).eq("id", quote.id);
-    } else {
-      toast.success("Quote created");
-    }
+      // Only mark sent when a channel actually succeeded.
+      if (anySuccess) {
+        await supabase.from("platform_quotes").update({ status: "sent", sent_at: new Date().toISOString() }).eq("id", saved.id);
+      }
 
+      setSaving(false);
+      if (anySuccess) onCreated();
+      return anySuccess;
+  };
+
+  /**
+   * Copy path — the quote is already saved, so promote it to "sent" and hand the
+   * message to an iOS-safe confirmation sheet (clipboard write happens on a fresh
+   * tap, never after an await).
+   */
+  const handleSaveAndCopy = async () => {
+    const saved = savedQuote ?? await persistQuote();
+    if (!saved) return;
+    setSaving(true);
+    const { error: statusErr } = await supabase
+      .from("platform_quotes")
+      .update({ status: "sent", sent_at: new Date().toISOString() })
+      .eq("id", saved.id);
+    if (statusErr) {
+      toast.error(`Could not mark the quote as sent — nothing copied. ${statusErr.message}`);
+      setSaving(false);
+      return;
+    }
+    const message = buildQuoteMessage({
+      quoteId: saved.id,
+      quoteNumber: saved.quote_number,
+      customerName,
+      total,
+      businessName: activeBiz?.public_brand_name,
+      shortcode: activeBiz?.shortcode,
+    });
     setSaving(false);
-    onCreated();
+    setShowSendModal(false);
+    setSavedCopyQuoteNumber(saved.quote_number);
+    setManualCopyText(message);
   };
 
   return (
