@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Search, Plus, X, Calendar, User, Building2, FileText,
-  Eye, Save, Send, Package,
+  Eye, Save, Send, Package, Pencil,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -68,6 +68,10 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  /** Recipient ("To") name override saved on the quote only — mirrors the
+   *  invoice Bill To override. The customer record is never modified. */
+  const [recipientName, setRecipientName] = useState("");
+  const [editingRecipientName, setEditingRecipientName] = useState(false);
   const [quoteNumber, setQuoteNumber] = useState("Generating…");
   const [quoteDate, setQuoteDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [validUntil, setValidUntil] = useState(format(addDays(new Date(), 30), "yyyy-MM-dd"));
@@ -180,6 +184,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   const selectCustomer = (c: CustomerResult) => {
     setCustomerId(c.id); setCustomerSource((c.source as "platform" | "jobber") || "platform");
     setCustomerName(c.display_name); setCustomerEmail(c.email || ""); setCustomerPhone(c.phone || "");
+    setRecipientName(c.display_name); setEditingRecipientName(false);
     setShowCustomerSearch(false); setCustomerSearch("");
   };
 
@@ -187,10 +192,15 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
     setValidUntil(format(addDays(new Date(quoteDate), days), "yyyy-MM-dd"));
   };
 
+  /** The name the customer actually sees. Override wins, customer record is fallback. */
+  const displayToName = recipientName.trim() || customerName;
+  /** Only persist an override when it differs from the customer's own name. */
+  const billingNameToSave = displayToName && displayToName !== customerName ? displayToName : null;
+
   // Preview data
   const previewData = useMemo(() => ({
     quoteNumber, quoteDate, validUntil,
-    customerName: customerName || "Customer Name", customerEmail, customerPhone,
+    customerName: displayToName || "Customer Name", customerEmail, customerPhone,
     lineItems: lineItems.filter(l => l.description.trim()).map(l => ({
       description: l.description, quantity: Number(l.qty) || 1,
       unit_price: Number(l.price) || 0, line_total: (Number(l.qty) || 1) * (Number(l.price) || 0),
@@ -199,7 +209,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
     depositRequired: depositEnabled, depositAmount, scopeOfWork, publicNotes,
     businessName: activeBiz?.public_brand_name || "", shortcode: activeBiz?.shortcode || "gcp",
     isDraft: true, logoUrl,
-  }), [quoteNumber, quoteDate, validUntil, customerName, customerEmail, customerPhone, lineItems, subtotal, taxEnabled, taxRate, taxAmount, discountAmount, total, depositEnabled, depositAmount, scopeOfWork, publicNotes, activeBiz, logoUrl]);
+  }), [quoteNumber, quoteDate, validUntil, displayToName, customerEmail, customerPhone, lineItems, subtotal, taxEnabled, taxRate, taxAmount, discountAmount, total, depositEnabled, depositAmount, scopeOfWork, publicNotes, activeBiz, logoUrl]);
 
   /**
    * Persist the quote (draft) and return the saved row. The quote MUST exist
@@ -233,6 +243,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
 
     const { data: quote, error } = await supabase.from("platform_quotes").insert({
       business_id: bizId, quote_number: quoteNumber, customer_id: resolvedCustomerId,
+      billing_name: billingNameToSave,
       status: "draft", subtotal, discount_total: discountAmount,
       tax_rate: taxEnabled ? Number(taxRate) : 0, tax_total: taxAmount, total,
       deposit_required_flag: depositEnabled, deposit_type: depositType === "%" ? "percentage" : "fixed",
