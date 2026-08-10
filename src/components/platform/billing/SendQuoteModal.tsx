@@ -3,10 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Send, Mail, Smartphone } from "lucide-react";
+import { Send, Mail, Smartphone, ClipboardCopy, Link2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-
 interface SendQuoteModalProps {
   customerName: string;
   customerEmail: string;
@@ -18,6 +17,7 @@ interface SendQuoteModalProps {
   total: number;
   quoteUrl: string;
   onSend: (data: { email: string; subject: string; message: string; sendEmail: boolean; sendSms: boolean; smsMessage?: string }) => Promise<void>;
+  onCopy: () => Promise<void>;
   onClose: () => void;
   saving: boolean;
 }
@@ -25,12 +25,12 @@ interface SendQuoteModalProps {
 export default function SendQuoteModal({
   customerName, customerEmail, customerPhone,
   quoteNumber, validUntil, businessName, shortcode, total, quoteUrl,
-  onSend, onClose, saving,
+  onSend, onCopy, onClose, saving,
 }: SendQuoteModalProps) {
   const [email, setEmail] = useState(customerEmail);
   const [subject, setSubject] = useState(`Quote ${quoteNumber} from ${businessName} — Valid Until ${validUntil}`);
   const [message, setMessage] = useState(
-    `Please find your quote attached. You can view and approve it online using the link below.\n\nThank you for considering ${businessName}!`
+    `Please find your quote attached. You can view and approve it online using the link below.\n\n${quoteUrl}\n\nThank you for considering ${businessName}!`
   );
   const [sendEmail, setSendEmail] = useState(true);
   const [sendSms, setSendSms] = useState(false);
@@ -40,12 +40,35 @@ export default function SendQuoteModal({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="ops-theme max-w-md bg-background border-border">
+      <DialogContent className="ops-theme max-w-md max-h-[calc(100dvh-1rem)] overflow-y-auto bg-background border-border">
         <DialogHeader>
           <DialogTitle className="font-display text-foreground">Send Quote</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Real, saved public quote link — visible before sending so a broken
+              link can never go out unnoticed. */}
+          <div className="bg-card border border-border rounded-lg p-2.5">
+            <label className="font-body text-[10px] font-medium text-muted-foreground mb-1 flex items-center gap-1 uppercase tracking-wider">
+              <Link2 className="w-3 h-3" /> Customer quote link
+            </label>
+            <div className="flex items-center gap-2">
+              <Input readOnly value={quoteUrl} onFocus={e => e.currentTarget.select()}
+                className="bg-secondary/50 border-border font-mono text-[11px] text-foreground" />
+              <Button type="button" size="sm" variant="outline" className="font-body text-xs shrink-0"
+                onClick={() => {
+                  try {
+                    navigator.clipboard.writeText(quoteUrl);
+                    toast.success("Link copied");
+                  } catch {
+                    toast.error("Couldn't copy — select the link and copy manually");
+                  }
+                }}>
+                Copy
+              </Button>
+            </div>
+          </div>
+
           <div className="flex gap-2">
             <button
               type="button"
@@ -123,6 +146,9 @@ export default function SendQuoteModal({
 
         <DialogFooter className="mt-4">
           <Button variant="outline" onClick={onClose} className="font-body text-sm">Cancel</Button>
+          <Button variant="outline" onClick={() => { void onCopy(); }} disabled={saving} className="font-body text-sm">
+            <ClipboardCopy className="w-3.5 h-3.5 mr-1.5" /> Copy Quote (no contact info)
+          </Button>
           <Button onClick={() => onSend({ email, subject, message, sendEmail, sendSms, smsMessage })} disabled={saving || (!sendEmail && !sendSms)} className="font-body text-sm">
             <Send className="w-3.5 h-3.5 mr-1.5" />
             {saving ? "Sending…" : "Send Quote"}

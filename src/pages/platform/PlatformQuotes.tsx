@@ -10,11 +10,13 @@ import { InlineBadge } from "@/components/platform/BusinessSwitcher";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Search, Plus, FileText, DollarSign, Clock, Hash, Trash2,
   Send, CheckCircle, XCircle, History, ChevronRight, Receipt,
   Link2, MoreHorizontal, Copy, TrendingUp, Eye, Briefcase,
-  MessageSquare,
+  MessageSquare, ClipboardCopy,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -25,6 +27,36 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
+import { buildQuoteMessage, getQuotePublicUrl, copyTextToClipboard } from "@/lib/quote-message";
+
+/**
+ * Promote a draft quote to "sent" then build its customer-ready message.
+ * Shared by the list row action and the detail panel so there is exactly one
+ * implementation (mirrors the invoice Copy flow).
+ */
+export async function prepareQuoteCopy(
+  quote: PlatformQuote,
+  biz: { public_brand_name?: string; shortcode?: string } | undefined,
+): Promise<string | null> {
+  if (quote.status === "draft") {
+    const { error } = await supabase
+      .from("platform_quotes")
+      .update({ status: "sent", sent_at: new Date().toISOString() })
+      .eq("id", quote.id);
+    if (error) {
+      toast.error(`Could not mark the quote as sent — nothing copied. ${error.message}`);
+      return null;
+    }
+  }
+  return buildQuoteMessage({
+    quoteId: quote.id,
+    quoteNumber: quote.quote_number,
+    customerName: quote.customer_name,
+    total: quote.total,
+    businessName: biz?.public_brand_name,
+    shortcode: biz?.shortcode,
+  });
+}
 
 function QuoteStatusBadge({ status }: { status: string }) {
   const s = QUOTE_STATUSES.find(qs => qs.value === status);
@@ -68,6 +100,7 @@ export default function PlatformQuotes() {
   } = usePlatformQuotes(selectedBusinessId);
 
   const [selectedQuote, setSelectedQuote] = useState<PlatformQuote | null>(null);
+  const [manualCopyText, setManualCopyText] = useState<string | null>(null);
   const { createdTick } = useCreateSheets();
   useEffect(() => { refetch(); }, [createdTick, refetch]);
 
@@ -86,8 +119,8 @@ export default function PlatformQuotes() {
   const conversionRate = sentCount > 0 ? Math.round((wonCount / sentCount) * 100) : 0;
 
   const getQuoteUrl = (q: PlatformQuote) => {
-    const shortcode = q.quote_number?.split("-")[0]?.toLowerCase() || "gcp";
-    return `${window.location.origin}/quote/${shortcode}/${q.id}`;
+    const biz = getBiz(q.business_id) as { shortcode?: string } | undefined;
+    return getQuotePublicUrl({ quoteId: q.id, quoteNumber: q.quote_number, shortcode: biz?.shortcode });
   };
 
   const getPreviewUrl = (q: PlatformQuote) => {
@@ -102,6 +135,16 @@ export default function PlatformQuotes() {
   const copyQuoteLink = (q: PlatformQuote) => {
     navigator.clipboard.writeText(getQuoteUrl(q));
     toast.success("Quote link copied");
+  };
+
+  const copyQuoteMessage = async (q: PlatformQuote) => {
+    const biz = getBiz(q.business_id) as { public_brand_name?: string; shortcode?: string } | undefined;
+    const text = await prepareQuoteCopy(q, biz);
+    if (!text) return;
+    refetch();
+    const ok = await copyTextToClipboard(text);
+    if (ok) toast.success("Quote message copied");
+    else setManualCopyText(text);
   };
 
   const deleteQuote = async (q: PlatformQuote) => {
@@ -205,6 +248,9 @@ export default function PlatformQuotes() {
                             <DropdownMenuItem onClick={() => copyQuoteLink(q)} className="text-xs gap-2">
                               <Link2 className="w-3.5 h-3.5" /> Copy Link
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => copyQuoteMessage(q)} className="text-xs gap-2">
+                              <ClipboardCopy className="w-3.5 h-3.5" /> Copy Quote
+                            </DropdownMenuItem>
                             {isApproved && (
                               <DropdownMenuItem onClick={() => handleConvertToInvoice(q, businesses, refetch)} className="text-xs gap-2">
                                 <Receipt className="w-3.5 h-3.5" /> Convert to Invoice
@@ -234,10 +280,31 @@ export default function PlatformQuotes() {
               businesses={businesses}
               onUpdate={() => { refetch(); }}
               onClose={() => setSelectedQuote(null)}
+              onCopyQuoteMessage={() => copyQuoteMessage(selectedQuote)}
             />
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Manual-copy fallback for browsers without clipboard access */}
+      <Dialog open={!!manualCopyText} onOpenChange={(open) => { if (!open) setManualCopyText(null); }}>
+        <DialogContent className="ops-theme bg-background border-border max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-foreground">Copy quote message</DialogTitle>
+            <DialogDescription className="font-body text-xs text-muted-foreground">
+              Long-press or select all, then copy.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={manualCopyText || ""}
+            readOnly
+            rows={6}
+            className="bg-card border-border font-body text-sm text-foreground"
+            onFocus={(e) => e.currentTarget.select()}
+          />
+          <Button size="sm" className="font-body text-xs" onClick={() => setManualCopyText(null)}>Done</Button>
+        </DialogContent>
+      </Dialog>
     </PlatformLayout>
   );
 }
@@ -305,10 +372,10 @@ async function handleConvertToInvoice(quote: PlatformQuote, businesses: Array<Re
   }
 }
 
-function QuoteDetail({ quote, biz, businesses, onUpdate, onClose }: {
+function QuoteDetail({ quote, biz, businesses, onUpdate, onClose, onCopyQuoteMessage }: {
   quote: PlatformQuote; biz: Record<string, unknown> | undefined;
   businesses: Array<Record<string, unknown>>;
-  onUpdate: () => void; onClose: () => void;
+  onUpdate: () => void; onClose: () => void; onCopyQuoteMessage: () => void;
 }) {
   const { open: openSheet } = useCreateSheets();
   const [lineItems, setLineItems] = useState<QuoteLineItem[]>([]);
@@ -359,6 +426,10 @@ function QuoteDetail({ quote, biz, businesses, onUpdate, onClose }: {
       {/* Preview Quote button */}
       <Button size="sm" variant="outline" className="w-full gap-2 border-primary/30 text-primary text-xs mb-2" onClick={() => window.open(previewUrl, "_blank")}>
         <Eye className="w-3.5 h-3.5" /> Preview Quote (Customer View)
+      </Button>
+
+      <Button size="sm" variant="outline" className="w-full gap-2 border-border text-foreground text-xs" onClick={onCopyQuoteMessage}>
+        <ClipboardCopy className="w-3.5 h-3.5" /> Copy Quote (paste anywhere)
       </Button>
 
       <div className="flex items-center gap-2 flex-wrap">
