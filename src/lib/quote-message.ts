@@ -18,6 +18,11 @@ export interface QuoteMessageInput {
   businessName: string | null | undefined;
   shortcode: string | null | undefined;
   origin?: string;
+  /**
+   * When a recipient-name override is set (an HOA / condo association rather than a
+   * person), greet with the full name instead of splitting off a first name.
+   */
+  useFullName?: boolean;
 }
 
 const PLACEHOLDER = /^(pending|undefined|null|new|draft)$/i;
@@ -41,7 +46,8 @@ export function getQuotePublicUrl(input: {
 }
 
 export function buildQuoteMessage(input: QuoteMessageInput): string {
-  const firstName = (input.customerName || "there").trim().split(/\s+/)[0];
+  const full = (input.customerName || "there").trim();
+  const firstName = input.useFullName ? full : full.split(/\s+/)[0];
   const totalStr = `$${Number(input.total || 0).toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -53,7 +59,8 @@ export function buildQuoteMessage(input: QuoteMessageInput): string {
 
 /** Default customer SMS for a saved quote (includes the real public link). */
 export function buildQuoteSms(input: QuoteMessageInput): string {
-  const firstName = (input.customerName || "there").trim().split(/\s+/)[0];
+  const full = (input.customerName || "there").trim();
+  const firstName = input.useFullName ? full : full.split(/\s+/)[0];
   const totalStr = `$${Number(input.total || 0).toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,

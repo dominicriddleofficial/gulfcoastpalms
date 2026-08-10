@@ -50,6 +50,8 @@ export interface PlatformQuote {
   updated_at: string;
   // joined
   customer_name?: string;
+  /** Raw customer record name (fallback shown when no override is set). */
+  customer_display_name?: string;
   property_address?: string;
 }
 
@@ -100,6 +102,7 @@ export async function fetchPlatformQuotes(
   return (data as any[]).map(q => ({
     ...q,
     customer_name: q.billing_name || customerMap.get(q.customer_id) || "Unknown",
+    customer_display_name: customerMap.get(q.customer_id) || "",
   })) as PlatformQuote[];
 }
 

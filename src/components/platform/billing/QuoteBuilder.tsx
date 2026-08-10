@@ -384,7 +384,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
 
       // Only mark sent when a channel actually succeeded.
       if (anySuccess) {
-        await supabase.from("platform_quotes").update({ status: "sent", sent_at: new Date().toISOString() }).eq("id", saved.id);
+        await supabase.from("platform_quotes").update({ status: "sent", sent_at: new Date().toISOString(), billing_name: billingNameToSave }).eq("id", saved.id);
       }
 
       setSaving(false);
@@ -403,7 +403,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
     setSaving(true);
     const { error: statusErr } = await supabase
       .from("platform_quotes")
-      .update({ status: "sent", sent_at: new Date().toISOString() })
+      .update({ status: "sent", sent_at: new Date().toISOString(), billing_name: billingNameToSave })
       .eq("id", saved.id);
     if (statusErr) {
       toast.error(`Could not mark the quote as sent — nothing copied. ${statusErr.message}`);
@@ -416,6 +416,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
         quoteId: saved.id,
         quoteNumber: saved.quote_number,
         customerName: displayToName,
+        useFullName: !!billingNameToSave,
         total,
         businessName: activeBiz?.public_brand_name,
         shortcode: activeBiz?.shortcode,
