@@ -12,7 +12,7 @@ export interface Article {
   sections: { heading?: string; paragraphs: string[] }[];
 }
 
-const articles: Article[] = [
+export const articles: Article[] = [
   {
     slug: "how-often-trim-palm-trees-florida",
     title: "How Often Should You Trim Palm Trees in Florida?",
