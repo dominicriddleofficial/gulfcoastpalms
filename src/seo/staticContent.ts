@@ -61,6 +61,13 @@ const literalContent: Record<string, StaticPageContent> = {
         heading: "Palm Tree Service Areas",
         list: locations.map((l) => `Palm tree trimming in ${l.city}, ${l.state}`),
       },
+      {
+        heading: "Frequently Asked Questions",
+        paragraphs: [
+          "Everything you need to know about our palm tree services across the Gulf Coast.",
+          ...homeFaqs.flatMap((f) => [f.q, f.a]),
+        ],
+      },
     ],
   },
   "/services": {
@@ -69,7 +76,7 @@ const literalContent: Record<string, StaticPageContent> = {
       "From palm tree trimming and diamond cutting to installation and safe removals — we specialize exclusively in palm trees across the Emerald Coast.",
     blocks: servicesData.map((s) => ({
       heading: s.title,
-      paragraphs: [`${s.introParagraphs[0].slice(0, 150)}…`],
+      paragraphs: [s.introParagraphs[0]],
     })),
   },
   "/about": {
