@@ -21,6 +21,7 @@ import { locations } from "@/data/locations";
 import { palmTypes } from "@/data/palmTypes";
 import { palmGuides } from "@/data/palmGuides";
 import { articles } from "@/data/learnArticles";
+import { homeFaqs } from "@/data/homeFaq";
 
 export interface StaticBlock {
   heading?: string;
