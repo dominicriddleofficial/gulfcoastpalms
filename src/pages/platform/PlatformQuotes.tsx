@@ -16,7 +16,7 @@ import {
   Search, Plus, FileText, DollarSign, Clock, Hash, Trash2,
   Send, CheckCircle, XCircle, History, ChevronRight, Receipt,
   Link2, MoreHorizontal, Copy, TrendingUp, Eye, Briefcase,
-  MessageSquare, ClipboardCopy,
+  MessageSquare, ClipboardCopy, Pencil,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -383,6 +383,33 @@ function QuoteDetail({ quote, biz, businesses, onUpdate, onClose, onCopyQuoteMes
   const [showVersions, setShowVersions] = useState(false);
   const [loadingItems, setLoadingItems] = useState(true);
   const [converting, setConverting] = useState(false);
+  /**
+   * Recipient ("To") name override — mirrors the invoice Bill To pencil control in
+   * InvoiceBuilder.tsx. Writes platform_quotes.billing_name only; the customer
+   * record is never modified. Empty falls back to the customer's display_name.
+   */
+  const customerRecordName = quote.customer_display_name || "";
+  const [editingName, setEditingName] = useState(false);
+  const [recipientName, setRecipientName] = useState(quote.billing_name || quote.customer_name || "");
+  const [savingName, setSavingName] = useState(false);
+
+  useEffect(() => {
+    setRecipientName(quote.billing_name || quote.customer_name || "");
+    setEditingName(false);
+  }, [quote.id, quote.billing_name, quote.customer_name]);
+
+  const saveRecipientName = async () => {
+    setEditingName(false);
+    const typed = recipientName.trim();
+    const next = typed && typed !== customerRecordName ? typed : null;
+    if ((quote.billing_name || null) === next) return;
+    setSavingName(true);
+    const { error } = await supabase.from("platform_quotes").update({ billing_name: next }).eq("id", quote.id);
+    setSavingName(false);
+    if (error) { toast.error(`Could not save the name — ${error.message}`); return; }
+    toast.success(next ? "Recipient name updated" : "Recipient name reset to customer");
+    onUpdate();
+  };
 
   useEffect(() => {
     setLoadingItems(true);
@@ -420,7 +447,39 @@ function QuoteDetail({ quote, biz, businesses, onUpdate, onClose, onCopyQuoteMes
           {biz && <InlineBadge shortcode={biz.shortcode as string} color={biz.default_business_color as string | undefined} />}
           <SheetTitle className="font-mono text-lg text-foreground">{quote.quote_number}</SheetTitle>
         </div>
-        <p className="font-body text-sm text-muted-foreground">{quote.customer_name}</p>
+        <div className="space-y-1">
+          <p className="font-body text-[10px] font-medium text-muted-foreground uppercase tracking-wider">To</p>
+          {editingName ? (
+            <Input
+              autoFocus
+              value={recipientName}
+              onChange={(e) => setRecipientName(e.target.value)}
+              onBlur={() => { void saveRecipientName(); }}
+              onKeyDown={(e) => { if (e.key === "Enter") { void saveRecipientName(); } }}
+              placeholder={customerRecordName || "Recipient name"}
+              className="bg-secondary/50 border-border font-body text-sm"
+              data-testid="quote-detail-recipient-name-input"
+            />
+          ) : (
+            <button
+              type="button"
+              data-testid="quote-detail-recipient-name-edit"
+              onClick={() => setEditingName(true)}
+              className="flex items-center gap-2 text-left group"
+              disabled={savingName}
+            >
+              <span className="font-body text-sm font-semibold text-foreground">
+                {quote.billing_name || quote.customer_name}
+              </span>
+              <Pencil className="w-3 h-3 text-muted-foreground group-hover:text-primary shrink-0" />
+            </button>
+          )}
+          <p className="font-body text-[10px] text-muted-foreground">
+            {quote.billing_name && customerRecordName
+              ? `Override — customer record stays ${customerRecordName}`
+              : "Saved with this quote — customer record unchanged"}
+          </p>
+        </div>
       </SheetHeader>
 
       {/* Preview Quote button */}
