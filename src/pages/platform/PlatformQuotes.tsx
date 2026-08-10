@@ -52,6 +52,7 @@ export async function prepareQuoteCopy(
     quoteId: quote.id,
     quoteNumber: quote.quote_number,
     customerName: quote.customer_name,
+    useFullName: !!quote.billing_name,
     total: quote.total,
     businessName: biz?.public_brand_name,
     shortcode: biz?.shortcode,
