@@ -307,8 +307,23 @@ function outPathFor(routePath) {
   return path.join(distDir, rel, "index.html");
 }
 
+/**
+ * Make this script idempotent: strip anything a previous run injected so
+ * re-running against an already-prerendered dist/index.html can never nest
+ * or leak the homepage copy into other routes.
+ */
+function resetTemplate(html) {
+  return html
+    .replace(/<script>\(function\(\)\{try\{var known=[\s\S]*?<\/script>/g, "")
+    .replace(/<div id="root">[\s\S]*?<\/div>\s*(?=<script)/i, '<div id="root"></div>\n    ')
+    .replace(/<div id="root">\s*<div id="seo-static-content"[\s\S]*?<\/div>\s*<\/div>/i, '<div id="root"></div>');
+}
+
 async function main() {
-  const template = await fs.readFile(indexPath, "utf8");
+  const template = resetTemplate(await fs.readFile(indexPath, "utf8"));
+  if (!/<div id="root">\s*<\/div>/i.test(template)) {
+    throw new Error("index.html no longer has an empty <div id=\"root\"></div> to inject into");
+  }
   const staticContent = await loadStaticContent();
   const meta = rawRoutes.map((r) => ({
     path: r.path,
