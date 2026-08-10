@@ -238,6 +238,18 @@ const literalContent: Record<string, StaticPageContent> = {
       "We've received your request and will get back to you shortly. Our team typically responds within 15 minutes during business hours.",
     blocks: [],
   },
+  "/services/tree-trimming-removal": {
+    h1: "Tree Trimming & Removal — NW Florida",
+    subheading:
+      "Expert trimming and safe removal for oaks, pines, crape myrtles, and more. Licensed, insured, and serving the entire Emerald Coast.",
+    blocks: [],
+  },
+  "/services/landscaping-services": {
+    h1: "Professional Landscaping Services",
+    subheading:
+      "Hedge trimming, mulch, pine straw, sod installation, and bed cleanups across Pensacola, Gulf Breeze, Navarre, Fort Walton Beach, Destin, and the entire Emerald Coast.",
+    blocks: [],
+  },
 };
 
 export function buildStaticContent(): Record<string, StaticPageContent> {
