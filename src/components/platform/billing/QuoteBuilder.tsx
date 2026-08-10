@@ -638,16 +638,17 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
 
             {/* Actions */}
             <section className="flex flex-col sm:flex-row gap-2 pb-8">
-              <Button variant="outline" className="flex-1 font-body text-sm" disabled={saving} onClick={() => handleSave(false)}>
+              <Button variant="outline" className="flex-1 font-body text-sm" disabled={saving} onClick={() => { void handleSaveDraft(); }}>
                 <Save className="w-4 h-4 mr-1.5" /> Save as Draft
               </Button>
               <Button className="flex-1 font-body text-sm" disabled={saving}
                 onClick={() => {
                   if (!customerId) { toast.error("Please select a customer"); return; }
                   if (lineItems.filter(l => l.description.trim()).length === 0) { toast.error("Add at least one line item"); return; }
-                  setShowSendModal(true);
+                  // Save first — the send sheet needs the real quote link.
+                  void openSendModal();
                 }}>
-                <Send className="w-4 h-4 mr-1.5" /> Send Quote
+                <Send className="w-4 h-4 mr-1.5" /> {saving && !showSendModal ? "Saving…" : "Send Quote"}
               </Button>
             </section>
           </div>
@@ -688,16 +689,93 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
       </Sheet>
 
       {/* Send Modal */}
-      {showSendModal && (
+      {showSendModal && savedQuote && (
         <SendQuoteModal
           customerName={customerName} customerEmail={customerEmail} customerPhone={customerPhone}
-          quoteNumber={quoteNumber} validUntil={validUntil}
+          quoteNumber={savedQuote.quote_number} validUntil={validUntil}
           businessName={activeBiz?.public_brand_name || ""} shortcode={activeBiz?.shortcode || "gcp"}
-          total={total} quoteUrl={`${window.location.origin}/quote/${activeBiz?.shortcode || "gcp"}/PENDING`}
-          onSend={async (data) => { await handleSave(true, data); setShowSendModal(false); }}
+          total={total}
+          quoteUrl={getQuotePublicUrl({ quoteId: savedQuote.id, quoteNumber: savedQuote.quote_number, shortcode: activeBiz?.shortcode })}
+          onSend={async (data) => { const ok = await sendQuote(savedQuote, data); if (ok) setShowSendModal(false); }}
+          onCopy={handleSaveAndCopy}
           onClose={() => setShowSendModal(false)} saving={saving}
         />
       )}
+
+      {/* Post-save copy sheet — iOS-safe: the clipboard write happens inside a
+          fresh tap on "Copy message", never after an awaited save. */}
+      <Sheet
+        open={!!manualCopyText}
+        onOpenChange={(open) => {
+          if (!open) {
+            const wasOpen = !!manualCopyText;
+            setManualCopyText(null);
+            setSavedCopyQuoteNumber(null);
+            if (wasOpen) onCreated();
+          }
+        }}
+      >
+        <SheetContent side="bottom" className="ops-theme bg-background border-border max-w-md mx-auto rounded-t-2xl">
+          <SheetHeader>
+            <SheetTitle className="font-display text-foreground">
+              {savedCopyQuoteNumber ? `Quote ${savedCopyQuoteNumber} saved` : "Copy quote message"}
+            </SheetTitle>
+          </SheetHeader>
+          <p className="font-body text-xs text-muted-foreground mt-1" data-testid="quote-copy-sheet-hint">
+            Tap “Copy message”, then paste anywhere (Messenger, email, notes).
+          </p>
+          <Textarea
+            data-testid="copy-quote-textarea"
+            value={manualCopyText || ""}
+            readOnly
+            rows={6}
+            className="bg-card border-border font-body text-sm text-foreground mt-3"
+            onFocus={(e) => e.currentTarget.select()}
+          />
+          <div className="flex gap-2 mt-3">
+            <Button
+              data-testid="copy-quote-copy-btn"
+              className="flex-1 font-body text-sm"
+              onClick={async () => {
+                const text = manualCopyText || "";
+                try {
+                  if (navigator?.clipboard?.writeText) {
+                    await navigator.clipboard.writeText(text);
+                    toast.success("Copied — paste it anywhere");
+                    return;
+                  }
+                } catch {
+                  /* fall through */
+                }
+                try {
+                  const ta = document.createElement("textarea");
+                  ta.value = text;
+                  ta.style.position = "fixed";
+                  ta.style.opacity = "0";
+                  document.body.appendChild(ta);
+                  ta.focus();
+                  ta.select();
+                  const ok = document.execCommand("copy");
+                  document.body.removeChild(ta);
+                  if (ok) toast.success("Copied — paste it anywhere");
+                  else toast.error("Couldn't copy — long-press the message to copy manually");
+                } catch {
+                  toast.error("Couldn't copy — long-press the message to copy manually");
+                }
+              }}
+            >
+              Copy message
+            </Button>
+            <Button
+              variant="outline"
+              className="font-body text-sm"
+              onClick={() => { setManualCopyText(null); setSavedCopyQuoteNumber(null); onCreated(); }}
+            >
+              Done
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </>
   );
 }
