@@ -6,8 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Send, Mail, Smartphone, ClipboardCopy, Link2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { buildQuoteSms } from "@/lib/quote-message";
-
 interface SendQuoteModalProps {
   customerName: string;
   customerEmail: string;
@@ -37,9 +35,7 @@ export default function SendQuoteModal({
   const [sendEmail, setSendEmail] = useState(true);
   const [sendSms, setSendSms] = useState(false);
   const [smsMessage, setSmsMessage] = useState(
-    buildQuoteSms({ quoteId: "x", quoteNumber, customerName, total, businessName, shortcode })
-      // the id above is unused: the real, already-saved link is substituted below
-      .replace(/View and approve here: \S+/, `View and approve here: ${quoteUrl}`)
+    `Hi ${customerName}, ${businessName} has sent you a quote for $${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}. View and approve here: ${quoteUrl} Reply STOP to unsubscribe.`
   );
 
   return (
@@ -150,6 +146,9 @@ export default function SendQuoteModal({
 
         <DialogFooter className="mt-4">
           <Button variant="outline" onClick={onClose} className="font-body text-sm">Cancel</Button>
+          <Button variant="outline" onClick={() => { void onCopy(); }} disabled={saving} className="font-body text-sm">
+            <ClipboardCopy className="w-3.5 h-3.5 mr-1.5" /> Copy Quote (no contact info)
+          </Button>
           <Button onClick={() => onSend({ email, subject, message, sendEmail, sendSms, smsMessage })} disabled={saving || (!sendEmail && !sendSms)} className="font-body text-sm">
             <Send className="w-3.5 h-3.5 mr-1.5" />
             {saving ? "Sending…" : "Send Quote"}
