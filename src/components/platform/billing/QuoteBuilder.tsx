@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Search, Plus, X, Calendar, User, Building2, FileText,
-  Eye, Save, Send, Package,
+  Eye, Save, Send, Package, Pencil,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -68,6 +68,10 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  /** Recipient ("To") name override saved on the quote only — mirrors the
+   *  invoice Bill To override. The customer record is never modified. */
+  const [recipientName, setRecipientName] = useState("");
+  const [editingRecipientName, setEditingRecipientName] = useState(false);
   const [quoteNumber, setQuoteNumber] = useState("Generating…");
   const [quoteDate, setQuoteDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [validUntil, setValidUntil] = useState(format(addDays(new Date(), 30), "yyyy-MM-dd"));
@@ -180,6 +184,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   const selectCustomer = (c: CustomerResult) => {
     setCustomerId(c.id); setCustomerSource((c.source as "platform" | "jobber") || "platform");
     setCustomerName(c.display_name); setCustomerEmail(c.email || ""); setCustomerPhone(c.phone || "");
+    setRecipientName(c.display_name); setEditingRecipientName(false);
     setShowCustomerSearch(false); setCustomerSearch("");
   };
 
@@ -187,10 +192,15 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
     setValidUntil(format(addDays(new Date(quoteDate), days), "yyyy-MM-dd"));
   };
 
+  /** The name the customer actually sees. Override wins, customer record is fallback. */
+  const displayToName = recipientName.trim() || customerName;
+  /** Only persist an override when it differs from the customer's own name. */
+  const billingNameToSave = displayToName && displayToName !== customerName ? displayToName : null;
+
   // Preview data
   const previewData = useMemo(() => ({
     quoteNumber, quoteDate, validUntil,
-    customerName: customerName || "Customer Name", customerEmail, customerPhone,
+    customerName: displayToName || "Customer Name", customerEmail, customerPhone,
     lineItems: lineItems.filter(l => l.description.trim()).map(l => ({
       description: l.description, quantity: Number(l.qty) || 1,
       unit_price: Number(l.price) || 0, line_total: (Number(l.qty) || 1) * (Number(l.price) || 0),
@@ -199,7 +209,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
     depositRequired: depositEnabled, depositAmount, scopeOfWork, publicNotes,
     businessName: activeBiz?.public_brand_name || "", shortcode: activeBiz?.shortcode || "gcp",
     isDraft: true, logoUrl,
-  }), [quoteNumber, quoteDate, validUntil, customerName, customerEmail, customerPhone, lineItems, subtotal, taxEnabled, taxRate, taxAmount, discountAmount, total, depositEnabled, depositAmount, scopeOfWork, publicNotes, activeBiz, logoUrl]);
+  }), [quoteNumber, quoteDate, validUntil, displayToName, customerEmail, customerPhone, lineItems, subtotal, taxEnabled, taxRate, taxAmount, discountAmount, total, depositEnabled, depositAmount, scopeOfWork, publicNotes, activeBiz, logoUrl]);
 
   /**
    * Persist the quote (draft) and return the saved row. The quote MUST exist
@@ -233,6 +243,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
 
     const { data: quote, error } = await supabase.from("platform_quotes").insert({
       business_id: bizId, quote_number: quoteNumber, customer_id: resolvedCustomerId,
+      billing_name: billingNameToSave,
       status: "draft", subtotal, discount_total: discountAmount,
       tax_rate: taxEnabled ? Number(taxRate) : 0, tax_total: taxAmount, total,
       deposit_required_flag: depositEnabled, deposit_type: depositType === "%" ? "percentage" : "fixed",
@@ -307,7 +318,19 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
     sendData: { email: string; subject: string; message: string; sendEmail: boolean; sendSms: boolean; smsMessage?: string },
   ) => {
       setSaving(true);
-      const quoteUrl = getQuotePublicUrl({ quoteId: saved.id, quoteNumber: saved.quote_number, shortcode: activeBiz?.shortcode });
+      let quoteUrl: string;
+      try {
+        quoteUrl = getQuotePublicUrl({ quoteId: saved.id, quoteNumber: saved.quote_number, shortcode: activeBiz?.shortcode });
+      } catch {
+        toast.error("The quote link isn't ready yet — nothing was sent. Save the quote and try again.");
+        setSaving(false);
+        return false;
+      }
+      if (/\/(pending|undefined|null)\b/i.test(quoteUrl)) {
+        toast.error("Refusing to send: the quote link is incomplete.");
+        setSaving(false);
+        return false;
+      }
       let anySuccess = false;
 
       // Send email
@@ -315,7 +338,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
         try {
           const { data: fnRes, error: fnErr } = await supabase.functions.invoke("send-quote-email", {
             body: {
-              quoteId: saved.id, recipientEmail: sendData.email, recipientName: customerName,
+              quoteId: saved.id, recipientEmail: sendData.email, recipientName: displayToName,
               subject: sendData.subject, message: sendData.message,
               businessName: activeBiz?.public_brand_name || "", quoteNumber: saved.quote_number,
               quoteUrl,
@@ -324,7 +347,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
           });
           const functionError = fnErr?.message || fnRes?.error;
           if (functionError) { toast.error(`Quote created but email failed: ${functionError}`); }
-          else { anySuccess = true; toast.success(`Quote sent to ${customerName} at ${sendData.email}`); }
+          else { anySuccess = true; toast.success(`Quote sent to ${displayToName} at ${sendData.email}`); }
         } catch (e: unknown) {
           const msg = e instanceof Error ? e.message : "Unknown error";
           toast.error(`Quote created but email failed: ${msg}`);
@@ -339,8 +362,8 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
           try {
             const smsMessage = sendData.smsMessage?.trim()
               ? sendData.smsMessage
-              : `Hi ${customerName}, ${activeBiz?.public_brand_name || "Gulf Coast Palms"} has sent you a quote for $${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}. View and approve here: ${quoteUrl} Reply STOP to unsubscribe.`;
-            console.log("[SMS] sending quote text", { to: customerPhone, customerName, quoteUrl });
+              : `Hi ${displayToName}, ${activeBiz?.public_brand_name || "Gulf Coast Palms"} has sent you a quote for $${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}. View and approve here: ${quoteUrl} Reply STOP to unsubscribe.`;
+            console.log("[SMS] sending quote text", { to: customerPhone, name: displayToName, quoteUrl });
             const { error: smsErr } = await supabase.functions.invoke("send-sms", {
               body: { to: customerPhone, message: smsMessage },
             });
@@ -387,14 +410,21 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
       setSaving(false);
       return;
     }
-    const message = buildQuoteMessage({
-      quoteId: saved.id,
-      quoteNumber: saved.quote_number,
-      customerName,
-      total,
-      businessName: activeBiz?.public_brand_name,
-      shortcode: activeBiz?.shortcode,
-    });
+    let message: string;
+    try {
+      message = buildQuoteMessage({
+        quoteId: saved.id,
+        quoteNumber: saved.quote_number,
+        customerName: displayToName,
+        total,
+        businessName: activeBiz?.public_brand_name,
+        shortcode: activeBiz?.shortcode,
+      });
+    } catch {
+      toast.error("The quote link isn't ready yet — nothing copied.");
+      setSaving(false);
+      return;
+    }
     setSaving(false);
     setShowSendModal(false);
     setSavedCopyQuoteNumber(saved.quote_number);
@@ -445,12 +475,38 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                 <div className="flex items-center justify-between">
                   <p className="font-body text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Prepared For</p>
                   {customerId && (
-                    <button className="font-body text-[10px] text-primary hover:underline" onClick={() => { setCustomerId(null); setCustomerName(""); setShowCustomerSearch(true); }}>Change</button>
+                    <button className="font-body text-[10px] text-primary hover:underline" onClick={() => { setCustomerId(null); setCustomerName(""); setRecipientName(""); setEditingRecipientName(false); setShowCustomerSearch(true); }}>Change</button>
                   )}
                 </div>
                 {customerId ? (
                   <div>
-                    <p className="font-body text-sm font-semibold text-foreground">{customerName}</p>
+                    <div className="space-y-1">
+                      <label className="font-body text-[10px] font-medium text-muted-foreground uppercase tracking-wider">To</label>
+                      {editingRecipientName ? (
+                        <Input
+                          autoFocus
+                          value={recipientName}
+                          onChange={(e) => setRecipientName(e.target.value)}
+                          onBlur={() => setEditingRecipientName(false)}
+                          placeholder={customerName}
+                          className="bg-secondary/50 border-border font-body text-sm"
+                          data-testid="quote-recipient-name-input"
+                        />
+                      ) : (
+                        <button
+                          type="button"
+                          data-testid="quote-recipient-name-edit"
+                          onClick={() => setEditingRecipientName(true)}
+                          className="w-full flex items-center gap-2 text-left group"
+                        >
+                          <span className="font-body text-sm font-semibold text-foreground">{displayToName}</span>
+                          <Pencil className="w-3 h-3 text-muted-foreground group-hover:text-primary shrink-0" />
+                        </button>
+                      )}
+                      <p className="font-body text-[10px] text-muted-foreground">
+                        Saved with this quote — customer record unchanged
+                      </p>
+                    </div>
                     {customerEmail && <p className="font-body text-xs text-muted-foreground">{customerEmail}</p>}
                     {customerPhone && <p className="font-body text-xs text-muted-foreground">{customerPhone}</p>}
                   </div>
@@ -691,7 +747,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
       {/* Send Modal */}
       {showSendModal && savedQuote && (
         <SendQuoteModal
-          customerName={customerName} customerEmail={customerEmail} customerPhone={customerPhone}
+          customerName={displayToName} customerEmail={customerEmail} customerPhone={customerPhone}
           quoteNumber={savedQuote.quote_number} validUntil={validUntil}
           businessName={activeBiz?.public_brand_name || ""} shortcode={activeBiz?.shortcode || "gcp"}
           total={total}

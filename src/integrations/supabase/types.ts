@@ -4561,6 +4561,7 @@ export type Database = {
           approval_sms_sent_at: string | null
           approved_at: string | null
           approved_by: string | null
+          billing_name: string | null
           business_id: string
           change_request_notes: string | null
           change_requested_at: string | null
@@ -4605,6 +4606,7 @@ export type Database = {
           approval_sms_sent_at?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          billing_name?: string | null
           business_id: string
           change_request_notes?: string | null
           change_requested_at?: string | null
@@ -4649,6 +4651,7 @@ export type Database = {
           approval_sms_sent_at?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          billing_name?: string | null
           business_id?: string
           change_request_notes?: string | null
           change_requested_at?: string | null

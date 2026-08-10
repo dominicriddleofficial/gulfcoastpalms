@@ -44,6 +44,8 @@ export interface PlatformQuote {
   public_notes: string | null;
   scope_of_work?: string | null;
   version_number: number;
+  /** Recipient ("To") name override saved on the quote. Customer record untouched. */
+  billing_name?: string | null;
   created_at: string;
   updated_at: string;
   // joined
@@ -97,7 +99,7 @@ export async function fetchPlatformQuotes(
 
   return (data as any[]).map(q => ({
     ...q,
-    customer_name: customerMap.get(q.customer_id) || "Unknown",
+    customer_name: q.billing_name || customerMap.get(q.customer_id) || "Unknown",
   })) as PlatformQuote[];
 }
 

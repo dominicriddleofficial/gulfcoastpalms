@@ -46,6 +46,9 @@ export default function SendQuoteModal({
         </DialogHeader>
 
         <div className="space-y-4">
+          <p className="font-body text-xs text-muted-foreground">
+            To: <span className="font-semibold text-foreground">{customerName}</span>
+          </p>
           {/* Real, saved public quote link — visible before sending so a broken
               link can never go out unnoticed. */}
           <div className="bg-card border border-border rounded-lg p-2.5">

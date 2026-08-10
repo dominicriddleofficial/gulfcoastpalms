@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
     // Fetch quote
     const { data: quote, error: qErr } = await supabase
       .from("platform_quotes")
-      .select("id, quote_number, total, subtotal, tax_rate, tax_total, status, valid_until, public_notes, scope_of_work, created_at, customer_id, property_id, business_id, deposit_required_flag, deposit_amount_calculated")
+      .select("id, quote_number, billing_name, total, subtotal, tax_rate, tax_total, status, valid_until, public_notes, scope_of_work, created_at, customer_id, property_id, business_id, deposit_required_flag, deposit_amount_calculated")
       .eq("id", quote_id)
       .single();
 
@@ -103,6 +103,10 @@ Deno.serve(async (req) => {
         customerPhone = cust.phone;
       }
     }
+
+    // Recipient name override saved on the quote — the customer record is never changed.
+    const billingName = (quote as { billing_name?: string | null }).billing_name || null;
+    if (billingName) customerName = billingName;
 
     let customerAddress: string | null = null;
     if (quote.property_id) {
@@ -144,6 +148,7 @@ Deno.serve(async (req) => {
       public_notes: quote.public_notes,
       scope_of_work: quote.scope_of_work,
       customer_name: customerName,
+      billing_name: billingName,
       customer_email: customerEmail,
       customer_phone: customerPhone,
       customer_address: customerAddress,
