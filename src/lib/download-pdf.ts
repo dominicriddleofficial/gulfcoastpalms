@@ -4,12 +4,21 @@
  */
 export async function downloadElementAsPdf(
   element: HTMLElement | null,
-  filename: string
+  filename: string,
+  options?: {
+    /**
+     * CSS selector for elements that must be skipped while rasterizing.
+     * html2canvas does not evaluate `@media print`, so print-only hiding
+     * (e.g. `.no-print`) has to be applied here as well.
+     */
+    ignoreSelector?: string;
+  }
 ): Promise<void> {
   if (!element) return;
   const mod = await import("html2pdf.js");
   const html2pdf = (mod as { default?: unknown }).default ?? mod;
   const safeFilename = filename.endsWith(".pdf") ? filename : `${filename}.pdf`;
+  const ignoreSelector = options?.ignoreSelector;
   const opt = {
     margin: [8, 8, 8, 8] as [number, number, number, number],
     filename: safeFilename,
@@ -19,6 +28,12 @@ export async function downloadElementAsPdf(
       useCORS: true,
       backgroundColor: "#0a0f0a",
       logging: false,
+      ...(ignoreSelector
+        ? {
+            ignoreElements: (el: Element) =>
+              typeof el.matches === "function" && el.matches(ignoreSelector),
+          }
+        : {}),
     },
     jsPDF: { unit: "mm" as const, format: "a4", orientation: "portrait" as const },
     pagebreak: { mode: ["css", "legacy"] },

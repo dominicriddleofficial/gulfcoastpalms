@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
     // Fetch quote
     const { data: quote, error: qErr } = await supabase
       .from("platform_quotes")
-      .select("id, quote_number, billing_name, total, subtotal, tax_rate, tax_total, status, valid_until, public_notes, scope_of_work, created_at, customer_id, property_id, business_id, deposit_required_flag, deposit_amount_calculated")
+      .select("id, quote_number, billing_name, total, subtotal, tax_rate, tax_total, status, valid_until, public_notes, scope_of_work, created_at, customer_id, property_id, business_id, deposit_required_flag, deposit_amount_calculated, approved_at, approved_by, accepted_at")
       .eq("id", quote_id)
       .single();
 
@@ -145,6 +145,8 @@ Deno.serve(async (req) => {
       status: quote.status,
       valid_until: quote.valid_until,
       created_at: quote.created_at,
+      approved_at: quote.approved_at || quote.accepted_at || null,
+      approved_by: quote.approved_by || null,
       public_notes: quote.public_notes,
       scope_of_work: quote.scope_of_work,
       customer_name: customerName,
