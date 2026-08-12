@@ -48,6 +48,8 @@ type QuoteData = {
   business_phone?: string;
   business_email?: string;
   approval_token?: string;
+  approved_at?: string | null;
+  approved_by?: string | null;
 };
 
 const fmt = (n: number) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -362,7 +364,10 @@ export default function ViewQuote() {
           </button>
           <button onClick={async () => {
             try {
-              await downloadElementAsPdf(quoteCardRef.current, `Quote-${quote.quote_number}.pdf`);
+              await downloadElementAsPdf(quoteCardRef.current, `Quote-${quote.quote_number}.pdf`, {
+                // html2canvas ignores @media print, so skip print-hidden nodes explicitly
+                ignoreSelector: ".no-print",
+              });
             } catch (err) {
               console.error("PDF download failed", err);
               toast({ title: "Could not generate PDF", variant: "destructive" });
@@ -408,7 +413,7 @@ export default function ViewQuote() {
                 <div style={{ textAlign: "right", flexShrink: 0 }}>
                   <p style={{ fontFamily: "monospace", fontSize: 14, fontWeight: 600, color: "#fff" }}>{quote.quote_number}</p>
                   <p style={{ fontSize: 12, color: labelColor, marginTop: 2 }}>{quote.created_at ? new Date(quote.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : ""}</p>
-                  <div style={{ display: "inline-block", marginTop: 6, padding: "2px 10px", borderRadius: 20, backgroundColor: badge.bg, color: badge.color, border: `1px solid ${badge.border}`, fontSize: 10, fontWeight: 600 }}>
+                  <div className="no-print" style={{ display: "inline-block", marginTop: 6, padding: "2px 10px", borderRadius: 20, backgroundColor: badge.bg, color: badge.color, border: `1px solid ${badge.border}`, fontSize: 10, fontWeight: 600 }}>
                     {badge.label}
                   </div>
                 </div>
@@ -479,9 +484,9 @@ export default function ViewQuote() {
                     <span style={{ color: "#fff" }}>${fmt(quote.tax_total)}</span>
                   </div>
                 )}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", paddingTop: 8, borderTop: `1px solid ${cardBorder}` }}>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>Grand Total</span>
-                  <span style={{ fontSize: 28, fontWeight: 700, color: accent }}>${fmt(grandTotal)}</span>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginTop: 8, paddingTop: 16, paddingBottom: 6, borderTop: `1px solid ${cardBorder}`, lineHeight: 1.5 }}>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: "#fff", lineHeight: 1.5 }}>Grand Total</span>
+                  <span style={{ fontSize: 28, fontWeight: 700, color: accent, lineHeight: 1.5, display: "inline-block" }}>${fmt(grandTotal)}</span>
                 </div>
               </div>
             </div>
