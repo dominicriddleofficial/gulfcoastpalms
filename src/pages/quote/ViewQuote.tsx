@@ -662,6 +662,27 @@ export default function ViewQuote() {
               </div>
             )}
 
+            {/* ── APPROVAL PROOF (prints; shows instead of the interactive block once signed) ── */}
+            {isApproved && (
+              <div style={{ padding: "0 20px 24px" }}>
+                <div style={{ background: "#0f0f0f", border: `1px solid ${cardBorder}`, borderRadius: 12, padding: 20 }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: labelColor }}>SIGNATURE</span>
+                  <p style={{ fontFamily: "'Brush Script MT', cursive", fontSize: 26, color: "#fff", marginTop: 10, lineHeight: 1.6 }}>
+                    {quote.approved_by || quote.customer_name}
+                  </p>
+                  <div style={{ borderTop: `1px solid ${cardBorder}`, marginTop: 10, paddingTop: 10 }}>
+                    <p style={{ fontSize: 12, color: accent, fontWeight: 600, lineHeight: 1.6 }}>
+                      Approved{quote.approved_at ? ` ${new Date(quote.approved_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}` : ""}
+                      {quote.approved_by ? ` · ${quote.approved_by}` : ""}
+                    </p>
+                    <p style={{ fontSize: 11, color: "#71717a", marginTop: 4, lineHeight: 1.6 }}>
+                      Scope of work, pricing and payment terms accepted.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Validity notice */}
             {quote.valid_until && !isApproved && (
               <div style={{ padding: "0 20px 20px" }}>
