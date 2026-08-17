@@ -152,6 +152,7 @@ export default function PlatformCrew() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<CrewJob | null>(null);
   const [hydratedFromCache, setHydratedFromCache] = useState(false);
+  const { offline, writeDisabled } = useWriteGuard();
 
   const today = useMemo(() => startOfToday(), []);
   const businessId = auth.selectedBusinessId;
@@ -185,9 +186,9 @@ export default function PlatformCrew() {
     async function loadJobs() {
       setLoading(true);
       const start = toLocalDateKey(today);
-      const end = toLocalDateKey(addDays(today, 7));
+      const end = toLocalDateKey(addLocalDays(today, UPCOMING_DAYS));
       const rangeStartIso = startOfLocalDay(today).toISOString();
-      const rangeEndIso = endOfLocalDay(addDays(today, 7)).toISOString();
+      const rangeEndIso = endOfLocalDay(addLocalDays(today, UPCOMING_DAYS)).toISOString();
 
       // 1. Native platform_jobs
       const { data: platformData } = await supabase
