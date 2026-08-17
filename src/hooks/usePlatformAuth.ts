@@ -255,8 +255,14 @@ function usePlatformAuthState(): PlatformAuthState {
     setOfflineModeState(true);
     setLoading(false);
     setInitialSessionChecked(true);
+    // Land the user somewhere the cached mirror can actually serve: the
+    // crew/owner schedule. Dashboard KPIs need live queries.
+    const path = typeof window !== "undefined" ? window.location.pathname : "";
+    if (path === "/platform" || path === "/platform/login") {
+      navigate("/platform/crew", { replace: true });
+    }
     return true;
-  }, []);
+  }, [navigate]);
 
   const loadPlatformAccess = useCallback(async (user: User, isCancelled: () => boolean) => {
     // Don't flip back to loading=true if we already hydrated real data —
