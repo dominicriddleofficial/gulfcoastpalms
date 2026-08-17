@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useOfflineMode } from "@/hooks/useOfflineMode";
+import { OFFLINE_WRITE_TOOLTIP } from "@/lib/offlineMode";
 
 interface QuickAction { label: string; path: string; emoji: string; ownerOnly?: boolean; }
 
@@ -25,6 +27,7 @@ export default function QuickActionFAB({ brandColor = "var(--button-bg)" }: Prop
   const location = useLocation();
   const navigate = useNavigate();
   const { isOwner, isCrew } = useUserRole();
+  const { offline } = useOfflineMode();
 
   // Hide FAB whenever any Radix dialog/sheet is open (e.g. job detail sheet).
   useEffect(() => {
@@ -76,6 +79,7 @@ export default function QuickActionFAB({ brandColor = "var(--button-bg)" }: Prop
   const visibleActions = ACTIONS.filter(a => !a.ownerOnly || isOwner);
 
   const handleAction = (path: string) => {
+    if (offline) return;
     setOpen(false);
     navigate(path);
   };
@@ -85,7 +89,7 @@ export default function QuickActionFAB({ brandColor = "var(--button-bg)" }: Prop
       ref={ref}
       className="fixed right-4 z-[60] flex flex-col-reverse items-end gap-2 bottom-[calc(env(safe-area-inset-bottom)+84px)] lg:bottom-6"
     >
-      {open && (
+      {open && !offline && (
         <div className="flex flex-col gap-1.5 mb-2 animate-in fade-in slide-in-from-bottom-4 duration-200">
           {visibleActions.map((action) => (
             <button
@@ -103,10 +107,14 @@ export default function QuickActionFAB({ brandColor = "var(--button-bg)" }: Prop
       )}
 
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => { if (!offline) setOpen(!open); }}
+        disabled={offline}
+        aria-disabled={offline}
+        title={offline ? OFFLINE_WRITE_TOOLTIP : undefined}
         className={cn(
           "w-12 h-12 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95",
-          open && "rotate-45"
+          open && "rotate-45",
+          offline && "opacity-40 cursor-not-allowed hover:scale-100",
         )}
         style={{ backgroundColor: brandColor }}
         aria-label={open ? "Close quick actions" : "Open quick actions"}

@@ -185,6 +185,20 @@ export async function hasAnyMirrorFor(businessId: string): Promise<boolean> {
 }
 
 /**
+ * Newest savedAt timestamp across the mirrored stores for a business.
+ * 0 when nothing is mirrored. Used by the offline banner ("Saved 2 hours ago").
+ */
+export async function getMirrorSavedAt(businessId: string): Promise<number> {
+  if (!businessId) return 0;
+  const [s, c, j] = await Promise.all([
+    readMirror("schedule", businessId),
+    readMirror("customers", businessId),
+    readMirror("jobs", businessId),
+  ]);
+  return Math.max(s?.savedAt ?? 0, c?.savedAt ?? 0, j?.savedAt ?? 0);
+}
+
+/**
  * List every business id that has at least one mirrored record. Used by the
  * offline page to pick a default business when the auth snapshot lists many.
  */

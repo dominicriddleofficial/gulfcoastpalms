@@ -11,6 +11,7 @@ import PlatformBottomNav from "./PlatformBottomNav";
 import NotificationPanel from "./NotificationPanel";
 import InstallPrompt from "./InstallPrompt";
 import OutageBanner from "./OutageBanner";
+import OfflineModeBanner from "./OfflineModeBanner";
 import { setMirrorContext } from "@/lib/offlineMirror";
 import { runOfflineMirrorPrefetch } from "@/lib/offlineMirrorPrefetch";
 import { Button } from "@/components/ui/button";
@@ -571,6 +572,7 @@ export default function PlatformLayout({ children }: Props) {
           <NotificationPanel />
         </header>
         <OutageBanner />
+        <OfflineModeBanner />
 
         <main className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full pb-20 lg:pb-6">{children}</main>
 

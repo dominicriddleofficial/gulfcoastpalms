@@ -17,7 +17,11 @@ import { getOfflineDB, setMeta } from "@/lib/offline/db";
 import OfflineBanner from "@/components/platform/offline/OfflineBanner";
 import LastSyncedLabel from "@/components/platform/offline/LastSyncedLabel";
 import { usePullToRefresh } from "@/lib/offline/usePullToRefresh";
-import { startOfLocalDay, endOfLocalDay, toLocalDateKey } from "@/lib/localDate";
+import { startOfLocalDay, endOfLocalDay, toLocalDateKey, parseDateOnlyLocal, addLocalDays } from "@/lib/localDate";
+import { readMirror } from "@/lib/offlineMirror";
+import { useWriteGuard } from "@/hooks/useOfflineMode";
+import { OFFLINE_WRITE_TOOLTIP } from "@/lib/offlineMode";
+import OfflineModeBanner from "@/components/platform/OfflineModeBanner";
 
 type CrewJob = {
   id: string;
@@ -52,7 +56,10 @@ type CrewJob = {
   } | null;
 };
 
-type Tab = "today" | "tomorrow" | "week";
+type Tab = "today" | "tomorrow" | "week" | "upcoming";
+
+/** How far ahead the Upcoming tab looks. */
+const UPCOMING_DAYS = 30;
 
 const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
   scheduled: { label: "Scheduled", cls: "bg-blue-500/15 text-blue-300 border-blue-500/25" },
@@ -81,6 +88,62 @@ function buildDirectionsUrl(p: CrewJob["property"]) {
   return `https://maps.apple.com/?daddr=${encoded}`;
 }
 
+/**
+ * Shape written into the offline mirror by runOfflineMirrorPrefetch
+ * (jobs -30d..+90d). Mapped onto CrewJob so every tab — including
+ * Upcoming — renders from the mirror with no network at all.
+ */
+type MirrorScheduleJob = {
+  id?: string;
+  business_id?: string | null;
+  job_number?: string | null;
+  title?: string | null;
+  status?: string | null;
+  visit_status?: string | null;
+  scheduled_start?: string | null;
+  scheduled_end?: string | null;
+  client_name?: string | null;
+  customer_name?: string | null;
+  client_phone?: string | null;
+  customer_phone?: string | null;
+  property_address?: string | null;
+  address?: string | null;
+  internal_notes?: string | null;
+  customer_id?: string | null;
+};
+
+function mirrorToCrewJob(j: MirrorScheduleJob, businessId: string): CrewJob {
+  const addr = j.property_address ?? j.address ?? null;
+  return {
+    id: j.id ?? `${j.scheduled_start ?? ""}-${j.client_name ?? ""}`,
+    business_id: j.business_id ?? businessId,
+    job_number: j.job_number ?? "",
+    title: j.title ?? null,
+    job_type: null,
+    status: String(j.visit_status ?? j.status ?? "scheduled").toLowerCase(),
+    scheduled_start: j.scheduled_start ?? null,
+    scheduled_end: j.scheduled_end ?? null,
+    estimated_duration_minutes: null,
+    internal_notes: j.internal_notes ?? null,
+    client_notes: null,
+    assigned_to: [],
+    assigned_crew_member_id: null,
+    customer_id: j.customer_id ?? null,
+    property_id: null,
+    completed_at: null,
+    customer: {
+      display_name: j.client_name ?? j.customer_name ?? null,
+      phone: j.client_phone ?? j.customer_phone ?? null,
+    },
+    property: addr
+      ? {
+          address_1: addr, city: null, state: null, zip: null,
+          gate_code: null, access_notes: null, latitude: null, longitude: null,
+        }
+      : null,
+  };
+}
+
 export default function PlatformCrew() {
   const auth = usePlatformAuth();
   const { userId, role, isLoading: roleLoading } = useUserRole();
@@ -89,6 +152,7 @@ export default function PlatformCrew() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<CrewJob | null>(null);
   const [hydratedFromCache, setHydratedFromCache] = useState(false);
+  const { offline, writeDisabled } = useWriteGuard();
 
   const today = useMemo(() => startOfToday(), []);
   const businessId = auth.selectedBusinessId;
@@ -101,6 +165,26 @@ export default function PlatformCrew() {
   useEffect(() => {
     if (!userId || !businessId) return;
     let cancelled = false;
+
+    // OFFLINE READ-ONLY MODE: serve the IndexedDB mirror only. No network
+    // calls at all — auth is down, every query would 401.
+    if (offline) {
+      (async () => {
+        try {
+          const rec = await readMirror<MirrorScheduleJob[]>("schedule", businessId);
+          if (cancelled) return;
+          if (Array.isArray(rec?.data)) {
+            setJobs(rec.data.map((j) => mirrorToCrewJob(j, businessId)));
+            setHydratedFromCache(true);
+          }
+        } catch (err) {
+          if (import.meta.env.DEV) console.warn("[offline] mirror read failed", err);
+        } finally {
+          if (!cancelled) setLoading(false);
+        }
+      })();
+      return () => { cancelled = true; };
+    }
 
     // Hydrate from IndexedDB first so the screen is usable instantly,
     // even on a flaky connection.
@@ -122,9 +206,9 @@ export default function PlatformCrew() {
     async function loadJobs() {
       setLoading(true);
       const start = toLocalDateKey(today);
-      const end = toLocalDateKey(addDays(today, 7));
+      const end = toLocalDateKey(addLocalDays(today, UPCOMING_DAYS));
       const rangeStartIso = startOfLocalDay(today).toISOString();
-      const rangeEndIso = endOfLocalDay(addDays(today, 7)).toISOString();
+      const rangeEndIso = endOfLocalDay(addLocalDays(today, UPCOMING_DAYS)).toISOString();
 
       // 1. Native platform_jobs
       const { data: platformData } = await supabase
@@ -270,13 +354,25 @@ export default function PlatformCrew() {
       }
     }
 
-    loadJobs().catch((err) => {
+    loadJobs().catch(async (err) => {
       if (import.meta.env.DEV) console.error("[crew] load jobs failed", err);
-      // If we already hydrated from cache, leave that on screen.
+      // Live load failed. Fall back to the offline mirror (-30d..+90d) so the
+      // schedule — including Upcoming — still renders during an outage.
+      if (!hydratedFromCache) {
+        try {
+          const rec = await readMirror<MirrorScheduleJob[]>("schedule", businessId);
+          if (!cancelled && Array.isArray(rec?.data) && rec.data.length > 0) {
+            setJobs(rec.data.map((j) => mirrorToCrewJob(j, businessId)));
+            setHydratedFromCache(true);
+            setLoading(false);
+            return;
+          }
+        } catch { /* fall through to the empty state */ }
+      }
       if (!hydratedFromCache) setLoading(false);
     });
     return () => { cancelled = true; };
-  }, [userId, businessId, role, today, hydratedFromCache]);
+  }, [userId, businessId, role, today, hydratedFromCache, offline]);
 
   const tabbed = useMemo(() => {
     const tomorrow = addDays(today, 1);
@@ -286,9 +382,39 @@ export default function PlatformCrew() {
       const d = new Date(j.scheduled_start);
       if (tab === "today") return isToday(d);
       if (tab === "tomorrow") return isTomorrow(d);
+      if (tab === "upcoming") {
+        const key = toLocalDateKey(d);
+        return key >= toLocalDateKey(today) && key <= toLocalDateKey(addLocalDays(today, UPCOMING_DAYS));
+      }
       return isWithinInterval(d, { start: today, end: weekEnd });
     });
   }, [jobs, tab, today]);
+
+  /**
+   * Upcoming tab: next 30 local days grouped by day. Day keys come from
+   * toLocalDateKey / parseDateOnlyLocal — never toISOString().slice(0,10),
+   * which would shift evening jobs into tomorrow in America/Chicago.
+   */
+  const upcomingGroups = useMemo(() => {
+    if (tab !== "upcoming") return [];
+    const byDay = new Map<string, CrewJob[]>();
+    for (const j of tabbed) {
+      if (!j.scheduled_start) continue;
+      const key = toLocalDateKey(new Date(j.scheduled_start));
+      const list = byDay.get(key);
+      if (list) list.push(j);
+      else byDay.set(key, [j]);
+    }
+    return [...byDay.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([key, list]) => ({
+        key,
+        date: parseDateOnlyLocal(key),
+        jobs: list.sort((a, b) =>
+          (a.scheduled_start ?? "").localeCompare(b.scheduled_start ?? ""),
+        ),
+      }));
+  }, [tab, tabbed]);
 
   async function updateStatus(job: CrewJob, status: string) {
     // Translate to a queueable action.
@@ -386,6 +512,7 @@ export default function PlatformCrew() {
     return (
       <>
         <OfflineBanner />
+        <OfflineModeBanner />
         <CrewJobDetail
           job={selected}
           onBack={() => setSelected(null)}
@@ -393,6 +520,7 @@ export default function PlatformCrew() {
           onComplete={() => updateStatus(selected, "completed")}
           onSaveNotes={(text) => saveCrewNotes(selected, text)}
           userId={userId}
+          writeDisabled={writeDisabled}
         />
       </>
     );
@@ -438,6 +566,7 @@ export default function PlatformCrew() {
             { k: "today", label: "Today" },
             { k: "tomorrow", label: "Tomorrow" },
             { k: "week", label: "This Week" },
+            { k: "upcoming", label: "Upcoming" },
           ] as const).map(t => (
             <button
               key={t.k}
@@ -455,6 +584,8 @@ export default function PlatformCrew() {
         </div>
       </header>
 
+      <OfflineModeBanner />
+
       {/* Job feed */}
       <main className="px-4 py-4 space-y-3 max-w-xl mx-auto">
         {loading ? (
@@ -463,66 +594,86 @@ export default function PlatformCrew() {
           </div>
         ) : tabbed.length === 0 ? (
           <div className="text-center py-12">
-            <p className="font-body text-sm text-muted-foreground">No jobs scheduled.</p>
+            <p className="font-body text-sm text-muted-foreground">
+              {tab === "upcoming" ? "No jobs scheduled in the next 30 days." : "No jobs scheduled."}
+            </p>
             <p className="font-body text-xs text-muted-foreground/60 mt-1">Enjoy the break — check back later.</p>
           </div>
+        ) : tab === "upcoming" ? (
+          upcomingGroups.map(group => (
+            <section key={group.key} className="space-y-2">
+              <h2 className="font-display text-[12px] font-semibold uppercase tracking-wide text-muted-foreground pt-2">
+                {format(group.date, "EEEE, MMM d")}
+                <span className="ml-2 font-body text-[11px] font-normal normal-case text-muted-foreground/60">
+                  {group.jobs.length} job{group.jobs.length === 1 ? "" : "s"}
+                </span>
+              </h2>
+              {group.jobs.map(job => (
+                <JobFeedCard key={job.id} job={job} onSelect={() => setSelected(job)} />
+              ))}
+            </section>
+          ))
         ) : (
-          tabbed.map(job => {
-            const status = STATUS_LABEL[job.status] ?? STATUS_LABEL.scheduled;
-            const crewCount = (job.assigned_to?.length || 0) || (job.assigned_crew_member_id ? 1 : 0);
-            return (
-              <button
-                key={job.id}
-                onClick={() => setSelected(job)}
-                className="w-full text-left bg-card/60 hover:bg-card/80 border border-border rounded-2xl p-4 transition-colors active:scale-[0.99]"
-              >
-                <div className="flex items-start justify-between gap-3 mb-2">
-                  <div className="min-w-0">
-                    <p className="font-display text-[16px] font-semibold tracking-tight truncate">
-                      {job.customer?.display_name || job.title || "Job"}
-                    </p>
-                    {job.property && (
-                      <p className="font-body text-[12px] text-muted-foreground flex items-start gap-1 mt-0.5">
-                        <MapPin className="w-3 h-3 shrink-0 mt-0.5" />
-                        <span className="truncate">{formatAddress(job.property)}</span>
-                      </p>
-                    )}
-                  </div>
-                  <span className={cn("shrink-0 px-2 py-0.5 rounded-full font-body text-[10px] font-medium border", status.cls)}>
-                    {status.label}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {job.scheduled_start && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-secondary/40 text-[11px] font-body text-muted-foreground">
-                      <Clock className="w-3 h-3" />
-                      {format(new Date(job.scheduled_start), "h:mm a")}
-                      {job.scheduled_end && ` – ${format(new Date(job.scheduled_end), "h:mm a")}`}
-                    </span>
-                  )}
-                  {job.job_type && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[11px] font-body font-medium">
-                      {job.job_type}
-                    </span>
-                  )}
-                  {crewCount > 0 && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-secondary/40 text-[11px] font-body text-muted-foreground">
-                      <UsersIcon className="w-3 h-3" />
-                      {crewCount} crew
-                    </span>
-                  )}
-                </div>
-              </button>
-            );
-          })
+          tabbed.map(job => (
+            <JobFeedCard key={job.id} job={job} onSelect={() => setSelected(job)} />
+          ))
         )}
       </main>
     </div>
   );
 }
 
+/** One job row in the feed. Shared by every tab, including Upcoming. */
+function JobFeedCard({ job, onSelect }: { job: CrewJob; onSelect: () => void }) {
+  const status = STATUS_LABEL[job.status] ?? STATUS_LABEL.scheduled;
+  const crewCount = (job.assigned_to?.length || 0) || (job.assigned_crew_member_id ? 1 : 0);
+  return (
+    <button
+      onClick={onSelect}
+      className="w-full text-left bg-card/60 hover:bg-card/80 border border-border rounded-2xl p-4 transition-colors active:scale-[0.99]"
+    >
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <div className="min-w-0">
+          <p className="font-display text-[16px] font-semibold tracking-tight truncate">
+            {job.customer?.display_name || job.title || "Job"}
+          </p>
+          {job.property && (
+            <p className="font-body text-[12px] text-muted-foreground flex items-start gap-1 mt-0.5">
+              <MapPin className="w-3 h-3 shrink-0 mt-0.5" />
+              <span className="truncate">{formatAddress(job.property)}</span>
+            </p>
+          )}
+        </div>
+        <span className={cn("shrink-0 px-2 py-0.5 rounded-full font-body text-[10px] font-medium border", status.cls)}>
+          {status.label}
+        </span>
+      </div>
+      <div className="flex items-center gap-2 flex-wrap">
+        {job.scheduled_start && (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-secondary/40 text-[11px] font-body text-muted-foreground">
+            <Clock className="w-3 h-3" />
+            {format(new Date(job.scheduled_start), "h:mm a")}
+            {job.scheduled_end && ` – ${format(new Date(job.scheduled_end), "h:mm a")}`}
+          </span>
+        )}
+        {(job.job_type || job.title) && (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[11px] font-body font-medium truncate max-w-[60%]">
+            {job.job_type || job.title}
+          </span>
+        )}
+        {crewCount > 0 && (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-secondary/40 text-[11px] font-body text-muted-foreground">
+            <UsersIcon className="w-3 h-3" />
+            {crewCount} crew
+          </span>
+        )}
+      </div>
+    </button>
+  );
+}
+
 function CrewJobDetail({
-  job, onBack, onStart, onComplete, onSaveNotes, userId,
+  job, onBack, onStart, onComplete, onSaveNotes, userId, writeDisabled = false,
 }: {
   job: CrewJob;
   onBack: () => void;
@@ -530,6 +681,8 @@ function CrewJobDetail({
   onComplete: () => void;
   onSaveNotes: (text: string) => void;
   userId: string | null;
+  /** Offline read-only mode: every write affordance is visibly disabled. */
+  writeDisabled?: boolean;
 }) {
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
@@ -675,7 +828,8 @@ function CrewJobDetail({
             <Button
               size="sm"
               variant="secondary"
-              disabled={!note.trim() || saving}
+              disabled={!note.trim() || saving || writeDisabled}
+              title={writeDisabled ? OFFLINE_WRITE_TOOLTIP : undefined}
               onClick={async () => {
                 setSaving(true);
                 await onSaveNotes(note.trim());
@@ -701,12 +855,22 @@ function CrewJobDetail({
       <div className="fixed inset-x-0 bottom-0 z-40 bg-card/95 backdrop-blur border-t border-border p-4">
         <div className="max-w-xl mx-auto flex gap-2">
           {canStart && (
-            <Button onClick={onStart} className="flex-1 h-12 text-[15px] font-semibold">
+            <Button
+              onClick={onStart}
+              disabled={writeDisabled}
+              title={writeDisabled ? OFFLINE_WRITE_TOOLTIP : undefined}
+              className="flex-1 h-12 text-[15px] font-semibold"
+            >
               <Play className="w-4 h-4 mr-2" /> Start Job
             </Button>
           )}
           {canComplete && (
-            <Button onClick={onComplete} className="flex-1 h-12 text-[15px] font-semibold bg-emerald-600 hover:bg-emerald-700">
+            <Button
+              onClick={onComplete}
+              disabled={writeDisabled}
+              title={writeDisabled ? OFFLINE_WRITE_TOOLTIP : undefined}
+              className="flex-1 h-12 text-[15px] font-semibold bg-emerald-600 hover:bg-emerald-700"
+            >
               <CheckCircle2 className="w-4 h-4 mr-2" /> Complete Job
             </Button>
           )}

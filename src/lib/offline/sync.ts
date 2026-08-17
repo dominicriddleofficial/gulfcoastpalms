@@ -117,6 +117,7 @@ export async function processQueueOnce(): Promise<void> {
   if (processing) return;
   if (typeof navigator !== "undefined" && !navigator.onLine) return;
   processing = true;
+  const touchedBusinesses = new Set<string>();
   try {
     const pending = await listMutations();
     for (const m of pending) {
@@ -133,6 +134,7 @@ export async function processQueueOnce(): Promise<void> {
           // Receipt write failed; ignore — server already applied the change once.
         }
         await updateMutation(m.client_mutation_id, { status: "synced", last_error: null });
+        if (m.business_id) touchedBusinesses.add(m.business_id);
       } else {
         const errorText = (result as { ok: false; error: string }).error;
         const nextAttempts = m.attempts + 1;
@@ -154,6 +156,14 @@ export async function processQueueOnce(): Promise<void> {
     }
     await setMeta("last_sync_at", Date.now());
     notifySubscribers();
+    // Any successful write makes the offline mirror one action stale — refresh
+    // it immediately so an outage never serves pre-change data.
+    if (touchedBusinesses.size > 0) {
+      const { refreshMirrorAfterWrite } = await import("@/lib/offlineMirrorPrefetch");
+      for (const businessId of touchedBusinesses) {
+        void refreshMirrorAfterWrite(businessId);
+      }
+    }
   } finally {
     processing = false;
   }

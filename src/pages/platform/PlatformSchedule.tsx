@@ -77,6 +77,7 @@ import { CalendarClock, Pencil, Trash2 } from "lucide-react";
 import YearlyTrimmingToggle from "@/components/platform/schedule/YearlyTrimmingToggle";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { refreshMirrorAfterWrite } from "@/lib/offlineMirrorPrefetch";
 
 type ScheduleTab = "day" | "list" | "map" | "crew";
 
@@ -1422,6 +1423,7 @@ function JobDetail({
           void qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
           void qc.invalidateQueries({ queryKey: ["dashboard-kpis"] });
           void qc.invalidateQueries({ queryKey: ["schedule-jobs"] });
+          void refreshMirrorAfterWrite(job.business_id ?? null);
         }}
       />
 
@@ -1435,6 +1437,7 @@ function JobDetail({
           void qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
           void qc.invalidateQueries({ queryKey: ["dashboard-kpis"] });
           void qc.invalidateQueries({ queryKey: ["schedule-jobs"] });
+          void refreshMirrorAfterWrite(job.business_id ?? null);
         }}
       />
 
@@ -1448,6 +1451,7 @@ function JobDetail({
           void qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
           void qc.invalidateQueries({ queryKey: ["dashboard-kpis"] });
           void qc.invalidateQueries({ queryKey: ["schedule-jobs"] });
+          void refreshMirrorAfterWrite(job.business_id ?? null);
           onClose();
         }}
       />
