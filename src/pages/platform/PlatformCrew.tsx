@@ -512,6 +512,7 @@ export default function PlatformCrew() {
     return (
       <>
         <OfflineBanner />
+        <OfflineModeBanner />
         <CrewJobDetail
           job={selected}
           onBack={() => setSelected(null)}
@@ -519,6 +520,7 @@ export default function PlatformCrew() {
           onComplete={() => updateStatus(selected, "completed")}
           onSaveNotes={(text) => saveCrewNotes(selected, text)}
           userId={userId}
+          writeDisabled={writeDisabled}
         />
       </>
     );
