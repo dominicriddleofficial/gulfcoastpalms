@@ -199,6 +199,7 @@ function usePlatformAuthState(): PlatformAuthState {
   const [businessAccess, setBusinessAccess] = useState<BusinessAccess[]>(
     hydrated?.businessAccess ?? [],
   );
+  const [offlineMode, setOfflineModeState] = useState(false);
   const { selectedBusinessId, setSelectedBusinessId } = useBusinessContext();
   const navigate = useNavigate();
   const hadSessionRef = useRef(hydrated !== null);
@@ -224,6 +225,37 @@ function usePlatformAuthState(): PlatformAuthState {
     setAccessDenied(false);
     setBusinessAccess([]);
     isAdminRef.current = false;
+  }, []);
+
+  const exitOfflineMode = useCallback(() => {
+    setOfflineMode(false);
+    setOfflineModeState(false);
+  }, []);
+
+  /**
+   * Enter OFFLINE READ-ONLY MODE. Only succeeds when a snapshot from a
+   * previous successful sign-in exists AND the IndexedDB mirror holds data
+   * for a business that snapshot lists. Returns false when it must not be
+   * entered — callers then fall through to the normal login redirect.
+   */
+  const tryEnterOfflineMode = useCallback(async (): Promise<boolean> => {
+    const eligible = await checkOfflineEligibility();
+    if (!eligible) return false;
+    const { snapshot, businessId, savedAt } = eligible;
+    setUserId(snapshot.userId);
+    setUserEmail(snapshot.userEmail);
+    setIsOwner(snapshot.isOwner);
+    setBusinessAccess(snapshot.businessAccess);
+    setAccessDenied(false);
+    isAdminRef.current = snapshot.isAdmin;
+    if (!selectedBusinessIdRef.current) {
+      setSelectedBusinessIdRef.current(businessId);
+    }
+    setOfflineMode(true, savedAt);
+    setOfflineModeState(true);
+    setLoading(false);
+    setInitialSessionChecked(true);
+    return true;
   }, []);
 
   const loadPlatformAccess = useCallback(async (user: User, isCancelled: () => boolean) => {
