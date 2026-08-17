@@ -382,9 +382,39 @@ export default function PlatformCrew() {
       const d = new Date(j.scheduled_start);
       if (tab === "today") return isToday(d);
       if (tab === "tomorrow") return isTomorrow(d);
+      if (tab === "upcoming") {
+        const key = toLocalDateKey(d);
+        return key >= toLocalDateKey(today) && key <= toLocalDateKey(addLocalDays(today, UPCOMING_DAYS));
+      }
       return isWithinInterval(d, { start: today, end: weekEnd });
     });
   }, [jobs, tab, today]);
+
+  /**
+   * Upcoming tab: next 30 local days grouped by day. Day keys come from
+   * toLocalDateKey / parseDateOnlyLocal — never toISOString().slice(0,10),
+   * which would shift evening jobs into tomorrow in America/Chicago.
+   */
+  const upcomingGroups = useMemo(() => {
+    if (tab !== "upcoming") return [];
+    const byDay = new Map<string, CrewJob[]>();
+    for (const j of tabbed) {
+      if (!j.scheduled_start) continue;
+      const key = toLocalDateKey(new Date(j.scheduled_start));
+      const list = byDay.get(key);
+      if (list) list.push(j);
+      else byDay.set(key, [j]);
+    }
+    return [...byDay.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([key, list]) => ({
+        key,
+        date: parseDateOnlyLocal(key),
+        jobs: list.sort((a, b) =>
+          (a.scheduled_start ?? "").localeCompare(b.scheduled_start ?? ""),
+        ),
+      }));
+  }, [tab, tabbed]);
 
   async function updateStatus(job: CrewJob, status: string) {
     // Translate to a queueable action.
