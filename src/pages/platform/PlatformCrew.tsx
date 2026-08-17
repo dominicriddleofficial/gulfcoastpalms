@@ -673,7 +673,7 @@ function JobFeedCard({ job, onSelect }: { job: CrewJob; onSelect: () => void }) 
 }
 
 function CrewJobDetail({
-  job, onBack, onStart, onComplete, onSaveNotes, userId,
+  job, onBack, onStart, onComplete, onSaveNotes, userId, writeDisabled = false,
 }: {
   job: CrewJob;
   onBack: () => void;
@@ -681,6 +681,8 @@ function CrewJobDetail({
   onComplete: () => void;
   onSaveNotes: (text: string) => void;
   userId: string | null;
+  /** Offline read-only mode: every write affordance is visibly disabled. */
+  writeDisabled?: boolean;
 }) {
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
@@ -826,7 +828,8 @@ function CrewJobDetail({
             <Button
               size="sm"
               variant="secondary"
-              disabled={!note.trim() || saving}
+              disabled={!note.trim() || saving || writeDisabled}
+              title={writeDisabled ? OFFLINE_WRITE_TOOLTIP : undefined}
               onClick={async () => {
                 setSaving(true);
                 await onSaveNotes(note.trim());
@@ -852,12 +855,22 @@ function CrewJobDetail({
       <div className="fixed inset-x-0 bottom-0 z-40 bg-card/95 backdrop-blur border-t border-border p-4">
         <div className="max-w-xl mx-auto flex gap-2">
           {canStart && (
-            <Button onClick={onStart} className="flex-1 h-12 text-[15px] font-semibold">
+            <Button
+              onClick={onStart}
+              disabled={writeDisabled}
+              title={writeDisabled ? OFFLINE_WRITE_TOOLTIP : undefined}
+              className="flex-1 h-12 text-[15px] font-semibold"
+            >
               <Play className="w-4 h-4 mr-2" /> Start Job
             </Button>
           )}
           {canComplete && (
-            <Button onClick={onComplete} className="flex-1 h-12 text-[15px] font-semibold bg-emerald-600 hover:bg-emerald-700">
+            <Button
+              onClick={onComplete}
+              disabled={writeDisabled}
+              title={writeDisabled ? OFFLINE_WRITE_TOOLTIP : undefined}
+              className="flex-1 h-12 text-[15px] font-semibold bg-emerald-600 hover:bg-emerald-700"
+            >
               <CheckCircle2 className="w-4 h-4 mr-2" /> Complete Job
             </Button>
           )}
