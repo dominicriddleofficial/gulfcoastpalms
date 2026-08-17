@@ -17,7 +17,11 @@ import { getOfflineDB, setMeta } from "@/lib/offline/db";
 import OfflineBanner from "@/components/platform/offline/OfflineBanner";
 import LastSyncedLabel from "@/components/platform/offline/LastSyncedLabel";
 import { usePullToRefresh } from "@/lib/offline/usePullToRefresh";
-import { startOfLocalDay, endOfLocalDay, toLocalDateKey } from "@/lib/localDate";
+import { startOfLocalDay, endOfLocalDay, toLocalDateKey, parseDateOnlyLocal, addLocalDays } from "@/lib/localDate";
+import { readMirror } from "@/lib/offlineMirror";
+import { useWriteGuard } from "@/hooks/useOfflineMode";
+import { OFFLINE_WRITE_TOOLTIP } from "@/lib/offlineMode";
+import OfflineModeBanner from "@/components/platform/OfflineModeBanner";
 
 type CrewJob = {
   id: string;
@@ -52,7 +56,10 @@ type CrewJob = {
   } | null;
 };
 
-type Tab = "today" | "tomorrow" | "week";
+type Tab = "today" | "tomorrow" | "week" | "upcoming";
+
+/** How far ahead the Upcoming tab looks. */
+const UPCOMING_DAYS = 30;
 
 const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
   scheduled: { label: "Scheduled", cls: "bg-blue-500/15 text-blue-300 border-blue-500/25" },
@@ -79,6 +86,62 @@ function buildDirectionsUrl(p: CrewJob["property"]) {
     return `maps://?daddr=${encoded}`;
   }
   return `https://maps.apple.com/?daddr=${encoded}`;
+}
+
+/**
+ * Shape written into the offline mirror by runOfflineMirrorPrefetch
+ * (jobs -30d..+90d). Mapped onto CrewJob so every tab — including
+ * Upcoming — renders from the mirror with no network at all.
+ */
+type MirrorScheduleJob = {
+  id?: string;
+  business_id?: string | null;
+  job_number?: string | null;
+  title?: string | null;
+  status?: string | null;
+  visit_status?: string | null;
+  scheduled_start?: string | null;
+  scheduled_end?: string | null;
+  client_name?: string | null;
+  customer_name?: string | null;
+  client_phone?: string | null;
+  customer_phone?: string | null;
+  property_address?: string | null;
+  address?: string | null;
+  internal_notes?: string | null;
+  customer_id?: string | null;
+};
+
+function mirrorToCrewJob(j: MirrorScheduleJob, businessId: string): CrewJob {
+  const addr = j.property_address ?? j.address ?? null;
+  return {
+    id: j.id ?? `${j.scheduled_start ?? ""}-${j.client_name ?? ""}`,
+    business_id: j.business_id ?? businessId,
+    job_number: j.job_number ?? "",
+    title: j.title ?? null,
+    job_type: null,
+    status: String(j.visit_status ?? j.status ?? "scheduled").toLowerCase(),
+    scheduled_start: j.scheduled_start ?? null,
+    scheduled_end: j.scheduled_end ?? null,
+    estimated_duration_minutes: null,
+    internal_notes: j.internal_notes ?? null,
+    client_notes: null,
+    assigned_to: [],
+    assigned_crew_member_id: null,
+    customer_id: j.customer_id ?? null,
+    property_id: null,
+    completed_at: null,
+    customer: {
+      display_name: j.client_name ?? j.customer_name ?? null,
+      phone: j.client_phone ?? j.customer_phone ?? null,
+    },
+    property: addr
+      ? {
+          address_1: addr, city: null, state: null, zip: null,
+          gate_code: null, access_notes: null, latitude: null, longitude: null,
+        }
+      : null,
+  };
 }
 
 export default function PlatformCrew() {
