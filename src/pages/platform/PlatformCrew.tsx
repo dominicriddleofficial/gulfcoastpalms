@@ -564,6 +564,7 @@ export default function PlatformCrew() {
             { k: "today", label: "Today" },
             { k: "tomorrow", label: "Tomorrow" },
             { k: "week", label: "This Week" },
+            { k: "upcoming", label: "Upcoming" },
           ] as const).map(t => (
             <button
               key={t.k}
@@ -581,6 +582,8 @@ export default function PlatformCrew() {
         </div>
       </header>
 
+      <OfflineModeBanner />
+
       {/* Job feed */}
       <main className="px-4 py-4 space-y-3 max-w-xl mx-auto">
         {loading ? (
@@ -589,61 +592,81 @@ export default function PlatformCrew() {
           </div>
         ) : tabbed.length === 0 ? (
           <div className="text-center py-12">
-            <p className="font-body text-sm text-muted-foreground">No jobs scheduled.</p>
+            <p className="font-body text-sm text-muted-foreground">
+              {tab === "upcoming" ? "No jobs scheduled in the next 30 days." : "No jobs scheduled."}
+            </p>
             <p className="font-body text-xs text-muted-foreground/60 mt-1">Enjoy the break — check back later.</p>
           </div>
+        ) : tab === "upcoming" ? (
+          upcomingGroups.map(group => (
+            <section key={group.key} className="space-y-2">
+              <h2 className="font-display text-[12px] font-semibold uppercase tracking-wide text-muted-foreground pt-2">
+                {format(group.date, "EEEE, MMM d")}
+                <span className="ml-2 font-body text-[11px] font-normal normal-case text-muted-foreground/60">
+                  {group.jobs.length} job{group.jobs.length === 1 ? "" : "s"}
+                </span>
+              </h2>
+              {group.jobs.map(job => (
+                <JobFeedCard key={job.id} job={job} onSelect={() => setSelected(job)} />
+              ))}
+            </section>
+          ))
         ) : (
-          tabbed.map(job => {
-            const status = STATUS_LABEL[job.status] ?? STATUS_LABEL.scheduled;
-            const crewCount = (job.assigned_to?.length || 0) || (job.assigned_crew_member_id ? 1 : 0);
-            return (
-              <button
-                key={job.id}
-                onClick={() => setSelected(job)}
-                className="w-full text-left bg-card/60 hover:bg-card/80 border border-border rounded-2xl p-4 transition-colors active:scale-[0.99]"
-              >
-                <div className="flex items-start justify-between gap-3 mb-2">
-                  <div className="min-w-0">
-                    <p className="font-display text-[16px] font-semibold tracking-tight truncate">
-                      {job.customer?.display_name || job.title || "Job"}
-                    </p>
-                    {job.property && (
-                      <p className="font-body text-[12px] text-muted-foreground flex items-start gap-1 mt-0.5">
-                        <MapPin className="w-3 h-3 shrink-0 mt-0.5" />
-                        <span className="truncate">{formatAddress(job.property)}</span>
-                      </p>
-                    )}
-                  </div>
-                  <span className={cn("shrink-0 px-2 py-0.5 rounded-full font-body text-[10px] font-medium border", status.cls)}>
-                    {status.label}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {job.scheduled_start && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-secondary/40 text-[11px] font-body text-muted-foreground">
-                      <Clock className="w-3 h-3" />
-                      {format(new Date(job.scheduled_start), "h:mm a")}
-                      {job.scheduled_end && ` – ${format(new Date(job.scheduled_end), "h:mm a")}`}
-                    </span>
-                  )}
-                  {job.job_type && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[11px] font-body font-medium">
-                      {job.job_type}
-                    </span>
-                  )}
-                  {crewCount > 0 && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-secondary/40 text-[11px] font-body text-muted-foreground">
-                      <UsersIcon className="w-3 h-3" />
-                      {crewCount} crew
-                    </span>
-                  )}
-                </div>
-              </button>
-            );
-          })
+          tabbed.map(job => (
+            <JobFeedCard key={job.id} job={job} onSelect={() => setSelected(job)} />
+          ))
         )}
       </main>
     </div>
+  );
+}
+
+/** One job row in the feed. Shared by every tab, including Upcoming. */
+function JobFeedCard({ job, onSelect }: { job: CrewJob; onSelect: () => void }) {
+  const status = STATUS_LABEL[job.status] ?? STATUS_LABEL.scheduled;
+  const crewCount = (job.assigned_to?.length || 0) || (job.assigned_crew_member_id ? 1 : 0);
+  return (
+    <button
+      onClick={onSelect}
+      className="w-full text-left bg-card/60 hover:bg-card/80 border border-border rounded-2xl p-4 transition-colors active:scale-[0.99]"
+    >
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <div className="min-w-0">
+          <p className="font-display text-[16px] font-semibold tracking-tight truncate">
+            {job.customer?.display_name || job.title || "Job"}
+          </p>
+          {job.property && (
+            <p className="font-body text-[12px] text-muted-foreground flex items-start gap-1 mt-0.5">
+              <MapPin className="w-3 h-3 shrink-0 mt-0.5" />
+              <span className="truncate">{formatAddress(job.property)}</span>
+            </p>
+          )}
+        </div>
+        <span className={cn("shrink-0 px-2 py-0.5 rounded-full font-body text-[10px] font-medium border", status.cls)}>
+          {status.label}
+        </span>
+      </div>
+      <div className="flex items-center gap-2 flex-wrap">
+        {job.scheduled_start && (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-secondary/40 text-[11px] font-body text-muted-foreground">
+            <Clock className="w-3 h-3" />
+            {format(new Date(job.scheduled_start), "h:mm a")}
+            {job.scheduled_end && ` – ${format(new Date(job.scheduled_end), "h:mm a")}`}
+          </span>
+        )}
+        {(job.job_type || job.title) && (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[11px] font-body font-medium truncate max-w-[60%]">
+            {job.job_type || job.title}
+          </span>
+        )}
+        {crewCount > 0 && (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-secondary/40 text-[11px] font-body text-muted-foreground">
+            <UsersIcon className="w-3 h-3" />
+            {crewCount} crew
+          </span>
+        )}
+      </div>
+    </button>
   );
 }
 
