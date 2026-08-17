@@ -354,13 +354,25 @@ export default function PlatformCrew() {
       }
     }
 
-    loadJobs().catch((err) => {
+    loadJobs().catch(async (err) => {
       if (import.meta.env.DEV) console.error("[crew] load jobs failed", err);
-      // If we already hydrated from cache, leave that on screen.
+      // Live load failed. Fall back to the offline mirror (-30d..+90d) so the
+      // schedule — including Upcoming — still renders during an outage.
+      if (!hydratedFromCache) {
+        try {
+          const rec = await readMirror<MirrorScheduleJob[]>("schedule", businessId);
+          if (!cancelled && Array.isArray(rec?.data) && rec.data.length > 0) {
+            setJobs(rec.data.map((j) => mirrorToCrewJob(j, businessId)));
+            setHydratedFromCache(true);
+            setLoading(false);
+            return;
+          }
+        } catch { /* fall through to the empty state */ }
+      }
       if (!hydratedFromCache) setLoading(false);
     });
     return () => { cancelled = true; };
-  }, [userId, businessId, role, today, hydratedFromCache]);
+  }, [userId, businessId, role, today, hydratedFromCache, offline]);
 
   const tabbed = useMemo(() => {
     const tomorrow = addDays(today, 1);
