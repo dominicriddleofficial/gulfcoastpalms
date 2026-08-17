@@ -50,6 +50,19 @@ export interface OfflineMirrorPrefetchOptions {
 }
 
 /**
+ * Refresh the mirror immediately after a successful job create / edit /
+ * reschedule / delete, ignoring the 15-minute throttle. Keeps the offline
+ * copy at most one action stale. Fire-and-forget; never throws.
+ */
+export async function refreshMirrorAfterWrite(businessId: string | null): Promise<void> {
+  try {
+    await runOfflineMirrorPrefetch(businessId, { force: true });
+  } catch {
+    /* best-effort */
+  }
+}
+
+/**
  * Run a proactive offline mirror refresh for `businessId`. Fire-and-forget —
  * never throws. Safe to call from any effect; concurrent calls dedupe.
  */
