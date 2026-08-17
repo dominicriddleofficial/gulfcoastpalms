@@ -178,6 +178,13 @@ function clearAllSnapshots() {
   wipeOfflineMirror();
 }
 
+/**
+ * Only an EXPLICIT sign-out may wipe the snapshot + mirror. An involuntary
+ * SIGNED_OUT (Supabase rejecting a refreshed JWT during an incident) must
+ * keep them, otherwise the outage itself would destroy the offline copy.
+ */
+let explicitSignOut = false;
+
 function usePlatformAuthState(): PlatformAuthState {
   // Hydrate synchronously on the very first render so the shell can paint
   // real data instead of the loading gate. `useMemo` is sync on first render.
