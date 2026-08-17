@@ -8,7 +8,7 @@
  * negative-offset zones like America/Chicago).
  */
 
-import { toLocalDateKey } from "./localDate";
+import { addLocalDays, startOfLocalDay, toLocalDateKey } from "./localDate";
 
 export interface JobLike {
   scheduled_start?: string | null;
@@ -43,4 +43,15 @@ export function filterTodayJobs<T extends JobLike>(jobs: T[], now: Date = new Da
 export function filterWeekJobs<T extends JobLike>(jobs: T[], now: Date = new Date()): T[] {
   const wk = localWeekKeys(now);
   return jobs.filter((j) => wk.has(jobLocalDateKey(j.scheduled_start)));
+}
+
+/** Jobs after today through the next 30 local calendar days. */
+export function filterUpcomingJobs<T extends JobLike>(jobs: T[], now: Date = new Date()): T[] {
+  const start = startOfLocalDay(addLocalDays(now, 1));
+  const end = startOfLocalDay(addLocalDays(now, 31));
+  return jobs.filter((job) => {
+    if (!job.scheduled_start) return false;
+    const scheduled = new Date(job.scheduled_start);
+    return !Number.isNaN(scheduled.getTime()) && scheduled >= start && scheduled < end;
+  });
 }

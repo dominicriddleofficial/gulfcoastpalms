@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { filterTodayJobs, filterWeekJobs } from "@/lib/offlineJobFilters";
+import { filterTodayJobs, filterUpcomingJobs, filterWeekJobs } from "@/lib/offlineJobFilters";
 
 // This test asserts local-timezone grouping. It is only meaningful when
 // the runner is in America/Chicago (UTC-5/-6) — set TZ=America/Chicago
@@ -41,5 +41,18 @@ describe("offline job filters — TZ=America/Chicago", () => {
     const now = new Date(2026, 6, 6, 22, 0, 0);
     const eveningJob = { scheduled_start: new Date(2026, 6, 6, 21, 0, 0).toISOString() };
     expect(filterTodayJobs([eveningJob], now)).toHaveLength(1);
+  });
+
+  it("shows tomorrow through the next 30 local days in Upcoming", () => {
+    const now = new Date(2026, 7, 16, 21, 0, 0);
+    const today = { scheduled_start: new Date(2026, 7, 16, 9, 0, 0).toISOString() };
+    const tomorrow = { scheduled_start: new Date(2026, 7, 17, 9, 0, 0).toISOString() };
+    const dayThirty = { scheduled_start: new Date(2026, 8, 15, 9, 0, 0).toISOString() };
+    const tooFar = { scheduled_start: new Date(2026, 8, 16, 9, 0, 0).toISOString() };
+
+    expect(filterUpcomingJobs([today, tomorrow, dayThirty, tooFar], now)).toEqual([
+      tomorrow,
+      dayThirty,
+    ]);
   });
 });
