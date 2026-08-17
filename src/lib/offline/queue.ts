@@ -5,6 +5,7 @@ import {
   type MutationStatus,
   type QueuedMutation,
 } from "./db";
+import { assertWritable } from "@/lib/offlineMode";
 
 function uuidv4(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
