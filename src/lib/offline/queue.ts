@@ -29,6 +29,10 @@ export interface EnqueueInput {
 }
 
 export async function enqueueMutation(input: EnqueueInput): Promise<QueuedMutation> {
+  // Offline READ-ONLY mode (auth down): refuse to queue writes. The queue is
+  // for a network outage with a valid session; with no valid JWT every replay
+  // would 401 and the user would think their work saved.
+  assertWritable();
   const db = await getOfflineDB();
   const now = Date.now();
   const mutation: QueuedMutation = {
