@@ -1422,6 +1422,7 @@ function JobDetail({
           void qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
           void qc.invalidateQueries({ queryKey: ["dashboard-kpis"] });
           void qc.invalidateQueries({ queryKey: ["schedule-jobs"] });
+          void refreshMirrorAfterWrite(job.business_id ?? null);
         }}
       />
 
@@ -1435,6 +1436,7 @@ function JobDetail({
           void qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
           void qc.invalidateQueries({ queryKey: ["dashboard-kpis"] });
           void qc.invalidateQueries({ queryKey: ["schedule-jobs"] });
+          void refreshMirrorAfterWrite(job.business_id ?? null);
         }}
       />
 
@@ -1448,6 +1450,7 @@ function JobDetail({
           void qc.invalidateQueries({ queryKey: ["dashboard-scheduled-jobs"] });
           void qc.invalidateQueries({ queryKey: ["dashboard-kpis"] });
           void qc.invalidateQueries({ queryKey: ["schedule-jobs"] });
+          void refreshMirrorAfterWrite(job.business_id ?? null);
           onClose();
         }}
       />
