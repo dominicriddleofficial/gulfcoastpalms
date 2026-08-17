@@ -655,6 +655,8 @@ function usePlatformAuthState(): PlatformAuthState {
     setSelectedBusinessId,
     selectedBusiness,
     signOut,
+    offlineMode,
+    retryConnection,
   };
 }
 
