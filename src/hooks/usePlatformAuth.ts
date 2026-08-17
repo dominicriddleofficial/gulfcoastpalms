@@ -4,6 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useBusinessContext } from "@/contexts/BusinessContext";
 import type { User } from "@supabase/supabase-js";
 import { wipeOfflineMirror } from "@/lib/offlineMirror";
+import {
+  checkOfflineEligibility,
+  setOfflineMode,
+  isOfflineMode,
+} from "@/lib/offlineMode";
 
 export interface BusinessAccess {
   id: string;
@@ -44,6 +49,10 @@ export interface PlatformAuthState {
   setSelectedBusinessId: (id: string | null) => void;
   selectedBusiness: BusinessAccess | null;
   signOut: () => Promise<void>;
+  /** True when running read-only from the local mirror (auth unreachable). */
+  offlineMode: boolean;
+  /** Re-attempt auth. Resolves true when live mode was restored. */
+  retryConnection: () => Promise<boolean>;
 }
 
 const PlatformAuthContext = createContext<PlatformAuthState | null>(null);
