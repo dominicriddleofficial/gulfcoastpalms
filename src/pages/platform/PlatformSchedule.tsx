@@ -77,6 +77,7 @@ import { CalendarClock, Pencil, Trash2 } from "lucide-react";
 import YearlyTrimmingToggle from "@/components/platform/schedule/YearlyTrimmingToggle";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { refreshMirrorAfterWrite } from "@/lib/offlineMirrorPrefetch";
 
 type ScheduleTab = "day" | "list" | "map" | "crew";
 
