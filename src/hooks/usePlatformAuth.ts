@@ -482,14 +482,19 @@ function usePlatformAuthState(): PlatformAuthState {
         }
         void loadPlatformAccess(user, () => cancelled);
       } else {
-        // Token vanished between hydration and INITIAL_SESSION — clear
-        // any optimistically rendered shell.
-        if (hydrated) {
-          clearAllSnapshots();
-          clearAuthState();
-        }
         hadSessionRef.current = false;
-        setLoading(false);
+        // Auth returned no usable session. This is exactly the incident
+        // shape (refreshed JWT rejected with 401 / network failure), so try
+        // the offline read-only copy BEFORE clearing anything. Snapshots are
+        // only wiped on explicit sign-out or a user switch.
+        void tryEnterOfflineMode().then((entered) => {
+          if (cancelled || entered) return;
+          if (hydrated) {
+            clearAllSnapshots();
+            clearAuthState();
+          }
+          setLoading(false);
+        });
       }
     };
 
@@ -505,9 +510,13 @@ function usePlatformAuthState(): PlatformAuthState {
         setLoading(false);
         return;
       }
-      clearAuthState();
-      setLoading(false);
-      navigate("/platform/login", { replace: true });
+      // Auth timed out with no hydratable session — offline copy or login.
+      void tryEnterOfflineMode().then((entered) => {
+        if (cancelled || entered) return;
+        clearAuthState();
+        setLoading(false);
+        navigate("/platform/login", { replace: true });
+      });
     }, 2500);
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -531,10 +540,26 @@ function usePlatformAuthState(): PlatformAuthState {
         const shouldRedirect = initialSessionLoadedRef.current && hadSessionRef.current;
         hadSessionRef.current = false;
         setInitialSessionChecked(true);
-        clearAllSnapshots();
-        clearAuthState();
-        setLoading(false);
-        if (shouldRedirect) navigate("/platform/login", { replace: true });
+        if (explicitSignOut) {
+          // Explicit sign-out: destroy the snapshot AND the mirror so this
+          // device can never re-enter offline mode.
+          explicitSignOut = false;
+          clearAllSnapshots();
+          clearAuthState();
+          setLoading(false);
+          exitOfflineMode();
+          if (shouldRedirect) navigate("/platform/login", { replace: true });
+          return;
+        }
+        // Involuntary sign-out (token rejected during an outage) — keep the
+        // snapshot and fall back to the read-only copy when eligible.
+        void tryEnterOfflineMode().then((entered) => {
+          if (cancelled || entered) return;
+          clearAllSnapshots();
+          clearAuthState();
+          setLoading(false);
+          if (shouldRedirect) navigate("/platform/login", { replace: true });
+        });
       }
     });
 
@@ -559,14 +584,58 @@ function usePlatformAuthState(): PlatformAuthState {
     };
   }, [clearAuthState, loadPlatformAccess, navigate, hydrated]);
 
+  /**
+   * Re-attempt auth. Used by the offline banner's Retry button and by the
+   * background recovery poll. Returns true when live mode was restored.
+   */
+  const retryConnection = useCallback(async (): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      const user = data?.session?.user ?? null;
+      if (error || !user) {
+        // Still down — try one explicit refresh before giving up.
+        const refreshed = await supabase.auth.refreshSession();
+        const rUser = refreshed.data?.session?.user ?? null;
+        if (refreshed.error || !rUser) return false;
+        exitOfflineMode();
+        await loadPlatformAccess(rUser, () => false);
+        return true;
+      }
+      exitOfflineMode();
+      await loadPlatformAccess(user, () => false);
+      return true;
+    } catch {
+      return false;
+    }
+  }, [exitOfflineMode, loadPlatformAccess]);
+
+  // Background recovery poll: while offline, re-check auth every 30s and
+  // switch back to live automatically the moment it succeeds.
   useEffect(() => {
-    if (initialSessionChecked && !loading && !userId && !accessDenied) {
+    if (!offlineMode) return;
+    const id = window.setInterval(() => { void retryConnection(); }, 30_000);
+    const onOnline = () => { void retryConnection(); };
+    window.addEventListener("online", onOnline);
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener("online", onOnline);
+    };
+  }, [offlineMode, retryConnection]);
+
+  useEffect(() => {
+    if (initialSessionChecked && !loading && !userId && !accessDenied && !offlineMode) {
       navigate("/platform/login", { replace: true });
     }
-  }, [initialSessionChecked, loading, userId, accessDenied, navigate]);
+  }, [initialSessionChecked, loading, userId, accessDenied, offlineMode, navigate]);
 
   const signOut = async () => {
+    explicitSignOut = true;
+    exitOfflineMode();
     await supabase.auth.signOut();
+    // Belt and braces: an explicit sign-out always destroys the offline copy,
+    // even if the SIGNED_OUT event never arrives (e.g. auth is down).
+    clearAllSnapshots();
+    clearAuthState();
     setSelectedBusinessId(null);
     navigate("/platform/login");
   };
