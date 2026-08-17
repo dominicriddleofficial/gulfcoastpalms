@@ -166,6 +166,26 @@ export default function PlatformCrew() {
     if (!userId || !businessId) return;
     let cancelled = false;
 
+    // OFFLINE READ-ONLY MODE: serve the IndexedDB mirror only. No network
+    // calls at all — auth is down, every query would 401.
+    if (offline) {
+      (async () => {
+        try {
+          const rec = await readMirror<MirrorScheduleJob[]>("schedule", businessId);
+          if (cancelled) return;
+          if (Array.isArray(rec?.data)) {
+            setJobs(rec.data.map((j) => mirrorToCrewJob(j, businessId)));
+            setHydratedFromCache(true);
+          }
+        } catch (err) {
+          if (import.meta.env.DEV) console.warn("[offline] mirror read failed", err);
+        } finally {
+          if (!cancelled) setLoading(false);
+        }
+      })();
+      return () => { cancelled = true; };
+    }
+
     // Hydrate from IndexedDB first so the screen is usable instantly,
     // even on a flaky connection.
     (async () => {
