@@ -17,7 +17,12 @@ import {
   type MirrorRecord,
 } from "@/lib/offlineMirror";
 import { pingSupabase } from "@/lib/outageDetect";
-import { filterTodayJobs, filterWeekJobs } from "@/lib/offlineJobFilters";
+import {
+  filterTodayJobs,
+  filterUpcomingJobs,
+  filterWeekJobs,
+  jobLocalDateKey,
+} from "@/lib/offlineJobFilters";
 import { runOfflineMirrorPrefetch } from "@/lib/offlineMirrorPrefetch";
 
 type OfflineJob = {
@@ -87,7 +92,7 @@ export default function PlatformOffline() {
   const [schedule, setSchedule] = useState<MirrorRecord<OfflineJob[]> | null>(null);
   const [customers, setCustomers] = useState<MirrorRecord<OfflineCustomer[]> | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"today" | "week" | "customers">("today");
+  const [tab, setTab] = useState<"today" | "week" | "upcoming" | "customers">("today");
   const [query, setQuery] = useState("");
   const [retrying, setRetrying] = useState(false);
   const [backOnline, setBackOnline] = useState(false);
@@ -189,6 +194,10 @@ export default function PlatformOffline() {
 
   const weekJobs = useMemo(() => {
     return filterWeekJobs(jobs);
+  }, [jobs]);
+
+  const upcomingJobs = useMemo(() => {
+    return filterUpcomingJobs(jobs);
   }, [jobs]);
 
   const filteredCustomers = useMemo(() => {
@@ -301,13 +310,14 @@ export default function PlatformOffline() {
         {/* Tabs */}
         <div
           role="tablist"
-          className="grid grid-cols-3 gap-1 rounded-2xl p-1 mb-4"
+          className="grid grid-cols-2 gap-1 rounded-2xl p-1 mb-4 sm:grid-cols-4"
           style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
         >
           {(
             [
               ["today", `Today (${todayJobs.length})`],
               ["week", `This Week (${weekJobs.length})`],
+              ["upcoming", `Upcoming (${upcomingJobs.length})`],
               ["customers", `Customers (${customers?.data?.length ?? 0})`],
             ] as const
           ).map(([id, label]) => {
@@ -333,6 +343,9 @@ export default function PlatformOffline() {
 
         {tab === "today" && <JobList jobs={todayJobs} isOwner={isOwner} emptyLabel="No jobs saved for today." />}
         {tab === "week" && <JobList jobs={weekJobs} isOwner={isOwner} emptyLabel="No jobs saved for this week." />}
+        {tab === "upcoming" && (
+          <UpcomingJobList jobs={upcomingJobs} isOwner={isOwner} />
+        )}
 
         {tab === "customers" && (
           <div>
@@ -351,6 +364,55 @@ export default function PlatformOffline() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function UpcomingJobList({ jobs, isOwner }: { jobs: OfflineJob[]; isOwner: boolean }) {
+  const groups = useMemo(() => {
+    const grouped = new Map<string, OfflineJob[]>();
+    jobs.forEach((job) => {
+      const key = jobLocalDateKey(job.scheduled_start);
+      if (!key) return;
+      const existing = grouped.get(key) ?? [];
+      existing.push(job);
+      grouped.set(key, existing);
+    });
+    return Array.from(grouped.entries());
+  }, [jobs]);
+
+  if (groups.length === 0) {
+    return <JobList jobs={[]} isOwner={isOwner} emptyLabel="No upcoming jobs in the saved copy." />;
+  }
+
+  return (
+    <div className="space-y-5">
+      {groups.map(([dateKey, dayJobs]) => {
+        const [year, month, day] = dateKey.split("-").map(Number);
+        const date = new Date(year, month - 1, day);
+        const label = date.toLocaleDateString([], {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+        });
+        return (
+          <section key={dateKey} aria-labelledby={`offline-day-${dateKey}`}>
+            <div className="mb-2 flex items-center gap-3">
+              <h2
+                id={`offline-day-${dateKey}`}
+                className="font-display text-[14px] font-semibold text-white"
+              >
+                {label}
+              </h2>
+              <span className="font-body text-[11px] text-white/45">
+                {dayJobs.length} {dayJobs.length === 1 ? "job" : "jobs"}
+              </span>
+              <span className="h-px flex-1 bg-white/10" aria-hidden />
+            </div>
+            <JobList jobs={dayJobs} isOwner={isOwner} emptyLabel="" />
+          </section>
+        );
+      })}
     </div>
   );
 }
