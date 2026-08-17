@@ -680,5 +680,7 @@ export function usePlatformAuth() {
     setSelectedBusinessId: () => undefined,
     selectedBusiness: null,
     signOut: async () => undefined,
+    offlineMode: isOfflineMode(),
+    retryConnection: async () => false,
   };
 }
