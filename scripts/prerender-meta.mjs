@@ -27,6 +27,9 @@ const indexPath = path.join(distDir, "index.html");
 const { rawRoutes, SITE_ORIGIN, DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGE_ALT } = await import(
   path.join(projectRoot, "src", "seo", "routes.data.mjs")
 );
+const { writeLlmsTxt } = await import(
+  path.join(projectRoot, "scripts", "generate-llms-txt.mjs")
+);
 const { writeSitemap } = await import(
   path.join(projectRoot, "scripts", "generate-sitemap.mjs")
 );
@@ -83,7 +86,7 @@ async function loadStaticContent() {
     ],
   });
   const mod = await import(`file://${outFile}`);
-  return mod.buildStaticContent();
+  return mod;
 }
 
 function escapeHtml(value) {
@@ -161,7 +164,7 @@ function unknownRouteScript(knownPaths) {
     NOT_FOUND_DESCRIPTION,
   )});var c=document.querySelector('link[rel="canonical"]');if(c&&c.parentNode)c.parentNode.removeChild(c);var ou=document.querySelector('meta[property="og:url"]');if(ou&&ou.parentNode)ou.parentNode.removeChild(ou);var ot=document.querySelector('meta[property="og:title"]');if(ot)ot.setAttribute("content",${JSON.stringify(
     NOT_FOUND_TITLE,
-  )});document.addEventListener("DOMContentLoaded",function(){var s=document.getElementById("seo-static-content");if(s&&s.parentNode)s.parentNode.removeChild(s);});}catch(e){}})();</script>`;
+  )});var lds=document.querySelectorAll('script[type="application/ld+json"]');for(var i=0;i<lds.length;i++){if(lds[i].parentNode)lds[i].parentNode.removeChild(lds[i]);}document.addEventListener("DOMContentLoaded",function(){var s=document.getElementById("seo-static-content");if(s&&s.parentNode)s.parentNode.removeChild(s);});}catch(e){}})();</script>`;
 }
 
 /** Build the standalone dist/404.html document (no canonical, noindex). */
@@ -301,6 +304,25 @@ function rewriteHead(html, meta) {
   return out;
 }
 
+/** Render JSON-LD payloads as <script type="application/ld+json"> tags. */
+function renderJsonLd(payloads) {
+  if (!payloads || payloads.length === 0) return "";
+  return payloads
+    .map(
+      (p) =>
+        `<script type="application/ld+json">${JSON.stringify(p, null, 2).replace(
+          /</g,
+          "\\u003c",
+        )}</script>`,
+    )
+    .join("\n    ");
+}
+
+function injectJsonLd(html, tags) {
+  if (!tags) return html;
+  return html.replace(/<\/head>/i, `    ${tags}\n</head>`);
+}
+
 function outPathFor(routePath) {
   if (routePath === "/") return indexPath;
   const rel = routePath.replace(/^\//, "").replace(/\/$/, "");
@@ -314,6 +336,7 @@ function outPathFor(routePath) {
  */
 function resetTemplate(html) {
   return html
+    .replace(/\s*<script type="application\/ld\+json">[\s\S]*?<\/script>/g, "")
     .replace(/<script>\(function\(\)\{try\{var known=[\s\S]*?<\/script>/g, "")
     .replace(/<div id="root">[\s\S]*?<\/div>\s*(?=<script)/i, '<div id="root"></div>\n    ')
     .replace(/<div id="root">\s*<div id="seo-static-content"[\s\S]*?<\/div>\s*<\/div>/i, '<div id="root"></div>');
@@ -324,7 +347,8 @@ async function main() {
   if (!/<div id="root">\s*<\/div>/i.test(template)) {
     throw new Error("index.html no longer has an empty <div id=\"root\"></div> to inject into");
   }
-  const staticContent = await loadStaticContent();
+  const seo = await loadStaticContent();
+  const staticContent = seo.buildStaticContent();
   const meta = rawRoutes.map((r) => ({
     path: r.path,
     title: r.title,
@@ -346,8 +370,12 @@ async function main() {
     seenDesc.add(m.description);
   }
 
+  const routeJsonLd = seo.buildRouteJsonLd(
+    Object.fromEntries(meta.map((m) => [m.path, m.title])),
+  );
   let written = 0;
   let withContent = 0;
+  let jsonLdBlocks = 0;
   const knownPaths = meta.map((m) => (m.path === "/" ? "/" : m.path.replace(/\/+$/, "")));
   const fallbackScript = unknownRouteScript(knownPaths);
 
@@ -355,6 +383,10 @@ async function main() {
     const target = outPathFor(m.path);
     await fs.mkdir(path.dirname(target), { recursive: true });
     let rewritten = rewriteHead(template, m);
+    // Site-wide LocalBusiness on every public page, then page-specific schema.
+    const payloads = [seo.localBusinessSchema(), ...(routeJsonLd[m.path] || [])];
+    rewritten = injectJsonLd(rewritten, renderJsonLd(payloads));
+    jsonLdBlocks += payloads.length;
     const markup = renderStaticContent(staticContent[m.path]);
     if (markup) withContent += 1;
     rewritten = injectBody(rewritten, markup);
@@ -373,6 +405,9 @@ async function main() {
   console.log(
     `[prerender-meta] injected static body copy on ${withContent}/${meta.length} routes`,
   );
+  console.log(
+    `[prerender-meta] injected ${jsonLdBlocks} JSON-LD blocks across ${meta.length} routes`,
+  );
 
   // Standalone 404 document — harmless if the host ignores it.
   await fs.writeFile(path.join(distDir, "404.html"), buildNotFoundDoc(template), "utf8");
@@ -380,6 +415,9 @@ async function main() {
 
   // Also (re)generate the sitemap into dist/ from the same source of truth,
   // so the shipped bundle matches whatever routes just got prerendered.
+  const llms = await writeLlmsTxt(distDir);
+  console.log(`[prerender-meta] wrote dist/llms.txt (${llms.shortLines} lines) + dist/llms-full.txt (${llms.fullLines} lines)`);
+
   const sitemapPath = path.join(distDir, "sitemap.xml");
   const sitemapXml = await writeSitemap({ outFile: sitemapPath });
   console.log(`[prerender-meta] wrote dist/sitemap.xml (${sitemapXml.entries} entries)`);

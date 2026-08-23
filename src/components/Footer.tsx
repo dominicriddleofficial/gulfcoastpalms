@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Phone, MessageSquare, MapPin } from "lucide-react";
 import { locations } from "@/data/locations";
 import { serviceNavLinks } from "@/data/services";
-import { GOOGLE_REVIEW_URL } from "@/data/reviews";
+import { GOOGLE_REVIEW_URL, aggregateRating } from "@/data/reviews";
 import { trackEvent } from "@/lib/analytics";
 import { GCP_BUSINESS, TEL_HREF, SMS_HREF } from "@/lib/business-info";
 
@@ -17,7 +17,7 @@ const Footer = () => {
             </h3>
             <p className="font-body text-palm-sand/70 leading-relaxed">
               Professional palm tree services for Florida's Gulf Coast.
-              500+ properties served across the Emerald Coast · 100+ five-star Google reviews.
+              500+ properties served across the Emerald Coast · {aggregateRating.count} five-star Google reviews.
             </p>
           </div>
 
