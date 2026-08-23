@@ -83,7 +83,7 @@ async function loadStaticContent() {
     ],
   });
   const mod = await import(`file://${outFile}`);
-  return mod.buildStaticContent();
+  return mod;
 }
 
 function escapeHtml(value) {
@@ -301,6 +301,25 @@ function rewriteHead(html, meta) {
   return out;
 }
 
+/** Render JSON-LD payloads as <script type="application/ld+json"> tags. */
+function renderJsonLd(payloads) {
+  if (!payloads || payloads.length === 0) return "";
+  return payloads
+    .map(
+      (p) =>
+        `<script type="application/ld+json">${JSON.stringify(p, null, 2).replace(
+          /</g,
+          "\\u003c",
+        )}</script>`,
+    )
+    .join("\n    ");
+}
+
+function injectJsonLd(html, tags) {
+  if (!tags) return html;
+  return html.replace(/<\/head>/i, `    ${tags}\n</head>`);
+}
+
 function outPathFor(routePath) {
   if (routePath === "/") return indexPath;
   const rel = routePath.replace(/^\//, "").replace(/\/$/, "");
@@ -314,6 +333,7 @@ function outPathFor(routePath) {
  */
 function resetTemplate(html) {
   return html
+    .replace(/\s*<script type="application\/ld\+json">[\s\S]*?<\/script>/g, "")
     .replace(/<script>\(function\(\)\{try\{var known=[\s\S]*?<\/script>/g, "")
     .replace(/<div id="root">[\s\S]*?<\/div>\s*(?=<script)/i, '<div id="root"></div>\n    ')
     .replace(/<div id="root">\s*<div id="seo-static-content"[\s\S]*?<\/div>\s*<\/div>/i, '<div id="root"></div>');
@@ -324,7 +344,8 @@ async function main() {
   if (!/<div id="root">\s*<\/div>/i.test(template)) {
     throw new Error("index.html no longer has an empty <div id=\"root\"></div> to inject into");
   }
-  const staticContent = await loadStaticContent();
+  const seo = await loadStaticContent();
+  const staticContent = seo.buildStaticContent();
   const meta = rawRoutes.map((r) => ({
     path: r.path,
     title: r.title,
@@ -346,8 +367,12 @@ async function main() {
     seenDesc.add(m.description);
   }
 
+  const routeJsonLd = seo.buildRouteJsonLd(
+    Object.fromEntries(meta.map((m) => [m.path, m.title])),
+  );
   let written = 0;
   let withContent = 0;
+  let jsonLdBlocks = 0;
   const knownPaths = meta.map((m) => (m.path === "/" ? "/" : m.path.replace(/\/+$/, "")));
   const fallbackScript = unknownRouteScript(knownPaths);
 
@@ -355,6 +380,10 @@ async function main() {
     const target = outPathFor(m.path);
     await fs.mkdir(path.dirname(target), { recursive: true });
     let rewritten = rewriteHead(template, m);
+    // Site-wide LocalBusiness on every public page, then page-specific schema.
+    const payloads = [seo.localBusinessSchema(), ...(routeJsonLd[m.path] || [])];
+    rewritten = injectJsonLd(rewritten, renderJsonLd(payloads));
+    jsonLdBlocks += payloads.length;
     const markup = renderStaticContent(staticContent[m.path]);
     if (markup) withContent += 1;
     rewritten = injectBody(rewritten, markup);
@@ -372,6 +401,9 @@ async function main() {
   );
   console.log(
     `[prerender-meta] injected static body copy on ${withContent}/${meta.length} routes`,
+  );
+  console.log(
+    `[prerender-meta] injected ${jsonLdBlocks} JSON-LD blocks across ${meta.length} routes`,
   );
 
   // Standalone 404 document — harmless if the host ignores it.
