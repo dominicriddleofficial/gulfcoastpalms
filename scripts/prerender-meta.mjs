@@ -161,7 +161,7 @@ function unknownRouteScript(knownPaths) {
     NOT_FOUND_DESCRIPTION,
   )});var c=document.querySelector('link[rel="canonical"]');if(c&&c.parentNode)c.parentNode.removeChild(c);var ou=document.querySelector('meta[property="og:url"]');if(ou&&ou.parentNode)ou.parentNode.removeChild(ou);var ot=document.querySelector('meta[property="og:title"]');if(ot)ot.setAttribute("content",${JSON.stringify(
     NOT_FOUND_TITLE,
-  )});document.addEventListener("DOMContentLoaded",function(){var s=document.getElementById("seo-static-content");if(s&&s.parentNode)s.parentNode.removeChild(s);});}catch(e){}})();</script>`;
+  )});var lds=document.querySelectorAll('script[type="application/ld+json"]');for(var i=0;i<lds.length;i++){if(lds[i].parentNode)lds[i].parentNode.removeChild(lds[i]);}document.addEventListener("DOMContentLoaded",function(){var s=document.getElementById("seo-static-content");if(s&&s.parentNode)s.parentNode.removeChild(s);});}catch(e){}})();</script>`;
 }
 
 /** Build the standalone dist/404.html document (no canonical, noindex). */
