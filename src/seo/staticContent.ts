@@ -22,6 +22,9 @@ import { palmTypes } from "@/data/palmTypes";
 import { palmGuides } from "@/data/palmGuides";
 import { articles } from "@/data/learnArticles";
 import { homeFaqs } from "@/data/homeFaq";
+import { trustFactsText } from "@/seo/jsonLd";
+
+export { buildRouteJsonLd, localBusinessSchema, trustFactsText } from "@/seo/jsonLd";
 
 export interface StaticBlock {
   heading?: string;
@@ -368,6 +371,17 @@ export function buildStaticContent(): Record<string, StaticPageContent> {
         heading: s.heading,
         paragraphs: s.paragraphs,
       })),
+    };
+  }
+
+  // Trust facts (phone, real Google rating + review count, service area,
+  // licensed/insured status) appended to every public page as real text so
+  // AI crawlers reading the raw HTML can cite contact info and credibility.
+  const trust = trustFactsText();
+  for (const key of Object.keys(out)) {
+    out[key] = {
+      ...out[key],
+      blocks: [...out[key].blocks, { heading: "Gulf Coast Palms", paragraphs: trust }],
     };
   }
 
