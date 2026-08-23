@@ -27,6 +27,9 @@ const indexPath = path.join(distDir, "index.html");
 const { rawRoutes, SITE_ORIGIN, DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGE_ALT } = await import(
   path.join(projectRoot, "src", "seo", "routes.data.mjs")
 );
+const { writeLlmsTxt } = await import(
+  path.join(projectRoot, "scripts", "generate-llms-txt.mjs")
+);
 const { writeSitemap } = await import(
   path.join(projectRoot, "scripts", "generate-sitemap.mjs")
 );
@@ -412,6 +415,9 @@ async function main() {
 
   // Also (re)generate the sitemap into dist/ from the same source of truth,
   // so the shipped bundle matches whatever routes just got prerendered.
+  const llms = await writeLlmsTxt(distDir);
+  console.log(`[prerender-meta] wrote dist/llms.txt (${llms.shortLines} lines) + dist/llms-full.txt (${llms.fullLines} lines)`);
+
   const sitemapPath = path.join(distDir, "sitemap.xml");
   const sitemapXml = await writeSitemap({ outFile: sitemapPath });
   console.log(`[prerender-meta] wrote dist/sitemap.xml (${sitemapXml.entries} entries)`);
