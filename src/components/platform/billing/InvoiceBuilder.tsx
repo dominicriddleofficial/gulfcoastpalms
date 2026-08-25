@@ -492,12 +492,12 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
       public_notes: publicNotes || null,
       internal_notes: internalNotes || null,
       created_by_user_id: userId,
-      service_address_line1: serviceLine1 || null,
-      service_address_line2: serviceLine2 || null,
-      service_city: serviceCity || null,
-      service_state: serviceState || null,
-      service_zip: serviceZip || null,
-      service_formatted_address: serviceFormatted,
+      // Parts + formatted string always written together (src/lib/invoice-address.ts).
+      ...serviceAddressUpdatePayload(
+        { line1: serviceLine1, line2: serviceLine2, city: serviceCity, state: serviceState, zip: serviceZip },
+        serviceFormatted,
+      ),
+
       service_latitude: serviceLat,
       service_longitude: serviceLng,
       service_place_id: servicePlaceId,
@@ -682,12 +682,12 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
       public_notes: publicNotes || null,
       internal_notes: internalNotes || null,
       created_by_user_id: userId,
-      service_address_line1: serviceLine1 || null,
-      service_address_line2: serviceLine2 || null,
-      service_city: serviceCity || null,
-      service_state: serviceState || null,
-      service_zip: serviceZip || null,
-      service_formatted_address: serviceFormatted,
+      // Parts + formatted string always written together (src/lib/invoice-address.ts).
+      ...serviceAddressUpdatePayload(
+        { line1: serviceLine1, line2: serviceLine2, city: serviceCity, state: serviceState, zip: serviceZip },
+        serviceFormatted,
+      ),
+
       service_latitude: serviceLat,
       service_longitude: serviceLng,
       service_place_id: servicePlaceId,

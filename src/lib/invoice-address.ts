@@ -68,23 +68,34 @@ export function resolveInvoiceDisplayAddress(input: {
  * The ONLY payload shape used to persist an invoice service address. Always writes the
  * parts and the rebuilt formatted string together.
  */
-export function serviceAddressUpdatePayload(parts: ServiceAddressParts) {
+export function serviceAddressUpdatePayload(
+  parts: ServiceAddressParts,
+  /** A Google-formatted string is kept only while it still agrees with line1. */
+  existingFormatted?: string | null,
+) {
   return {
     service_address_line1: clean(parts.line1) || null,
     service_address_line2: clean(parts.line2) || null,
     service_city: clean(parts.city) || null,
     service_state: clean(parts.state) || null,
     service_zip: clean(parts.zip) || null,
-    service_formatted_address: buildFormattedAddress(parts),
+    service_formatted_address: formattedMatchesParts(existingFormatted, parts.line1)
+      ? clean(existingFormatted)
+      : buildFormattedAddress(parts),
   };
 }
+
 
 export type ServiceAddressUpdatePayload = ReturnType<typeof serviceAddressUpdatePayload>;
 
 /** Single save path for editing an existing invoice's service address. */
-
-export async function saveInvoiceServiceAddress(invoiceId: string, parts: ServiceAddressParts) {
-  const payload = serviceAddressUpdatePayload(parts);
+export async function saveInvoiceServiceAddress(
+  invoiceId: string,
+  parts: ServiceAddressParts,
+  existingFormatted?: string | null,
+) {
+  const payload = serviceAddressUpdatePayload(parts, existingFormatted);
   const { error } = await supabase.from("platform_invoices").update(payload).eq("id", invoiceId);
   return { error, payload };
 }
+
