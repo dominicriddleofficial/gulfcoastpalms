@@ -18,6 +18,8 @@ import { useQuery } from "@tanstack/react-query";
 import type { InvoicePrefillState } from "@/components/platform/CreateSheetsProvider";
 import { downloadElementAsPdf } from "@/lib/download-pdf";
 import { buildInvoiceMessage, copyTextToClipboard, buildOfflinePaymentBlock } from "@/lib/invoice-message";
+import { serviceAddressUpdatePayload } from "@/lib/invoice-address";
+
 
 interface LineItem {
   id: string;
