@@ -352,6 +352,10 @@ export default function PlatformInvoices() {
               invoice={selectedInvoice}
               businesses={businesses}
               onCopyInvoiceMessage={() => copyInvoiceMessage(selectedInvoice)}
+              onPaymentMethodChange={(method) => {
+                setSelectedInvoice({ ...selectedInvoice, payment_method: method });
+                refetch();
+              }}
               onStatusChange={async (newStatus) => {
                 const updates: PlatformInvoiceUpdate = { status: newStatus };
                 if (newStatus === "sent") updates.sent_at = new Date().toISOString();
