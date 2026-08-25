@@ -550,6 +550,19 @@ function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayme
         businessShortcode={biz?.shortcode}
       />
 
+      <PaymentMethodCard
+        invoice={{
+          id: invoice.id,
+          invoice_number: invoice.invoice_number,
+          status: invoice.status,
+          payment_method: invoice.payment_method,
+          amount_paid: invoice.amount_paid,
+        }}
+        businessName={biz?.public_brand_name}
+        onUpdated={onPaymentMethodChange}
+      />
+
+
       {!isVoid && (
         <PaymentActionPanel
           invoice={{
