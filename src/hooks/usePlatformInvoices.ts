@@ -54,6 +54,13 @@ export type PlatformInvoice = {
   internal_notes: string | null;
   payment_instructions: string | null;
   billing_name: string | null;
+  service_address_line1?: string | null;
+  service_address_line2?: string | null;
+  service_city?: string | null;
+  service_state?: string | null;
+  service_zip?: string | null;
+  service_formatted_address?: string | null;
+
   created_at: string;
   updated_at: string;
   customer_name?: string;

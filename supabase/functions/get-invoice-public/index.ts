@@ -163,12 +163,19 @@ serve(async (req) => {
       }
     }
 
-    const customerAddress =
-      addr.formatted ||
-      [addr.line1, addr.line2, [addr.city, addr.state, addr.zip].filter(Boolean).join(", ")]
+    // Mirrors src/lib/invoice-address.ts resolveInvoiceDisplayAddress: a stored
+    // formatted string is only trusted while it still agrees with line1, otherwise it is
+    // stale (edited parts) and we rebuild from the parts.
+    const norm = (v: string | null) => (v || "").replace(/[^a-z0-9]/gi, "").toLowerCase();
+    const fromParts =
+      [addr.line1, addr.line2, [[addr.city, addr.state].filter(Boolean).join(", "), addr.zip].filter(Boolean).join(" ")]
         .filter(Boolean)
-        .join(", ") ||
-      null;
+        .join(", ") || null;
+    const formattedOk =
+      !!addr.formatted && (!addr.line1 || norm(addr.formatted).startsWith(norm(addr.line1)));
+    const customerAddress = (formattedOk ? addr.formatted : null) || fromParts || null;
+    if (!formattedOk) addr.formatted = fromParts;
+
 
     // Return only safe public-facing fields — no internal notes, cost margins, or employee data
     return new Response(JSON.stringify({

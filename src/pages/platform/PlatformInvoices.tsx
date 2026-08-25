@@ -11,6 +11,9 @@ import { InvoiceStatusBadge, getInvoiceDisplayState, getAmountDueNow } from "@/c
 import BillingSummaryCard from "@/components/platform/billing/BillingSummaryCard";
 import PaymentActionPanel from "@/components/platform/billing/PaymentActionPanel";
 import PaymentMethodCard from "@/components/platform/billing/PaymentMethodCard";
+import ServiceAddressCard from "@/components/platform/billing/ServiceAddressCard";
+import type { ServiceAddressUpdatePayload } from "@/lib/invoice-address";
+
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -356,6 +359,11 @@ export default function PlatformInvoices() {
                 setSelectedInvoice({ ...selectedInvoice, payment_method: method });
                 refetch();
               }}
+              onServiceAddressChange={(payload) => {
+                setSelectedInvoice({ ...selectedInvoice, ...payload });
+                refetch();
+              }}
+
               onStatusChange={async (newStatus) => {
                 const updates: PlatformInvoiceUpdate = { status: newStatus };
                 if (newStatus === "sent") updates.sent_at = new Date().toISOString();
@@ -453,14 +461,16 @@ export default function PlatformInvoices() {
 }
 
 /* ─── Invoice Detail ─── */
-function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayment, onCopyInvoiceMessage, onPaymentMethodChange }: {
+function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayment, onCopyInvoiceMessage, onPaymentMethodChange, onServiceAddressChange }: {
   invoice: PlatformInvoice;
   businesses: Array<{ id: string; public_brand_name: string; shortcode: string; default_business_color?: string }>;
   onStatusChange: (status: string) => void;
   onRecordPayment: (amount: number, method: string, notes: string, isDeposit: boolean, tipAmount: number) => void;
   onCopyInvoiceMessage: () => void;
   onPaymentMethodChange: (method: string) => void;
+  onServiceAddressChange: (payload: ServiceAddressUpdatePayload) => void;
 }) {
+
   const biz = businesses.find(b => b.id === invoice.business_id);
   const isVoid = invoice.status === "void";
 
@@ -567,6 +577,9 @@ function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayme
         businessName={biz?.public_brand_name}
         onUpdated={onPaymentMethodChange}
       />
+
+      <ServiceAddressCard invoice={invoice} onUpdated={onServiceAddressChange} />
+
 
 
       {!isVoid && (
