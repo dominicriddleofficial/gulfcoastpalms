@@ -5,6 +5,8 @@ import { toast } from "@/hooks/use-toast";
 import DocumentBrandMark from "@/components/platform/billing/DocumentBrandMark";
 import { downloadElementAsPdf } from "@/lib/download-pdf";
 import { CHECK_REMIT, buildOfflinePaymentBlock } from "@/lib/invoice-message";
+import { resolveInvoiceDisplayAddress } from "@/lib/invoice-address";
+
 
 type InvoiceData = {
   id: string;
