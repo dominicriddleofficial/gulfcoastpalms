@@ -34,6 +34,15 @@ type InvoiceData = {
   customer_email?: string;
   customer_phone?: string;
   customer_address?: string;
+  customer_address_lines?: {
+    line1?: string | null;
+    line2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    zip?: string | null;
+    formatted?: string | null;
+  } | null;
+
   tips_enabled?: boolean;
   tip_presets?: number[];
 };
@@ -220,7 +229,16 @@ export default function PayInvoice() {
   // Drafts are presented to the customer as a normal (sent) invoice — see safety net above.
   const dueNow = invoice.deposit_required && !invoice.deposit_paid && invoice.deposit_amount > 0 ? invoice.deposit_amount : invoice.balance_due;
   const billToName = (invoice.billing_name || invoice.customer_name || "").trim() || null;
-  const billToAddress = hasRealAddress(invoice.customer_address) ? invoice.customer_address.trim() : null;
+  // One shared resolver for detail page / pay page / PDF — never renders a stale
+  // service_formatted_address that disagrees with line1.
+  const resolvedAddress = resolveInvoiceDisplayAddress({
+    service: invoice.customer_address_lines
+      ? { ...invoice.customer_address_lines, formatted: invoice.customer_address_lines.formatted }
+      : null,
+    customerAddress: invoice.customer_address ?? null,
+  });
+  const billToAddress = hasRealAddress(resolvedAddress) ? resolvedAddress.trim() : null;
+
 
   const statusBadge = () => {
     if (isPaid) return { label: "Paid", bg: `rgba(${accentRgb}, 0.15)`, color: accent, border: `rgba(${accentRgb}, 0.3)` };
