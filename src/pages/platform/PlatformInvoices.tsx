@@ -10,6 +10,7 @@ import { InlineBadge } from "@/components/platform/BusinessSwitcher";
 import { InvoiceStatusBadge, getInvoiceDisplayState, getAmountDueNow } from "@/components/platform/billing/InvoiceStatusBadge";
 import BillingSummaryCard from "@/components/platform/billing/BillingSummaryCard";
 import PaymentActionPanel from "@/components/platform/billing/PaymentActionPanel";
+import PaymentMethodCard from "@/components/platform/billing/PaymentMethodCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
