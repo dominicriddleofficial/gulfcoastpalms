@@ -79,7 +79,10 @@ export function serviceAddressUpdatePayload(parts: ServiceAddressParts) {
   };
 }
 
+export type ServiceAddressUpdatePayload = ReturnType<typeof serviceAddressUpdatePayload>;
+
 /** Single save path for editing an existing invoice's service address. */
+
 export async function saveInvoiceServiceAddress(invoiceId: string, parts: ServiceAddressParts) {
   const payload = serviceAddressUpdatePayload(parts);
   const { error } = await supabase.from("platform_invoices").update(payload).eq("id", invoiceId);

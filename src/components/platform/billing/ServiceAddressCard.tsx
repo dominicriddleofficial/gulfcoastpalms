@@ -8,6 +8,7 @@ import {
   resolveInvoiceDisplayAddress,
   saveInvoiceServiceAddress,
   type ServiceAddressParts,
+  type ServiceAddressUpdatePayload,
 } from "@/lib/invoice-address";
 
 export type ServiceAddressCardInvoice = {
@@ -24,18 +25,9 @@ export type ServiceAddressCardInvoice = {
 interface Props {
   invoice: ServiceAddressCardInvoice;
   /** Called with the saved parts + rebuilt formatted string so the sheet re-renders instantly. */
-  onUpdated: (payload: ReturnType<typeof buildPayloadType>) => void;
+  onUpdated: (payload: ServiceAddressUpdatePayload) => void;
 }
 
-// Type-only helper so the callback signature stays tied to the single save path.
-declare function buildPayloadType(): {
-  service_address_line1: string | null;
-  service_address_line2: string | null;
-  service_city: string | null;
-  service_state: string | null;
-  service_zip: string | null;
-  service_formatted_address: string | null;
-};
 
 /** Owner-only pencil edit for the per-invoice service address override. */
 export default function ServiceAddressCard({ invoice, onUpdated }: Props) {
