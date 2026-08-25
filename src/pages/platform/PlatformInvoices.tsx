@@ -10,6 +10,7 @@ import { InlineBadge } from "@/components/platform/BusinessSwitcher";
 import { InvoiceStatusBadge, getInvoiceDisplayState, getAmountDueNow } from "@/components/platform/billing/InvoiceStatusBadge";
 import BillingSummaryCard from "@/components/platform/billing/BillingSummaryCard";
 import PaymentActionPanel from "@/components/platform/billing/PaymentActionPanel";
+import PaymentMethodCard from "@/components/platform/billing/PaymentMethodCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -351,6 +352,10 @@ export default function PlatformInvoices() {
               invoice={selectedInvoice}
               businesses={businesses}
               onCopyInvoiceMessage={() => copyInvoiceMessage(selectedInvoice)}
+              onPaymentMethodChange={(method) => {
+                setSelectedInvoice({ ...selectedInvoice, payment_method: method });
+                refetch();
+              }}
               onStatusChange={async (newStatus) => {
                 const updates: PlatformInvoiceUpdate = { status: newStatus };
                 if (newStatus === "sent") updates.sent_at = new Date().toISOString();
@@ -448,12 +453,13 @@ export default function PlatformInvoices() {
 }
 
 /* ─── Invoice Detail ─── */
-function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayment, onCopyInvoiceMessage }: {
+function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayment, onCopyInvoiceMessage, onPaymentMethodChange }: {
   invoice: PlatformInvoice;
   businesses: Array<{ id: string; public_brand_name: string; shortcode: string; default_business_color?: string }>;
   onStatusChange: (status: string) => void;
   onRecordPayment: (amount: number, method: string, notes: string, isDeposit: boolean, tipAmount: number) => void;
   onCopyInvoiceMessage: () => void;
+  onPaymentMethodChange: (method: string) => void;
 }) {
   const biz = businesses.find(b => b.id === invoice.business_id);
   const isVoid = invoice.status === "void";
@@ -549,6 +555,19 @@ function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayme
         businessColor={biz?.default_business_color}
         businessShortcode={biz?.shortcode}
       />
+
+      <PaymentMethodCard
+        invoice={{
+          id: invoice.id,
+          invoice_number: invoice.invoice_number,
+          status: invoice.status,
+          payment_method: invoice.payment_method,
+          amount_paid: invoice.amount_paid,
+        }}
+        businessName={biz?.public_brand_name}
+        onUpdated={onPaymentMethodChange}
+      />
+
 
       {!isVoid && (
         <PaymentActionPanel

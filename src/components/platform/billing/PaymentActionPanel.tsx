@@ -219,14 +219,21 @@ export default function PaymentActionPanel({
         <>
           <Button
             variant="outline"
-            className="w-full h-10 font-body font-medium text-sm justify-between border-primary/20 hover:border-primary/40"
+            className="w-full h-10 font-body font-semibold text-sm justify-between border-primary/50 text-foreground hover:bg-primary/10 hover:border-primary"
             onClick={onSendPaymentLink || onCopyPaymentLink}
           >
             <span className="flex items-center gap-2">
               <Send className="w-4 h-4 text-primary" /> Send Payment Link
             </span>
-            <ChevronRight className="w-4 h-4 opacity-40" />
+            <ChevronRight className="w-4 h-4 opacity-60" />
           </Button>
+          {(invoice.payment_method === "check" || invoice.payment_method === "p2p") && (
+            <p className="font-body text-[10px] text-muted-foreground leading-snug px-0.5">
+              Payment method is {invoice.payment_method === "check" ? "check (mail-in)" : "Zelle / Venmo / Cash App"} —
+              the link shows those instructions instead of a card button. Change the payment method to Card for a Stripe link.
+            </p>
+          )}
+
 
           {/* Tertiary row */}
           <div className="flex gap-2">
