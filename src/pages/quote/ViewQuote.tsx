@@ -368,10 +368,10 @@ export default function ViewQuote() {
           </button>
           <button onClick={async () => {
             try {
-              await downloadElementAsPdf(quoteCardRef.current, `Quote-${quote.quote_number}.pdf`, {
-                // html2canvas ignores @media print, so skip print-hidden nodes explicitly
-                ignoreSelector: ".no-print",
-              });
+              await downloadElementAsPdf(
+                printRef.current,
+                documentFilename(quote.business_name, "Quote", quote.quote_number),
+              );
             } catch (err) {
               console.error("PDF download failed", err);
               toast({ title: "Could not generate PDF", variant: "destructive" });
