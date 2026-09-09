@@ -176,9 +176,9 @@ export default function PrintInvoiceDocument({ data }: { data: PrintInvoiceData 
       )}
 
       {/* Notes */}
-      {data.public_notes && (
+      {showNotes && (
         <div style={{ padding: "16px 24px 0", fontSize: 12, color: PRINT.secondary, fontStyle: "italic", lineHeight: 1.6 }}>
-          {data.public_notes}
+          {notes}
         </div>
       )}
 
