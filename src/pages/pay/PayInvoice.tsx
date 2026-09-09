@@ -182,10 +182,13 @@ export default function PayInvoice() {
   };
 
   const handleDownloadPdf = async () => {
-    if (!invoiceCardRef.current || downloading) return;
+    if (!printRef.current || downloading) return;
     setDownloading(true);
     try {
-      await downloadElementAsPdf(invoiceCardRef.current, `Invoice-${invoice?.invoice_number || "invoice"}.pdf`);
+      await downloadElementAsPdf(
+        printRef.current,
+        documentFilename(invoice?.business_name, "Invoice", invoice?.invoice_number),
+      );
     } catch (err) {
       toast({ title: "Download failed", description: err instanceof Error ? err.message : "Could not generate PDF.", variant: "destructive" });
     } finally {
