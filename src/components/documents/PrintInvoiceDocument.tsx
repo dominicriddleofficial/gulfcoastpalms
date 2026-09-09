@@ -51,6 +51,10 @@ export default function PrintInvoiceDocument({ data }: { data: PrintInvoiceData 
   const offlineBlock = buildOfflinePaymentBlock(data.payment_method, data.invoice_number, data.business_name);
   const isCheck = data.payment_method === "check";
   const items = data.line_items ?? [];
+  // The footer already carries one thank-you line. Drop a note that only
+  // repeats it so paper never shows the sentence twice.
+  const notes = (data.public_notes || "").trim();
+  const showNotes = notes && !/^thank you for choosing/i.test(notes);
 
   return (
     <div
