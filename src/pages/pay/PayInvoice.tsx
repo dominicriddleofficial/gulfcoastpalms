@@ -610,6 +610,44 @@ export default function PayInvoice() {
         </div>
         </div>
       </div>
+
+      {/* Offscreen light-theme print copy — source node for the PDF. */}
+      <div aria-hidden style={{ position: "absolute", left: -10000, top: 0, width: 680, pointerEvents: "none", opacity: 1 }}>
+        <div ref={printRef}>
+          <PrintInvoiceDocument
+            data={{
+              invoice_number: invoice.invoice_number,
+              status: invoice.status,
+              payment_method: invoice.payment_method,
+              business_name: invoice.business_name || brand.name,
+              shortcode: invoice.shortcode || brandKey,
+              tagline: brand.tagline,
+              footer: brand.footer,
+              logo_url: invoice.logo_url,
+              issue_date: invoice.issue_date,
+              due_date: invoice.due_date,
+              bill_to_name: billToName,
+              bill_to_address: billToAddress,
+              customer_phone: invoice.customer_phone,
+              customer_email: invoice.customer_email,
+              line_items: invoice.line_items,
+              subtotal: invoice.subtotal,
+              tax_total: invoice.tax_total,
+              tax_rate: invoice.tax_rate,
+              deposit_paid: invoice.deposit_paid,
+              deposit_amount: invoice.deposit_amount,
+              total: invoice.total,
+              amount_due: dueNow,
+              public_notes: invoice.public_notes,
+              pay_url: getInvoicePaymentUrl({
+                invoiceId: invoice.id,
+                invoiceNumber: invoice.invoice_number,
+                shortcode: invoice.shortcode,
+              }),
+            }}
+          />
+        </div>
+      </div>
     </>
   );
 }
