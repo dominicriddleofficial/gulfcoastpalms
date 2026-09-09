@@ -718,6 +718,37 @@ export default function ViewQuote() {
           </div>
         </div>
       </div>
+
+      {/* Offscreen light-theme print copy — source node for the PDF. */}
+      <div aria-hidden style={{ position: "absolute", left: -10000, top: 0, width: 680, pointerEvents: "none" }}>
+        <div ref={printRef}>
+          <PrintQuoteDocument
+            data={{
+              quote_number: quote.quote_number,
+              business_name: quote.business_name || brand.name,
+              shortcode: quote.shortcode || brandKey,
+              tagline: brand.tagline,
+              footer: brand.footerInfo,
+              logo_url: quote.logo_url,
+              created_at: quote.created_at,
+              valid_until: quote.valid_until,
+              customer_name: quote.customer_name,
+              customer_address: quote.customer_address,
+              customer_phone: quote.customer_phone,
+              customer_email: quote.customer_email,
+              scope_of_work: quote.scope_of_work || quote.public_notes,
+              line_items: quote.line_items,
+              subtotal: quote.subtotal,
+              tax_total: quote.tax_total,
+              tax_rate: quote.tax_rate,
+              total: grandTotal,
+              approved_at: quote.approved_at,
+              approved_by: quote.approved_by,
+              is_approved: isApproved,
+            }}
+          />
+        </div>
+      </div>
     </>
   );
 }
