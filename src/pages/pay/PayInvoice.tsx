@@ -346,7 +346,7 @@ export default function PayInvoice() {
                 <div style={{ textAlign: "right", flexShrink: 0 }}>
                   <p style={{ fontFamily: "monospace", fontSize: 14, fontWeight: 600, color: "#fff" }}>{invoice.invoice_number}</p>
                   {invoice.issue_date && <p style={{ fontSize: 12, color: labelColor, marginTop: 2 }}>{invoice.issue_date}</p>}
-                  <div style={{ display: "inline-block", marginTop: 6, padding: "2px 10px", borderRadius: 20, backgroundColor: badge.bg, color: badge.color, border: `1px solid ${badge.border}`, fontSize: 10, fontWeight: 600 }}>
+                  <div className={isPaid ? undefined : "no-print"} style={{ display: "inline-block", marginTop: 6, padding: "2px 10px", borderRadius: 20, backgroundColor: badge.bg, color: badge.color, border: `1px solid ${badge.border}`, fontSize: 10, fontWeight: 600 }}>
                     {badge.label}
                   </div>
                 </div>
