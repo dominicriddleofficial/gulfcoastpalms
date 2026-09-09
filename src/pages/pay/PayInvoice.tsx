@@ -4,8 +4,10 @@ import { CreditCard, CheckCircle, XCircle, Loader2, Shield, AlertCircle, Downloa
 import { toast } from "@/hooks/use-toast";
 import DocumentBrandMark from "@/components/platform/billing/DocumentBrandMark";
 import { downloadElementAsPdf } from "@/lib/download-pdf";
-import { CHECK_REMIT, buildOfflinePaymentBlock } from "@/lib/invoice-message";
+import { CHECK_REMIT, buildOfflinePaymentBlock, getInvoicePaymentUrl } from "@/lib/invoice-message";
 import { resolveInvoiceDisplayAddress } from "@/lib/invoice-address";
+import PrintInvoiceDocument from "@/components/documents/PrintInvoiceDocument";
+import { documentFilename } from "@/components/documents/printTheme";
 
 
 type InvoiceData = {
@@ -80,6 +82,8 @@ export default function PayInvoice() {
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const invoiceCardRef = useRef<HTMLDivElement>(null);
+  // Offscreen light-theme copy — this is what the PDF rasterizes.
+  const printRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
   // Tip selection: null = nothing chosen yet (nothing is preselected).
   const [tipChoice, setTipChoice] = useState<number | "other" | "none" | null>(null);
