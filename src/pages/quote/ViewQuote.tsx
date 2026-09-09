@@ -4,6 +4,8 @@ import { Loader2, XCircle, CheckCircle, MessageSquare, Shield, Download, Copy, C
 import { toast } from "@/hooks/use-toast";
 import DocumentBrandMark from "@/components/platform/billing/DocumentBrandMark";
 import { downloadElementAsPdf } from "@/lib/download-pdf";
+import PrintQuoteDocument from "@/components/documents/PrintQuoteDocument";
+import { documentFilename } from "@/components/documents/printTheme";
 
 /* ── Brand tokens ── */
 const BRAND: Record<string, {
