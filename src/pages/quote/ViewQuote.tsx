@@ -257,6 +257,8 @@ export default function ViewQuote() {
   };
 
   const quoteCardRef = useRef<HTMLDivElement>(null);
+  // Offscreen light-theme copy — this is what the PDF rasterizes.
+  const printRef = useRef<HTMLDivElement>(null);
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
