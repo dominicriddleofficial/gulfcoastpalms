@@ -4,6 +4,8 @@ import { Loader2, XCircle, CheckCircle, MessageSquare, Shield, Download, Copy, C
 import { toast } from "@/hooks/use-toast";
 import DocumentBrandMark from "@/components/platform/billing/DocumentBrandMark";
 import { downloadElementAsPdf } from "@/lib/download-pdf";
+import PrintQuoteDocument from "@/components/documents/PrintQuoteDocument";
+import { documentFilename } from "@/components/documents/printTheme";
 
 /* ── Brand tokens ── */
 const BRAND: Record<string, {
@@ -255,6 +257,8 @@ export default function ViewQuote() {
   };
 
   const quoteCardRef = useRef<HTMLDivElement>(null);
+  // Offscreen light-theme copy — this is what the PDF rasterizes.
+  const printRef = useRef<HTMLDivElement>(null);
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -364,10 +368,10 @@ export default function ViewQuote() {
           </button>
           <button onClick={async () => {
             try {
-              await downloadElementAsPdf(quoteCardRef.current, `Quote-${quote.quote_number}.pdf`, {
-                // html2canvas ignores @media print, so skip print-hidden nodes explicitly
-                ignoreSelector: ".no-print",
-              });
+              await downloadElementAsPdf(
+                printRef.current,
+                documentFilename(quote.business_name, "Quote", quote.quote_number),
+              );
             } catch (err) {
               console.error("PDF download failed", err);
               toast({ title: "Could not generate PDF", variant: "destructive" });
@@ -712,6 +716,37 @@ export default function ViewQuote() {
               <div style={{ fontSize: 11, color: "#52525b", marginTop: 4 }}>{brand.footerInfo}</div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Offscreen light-theme print copy — source node for the PDF. */}
+      <div aria-hidden style={{ position: "absolute", left: -10000, top: 0, width: 680, pointerEvents: "none" }}>
+        <div ref={printRef}>
+          <PrintQuoteDocument
+            data={{
+              quote_number: quote.quote_number,
+              business_name: quote.business_name || brand.name,
+              shortcode: quote.shortcode || brandKey,
+              tagline: brand.tagline,
+              footer: brand.footerInfo,
+              logo_url: quote.logo_url,
+              created_at: quote.created_at,
+              valid_until: quote.valid_until,
+              customer_name: quote.customer_name,
+              customer_address: quote.customer_address,
+              customer_phone: quote.customer_phone,
+              customer_email: quote.customer_email,
+              scope_of_work: quote.scope_of_work || quote.public_notes,
+              line_items: quote.line_items,
+              subtotal: quote.subtotal,
+              tax_total: quote.tax_total,
+              tax_rate: quote.tax_rate,
+              total: grandTotal,
+              approved_at: quote.approved_at,
+              approved_by: quote.approved_by,
+              is_approved: isApproved,
+            }}
+          />
         </div>
       </div>
     </>

@@ -4,8 +4,10 @@ import { CreditCard, CheckCircle, XCircle, Loader2, Shield, AlertCircle, Downloa
 import { toast } from "@/hooks/use-toast";
 import DocumentBrandMark from "@/components/platform/billing/DocumentBrandMark";
 import { downloadElementAsPdf } from "@/lib/download-pdf";
-import { CHECK_REMIT, buildOfflinePaymentBlock } from "@/lib/invoice-message";
+import { CHECK_REMIT, buildOfflinePaymentBlock, getInvoicePaymentUrl } from "@/lib/invoice-message";
 import { resolveInvoiceDisplayAddress } from "@/lib/invoice-address";
+import PrintInvoiceDocument from "@/components/documents/PrintInvoiceDocument";
+import { documentFilename } from "@/components/documents/printTheme";
 
 
 type InvoiceData = {
@@ -80,6 +82,8 @@ export default function PayInvoice() {
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const invoiceCardRef = useRef<HTMLDivElement>(null);
+  // Offscreen light-theme copy — this is what the PDF rasterizes.
+  const printRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
   // Tip selection: null = nothing chosen yet (nothing is preselected).
   const [tipChoice, setTipChoice] = useState<number | "other" | "none" | null>(null);
@@ -178,10 +182,13 @@ export default function PayInvoice() {
   };
 
   const handleDownloadPdf = async () => {
-    if (!invoiceCardRef.current || downloading) return;
+    if (!printRef.current || downloading) return;
     setDownloading(true);
     try {
-      await downloadElementAsPdf(invoiceCardRef.current, `Invoice-${invoice?.invoice_number || "invoice"}.pdf`);
+      await downloadElementAsPdf(
+        printRef.current,
+        documentFilename(invoice?.business_name, "Invoice", invoice?.invoice_number),
+      );
     } catch (err) {
       toast({ title: "Download failed", description: err instanceof Error ? err.message : "Could not generate PDF.", variant: "destructive" });
     } finally {
@@ -339,7 +346,7 @@ export default function PayInvoice() {
                 <div style={{ textAlign: "right", flexShrink: 0 }}>
                   <p style={{ fontFamily: "monospace", fontSize: 14, fontWeight: 600, color: "#fff" }}>{invoice.invoice_number}</p>
                   {invoice.issue_date && <p style={{ fontSize: 12, color: labelColor, marginTop: 2 }}>{invoice.issue_date}</p>}
-                  <div style={{ display: "inline-block", marginTop: 6, padding: "2px 10px", borderRadius: 20, backgroundColor: badge.bg, color: badge.color, border: `1px solid ${badge.border}`, fontSize: 10, fontWeight: 600 }}>
+                  <div className={isPaid ? undefined : "no-print"} style={{ display: "inline-block", marginTop: 6, padding: "2px 10px", borderRadius: 20, backgroundColor: badge.bg, color: badge.color, border: `1px solid ${badge.border}`, fontSize: 10, fontWeight: 600 }}>
                     {badge.label}
                   </div>
                 </div>
@@ -601,6 +608,44 @@ export default function PayInvoice() {
             </div>
           </div>
         </div>
+        </div>
+      </div>
+
+      {/* Offscreen light-theme print copy — source node for the PDF. */}
+      <div aria-hidden style={{ position: "absolute", left: -10000, top: 0, width: 680, pointerEvents: "none", opacity: 1 }}>
+        <div ref={printRef}>
+          <PrintInvoiceDocument
+            data={{
+              invoice_number: invoice.invoice_number,
+              status: invoice.status,
+              payment_method: invoice.payment_method,
+              business_name: invoice.business_name || brand.name,
+              shortcode: invoice.shortcode || brandKey,
+              tagline: brand.tagline,
+              footer: brand.footer,
+              logo_url: invoice.logo_url,
+              issue_date: invoice.issue_date,
+              due_date: invoice.due_date,
+              bill_to_name: billToName,
+              bill_to_address: billToAddress,
+              customer_phone: invoice.customer_phone,
+              customer_email: invoice.customer_email,
+              line_items: invoice.line_items,
+              subtotal: invoice.subtotal,
+              tax_total: invoice.tax_total,
+              tax_rate: invoice.tax_rate,
+              deposit_paid: invoice.deposit_paid,
+              deposit_amount: invoice.deposit_amount,
+              total: invoice.total,
+              amount_due: dueNow,
+              public_notes: invoice.public_notes,
+              pay_url: getInvoicePaymentUrl({
+                invoiceId: invoice.id,
+                invoiceNumber: invoice.invoice_number,
+                shortcode: invoice.shortcode,
+              }),
+            }}
+          />
         </div>
       </div>
     </>

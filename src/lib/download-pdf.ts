@@ -18,7 +18,9 @@ export async function downloadElementAsPdf(
   const mod = await import("html2pdf.js");
   const html2pdf = (mod as { default?: unknown }).default ?? mod;
   const safeFilename = filename.endsWith(".pdf") ? filename : `${filename}.pdf`;
-  const ignoreSelector = options?.ignoreSelector;
+  // Screen-only nodes are always skipped: html2canvas ignores @media print, so a
+  // caller can never forget to filter them.
+  const ignoreSelector = options?.ignoreSelector ?? ".no-print";
   const opt = {
     margin: [8, 8, 8, 8] as [number, number, number, number],
     filename: safeFilename,
@@ -26,14 +28,10 @@ export async function downloadElementAsPdf(
     html2canvas: {
       scale: 2,
       useCORS: true,
-      backgroundColor: "#0a0f0a",
+      backgroundColor: "#FFFFFF",
       logging: false,
-      ...(ignoreSelector
-        ? {
-            ignoreElements: (el: Element) =>
-              typeof el.matches === "function" && el.matches(ignoreSelector),
-          }
-        : {}),
+      ignoreElements: (el: Element) =>
+        typeof el.matches === "function" && el.matches(ignoreSelector),
     },
     jsPDF: { unit: "mm" as const, format: "a4", orientation: "portrait" as const },
     pagebreak: { mode: ["css", "legacy"] },
