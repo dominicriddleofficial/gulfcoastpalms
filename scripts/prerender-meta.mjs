@@ -24,7 +24,7 @@ const projectRoot = path.resolve(__dirname, "..");
 const distDir = path.join(projectRoot, "dist");
 const indexPath = path.join(distDir, "index.html");
 
-const { rawRoutes, SITE_ORIGIN, DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGE_ALT } = await import(
+const { rawRoutes, buildRouteMeta, SITE_ORIGIN, DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGE_ALT } = await import(
   path.join(projectRoot, "src", "seo", "routes.data.mjs")
 );
 const { writeLlmsTxt } = await import(
@@ -33,6 +33,8 @@ const { writeLlmsTxt } = await import(
 const { writeSitemap } = await import(
   path.join(projectRoot, "scripts", "generate-sitemap.mjs")
 );
+
+const { isPrivateRoute } = await import(path.join(projectRoot, "src", "seo", "indexing-policy.mjs"));
 
 const NOT_FOUND_TITLE = "Page Not Found | Gulf Coast Palms";
 const NOT_FOUND_DESCRIPTION =
@@ -124,17 +126,22 @@ function renderParagraphs(paragraphs, out) {
 function renderStaticContent(content) {
   if (!content) return "";
   const out = [];
+  out.push(`<nav aria-label="Main navigation"><a href="/">Home</a> · <a href="/services">Services</a> · <a href="/service-areas">Service areas</a> · <a href="/commercial">Commercial</a> · <a href="/learn">Palm care guides</a> · <a href="/jobs">Completed projects</a> · <a href="/quote">Free quote</a></nav>`);
   out.push(`<h1>${escapeHtml(plain(content.h1))}</h1>`);
   if (content.subheading) out.push(`<p>${escapeHtml(plain(content.subheading))}</p>`);
   for (const block of content.blocks || []) {
     if (block.heading) out.push(`<h2>${escapeHtml(plain(block.heading))}</h2>`);
     if (block.paragraphs) renderParagraphs(block.paragraphs, out);
+    if (block.links?.length) {
+      out.push(`<ul>${block.links.map(({ label, href }) => `<li><a href="${escapeAttr(href)}">${escapeHtml(plain(label))}</a></li>`).join("")}</ul>`);
+    }
     if (block.list && block.list.length) {
       out.push(
         `<ul>${block.list.map((li) => `<li>${escapeHtml(plain(li))}</li>`).join("")}</ul>`,
       );
     }
   }
+  out.push('<p><a href="/quote">Request a free quote</a> · <a href="tel:8509101290">Call (850) 910-1290</a></p>');
   return `<div id="seo-static-content" style="max-width:760px;margin:0 auto;padding:24px 16px;line-height:1.6">${out.join(
     "",
   )}</div>`;
@@ -157,14 +164,21 @@ function injectBody(html, markup) {
  * drops the homepage static copy whenever the path is not a real route.
  */
 function unknownRouteScript(knownPaths) {
-  const known = JSON.stringify(knownPaths);
-  return `<script>(function(){try{var known=${known};var p=location.pathname.replace(/\\/+$/,"")||"/";if(known.indexOf(p)!==-1)return;if(p.indexOf("/platform")===0||p.indexOf("/portal")===0||p.indexOf("/admin")===0)return;document.title=${JSON.stringify(
-    NOT_FOUND_TITLE,
-  )};var r=document.querySelector('meta[name="robots"]');if(r)r.setAttribute("content","noindex, nofollow");var d=document.querySelector('meta[name="description"]');if(d)d.setAttribute("content",${JSON.stringify(
-    NOT_FOUND_DESCRIPTION,
-  )});var c=document.querySelector('link[rel="canonical"]');if(c&&c.parentNode)c.parentNode.removeChild(c);var ou=document.querySelector('meta[property="og:url"]');if(ou&&ou.parentNode)ou.parentNode.removeChild(ou);var ot=document.querySelector('meta[property="og:title"]');if(ot)ot.setAttribute("content",${JSON.stringify(
-    NOT_FOUND_TITLE,
-  )});var lds=document.querySelectorAll('script[type="application/ld+json"]');for(var i=0;i<lds.length;i++){if(lds[i].parentNode)lds[i].parentNode.removeChild(lds[i]);}document.addEventListener("DOMContentLoaded",function(){var s=document.getElementById("seo-static-content");if(s&&s.parentNode)s.parentNode.removeChild(s);});}catch(e){}})();</script>`;
+  return `<script data-gcp-route-guard>(function(){
+    var isPrivateRoute = ${isPrivateRoute.toString()};
+    var p = location.pathname.replace(/\\/+$/, "") || "/";
+    if (${JSON.stringify(knownPaths)}.indexOf(p) !== -1) return;
+    var privatePage = isPrivateRoute(p);
+    var title = privatePage ? "Account | Gulf Coast Palms" : ${JSON.stringify(NOT_FOUND_TITLE)};
+    document.title = title;
+    var robots = document.querySelector('meta[name="robots"]');
+    if (robots) robots.content = "noindex, nofollow";
+    var description = document.querySelector('meta[name="description"]');
+    if (description) description.content = privatePage ? "Gulf Coast Palms account and customer services." : ${JSON.stringify(NOT_FOUND_DESCRIPTION)};
+    document.querySelectorAll('link[rel="canonical"],meta[property="og:url"],script[type="application/ld+json"]').forEach(function(tag){tag.remove();});
+    document.querySelectorAll('meta[property="og:title"],meta[name="twitter:title"]').forEach(function(tag){tag.content=title;});
+    document.addEventListener("DOMContentLoaded",function(){var copy=document.getElementById("seo-static-content");if(copy)copy.remove();});
+  })();</script>`;
 }
 
 /** Build the standalone dist/404.html document (no canonical, noindex). */
@@ -301,7 +315,17 @@ function rewriteHead(html, meta) {
     `<meta name="twitter:image:alt" content="${ogImageAlt}">`,
   );
 
+  if (meta.noindex) {
+    out = out.replace(/\s*<link\s+rel=["']canonical["'][^>]*>/gi, "");
+    out = out.replace(/\s*<meta\s+property=["']og:url["'][^>]*>/gi, "");
+  }
   return out;
+}
+
+function adoptHead(html) {
+  return html
+    .replace(/<meta (?=(?:name=["'](?:description|robots|twitter:[^"']+)["']|property=["']og:[^"']+["']))/gi, '<meta data-rh="true" ')
+    .replace(/<link rel=["']canonical["']/gi, '<link data-rh="true" rel="canonical"');
 }
 
 /** Render JSON-LD payloads as <script type="application/ld+json"> tags. */
@@ -310,7 +334,7 @@ function renderJsonLd(payloads) {
   return payloads
     .map(
       (p) =>
-        `<script type="application/ld+json">${JSON.stringify(p, null, 2).replace(
+        `<script type="application/ld+json" data-gcp-prerender>${JSON.stringify(p, null, 2).replace(
           /</g,
           "\\u003c",
         )}</script>`,
@@ -336,7 +360,10 @@ function outPathFor(routePath) {
  */
 function resetTemplate(html) {
   return html
-    .replace(/\s*<script type="application\/ld\+json">[\s\S]*?<\/script>/g, "")
+    .replace(/\sdata-rh="true"/g, "")
+    .replace(/<script data-gcp-route-guard>[\s\S]*?<\/script>/g, "")
+    .replace(/<script data-gcp-platform-preload>[\s\S]*?<\/script>/g, "")
+    .replace(/\s*<script type="application\/ld\+json"[^>]*>[\s\S]*?<\/script>/g, "")
     .replace(/<script>\(function\(\)\{try\{var known=[\s\S]*?<\/script>/g, "")
     .replace(/<div id="root">[\s\S]*?<\/div>\s*(?=<script)/i, '<div id="root"></div>\n    ')
     .replace(/<div id="root">\s*<div id="seo-static-content"[\s\S]*?<\/div>\s*<\/div>/i, '<div id="root"></div>');
@@ -344,30 +371,25 @@ function resetTemplate(html) {
 
 async function main() {
   const template = resetTemplate(await fs.readFile(indexPath, "utf8"));
+  const platformAssets = JSON.parse(await fs.readFile(path.join(distDir, "asset-manifest.json"), "utf8")).platform || [];
   if (!/<div id="root">\s*<\/div>/i.test(template)) {
     throw new Error("index.html no longer has an empty <div id=\"root\"></div> to inject into");
   }
   const seo = await loadStaticContent();
   const staticContent = seo.buildStaticContent();
-  const meta = rawRoutes.map((r) => ({
-    path: r.path,
-    title: r.title,
-    description: r.description,
-    ogImage: DEFAULT_OG_IMAGE,
-    ogImageAlt: DEFAULT_OG_IMAGE_ALT,
-    canonical: `${SITE_ORIGIN}${r.path}`,
-    ogType: "website",
-    noindex: r.noindex === true,
-  }));
+  const meta = buildRouteMeta();
+  for (const route of Object.keys(staticContent)) {
+    if (!meta.some((entry) => entry.path === route)) throw new Error(`Content page missing from SEO routes: ${route}`);
+  }
 
   // Sanity: unique descriptions/paths
   const seenDesc = new Set();
   const seenPath = new Set();
   for (const m of meta) {
     if (seenPath.has(m.path)) throw new Error(`Duplicate path in routeMeta: ${m.path}`);
-    if (seenDesc.has(m.description)) throw new Error(`Duplicate description: ${m.path}`);
+    if (m.canonical === `${SITE_ORIGIN}${m.path}` && seenDesc.has(m.description)) throw new Error(`Duplicate description: ${m.path}`);
     seenPath.add(m.path);
-    seenDesc.add(m.description);
+    if (m.canonical === `${SITE_ORIGIN}${m.path}`) seenDesc.add(m.description);
   }
 
   const routeJsonLd = seo.buildRouteJsonLd(
@@ -384,18 +406,32 @@ async function main() {
     await fs.mkdir(path.dirname(target), { recursive: true });
     let rewritten = rewriteHead(template, m);
     // Site-wide LocalBusiness on every public page, then page-specific schema.
-    const payloads = [seo.localBusinessSchema(), ...(routeJsonLd[m.path] || [])];
+    const payloads = m.noindex ? [] : [seo.localBusinessSchema(), ...(routeJsonLd[m.path] || [])];
     rewritten = injectJsonLd(rewritten, renderJsonLd(payloads));
     jsonLdBlocks += payloads.length;
     const markup = renderStaticContent(staticContent[m.path]);
-    if (markup) withContent += 1;
+    if (!markup) throw new Error(`Missing static content for ${m.path}`);
+    withContent += 1;
     rewritten = injectBody(rewritten, markup);
     // Only the root document doubles as the host's SPA fallback for unknown
     // URLs, so the unknown-route head correction goes there.
     if (m.path === "/") {
       rewritten = rewritten.replace(/<\/head>/i, `  ${fallbackScript}\n</head>`);
     }
-    await fs.writeFile(target, rewritten, "utf8");
+    // Keep the CRM's early preloads on /platform without downloading its
+    // dashboard and layout for every marketing visitor.
+    const platformPreloads = [];
+    rewritten = rewritten.replace(/<link[^>]+rel="modulepreload"[^>]+href="([^" ]*\/Platform(?:Dashboard|Layout)-[^" ]+)"[^>]*>/g, (_tag, href) => {
+      platformPreloads.push(href);
+      return "";
+    });
+    if (!platformPreloads.length) platformPreloads.push(...platformAssets);
+    if (m.path === "/" && platformPreloads.length) {
+      const preloadScript = `<script data-gcp-platform-preload>if(/^\\/platform(?:\\/|$)/.test(location.pathname)){${JSON.stringify(platformPreloads)}.forEach(function(href){var link=document.createElement("link");link.rel="modulepreload";link.crossOrigin="";link.href=href;document.head.appendChild(link);});}</script>`;
+      rewritten = rewritten.replace("</head>", `${preloadScript}</head>`);
+    }
+    if (m.path !== "/") rewritten = rewritten.replace(/<link[^>]+rel="preload"[^>]+as="image"[^>]*>/g, "");
+    await fs.writeFile(target, adoptHead(rewritten), "utf8");
     written += 1;
   }
 
@@ -410,7 +446,7 @@ async function main() {
   );
 
   // Standalone 404 document — harmless if the host ignores it.
-  await fs.writeFile(path.join(distDir, "404.html"), buildNotFoundDoc(template), "utf8");
+  await fs.writeFile(path.join(distDir, "404.html"), adoptHead(buildNotFoundDoc(template)), "utf8");
   console.log("[prerender-meta] wrote dist/404.html (noindex, no canonical)");
 
   // Also (re)generate the sitemap into dist/ from the same source of truth,

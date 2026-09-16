@@ -7,7 +7,7 @@
     "dev": "vite",
     "predev": "node scripts/generate-sitemap.mjs",
     "prebuild": "node scripts/generate-sitemap.mjs",
-    "build": "vite build && node scripts/prerender-meta.mjs",
+    "build": "vite build && node scripts/prerender-meta.mjs && node scripts/check-seo.mjs",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -15,7 +15,8 @@
     "test:watch": "vitest",
     "perf:bundle": "node scripts/check-bundle-size.mjs",
     "perf:lighthouse": "lhci autorun --config=./lighthouserc.cjs",
-    "perf": "bun run build && bun run perf:bundle && bun run perf:lighthouse"
+    "perf": "bun run build && bun run perf:bundle && bun run perf:lighthouse",
+    "seo:check": "node scripts/check-seo.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

@@ -3,6 +3,7 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import StickyContactBar from "./StickyContactBar";
 import SeasonalBanner from "./home/SeasonalBanner";
+import { LocalBusinessJsonLd } from "./JsonLd";
 
 // ChatWidget is loaded lazily, AFTER the main thread is idle or after the
 // user shows intent (scroll / pointer / touch). This keeps it off the
@@ -50,6 +51,7 @@ const Layout = ({ children }: LayoutProps) => {
   const showChat = useDeferredMount();
   return (
     <div className="min-h-screen flex flex-col overflow-x-clip">
+      <LocalBusinessJsonLd />
       <SeasonalBanner />
       <Navbar />
       <main className="flex-1 pt-16 md:pt-20 pb-[calc(env(safe-area-inset-bottom,0px)+4.5rem)] md:pb-0 overflow-x-clip">

@@ -28,7 +28,6 @@ export const GCP_BUSINESS = {
     postalCode: "32566",
     addressCountry: "US",
   },
-  geo: { latitude: 30.3577, longitude: -87.1636 },
   areaServed: [
     "Pensacola",
     "Navarre",
@@ -42,6 +41,8 @@ export const GCP_BUSINESS = {
     "Niceville",
     "Mary Esther",
     "Santa Rosa Beach",
+    "Crestview",
+    "Perdido",
   ],
   sameAs: [
     "https://www.facebook.com/gulfcoastpalmtreetrimming/",

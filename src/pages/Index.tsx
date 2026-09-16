@@ -1,6 +1,5 @@
 import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
-import { LocalBusinessJsonLd } from "@/components/JsonLd";
 import HeroSection from "@/components/home/HeroSection";
 import TrustBadges from "@/components/home/TrustBadges";
 import WhyChooseUs from "@/components/home/WhyChooseUs";
@@ -20,9 +19,6 @@ const Index = () => {
         description="Professional palm tree trimming, removal, and hurricane prep across Navarre, Gulf Breeze, and Pensacola. Free quotes — call (850) 910-1290."
         canonicalUrl="/"
       />
-
-      {/* JSON-LD for Local Business SEO */}
-      <LocalBusinessJsonLd />
 
       <HeroSection />
       <TrustBadges />

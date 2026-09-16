@@ -65,7 +65,7 @@ function renderXml(entries) {
 }
 
 export async function writeSitemap({ outFile } = {}) {
-  const indexable = rawRoutes.filter((r) => r.noindex !== true);
+  const indexable = rawRoutes.filter((r) => r.noindex !== true && (!r.canonicalPath || r.canonicalPath === r.path));
   const entries = indexable.map((r) => ({
     path: r.path,
     priority: priorityFor(r.path),
