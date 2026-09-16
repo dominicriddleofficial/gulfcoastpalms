@@ -54,7 +54,7 @@ const Navbar = () => {
   const topAreas = locations.slice(0, 6);
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border transition-[height,box-shadow] duration-200 ${scrolled ? "shadow-sm" : ""}`}>
+    <header className={`sticky top-0 z-50 bg-background/90 backdrop-blur-md border-b border-border transition-[height,box-shadow] duration-200 ${scrolled ? "shadow-sm" : ""}`}>
       <div className={`container mx-auto flex items-center justify-between px-4 lg:px-8 transition-[height] duration-200 ${scrolled ? "h-14 lg:h-16" : "h-16 lg:h-20"}`}>
         <Link to="/" className="flex items-center gap-2">
           <span className={`font-display font-bold text-primary transition-all ${scrolled ? "text-xl" : "text-2xl"}`}>
