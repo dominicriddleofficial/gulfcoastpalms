@@ -42,7 +42,7 @@ const SeasonalBanner = () => {
   };
 
   return (
-    <div className="bg-palm-gold text-palm-dark relative z-[60]">
+    <div className="bg-palm-gold text-palm-dark relative">
       <div className="container mx-auto flex items-center justify-between gap-3 px-4 py-2.5">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <p className="font-body font-semibold text-sm truncate">

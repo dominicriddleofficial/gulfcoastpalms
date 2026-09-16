@@ -54,7 +54,7 @@ const Layout = ({ children }: LayoutProps) => {
       <LocalBusinessJsonLd />
       <SeasonalBanner />
       <Navbar />
-      <main className="flex-1 pt-16 md:pt-20 pb-[calc(env(safe-area-inset-bottom,0px)+4.5rem)] md:pb-0 overflow-x-clip">
+      <main className="flex-1 pb-[calc(env(safe-area-inset-bottom,0px)+4.5rem)] md:pb-0 overflow-x-clip">
         {children}
       </main>
       <Footer />
