@@ -11,7 +11,7 @@ export const DEFAULT_OG_IMAGE_ALT =
   "Gulf Coast Palms — professional palm tree trimming, installation, and removal across Florida's Emerald Coast";
 
 export const rawRoutes = [
-  { path: "/", title: "Gulf Coast Palms | Palm Tree Services in Navarre, FL", description: "Palm tree trimming, removal, installation & hurricane prep across Navarre, Gulf Breeze, Pensacola & Destin. 5.0★ · free quotes — call (850) 910-1290." },
+  { path: "/", title: "Palm Tree Trimming Navarre & Emerald Coast | Gulf Coast Palms", description: "Palm tree trimming, removal, installation & hurricane prep across Navarre, Gulf Breeze, Pensacola & Destin. 5.0★ · free quotes — call (850) 910-1290." },
   { path: "/services", title: "Palm Tree Services — Trimming, Removal, Installation | Gulf Coast Palms", description: "Full-service palm care across NW Florida: trimming, diamond cutting, trunk skinning, installation, removal & hurricane prep. Free estimates — (850) 910-1290." },
   { path: "/services/palm-tree-trimming", title: "Palm Tree Trimming – Gulf Coast Palms | Emerald Coast FL", description: "Professional palm tree trimming for homes, HOAs & commercial properties across the Emerald Coast. Proper technique, storm-ready palms — call (850) 910-1290." },
   { path: "/services/palm-tree-installation", title: "Palm Tree Installation – Gulf Coast Palms | Emerald Coast FL", description: "Palm tree installation with a 1-year warranty. We source, deliver & hand-plant premium palms across the Florida Emerald Coast. Free quote (850) 910-1290." },
@@ -44,6 +44,11 @@ export const rawRoutes = [
   { path: "/palm-trees/buy", title: "Buy Palm Trees Delivered & Installed — Emerald Coast FL | Gulf Coast Palms", description: "Buy palm trees sourced, delivered & installed across Pensacola, Navarre & Destin. Sabal Palms from $350 installed, Sylvester from $1,200 — (850) 910-1290." },
   { path: "/palm-trees/guides", title: "Palm Care Guides — Expert Tips for Florida Palms | Gulf Coast Palms", description: "Expert palm tree care guides — trimming frequency, seasonal timing, species care & maintenance tips for Florida's Emerald Coast. Free quote (850) 910-1290." },
   { path: "/palm-trees/guides/how-often-should-palm-trees-be-trimmed", title: "How Often Should Palm Trees Be Trimmed? | Gulf Coast Palms", description: "How often should palm trees be trimmed in Florida? Expert advice on frequency, seasonal timing & why over-trimming damages palms. Free quote (850) 910-1290." },
+  { path: "/palm-trees/guides/when-to-trim-palm-trees", title: "When Is the Best Time to Trim Palm Trees? | Gulf Coast Palms", description: "Find out the best time of year to trim palm trees in Florida. Seasonal timing tips for the Emerald Coast from Gulf Coast Palms." },
+  { path: "/palm-trees/guides/hurricane-preparation-palm-trimming", title: "Hurricane Preparation: How to Get Your Palms Storm-Ready | Gulf Coast Palms", description: "Prepare your palm trees for hurricane season in Florida. Professional storm preparation trimming tips from Gulf Coast Palms on the Emerald Coast." },
+  { path: "/palm-trees/guides/signs-palm-tree-unhealthy", title: "Signs Your Palm Tree May Be Unhealthy | Gulf Coast Palms", description: "Learn the warning signs that your palm tree may be unhealthy or dying. Expert diagnosis tips from Gulf Coast Palms on the Emerald Coast." },
+  { path: "/palm-trees/guides/what-is-diamond-cutting-on-palm-trees", title: "What Is Diamond Cutting on Palm Trees? | Gulf Coast Palms", description: "Learn what diamond cutting is on palm trees, why it's done, and how it transforms the appearance of your palms. Expert guide from Gulf Coast Palms." },
+  { path: "/palm-trees/guides/best-palm-trees-for-emerald-coast", title: "Best Palm Trees for the Emerald Coast | Gulf Coast Palms", description: "Discover the best palm trees that grow well on Florida's Emerald Coast. Expert recommendations for Pensacola, Destin, Navarre, and surrounding areas." },
   { path: "/learn", title: "Palm Tree Care Guides & Resources | Gulf Coast Palms NW Florida", description: "Expert palm tree care guides for NW Florida homeowners — when to trim, how to spot problems, hurricane prep tips & more. Free quote — (850) 910-1290." },
   { path: "/learn/how-often-trim-palm-trees-florida", title: "How Often Should You Trim Palm Trees in Florida? | Gulf Coast Palms", description: "Ideal palm-trimming frequency in Florida by species, timing, signs to watch for & why over-trimming damages palms. Free quote — (850) 910-1290." },
   { path: "/learn/palm-tree-turning-brown-florida", title: "Why Is My Palm Tree Turning Brown? Florida Guide | Gulf Coast Palms", description: "Florida palm turning brown? Causes from normal aging to lethal yellowing, nutrient deficiency & root rot — plus what to do. Free quote (850) 910-1290." },
@@ -52,18 +57,22 @@ export const rawRoutes = [
   { path: "/learn/palm-tree-trimming-cost-florida", title: "Palm Tree Trimming Cost in Florida (2026 Guide) | Gulf Coast Palms", description: "In-depth Florida palm-trimming cost guide: price ranges by palm height & species, cost factors & what pro service includes. Free quote (850) 910-1290." },
   { path: "/hoa-commercial-palm-maintenance", title: "Commercial & HOA Palm Tree Maintenance NW Florida | Gulf Coast Palms", description: "Large-scale palm maintenance for HOAs, condos, resorts & commercial properties across the Emerald Coast. Licensed & insured — call (850) 910-1290." },
   { path: "/commercial", title: "Commercial & Property Management Palm & Tree Services | Gulf Coast Palms", description: "Portfolio palm & tree services for property managers, HOAs & commercial properties across NW Florida. Volume pricing, photo docs, priority storm response." },
-  { path: "/commercial-palm-tree-services", title: "Commercial Palm Tree Services for Property Managers & HOAs | Gulf Coast Palms", description: "Volume-priced palm & tree services for property managers, HOAs & commercial portfolios across NW Florida. Photo documentation, direct invoicing, one point of contact." },
+  { path: "/commercial-palm-tree-services", title: "Commercial Palm Tree Services for Property Managers & HOAs | Gulf Coast Palms", description: "Volume-priced palm & tree services for property managers, HOAs & commercial portfolios across NW Florida. Photo documentation, direct invoicing, one point of contact.", canonicalPath: "/commercial" },
   { path: "/hurricane-palm-preparation", title: "Hurricane Palm Tree Preparation Navarre & NW Florida | Gulf Coast Palms", description: "Prep your palms for hurricane season — pre-storm trimming, hazard assessment & emergency response across NW Florida. Book early — (850) 910-1290." },
-  { path: "/palm-tree-cost", title: "Palm Tree Trimming Cost — Instant Pricing | Gulf Coast Palms", description: "Get instant palm tree trimming, removal & install pricing across NW Florida. Text a photo for a same-day quote — free estimate at (850) 910-1290." },
+  { path: "/palm-tree-cost", title: "Palm Tree Trimming & Removal Costs | Gulf Coast Palms", description: "Learn what affects palm trimming, removal, diamond cutting and installation costs across NW Florida. Text a photo for a free quote: (850) 910-1290." },
   { path: "/emergency-palm-service", title: "Emergency Palm Tree Service NW Florida | Gulf Coast Palms", description: "Storm damage or leaning palms? Fast emergency palm removal, assessment & insurance documentation across Navarre, Pensacola & Destin. (850) 910-1290." },
   { path: "/holiday-lighting", title: "Holiday Lighting Installation NW Florida | Navarre, Gulf Breeze | Gulf Coast Palms", description: "Professional holiday lighting install & removal for homes, vacation rentals & HOAs across Navarre, Gulf Breeze, Fort Walton & the Emerald Coast." },
   { path: "/gallery", title: "Before & After Palm Tree Gallery | Gulf Coast Palms", description: "Real before & after photos from Gulf Coast Palms — palm trimming, removal, diamond cutting & HOA maintenance across Florida's Emerald Coast." },
   { path: "/about", title: "About Gulf Coast Palms | Navarre Beach's Palm Tree Specialists", description: "Family-owned in Navarre Beach, FL. Why NW Florida homeowners trust Gulf Coast Palms for expert palm trimming, removal & hurricane prep — (850) 910-1290." },
   { path: "/service-areas", title: "Palm Tree Service Areas | Gulf Coast Palms NW Florida", description: "Serving Navarre, Gulf Breeze, Pensacola, Fort Walton Beach, Destin, 30A, Perdido Key & all of NW Florida. View our full coverage — (850) 910-1290." },
-  { path: "/jobs", title: "Jobs & Careers | Gulf Coast Palms Navarre FL", description: "Join the Gulf Coast Palms crew — now hiring palm tree trimmers, team leaders & operations staff in NW Florida. View open positions and apply today." },
+  { path: "/jobs", title: "Completed Palm Tree Projects | Gulf Coast Palms", description: "Browse completed palm trimming, diamond cutting, installation and removal projects by Gulf Coast Palms across Navarre and the Emerald Coast." },
   { path: "/referral", title: "Refer a Friend & Earn | Gulf Coast Palms Referral Program", description: "Love your results? Refer a neighbor or friend to Gulf Coast Palms and earn rewards. Join our NW Florida referral program — call (850) 910-1290." },
-  { path: "/payments", title: "Pay Your Invoice | Gulf Coast Palms", description: "Pay your Gulf Coast Palms invoice online. Secure Stripe-powered payments — have your invoice number ready. Questions? Call (850) 910-1290." },
+  { path: "/payments", title: "Pay Your Invoice | Gulf Coast Palms", description: "Pay your Gulf Coast Palms invoice online. Secure Stripe-powered payments — have your invoice number ready. Questions? Call (850) 910-1290.", noindex: true },
   { path: "/careers/gulf-coast-palms", title: "Careers at Gulf Coast Palms | NW Florida", description: "Build an outdoor career with Gulf Coast Palms. Open roles for groundsmen, team leaders & sales operations in Navarre & NW Florida — apply today." },
+  { path: "/careers/gulf-coast-palms/team-leader", title: "Team Leader Position | Gulf Coast Palms Careers", description: "Lead a crew with Gulf Coast Palms. We're hiring experienced Team Leaders for palm tree service operations across NW Florida. Apply today." },
+  { path: "/careers/gulf-coast-palms/groundsman", title: "Groundsman Position | Gulf Coast Palms Careers", description: "Apply for the Groundsman position at Gulf Coast Palms. Join our field crew serving Navarre Beach and NW Florida. Competitive pay, flexible schedule." },
+  { path: "/careers/gulf-coast-palms/sales-operations", title: "Sales & Operations Role | Gulf Coast Palms Careers", description: "Join the Gulf Coast Palms operations team. We're looking for a sales and operations coordinator to help grow our NW Florida palm tree service business." },
+  { path: "/careers/thank-you", title: "Application Received | Gulf Coast Palms", description: "Your Gulf Coast Palms job application has been received. Our team will review it and contact you about next steps.", noindex: true },
   { path: "/careers/palm-tree-trimmer", title: "Palm Tree Trimmer / Team Lead — Hiring Now | Gulf Coast Palms", description: "Run your own palm crew on the Emerald Coast. 25% of every job, paid $200/day training week, $25/hr helpers on big jobs. Must have your own truck. Apply today." },
   { path: "/terms-of-service", title: "Terms of Service | Gulf Coast Palms", description: "Review the terms of service for Gulf Coast Palms palm tree trimming, removal & maintenance services across Northwest Florida." },
   { path: "/privacy-policy", title: "Privacy Policy | Gulf Coast Palms", description: "Read the Gulf Coast Palms privacy policy to understand how we collect, use & protect your personal information when you request service or a quote." },
@@ -73,16 +82,19 @@ export const rawRoutes = [
 ];
 
 export function buildRouteMeta() {
-  return rawRoutes.map((r) => ({
+  return rawRoutes.map((r) => {
+    const source = rawRoutes.find((target) => target.path === r.canonicalPath) || r;
+    return {
     path: r.path,
-    title: r.title,
-    description: r.description,
-    ogTitle: r.title,
-    ogDescription: r.description,
+    title: source.title,
+    description: source.description,
+    ogTitle: source.title,
+    ogDescription: source.description,
     ogImage: DEFAULT_OG_IMAGE,
     ogImageAlt: DEFAULT_OG_IMAGE_ALT,
     ogType: "website",
-    canonical: `${SITE_ORIGIN}${r.path}`,
+    canonical: `${SITE_ORIGIN}${r.canonicalPath || r.path}`,
     noindex: r.noindex === true,
-  }));
+    };
+  });
 }

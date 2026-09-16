@@ -1,5 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { GCP_BUSINESS } from "@/lib/business-info";
+import { localBusinessSchema } from "@/seo/businessSchema";
 
 /**
  * Reusable JSON-LD components. Render these inside any page to emit
@@ -16,65 +17,13 @@ interface JsonLdProps {
 /** Low-level: emit any JSON-LD payload */
 export const JsonLd = ({ data }: JsonLdProps) => (
   <Helmet>
-    <script type="application/ld+json">{JSON.stringify(data)}</script>
+    <script type="application/ld+json">{JSON.stringify(data).replace(/</g, "\\u003c")}</script>
   </Helmet>
 );
 
 // ---------- LocalBusiness ----------
 
-interface LocalBusinessProps {
-  /** Optional override — defaults to global GCP_BUSINESS */
-  description?: string;
-  serviceType?: string[];
-}
-
-export const LocalBusinessJsonLd = ({
-  description = "NW Florida's palm tree trimming, removal, and hurricane preparation specialist.",
-  serviceType = [
-    "Palm Trimming",
-    "Diamond Cutting",
-    "Trunk Skinning",
-    "Palm Tree Installation",
-    "Palm Tree Removal",
-  ],
-}: LocalBusinessProps = {}) => (
-  <JsonLd
-    data={{
-      "@context": "https://schema.org",
-      "@type": "LocalBusiness",
-      name: GCP_BUSINESS.name,
-      legalName: GCP_BUSINESS.legalName,
-      description,
-      telephone: GCP_BUSINESS.phone,
-      email: GCP_BUSINESS.email,
-      url: GCP_BUSINESS.url,
-      logo: GCP_BUSINESS.logo,
-      image: GCP_BUSINESS.ogImage,
-      priceRange: GCP_BUSINESS.priceRange,
-      address: {
-        "@type": "PostalAddress",
-        ...GCP_BUSINESS.address,
-      },
-      geo: {
-        "@type": "GeoCoordinates",
-        latitude: GCP_BUSINESS.geo.latitude,
-        longitude: GCP_BUSINESS.geo.longitude,
-      },
-      areaServed: GCP_BUSINESS.areaServed.map((a) => ({
-        "@type": "City",
-        name: a,
-        containedInPlace: { "@type": "State", name: "Florida" },
-      })),
-      serviceType,
-      aggregateRating: {
-        "@type": "AggregateRating",
-        ratingValue: GCP_BUSINESS.aggregateRating.ratingValue,
-        reviewCount: GCP_BUSINESS.aggregateRating.reviewCount,
-      },
-      sameAs: GCP_BUSINESS.sameAs,
-    }}
-  />
-);
+export const LocalBusinessJsonLd = () => <JsonLd data={localBusinessSchema()} />;
 
 // ---------- Service ----------
 
@@ -99,7 +48,8 @@ export const ServiceJsonLd = ({ service }: ServiceJsonLdProps) => (
       areaServed: service.areaServed ?? GCP_BUSINESS.areaServed,
       url: service.url,
       provider: {
-        "@type": "LocalBusiness",
+        "@type": "HomeAndConstructionBusiness",
+        "@id": `${GCP_BUSINESS.url}/#business`,
         name: GCP_BUSINESS.name,
         telephone: GCP_BUSINESS.phone,
         url: GCP_BUSINESS.url,

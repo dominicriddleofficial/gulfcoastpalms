@@ -67,8 +67,8 @@ const Jobs = () => {
   return (
     <Layout>
       <SEOHead
-        title="Jobs & Careers | Gulf Coast Palms Navarre FL"
-        description="Join the Gulf Coast Palms crew. We're hiring palm tree trimmers, team leaders, and operations staff in NW Florida. View open positions and apply today."
+        title="Completed Palm Tree Projects | Gulf Coast Palms"
+        description="Browse completed palm trimming, diamond cutting, installation and removal projects by Gulf Coast Palms across Navarre and the Emerald Coast."
         canonicalUrl="/jobs"
       />
       {/* Hero */}

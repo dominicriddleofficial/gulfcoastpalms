@@ -16,6 +16,7 @@ import { AdminRoutes } from "@/routes/AdminRoutes";
 import { PlatformRoutes } from "@/routes/PlatformRoutes";
 import { PortalRoutes } from "@/routes/PortalRoutes";
 import { PublicRoutes } from "@/routes/PublicRoutes";
+import RouteIndexing from "@/seo/RouteIndexing";
 
 const RouteTracker = () => {
   const location = useLocation();
@@ -234,6 +235,7 @@ const App = () => (
                     {PublicRoutes()}
                   </Routes>
                 </Suspense>
+                <RouteIndexing />
               </CreateSheetsProvider>
             </BrowserRouter>
           </ErrorBoundary>

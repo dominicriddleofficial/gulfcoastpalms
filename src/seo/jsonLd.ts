@@ -20,70 +20,18 @@ import { GCP_BUSINESS } from "@/lib/business-info";
 import { servicesData } from "@/data/services";
 import { locations } from "@/data/locations";
 import { homeFaqs } from "@/data/homeFaq";
+import { articles } from "@/data/learnArticles";
+import { palmGuides } from "@/data/palmGuides";
 
 const SITE = GCP_BUSINESS.url;
 
 type Json = Record<string, unknown>;
 
-/** Opening hours as currently advertised: Mon–Sat work, storm calls 7 days. */
-const OPENING_HOURS = [
-  {
-    "@type": "OpeningHoursSpecification",
-    dayOfWeek: [
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-    ],
-    opens: "07:00",
-    closes: "18:00",
-  },
-];
-
-export function localBusinessSchema(): Json {
-  return {
-    "@context": "https://schema.org",
-    "@type": ["LocalBusiness", "HomeAndConstructionBusiness"],
-    "@id": `${SITE}/#business`,
-    name: GCP_BUSINESS.name,
-    legalName: GCP_BUSINESS.legalName,
-    description:
-      "Palm tree trimming, diamond cutting, trunk skinning, installation, removal and hurricane preparation across Northwest Florida's Emerald Coast.",
-    telephone: GCP_BUSINESS.phone,
-    email: GCP_BUSINESS.email,
-    url: SITE,
-    logo: GCP_BUSINESS.logo,
-    image: GCP_BUSINESS.ogImage,
-    priceRange: GCP_BUSINESS.priceRange,
-    address: { "@type": "PostalAddress", ...GCP_BUSINESS.address },
-    geo: {
-      "@type": "GeoCoordinates",
-      latitude: GCP_BUSINESS.geo.latitude,
-      longitude: GCP_BUSINESS.geo.longitude,
-    },
-    areaServed: GCP_BUSINESS.areaServed.map((a) => ({
-      "@type": "City",
-      name: a,
-      containedInPlace: { "@type": "State", name: "Florida" },
-    })),
-    openingHoursSpecification: OPENING_HOURS,
-    sameAs: [...GCP_BUSINESS.sameAs],
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: GCP_BUSINESS.aggregateRating.ratingValue,
-      reviewCount: GCP_BUSINESS.aggregateRating.reviewCount,
-      bestRating: "5",
-      worstRating: "1",
-    },
-    serviceType: servicesData.map((s) => s.title),
-  };
-}
+export { localBusinessSchema } from "./businessSchema";
 
 function providerRef(): Json {
   return {
-    "@type": "LocalBusiness",
+    "@type": "HomeAndConstructionBusiness",
     "@id": `${SITE}/#business`,
     name: GCP_BUSINESS.name,
     telephone: GCP_BUSINESS.phone,
@@ -142,7 +90,7 @@ function titleize(segment: string): string {
 }
 
 /** Breadcrumbs for nested pages only (2+ path segments). */
-function breadcrumbSchema(routePath: string, title: string): Json | null {
+function breadcrumbSchema(routePath: string, title: string, knownPaths: Set<string>): Json | null {
   const segments = routePath.replace(/^\/|\/$/g, "").split("/").filter(Boolean);
   if (segments.length < 2) return null;
   const items: Json[] = [
@@ -152,9 +100,10 @@ function breadcrumbSchema(routePath: string, title: string): Json | null {
   segments.forEach((seg, i) => {
     acc += `/${seg}`;
     const last = i === segments.length - 1;
+    if (!last && !knownPaths.has(acc)) return;
     items.push({
       "@type": "ListItem",
-      position: i + 2,
+      position: items.length + 1,
       name: last ? title : titleize(seg),
       item: `${SITE}${acc}`,
     });
@@ -234,9 +183,29 @@ export function buildRouteJsonLd(
     if (l.faqs && l.faqs.length) add(routePath, faqSchema(l.faqs));
   }
 
+  for (const article of articles) {
+    add(`/learn/${article.slug}`, {
+      "@context": "https://schema.org", "@type": "Article",
+      headline: article.title, description: article.metaDescription,
+      image: GCP_BUSINESS.ogImage,
+      author: { "@type": "Organization", name: GCP_BUSINESS.name },
+      publisher: { "@type": "Organization", name: GCP_BUSINESS.name, logo: { "@type": "ImageObject", url: GCP_BUSINESS.logo } },
+      mainEntityOfPage: `${SITE}/learn/${article.slug}`,
+    });
+  }
+  for (const guide of palmGuides) {
+    add(`/palm-trees/guides/${guide.slug}`, {
+      "@context": "https://schema.org", "@type": "Article",
+      headline: guide.title, description: guide.metaDescription,
+      datePublished: guide.publishDate,
+      author: { "@type": "Organization", name: GCP_BUSINESS.name },
+      mainEntityOfPage: `${SITE}/palm-trees/guides/${guide.slug}`,
+    });
+  }
+
   // Breadcrumbs on nested routes
   for (const routePath of Object.keys(titles)) {
-    add(routePath, breadcrumbSchema(routePath, titles[routePath]));
+    add(routePath, breadcrumbSchema(routePath, titles[routePath], new Set(Object.keys(titles))));
   }
 
   return out;

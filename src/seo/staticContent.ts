@@ -30,6 +30,7 @@ export interface StaticBlock {
   heading?: string;
   paragraphs?: string[];
   list?: string[];
+  links?: { label: string; href: string }[];
 }
 
 export interface StaticPageContent {
@@ -49,7 +50,7 @@ function faqBlocks(faqs?: { q: string; a: string }[]): StaticBlock[] {
 /** Routes whose copy lives inline in the page component rather than a data module. */
 const literalContent: Record<string, StaticPageContent> = {
   "/": {
-    h1: "Resort-Quality Palm Care for Florida's Emerald Coast",
+    h1: "Palm Tree Trimming & Care for Florida's Emerald Coast",
     subheading:
       "Palm-tree specialists with 500+ properties served across the Emerald Coast. Same-day estimates. No generalist crews.",
     blocks: [
@@ -59,11 +60,11 @@ const literalContent: Record<string, StaticPageContent> = {
         paragraphs: [
           "From palm tree trimming and diamond cutting to installation and safe removals — we specialize exclusively in palm trees across the Emerald Coast.",
         ],
-        list: servicesData.map((s) => s.title),
+        links: servicesData.map((s) => ({ label: s.title, href: `/services/${s.slug}` })),
       },
       {
         heading: "Palm Tree Service Areas",
-        list: locations.map((l) => `Palm tree trimming in ${l.city}, ${l.state}`),
+        links: locations.map((l) => ({ label: `Palm tree trimming in ${l.city}, ${l.state}`, href: `/${l.slug}` })),
       },
       {
         heading: "Frequently Asked Questions",
@@ -81,6 +82,7 @@ const literalContent: Record<string, StaticPageContent> = {
     blocks: servicesData.map((s) => ({
       heading: s.title,
       paragraphs: [s.introParagraphs[0]],
+      links: [{ label: s.title, href: `/services/${s.slug}` }],
     })),
   },
   "/about": {
@@ -96,7 +98,7 @@ const literalContent: Record<string, StaticPageContent> = {
     blocks: [
       {
         heading: "Communities We Serve",
-        list: locations.map((l) => `${l.city}, ${l.state}`),
+        links: locations.map((l) => ({ label: `${l.city}, ${l.state}`, href: `/${l.slug}` })),
       },
     ],
   },
@@ -184,6 +186,7 @@ const literalContent: Record<string, StaticPageContent> = {
     blocks: palmTypes.map((p) => ({
       heading: p.name,
       paragraphs: [p.shortDescription],
+      links: [{ label: p.name, href: `/palm-trees/${p.slug}` }],
     })),
   },
   "/palm-trees/buy": {
@@ -199,7 +202,7 @@ const literalContent: Record<string, StaticPageContent> = {
     h1: "Palm Care Guides",
     subheading:
       "Professional tips, cost guides, and expert advice on palm tree trimming and maintenance from Gulf Coast Palms.",
-    blocks: palmGuides.map((g) => ({ heading: g.title, paragraphs: [g.excerpt] })),
+    blocks: palmGuides.map((g) => ({ heading: g.title, paragraphs: [g.excerpt], links: [{ label: g.title, href: `/palm-trees/guides/${g.slug}` }] })),
   },
   "/learn": {
     h1: "Your Palm Tree Resource Center",
@@ -208,6 +211,7 @@ const literalContent: Record<string, StaticPageContent> = {
     blocks: articles.map((a) => ({
       heading: a.title,
       paragraphs: [a.metaDescription],
+      links: [{ label: a.title, href: `/learn/${a.slug}` }],
     })),
   },
   "/careers/gulf-coast-palms": {
@@ -263,8 +267,504 @@ const literalContent: Record<string, StaticPageContent> = {
   },
 };
 
+/** Existing landing-page copy, kept aligned with the corresponding React pages. */
+const landingContent: Record<string, StaticPageContent> = {
+  "/commercial": {
+    "h1": "Palm & Tree Care for Property Portfolios",
+    "blocks": [
+      {
+        "heading": "Who We Work With"
+      },
+      {
+        "paragraphs": [
+          "If you manage more than one property, you get a dedicated point of contact and simplified billing."
+        ]
+      },
+      {
+        "heading": "Why Property Managers Choose Gulf Coast Palms"
+      },
+      {
+        "heading": "Services We Deliver at Scale"
+      },
+      {
+        "heading": "Request Portfolio Pricing"
+      },
+      {
+        "paragraphs": [
+          "Send us the property list and we'll come back with a per-visit rate and a proposed schedule — usually within one business day."
+        ]
+      }
+    ],
+    "subheading": "One crew for every address in your portfolio. Gulf Coast Palms partners with property managers, HOAs, and commercial owners across Northwest Florida — with volume pricing, photo documentation, and priority hurricane response."
+  },
+  "/palm-tree-cost": {
+    "h1": "Palm Tree Cost",
+    "blocks": [
+      {
+        "heading": "Palm Tree Trimming Cost"
+      },
+      {
+        "paragraphs": [
+          "Every palm tree is different, and pricing reflects the unique characteristics of each job. We don't believe in one-size-fits-all pricing — instead, we evaluate your specific palms and provide an honest, transparent quote."
+        ]
+      },
+      {
+        "paragraphs": [
+          "The cost of palm tree trimming varies based on several key factors:"
+        ]
+      },
+      {
+        "paragraphs": [
+          "Properties with more palms often benefit from volume pricing. Whether you have 3 palms or 300, we'll provide a competitive quote that reflects the scope of the job."
+        ]
+      },
+      {
+        "paragraphs": [
+          "The fastest way to get an accurate price? Text us a photo of your palms — we'll respond with an estimate quickly."
+        ]
+      },
+      {
+        "heading": "Diamond Cutting & Trunk Skinning Cost"
+      },
+      {
+        "paragraphs": [
+          "Palm Diamond Cutting and Palm Trunk Skinning are priced per foot of trunk height being cleaned."
+        ]
+      },
+      {
+        "paragraphs": [
+          "This pricing model ensures you only pay for the work being done. A 10-foot trunk costs less than a 30-foot trunk — simple and fair."
+        ]
+      },
+      {
+        "paragraphs": [
+          "Both services are often combined with palm tree trimming for a complete palm makeover at a bundled rate."
+        ]
+      },
+      {
+        "heading": "Palm Tree Removal Cost"
+      },
+      {
+        "paragraphs": [
+          "Palm tree removal pricing depends on multiple factors unique to each job:"
+        ]
+      },
+      {
+        "paragraphs": [
+          "Removals near power lines, buildings, or in tight spaces require extra care and specialized equipment. Every removal includes complete debris cleanup and haul-away."
+        ]
+      },
+      {
+        "heading": "Palm Tree Installation Cost"
+      },
+      {
+        "paragraphs": [
+          "Palm tree installation pricing depends on:"
+        ]
+      },
+      {
+        "paragraphs": [
+          "Every installation includes professional planting, root ball securing, initial watering, and soil conditioning. Browse our available palms on the Buy Palm Trees page."
+        ]
+      },
+      {
+        "paragraphs": [
+          "All installations include a 1-year establishment warranty."
+        ]
+      },
+      {
+        "paragraphs": [
+          "Want the full breakdown by height & species? Read the full 2026 Florida palm-trimming cost guide →"
+        ]
+      },
+      {
+        "heading": "Get an Instant Quote"
+      },
+      {
+        "paragraphs": [
+          "The fastest way to get a price? Text us a photo of your palm trees and we'll respond with an estimate."
+        ]
+      }
+    ],
+    "subheading": "Honest pricing information for palm tree trimming, diamond cutting, trunk skinning, installation, and removal across the Emerald Coast."
+  },
+  "/palm-tree-maintenance-plans": {
+    "h1": "Keep Your Palms Healthy Year-Round",
+    "blocks": [
+      {
+        "heading": "Why a Maintenance Plan?"
+      },
+      {
+        "heading": "Plan Options"
+      },
+      {
+        "paragraphs": [
+          "Custom quote"
+        ]
+      },
+      {
+        "heading": "What's Included in Every Plan"
+      },
+      {
+        "heading": "Frequently Asked Questions"
+      },
+      {
+        "heading": "Start My Maintenance Plan"
+      }
+    ],
+    "subheading": "Set it and forget it — Gulf Coast Palms handles your scheduled palm maintenance so you never have to think about it."
+  },
+  "/hoa-commercial-palm-maintenance": {
+    "h1": "Palm Tree Maintenance for HOAs, Resorts & Commercial Properties",
+    "blocks": [
+      {
+        "heading": "Why Property Managers Choose Gulf Coast Palms"
+      },
+      {
+        "heading": "Recurring Maintenance Programs"
+      },
+      {
+        "paragraphs": [
+          "Our maintenance programs are designed to keep your palms healthy, safe, and looking their best — all year round."
+        ]
+      },
+      {
+        "heading": "Properties We Work With"
+      },
+      {
+        "heading": "Large Property Experience"
+      },
+      {
+        "paragraphs": [
+          "Gulf Coast Palms frequently maintains properties with dozens or even hundreds of palm trees. We understand the logistics of large-scale trimming operations — from efficient crew scheduling to minimize disruption, to coordinating access across multi-building communities."
+        ]
+      },
+      {
+        "paragraphs": [
+          "Whether your property has 50 Sabal palms or 200+ palms of mixed species, we deliver consistent quality across every tree. Our team understands that HOA boards and property managers need reliability, professionalism, and documented results — and that's exactly what we provide."
+        ]
+      },
+      {
+        "paragraphs": [
+          "We serve commercial and HOA properties throughout the Emerald Coast, including Pensacola, Gulf Breeze, Navarre, Fort Walton Beach, Destin, 30A, and Perdido Key."
+        ]
+      },
+      {
+        "heading": "Request a Property Maintenance Consultation"
+      },
+      {
+        "paragraphs": [
+          "Contact us to schedule an on-site property assessment. We'll evaluate your palms and build a custom maintenance program for your property."
+        ]
+      }
+    ],
+    "subheading": "Professional palm trimming and maintenance programs for large properties across Pensacola, Gulf Breeze, Navarre, Fort Walton Beach, Destin, 30A, and Perdido Key."
+  },
+  "/hurricane-palm-preparation": {
+    "h1": "Hurricane Preparation for Palm Trees",
+    "blocks": [
+      {
+        "heading": "Why Palm Preparation Matters Before Hurricanes"
+      },
+      {
+        "paragraphs": [
+          "Florida's Emerald Coast faces powerful coastal storms and high winds every hurricane season. Untrimmed or poorly trimmed palms create serious risks, including:"
+        ]
+      },
+      {
+        "paragraphs": [
+          "Proactive storm preparation trimming is one of the most effective steps property owners can take to reduce wind damage, protect structures, and keep residents safe during hurricane season."
+        ]
+      },
+      {
+        "heading": "Proper Hurricane Palm Trimming"
+      },
+      {
+        "paragraphs": [
+          "There's a right way and a wrong way to prepare palms for storms. Improper trimming — especially aggressive \"hurricane cuts\" — can actually weaken palms and increase storm damage risk."
+        ]
+      },
+      {
+        "heading": "Signs Your Palms Need Storm Preparation"
+      },
+      {
+        "paragraphs": [
+          "If any of these signs apply to your palms, contact Gulf Coast Palms before storm season. Early preparation is always safer and more affordable than emergency cleanup after a hurricane."
+        ]
+      },
+      {
+        "heading": "Hurricane Prep Service Areas"
+      },
+      {
+        "paragraphs": [
+          "We provide hurricane palm preparation services across the entire Emerald Coast of Florida."
+        ]
+      },
+      {
+        "heading": "Prepare Your Palms Before Storm Season"
+      },
+      {
+        "paragraphs": [
+          "Don't wait for a hurricane warning. Schedule your palm trimming now and protect your property, your family, and your investment."
+        ]
+      }
+    ],
+    "subheading": "Protect your property and reduce storm damage with proper palm trimming and preparation across the Emerald Coast."
+  },
+  "/emergency-palm-service": {
+    "h1": "Storm Damage? We Respond Fast Across NW Florida",
+    "blocks": [
+      {
+        "heading": "What Qualifies as a Palm Emergency?"
+      },
+      {
+        "heading": "Insurance Claim Documentation"
+      },
+      {
+        "paragraphs": [
+          "Filing an insurance claim for storm-damaged palms? Gulf Coast Palms can help. We provide detailed photo documentation, written damage assessments, and professional reports to support your homeowner's insurance claim."
+        ]
+      },
+      {
+        "paragraphs": [
+          "Our team photographs all damage, documents the condition and species of each affected palm, and provides a written assessment with cost estimates. This documentation has helped dozens of Gulf Coast homeowners successfully file claims and get reimbursed for emergency tree work."
+        ]
+      },
+      {
+        "heading": "Report a Palm Emergency"
+      },
+      {
+        "paragraphs": [
+          "Fill out the form and we'll call you back as soon as possible."
+        ]
+      },
+      {
+        "paragraphs": [
+          "Our team will call you as soon as possible. For immediate help, call (850) 910-1290."
+        ]
+      },
+      {
+        "heading": "What Happens Next"
+      }
+    ],
+    "subheading": "Leaning palms, downed fronds, root instability — we assess, document, and resolve palm emergencies quickly and safely."
+  },
+  "/holiday-lighting": {
+    "h1": "Professional Holiday Lighting for NW Florida Homes & Properties",
+    "blocks": [
+      {
+        "heading": "Why Professional Holiday Lighting?"
+      },
+      {
+        "heading": "Our Holiday Lighting Services"
+      },
+      {
+        "heading": "Service Areas"
+      },
+      {
+        "heading": "Book Early — We Fill Up Fast"
+      },
+      {
+        "paragraphs": [
+          "October and November fill up quickly. Request your estimate now to secure your spot."
+        ]
+      },
+      {
+        "heading": "Get Your Free Holiday Lighting Estimate"
+      },
+      {
+        "heading": "Frequently Asked Questions"
+      }
+    ],
+    "subheading": "Installation, takedown, and storage handled completely by us. You enjoy the holidays — we handle the lights."
+  },
+  "/referral": {
+    "h1": "Refer a Friend, Both Get Rewarded",
+    "blocks": [
+      {
+        "heading": "How It Works"
+      },
+      {
+        "heading": "Referral Rewards Tiers"
+      },
+      {
+        "heading": "Submit Your Referral"
+      },
+      {
+        "heading": "Questions About the Referral Program?"
+      },
+      {
+        "paragraphs": [
+          "Call or text us anytime."
+        ]
+      }
+    ],
+    "subheading": "Share Gulf Coast Palms with your neighbors and earn $50 off your next service — for each referral that becomes a customer."
+  },
+  "/payments": {
+    "h1": "Payments & Invoicing",
+    "blocks": [
+      {
+        "heading": "Deposit Payments"
+      },
+      {
+        "paragraphs": [
+          "For larger projects like palm installations, we may require a deposit to secure your booking and order materials. Deposits are typically 50% of the total project cost."
+        ]
+      },
+      {
+        "heading": "Invoice Payments"
+      },
+      {
+        "paragraphs": [
+          "After service completion, we'll send you a detailed invoice with a secure payment link. Pay online at your convenience — no need for cash or checks."
+        ]
+      },
+      {
+        "heading": "Have a Payment Question?"
+      },
+      {
+        "paragraphs": [
+          "Contact us for billing inquiries or to request an invoice."
+        ]
+      }
+    ],
+    "subheading": "Simple, transparent payment options for all Gulf Coast Palms services."
+  },
+  "/careers/gulf-coast-palms/team-leader": {
+    "h1": "Team Leader",
+    "blocks": [
+      {
+        "paragraphs": [
+          "We need someone who can drive the truck and trailer, lead the crew, talk to customers, and keep every job running efficiently. If you can take ownership and make things happen, this role is for you."
+        ]
+      },
+      {
+        "heading": "What You'll Do"
+      },
+      {
+        "heading": "What We Offer"
+      },
+      {
+        "heading": "What We're Looking For"
+      },
+      {
+        "paragraphs": [
+          "Experience in tree work, landscaping, trailers, ladders, saws, cleanup, or outdoor labor goes a long way. But we're still open to the right person if they have the attitude, discipline, and work ethic to learn and lead."
+        ]
+      },
+      {
+        "heading": "Our Standards"
+      },
+      {
+        "paragraphs": [
+          "We move fast, work hard, protect customer property, and take pride in doing clean, professional work. If you're dependable, coachable, and want to grow with a serious company — this could be a strong fit."
+        ]
+      },
+      {
+        "heading": "Apply Now"
+      },
+      {
+        "paragraphs": [
+          "Fill out the form below and we'll be in touch if your background looks like a fit."
+        ]
+      }
+    ],
+    "subheading": "Lead crews in the field for a fast-growing palm tree trimming company that values speed, quality, safety, and professionalism."
+  },
+  "/careers/gulf-coast-palms/groundsman": {
+    "h1": "Groundsman",
+    "blocks": [
+      {
+        "paragraphs": [
+          "We need someone who can move with pace, drag brush, load the trailer, and help keep every job site clean and efficient. Groundsman positions typically start around $20/hr during the first month and can move up to $25/hr."
+        ]
+      },
+      {
+        "heading": "What You'll Do"
+      },
+      {
+        "heading": "What We Offer"
+      },
+      {
+        "heading": "What We're Looking For"
+      },
+      {
+        "paragraphs": [
+          "Experience in tree work, landscaping, trailers, cleanup, or outdoor labor is a plus. But we're open to the right person if they have the attitude, discipline, and work ethic to learn."
+        ]
+      },
+      {
+        "heading": "Our Standards"
+      },
+      {
+        "paragraphs": [
+          "We move fast, work hard, protect customer property, and take pride in doing clean, professional work. If you're dependable, coachable, and want to grow with a serious company — this could be a strong fit."
+        ]
+      },
+      {
+        "heading": "Apply Now"
+      },
+      {
+        "paragraphs": [
+          "Fill out the form below and we'll be in touch if your background looks like a fit."
+        ]
+      }
+    ],
+    "subheading": "Support the crew from the ground on palm tree trimming jobs across the Gulf Coast."
+  },
+  "/careers/gulf-coast-palms/sales-operations": {
+    "h1": "Sales & Operations Coordinator",
+    "blocks": [
+      {
+        "paragraphs": [
+          "This is a real growth position for someone who's sharp, organized, and wants to play a major role in how this company scales. You'll be the voice of the company and the engine that keeps the schedule tight."
+        ]
+      },
+      {
+        "heading": "What You'll Do"
+      },
+      {
+        "heading": "What We Offer"
+      },
+      {
+        "heading": "What We're Looking For"
+      },
+      {
+        "paragraphs": [
+          "Experience in customer service, scheduling, dispatch, sales, office/admin, or service business operations is a strong plus. But we're open to the right person if they have the drive, communication skills, and work ethic to learn fast."
+        ]
+      },
+      {
+        "heading": "Our Standards"
+      },
+      {
+        "paragraphs": [
+          "We move fast, stay organized, and take pride in how we communicate with customers. If you're sharp, dependable, and want to grow with a serious company — this could be a strong fit."
+        ]
+      },
+      {
+        "heading": "Apply Now"
+      },
+      {
+        "paragraphs": [
+          "Fill out the form below and we'll be in touch if your background looks like a fit."
+        ]
+      }
+    ],
+    "subheading": "Run the front end of a fast-growing palm tree trimming company — manage leads, book quotes, and keep everything organized."
+  },
+  "/careers/thank-you": {
+    "h1": "Thanks for Applying",
+    "blocks": [],
+    "subheading": "We received your application. If your background looks like a fit, we'll be in touch soon."
+  }
+};
+
 export function buildStaticContent(): Record<string, StaticPageContent> {
-  const out: Record<string, StaticPageContent> = { ...literalContent };
+  const out: Record<string, StaticPageContent> = { ...literalContent, ...landingContent };
+
+  out["/commercial-palm-tree-services"] = out["/commercial"];
 
   // Service detail pages
   for (const s of servicesData) {
@@ -367,10 +867,15 @@ export function buildStaticContent(): Record<string, StaticPageContent> {
   for (const a of articles) {
     out[`/learn/${a.slug}`] = {
       h1: a.title,
-      blocks: a.sections.map((s) => ({
+      blocks: [...a.sections.map((s) => ({
         heading: s.heading,
         paragraphs: s.paragraphs,
-      })),
+      })), { heading: "Related Palm Services & Guides", links: [
+        { label: "Professional palm tree trimming", href: "/services/palm-tree-trimming" },
+        { label: "Palm tree removal", href: "/services/palm-tree-removal" },
+        { label: "Palm tree service costs", href: "/palm-tree-cost" },
+        ...articles.filter((other) => other.slug !== a.slug).map((other) => ({ label: other.title, href: `/learn/${other.slug}` })),
+      ] }],
     };
   }
 

@@ -166,6 +166,31 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://gulfcoastpalmservices.com/palm-trees/guides/when-to-trim-palm-trees</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gulfcoastpalmservices.com/palm-trees/guides/hurricane-preparation-palm-trimming</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gulfcoastpalmservices.com/palm-trees/guides/signs-palm-tree-unhealthy</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gulfcoastpalmservices.com/palm-trees/guides/what-is-diamond-cutting-on-palm-trees</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gulfcoastpalmservices.com/palm-trees/guides/best-palm-trees-for-emerald-coast</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://gulfcoastpalmservices.com/learn</loc>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
@@ -202,11 +227,6 @@
   </url>
   <url>
     <loc>https://gulfcoastpalmservices.com/commercial</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://gulfcoastpalmservices.com/commercial-palm-tree-services</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -256,12 +276,22 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gulfcoastpalmservices.com/payments</loc>
+    <loc>https://gulfcoastpalmservices.com/careers/gulf-coast-palms</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gulfcoastpalmservices.com/careers/gulf-coast-palms</loc>
+    <loc>https://gulfcoastpalmservices.com/careers/gulf-coast-palms/team-leader</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://gulfcoastpalmservices.com/careers/gulf-coast-palms/groundsman</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://gulfcoastpalmservices.com/careers/gulf-coast-palms/sales-operations</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>

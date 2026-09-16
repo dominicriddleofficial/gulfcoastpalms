@@ -4,7 +4,7 @@ import { Phone, Star, CheckCircle, MapPin, ArrowRight, ShieldCheck, Clock, Messa
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
-import { ServiceJsonLd, BreadcrumbJsonLd, FAQPageJsonLd, JsonLd } from "@/components/JsonLd";
+import { ServiceJsonLd, BreadcrumbJsonLd, FAQPageJsonLd } from "@/components/JsonLd";
 import HeroReviewBadge from "@/components/home/HeroReviewBadge";
 import { GCP_BUSINESS, TEL_HREF, SMS_HREF } from "@/lib/business-info";
 import { LocationData, locations } from "@/data/locations";
@@ -105,36 +105,6 @@ const LocationPage = ({ location }: Props) => {
       {location.faqs && location.faqs.length > 0 && (
         <FAQPageJsonLd questions={location.faqs} />
       )}
-      {location.geo && (
-        <JsonLd
-          data={{
-            "@context": "https://schema.org",
-            "@type": "LocalBusiness",
-            name: `${GCP_BUSINESS.name} — ${location.city}, ${location.state}`,
-            telephone: GCP_BUSINESS.phone,
-            url: `${BASE_URL}${canonicalUrl}`,
-            image: GCP_BUSINESS.ogImage,
-            priceRange: GCP_BUSINESS.priceRange,
-            geo: {
-              "@type": "GeoCoordinates",
-              latitude: location.geo.latitude,
-              longitude: location.geo.longitude,
-            },
-            areaServed: (location.neighborhoods ?? [location.city]).map((n) => ({
-              "@type": "City",
-              name: n,
-              containedInPlace: { "@type": "State", name: "Florida" },
-            })),
-            aggregateRating: {
-              "@type": "AggregateRating",
-              ratingValue: GCP_BUSINESS.aggregateRating.ratingValue,
-              reviewCount: GCP_BUSINESS.aggregateRating.reviewCount,
-            },
-            dateModified: new Date().toISOString().split("T")[0],
-          }}
-        />
-      )}
-
       {/* Hero */}
       <section className="relative py-20 md:py-28 overflow-hidden bg-palm-dark">
         <div className="absolute inset-0">

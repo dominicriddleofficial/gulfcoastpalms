@@ -11,63 +11,13 @@ const AMBER = "#F4A825";
 const NOT_FOUND_DESCRIPTION =
   "This page doesn't exist. Find palm tree trimming, removal, and hurricane prep for NW Florida on the Gulf Coast Palms site.";
 
-/**
- * Catch-all (`path="*"`) route.
- *
- * Google Search Console filed Soft 404s because the host rewrites unknown
- * paths to index.html with HTTP 200 and the homepage head. This stack cannot
- * return a real 404 status from React, so the fix is head-level:
- *
- *  - its own <title> and description (never the homepage's)
- *  - `noindex, nofollow` — this is what clears the Soft 404 report
- *  - NO canonical: the static one baked into index.html points at the
- *    homepage, and react-helmet-async does not dedupe <link> tags, so it is
- *    stripped imperatively below (along with og:url) instead
- *  - real, visible not-found content so the renderer sees an error page
- *
- * Only this route is affected; the 58 real pages keep their baked-in head.
- */
+/** Missing routes have no canonical and are excluded from indexing. */
 const NotFound = () => {
   const location = useLocation();
 
   useEffect(() => {
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);
   }, [location.pathname]);
-
-  // The static index.html head ships `robots: index, follow`, the homepage
-  // description, a homepage canonical and og:url. react-helmet-async appends
-  // its own tags rather than replacing these, and crawlers read the first
-  // match — so override them in place here and restore on unmount.
-  useEffect(() => {
-    const robots = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
-    const description = document.querySelector<HTMLMetaElement>('meta[name="description"]');
-    const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
-    const ogUrl = document.querySelector<HTMLMetaElement>('meta[property="og:url"]');
-    const prevRobots = robots?.getAttribute("content") ?? null;
-    const prevDescription = description?.getAttribute("content") ?? null;
-    const canonicalHref = canonical?.getAttribute("href") ?? null;
-    const ogUrlContent = ogUrl?.getAttribute("content") ?? null;
-    robots?.setAttribute("content", "noindex, nofollow");
-    description?.setAttribute("content", NOT_FOUND_DESCRIPTION);
-    canonical?.remove();
-    ogUrl?.remove();
-    return () => {
-      if (robots && prevRobots) robots.setAttribute("content", prevRobots);
-      if (description && prevDescription) description.setAttribute("content", prevDescription);
-      if (canonicalHref && !document.querySelector('link[rel="canonical"]')) {
-        const link = document.createElement("link");
-        link.setAttribute("rel", "canonical");
-        link.setAttribute("href", canonicalHref);
-        document.head.appendChild(link);
-      }
-      if (ogUrlContent && !document.querySelector('meta[property="og:url"]')) {
-        const meta = document.createElement("meta");
-        meta.setAttribute("property", "og:url");
-        meta.setAttribute("content", ogUrlContent);
-        document.head.appendChild(meta);
-      }
-    };
-  }, []);
 
   return (
     <main className="min-h-screen flex items-center justify-center px-5 py-16" style={{ background: "#0c1410" }}>

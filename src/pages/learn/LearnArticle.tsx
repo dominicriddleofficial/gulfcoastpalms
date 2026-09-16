@@ -4,6 +4,8 @@ import { ArrowLeft, Phone, MessageSquare } from "lucide-react";
 import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
 import NotFound from "@/pages/NotFound";
+import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/JsonLd";
+import { GCP_BUSINESS } from "@/lib/business-info";
 
 import { articles } from "@/data/learnArticles";
 
@@ -21,6 +23,9 @@ const LearnArticle = () => {
         description={article.metaDescription}
         canonicalUrl={`/learn/${article.slug}`}
       />
+
+      <ArticleJsonLd article={{ headline: article.title, description: article.metaDescription, url: `${GCP_BUSINESS.url}/learn/${article.slug}` }} />
+      <BreadcrumbJsonLd items={[{ name: "Home", url: `${GCP_BUSINESS.url}/` }, { name: "Palm care guides", url: `${GCP_BUSINESS.url}/learn` }, { name: article.title, url: `${GCP_BUSINESS.url}/learn/${article.slug}` }]} />
 
       <section className="py-16 md:py-24 bg-palm-dark">
         <div className="container mx-auto px-4">
@@ -51,6 +56,18 @@ const LearnArticle = () => {
               </div>
             ))}
           </div>
+
+          <nav aria-label="Related palm services and guides" className="mt-10 border-t border-border pt-8">
+            <h2 className="font-display text-2xl font-bold mb-4">Related Palm Services & Guides</h2>
+            <ul className="space-y-3 font-body text-primary">
+              <li><Link className="underline" to="/services/palm-tree-trimming">Professional palm tree trimming</Link></li>
+              <li><Link className="underline" to="/services/palm-tree-removal">Palm tree removal</Link></li>
+              <li><Link className="underline" to="/palm-tree-cost">Palm tree service costs</Link></li>
+              {articles.filter((other) => other.slug !== article.slug).map((other) => (
+                <li key={other.slug}><Link className="underline" to={`/learn/${other.slug}`}>{other.title}</Link></li>
+              ))}
+            </ul>
+          </nav>
 
           {/* Lead CTA */}
           <div className="mt-16 p-8 rounded-2xl bg-primary/5 border border-primary/20 text-center">

@@ -152,8 +152,7 @@ export default function PalmTreeMaintenancePlans() {
                 {plan.popular && <span className="inline-block px-3 py-1 rounded-full bg-primary text-primary-foreground font-body text-xs font-bold uppercase mb-3 self-start">Most Popular</span>}
                 <h3 className="font-display text-xl font-bold text-foreground mb-2">{plan.name}</h3>
                 <p className="font-body text-sm text-muted-foreground mb-4">{plan.desc}</p>
-                {/* TODO: Fill in actual plan pricing */}
-                <p className="font-display text-2xl font-bold text-primary mb-4">[PRICE]<span className="text-sm font-normal text-muted-foreground">/year</span></p>
+                <p className="font-display text-2xl font-bold text-primary mb-4">Custom quote</p>
                 <p className="font-body text-xs text-muted-foreground mb-4">Best for: {plan.best}</p>
                 <ul className="space-y-2 flex-1">
                   {plan.features.map((f) => (
