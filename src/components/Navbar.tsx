@@ -11,7 +11,7 @@ import { prefetchOnHover } from "@/lib/route-prefetch";
 const learnLinks = [
   { label: "Palm Care Guides", to: "/learn" },
   { label: "Palm Tree Types", to: "/palm-trees/types" },
-  { label: "Care Guides (Legacy)", to: "/palm-trees/guides" },
+  { label: "More Palm Care Guides", to: "/palm-trees/guides" },
   { label: "Palm Tree Cost Guide", to: "/palm-tree-cost" },
   { label: "Hurricane Prep Guide", to: "/hurricane-palm-preparation" },
 ];
@@ -73,7 +73,7 @@ const Navbar = () => {
             <Link to="/services" className={`whitespace-nowrap font-body font-medium text-[13px] xl:text-sm uppercase tracking-wider transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.startsWith("/services") ? "text-primary" : "text-muted-foreground"}`}>
               Services <ChevronDown className="w-3.5 h-3.5" />
             </Link>
-            <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+            <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200">
               <div className="bg-card border border-border rounded-xl shadow-xl py-2 min-w-[260px]">
                 {serviceNavLinks.map((link) => (
                   <Link key={link.to} to={link.to} {...prefetchOnHover(link.to)} className={`block px-4 py-2.5 font-body text-sm hover:bg-secondary transition-colors ${location.pathname === link.to ? "text-primary font-semibold" : "text-foreground"}`}>
@@ -93,10 +93,10 @@ const Navbar = () => {
 
           {/* Learn Dropdown */}
           <div className="relative group">
-            <span className={`whitespace-nowrap font-body font-medium text-[13px] xl:text-sm uppercase tracking-wider transition-colors hover:text-primary inline-flex items-center gap-1 cursor-pointer ${["/palm-trees", "/palm-tree-cost", "/hurricane-palm-preparation"].some((p) => location.pathname.startsWith(p)) ? "text-primary" : "text-muted-foreground"}`}>
+            <Link to="/learn" className={`whitespace-nowrap font-body font-medium text-[13px] xl:text-sm uppercase tracking-wider transition-colors hover:text-primary inline-flex items-center gap-1 cursor-pointer ${["/palm-trees", "/palm-tree-cost", "/hurricane-palm-preparation"].some((p) => location.pathname.startsWith(p)) ? "text-primary" : "text-muted-foreground"}`}>
               Learn <ChevronDown className="w-3.5 h-3.5" />
-            </span>
-            <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+            </Link>
+            <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200">
               <div className="bg-card border border-border rounded-xl shadow-xl py-2 min-w-[240px]">
                 {learnLinks.map((link) => (
                   <Link key={link.to} to={link.to} className={`block px-4 py-2.5 font-body text-sm hover:bg-secondary transition-colors ${location.pathname === link.to ? "text-primary font-semibold" : "text-foreground"}`}>
@@ -116,7 +116,7 @@ const Navbar = () => {
             <Link to="/service-areas" className={`whitespace-nowrap font-body font-medium text-[13px] xl:text-sm uppercase tracking-wider transition-colors hover:text-primary inline-flex items-center gap-1 ${location.pathname.includes("palm-tree-trimming") || location.pathname === "/service-areas" ? "text-primary" : "text-muted-foreground"}`}>
               Service Areas <ChevronDown className="w-3.5 h-3.5" />
             </Link>
-            <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+            <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200">
               <div className="bg-card border border-border rounded-xl shadow-xl py-2 min-w-[220px] max-h-[60vh] overflow-y-auto">
                 {locations.map((loc) => (
                   <Link key={loc.slug} to={`/${loc.slug}`} {...prefetchOnHover(`/${loc.slug}`)} className={`block px-4 py-2.5 font-body text-sm hover:bg-secondary transition-colors ${location.pathname === `/${loc.slug}` ? "text-primary font-semibold" : "text-foreground"}`}>

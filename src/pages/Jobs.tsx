@@ -24,7 +24,7 @@ const galleryImages = [
   { src: job8, alt: "Diamond cut palms at luxury home", caption: "Diamond Cut — Gulf Breeze" },
   { src: job7, alt: "Palm trees at residential property with blue sky", caption: "Residential — Navarre Beach" },
   { src: job5, alt: "Palm tree trimming at commercial parking structure", caption: "Commercial Palms — Fort Walton Beach" },
-  { src: job4, alt: "Residential palm trimming in Gulf Breeze FL", caption: "Palm Trimming — Pensacola" },
+  { src: job4, alt: "Residential palm trimming with cleaned palm crowns", caption: "Palm Trimming — Pensacola" },
   { src: job9, alt: "Freshly trimmed palm trees in residential yard", caption: "Palm Trimming — Crestview" },
   { src: job10, alt: "Row of trimmed palms at commercial property", caption: "Commercial Maintenance — Destin" },
 ];

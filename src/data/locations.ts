@@ -34,7 +34,8 @@ export interface LocationData {
   faqs?: { q: string; a: string }[];
   pricingTiers?: { name: string; price: string; bestFor: string }[];
   pricingNote?: string;
-  testimonial?: { quote: string; author: string; rating?: number };
+  // Publish only after the exact quotation has a verifiable source.
+  testimonial?: { quote: string; author: string; rating?: number; sourceUrl?: string };
   /** Centroid coordinates for the city, used in LocalBusiness JSON-LD. */
   geo?: { latitude: number; longitude: number };
   /** Specific neighborhoods/sub-areas served, used in JSON-LD areaServed. */

@@ -1,5 +1,5 @@
 import { Star } from "lucide-react";
-import { aggregateRating, GOOGLE_REVIEW_URL } from "@/data/reviews";
+import { aggregateRating, GOOGLE_BUSINESS_URL } from "@/data/reviews";
 
 interface HeroReviewBadgeProps {
   compact?: boolean;
@@ -7,7 +7,8 @@ interface HeroReviewBadgeProps {
 
 const HeroReviewBadge = ({ compact }: HeroReviewBadgeProps) => (
   <a
-    href={GOOGLE_REVIEW_URL}
+    href={GOOGLE_BUSINESS_URL}
+    title={`Rating checked ${aggregateRating.checkedAt}`}
     target="_blank"
     rel="noopener noreferrer"
     aria-label={`${aggregateRating.score} stars from ${aggregateRating.count}+ Google reviews — read on Google`}

@@ -219,7 +219,7 @@ export function trustFactsText(): string[] {
   const { ratingValue, reviewCount } = GCP_BUSINESS.aggregateRating;
   return [
     `Gulf Coast Palms — call or text ${GCP_BUSINESS.phoneDisplay} for a free quote.`,
-    `We hold a ${ratingValue} rating from ${reviewCount} five-star Google reviews and are fully licensed and insured, with general liability insurance and workers' compensation coverage on every job.`,
+    `We hold a ${ratingValue} rating from ${reviewCount} Google reviews (checked ${GCP_BUSINESS.aggregateRating.checkedAt}) and are fully licensed and insured, with general liability insurance and workers' compensation coverage on every job.`,
     `Serving the entire Emerald Coast: ${GCP_BUSINESS.areaServed.join(", ")}.`,
   ];
 }

@@ -1,5 +1,6 @@
 // Conversion analytics: fires GA4 events AND writes to our owner-only
 // `analytics_events` table via the public `track-event` edge function.
+import { isPrivateRoute } from "@/seo/indexing-policy.mjs";
 
 declare global {
   interface Window {
@@ -193,17 +194,19 @@ function postEvent(payload: Record<string, unknown>) {
 }
 
 export function trackEvent(event: ConversionEvent | string, params?: EventParams) {
-  if (typeof window.gtag === "function") {
-    window.gtag("event", event, {
-      ...params,
-      page_path: params?.page_path || window.location.pathname,
-    });
-  }
   if (typeof window === "undefined") return;
-
   const path = params?.page_path || window.location.pathname;
   const session = getSessionId();
   if (!shouldSend(event, path, session)) return;
+
+  // Keep internal operations in the owner analytics without counting them
+  // as public marketing traffic in GA4.
+  if (!isPrivateRoute(path) && typeof window.gtag === "function") {
+    window.gtag("event", event, {
+      ...params,
+      page_path: path,
+    });
+  }
 
   const utm = captureUtmFromUrl();
   const properties: Record<string, unknown> = {};
@@ -235,14 +238,9 @@ export function trackEvent(event: ConversionEvent | string, params?: EventParams
 }
 
 export function trackPageView(path?: string) {
+  if (typeof window === "undefined") return;
   const finalPath = path || (typeof window !== "undefined" ? window.location.pathname : "/");
-  if (typeof window.gtag === "function") {
-    window.gtag("event", "page_view", {
-      page_path: finalPath,
-      page_location: window.location.href,
-    });
-  }
-  trackEvent("page_view", { page_path: finalPath });
+  trackEvent("page_view", { page_path: finalPath, page_location: window.location.href });
 }
 
 // Predefined event helpers

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2, Send, Phone, MessageSquare } from "lucide-react";
 import Layout from "@/components/Layout";
@@ -14,6 +14,7 @@ const Quote = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const renderTime = useRef(Date.now());
+  const started = useRef(false);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     name: "",
@@ -26,12 +27,13 @@ const Quote = () => {
     website: "", // honeypot
   });
 
-  useEffect(() => {
-    trackEvent("quote_request_started", { source: searchParams.get("source") || "quote_page" });
-  }, [searchParams]);
-
-  const update = (key: keyof typeof form, val: string) =>
+  const update = (key: keyof typeof form, val: string) => {
+    if (key !== "website" && !started.current) {
+      started.current = true;
+      trackEvent("quote_request_started", { source: searchParams.get("source") || "quote_page" });
+    }
     setForm((f) => ({ ...f, [key]: val }));
+  };
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

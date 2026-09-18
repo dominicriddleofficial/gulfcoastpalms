@@ -12,7 +12,7 @@ const services = [
     image: palmTrimming,
     link: "/services/palm-tree-trimming",
     desc: "Expert trimming to keep your palms healthy and beautiful year-round.",
-    seo: "Regular palm tree trimming is essential for maintaining the health, safety, and curb appeal of your property. Our certified team removes dead and dying fronds, seed pods, and flower stalks with precision — leaving your palms looking pristine without over-trimming.",
+    seo: "Regular palm tree trimming is essential for maintaining the health, safety, and curb appeal of your property. Our experienced team removes dead and dying fronds, seed pods, and flower stalks with precision — leaving your palms looking pristine without over-trimming.",
   },
   {
     title: "Palm Diamond Cutting",

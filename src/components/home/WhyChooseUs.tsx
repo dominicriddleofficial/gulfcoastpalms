@@ -74,7 +74,7 @@ const WhyChooseUs = () => (
         custom={0}
         className="font-body text-palm-sand/80 max-w-3xl mx-auto text-center leading-relaxed"
       >
-        Our certified team corrects damage from improper trimming and ensures cleaner cuts, stronger crowns, and healthier trees built to withstand Florida storms.
+        Our experienced team corrects damage from improper trimming and ensures cleaner cuts, stronger crowns, and healthier trees built to withstand Florida storms.
       </motion.p>
     </div>
   </section>

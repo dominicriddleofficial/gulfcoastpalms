@@ -11,7 +11,7 @@ export interface HomeFaqItem {
 export const homeFaqs: HomeFaqItem[] = [
   {
     q: "How often should I have my palm trees trimmed?",
-    a: "Most palm species in the Gulf Coast region benefit from trimming once or twice a year. We recommend scheduling a trim in late spring and again in early fall. Over-trimming can actually harm your palms, so we follow industry best practices to remove only dead or dying fronds, seed pods, and flower stalks — never healthy green fronds.",
+    a: "Trimming depends on the species and condition of the palm, not a fixed calendar. Some palms shed their old fronds naturally and need little pruning. We assess dead fronds, flower stalks, fruit and access hazards while preserving healthy green fronds. An inspection or maintenance visit does not mean your palm needs another trim.",
   },
   {
     q: "What is diamond cutting and is it bad for my palms?",

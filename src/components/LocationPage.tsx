@@ -287,7 +287,7 @@ const LocationPage = ({ location }: Props) => {
       )}
 
       {/* Testimonial */}
-      {location.testimonial && (
+      {location.testimonial?.sourceUrl && (
         <section className="section-padding bg-palm-dark">
           <div className="container mx-auto max-w-3xl">
             <motion.figure
@@ -307,7 +307,8 @@ const LocationPage = ({ location }: Props) => {
                 "{location.testimonial.quote}"
               </blockquote>
               <figcaption className="font-body text-sm text-palm-sand/80 font-medium">
-                — {location.testimonial.author}
+                — {location.testimonial.author}{" · "}
+                <a href={location.testimonial.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline">Read original review</a>
               </figcaption>
             </motion.figure>
           </div>

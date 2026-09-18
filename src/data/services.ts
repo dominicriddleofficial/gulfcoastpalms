@@ -28,11 +28,11 @@ export const servicesData: ServiceData[] = [
     heroSubheading: "Expert Trimming for Healthier, Storm-Ready Palms Across the Emerald Coast",
     introParagraphs: [
       "Gulf Coast Palms provides professional palm tree trimming throughout Northwest Florida — from Pensacola and Gulf Breeze to Navarre, Fort Walton Beach, Destin, 30A, and Perdido Key. Our team removes dead fronds, seed pods, flower stalks, and debris with precision, leaving your palms healthy, clean, and beautiful.",
-      "Proper palm trimming is more than cosmetics — it's essential for storm resistance and long-term tree health. Over-trimming (sometimes called \"hurricane cutting\") actually weakens palms by removing live fronds that the tree needs for energy. Our certified crew understands the difference between proper maintenance and harmful pruning.",
+      "Proper palm trimming is more than cosmetics — it's essential for storm resistance and long-term tree health. Over-trimming (sometimes called \"hurricane cutting\") actually weakens palms by removing live fronds that the tree needs for energy. Our experienced crew understands the difference between proper maintenance and harmful pruning.",
       "Whether you own a single property with a few palms or manage an HOA community with hundreds, we have the equipment, experience, and attention to detail to handle the job safely and efficiently. We frequently correct damage caused by aggressive trimming from inexperienced crews, restoring crown health and structural integrity."
     ],
     benefits: [
-      "Prevents storm damage from loose or dead fronds",
+      "Removes loose or dead fronds that can become falling debris",
       "Promotes healthier, stronger palm growth",
       "Improves property curb appeal and value",
       "Safe removal of seed pods & flower stalks",

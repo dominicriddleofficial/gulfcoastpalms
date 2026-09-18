@@ -61,10 +61,11 @@ export async function submitLead(data: LeadData): Promise<{ success: boolean; er
       if (import.meta.env.DEV) console.warn("[spam blocked] honeypot triggered");
       return { success: true };
     }
-    // Render-time anti-spam: reject submissions in under 2s
+    // Autofill can finish quickly. Preserve the form and allow a retry;
+    // never report a saved lead when no request has reached the server.
     if (data.formRenderTime && Date.now() - data.formRenderTime < 2000) {
       if (import.meta.env.DEV) console.warn("[spam blocked] form submitted too fast");
-      return { success: true };
+      return { success: false, error: "Please wait a moment, then submit again. Your request has not been sent yet." };
     }
 
     // Validate and sanitize input
@@ -98,6 +99,7 @@ export async function submitLead(data: LeadData): Promise<{ success: boolean; er
       error?: string;
       id?: string;
       duplicate?: boolean;
+      too_fast?: boolean;
     }>("submit-lead", {
       name: clean.name,
       phone: clean.phone,
@@ -111,6 +113,9 @@ export async function submitLead(data: LeadData): Promise<{ success: boolean; er
       page_context: pageContext,
     });
 
+    if (result?.too_fast) {
+      return { success: false, error: "Please wait a moment, then submit again. Your request has not been sent yet." };
+    }
     if (fnErr || !result?.success) {
       const msg = result?.error || fnErr?.message || "Failed to submit";
       return { success: false, error: msg };

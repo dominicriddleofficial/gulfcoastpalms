@@ -1,79 +1,44 @@
-/**
- * Google Reviews data — update this array when new reviews come in.
- * To update: just edit the entries below. No component code changes needed.
- */
+import { GCP_BUSINESS } from "@/lib/business-info";
+
+/** Public profile for reading reviews; separate from the write-review flow. */
+export const GOOGLE_BUSINESS_URL = "https://g.page/r/CVI5xmZYC-NAEBM";
+export const GOOGLE_REVIEW_URL =
+  import.meta.env.VITE_GOOGLE_REVIEW_URL || `${GOOGLE_BUSINESS_URL}/review`;
+
+/** Manually checked against the public Google profile; not a live API feed. */
+export const aggregateRating = {
+  score: Number(GCP_BUSINESS.aggregateRating.ratingValue),
+  count: Number(GCP_BUSINESS.aggregateRating.reviewCount),
+  checkedAt: GCP_BUSINESS.aggregateRating.checkedAt,
+};
+
 export interface GoogleReview {
   name: string;
   rating: number;
-  relativeDate: string;
   text: string;
+  sourceUrl: string;
 }
 
-/**
- * Google Business Profile review link.
- *
- * ACTION REQUIRED: Set VITE_GOOGLE_REVIEW_URL in your .env file
- * How to get your link:
- * 1. Go to Google Business Profile (business.google.com)
- * 2. Click "Ask for reviews"
- * 3. Copy the short link
- * Format will look like: https://g.page/r/[YOUR_ID]/review
- *
- * Fallback: searches Google for the business name so customers can still find reviews.
+/** Short, exact excerpts verified on Google Maps on 2026-09-18.
+ * Keep original wording and attribution. Do not invent relative dates.
  */
-export const GOOGLE_REVIEW_URL =
-  import.meta.env.VITE_GOOGLE_REVIEW_URL ||
-  "https://g.page/r/CVI5xmZYC-NAEBM/review";
-
-/**
- * ⚠️ ACTION REQUIRED: Update aggregateRating regularly
- * Current: 5.0 rating, 118 reviews (as of August 2026)
- *
- * How to update:
- * 1. Check your Google Business Profile for current review count
- * 2. Update the score and count below
- * 3. This automatically updates the homepage badge AND the JSON-LD structured data
- */
-export const aggregateRating = {
-  score: 5.0,
-  count: 118,
-};
-
 export const reviews: GoogleReview[] = [
   {
-    name: "Sarah M.",
+    name: "Susan Bonsignore",
     rating: 5,
-    relativeDate: "2 weeks ago",
-    text: "Gulf Coast Palms completely transformed our front yard. The diamond cut on our Canary Island palms looks absolutely stunning — like a five-star resort. Fast, professional, and reasonably priced.",
+    text: "Dom and his crew are AMAZING!",
+    sourceUrl: GOOGLE_BUSINESS_URL,
   },
   {
-    name: "Mike & Jessica T.",
+    name: "Mallory Wilson",
     rating: 5,
-    relativeDate: "3 weeks ago",
-    text: "We had 12 palms that were badly overgrown and they knocked them all out in one day. The crew was respectful, cleaned up everything, and our palms have never looked better.",
+    text: "We had an excellent experience with Gulf Coast Palms!",
+    sourceUrl: GOOGLE_BUSINESS_URL,
   },
   {
-    name: "Robert K.",
+    name: "Alina Nazaruk",
     rating: 5,
-    relativeDate: "1 month ago",
-    text: "I manage several rental properties and Gulf Coast Palms is my go-to for all palm maintenance. They're reliable, affordable, and always do top-quality work.",
-  },
-  {
-    name: "Linda W.",
-    rating: 5,
-    relativeDate: "1 month ago",
-    text: "Had two large palms removed that were dangerously close to our roof. They handled it quickly and safely — even ground the stumps. True professionals.",
-  },
-  {
-    name: "David P.",
-    rating: 5,
-    relativeDate: "2 months ago",
-    text: "Best palm service on the Emerald Coast. They trimmed all 20 of our HOA's palms and the property looks incredible. Great communication and fair pricing.",
-  },
-  {
-    name: "Jennifer R.",
-    rating: 4,
-    relativeDate: "2 months ago",
-    text: "Very professional and thorough. They installed 6 new Sabal palms at our Destin rental property and they look amazing. The 1-year warranty gives us peace of mind.",
+    text: "Communication was great",
+    sourceUrl: GOOGLE_BUSINESS_URL,
   },
 ];
