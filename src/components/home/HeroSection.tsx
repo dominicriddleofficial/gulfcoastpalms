@@ -53,7 +53,7 @@ const HeroSection = () => {
           className="font-display text-[38px] sm:text-5xl md:text-7xl lg:text-8xl font-bold text-primary-foreground leading-[1.1] md:leading-tight mb-4"
         >
           Palm Tree Trimming &amp; Care{" "}
-          <span className="text-gradient-primary">for Florida's Emerald Coast</span>
+          <span className="text-palm-sand">for Florida's Emerald Coast</span>
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 20 }}

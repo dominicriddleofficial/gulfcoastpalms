@@ -83,7 +83,7 @@ export async function buildLlmsTxt() {
     "",
     `> Palm tree trimming, diamond cutting, trunk skinning, installation, removal and hurricane preparation across Northwest Florida's Emerald Coast.`,
     "",
-    `${GCP_BUSINESS.legalName} is a palm-tree specialist serving Northwest Florida. Licensed and insured, with general liability insurance and workers' compensation coverage on every job. ${ratingValue} rating from ${reviewCount} five-star Google reviews.`,
+    `${GCP_BUSINESS.legalName} is a palm-tree specialist serving Northwest Florida. Licensed and insured, with general liability insurance and workers' compensation coverage on every job. ${ratingValue} rating from ${reviewCount} Google reviews (checked ${GCP_BUSINESS.aggregateRating.checkedAt}).`,
     "",
     "## Contact",
     "",

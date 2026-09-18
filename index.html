@@ -52,7 +52,9 @@
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-    gtag('config', 'G-8FNKZVRWGY');
+    // RouteTracker sends pageviews. Also disable history-based pageviews
+    // in GA4 Enhanced Measurement to avoid a second automatic source.
+    gtag('config', 'G-8FNKZVRWGY', { send_page_view: false });
     gtag('config', 'AW-11356668550');
     function loadGA(){
       var s = document.createElement('script');

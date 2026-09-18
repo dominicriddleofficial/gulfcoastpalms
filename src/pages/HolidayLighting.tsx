@@ -36,9 +36,9 @@ export default function HolidayLighting() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
     // Honeypot anti-spam
     if (honeypot) { navigate("/thank-you"); return; }
-    if (Date.now() - formRenderTime < 2000) { navigate("/thank-you"); return; }
     const parsed = holidayLightingSchema.safeParse(form);
     if (!parsed.success) {
       toast.error(parsed.error.errors[0]?.message || "Please check the form");
@@ -104,11 +104,11 @@ export default function HolidayLighting() {
           <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-8">
             Installation, takedown, and storage handled completely by us. You enjoy the holidays — we handle the lights.
           </p>
-          <a href="#estimate-form">
-            <Button size="lg" className="bg-[#22c55e] hover:bg-[#16a34a] text-white text-lg px-8 py-6">
+            <Button asChild size="lg" className="bg-[#166534] hover:bg-[#14532d] text-white text-lg px-8 py-6">
+              <a href="#estimate-form">
               Get a Free Lighting Estimate
+              </a>
             </Button>
-          </a>
         </div>
       </section>
 
@@ -149,7 +149,7 @@ export default function HolidayLighting() {
           <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">Service Areas</h2>
           <div className="flex flex-wrap justify-center gap-3">
             {cities.map(city => (
-              <span key={city} className="inline-flex items-center gap-1.5 bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/30 rounded-full px-4 py-2 text-sm font-medium">
+              <span key={city} className="inline-flex items-center gap-1.5 bg-primary/10 text-foreground border border-primary/30 rounded-full px-4 py-2 text-sm font-medium">
                 <MapPin className="w-3.5 h-3.5" /> {city}
               </span>
             ))}
@@ -193,12 +193,13 @@ export default function HolidayLighting() {
               <label htmlFor="website-hp">Website (leave blank)</label>
               <input type="text" id="website-hp" name="website" tabIndex={-1} autoComplete="off" value={honeypot} onChange={(e) => setHoneypot(e.target.value)} />
             </div>
-            <Input placeholder="Full Name *" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
-            <Input placeholder="Phone *" type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} required />
-            <Input placeholder="Email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
-            <Input placeholder="Property Address" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
+            <div className="space-y-1"><label htmlFor="lighting-name" className="text-sm font-medium">Full name *</label><Input id="lighting-name" name="name" autoComplete="name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required /></div>
+            <div className="space-y-1"><label htmlFor="lighting-phone" className="text-sm font-medium">Phone *</label><Input id="lighting-phone" name="phone" autoComplete="tel" type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} required /></div>
+            <div className="space-y-1"><label htmlFor="lighting-email" className="text-sm font-medium">Email (optional)</label><Input id="lighting-email" name="email" autoComplete="email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
+            <div className="space-y-1"><label htmlFor="lighting-address" className="text-sm font-medium">Property address (optional)</label><Input id="lighting-address" name="address" autoComplete="street-address" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} /></div>
+            <label htmlFor="lighting-property-type" className="block text-sm font-medium">Property type</label>
             <Select value={form.propertyType} onValueChange={v => setForm({ ...form, propertyType: v })}>
-              <SelectTrigger><SelectValue placeholder="Property Type" /></SelectTrigger>
+              <SelectTrigger id="lighting-property-type"><SelectValue placeholder="Select property type" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="home">Home</SelectItem>
                 <SelectItem value="vacation-rental">Vacation Rental / Airbnb</SelectItem>
@@ -206,8 +207,9 @@ export default function HolidayLighting() {
                 <SelectItem value="commercial">Commercial</SelectItem>
               </SelectContent>
             </Select>
+            <label htmlFor="lighting-roofline" className="block text-sm font-medium">Approximate roofline length</label>
             <Select value={form.roofline} onValueChange={v => setForm({ ...form, roofline: v })}>
-              <SelectTrigger><SelectValue placeholder="Approximate Roofline Length" /></SelectTrigger>
+              <SelectTrigger id="lighting-roofline"><SelectValue placeholder="Select length if known" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="under-100">Under 100 ft</SelectItem>
                 <SelectItem value="100-200">100–200 ft</SelectItem>
@@ -215,8 +217,8 @@ export default function HolidayLighting() {
                 <SelectItem value="400+">400+ ft</SelectItem>
               </SelectContent>
             </Select>
-            <Textarea placeholder="Additional notes…" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
-            <Button type="submit" className="w-full bg-[#22c55e] hover:bg-[#16a34a] text-white" disabled={submitting}>
+            <div className="space-y-1"><label htmlFor="lighting-notes" className="text-sm font-medium">Additional notes (optional)</label><Textarea id="lighting-notes" name="notes" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} /></div>
+            <Button type="submit" className="w-full bg-[#166534] hover:bg-[#14532d] text-white" disabled={submitting}>
               {submitting ? "Submitting…" : "Request Free Estimate"}
             </Button>
           </form>

@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Star, ExternalLink } from "lucide-react";
-import { reviews, aggregateRating, GOOGLE_REVIEW_URL } from "@/data/reviews";
+import { reviews, aggregateRating, GOOGLE_REVIEW_URL, GOOGLE_BUSINESS_URL } from "@/data/reviews";
 import useEmblaCarousel from "embla-carousel-react";
 import { useCallback, useEffect, useState } from "react";
 
@@ -52,8 +52,9 @@ const GoogleReviews = () => {
                 />
               ))}
             </div>
-            <span className="font-body text-sm text-muted-foreground">based on {aggregateRating.count}+ reviews</span>
+            <span className="font-body text-sm text-muted-foreground">based on {aggregateRating.count} Google reviews</span>
           </motion.div>
+          <p className="font-body text-xs text-muted-foreground mt-3">Review excerpts and rating checked September 18, 2026. Read the full reviews on Google.</p>
         </motion.div>
 
         {/* Carousel — mobile scroll, desktop grid */}
@@ -76,7 +77,7 @@ const GoogleReviews = () => {
         {/* CTA */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10">
           <a
-            href={GOOGLE_REVIEW_URL}
+            href={GOOGLE_BUSINESS_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-body font-semibold hover:bg-primary/90 transition-colors"
@@ -108,7 +109,7 @@ function ReviewCard({ review, className }: { review: typeof reviews[0]; classNam
       <p className="font-body text-sm text-foreground/85 leading-relaxed flex-1 mb-4">"{review.text}"</p>
       <div className="flex items-center justify-between">
         <span className="font-display font-bold text-sm text-foreground">{review.name}</span>
-        <span className="font-body text-xs text-muted-foreground">{review.relativeDate}</span>
+        <a href={review.sourceUrl} target="_blank" rel="noopener noreferrer" className="font-body text-xs text-primary underline">Google review excerpt</a>
       </div>
     </div>
   );

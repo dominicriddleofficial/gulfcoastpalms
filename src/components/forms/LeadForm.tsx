@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, FormEvent, ReactNode } from "react";
+import { useRef, useState, FormEvent, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2, Send } from "lucide-react";
 import { z, ZodTypeAny, infer as zInfer } from "zod";
@@ -63,16 +63,17 @@ export function LeadForm<S extends ZodTypeAny>({
   type Values = zInfer<S>;
   const navigate = useNavigate();
   const renderTime = useRef(Date.now());
+  const started = useRef(false);
   const [values, setValues] = useState<Values>(defaultValues);
   const [errors, setErrors] = useState<Partial<Record<keyof Values, string>>>({});
   const [submitting, setSubmitting] = useState(false);
   const [website, setWebsite] = useState(""); // honeypot
 
-  useEffect(() => {
-    if (startEvent) trackEvent(startEvent, { source });
-  }, [startEvent, source]);
-
   const setField = <K extends keyof Values>(key: K, value: Values[K]) => {
+    if (!started.current) {
+      started.current = true;
+      if (startEvent) trackEvent(startEvent, { source });
+    }
     setValues((v) => ({ ...v, [key]: value }));
     if (errors[key]) {
       setErrors((e) => {

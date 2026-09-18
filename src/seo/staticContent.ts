@@ -58,7 +58,7 @@ const literalContent: Record<string, StaticPageContent> = {
       {
         heading: "Professional Palm Tree Services",
         paragraphs: [
-          "From palm tree trimming and diamond cutting to installation and safe removals — we specialize exclusively in palm trees across the Emerald Coast.",
+          "From palm tree trimming and diamond cutting to installation and safe removals — our focus is expert palm care across the Emerald Coast.",
         ],
         links: servicesData.map((s) => ({ label: s.title, href: `/services/${s.slug}` })),
       },
@@ -78,7 +78,7 @@ const literalContent: Record<string, StaticPageContent> = {
   "/services": {
     h1: "Professional Palm Tree Services",
     subheading:
-      "From palm tree trimming and diamond cutting to installation and safe removals — we specialize exclusively in palm trees across the Emerald Coast.",
+      "From palm tree trimming and diamond cutting to installation and safe removals — our focus is expert palm care across the Emerald Coast.",
     blocks: servicesData.map((s) => ({
       heading: s.title,
       paragraphs: [s.introParagraphs[0]],

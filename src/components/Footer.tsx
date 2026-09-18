@@ -17,7 +17,7 @@ const Footer = () => {
             </h3>
             <p className="font-body text-palm-sand/70 leading-relaxed">
               Professional palm tree services for Florida's Gulf Coast.
-              500+ properties served across the Emerald Coast · {aggregateRating.count} five-star Google reviews.
+              500+ properties served across the Emerald Coast · {aggregateRating.count} Google reviews.
             </p>
           </div>
 
@@ -46,6 +46,7 @@ const Footer = () => {
               <Link to="/palm-tree-cost" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Palm Tree Cost</Link>
               <Link to="/commercial" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Commercial & Property Managers</Link>
               <Link to="/referral" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Referral Program</Link>
+              <Link to="/holiday-lighting" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Holiday Lighting</Link>
               <Link to="/payments" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">Payments</Link>
               <a href={GOOGLE_REVIEW_URL} target="_blank" rel="noopener noreferrer" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">
                 Leave Us a Review ⭐
