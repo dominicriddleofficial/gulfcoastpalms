@@ -69,7 +69,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Pensacola Homeowners & Property Managers Choose Us",
     whyChoosePoints: [
-      "500+ palms serviced across the Emerald Coast",
+      "Over a thousand properties served across the Emerald Coast",
       "Experienced with large properties and HOA communities",
       "Licensed & insured",
       "5-star rated across the Emerald Coast",
@@ -183,7 +183,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Gulf Breeze Trusts Us",
     whyChoosePoints: [
-      "500+ palms serviced across the Emerald Coast",
+      "Over a thousand properties served across the Emerald Coast",
       "Trusted by property managers & HOAs",
       "Licensed & insured professionals",
       "5-star rated locally",
@@ -298,7 +298,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Choose Us in Navarre",
     whyChoosePoints: [
-      "500+ palms serviced across the Emerald Coast",
+      "Over a thousand properties served across the Emerald Coast",
       "Experienced with large-scale properties",
       "Diamond cutting specialists",
       "Locally owned & operated",
@@ -412,7 +412,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Fort Walton Beach Property Owners Trust Us",
     whyChoosePoints: [
-      "500+ palms serviced across the Emerald Coast",
+      "Over a thousand properties served across the Emerald Coast",
       "Trusted by condo associations & commercial properties",
       "Licensed & insured professionals",
       "5-star rated across the Emerald Coast",
@@ -526,7 +526,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Destin Properties Choose Gulf Coast Palms",
     whyChoosePoints: [
-      "500+ palms serviced across the Emerald Coast",
+      "Over a thousand properties served across the Emerald Coast",
       "Trusted by luxury homeowners & vacation rental managers",
       "Diamond cutting specialists",
       "Licensed & insured",
@@ -647,7 +647,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why 30A Communities Trust Gulf Coast Palms",
     whyChoosePoints: [
-      "500+ palms serviced across the Emerald Coast",
+      "Over a thousand properties served across the Emerald Coast",
       "Experienced with 30A's distinctive communities",
       "Diamond cutting specialists",
       "Licensed & insured",
@@ -761,7 +761,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Perdido Key Property Owners Choose Us",
     whyChoosePoints: [
-      "500+ palms serviced across the Emerald Coast",
+      "Over a thousand properties served across the Emerald Coast",
       "Experienced with barrier island properties",
       "Licensed & insured professionals",
       "5-star rated across the Gulf Coast",
@@ -875,7 +875,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Niceville Homeowners Choose Gulf Coast Palms",
     whyChoosePoints: [
-      "500+ palms serviced across the Emerald Coast",
+      "Over a thousand properties served across the Emerald Coast",
       "Experienced with Bluewater Bay & Rocky Bayou properties",
       "Licensed & insured professionals",
       "5-star rated across Okaloosa County",
@@ -989,7 +989,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Mary Esther Property Owners Trust Us",
     whyChoosePoints: [
-      "500+ palms serviced across the Emerald Coast",
+      "Over a thousand properties served across the Emerald Coast",
       "Trusted by military families & property managers",
       "Licensed & insured professionals",
       "5-star rated across the Emerald Coast",
@@ -1103,7 +1103,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Santa Rosa Beach Properties Choose Us",
     whyChoosePoints: [
-      "500+ palms serviced across the Emerald Coast",
+      "Over a thousand properties served across the Emerald Coast",
       "Experienced with WaterColor, WaterSound & 30A communities",
       "Diamond cutting specialists",
       "Licensed & insured",
@@ -1217,7 +1217,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Pace Homeowners Choose Gulf Coast Palms",
     whyChoosePoints: [
-      "500+ palms serviced across the Emerald Coast",
+      "Over a thousand properties served across the Emerald Coast",
       "Experience with inland Santa Rosa County properties",
       "Licensed & insured professionals",
       "5-star rated locally",
@@ -1331,7 +1331,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Milton Property Owners Trust Gulf Coast Palms",
     whyChoosePoints: [
-      "500+ palms serviced across the Emerald Coast",
+      "Over a thousand properties served across the Emerald Coast",
       "Familiar with Santa Rosa County's inland conditions",
       "Licensed & insured professionals",
       "5-star rated across NW Florida",
@@ -1445,7 +1445,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Crestview Property Owners Choose Gulf Coast Palms",
     whyChoosePoints: [
-      "500+ properties served across the Emerald Coast",
+      "Over a thousand properties served across the Emerald Coast",
       "Experienced with cold-hardy inland palm species",
       "Licensed & insured professionals",
       "5-star rated across NW Florida — 100+ Google reviews",
@@ -1566,7 +1566,7 @@ export const locations: LocationData[] = [
     ],
     whyChooseTitle: "Why Perdido Homeowners Choose Us",
     whyChoosePoints: [
-      "500+ palms serviced across the Emerald Coast",
+      "Over a thousand properties served across the Emerald Coast",
       "Experienced with bay-front and salt-exposed properties",
       "Licensed & insured",
       "5-star rated across the Gulf Coast",

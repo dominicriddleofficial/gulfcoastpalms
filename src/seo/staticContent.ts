@@ -52,7 +52,7 @@ const literalContent: Record<string, StaticPageContent> = {
   "/": {
     h1: "Palm Tree Trimming & Care for Florida's Emerald Coast",
     subheading:
-      "Palm-tree specialists with 500+ properties served across the Emerald Coast. Same-day estimates. No generalist crews.",
+      "Palm-tree specialists with over a thousand properties served across the Emerald Coast. Same-day estimates. No generalist crews.",
     blocks: [
       { paragraphs: ["Serving Perdido Key to 30A"] },
       {

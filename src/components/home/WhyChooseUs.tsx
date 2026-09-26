@@ -12,7 +12,7 @@ const fadeUp = {
 };
 
 const points: { text: string; Icon: LucideIcon; amber?: boolean }[] = [
-  { text: "Trusted by 500+ Emerald Coast Homeowners", Icon: Award, amber: true },
+  { text: "Over a thousand properties served across the Emerald Coast", Icon: Award, amber: true },
   { text: "5-Star Rated Across the Emerald Coast", Icon: Star, amber: true },
   { text: "Licensed & Insured Professionals", Icon: ShieldCheck },
   { text: "Diamond Cutting & Coastal Palm Specialists", Icon: Scissors },
