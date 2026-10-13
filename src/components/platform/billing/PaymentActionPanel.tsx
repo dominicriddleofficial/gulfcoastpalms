@@ -26,7 +26,9 @@ interface Props {
     status: string;
     payment_method?: string | null;
   };
-  onRecordPayment: (amount: number, method: string, notes: string, isDeposit: boolean, tipAmount: number) => void;
+  onRecordPayment: (amount: number, method: string, notes: string, isDeposit: boolean, tipAmount: number) => Promise<boolean>;
+  onMarkPaid: () => void;
+  savingPayment?: boolean;
   onOpenPaymentPage: () => void;
   onCopyPaymentLink: () => void;
   onSendPaymentLink?: () => void;
@@ -66,7 +68,7 @@ function getPrimaryAction(invoice: Props["invoice"]): {
 }
 
 export default function PaymentActionPanel({
-  invoice, onRecordPayment, onOpenPaymentPage, onCopyPaymentLink, onSendPaymentLink, onSendPaymentLinkSMS, onSendPaymentLinkEmail, onViewHistory, businessId, customerId,
+  invoice, onRecordPayment, onMarkPaid, savingPayment = false, onOpenPaymentPage, onCopyPaymentLink, onSendPaymentLink, onSendPaymentLinkSMS, onSendPaymentLinkEmail, onViewHistory, businessId, customerId,
 }: Props) {
   const [step, setStep] = useState<FlowStep>("menu");
   const { amount: suggestedAmount, label: suggestedLabel } = getAmountDueNow(invoice);
@@ -75,7 +77,6 @@ export default function PaymentActionPanel({
   const [payNotes, setPayNotes] = useState("");
   const [payTip, setPayTip] = useState("");
   const [isDeposit, setIsDeposit] = useState(!!invoice.deposit_required && !invoice.deposit_paid);
-  const { toast } = useToast();
 
   const balance = Number(invoice.balance_due ?? invoice.total ?? 0);
   const primary = getPrimaryAction(invoice);
@@ -150,13 +151,13 @@ export default function PaymentActionPanel({
           Use this only for cash, check, Zelle, bank transfer, or other offline payments. Online Stripe payments update automatically.
         </p>
         <div className="flex gap-2">
-          <Button className="flex-1 h-11 font-body font-semibold" onClick={() => {
-            onRecordPayment(amt, payMethod, payNotes, isDeposit, tipAmt);
-            setStep("menu");
+          <Button className="flex-1 h-11 font-body font-semibold" disabled={savingPayment} onClick={async () => {
+            const saved = await onRecordPayment(amt, payMethod, payNotes, isDeposit, tipAmt);
+            if (saved) setStep("menu");
           }}>
-            <CheckCircle className="w-4 h-4 mr-1.5" /> Confirm Payment
+            <CheckCircle className="w-4 h-4 mr-1.5" /> {savingPayment ? "Saving…" : "Confirm Payment"}
           </Button>
-          <Button variant="outline" className="font-body" onClick={() => setStep("record")}>Back</Button>
+          <Button variant="outline" className="font-body" disabled={savingPayment} onClick={() => setStep("record")}>Back</Button>
         </div>
       </div>
     );
@@ -250,18 +251,8 @@ export default function PaymentActionPanel({
             variant="outline"
             size="sm"
             className="w-full h-9 font-body text-xs border-[#22c55e]/30 text-[#22c55e] hover:bg-[#22c55e]/10"
-            onClick={() => {
-              if (balance <= 0) {
-                toast({ title: "Already paid", description: "This invoice has no remaining balance." });
-                return;
-              }
-              const ok = window.confirm(
-                `Mark invoice ${invoice.invoice_number} as PAID? This will record a $${balance.toLocaleString()} payment and set the balance due to $0.00.`
-              );
-              if (!ok) return;
-              onRecordPayment(balance, "other", "Marked as paid", false, 0);
-              toast({ title: "Marked as paid", description: `Balance set to $0.00.` });
-            }}
+            onClick={onMarkPaid}
+            disabled={savingPayment || balance <= 0}
           >
             <CheckCircle className="w-3.5 h-3.5 mr-1" /> Mark as Paid ($0.00 due)
           </Button>

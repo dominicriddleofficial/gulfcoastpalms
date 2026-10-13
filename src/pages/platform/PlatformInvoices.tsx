@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
@@ -10,6 +11,8 @@ import { InlineBadge } from "@/components/platform/BusinessSwitcher";
 import { InvoiceStatusBadge, getInvoiceDisplayState, getAmountDueNow } from "@/components/platform/billing/InvoiceStatusBadge";
 import BillingSummaryCard from "@/components/platform/billing/BillingSummaryCard";
 import PaymentActionPanel from "@/components/platform/billing/PaymentActionPanel";
+import MarkInvoicePaidDialog from "@/components/platform/billing/MarkInvoicePaidDialog";
+import { recordInvoicePayment, RecordedPaymentError, remainingInvoiceBalance } from "@/lib/record-invoice-payment";
 import PaymentMethodCard from "@/components/platform/billing/PaymentMethodCard";
 import ServiceAddressCard from "@/components/platform/billing/ServiceAddressCard";
 import type { ServiceAddressUpdatePayload } from "@/lib/invoice-address";
@@ -22,7 +25,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Search, Plus, Receipt, DollarSign, Clock, User,
   AlertTriangle, Send, Link2, ExternalLink, Trash2, Edit, Copy, Download, ClipboardCopy,
-  MoreHorizontal, MessageSquare, Eye,
+  MoreHorizontal, MessageSquare, Eye, CheckCircle,
 } from "lucide-react";
 import { format, formatDistanceToNow, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -46,7 +49,45 @@ export default function PlatformInvoices() {
   const invalidateUnpaid = useInvalidateUnpaidJobs();
   const [selectedInvoice, setSelectedInvoice] = useState<PlatformInvoice | null>(null);
   const [manualCopyText, setManualCopyText] = useState<string | null>(null);
+  const [paidInvoice, setPaidInvoice] = useState<PlatformInvoice | null>(null);
+  const [savingPayment, setSavingPayment] = useState(false);
+  const paymentPending = useRef(false);
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
+
+  const recordPayment = async (
+    invoice: PlatformInvoice, amount: number, method: string, notes: string,
+    isDeposit = false, tipAmount = 0, paymentDate?: string, requireFullBalance = false,
+  ): Promise<boolean> => {
+    if (paymentPending.current) return false;
+    if (!userId) { toast.error("Sign in again before recording payment."); return false; }
+    paymentPending.current = true;
+    setSavingPayment(true);
+    try {
+      const updated = await recordInvoicePayment({ invoice, userId, amount, method, notes, isDeposit, tipAmount, paymentDate, requireFullBalance });
+      toast.success(updated.status === "paid" ? "Invoice marked as paid — $0.00 due" : `Payment of $${amount.toLocaleString()} recorded`);
+      setSelectedInvoice(current => current?.id === invoice.id ? { ...current, ...updated } : current);
+      return true;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not save payment. Check Payments before trying again.");
+      if (error instanceof RecordedPaymentError) {
+        setPaidInvoice(null);
+        setSelectedInvoice(null);
+      }
+      return false;
+    } finally {
+      paymentPending.current = false;
+      setSavingPayment(false);
+      void queryClient.invalidateQueries({ queryKey: ["platform-invoices"] });
+      void queryClient.invalidateQueries({ queryKey: ["platform-payments"] });
+      void queryClient.invalidateQueries({ queryKey: ["dashboard-kpis"] });
+      void invalidateUnpaid(invoice.business_id);
+      if (selectedBusinessId !== invoice.business_id) void invalidateUnpaid(selectedBusinessId);
+    }
+  };
+
+  const canMarkPaid = (invoice: PlatformInvoice) =>
+    !["paid", "void"].includes(invoice.status) && remainingInvoiceBalance(invoice) > 0;
 
   const getBiz = (bizId: string) => businesses.find(b => b.id === bizId);
 
@@ -311,6 +352,11 @@ export default function PlatformInvoices() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-card border-border">
+                          {canMarkPaid(inv) && (
+                            <DropdownMenuItem className="font-body text-xs" onClick={() => setPaidInvoice(inv)}>
+                              <CheckCircle className="w-3.5 h-3.5 mr-2" /> Mark as Paid
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem className="font-body text-xs" onClick={() => window.open(getPaymentUrl(inv), "_blank")}>
                             <Eye className="w-3.5 h-3.5 mr-2" /> Preview Invoice
                           </DropdownMenuItem>
@@ -340,6 +386,14 @@ export default function PlatformInvoices() {
                       </DropdownMenu>
                     </div>
                   </div>
+                  {canMarkPaid(inv) && (
+                    <div className="mt-3 flex justify-end border-t border-border pt-2">
+                      <Button size="sm" variant="outline" className="h-9 gap-1.5 font-body text-xs border-primary/40 text-primary"
+                        onClick={() => setPaidInvoice(inv)} disabled={savingPayment}>
+                        <CheckCircle className="h-3.5 w-3.5" /> Mark as Paid
+                      </Button>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -348,12 +402,15 @@ export default function PlatformInvoices() {
       </div>
 
       {/* Invoice Detail Drawer */}
-      <Sheet open={!!selectedInvoice} onOpenChange={() => setSelectedInvoice(null)}>
+      <Sheet open={!!selectedInvoice} onOpenChange={() => { if (!savingPayment) setSelectedInvoice(null); }}>
         <SheetContent className="ops-theme bg-background border-border w-full sm:max-w-lg overflow-y-auto">
           {selectedInvoice && (
             <InvoiceDetailPanel
+              key={selectedInvoice.id}
               invoice={selectedInvoice}
               businesses={businesses}
+              savingPayment={savingPayment}
+              onMarkPaid={() => setPaidInvoice(selectedInvoice)}
               onCopyInvoiceMessage={() => copyInvoiceMessage(selectedInvoice)}
               onPaymentMethodChange={(method) => {
                 setSelectedInvoice({ ...selectedInvoice, payment_method: method });
@@ -365,14 +422,11 @@ export default function PlatformInvoices() {
               }}
 
               onStatusChange={async (newStatus) => {
+                if (savingPayment) return;
+                if (newStatus === "paid") { setPaidInvoice(selectedInvoice); return; }
                 const updates: PlatformInvoiceUpdate = { status: newStatus };
                 if (newStatus === "sent") updates.sent_at = new Date().toISOString();
                 if (newStatus === "void") updates.voided_at = new Date().toISOString();
-                if (newStatus === "paid") {
-                  updates.paid_at = new Date().toISOString();
-                  updates.amount_paid = selectedInvoice.total;
-                  updates.balance_due = 0;
-                }
                 const { error } = await supabase.from("platform_invoices").update(updates).eq("id", selectedInvoice.id);
                 if (error) {
                   toast.error(`Could not update invoice: ${error.message}`);
@@ -383,57 +437,22 @@ export default function PlatformInvoices() {
                 invalidateUnpaid(selectedBusinessId);
                 setSelectedInvoice(null);
               }}
-              onRecordPayment={async (amount, method, notes, isDeposit, tipAmount) => {
-                const { data: numData } = await supabase.rpc("generate_next_number", {
-                  _business_id: selectedInvoice.business_id,
-                  _record_type: "payment",
-                });
-                const { error: paymentError } = await supabase.from("platform_payments").insert({
-                  business_id: selectedInvoice.business_id,
-                  payment_number: numData || "P-TEMP",
-                  invoice_id: selectedInvoice.id,
-                  customer_id: selectedInvoice.customer_id,
-                  amount,
-                  tip_amount: Math.max(0, Number(tipAmount) || 0),
-                  method,
-                  notes: notes || null,
-                  is_deposit: isDeposit,
-                  recorded_by_user_id: userId,
-                });
-                if (paymentError) {
-                  toast.error(`Could not record payment: ${paymentError.message}. Invoice status NOT changed.`);
-                  return;
-                }
-                const newPaid = (Number(selectedInvoice.amount_paid) || 0) + amount;
-                const newBalance = (Number(selectedInvoice.total) || 0) - newPaid;
-                const invoiceUpdates: PlatformInvoiceUpdate = {
-                  amount_paid: newPaid,
-                  balance_due: Math.max(0, newBalance),
-                  status: newBalance <= 0 ? "paid" : "partial",
-                };
-                if (newBalance <= 0) invoiceUpdates.paid_at = new Date().toISOString();
-                if (isDeposit) invoiceUpdates.deposit_paid = true;
-                const { error: invoiceError } = await supabase
-                  .from("platform_invoices")
-                  .update(invoiceUpdates)
-                  .eq("id", selectedInvoice.id);
-                if (invoiceError) {
-                  toast.error(
-                    `Payment was recorded but the invoice status could not be updated: ${invoiceError.message}. Fix the invoice status manually.`
-                  );
-                  refetch();
-                  invalidateUnpaid(selectedBusinessId);
-                  return;
-                }
-                toast.success(`Payment of $${amount.toLocaleString()} recorded`);
-                refetch();
-                invalidateUnpaid(selectedBusinessId);
-                setSelectedInvoice(null);
-              }}
+              onRecordPayment={(amount, method, notes, isDeposit, tipAmount) =>
+                recordPayment(selectedInvoice, amount, method, notes, isDeposit, tipAmount)}
             />
           )}
         </SheetContent>
       </Sheet>
+
+      {paidInvoice && (
+        <MarkInvoicePaidDialog
+          key={paidInvoice.id}
+          invoice={paidInvoice}
+          onClose={() => setPaidInvoice(null)}
+          onConfirm={(amount, method, notes, paymentDate) =>
+            recordPayment(paidInvoice, amount, method, notes, false, 0, paymentDate, true)}
+        />
+      )}
 
       {/* Manual-copy fallback for browsers without clipboard access */}
       <Dialog open={!!manualCopyText} onOpenChange={(open) => { if (!open) setManualCopyText(null); }}>
@@ -461,11 +480,13 @@ export default function PlatformInvoices() {
 }
 
 /* ─── Invoice Detail ─── */
-function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayment, onCopyInvoiceMessage, onPaymentMethodChange, onServiceAddressChange }: {
+function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayment, onMarkPaid, savingPayment, onCopyInvoiceMessage, onPaymentMethodChange, onServiceAddressChange }: {
   invoice: PlatformInvoice;
   businesses: Array<{ id: string; public_brand_name: string; shortcode: string; default_business_color?: string }>;
   onStatusChange: (status: string) => void;
-  onRecordPayment: (amount: number, method: string, notes: string, isDeposit: boolean, tipAmount: number) => void;
+  onRecordPayment: (amount: number, method: string, notes: string, isDeposit: boolean, tipAmount: number) => Promise<boolean>;
+  onMarkPaid: () => void;
+  savingPayment: boolean;
   onCopyInvoiceMessage: () => void;
   onPaymentMethodChange: (method: string) => void;
   onServiceAddressChange: (payload: ServiceAddressUpdatePayload) => void;
@@ -550,6 +571,12 @@ function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayme
         <SheetTitle className="font-display text-foreground sr-only">Invoice Detail</SheetTitle>
       </SheetHeader>
 
+      {!["paid", "void"].includes(invoice.status) && remainingInvoiceBalance(invoice) > 0 && (
+        <Button className="w-full gap-2 h-11 font-body font-semibold" onClick={onMarkPaid} disabled={savingPayment}>
+          <CheckCircle className="w-4 h-4" /> Mark as Paid
+        </Button>
+      )}
+
       {/* Preview Invoice button */}
       <Button size="sm" variant="outline" className="w-full gap-2 border-primary/30 text-primary text-xs" onClick={() => window.open(getPaymentUrl(), "_blank")}>
         <Eye className="w-3.5 h-3.5" /> Preview Invoice (Customer View)
@@ -599,6 +626,8 @@ function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayme
           businessId={invoice.business_id}
           customerId={invoice.customer_id || undefined}
           onRecordPayment={onRecordPayment}
+          onMarkPaid={onMarkPaid}
+          savingPayment={savingPayment}
           onOpenPaymentPage={() => window.open(getPaymentUrl(), "_blank")}
           onCopyPaymentLink={copyPaymentLink}
           onSendPaymentLinkSMS={sendPaymentLinkSMS}
@@ -630,7 +659,7 @@ function InvoiceDetailPanel({ invoice, businesses, onStatusChange, onRecordPayme
               variant={invoice.status === s.value ? "default" : "outline"}
               className="font-body text-xs"
               onClick={() => onStatusChange(s.value)}
-              disabled={invoice.status === s.value}
+              disabled={savingPayment || invoice.status === s.value || (s.value === "paid" && isVoid)}
             >
               {s.label}
             </Button>
