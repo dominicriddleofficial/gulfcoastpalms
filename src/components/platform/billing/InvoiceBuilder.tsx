@@ -657,11 +657,12 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
       if (validLines.length === 0) { toast.error("Add at least one line item"); return; }
       if (!Number.isFinite(total) || totalCents <= 0) { toast.error("The invoice total must be more than $0.00."); return; }
     }
-    if (!receivedDate || !/^\d{4}-\d{2}-\d{2}$/.test(receivedDate)) { toast.error("Enter the date the payment was received."); return; }
+    if (!isValidCalendarDate(receivedDate)) { toast.error("Enter a valid date the payment was received."); return; }
     if (receivedDate > todayLocal()) { toast.error("Date received can't be in the future."); return; }
 
     savingRef.current = true;
     setSaving(true);
+    let persisted = !!pendingPaid;
     try {
       let pending = pendingPaid;
       if (!pending) {
@@ -752,13 +753,19 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
         return;
       }
 
-      void queryClient.invalidateQueries({ queryKey: ["platform-invoices"] });
-      void queryClient.invalidateQueries({ queryKey: ["platform-payments"] });
-      void queryClient.invalidateQueries({ queryKey: ["dashboard-kpis"] });
       setPendingPaid(null);
       toast.success(`Invoice ${pending.invoiceNumber} saved as paid`);
       onCreated();
+    } catch (err) {
+      // Unexpected failure (network, thrown client error). Any saved invoice stays
+      // in pendingPaid so a retry resumes instead of creating a duplicate.
+      toast.error(`Could not finish saving the paid invoice: ${err instanceof Error ? err.message : "unexpected error"}`);
     } finally {
+      if (persisted) {
+        for (const key of ["platform-invoices", "platform-payments", "dashboard-kpis", "platform-unpaid-jobs"]) {
+          void queryClient.invalidateQueries({ queryKey: [key] });
+        }
+      }
       savingRef.current = false;
       setSaving(false);
     }
@@ -921,6 +928,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
             <button
               type="button"
               onClick={onClose}
+              disabled={saving}
               aria-label="Close"
               className="flex items-center justify-center w-10 h-10 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors -ml-2 shrink-0"
             >
@@ -1383,7 +1391,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
             {/* Section F — Actions */}
             {isAlreadyPaid ? (
               <section className="space-y-2 pb-8">
-                {pendingPaid && (
+                {pendingPaid && !saving && (
                   <div role="alert" className="rounded-lg border border-[#F4A825]/40 bg-[#F4A825]/10 p-3 font-body text-xs text-foreground">
                     {pendingPaid.paymentBlocked
                       ? `Invoice ${pendingPaid.invoiceNumber} was saved, but its payment needs review. Open Invoices → ${pendingPaid.invoiceNumber} and check Payments before recording again.`
