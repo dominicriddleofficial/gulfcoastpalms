@@ -24,7 +24,7 @@ import { PAYMENT_METHODS } from "@/hooks/usePlatformInvoices";
 
 const todayLocal = () => format(new Date(), "yyyy-MM-dd");
 /** True only for a real yyyy-MM-dd calendar date (rejects 2026-02-30 etc.). */
-export function isValidCalendarDate(value: string): boolean {
+function isValidCalendarDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const d = new Date(`${value}T12:00:00`);
   return !Number.isNaN(d.getTime()) && format(d, "yyyy-MM-dd") === value;
