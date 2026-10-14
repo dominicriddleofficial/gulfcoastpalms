@@ -14,11 +14,25 @@ import { toast } from "sonner";
 import { format, addDays } from "date-fns";
 import InvoicePreviewPanel from "./InvoicePreviewPanel";
 import SendInvoiceModal from "./SendInvoiceModal";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InvoicePrefillState } from "@/components/platform/CreateSheetsProvider";
 import { downloadElementAsPdf } from "@/lib/download-pdf";
 import { buildInvoiceMessage, copyTextToClipboard, buildOfflinePaymentBlock } from "@/lib/invoice-message";
 import { serviceAddressUpdatePayload } from "@/lib/invoice-address";
+import { recordInvoicePayment, RecordedPaymentError } from "@/lib/record-invoice-payment";
+import { PAYMENT_METHODS } from "@/hooks/usePlatformInvoices";
+
+const todayLocal = () => format(new Date(), "yyyy-MM-dd");
+
+interface PendingPaidInvoice {
+  invoiceId: string;
+  businessId: string;
+  invoiceNumber: string;
+  total: number;
+  linesSaved: boolean;
+  paymentBlocked: boolean;
+  lines: Array<{ business_id: string; invoice_id: string; description: string; quantity: number; unit_price: number; line_total: number; sort_order: number }>;
+}
 
 
 interface LineItem {
@@ -133,6 +147,14 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
   const mobilePreviewRef = useRef<HTMLDivElement>(null);
   const [showSendModal, setShowSendModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
+  const queryClient = useQueryClient();
+  const [paymentStatus, setPaymentStatus] = useState<"unpaid" | "paid">("unpaid");
+  const [receivedMethod, setReceivedMethod] = useState<string>("other");
+  const [receivedDate, setReceivedDate] = useState<string>(() => todayLocal());
+  const [pendingPaid, setPendingPaid] = useState<PendingPaidInvoice | null>(null);
+  const isAlreadyPaid = paymentStatus === "paid";
+  const frozen = saving || !!pendingPaid;
   const [manualCopyText, setManualCopyText] = useState<string | null>(null);
   const [savedCopyInvoiceNumber, setSavedCopyInvoiceNumber] = useState<string | null>(null);
 
@@ -424,13 +446,16 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
     publicNotes,
     businessName: activeBiz?.public_brand_name || "",
     shortcode: activeBiz?.shortcode || "gcp",
-    isDraft: true,
+    isDraft: !isAlreadyPaid,
+    status: isAlreadyPaid ? "paid" : undefined,
+    amountPaid: isAlreadyPaid ? total : undefined,
     logoUrl: logoUrl,
     paymentMethod,
-  }), [invoiceNumber, issueDate, dueDate, billTo, customerEmail, customerPhone, serviceLine1, serviceLine2, serviceCity, serviceState, serviceZip, lineItems, subtotal, taxEnabled, taxRate, taxAmount, discountAmount, total, publicNotes, activeBiz, logoUrl, paymentMethod]);
+  }), [invoiceNumber, issueDate, dueDate, billTo, customerEmail, customerPhone, serviceLine1, serviceLine2, serviceCity, serviceState, serviceZip, lineItems, subtotal, taxEnabled, taxRate, taxAmount, discountAmount, total, publicNotes, activeBiz, logoUrl, paymentMethod, isAlreadyPaid]);
 
   // Save invoice
   const handleSave = async (sendAfter: boolean = false, sendData: SendInvoiceData | null = null) => {
+    if (isAlreadyPaid) { toast.error("This invoice is marked Already paid. Use Save Paid Invoice."); return; }
     if (!bizId) return;
     if (!customerId) { toast.error("Please select a customer"); return; }
     const validLines = lineItems.filter(l => l.description.trim());
@@ -615,11 +640,137 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
   };
 
   /**
+   * Already-paid path — create the invoice + line items, then record the received
+   * payment through recordInvoicePayment (which marks it paid). Never sends
+   * email/SMS, never creates a payment link, never charges a card.
+   * If a later step fails, the saved invoice is remembered so a retry only
+   * finishes the unfinished step instead of creating a second invoice.
+   */
+  const handleSavePaid = async () => {
+    if (savingRef.current) return;
+    if (!isAlreadyPaid || !bizId) return;
+    if (!userId) { toast.error("Sign in again before saving a paid invoice."); return; }
+    const validLines = lineItems.filter(l => l.description.trim());
+    const totalCents = Math.round(total * 100);
+    if (!pendingPaid) {
+      if (!customerId) { toast.error("Please select a customer"); return; }
+      if (validLines.length === 0) { toast.error("Add at least one line item"); return; }
+      if (!Number.isFinite(total) || totalCents <= 0) { toast.error("The invoice total must be more than $0.00."); return; }
+    }
+    if (!receivedDate || !/^\d{4}-\d{2}-\d{2}$/.test(receivedDate)) { toast.error("Enter the date the payment was received."); return; }
+    if (receivedDate > todayLocal()) { toast.error("Date received can't be in the future."); return; }
+
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      let pending = pendingPaid;
+      if (!pending) {
+        let resolvedCustomerId = customerId;
+        if (customerSource === "jobber" && customerId) {
+          const { data: existing } = await supabase.from("platform_customers").select("id")
+            .eq("business_id", bizId).eq("source_system", "jobber").eq("source_record_id", customerId).maybeSingle();
+          if (existing) {
+            resolvedCustomerId = existing.id;
+          } else {
+            const { data: newCust, error: custErr } = await supabase.from("platform_customers").insert({
+              business_id: bizId, display_name: customerName, email: customerEmail || null,
+              phone: customerPhone || null, source_system: "jobber", source_record_id: customerId,
+            }).select("id").single();
+            if (custErr || !newCust) { toast.error("Failed to create customer record"); return; }
+            resolvedCustomerId = newCust.id;
+          }
+        }
+        const { data: inv, error } = await supabase.from("platform_invoices").insert({
+          business_id: bizId,
+          invoice_number: invoiceNumber,
+          customer_id: resolvedCustomerId,
+          job_id: prefill?.fromJobId ?? null,
+          property_id: servicePropertyId,
+          status: "draft",
+          terms,
+          billing_name: billingNameToSave,
+          payment_method: receivedMethod === "check" ? "check" : ["zelle", "venmo", "cashapp"].includes(receivedMethod) ? "p2p" : "card",
+          issue_date: issueDate,
+          due_date: dueDate,
+          subtotal,
+          tax_rate: taxEnabled ? Number(taxRate) : 0,
+          tax_total: taxAmount,
+          discount_total: discountAmount,
+          total,
+          balance_due: total,
+          amount_paid: 0,
+          public_notes: publicNotes || null,
+          internal_notes: internalNotes || null,
+          created_by_user_id: userId,
+          ...serviceAddressUpdatePayload(
+            { line1: serviceLine1, line2: serviceLine2, city: serviceCity, state: serviceState, zip: serviceZip },
+            serviceFormatted,
+          ),
+          service_latitude: serviceLat,
+          service_longitude: serviceLng,
+          service_place_id: servicePlaceId,
+        }).select().single();
+        if (error || !inv) { toast.error(error?.message || "Failed to create invoice. Nothing was saved."); return; }
+        pending = {
+          invoiceId: inv.id, businessId: bizId, invoiceNumber: inv.invoice_number || invoiceNumber,
+          total, linesSaved: false, paymentBlocked: false,
+          lines: validLines.map((l, i) => ({
+            business_id: bizId, invoice_id: inv.id, description: l.description,
+            quantity: Number(l.qty) || 1, unit_price: Number(l.price) || 0,
+            line_total: (Number(l.qty) || 1) * (Number(l.price) || 0), sort_order: i,
+          })),
+        };
+        setPendingPaid(pending);
+      }
+
+      if (!pending.linesSaved) {
+        const { error: lineErr } = await supabase.from("platform_invoice_line_items").insert(pending.lines);
+        if (lineErr) {
+          toast.error(`Invoice ${pending.invoiceNumber} saved, but line items failed: ${lineErr.message}. Tap Finish saving to retry.`);
+          return;
+        }
+        pending = { ...pending, linesSaved: true };
+        setPendingPaid(pending);
+      }
+
+      try {
+        await recordInvoicePayment({
+          invoice: { id: pending.invoiceId, business_id: pending.businessId },
+          userId,
+          amount: Math.round(pending.total * 100) / 100,
+          method: receivedMethod,
+          notes: "Paid before invoice was created",
+          paymentDate: receivedDate,
+          requireFullBalance: true,
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Payment could not be recorded.";
+        if (err instanceof RecordedPaymentError) {
+          setPendingPaid({ ...pending, paymentBlocked: true });
+        }
+        toast.error(`Invoice ${pending.invoiceNumber} saved, but payment was not completed: ${msg}`);
+        return;
+      }
+
+      void queryClient.invalidateQueries({ queryKey: ["platform-invoices"] });
+      void queryClient.invalidateQueries({ queryKey: ["platform-payments"] });
+      void queryClient.invalidateQueries({ queryKey: ["dashboard-kpis"] });
+      setPendingPaid(null);
+      toast.success(`Invoice ${pending.invoiceNumber} saved as paid`);
+      onCreated();
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
+  };
+
+  /**
    * Copy path — save the invoice as "sent" (so it lands in the list / Money Center
    * like an emailed one) but skip email/SMS, then copy the customer-ready message
    * to the clipboard. Used when the customer has no phone AND no email.
    */
   const handleSaveAndCopy = async () => {
+    if (isAlreadyPaid) { toast.error("This invoice is marked Already paid. Use Save Paid Invoice."); return; }
     if (!bizId) return;
     if (!customerId) { toast.error("Please select a customer"); return; }
     const validLines = lineItems.filter(l => l.description.trim());
