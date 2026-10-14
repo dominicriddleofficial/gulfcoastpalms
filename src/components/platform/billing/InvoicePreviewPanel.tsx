@@ -83,6 +83,7 @@ interface PreviewData {
   status?: string;
   logoUrl?: string | null;
   paymentMethod?: string | null;
+  amountPaid?: number;
 }
 
 export default function InvoicePreviewPanel({ data }: { data: PreviewData }) {
@@ -210,7 +211,7 @@ export default function InvoicePreviewPanel({ data }: { data: PreviewData }) {
       <div style={{ padding: "28px 32px", display: "flex", justifyContent: "space-between", gap: "24px", flexWrap: "wrap" }}>
         {/* Pay To / Bill To */}
         <div style={{ flex: "1 1 50%" }}>
-          {(isCheck || isP2p) && (
+          {!isPaid && (isCheck || isP2p) && (
             <div style={{ marginBottom: "16px" }}>
               <div style={{
                 fontSize: "10px", fontWeight: 600, letterSpacing: "0.2em",
@@ -386,18 +387,39 @@ export default function InvoicePreviewPanel({ data }: { data: PreviewData }) {
             display: "flex", justifyContent: "space-between", alignItems: "baseline",
           }}>
             <span style={{ color: "#fff", fontWeight: 700, fontSize: "13px", letterSpacing: "0.05em" }}>
-              TOTAL DUE
+              {isPaid ? "INVOICE TOTAL" : "TOTAL DUE"}
             </span>
             <span style={{ color: brand.accent, fontWeight: 800, fontSize: "24px" }}>
               {fmt(data.total)}
             </span>
           </div>
+          {isPaid && (
+            <>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", fontSize: "13px" }}>
+                <span style={{ color: brand.secondaryText }}>Amount Paid</span>
+                <span style={{ color: "#fff" }}>{fmt(data.amountPaid ?? data.total)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", fontSize: "13px", fontWeight: 700 }}>
+                <span style={{ color: "#fff" }}>Balance Due</span>
+                <span style={{ color: "#fff" }}>{fmt(Math.max(0, data.total - (data.amountPaid ?? data.total)))}</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
       {/* Payment CTA */}
       <div style={{ padding: "0 32px 24px" }}>
-        {offlineBlock ? (
+        {isPaid ? (
+        <div data-testid="paid-notice" style={{
+          background: `rgba(${brand.accentRgb}, 0.08)`,
+          border: `1px solid rgba(${brand.accentRgb}, 0.2)`,
+          borderRadius: "12px", padding: "16px", textAlign: "center",
+          fontSize: "14px", fontWeight: 700, color: brand.accent, letterSpacing: "0.1em",
+        }}>
+          PAID — THANK YOU
+        </div>
+        ) : offlineBlock ? (
         <div style={{
           background: `rgba(${brand.accentRgb}, 0.08)`,
           border: `1px solid rgba(${brand.accentRgb}, 0.2)`,
