@@ -23,6 +23,12 @@ import { recordInvoicePayment, RecordedPaymentError } from "@/lib/record-invoice
 import { PAYMENT_METHODS } from "@/hooks/usePlatformInvoices";
 
 const todayLocal = () => format(new Date(), "yyyy-MM-dd");
+/** True only for a real yyyy-MM-dd calendar date (rejects 2026-02-30 etc.). */
+export function isValidCalendarDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const d = new Date(`${value}T12:00:00`);
+  return !Number.isNaN(d.getTime()) && format(d, "yyyy-MM-dd") === value;
+}
 
 interface PendingPaidInvoice {
   invoiceId: string;
@@ -649,6 +655,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
   const handleSavePaid = async () => {
     if (savingRef.current) return;
     if (!isAlreadyPaid || !bizId) return;
+    if (pendingPaid?.paymentBlocked) { toast.error(`Review Payments on ${pendingPaid.invoiceNumber} before recording again.`); return; }
     if (!userId) { toast.error("Sign in again before saving a paid invoice."); return; }
     const validLines = lineItems.filter(l => l.description.trim());
     const totalCents = Math.round(total * 100);
@@ -721,6 +728,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
             line_total: (Number(l.qty) || 1) * (Number(l.price) || 0), sort_order: i,
           })),
         };
+        persisted = true;
         setPendingPaid(pending);
       }
 
