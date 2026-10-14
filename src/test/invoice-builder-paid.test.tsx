@@ -122,7 +122,7 @@ describe("InvoiceBuilder — Already paid", () => {
     expect(m.lineInsert).toHaveBeenCalledTimes(2);
   });
 
-  it("requires a signed-in user and blocks future dates", async () => {
+  it("requires a signed-in user before saving", async () => {
     setup(null);
     fireEvent.click(screen.getByRole("button", { name: /Save Paid Invoice/ }));
     await new Promise(r => setTimeout(r, 0));
