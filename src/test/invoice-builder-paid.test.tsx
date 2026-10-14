@@ -3,17 +3,16 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import InvoiceBuilder from "@/components/platform/billing/InvoiceBuilder";
 import InvoicePreviewPanel from "@/components/platform/billing/InvoicePreviewPanel";
-import { RecordedPaymentError } from "@/lib/record-invoice-payment";
 
 const m = vi.hoisted(() => ({
+  RecordedPaymentError: class RecordedPaymentError extends Error {},
   invoiceInsert: vi.fn(), lineInsert: vi.fn(), invoke: vi.fn(),
   record: vi.fn(), lineError: null as null | { message: string },
 }));
 
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 vi.mock("@/lib/record-invoice-payment", () => {
-  class RecordedPaymentError extends Error {}
-  return { recordInvoicePayment: m.record, RecordedPaymentError };
+  return { recordInvoicePayment: m.record, RecordedPaymentError: m.RecordedPaymentError };
 });
 vi.mock("@/integrations/supabase/client", () => {
   const chain = (result: unknown): Record<string, unknown> => {
@@ -147,7 +146,7 @@ describe("InvoiceBuilder — Already paid", () => {
   });
 
   it("RecordedPaymentError blocks any retry without duplicate writes", async () => {
-    m.record.mockRejectedValueOnce(new RecordedPaymentError("already recorded"));
+    m.record.mockRejectedValueOnce(new m.RecordedPaymentError("already recorded"));
     setup();
     fireEvent.click(screen.getByRole("button", { name: /Save Paid Invoice/ }));
     const blocked = await screen.findByRole("button", { name: /Finish saving/ });
