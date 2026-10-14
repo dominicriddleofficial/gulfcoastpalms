@@ -5,14 +5,14 @@ import InvoiceBuilder from "@/components/platform/billing/InvoiceBuilder";
 import InvoicePreviewPanel from "@/components/platform/billing/InvoicePreviewPanel";
 
 const m = vi.hoisted(() => ({
+  RecordedPaymentError: class RecordedPaymentError extends Error {},
   invoiceInsert: vi.fn(), lineInsert: vi.fn(), invoke: vi.fn(),
   record: vi.fn(), lineError: null as null | { message: string },
 }));
 
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 vi.mock("@/lib/record-invoice-payment", () => {
-  class RecordedPaymentError extends Error {}
-  return { recordInvoicePayment: m.record, RecordedPaymentError };
+  return { recordInvoicePayment: m.record, RecordedPaymentError: m.RecordedPaymentError };
 });
 vi.mock("@/integrations/supabase/client", () => {
   const chain = (result: unknown): Record<string, unknown> => {
@@ -120,6 +120,54 @@ describe("InvoiceBuilder — Already paid", () => {
     await waitFor(() => expect(onCreated).toHaveBeenCalledOnce());
     expect(m.invoiceInsert).toHaveBeenCalledOnce();
     expect(m.lineInsert).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([["", "empty"], ["2999-01-01", "future"], ["2026-02-30", "impossible"]])("blocks a %s (%s) received date before any write", async (value) => {
+    setup();
+    fireEvent.change(screen.getByLabelText("Date received"), { target: { value } });
+    fireEvent.click(screen.getByRole("button", { name: /Save Paid Invoice/ }));
+    await new Promise(r => setTimeout(r, 0));
+    expect(m.invoiceInsert).not.toHaveBeenCalled();
+    expect(m.lineInsert).not.toHaveBeenCalled();
+    expect(m.record).not.toHaveBeenCalled();
+  });
+
+  it("does not show the recovery notice while the payment is still saving", async () => {
+    let finish: (v: unknown) => void = () => {};
+    m.record.mockImplementationOnce(() => new Promise(r => { finish = r; }));
+    setup();
+    fireEvent.click(screen.getByRole("button", { name: /Save Paid Invoice/ }));
+    await waitFor(() => expect(m.record).toHaveBeenCalledOnce());
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getByRole("button", { name: "Close" })).toBeDisabled();
+    finish({ id: "inv-1", status: "paid" });
+    await waitFor(() => expect(onCreated).toHaveBeenCalledOnce());
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("RecordedPaymentError blocks any retry without duplicate writes", async () => {
+    m.record.mockRejectedValueOnce(new m.RecordedPaymentError("already recorded"));
+    setup();
+    fireEvent.click(screen.getByRole("button", { name: /Save Paid Invoice/ }));
+    const blocked = await screen.findByRole("button", { name: /Finish saving/ });
+    expect(blocked).toBeDisabled();
+    expect(screen.getByRole("alert").textContent).toContain("needs review");
+    fireEvent.click(blocked);
+    await new Promise(r => setTimeout(r, 0));
+    expect(m.invoiceInsert).toHaveBeenCalledOnce();
+    expect(m.lineInsert).toHaveBeenCalledOnce();
+    expect(m.record).toHaveBeenCalledOnce();
+    expect(onCreated).not.toHaveBeenCalled();
+  });
+
+  it("surfaces an unexpected error and keeps the saved invoice for a safe resume", async () => {
+    m.lineInsert.mockImplementationOnce(() => { throw new Error("socket closed"); });
+    setup();
+    fireEvent.click(screen.getByRole("button", { name: /Save Paid Invoice/ }));
+    const retry = await screen.findByRole("button", { name: /Finish saving/ });
+    fireEvent.click(retry);
+    await waitFor(() => expect(onCreated).toHaveBeenCalledOnce());
+    expect(m.invoiceInsert).toHaveBeenCalledOnce();
   });
 
   it("requires a signed-in user before saving", async () => {
