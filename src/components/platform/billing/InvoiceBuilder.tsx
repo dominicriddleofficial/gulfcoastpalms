@@ -794,6 +794,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
         <div className="flex-1 flex overflow-hidden">
           {/* Left: Form */}
           <div className="flex-1 md:w-[60%] overflow-y-auto p-4 md:p-6 space-y-6">
+            <fieldset disabled={frozen} className="space-y-6 min-w-0 border-0 p-0 m-0">
             {/* Section A — Business & Customer */}
             <section className="space-y-4">
               <SectionHeader title="Business & Customer" icon={Building2} />
@@ -975,7 +976,60 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
                 ))}
               </div>
 
-              {/* Payment method — card (online link) vs check (mail-in) vs p2p apps */}
+              {/* Payment status — unpaid (normal) vs already paid (record received money) */}
+              <div>
+                <label className="font-body text-[10px] font-medium text-muted-foreground mb-1 block">Payment status</label>
+                <div className="grid grid-cols-2 gap-2" role="group" aria-label="Payment status">
+                  {([
+                    { value: "unpaid", label: "Unpaid" },
+                    { value: "paid", label: "Already paid" },
+                  ] as const).map(opt => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setPaymentStatus(opt.value)}
+                      aria-pressed={paymentStatus === opt.value}
+                      className={cn(
+                        "py-2 px-1 rounded-lg border text-xs font-body font-semibold transition-all",
+                        paymentStatus === opt.value
+                          ? "bg-primary/15 text-primary border-primary"
+                          : "bg-secondary text-muted-foreground border-border hover:text-foreground"
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {isAlreadyPaid ? (
+                <div className="grid grid-cols-2 gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
+                  <div>
+                    <label htmlFor="received-method" className="font-body text-[10px] font-medium text-muted-foreground mb-1 block">How payment was received</label>
+                    <select
+                      id="received-method"
+                      value={receivedMethod}
+                      onChange={e => setReceivedMethod(e.target.value)}
+                      className="w-full h-9 rounded-md bg-card border border-border px-2 font-body text-sm text-foreground"
+                    >
+                      {PAYMENT_METHODS.map(m => (
+                        <option key={m.value} value={m.value}>
+                          {m.value === "card" ? "Card (already received)" : m.value === "other" ? "Other / not sure" : m.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="received-date" className="font-body text-[10px] font-medium text-muted-foreground mb-1 block">Date received</label>
+                    <Input id="received-date" type="date" required max={todayLocal()} value={receivedDate}
+                      onChange={e => setReceivedDate(e.target.value)}
+                      className="bg-card border-border font-body text-sm h-9" />
+                  </div>
+                  <p className="col-span-2 font-body text-[10px] text-muted-foreground">
+                    Records money you already received. No charge, payment link, email or text is sent.
+                  </p>
+                </div>
+              ) : (
               <div>
                 <label className="font-body text-[10px] font-medium text-muted-foreground mb-1 block">Payment method</label>
                 <div className="grid grid-cols-3 gap-2">
@@ -1006,6 +1060,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
                   </p>
                 )}
               </div>
+              )}
             </section>
 
             {/* Section C — Line Items */}
@@ -1137,9 +1192,21 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
                   </div>
 
                   <div className="border-t border-border pt-2 flex justify-between">
-                    <span className="font-body text-base font-bold text-foreground">Total Due</span>
+                    <span className="font-body text-base font-bold text-foreground">{isAlreadyPaid ? "Invoice Total" : "Total Due"}</span>
                     <span className="font-body text-xl font-bold text-primary">${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                   </div>
+                  {isAlreadyPaid && (
+                    <>
+                      <div className="flex justify-between text-sm" data-testid="paid-amount">
+                        <span className="text-muted-foreground">Amount paid</span>
+                        <span className="text-primary font-semibold">${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      </div>
+                      <div className="flex justify-between text-sm" data-testid="paid-balance">
+                        <span className="text-muted-foreground">Balance due</span>
+                        <span className="text-foreground font-semibold">$0.00</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </section>
@@ -1160,8 +1227,30 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
                   className="bg-card border-border font-body text-sm min-h-[60px]" />
               </div>
             </section>
+            </fieldset>
 
             {/* Section F — Actions */}
+            {isAlreadyPaid ? (
+              <section className="space-y-2 pb-8">
+                {pendingPaid && (
+                  <div role="alert" className="rounded-lg border border-[#F4A825]/40 bg-[#F4A825]/10 p-3 font-body text-xs text-foreground">
+                    {pendingPaid.paymentBlocked
+                      ? `Invoice ${pendingPaid.invoiceNumber} was saved, but its payment needs review. Open Invoices → ${pendingPaid.invoiceNumber} and check Payments before recording again.`
+                      : `Invoice ${pendingPaid.invoiceNumber} was saved, but ${pendingPaid.linesSaved ? "the payment" : "its line items"} could not be saved. Tap Finish saving to complete only the unfinished step — the invoice will not be created again.`}
+                  </div>
+                )}
+                <Button className="w-full font-body text-sm" disabled={saving || !!pendingPaid?.paymentBlocked}
+                  onClick={() => { void handleSavePaid(); }}>
+                  <Save className="w-4 h-4 mr-1.5" />
+                  {saving ? "Saving…" : pendingPaid ? "Finish saving" : "Save Paid Invoice"}
+                </Button>
+                {pendingPaid?.paymentBlocked && (
+                  <Button variant="outline" className="w-full font-body text-sm" onClick={() => onCreated()}>
+                    Go to Invoices
+                  </Button>
+                )}
+              </section>
+            ) : (
             <section className="flex flex-col sm:flex-row gap-2 pb-8">
               <Button variant="outline" className="flex-1 font-body text-sm" disabled={saving}
                 onClick={() => handleSave(false)}>
@@ -1176,6 +1265,7 @@ export default function InvoiceBuilder({ businessId, businesses, userId, onClose
                 <Send className="w-4 h-4 mr-1.5" /> Send Invoice
               </Button>
             </section>
+            )}
           </div>
 
           {/* Right: Live Preview (desktop only) */}
