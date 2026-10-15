@@ -14,15 +14,17 @@ import { format, addDays } from "date-fns";
 import QuotePreviewPanel from "./QuotePreviewPanel";
 import SendQuoteModal from "./SendQuoteModal";
 import { useQuery } from "@tanstack/react-query";
-import { generateQuoteNumber, calculateQuoteTotals } from "@/hooks/usePlatformQuotes";
+import { generateQuoteNumber } from "@/hooks/usePlatformQuotes";
 import { downloadElementAsPdf } from "@/lib/download-pdf";
 import { buildQuoteMessage, getQuotePublicUrl } from "@/lib/quote-message";
+import { saveEditedQuote, type QuoteEditData } from "@/lib/edit-quote";
 
 interface LineItem {
   id: string;
   description: string;
   qty: string;
   price: string;
+  original?: QuoteEditData["items"][number];
 }
 
 interface SavedItem {
@@ -53,40 +55,47 @@ interface QuoteBuilderProps {
   userId: string | null;
   onClose: () => void;
   onCreated: () => void;
+  editingQuote?: QuoteEditData;
 }
 
-let lineIdCounter = 0;
-function newLineId() { return `qline-${++lineIdCounter}-${Date.now()}`; }
+function newLineId() { return crypto.randomUUID(); }
+const roundMoney = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
+const lineAmount = (line: LineItem) => roundMoney((Number(line.qty) || 0) * (Number(line.price) || 0) - (line.original?.discount_amount ?? 0));
 
-export default function QuoteBuilder({ businessId, businesses, userId, onClose, onCreated }: QuoteBuilderProps) {
-  const [bizId, setBizId] = useState(businessId || businesses[0]?.id || "");
+export default function QuoteBuilder({ businessId, businesses, userId, onClose, onCreated, editingQuote }: QuoteBuilderProps) {
+  const existing = editingQuote?.quote;
+  const editSnapshot = useRef(editingQuote);
+  const editSavingRef = useRef(false);
+  const [bizId] = useState(existing?.business_id || businessId || businesses[0]?.id || "");
   const activeBiz = businesses.find(b => b.id === bizId);
 
   // Form state
-  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [customerId, setCustomerId] = useState<string | null>(existing?.customer_id ?? null);
   const [customerSource, setCustomerSource] = useState<"platform" | "jobber">("platform");
-  const [customerName, setCustomerName] = useState("");
-  const [customerEmail, setCustomerEmail] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerName, setCustomerName] = useState(editingQuote?.customer?.display_name ?? "");
+  const [customerEmail, setCustomerEmail] = useState(editingQuote?.customer?.email ?? "");
+  const [customerPhone, setCustomerPhone] = useState(editingQuote?.customer?.phone ?? "");
   /** Recipient ("To") name override saved on the quote only — mirrors the
    *  invoice Bill To override. The customer record is never modified. */
-  const [recipientName, setRecipientName] = useState("");
+  const [recipientName, setRecipientName] = useState(existing?.billing_name ?? editingQuote?.customer?.display_name ?? "");
   const [editingRecipientName, setEditingRecipientName] = useState(false);
-  const [quoteNumber, setQuoteNumber] = useState("Generating…");
-  const [quoteDate, setQuoteDate] = useState(format(new Date(), "yyyy-MM-dd"));
-  const [validUntil, setValidUntil] = useState(format(addDays(new Date(), 30), "yyyy-MM-dd"));
-  const [scopeOfWork, setScopeOfWork] = useState("");
-  const [lineItems, setLineItems] = useState<LineItem[]>([{ id: newLineId(), description: "", qty: "1", price: "" }]);
-  const [taxEnabled, setTaxEnabled] = useState(true);
-  const [taxRate, setTaxRate] = useState("7");
-  const [discountEnabled, setDiscountEnabled] = useState(false);
+  const [quoteNumber, setQuoteNumber] = useState(existing?.quote_number ?? "Generating…");
+  const [quoteDate, setQuoteDate] = useState(format(existing ? new Date(existing.created_at) : new Date(), "yyyy-MM-dd"));
+  const [validUntil, setValidUntil] = useState(existing ? existing.valid_until ?? "" : format(addDays(new Date(), 30), "yyyy-MM-dd"));
+  const [scopeOfWork, setScopeOfWork] = useState(existing?.scope_of_work ?? "");
+  const [lineItems, setLineItems] = useState<LineItem[]>(editingQuote?.items.length
+    ? editingQuote.items.map(item => ({ id: item.id, description: item.description, qty: String(item.quantity), price: String(item.unit_price), original: item }))
+    : [{ id: newLineId(), description: "", qty: "1", price: "" }]);
+  const [taxEnabled, setTaxEnabled] = useState(existing ? Number(existing.tax_rate) > 0 : true);
+  const [taxRate, setTaxRate] = useState(String(existing?.tax_rate ?? 7));
+  const [discountEnabled, setDiscountEnabled] = useState(Number(existing?.discount_total ?? 0) > 0);
   const [discountType, setDiscountType] = useState<"$" | "%">("$");
-  const [discountValue, setDiscountValue] = useState("0");
-  const [depositEnabled, setDepositEnabled] = useState(true);
-  const [depositType, setDepositType] = useState<"%" | "$">("%");
-  const [depositValue, setDepositValue] = useState("50");
-  const [publicNotes, setPublicNotes] = useState("");
-  const [internalNotes, setInternalNotes] = useState("");
+  const [discountValue, setDiscountValue] = useState(String(existing?.discount_total ?? 0));
+  const [depositEnabled, setDepositEnabled] = useState(existing ? !!existing.deposit_required_flag : true);
+  const [depositType, setDepositType] = useState<"%" | "$">(existing?.deposit_type === "fixed" ? "$" : "%");
+  const [depositValue, setDepositValue] = useState(String(existing?.deposit_value ?? 50));
+  const [publicNotes, setPublicNotes] = useState(existing?.public_notes ?? "");
+  const [internalNotes, setInternalNotes] = useState(existing?.internal_notes ?? "");
 
   // UI state
   const [customerSearch, setCustomerSearch] = useState("");
@@ -115,15 +124,16 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   });
   const logoUrl = brandAssets?.find(a => a.asset_type === 'logo')?.file_url || activeBiz?.logo_url || null;
 
-  // Generate quote number
+  // Generate a number only for new quotes; edits retain the original public link.
   useEffect(() => {
+    if (existing) return;
     (async () => {
       try {
         const num = await generateQuoteNumber(bizId);
         setQuoteNumber(num);
       } catch { setQuoteNumber("Q-ERROR"); }
     })();
-  }, [bizId]);
+  }, [bizId, existing]);
 
   // Load saved items
   useEffect(() => {
@@ -161,19 +171,20 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
 
   // Set default notes
   useEffect(() => {
-    if (!publicNotes) setPublicNotes(`Thank you for considering ${activeBiz?.public_brand_name || "us"}! We look forward to working with you.`);
-  }, [activeBiz?.public_brand_name]);
+    if (!existing && !publicNotes) setPublicNotes(`Thank you for considering ${activeBiz?.public_brand_name || "us"}! We look forward to working with you.`);
+  }, [activeBiz?.public_brand_name, existing]);
 
   // Calculations
-  const subtotal = useMemo(() => lineItems.reduce((s, l) => s + (Number(l.qty) || 0) * (Number(l.price) || 0), 0), [lineItems]);
-  const taxAmount = taxEnabled ? subtotal * (Number(taxRate) || 0) / 100 : 0;
-  const discountAmount = discountEnabled ? discountType === "%" ? subtotal * (Number(discountValue) || 0) / 100 : Number(discountValue) || 0 : 0;
-  const total = Math.max(0, subtotal + taxAmount - discountAmount);
-  const depositAmount = depositEnabled ? depositType === "%" ? total * (Number(depositValue) || 0) / 100 : Number(depositValue) || 0 : 0;
+  const subtotal = useMemo(() => roundMoney(lineItems.reduce((s, l) => s + lineAmount(l), 0)), [lineItems]);
+  const taxableSubtotal = lineItems.filter(l => l.original?.taxable_flag !== false).reduce((s, l) => s + lineAmount(l), 0);
+  const taxAmount = taxEnabled ? roundMoney(taxableSubtotal * (Number(taxRate) || 0) / 100) : 0;
+  const discountAmount = discountEnabled ? roundMoney(discountType === "%" ? subtotal * (Number(discountValue) || 0) / 100 : Number(discountValue) || 0) : 0;
+  const total = Math.max(0, roundMoney(subtotal + taxAmount - discountAmount));
+  const depositAmount = depositEnabled ? roundMoney(depositType === "%" ? total * (Number(depositValue) || 0) / 100 : Number(depositValue) || 0) : 0;
 
   const addLine = () => setLineItems([...lineItems, { id: newLineId(), description: "", qty: "1", price: "" }]);
   const removeLine = (id: string) => setLineItems(lineItems.filter(l => l.id !== id));
-  const updateLine = (id: string, field: keyof LineItem, val: string) =>
+  const updateLine = (id: string, field: "description" | "qty" | "price", val: string) =>
     setLineItems(lineItems.map(l => l.id === id ? { ...l, [field]: val } : l));
 
   const addSavedItem = (item: SavedItem) => {
@@ -203,13 +214,13 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
     customerName: displayToName || "Customer Name", customerEmail, customerPhone,
     lineItems: lineItems.filter(l => l.description.trim()).map(l => ({
       description: l.description, quantity: Number(l.qty) || 1,
-      unit_price: Number(l.price) || 0, line_total: (Number(l.qty) || 1) * (Number(l.price) || 0),
+      unit_price: Number(l.price) || 0, line_total: lineAmount(l),
     })),
     subtotal, taxRate: taxEnabled ? Number(taxRate) : 0, taxAmount, discountAmount, total,
     depositRequired: depositEnabled, depositAmount, scopeOfWork, publicNotes,
     businessName: activeBiz?.public_brand_name || "", shortcode: activeBiz?.shortcode || "gcp",
-    isDraft: true, logoUrl,
-  }), [quoteNumber, quoteDate, validUntil, displayToName, customerEmail, customerPhone, lineItems, subtotal, taxEnabled, taxRate, taxAmount, discountAmount, total, depositEnabled, depositAmount, scopeOfWork, publicNotes, activeBiz, logoUrl]);
+    isDraft: existing ? existing.status === "draft" : true, logoUrl,
+  }), [quoteNumber, quoteDate, validUntil, displayToName, customerEmail, customerPhone, lineItems, subtotal, taxEnabled, taxRate, taxAmount, discountAmount, total, depositEnabled, depositAmount, scopeOfWork, publicNotes, activeBiz, logoUrl, existing]);
 
   /**
    * Persist the quote (draft) and return the saved row. The quote MUST exist
@@ -217,6 +228,50 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
    * "PENDING" placeholder and could text a dead URL.
    */
   const persistQuote = async (): Promise<{ id: string; quote_number: string } | null> => {
+    if (editingQuote && editSnapshot.current) {
+      if (editSavingRef.current) return null;
+      if (!userId) { toast.error("Sign in before saving the quote"); return null; }
+      const validLines = lineItems.filter(l => l.description.trim());
+      if (!validLines.length) { toast.error("Add at least one line item"); return null; }
+      if (lineItems.some(l => !l.description.trim() && (l.price !== "" || l.original))) {
+        toast.error("Enter a description or remove the empty line"); return null;
+      }
+      if (![taxRate, discountValue, depositValue].every(v => Number.isFinite(Number(v)) && Number(v) >= 0) ||
+        Number(taxRate) > 100 || (discountEnabled && discountAmount > subtotal) ||
+        (depositEnabled && depositAmount > total)) {
+        toast.error("Check the tax, discount, and deposit amounts"); return null;
+      }
+      editSavingRef.current = true;
+      setSaving(true);
+      try {
+        const result = await saveEditedQuote(editSnapshot.current, {
+          billing_name: billingNameToSave, subtotal, discount_total: discountAmount,
+          tax_rate: taxEnabled ? Number(taxRate) : 0, tax_total: taxAmount, total,
+          deposit_required_flag: depositEnabled, deposit_type: depositType === "%" ? "percentage" : "fixed",
+          deposit_value: Number(depositValue), deposit_amount_calculated: depositAmount,
+          valid_until: validUntil || null, scope_of_work: scopeOfWork || null,
+          internal_notes: internalNotes || null, public_notes: publicNotes || null,
+        }, validLines.map((l, i) => ({
+          ...l.original, id: l.id, quote_id: editingQuote.quote.id, business_id: bizId,
+          description: l.description, quantity: Number(l.qty), unit_price: Number(l.price),
+          unit: l.original?.unit ?? "each", discount_amount: l.original?.discount_amount ?? 0,
+          taxable_flag: l.original?.taxable_flag ?? true, line_type: l.original?.line_type ?? "service",
+          service_catalog_id: l.original?.service_catalog_id ?? null,
+          line_total: lineAmount(l), sort_order: i,
+        })), userId);
+        editSnapshot.current = result;
+        if (result.historyWarning) toast.warning(result.historyWarning);
+        const saved = { id: result.quote.id, quote_number: result.quote.quote_number };
+        setSavedQuote(saved);
+        return saved;
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Could not save quote changes");
+        return null;
+      } finally {
+        editSavingRef.current = false;
+        setSaving(false);
+      }
+    }
     if (savedQuote) return savedQuote;
     if (!bizId) return null;
     if (!customerId) { toast.error("Please select a customer"); return null; }
@@ -302,7 +357,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   const handleSaveDraft = async () => {
     const saved = await persistQuote();
     if (!saved) return;
-    toast.success("Quote created");
+    toast.success(editingQuote ? "Quote updated" : "Quote created");
     onCreated();
   };
 
@@ -441,13 +496,14 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
             <button
               type="button"
               onClick={onClose}
+              disabled={saving}
               aria-label="Close"
               className="flex items-center justify-center w-10 h-10 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors -ml-2 shrink-0"
             >
               <X className="w-5 h-5" />
             </button>
             <div className="flex-1 min-w-0">
-              <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground leading-tight">New Quote</h1>
+              <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground leading-tight">{editingQuote ? "Edit Quote" : "New Quote"}</h1>
               <p className="font-mono text-xs text-muted-foreground tracking-tight">{quoteNumber}</p>
             </div>
           </div>
@@ -463,7 +519,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
 
         <div className="flex-1 flex overflow-hidden">
           {/* Left: Form */}
-          <div className="flex-1 md:w-[60%] overflow-y-auto p-4 md:p-6 space-y-6">
+          <fieldset disabled={saving} className="flex-1 min-w-0 md:w-[60%] overflow-y-auto p-4 md:p-6 space-y-6">
             {/* Business & Customer */}
             <section className="space-y-4">
               <SectionHeader title="Business & Customer" icon={Building2} />
@@ -475,11 +531,11 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
               <div className="bg-card border border-border rounded-lg p-3 space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="font-body text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Prepared For</p>
-                  {customerId && (
+                  {customerId && !editingQuote && (
                     <button className="font-body text-[10px] text-primary hover:underline" onClick={() => { setCustomerId(null); setCustomerName(""); setRecipientName(""); setEditingRecipientName(false); setShowCustomerSearch(true); }}>Change</button>
                   )}
                 </div>
-                {customerId ? (
+                {customerId || editingQuote ? (
                   <div>
                     <div className="space-y-1">
                       <label className="font-body text-[10px] font-medium text-muted-foreground uppercase tracking-wider">To</label>
@@ -545,7 +601,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                 </div>
                 <div>
                   <label className="font-body text-[10px] font-medium text-muted-foreground mb-1 block">Quote Date</label>
-                  <Input type="date" value={quoteDate} onChange={e => setQuoteDate(e.target.value)} className="bg-card border-border font-body text-sm" />
+                  <Input type="date" disabled={!!editingQuote} value={quoteDate} onChange={e => setQuoteDate(e.target.value)} className="bg-card border-border font-body text-sm" />
                 </div>
                 <div className="col-span-2">
                   <label className="font-body text-[10px] font-medium text-muted-foreground mb-1 block">Valid Until</label>
@@ -604,21 +660,21 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
               </div>
               <div className="space-y-2">
                 {lineItems.map(line => {
-                  const lineTotal = (Number(line.qty) || 0) * (Number(line.price) || 0);
+                  const lineTotal = lineAmount(line);
                   return (
                     <div key={line.id} className="grid grid-cols-1 md:grid-cols-[1fr_80px_100px_100px_32px] gap-2 bg-card border border-border rounded-lg p-2.5 md:p-2 md:rounded-none md:border-0 md:border-b md:bg-transparent">
-                      <Input placeholder="Service description…" value={line.description} onChange={e => updateLine(line.id, "description", e.target.value)} className="bg-secondary/50 border-border font-body text-sm" />
+                      <Input aria-label="Line description" placeholder="Service description…" value={line.description} onChange={e => updateLine(line.id, "description", e.target.value)} className="bg-secondary/50 border-border font-body text-sm" />
                       <div className="flex gap-2 md:contents">
                         <div className="flex-1 md:flex-none">
-                          <Input type="number" min="1" placeholder="Qty" value={line.qty} onChange={e => updateLine(line.id, "qty", e.target.value)} className="bg-secondary/50 border-border font-body text-sm text-center" />
+                          <Input aria-label="Quantity" type="number" min="0.01" step="any" placeholder="Qty" value={line.qty} onChange={e => updateLine(line.id, "qty", e.target.value)} className="bg-secondary/50 border-border font-body text-sm text-center" />
                         </div>
                         <div className="flex-1 md:flex-none">
-                          <Input type="number" step="0.01" placeholder="$0.00" value={line.price} onChange={e => updateLine(line.id, "price", e.target.value)} className="bg-secondary/50 border-border font-body text-sm text-right" />
+                          <Input aria-label="Unit price" type="number" min="0" step="0.01" placeholder="$0.00" value={line.price} onChange={e => updateLine(line.id, "price", e.target.value)} className="bg-secondary/50 border-border font-body text-sm text-right" />
                         </div>
                         <div className="flex items-center justify-end gap-2 md:contents">
                           <span className="font-body text-sm font-medium text-foreground md:text-right">${lineTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                           {lineItems.length > 1 && (
-                            <button onClick={() => removeLine(line.id)} className="text-muted-foreground hover:text-destructive transition-colors"><X className="w-4 h-4" /></button>
+                            <button aria-label="Remove line" onClick={() => removeLine(line.id)} className="text-muted-foreground hover:text-destructive transition-colors"><X className="w-4 h-4" /></button>
                           )}
                         </div>
                       </div>
@@ -696,9 +752,9 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
             {/* Actions */}
             <section className="flex flex-col sm:flex-row gap-2 pb-8">
               <Button variant="outline" className="flex-1 font-body text-sm" disabled={saving} onClick={() => { void handleSaveDraft(); }}>
-                <Save className="w-4 h-4 mr-1.5" /> Save as Draft
+                <Save className="w-4 h-4 mr-1.5" /> {saving ? "Saving…" : editingQuote ? "Save Changes" : "Save as Draft"}
               </Button>
-              <Button className="flex-1 font-body text-sm" disabled={saving}
+              {!editingQuote && <Button className="flex-1 font-body text-sm" disabled={saving}
                 onClick={() => {
                   if (!customerId) { toast.error("Please select a customer"); return; }
                   if (lineItems.filter(l => l.description.trim()).length === 0) { toast.error("Add at least one line item"); return; }
@@ -706,9 +762,9 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                   void openSendModal();
                 }}>
                 <Send className="w-4 h-4 mr-1.5" /> {saving && !showSendModal ? "Saving…" : "Send Quote"}
-              </Button>
+              </Button>}
             </section>
-          </div>
+          </fieldset>
 
           {/* Right: Live Preview */}
           <div className="hidden md:block w-[40%] border-l border-border overflow-y-auto bg-secondary/30">
