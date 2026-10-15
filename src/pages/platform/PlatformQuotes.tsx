@@ -243,6 +243,11 @@ export default function PlatformQuotes() {
                             <button className="text-muted-foreground hover:text-foreground p-1"><MoreHorizontal className="w-4 h-4" /></button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="bg-card border-border">
+                            {!q.is_read_only && !q.deleted_at && (
+                              <DropdownMenuItem onClick={() => navigate(`/platform/quotes/${q.id}/edit`)} className="text-xs gap-2">
+                                <Pencil className="w-3.5 h-3.5" /> Edit Quote
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem onClick={() => previewQuote(q)} className="text-xs gap-2">
                               <Eye className="w-3.5 h-3.5" /> Preview Quote
                             </DropdownMenuItem>
@@ -282,6 +287,7 @@ export default function PlatformQuotes() {
               onUpdate={() => { refetch(); }}
               onClose={() => setSelectedQuote(null)}
               onCopyQuoteMessage={() => copyQuoteMessage(selectedQuote)}
+              onEdit={() => navigate(`/platform/quotes/${selectedQuote.id}/edit`)}
             />
           )}
         </SheetContent>
@@ -373,10 +379,11 @@ async function handleConvertToInvoice(quote: PlatformQuote, businesses: Array<Re
   }
 }
 
-function QuoteDetail({ quote, biz, businesses, onUpdate, onClose, onCopyQuoteMessage }: {
+function QuoteDetail({ quote, biz, businesses, onUpdate, onClose, onCopyQuoteMessage, onEdit }: {
   quote: PlatformQuote; biz: Record<string, unknown> | undefined;
   businesses: Array<Record<string, unknown>>;
   onUpdate: () => void; onClose: () => void; onCopyQuoteMessage: () => void;
+  onEdit: () => void;
 }) {
   const { open: openSheet } = useCreateSheets();
   const [lineItems, setLineItems] = useState<QuoteLineItem[]>([]);
@@ -482,6 +489,12 @@ function QuoteDetail({ quote, biz, businesses, onUpdate, onClose, onCopyQuoteMes
           </p>
         </div>
       </SheetHeader>
+
+      {!quote.is_read_only && !quote.deleted_at && (
+        <Button size="sm" className="w-full gap-2 text-sm min-h-11" onClick={onEdit}>
+          <Pencil className="w-4 h-4" /> Edit Quote
+        </Button>
+      )}
 
       {/* Preview Quote button */}
       <Button size="sm" variant="outline" className="w-full gap-2 border-primary/30 text-primary text-xs mb-2" onClick={() => window.open(previewUrl, "_blank")}>

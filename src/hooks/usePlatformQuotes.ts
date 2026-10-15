@@ -27,6 +27,8 @@ export interface PlatformQuote {
   property_id: string | null;
   lead_id: string | null;
   status: string;
+  is_read_only?: boolean;
+  deleted_at?: string | null;
   subtotal: number;
   discount_total: number;
   tax_rate: number;
