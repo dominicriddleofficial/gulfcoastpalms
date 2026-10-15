@@ -44,11 +44,20 @@ vi.mock("@/integrations/supabase/client", () => ({ supabase: {
       }
       if (table === "platform_quote_line_items") {
         if (op === "upsert") {
-          for (const line of value) {
+          // PostgREST bulk writes use the union of keys across all rows. Once
+          // created_at is included by an existing row, a missing value becomes
+          // NULL instead of receiving the database's now() default.
+          const includesCreatedAt = value.some((line: any) => line.created_at !== undefined);
+          if (includesCreatedAt && value.some((line: any) => line.created_at == null)) {
+            return { data: null, error: { code: "23502", message:
+              'null value in column "created_at" of relation "platform_quote_line_items" violates not-null constraint' } };
+          }
+          const rows = value.map((line: any) => ({ ...line, created_at: line.created_at ?? new Date().toISOString() }));
+          for (const line of rows) {
             const index = db.lines.findIndex(l => l.id === line.id);
             if (index === -1) db.lines.push(structuredClone(line)); else db.lines[index] = structuredClone(line);
           }
-          return { data: structuredClone(value), error: null };
+          return { data: structuredClone(rows), error: null };
         }
         const selected = db.lines.filter(matches);
         if (op === "delete") db.lines = db.lines.filter(l => !matches(l));
@@ -162,17 +171,52 @@ describe("Editing saved quotes", () => {
     await act(async () => {});
   });
 
+  it("saves an eighth \$300 line with a creation date and preserves existing dates when reopened", async () => {
+    const original = fixture();
+    const view = setup(original);
+    fireEvent.click(screen.getByRole("button", { name: "Add Line" }));
+    fireEvent.change(screen.getAllByLabelText("Line description")[7], { target: { value: "Broken branches hanging on the front fence" } });
+    fireEvent.change(screen.getAllByLabelText("Unit price")[7], { target: { value: "300" } });
+    const beforeSave = Date.now();
+    save();
+    await waitFor(() => expect(completed).toHaveBeenCalledOnce());
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(db.quote).toMatchObject({ id: original.quote.id, total: 4650, subtotal: 4650, version_number: 2 });
+    expect(db.lines).toHaveLength(8);
+    for (const item of original.items) {
+      expect(db.lines.find(line => line.id === item.id)?.created_at).toBe(item.created_at);
+    }
+    const added = db.lines.find(line => line.description === "Broken branches hanging on the front fence")!;
+    expect(added).toMatchObject({ quantity: 1, unit_price: 300, line_total: 300 });
+    expect(Date.parse(added.created_at)).toBeGreaterThanOrEqual(beforeSave);
+    expect(Date.parse(added.created_at)).toBeLessThanOrEqual(Date.now());
+    view.unmount();
+    setup({ ...original, quote: structuredClone(db.quote) as any, items: structuredClone(db.lines) as any });
+    expect(screen.getAllByLabelText("Line description")).toHaveLength(8);
+    expect(document.body.textContent).toContain("\$4,650.00");
+    save();
+    await waitFor(() => expect(completed).toHaveBeenCalledTimes(2));
+    expect(db.lines).toHaveLength(8);
+    expect(db.lines.find(line => line.id === added.id)?.created_at).toBe(added.created_at);
+  });
+
   it.each(["platform_quote_line_items:upsert", "platform_quotes:update"])("keeps the editor open and restores originals after %s fails", async failure => {
     setup(); db.failOnce = failure;
     fireEvent.change(screen.getAllByLabelText("Unit price")[0], { target: { value: "650" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add Line" }));
+    fireEvent.change(screen.getAllByLabelText("Line description")[7], { target: { value: "Added cleanup" } });
+    fireEvent.change(screen.getAllByLabelText("Unit price")[7], { target: { value: "300" } });
     save();
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
     expect(completed).not.toHaveBeenCalled();
-    expect(db.quote.total).toBe(4350); expect(db.lines[0].unit_price).toBe(750);
+    expect(db.quote.total).toBe(4350); expect(db.lines).toEqual(fixture().items);
     expect(screen.getAllByLabelText("Unit price")[0]).toHaveValue(650);
     save();
     await waitFor(() => expect(completed).toHaveBeenCalledOnce());
-    expect(db.quote.total).toBe(4250); expect(db.lines).toHaveLength(7);
+    expect(db.quote.total).toBe(4550); expect(db.lines).toHaveLength(8);
+    const attempts = db.writes.filter(w => w.table === "platform_quote_line_items" && w.op === "upsert" && w.value.length === 8);
+    expect(attempts).toHaveLength(2);
+    expect(attempts[0].value[7].id).toBe(attempts[1].value[7].id);
   });
 
   it("verifies a successful save after a lost response without restoring stale line items", async () => {

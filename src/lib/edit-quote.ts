@@ -51,6 +51,14 @@ export async function saveEditedQuote(
   const keptIds = new Set(items.map(item => item.id));
   const removedIds = original.items.filter(item => !keptIds.has(item.id)).map(item => item.id);
   const addedIds = items.filter(item => !originalIds.has(item.id)).map(item => item.id);
+  const originalCreatedAt = new Map(original.items.map(item => [item.id, item.created_at]));
+  const createdAt = new Date().toISOString();
+  // Bulk upserts treat a missing key as NULL when another row includes it.
+  // Keep existing creation dates and supply one for every newly added line.
+  const linesToSave: QuoteLine[] = items.map(item => ({
+    ...item,
+    created_at: originalCreatedAt.get(item.id) ?? item.created_at ?? createdAt,
+  }));
   let savedQuote: Quote | null = null;
   let savedItems: QuoteLine[] = [];
   let headerAttempted = false;
@@ -58,7 +66,7 @@ export async function saveEditedQuote(
   try {
     // Upsert first: never delete every line before attempting to save replacements.
     const { data: written, error: lineError } = await supabase.from("platform_quote_line_items")
-      .upsert(items, { onConflict: "id" }).select("*");
+      .upsert(linesToSave, { onConflict: "id" }).select("*");
     if (lineError || written?.length !== items.length) {
       throw new Error(lineError?.message || "Could not confirm all line items saved.");
     }
