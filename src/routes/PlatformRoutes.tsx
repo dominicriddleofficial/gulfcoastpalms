@@ -29,6 +29,7 @@ const PlatformCustomerNew = lazy(() => import("@/pages/platform/PlatformCustomer
 const PlatformLeadNew = lazy(() => import("@/pages/platform/PlatformLeadNew"));
 const PlatformInvoiceNew = lazy(() => import("@/pages/platform/PlatformInvoiceNew"));
 const PlatformQuoteNew = lazy(() => import("@/pages/platform/PlatformQuoteNew"));
+const PlatformQuoteEdit = lazy(() => import("@/pages/platform/PlatformQuoteEdit"));
 const PlatformBackendHealth = lazy(() => import("@/pages/platform/PlatformBackendHealth"));
 const PlatformReconciliation = lazy(() => import("@/pages/platform/PlatformReconciliation"));
 const PlatformDocs = lazy(() => import("@/pages/platform/PlatformDocs"));
@@ -89,6 +90,7 @@ export const PlatformRoutes = () => (
     <Route path="/platform/customers/new" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformCustomerNew /></RoleRoute>)} />
     <Route path="/platform/leads/new" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformLeadNew /></RoleRoute>)} />
     <Route path="/platform/quotes/new" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformQuoteNew /></RoleRoute>)} />
+    <Route path="/platform/quotes/:quoteId/edit" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformQuoteEdit /></RoleRoute>)} />
     <Route path="/platform/invoices/new" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager"]}><PlatformInvoiceNew /></RoleRoute>)} />
   </>
 );
