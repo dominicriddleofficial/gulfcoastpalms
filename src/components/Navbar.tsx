@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Phone, MessageSquare, Menu, ChevronDown, ArrowRight } from "lucide-react";
 import { locations } from "@/data/locations";
-import { serviceNavLinks } from "@/data/services";
+import { serviceGroups } from "@/data/services";
 import { PHONE_NUMBER_TEL, PHONE_NUMBER_DISPLAY, SMS_NUMBER } from "@/data/contact";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { trackEvent } from "@/lib/analytics";
@@ -56,14 +56,15 @@ const Navbar = () => {
   return (
     <header className={`sticky top-0 z-50 bg-background/90 backdrop-blur-md border-b border-border transition-[height,box-shadow] duration-200 ${scrolled ? "shadow-sm" : ""}`}>
       <div className={`container mx-auto flex items-center justify-between px-4 lg:px-8 transition-[height] duration-200 ${scrolled ? "h-14 lg:h-16" : "h-16 lg:h-20"}`}>
-        <Link to="/" className="flex items-center gap-2">
-          <span className={`font-display font-bold text-primary transition-all ${scrolled ? "text-xl" : "text-2xl"}`}>
+        <Link to="/" className="flex flex-col items-start shrink-0">
+          <span className="font-display font-bold text-primary text-lg xl:text-xl whitespace-nowrap">
             Gulf Coast <span className="text-palm-light">Palms</span>
           </span>
+          <span className="font-body text-[11px] lg:text-xs font-medium text-foreground">Tree Services &amp; Palm Care</span>
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden lg:flex items-center gap-4 xl:gap-6">
+        <nav className="hidden lg:flex items-center gap-3 xl:gap-4">
           <Link to="/" className={`whitespace-nowrap font-body font-medium text-[13px] xl:text-sm uppercase tracking-wider transition-colors hover:text-primary ${location.pathname === "/" ? "text-primary" : "text-muted-foreground"}`}>
             Home
           </Link>
@@ -75,11 +76,13 @@ const Navbar = () => {
             </Link>
             <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200">
               <div className="bg-card border border-border rounded-xl shadow-xl py-2 min-w-[260px]">
-                {serviceNavLinks.map((link) => (
+                {serviceGroups.map((group) => <div key={group.label}>
+                  <p className="px-4 pt-3 pb-1 text-xs font-body font-semibold text-palm-gold">{group.label}</p>
+                  {group.links.map((link) => (
                   <Link key={link.to} to={link.to} {...prefetchOnHover(link.to)} className={`block px-4 py-2.5 font-body text-sm hover:bg-secondary transition-colors ${location.pathname === link.to ? "text-primary font-semibold" : "text-foreground"}`}>
                     {link.label}
                   </Link>
-                ))}
+                ))}</div>)}
                 <Link to="/palm-tree-maintenance-plans" {...prefetchOnHover("/palm-tree-maintenance-plans")} className={`block px-4 py-2.5 font-body text-sm hover:bg-secondary transition-colors ${location.pathname === "/palm-tree-maintenance-plans" ? "text-primary font-semibold" : "text-foreground"}`}>
                   Maintenance Plans
                 </Link>
@@ -219,13 +222,15 @@ const Navbar = () => {
                     <li>
                       <Link to="/services" onClick={() => trackMenuLink("All services")} className="block px-2 py-2 font-body text-sm text-foreground/90 hover:text-primary">View all services</Link>
                     </li>
-                    {serviceNavLinks.map((link) => (
+                    {serviceGroups.map((group) => <li key={group.label}>
+                      <p className="px-2 pt-3 pb-1 text-xs font-body font-semibold text-palm-gold">{group.label}</p>
+                      <ul>{group.links.map((link) => (
                       <li key={link.to}>
                         <Link to={link.to} onClick={() => trackMenuLink(link.label)} className={`block px-2 py-2 font-body text-sm hover:text-primary ${location.pathname === link.to ? "text-primary font-semibold" : "text-foreground/90"}`}>
                           {link.label}
                         </Link>
                       </li>
-                    ))}
+                    ))}</ul></li>)}
                     <li>
                       <Link to="/palm-tree-maintenance-plans" onClick={() => trackMenuLink("Maintenance Plans")} className="block px-2 py-2 font-body text-sm text-foreground/90 hover:text-primary">Maintenance Plans</Link>
                     </li>

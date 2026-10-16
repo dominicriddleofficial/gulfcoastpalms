@@ -34,7 +34,7 @@ const FAQ = () => (
           Frequently Asked Questions
         </motion.h2>
         <motion.p variants={fadeUp} custom={2} className="font-body text-muted-foreground max-w-2xl mx-auto">
-          Everything you need to know about our palm tree services across the Gulf Coast.
+          Questions about tree services and palm care across the Gulf Coast.
         </motion.p>
       </motion.div>
 

@@ -2,13 +2,14 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { HERO_IMAGE_URL, heroImageSrc, heroSrcSet } from "@/data/assets";
+import { publicMarketing } from "@/data/publicMarketing";
 import HeroReviewBadge from "@/components/home/HeroReviewBadge";
 import { GCP_BUSINESS, TEL_HREF } from "@/lib/business-info";
 import QuoteRequestButton from "@/components/cta/QuoteRequestButton";
 
 const HeroSection = () => {
   return (
-    <section className="relative min-h-[80vh] md:min-h-[90vh] flex items-center justify-center overflow-hidden pt-6 pb-10 md:pt-12 md:pb-16">
+    <section className="relative min-h-[65vh] md:min-h-[70vh] flex items-center justify-center overflow-hidden pt-6 pb-10 md:pt-12 md:pb-16">
       <div className="absolute inset-0">
         <picture>
           <source type="image/avif" srcSet={heroSrcSet("avif")} sizes="100vw" />
@@ -50,10 +51,9 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.1 }}
-          className="font-display text-[38px] sm:text-5xl md:text-7xl lg:text-8xl font-bold text-primary-foreground leading-[1.1] md:leading-tight mb-4"
+          className="font-display text-[38px] sm:text-5xl md:text-6xl max-w-4xl mx-auto font-bold text-primary-foreground leading-[1.1] md:leading-tight mb-4"
         >
-          Palm Tree Trimming &amp; Care{" "}
-          <span className="text-palm-sand">for Florida's Emerald Coast</span>
+          {publicMarketing.heroHeading}
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 20 }}
@@ -61,7 +61,7 @@ const HeroSection = () => {
           transition={{ duration: 0.7, delay: 0.2 }}
           className="font-body text-sm md:text-lg text-palm-sand/80 max-w-2xl mx-auto mb-4"
         >
-          Palm-tree specialists with over a thousand properties served across the Emerald Coast. Same-day estimates. No generalist crews.
+          {publicMarketing.heroText}
         </motion.p>
         {/* Review badge — above CTA on mobile */}
         <motion.div
@@ -77,20 +77,23 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.35 }}
-          className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center"
+          className="grid grid-cols-2 sm:flex sm:flex-row gap-3 sm:gap-4 justify-center items-center"
         >
           <QuoteRequestButton
             source="hero"
-            className="w-full sm:w-auto md:px-8 md:py-4 md:text-lg shadow-brand hover:-translate-y-0.5 transition-transform"
+            className="col-span-2 w-full sm:w-auto md:px-8 md:py-4 md:text-lg shadow-brand hover:-translate-y-0.5 transition-transform"
           >
             Get a Free Quote Online
           </QuoteRequestButton>
           <Link
-            to="/services"
-            className="hidden md:inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl border border-primary-foreground/25 bg-primary-foreground/5 backdrop-blur-sm text-primary-foreground font-body font-semibold text-lg hover:bg-primary-foreground/12 hover:border-primary-foreground/50 transition-all"
+            to="/services/tree-trimming-removal"
+            className="inline-flex items-center justify-center gap-2 px-3 sm:px-8 py-4 rounded-xl border border-primary-foreground/25 bg-primary-foreground/5 backdrop-blur-sm text-primary-foreground font-body font-semibold text-base sm:text-lg hover:bg-primary-foreground/12 hover:border-primary-foreground/50 transition-all"
           >
-            View Our Services
+            Tree Services
             <ArrowRight className="w-5 h-5" />
+          </Link>
+          <Link to="/services/palm-tree-trimming" className="inline-flex items-center justify-center gap-2 px-3 sm:px-8 py-4 rounded-xl border border-primary-foreground/25 bg-primary-foreground/5 text-primary-foreground font-body font-semibold text-base sm:text-lg hover:bg-primary-foreground/12 transition-colors">
+            Palm Care <ArrowRight className="w-5 h-5" />
           </Link>
         </motion.div>
 

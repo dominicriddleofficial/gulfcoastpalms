@@ -8,7 +8,7 @@ export function localBusinessSchema(): Record<string, unknown> {
     "@id": `${GCP_BUSINESS.url}/#business`,
     name: GCP_BUSINESS.name,
     legalName: GCP_BUSINESS.legalName,
-    description: "Palm tree trimming, diamond cutting, trunk skinning, installation, removal and hurricane preparation across Northwest Florida's Emerald Coast.",
+    description: "Tree trimming, tree removal, storm damage cleanup and palm care including trimming, installation, removal, diamond cutting and trunk skinning across Northwest Florida's Emerald Coast.",
     telephone: GCP_BUSINESS.phone,
     email: GCP_BUSINESS.email,
     url: GCP_BUSINESS.url,

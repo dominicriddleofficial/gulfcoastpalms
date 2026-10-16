@@ -15,15 +15,15 @@ const Index = () => {
   return (
     <Layout>
       <SEOHead
-        title="Gulf Coast Palms | Palm Tree Services in Navarre, FL"
-        description="Professional palm tree trimming, removal, and hurricane prep across Navarre, Gulf Breeze, and Pensacola. Free quotes — call (850) 910-1290."
+        title="Gulf Coast Palms | Tree Services & Palm Care on the Emerald Coast"
+        description="Tree trimming, tree removal, storm cleanup and palm care across Navarre, Pensacola, Destin and the Emerald Coast. Free quotes — (850) 910-1290."
         canonicalUrl="/"
       />
 
       <HeroSection />
+      <ServicesPreview />
       <TrustBadges />
       <WhyChooseUs />
-      <ServicesPreview />
       <ServiceAreasSection />
       <GalleryPreview />
       <ServiceAreaMap />

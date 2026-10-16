@@ -25,6 +25,7 @@ async function loadData() {
   await esbuild({
     stdin: {
       contents: `
+        export { publicMarketing } from "@/data/publicMarketing";
         export { GCP_BUSINESS } from "@/lib/business-info";
         export { servicesData } from "@/data/services";
         export { locations } from "@/data/locations";
@@ -74,16 +75,16 @@ function oneLine(text) {
 }
 
 export async function buildLlmsTxt() {
-  const { GCP_BUSINESS, servicesData, locations, homeFaqs } = await loadData();
+  const { GCP_BUSINESS, servicesData, locations, homeFaqs, publicMarketing } = await loadData();
   const { ratingValue, reviewCount } = GCP_BUSINESS.aggregateRating;
   const site = GCP_BUSINESS.url;
 
   const head = [
     `# ${GCP_BUSINESS.name}`,
     "",
-    `> Palm tree trimming, diamond cutting, trunk skinning, installation, removal and hurricane preparation across Northwest Florida's Emerald Coast.`,
+    `> ${publicMarketing.servicesText}`,
     "",
-    `${GCP_BUSINESS.legalName} is a palm-tree specialist serving Northwest Florida. Licensed and insured, with general liability insurance and workers' compensation coverage on every job. ${ratingValue} rating from ${reviewCount} Google reviews (checked ${GCP_BUSINESS.aggregateRating.checkedAt}).`,
+    `${GCP_BUSINESS.legalName} provides tree services and palm care across Northwest Florida. Experienced tree crews include an experienced climber. Over a thousand properties served. Owner-confirmed ${ratingValue} rating and ${reviewCount} five-star Google reviews as of ${GCP_BUSINESS.aggregateRating.checkedAt}; existing review excerpts checked September 18, 2026.`,
     "",
     "## Contact",
     "",
@@ -91,7 +92,6 @@ export async function buildLlmsTxt() {
     `- Email: ${GCP_BUSINESS.email}`,
     `- Website: ${site}`,
     `- Base: ${GCP_BUSINESS.address.addressLocality}, ${GCP_BUSINESS.address.addressRegion}`,
-    `- Hours: Monday–Saturday; storm and emergency calls answered seven days a week`,
     "",
     "## Service area",
     "",
@@ -111,13 +111,11 @@ export async function buildLlmsTxt() {
     "",
     "## What makes us different",
     "",
-    "- Palm specialists, not a generalist tree crew — trimming, diamond cutting and trunk skinning are core work, not add-ons.",
-    "- Free quotes from a texted photo: send a photo to " +
-      GCP_BUSINESS.phoneDisplay +
-      " and we usually reply with a price the same day.",
-    "- Proper technique: we remove dead fronds, seed pods and flower stalks — never healthy green fronds or the crown.",
-    "- Full cleanup and haul-off included on every job, with before/after photos attached to the invoice.",
-    "- HOA, condo and commercial programs with volume pricing, board reporting and priority hurricane response.",
+    "- Tree services and established palm care are equally important, with experienced crews and an experienced climber.",
+    "- Tree scope is based on species, condition, property goals and access; cleanup and haul-away scope is agreed in writing.",
+    "- Stump grinding is separately quoted when requested.",
+    "- Stay clear of unstable trees; contact emergency services or the utility for downed wires or immediate danger.",
+    "- Storm cleanup scheduling is subject to safe access and conditions; a quote request is not emergency dispatch.",
     "",
     "## Optional",
     "",
@@ -137,7 +135,12 @@ export async function buildLlmsTxt() {
 
   return {
     short: head.join("\n"),
-    full: [...head, ...faq].join("\n"),
+    full: [...head, ...faq, ...servicesData.filter((service) => !service.slug.startsWith("palm")).flatMap((service) => [
+      `## ${service.title}`, "", service.heroSubheading, "", ...service.introParagraphs,
+      "", service.scopeHeading, ...service.benefits, "", service.secondaryHeading, ...service.secondaryContent,
+      ...(service.faqs || []).flatMap((item) => [`### ${item.q}`, "", item.a, ""]),
+      `[Request a quote](/quote?${new URLSearchParams({ service: service.title, source: `service_${service.slug}` })})`, "",
+    ])].join("\n"),
   };
 }
 

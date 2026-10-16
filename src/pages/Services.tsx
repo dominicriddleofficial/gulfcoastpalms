@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
-import { Phone, MessageSquare, ArrowRight } from "lucide-react";
+import { Phone, MessageSquare, ArrowRight, TreeDeciduous } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
+import { publicMarketing } from "@/data/publicMarketing";
 import { servicesData } from "@/data/services";
 import palmTrimming from "@/assets/palm-trimming.jpg";
 import diamondCutting from "@/assets/diamond-cutting.jpg";
@@ -28,25 +29,27 @@ const fadeUp = {
 const Services = () => {
   return (
     <Layout>
-      <SEOHead title="Palm Tree Services — Trimming, Removal, Installation | Gulf Coast Palms" description="Full-service palm care across NW Florida. Trimming, diamond cutting, trunk skinning, installation, removal, and hurricane prep. Free estimates." canonicalUrl="/services" />
+      <SEOHead title="Tree Services & Palm Care | Gulf Coast Palms | Emerald Coast FL" description="Tree removal, tree trimming, storm cleanup and palm care including trimming, installation and diamond cutting across the Emerald Coast. Free quotes." canonicalUrl="/services" />
       <section className="bg-palm-dark section-padding text-center">
         <div className="container mx-auto">
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="font-body text-sm uppercase tracking-[0.2em] text-palm-gold font-semibold mb-3">
             Our Services
           </motion.p>
           <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="font-display text-4xl md:text-6xl font-bold text-primary-foreground mb-4">
-            Professional Palm Tree Services
+            {publicMarketing.servicesHeading}
           </motion.h1>
           <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="font-body text-lg text-palm-sand/70 max-w-2xl mx-auto">
-            From palm tree trimming and diamond cutting to installation and safe removals — we specialize exclusively in palm trees across the Emerald Coast.
+            {publicMarketing.servicesText}
           </motion.p>
         </div>
       </section>
 
       <section className="section-padding bg-background">
         <div className="container mx-auto">
+          {[{ label: "Tree Services", items: servicesData.filter((s) => !s.slug.startsWith("palm")) }, { label: "Palm Care", items: servicesData.filter((s) => s.slug.startsWith("palm")) }].map((group) => <div key={group.label} className="mb-12">
+          <h2 className="font-display text-3xl font-bold text-foreground mb-6">{group.label}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {servicesData.map((service, i) => (
+            {group.items.map((service, i) => (
               <motion.div key={service.slug} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-50px" }} variants={fadeUp} custom={i}>
                 <Link to={`/services/${service.slug}`} className="group block rounded-2xl overflow-hidden bg-card shadow-lg hover:shadow-xl transition-shadow h-full">
                   {serviceImages[service.slug] ? (
@@ -55,7 +58,7 @@ const Services = () => {
                     </div>
                   ) : (
                     <div className="h-48 bg-secondary flex items-center justify-center">
-                      <span className="font-display text-3xl text-primary/30">🌴</span>
+                      <TreeDeciduous className="w-16 h-16 text-primary" aria-hidden="true" />
                     </div>
                   )}
                   <div className="p-6">
@@ -66,17 +69,22 @@ const Services = () => {
                 </Link>
               </motion.div>
             ))}
+          </div></div>)}
+          <div className="flex flex-wrap gap-6 font-body text-primary">
+            <Link to="/services/landscaping-services">Landscaping Services</Link>
+            <Link to="/commercial">Commercial &amp; Property Managers</Link>
+            <Link to="/palm-trees/buy">Buy Palm Trees</Link>
           </div>
         </div>
       </section>
 
       <section className="section-padding bg-primary text-center">
         <div className="container mx-auto">
-          <h2 className="font-display text-4xl md:text-5xl font-bold text-primary-foreground mb-4">Get an Instant Quote</h2>
-          <p className="font-body text-lg text-primary-foreground/80 mb-8 max-w-xl mx-auto">Text us a photo of your palm trees for a fast, free estimate.</p>
+          <h2 className="font-display text-4xl md:text-5xl font-bold text-primary-foreground mb-4">Get a Free Quote</h2>
+          <p className="font-body text-lg text-primary-foreground/80 mb-8 max-w-xl mx-auto">Tell us about your trees or palms for a property-specific estimate.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a href="sms:8509101290&body=Hi%20Gulf%20Coast%20Palms!%20I%27d%20like%20a%20quote%20%E2%80%94%20here%27s%20a%20photo%20of%20my%20palms%3A" className="inline-flex items-center justify-center gap-3 px-10 py-5 rounded-xl bg-primary-foreground text-primary font-body font-bold text-xl hover:scale-105 transition-transform shadow-xl">
-              <MessageSquare className="w-6 h-6" /> Text Us a Photo for Instant Quote
+              <MessageSquare className="w-6 h-6" /> Text Us a Photo
             </a>
             <a href="tel:8509101290" className="inline-flex items-center justify-center gap-3 px-8 py-5 rounded-xl border-2 border-primary-foreground text-primary-foreground font-body font-bold text-lg hover:bg-primary-foreground/10 transition-colors">
               <Phone className="w-5 h-5" /> (850) 910-1290

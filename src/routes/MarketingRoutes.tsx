@@ -48,6 +48,7 @@ const PalmTreeInstallation = lazy(() => import("@/pages/services/PalmTreeInstall
 const PalmTreeRemoval = lazy(() => import("@/pages/services/PalmTreeRemoval"));
 const PalmDiamondCutting = lazy(() => import("@/pages/services/PalmDiamondCutting"));
 const PalmTreeTrunkSkinning = lazy(() => import("@/pages/services/PalmTreeTrunkSkinning"));
+const TreeService = lazy(() => import("@/pages/services/TreeService"));
 const TreeTrimmingRemoval = lazy(() => import("@/pages/services/TreeTrimmingRemoval"));
 const LandscapingServices = lazy(() => import("@/pages/services/LandscapingServices"));
 
@@ -77,6 +78,9 @@ export const MarketingRoutes = () => (
     <Route path="/services/palm-tree-removal" element={<PalmTreeRemoval />} />
     <Route path="/services/palm-diamond-cutting" element={<PalmDiamondCutting />} />
     <Route path="/services/palm-tree-trunk-skinning" element={<PalmTreeTrunkSkinning />} />
+    <Route path="/services/tree-removal" element={<TreeService slug="tree-removal" />} />
+    <Route path="/services/tree-trimming" element={<TreeService slug="tree-trimming" />} />
+    <Route path="/services/storm-damage-cleanup" element={<TreeService slug="storm-damage-cleanup" />} />
     <Route path="/services/tree-trimming-removal" element={<TreeTrimmingRemoval />} />
     <Route path="/services/landscaping-services" element={<LandscapingServices />} />
 

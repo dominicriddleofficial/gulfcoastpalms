@@ -8,6 +8,8 @@ import { trackEvent } from "@/lib/analytics";
 import { serviceNavLinks } from "@/data/services";
 import { locations } from "@/data/locations";
 import { PHONE_NUMBER_TEL, PHONE_NUMBER_DISPLAY, SMS_NUMBER } from "@/data/contact";
+import { publicMarketing } from "@/data/publicMarketing";
+import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 
 const Quote = () => {
@@ -79,8 +81,8 @@ const Quote = () => {
   return (
     <Layout>
       <SEOHead
-        title="Get a Free Palm Tree Quote | Gulf Coast Palms"
-        description="Request a free, no-obligation quote for palm tree trimming, removal, installation, or hurricane prep across Northwest Florida."
+        title="Get a Free Tree Service & Palm Care Quote | Gulf Coast Palms"
+        description="Request a free quote for tree removal, tree trimming, storm cleanup or palm care across the Emerald Coast. Call or text (850) 910-1290."
         canonicalUrl="/quote"
       />
       <section className="section-padding">
@@ -90,7 +92,7 @@ const Quote = () => {
               Get a Free Quote
             </h1>
             <p className="font-body text-base md:text-lg text-muted-foreground">
-              Tell us about your palms — we typically respond within 15 minutes during business hours.
+              {publicMarketing.quoteText}
             </p>
           </div>
 
@@ -226,18 +228,18 @@ const Quote = () => {
 
             <div>
               <label htmlFor="q-message" className="block font-body text-sm font-medium text-foreground mb-1">
-                Tell us about your palms
+                Tell us about your trees or palms
               </label>
               <textarea
                 id="q-message"
                 rows={4}
                 value={form.message}
                 onChange={(e) => update("message", e.target.value)}
-                placeholder="Number of palms, approximate height, access notes…"
+                placeholder="Tree or palm species, work needed, approximate size, access notes…"
                 className="w-full px-3 py-2.5 rounded-lg border border-input bg-background font-body text-base focus:outline-none focus:ring-2 focus:ring-ring resize-y"
               />
               <p className="mt-2 font-body text-xs text-muted-foreground">
-                💡 For the fastest quote, text a photo of your palms to{" "}
+                You can text a photo taken from a safe distance to{" "}
                 <a href={SMS_NUMBER} className="text-primary font-semibold underline-offset-2 hover:underline">
                   {PHONE_NUMBER_DISPLAY}
                 </a>
@@ -245,7 +247,7 @@ const Quote = () => {
               </p>
             </div>
 
-            <button
+            <Button
               type="submit"
               disabled={submitting}
               className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-primary text-primary-foreground font-body font-bold text-base hover:bg-palm-light transition-colors disabled:opacity-60"
@@ -259,7 +261,7 @@ const Quote = () => {
                   <Send className="w-5 h-5" /> Request My Free Quote
                 </>
               )}
-            </button>
+            </Button>
 
             <p className="font-body text-xs text-muted-foreground text-center">
               By submitting you agree to be contacted about your request. We never share your info.

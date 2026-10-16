@@ -9,6 +9,18 @@ export interface HomeFaqItem {
 }
 
 export const homeFaqs: HomeFaqItem[] = [
+{
+  "q": "Do you provide tree services as well as palm care?",
+  "a": "Yes. Tree trimming and removal for oaks and pines, storm cleanup and established palm care are equally important at Gulf Coast Palms. Our experienced tree crews include an experienced climber."
+},
+{
+  "q": "How do I choose between tree trimming and removal?",
+  "a": "Describe your property goals and the tree’s condition. An on-site assessment helps define branch work or discuss removal, with the agreed scope in writing."
+},
+{
+  "q": "What should I do around storm-damaged trees?",
+  "a": "Stay clear of fallen, broken or leaning trees, unstable limbs and downed wires. Contact emergency services or the utility for immediate danger. Cleanup scheduling depends on safe access and conditions."
+},
   {
     q: "How often should I have my palm trees trimmed?",
     a: "Trimming depends on the species and condition of the palm, not a fixed calendar. Some palms shed their old fronds naturally and need little pruning. We assess dead fronds, flower stalks, fruit and access hazards while preserving healthy green fronds. An inspection or maintenance visit does not mean your palm needs another trim.",
@@ -19,7 +31,7 @@ export const homeFaqs: HomeFaqItem[] = [
   },
   {
     q: "Do you offer free estimates?",
-    a: "Absolutely! We provide free, no-obligation estimates for all of our services. Just give us a call or text at (850) 910-1290 and we'll get you a quote — usually the same day. For most jobs, we can provide an accurate estimate from photos you text us.",
+    a: "Yes. Call or request a free quote for tree services or palm care. Describe the property, work needed and access. Photos taken from a safe distance can help explain the request; an on-site evaluation may be needed to confirm the scope.",
   },
   {
     q: "What areas do you serve?",
@@ -27,7 +39,7 @@ export const homeFaqs: HomeFaqItem[] = [
   },
   {
     q: "Are you licensed and insured?",
-    a: "Yes, Gulf Coast Palms is fully licensed and insured. We carry general liability insurance and workers' compensation coverage, giving you complete peace of mind on every job. We're happy to provide proof of insurance upon request.",
+    a: "Ask us for current business and insurance documentation when discussing your quote. Confirm the documentation appropriate to your proposed work before approving the scope.",
   },
   {
     q: "How much does palm tree trimming cost?",
@@ -35,7 +47,7 @@ export const homeFaqs: HomeFaqItem[] = [
   },
   {
     q: "Can you remove a palm tree that's close to my house?",
-    a: "Yes! We specialize in safe palm tree removal, even in tight spaces near structures, power lines, and fences. Our team uses professional equipment and techniques to bring palms down in controlled sections. We also offer stump grinding to leave your yard clean and ready for whatever comes next.",
+    a: "Nearby structures and access are considered before a removal scope is confirmed. Request an on-site evaluation. Keep clear of unstable trees, and contact emergency services or the utility for downed wires or immediate danger.",
   },
   {
     q: "What's the best time of year to install new palm trees?",
@@ -43,15 +55,15 @@ export const homeFaqs: HomeFaqItem[] = [
   },
   {
     q: "Do you haul away all the debris?",
-    a: "Yes. Full cleanup and haul-off are included on every job unless you specifically ask us to leave fronds or logs on-site. When we leave, the driveway is blown off and the property looks better than when we arrived.",
+    a: "Cleanup and haul-away should be described in the written scope. Tell us before approval if you want logs, branches or fronds left in an agreed location. Stump grinding is separately quoted when requested.",
   },
   {
     q: "Do I need to be home when you work?",
-    a: "No, you do not need to be home. Most palm and tree work happens outside and we can complete the job as long as we have access to the palms. We'll send before/after photos and a text when the crew is finished.",
+    a: "Discuss access and attendance when arranging the work. Tell us about gates, pets and any parts of the property that should not be entered so the plan is clear before scheduling.",
   },
   {
     q: "How fast can you come out?",
-    a: "Most standard palm and tree jobs are scheduled within a few days of the quote. Emergency work (storm damage, hangers over a house, blocked driveways) is prioritized — call (850) 910-1290 and we'll do everything we can to get a crew there the same day or next morning.",
+    a: "Scheduling depends on the proposed work, availability, property access and conditions. Storm work is subject to safe access and weather. A quote request is not emergency dispatch; contact emergency services or the utility for immediate danger or downed wires.",
   },
   {
     q: "When should I schedule hurricane prep for my palms?",
@@ -59,11 +71,11 @@ export const homeFaqs: HomeFaqItem[] = [
   },
   {
     q: "Do you offer stump grinding?",
-    a: "For palm stumps and small tree stumps we handle it in-house on the same visit as the removal. For very large hardwood stumps we sometimes coordinate with a stump-grinding partner. Call or text (850) 910-1290 with a photo and we'll tell you honestly what we can do.",
+    a: "Stump grinding is separately quoted when requested. Ask about it before approving the removal scope so you understand the follow-on work and what will remain.",
   },
   {
     q: "How does the text-a-photo quote work?",
-    a: "Snap a clear photo showing the whole palm or tree from the base up, text it to (850) 910-1290 with your address and what you need, and we'll usually reply with a price the same day. Photos beat guesswork — no site visit required for most jobs.",
+    a: "From a safe distance, take a photo of the tree or palm and text it with the property address and work needed to (850) 910-1290. Do not approach unstable trees or wires to take photos. An on-site evaluation may still be needed.",
   },
   {
     q: "Do you work with HOAs and property managers?",
@@ -87,7 +99,7 @@ export const homeFaqs: HomeFaqItem[] = [
   },
   {
     q: "What happens if a storm knocks a palm onto my house or driveway?",
-    a: "Call or text (850) 910-1290 immediately with a photo. Storm-response jobs move to the front of the schedule. We work with insurance-claim customers routinely and can provide photo documentation for adjusters.",
+    a: "Keep people and pets clear of unstable trees and broken limbs. For immediate danger or downed wires, contact emergency services or the utility. For a non-emergency cleanup request, describe the situation from a safe distance; the work needs on-site evaluation and scheduling subject to safe conditions.",
   },
   {
     q: "If you trim a palm, will the fronds grow back?",
@@ -99,6 +111,6 @@ export const homeFaqs: HomeFaqItem[] = [
   },
   {
     q: "Do you work weekends?",
-    a: "Yes. Most work happens Monday through Saturday, and we take emergency and storm-response calls seven days a week. If you need a Sunday visit, call or text (850) 910-1290 and we'll do our best to fit you in.",
+    a: "Contact us to discuss scheduling and availability for your property. A service request does not guarantee a particular day or round-the-clock storm response.",
   },
 ];

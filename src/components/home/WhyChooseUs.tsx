@@ -16,7 +16,7 @@ const points: { text: string; Icon: LucideIcon; amber?: boolean }[] = [
   { text: "5-Star Rated Across the Emerald Coast", Icon: Star, amber: true },
   { text: "Licensed & Insured Professionals", Icon: ShieldCheck },
   { text: "Diamond Cutting & Coastal Palm Specialists", Icon: Scissors },
-  { text: "Large Properties with 100+ Palms", Icon: Building2 },
+  { text: "Experienced Tree Crews & Climber", Icon: Building2 },
   { text: "Trusted by HOAs & Waterfront Estates", Icon: Home },
 ];
 
@@ -74,7 +74,7 @@ const WhyChooseUs = () => (
         custom={0}
         className="font-body text-palm-sand/80 max-w-3xl mx-auto text-center leading-relaxed"
       >
-        Our experienced team corrects damage from improper trimming and ensures cleaner cuts, stronger crowns, and healthier trees built to withstand Florida storms.
+        From oaks and pines to coastal palms, our team brings hands-on experience to tree trimming, removal, storm cleanup and established palm care. We discuss your property goals and the scope of work before scheduling.
       </motion.p>
     </div>
   </section>

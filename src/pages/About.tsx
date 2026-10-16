@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Phone, MapPin, TreePalm, Heart, Users } from "lucide-react";
+import { publicMarketing } from "@/data/publicMarketing";
 import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
 import heroImage from "@img/hero-palms.jpg?format=webp&quality=75&w=1600";
@@ -19,8 +20,8 @@ const About = () => {
   return (
     <Layout>
       <SEOHead
-        title="About Gulf Coast Palms | Navarre Beach's Palm Tree Specialists"
-        description="Family-owned and operated in Navarre Beach, FL. Learn why NW Florida homeowners trust Gulf Coast Palms for expert palm tree trimming, removal, and hurricane preparation."
+        title="About Gulf Coast Palms | Tree Services & Palm Care"
+        description="Experienced tree crews, an experienced climber and established palm expertise across Northwest Florida’s Emerald Coast. Call (850) 910-1290."
         canonicalUrl="/about"
       />
       {/* Hero */}
@@ -51,7 +52,7 @@ const About = () => {
             transition={{ delay: 0.2 }}
             className="font-body text-lg text-palm-sand/80 max-w-2xl mx-auto"
           >
-            Your trusted local experts for all palm tree services along Florida's Emerald Coast.
+            {publicMarketing.aboutText}
           </motion.p>
         </div>
       </section>
@@ -67,7 +68,7 @@ const About = () => {
               Gulf Coast Palms was founded with a simple mission: to provide the highest quality palm tree care on Florida's Gulf Coast. With over 500 palm jobs completed in the summer of 2025 alone, we've earned the trust of homeowners, property managers, and businesses across the panhandle.
             </motion.p>
             <motion.p variants={fadeUp} custom={2} className="font-body text-muted-foreground leading-relaxed mb-6">
-              Our team brings years of hands-on experience in palm trimming, diamond cutting, trunk skinning, and professional palm installations and removals. We treat every property like it's our own — with care, precision, and respect.
+              Our experienced tree crews include an experienced climber and provide trimming and removal for oaks and pines, plus storm cleanup. Alongside that work, our team brings established hands-on expertise in palm trimming, diamond cutting, trunk skinning, installations and removals. Over a thousand properties served across the Emerald Coast.
             </motion.p>
             <motion.p variants={fadeUp} custom={3} className="font-body text-muted-foreground leading-relaxed">
               From residential homes to large commercial properties, we deliver consistent 5-star quality that keeps our customers coming back season after season. We're fully insured and committed to your complete satisfaction.
@@ -92,7 +93,7 @@ const About = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               { icon: TreePalm, title: "Expert Knowledge", desc: "Deep understanding of palm species native to the Florida panhandle and the best care techniques for our coastal climate." },
-              { icon: Heart, title: "Passion for Palms", desc: "We genuinely love what we do. Every cut, every trim, and every install is done with pride and craftsmanship." },
+              { icon: Heart, title: "Experienced Tree Crews", desc: "Tree trimming, removal and storm cleanup for oaks and pines, with an experienced climber on our team." },
               { icon: Users, title: "Community Focused", desc: "Proud to serve our neighbors across Northwest Florida — from Navarre to Perdido Key and everywhere in between." },
             ].map((item, i) => (
               <motion.div
@@ -139,7 +140,7 @@ const About = () => {
       <section className="section-padding bg-primary text-center">
         <div className="container mx-auto">
           <h2 className="font-display text-4xl md:text-5xl font-bold text-primary-foreground mb-4">
-            Let's Talk About Your Palms
+            Let's Talk About Your Trees &amp; Palms
           </h2>
           <p className="font-body text-lg text-primary-foreground/80 mb-8 max-w-xl mx-auto">
             Call or text us for a free quote. We'd love to help you make your property stand out.

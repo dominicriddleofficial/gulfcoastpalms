@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { Phone, Star, CheckCircle, MapPin, ArrowRight, ShieldCheck, Clock, MessageSquare, HelpCircle, Tag } from "lucide-react";
 import { Link } from "react-router-dom";
+import TreeAreaLinks from "@/components/TreeAreaLinks";
 import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
 import { ServiceJsonLd, BreadcrumbJsonLd, FAQPageJsonLd } from "@/components/JsonLd";
@@ -208,6 +209,8 @@ const LocationPage = ({ location }: Props) => {
           </div>
         </div>
       </section>
+
+      <TreeAreaLinks />
 
       {/* FAQ */}
       {location.faqs && location.faqs.length > 0 && (
