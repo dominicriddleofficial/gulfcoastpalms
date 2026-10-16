@@ -3,11 +3,11 @@ import { Leaf, ShieldCheck, MapPin, Zap, Wind } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 const badges: { Icon: LucideIcon; label: string; sub: string; mobileHidden: boolean; amber?: boolean }[] = [
-  { Icon: Leaf, label: "Palm Specialists", sub: "Not a generalist tree service", mobileHidden: false },
-  { Icon: ShieldCheck, label: "Licensed & Insured", sub: "Full coverage on every job", mobileHidden: false },
+  { Icon: Leaf, label: "Trees & Palms", sub: "Experienced crews", mobileHidden: false },
+  { Icon: ShieldCheck, label: "Licensed & Insured", sub: "Ask for current documentation", mobileHidden: false },
   { Icon: MapPin, label: "Locally Owned", sub: "Navarre Beach, FL", mobileHidden: false },
-  { Icon: Zap, label: "Fast Response", sub: "Same-day estimates", mobileHidden: false, amber: true },
-  { Icon: Wind, label: "Hurricane Ready", sub: "Emergency service available", mobileHidden: true },
+  { Icon: Zap, label: "Free Quotes", sub: "Property-specific scope", mobileHidden: false, amber: true },
+  { Icon: Wind, label: "Storm Cleanup", sub: "On-site evaluation", mobileHidden: true },
 ];
 
 const TrustBadges = () => (

@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
 import { MapPin, ArrowRight, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
+import TreeAreaLinks from "@/components/TreeAreaLinks";
+import { publicMarketing } from "@/data/publicMarketing";
 import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
 import { locations } from "@/data/locations";
@@ -30,15 +32,16 @@ const ServiceAreas = () => {
               Service Areas
             </motion.p>
             <motion.h1 variants={fadeUp} custom={1} className="font-display text-4xl md:text-6xl font-bold text-primary-foreground mb-4">
-              Palm Tree Trimming Across the Emerald Coast
+              {publicMarketing.areasHeading}
             </motion.h1>
             <motion.p variants={fadeUp} custom={2} className="font-body text-lg text-palm-sand/80 max-w-2xl mx-auto">
-              Gulf Coast Palms proudly provides professional palm tree trimming, diamond cutting, and expert palm care throughout Northwest Florida's Gulf Coast communities.
+              {publicMarketing.areasText}
             </motion.p>
           </motion.div>
         </div>
       </section>
 
+      <TreeAreaLinks />
       <ServiceAreaMap />
 
       <section className="section-padding bg-background">

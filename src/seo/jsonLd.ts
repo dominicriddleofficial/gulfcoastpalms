@@ -9,7 +9,7 @@
  *
  * Rules:
  *  - Facts only. Ratings/counts come from GCP_BUSINESS.aggregateRating, which
- *    mirrors the real Google Business Profile numbers. Never inflate them.
+ *    records owner-confirmed totals separately from verified excerpts. Never inflate them.
  *  - FAQPage answers mirror the visible copy word for word (same data modules
  *    the React pages render from).
  *  - Only routes listed in `src/seo/routes.data.mjs` are emitted, so
@@ -219,7 +219,7 @@ export function trustFactsText(): string[] {
   const { ratingValue, reviewCount } = GCP_BUSINESS.aggregateRating;
   return [
     `Gulf Coast Palms — call or text ${GCP_BUSINESS.phoneDisplay} for a free quote.`,
-    `We hold a ${ratingValue} rating from ${reviewCount} Google reviews (checked ${GCP_BUSINESS.aggregateRating.checkedAt}) and are fully licensed and insured, with general liability insurance and workers' compensation coverage on every job.`,
+    `Owner-confirmed ${ratingValue} rating and ${reviewCount} five-star Google reviews as of ${GCP_BUSINESS.aggregateRating.checkedAt}. Review excerpts independently checked September 18, 2026.`,
     `Serving the entire Emerald Coast: ${GCP_BUSINESS.areaServed.join(", ")}.`,
   ];
 }

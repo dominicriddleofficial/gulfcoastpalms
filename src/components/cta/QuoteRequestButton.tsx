@@ -5,6 +5,7 @@ import { trackEvent } from "@/lib/analytics";
 
 interface QuoteRequestButtonProps {
   source?: string;
+  service?: string;
   variant?: "primary" | "secondary";
   className?: string;
   children?: ReactNode;
@@ -23,12 +24,13 @@ const variantClasses = {
  */
 const QuoteRequestButton = ({
   source = "unknown",
+  service,
   variant = "primary",
   className = "",
   children,
 }: QuoteRequestButtonProps) => (
   <Link
-    to="/quote"
+    to={service ? `/quote?${new URLSearchParams({ service, source }).toString()}` : "/quote"}
     onClick={() => {
       if (source === "hero") trackEvent("hero_cta_click", { source, cta_text: "quote_request" });
       else if (source.startsWith("service")) trackEvent("service_page_cta_click", { source, cta_text: "quote_request" });

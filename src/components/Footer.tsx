@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Phone, MessageSquare, MapPin } from "lucide-react";
 import { locations } from "@/data/locations";
-import { serviceNavLinks } from "@/data/services";
+import { serviceGroups } from "@/data/services";
 import { GOOGLE_REVIEW_URL, aggregateRating } from "@/data/reviews";
 import { trackEvent } from "@/lib/analytics";
 import { GCP_BUSINESS, TEL_HREF, SMS_HREF } from "@/lib/business-info";
@@ -16,7 +16,7 @@ const Footer = () => {
               Gulf Coast Palms
             </h3>
             <p className="font-body text-palm-sand/70 leading-relaxed">
-              Professional palm tree services for Florida's Gulf Coast.
+              Tree Services &amp; Palm Care for Florida's Gulf Coast.
               Over a thousand properties served across the Emerald Coast · {aggregateRating.count} Google reviews.
             </p>
           </div>
@@ -24,11 +24,13 @@ const Footer = () => {
           <div>
             <h4 className="font-display font-bold text-lg mb-4">Services</h4>
             <nav className="flex flex-col gap-2">
-              {serviceNavLinks.map((link) => (
+              {serviceGroups.map((group) => <div key={group.label} className="flex flex-col gap-2">
+                <p className="font-body font-semibold text-palm-gold text-sm mt-2">{group.label}</p>
+                {group.links.map((link) => (
                 <Link key={link.to} to={link.to} className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">
                   {link.label}
                 </Link>
-              ))}
+              ))}</div>)}
               <Link to="/palm-tree-maintenance-plans" className="font-body text-palm-sand/70 hover:text-palm-light transition-colors text-sm">
                 Maintenance Plans
               </Link>

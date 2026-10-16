@@ -54,7 +54,7 @@ const GoogleReviews = () => {
             </div>
             <span className="font-body text-sm text-muted-foreground">based on {aggregateRating.count} Google reviews</span>
           </motion.div>
-          <p className="font-body text-xs text-muted-foreground mt-3">Review excerpts and rating checked September 18, 2026. Read the full reviews on Google.</p>
+          <p className="font-body text-xs text-muted-foreground mt-3">Rating and 168 five-star reviews owner-confirmed October 15, 2026. Review excerpts checked September 18, 2026. Read the full reviews on Google.</p>
         </motion.div>
 
         {/* Carousel — mobile scroll, desktop grid */}

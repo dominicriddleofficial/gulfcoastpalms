@@ -20,7 +20,7 @@ const CTASection = () => (
           Get a Free Quote Today
         </motion.h2>
         <motion.p variants={fadeUp} custom={1} className="font-body text-lg text-primary-foreground/80 mb-8 max-w-xl mx-auto">
-          Call or text us for a free estimate on any palm tree service. Fast response guaranteed.
+          Call or text us for a free estimate on tree trimming, removal, storm cleanup or palm care.
         </motion.p>
         <motion.a
           variants={fadeUp}

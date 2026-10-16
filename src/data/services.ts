@@ -1,4 +1,5 @@
 export interface ServiceData {
+  scopeHeading?: string;
   slug: string;
   title: string;
   metaTitle: string;
@@ -20,6 +21,282 @@ export interface ServiceData {
 }
 
 export const servicesData: ServiceData[] = [
+{
+  "slug": "tree-trimming-removal",
+  "title": "Tree Trimming & Removal",
+  "metaTitle": "Tree Trimming & Removal | Emerald Coast FL | Gulf Coast Palms",
+  "metaDescription": "Tree trimming, removal and storm cleanup for oaks and pines across the Emerald Coast. Experienced crews and on-site evaluation. Call (850) 910-1290.",
+  "heroSubheading": "Tree removal, trimming and storm cleanup across Northwest Florida, from Perdido Key to 30A.",
+  "introParagraphs": [
+    "Gulf Coast Palms provides general tree services as well as established palm care. Our experienced tree crews include an experienced climber. We work with property owners on trimming and removal for oaks and pines and on cleanup after storms. Whether a branch needs attention, a tree is in the wrong location or storm debris is blocking part of your property, the first step is understanding the site and the scope of work.",
+    "Trimming, removal and storm cleanup are different jobs. Trimming focuses on selected branches and property goals; removal addresses a whole tree; storm work begins with the condition of fallen, broken or leaning trees and whether the site can be accessed. An on-site evaluation helps determine what can be undertaken and how the written scope should describe it.",
+    "For properties with both trees and palms, tell us about both when requesting a quote. Palm trimming, installations, removals, diamond cutting and trunk skinning remain core services. We assess the work appropriate to each tree rather than applying a palm pruning approach to an oak or pine."
+  ],
+  "benefits": [
+    "On-site review of tree condition and property goals",
+    "Access and nearby structures considered",
+    "Written scope for the agreed work",
+    "Cleanup and haul-away scope discussed",
+    "Stump grinding separately quoted when requested",
+    "Tree and palm work discussed together"
+  ],
+  "scopeHeading": "Planning Your Tree Work",
+  "secondaryHeading": "Choose the Service That Fits Your Property",
+  "secondaryContent": [
+    "Tree removal starts with the reason for removal, the tree’s size and condition, and its position relative to buildings, fences and access routes. Discuss stump grinding before approving the quote: it is separately quoted when requested, not automatically part of a tree removal.",
+    "Tree trimming starts with your goals and a species-specific assessment. Clearance around a driveway, dead or damaged branches and the condition of an oak or pine influence which branches are considered. A request to make a tree smaller is not, by itself, a complete pruning scope.",
+    "Storm cleanup requires evaluation before work is scheduled. Keep away from unstable trees and suspended branches. For downed wires or immediate danger, contact emergency services or the utility. Scheduling depends on safe access and conditions; a quote request is not emergency dispatch.",
+    "Costs depend on tree size, condition, access, nearby structures and debris volume. Tell us whether branches or logs should be hauled away or left in an agreed location. The written scope should identify what is included and what is separately quoted, so you can compare the proposed work rather than just a headline price."
+  ],
+  "ctaHeading": "Request a Tree Service Quote",
+  "ctaText": "Tell us what needs attention and how to access the property. Call or request a free quote for work across the Emerald Coast.",
+  "relatedLinks": [
+    {
+      "label": "Tree Removal",
+      "to": "/services/tree-removal"
+    },
+    {
+      "label": "Tree Trimming",
+      "to": "/services/tree-trimming"
+    },
+    {
+      "label": "Storm Damage Cleanup",
+      "to": "/services/storm-damage-cleanup"
+    },
+    {
+      "label": "Palm Tree Trimming",
+      "to": "/services/palm-tree-trimming"
+    }
+  ],
+  "faqs": [
+    {
+      "q": "Do you work on trees as well as palms?",
+      "a": "Yes. Gulf Coast Palms provides tree trimming and removal for oaks and pines, storm cleanup, and established palm care. Our experienced tree crews include an experienced climber."
+    },
+    {
+      "q": "Which tree service should I request?",
+      "a": "Choose Tree Trimming for branch work, Tree Removal for a whole tree, or Storm Damage Cleanup for fallen, broken or leaning trees after weather damage. If unsure, describe the situation in your quote request."
+    },
+    {
+      "q": "What information helps with a tree quote?",
+      "a": "Include the property address, the work you want, tree species if known, access limitations and nearby structures. Photos taken from a safe distance can help, but do not replace on-site evaluation where needed."
+    },
+    {
+      "q": "Can you quote trees and palms at the same property?",
+      "a": "Yes. Describe both in your request. Tree and palm work can be discussed together, with the agreed tasks and cleanup described in the written scope."
+    }
+  ]
+},
+{
+  "slug": "tree-removal",
+  "title": "Tree Removal",
+  "metaTitle": "Tree Removal | Emerald Coast FL | Gulf Coast Palms",
+  "metaDescription": "Tree removal for oaks and pines across Navarre, Pensacola, Destin and the Emerald Coast. Site assessment, written scope and cleanup planning. Free quotes.",
+  "heroSubheading": "On-site assessment and a written removal scope for trees across the Emerald Coast.",
+  "introParagraphs": [
+    "Removing a tree is a property-specific decision. An oak or pine may be dead, damaged, poorly positioned or no longer compatible with your plans for the space. Gulf Coast Palms begins by discussing the reason for removal and evaluating the tree and site. Our experienced tree crews include an experienced climber; the approach to a particular job depends on the condition of the tree and the access available.",
+    "The assessment considers size, trunk and branch condition, lean, surrounding vegetation and nearby structures. Buildings, fences, driveways and neighboring property affect the work area. Tell us about narrow gates, restricted parking, pets, underground irrigation or other access concerns when requesting a quote. Photos from a safe distance help explain the situation, but an on-site evaluation may be needed before the scope can be confirmed.",
+    "The written quote should identify the tree or trees to be removed, the agreed work and the cleanup and haul-away scope. If you want logs left on-site, say where and discuss that before approval. Do not assume removal also includes stump grinding, new planting or repairs to surrounding landscaping; those tasks need to be discussed separately."
+  ],
+  "benefits": [
+    "Tree and site assessment before confirming scope",
+    "Access routes and nearby structures reviewed",
+    "Identified trees and agreed work in a written scope",
+    "Debris cleanup and haul-away scope agreed",
+    "Stump grinding separately quoted when requested",
+    "Property access and scheduling discussed"
+  ],
+  "scopeHeading": "Planning Your Tree Work",
+  "secondaryHeading": "What Affects a Tree Removal Quote?",
+  "secondaryContent": [
+    "Tree size and species affect the amount and type of material involved. A broad oak canopy and a tall pine present different site considerations. Condition matters as well: broken limbs, decay or an unusual lean can change the evaluation and the work that can be undertaken.",
+    "Access is a major factor. The distance between the tree and a usable access route, the width of gates and the space available around the tree all influence the scope. Nearby buildings or fences require site-specific planning. Tell us about the full setting, not just the height of the tree.",
+    "Cleanup and haul-away should be explicit. Branches, trunk sections and existing debris can mean very different volumes of material. Ask what will be removed and what will remain after the agreed work. Stump grinding is separately quoted when requested, and any follow-on landscaping should be discussed before work begins.",
+    "Local tree protection rules and property requirements may affect removal. Check applicable local requirements and obtain any required permission before work is scheduled. We do not promise that every tree can be removed or that every site is suitable. For downed wires or immediate danger, stay clear and contact emergency services or the utility rather than approaching the tree."
+  ],
+  "ctaHeading": "Request a Tree Removal Quote",
+  "ctaText": "Tell us what needs attention and how to access the property. Call or request a free quote for work across the Emerald Coast.",
+  "relatedLinks": [
+    {
+      "label": "Tree Services Overview",
+      "to": "/services/tree-trimming-removal"
+    },
+    {
+      "label": "Tree Trimming",
+      "to": "/services/tree-trimming"
+    },
+    {
+      "label": "Storm Damage Cleanup",
+      "to": "/services/storm-damage-cleanup"
+    },
+    {
+      "label": "Palm Tree Trimming",
+      "to": "/services/palm-tree-trimming"
+    }
+  ],
+  "faqs": [
+    {
+      "q": "Is stump grinding included in tree removal?",
+      "a": "Stump grinding is separately quoted when requested. Ask about it before approving the removal scope so you understand what will remain and any follow-on work."
+    },
+    {
+      "q": "Can you assess a tree near a building or fence?",
+      "a": "Yes, nearby structures and property access are considered in the on-site evaluation. The assessment determines the proposed scope; it is not a promise that every removal can be undertaken."
+    },
+    {
+      "q": "What affects the cost of removing an oak or pine?",
+      "a": "Size, condition, access, nearby structures, debris volume and the agreed cleanup or haul-away scope affect the quote. We provide a property-specific quote rather than a fixed price by species."
+    },
+    {
+      "q": "Should I check permission before removing a tree?",
+      "a": "Yes. Local tree protection rules and property or HOA requirements can vary. Check the requirements that apply to your property and obtain any required permission before scheduling removal."
+    },
+    {
+      "q": "What should I do if the tree is unstable?",
+      "a": "Keep people and pets away from unstable trees and suspended limbs. If there are downed wires or immediate danger, contact emergency services or the utility. Do not approach to take close-up photos."
+    }
+  ]
+},
+{
+  "slug": "tree-trimming",
+  "title": "Tree Trimming",
+  "metaTitle": "Tree Trimming | Emerald Coast FL | Gulf Coast Palms",
+  "metaDescription": "Tree trimming for oaks and pines across the Emerald Coast. Species-specific assessment, clearance and dead or damaged branch work. Request a free quote.",
+  "heroSubheading": "Tree trimming guided by condition, species and your property goals — not a one-size-fits-all cut.",
+  "introParagraphs": [
+    "Tree trimming begins with the reason for the work. You may need clearance along a driveway, want attention to dead or damaged branches, or need to discuss how a tree fits the use of your property. Gulf Coast Palms provides tree trimming for oaks and pines across the Emerald Coast, with an experienced crew and an experienced climber on the team.",
+    "An on-site assessment considers the species, condition, branch structure and surroundings. The scope should describe the branches or areas being addressed and the goal of the work. Oaks, pines and palms have different growth patterns; established palm expertise does not mean applying the same pruning approach to every tree.",
+    "Tell us what you want to change and what you want to retain. A view, shade, vehicle clearance and access to a walkway can be competing goals. The assessment helps define a practical scope instead of treating an instruction to “cut it back” as a complete plan. We do not promise that trimming will eliminate future storm damage or resolve every tree condition."
+  ],
+  "benefits": [
+    "Property goals and tree condition discussed",
+    "Species-specific on-site assessment",
+    "Clearance needs around access routes reviewed",
+    "Dead and damaged branches considered",
+    "Agreed branch work described in writing",
+    "Cleanup and haul-away scope confirmed"
+  ],
+  "scopeHeading": "Planning Your Tree Work",
+  "secondaryHeading": "Planning Branch Work and Clearance",
+  "secondaryContent": [
+    "Clearance work needs a specific objective: for example, space for vehicles along a driveway or clearance over a frequently used walkway. Explain the normal use of the space and any access restrictions. Nearby structures and neighboring property should be considered before defining branch work.",
+    "Dead and damaged branches need evaluation in the context of the rest of the tree. A branch that looks problematic from the ground may need closer assessment before the work can be specified. Keep away from suspended or broken limbs; do not try to inspect them by climbing or pulling on them.",
+    "The timing and extent of trimming depend on species and condition, not just a fixed annual schedule. Ask what work is proposed for your oak or pine and why. Discuss the desired result before approval, including branches that should remain and any areas that must not be entered.",
+    "Trimming costs depend on the size and condition of the tree, the extent of branch work, access and debris volume. The written scope should state what will be trimmed and how cleanup and haul-away will be handled. If a tree needs removal rather than branch work, that is a separate discussion and quote. Trees near downed wires or immediate danger should be addressed through emergency services or the utility, not a routine trimming request."
+  ],
+  "ctaHeading": "Request a Tree Trimming Quote",
+  "ctaText": "Tell us what needs attention and how to access the property. Call or request a free quote for work across the Emerald Coast.",
+  "relatedLinks": [
+    {
+      "label": "Tree Services Overview",
+      "to": "/services/tree-trimming-removal"
+    },
+    {
+      "label": "Tree Removal",
+      "to": "/services/tree-removal"
+    },
+    {
+      "label": "Storm Damage Cleanup",
+      "to": "/services/storm-damage-cleanup"
+    },
+    {
+      "label": "Palm Tree Trimming",
+      "to": "/services/palm-tree-trimming"
+    }
+  ],
+  "faqs": [
+    {
+      "q": "Do all trees need annual trimming?",
+      "a": "No single schedule fits every tree. Species, condition, growth and your property goals guide the assessment and proposed work."
+    },
+    {
+      "q": "Can trimming improve clearance along a driveway?",
+      "a": "Clearance is one reason to request trimming. Tell us how the driveway is used and the space needed so the tree and nearby structures can be assessed before defining the scope."
+    },
+    {
+      "q": "Do you trim oaks and pines differently from palms?",
+      "a": "Yes. Species-specific assessment matters. Branch work for an oak or pine is different from removing palm fronds, flower stalks or seed pods."
+    },
+    {
+      "q": "Will trimming guarantee protection from storm damage?",
+      "a": "No. Trimming is not a guarantee against storm damage. We assess the tree and discuss the scope of branch work without promising a storm-proof result."
+    },
+    {
+      "q": "What happens to the cut branches?",
+      "a": "Cleanup and haul-away are discussed in the written scope. Tell us before approval if you want material left in an agreed location."
+    }
+  ]
+},
+{
+  "slug": "storm-damage-cleanup",
+  "title": "Storm Damage Cleanup",
+  "metaTitle": "Storm Damage Cleanup | Emerald Coast FL | Gulf Coast Palms",
+  "metaDescription": "Storm damage cleanup for fallen, broken and leaning trees across the Emerald Coast. On-site evaluation; scheduling subject to safe access and conditions.",
+  "heroSubheading": "Professional on-site evaluation of storm-damaged trees, with scheduling subject to safe access and conditions.",
+  "introParagraphs": [
+    "Severe weather can leave fallen trees, broken limbs and trees with a new lean. Gulf Coast Palms provides storm damage cleanup across the Emerald Coast. The first step is evaluating the tree and surrounding property, not assuming that all storm debris is ready to move. Our experienced tree crews include an experienced climber, and the proposed work depends on the condition of the tree and the site.",
+    "Stay clear of unstable trees, suspended branches and disturbed root areas. Keep people and pets out of the affected area. Do not stand beneath broken limbs or try to pull, cut or move a tree that may shift. If wires are down, treat them as dangerous and contact the utility or emergency services. For immediate danger, contact emergency services rather than waiting for a quote response.",
+    "For a non-emergency service request, describe what happened, the property address, the affected access routes and any visible damage from a safe distance. Photos can help communicate the situation only when they can be taken without entering the hazard area. An on-site evaluation determines the scope that can be proposed."
+  ],
+  "benefits": [
+    "Fallen, broken and leaning trees evaluated",
+    "Property access and surrounding hazards reviewed",
+    "Written scope for agreed tree and debris work",
+    "Cleanup and haul-away requirements discussed",
+    "Scheduling subject to safe access and conditions",
+    "Utility and immediate-danger concerns referred appropriately"
+  ],
+  "scopeHeading": "Planning Your Tree Work",
+  "secondaryHeading": "From Evaluation to Cleanup",
+  "secondaryContent": [
+    "A fallen tree may still contain tension, and broken branches can be supported by other branches or nearby objects. A newly leaning tree may have changed at the roots or trunk. These situations need professional on-site evaluation; a photo alone cannot establish that work can begin.",
+    "Scheduling is subject to safe access, weather and site conditions. Blocked roads, saturated ground and continuing weather can affect when an evaluation or cleanup can take place. A submitted quote request is not an emergency dispatch, a guaranteed response deadline or a promise of round-the-clock staffing.",
+    "The written scope should distinguish the storm-damaged tree work from general debris already on the property. Discuss branches, logs and haul-away requirements, and confirm what will be left on-site. Stump grinding, where requested, is separately quoted. Repairs to structures, utility work and other specialist tasks are not part of the service described here.",
+    "Costs depend on the condition and size of the affected trees, access, nearby structures and the volume of debris in the agreed scope. If you need documents for your own records, discuss those needs when requesting the quote. We do not promise insurance reimbursement or claim specialist roof, utility-line or crane capabilities."
+  ],
+  "ctaHeading": "Request a Storm Damage Cleanup Quote",
+  "ctaText": "Tell us what needs attention and how to access the property. Call or request a free quote for work across the Emerald Coast.",
+  "relatedLinks": [
+    {
+      "label": "Tree Services Overview",
+      "to": "/services/tree-trimming-removal"
+    },
+    {
+      "label": "Tree Removal",
+      "to": "/services/tree-removal"
+    },
+    {
+      "label": "Tree Trimming",
+      "to": "/services/tree-trimming"
+    },
+    {
+      "label": "Palm Tree Trimming",
+      "to": "/services/palm-tree-trimming"
+    }
+  ],
+  "faqs": [
+    {
+      "q": "What should I do about a tree touching downed wires?",
+      "a": "Stay away from the tree and wires, keep others clear and contact the utility or emergency services. Do not approach, cut or move anything touching or near the wires."
+    },
+    {
+      "q": "Can I request cleanup for a fallen or leaning tree?",
+      "a": "Yes. Describe the situation from a safe distance. A professional on-site evaluation is needed to determine the proposed work, with scheduling subject to safe access and conditions."
+    },
+    {
+      "q": "How quickly can storm cleanup be scheduled?",
+      "a": "Scheduling depends on safe access, weather, site conditions and availability. A quote request does not guarantee a response deadline or emergency dispatch."
+    },
+    {
+      "q": "Should I move broken branches before the crew arrives?",
+      "a": "Do not approach unstable trees, suspended limbs or material that may shift. Keep the affected area clear and wait for professional evaluation."
+    },
+    {
+      "q": "Does storm cleanup include repairs or insurance reimbursement?",
+      "a": "No repairs or insurance reimbursement are promised. The written scope describes agreed tree and debris work; utility or structural concerns require the appropriate service provider."
+    }
+  ]
+},
   {
     slug: "palm-tree-trimming",
     title: "Palm Tree Trimming",
@@ -310,8 +587,15 @@ export const serviceNavLinks = [
     label: s.title,
     to: `/services/${s.slug}`,
   })),
-  { label: "Tree Trimming & Removal", to: "/services/tree-trimming-removal" },
   { label: "Landscaping Services", to: "/services/landscaping-services" },
   { label: "HOA & Commercial Maintenance", to: "/hoa-commercial-palm-maintenance" },
   { label: "Hurricane Palm Preparation", to: "/hurricane-palm-preparation" },
 ];
+
+/** Grouped navigation retains every existing public service label. */
+export const serviceGroups = [
+  { label: "Tree Services", links: serviceNavLinks.filter((link) => ["Tree Trimming & Removal", "Tree Removal", "Tree Trimming", "Storm Damage Cleanup"].includes(link.label)) },
+  { label: "Palm Care", links: serviceNavLinks.filter((link) => link.to.includes("palm") || link.to.includes("hoa-commercial")) },
+  { label: "Property Services", links: serviceNavLinks.filter((link) => link.label === "Landscaping Services") },
+];
+export const treeServiceLinks = serviceGroups[0].links.filter((link) => link.to !== "/services/tree-trimming-removal");

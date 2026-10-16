@@ -3,6 +3,7 @@ import { Phone, Check, ArrowRight, Shield, Package, HelpCircle } from "lucide-re
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
+import QuoteRequestButton from "@/components/cta/QuoteRequestButton";
 import { ServiceJsonLd, BreadcrumbJsonLd, FAQPageJsonLd } from "@/components/JsonLd";
 import { GCP_BUSINESS, TEL_HREF } from "@/lib/business-info";
 import type { ServiceData } from "@/data/services";
@@ -58,7 +59,11 @@ const ServicePage = ({ service }: ServicePageProps) => {
         <div className="container mx-auto">
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="font-body text-sm uppercase tracking-[0.2em] text-palm-gold font-semibold mb-3">Our Services</motion.p>
           <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="font-display text-4xl md:text-6xl font-bold text-primary-foreground mb-4">{service.title}</motion.h1>
-          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="font-body text-lg text-palm-sand/70 max-w-2xl mx-auto">{service.heroSubheading}</motion.p>
+          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="font-body text-lg text-palm-sand/80 max-w-2xl mx-auto">{service.heroSubheading}</motion.p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
+            <QuoteRequestButton service={service.title} source={`service_${service.slug}`} />
+            <a href={TEL_HREF} className="font-body text-primary-foreground underline underline-offset-4">Call {GCP_BUSINESS.phoneDisplay}</a>
+          </div>
         </div>
       </section>
 
@@ -76,7 +81,7 @@ const ServicePage = ({ service }: ServicePageProps) => {
       {/* Benefits */}
       <section className="section-padding bg-secondary">
         <div className="container mx-auto max-w-4xl">
-          <motion.h2 initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0} className="font-display text-3xl md:text-4xl font-bold text-foreground mb-8 text-center">What's Included</motion.h2>
+          <motion.h2 initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0} className="font-display text-3xl md:text-4xl font-bold text-foreground mb-8 text-center">{service.scopeHeading ?? "What's Included"}</motion.h2>
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
             {service.benefits.map((b, i) => (
               <motion.div key={b} variants={fadeUp} custom={i} className="group flex items-center gap-4 bg-card rounded-2xl p-5 border border-border/70 shadow-elev-sm hover:shadow-elev-md hover:-translate-y-0.5 hover:border-primary/30 transition-all duration-300">
@@ -213,6 +218,8 @@ const ServicePage = ({ service }: ServicePageProps) => {
         <div className="container mx-auto">
           <h2 className="font-display text-4xl md:text-5xl font-bold text-primary-foreground mb-4">{service.ctaHeading}</h2>
           <p className="font-body text-lg text-primary-foreground/80 mb-8 max-w-xl mx-auto">{service.ctaText}</p>
+          <QuoteRequestButton service={service.title} source={`service_${service.slug}_bottom`} className="mb-4 border border-primary-foreground" />
+          <br />
           <a href={TEL_HREF} className="inline-flex items-center gap-3 px-10 py-5 rounded-xl bg-primary-foreground text-primary font-body font-bold text-xl hover:scale-105 transition-transform shadow-xl">
             <Phone className="w-6 h-6" /> {GCP_BUSINESS.phoneDisplay}
           </a>

@@ -50,8 +50,8 @@ export const GCP_BUSINESS = {
     "https://www.instagram.com/gulfcoastpalms",
   ] as string[],
   priceRange: "$$",
-  // Verified on the public Google Maps profile on 2026-09-18.
-  aggregateRating: { ratingValue: "5.0", reviewCount: "152", checkedAt: "2026-09-18" },
+  // Owner-confirmed on 2026-10-15 America/Chicago; not independently rechecked on Google.
+  aggregateRating: { ratingValue: "5.0", reviewCount: "168", checkedAt: "2026-10-15", source: "owner-confirmed" },
 } as const;
 
 /** Convenient href helpers */
