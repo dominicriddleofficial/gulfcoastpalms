@@ -16,6 +16,9 @@ vi.mock("@/components/Layout", () => ({ default: ({ children }: { children: Reac
 vi.mock("@/components/SEOHead", () => ({ default: () => null }));
 vi.mock("@/lib/analytics", () => ({ trackEvent: vi.fn() }));
 vi.mock("@/lib/submit-lead", () => ({ submitLead: vi.fn() }));
+// This suite exercises copy and forms, not the image pipeline. Vitest's
+// existing config does not define the production @img alias.
+vi.mock("@/data/locations", () => ({ locations: [] }));
 
 beforeEach(() => { vi.clearAllMocks(); vi.mocked(submitLead).mockResolvedValue({ success: false, error: "Mocked only" }); });
 afterEach(cleanup);
