@@ -62,7 +62,7 @@ export const TEL_HREF = `tel:${GCP_BUSINESS.phoneDigits}`;
  * (Android also accepts `?body=` — iOS form works on both).
  */
 export const SMS_BODY =
-  "Hi Gulf Coast Palms! I'd like a quote — here's a photo of my palms:";
+  "Hi Gulf Coast Palms! I'd like a quote — here's a photo of my trees or palms:";
 export const SMS_BODY_ENCODED = encodeURIComponent(SMS_BODY);
 /** Raw sms: href without body prefill — for admin / dynamic-recipient use. */
 export const SMS_HREF_RAW = `sms:${GCP_BUSINESS.phoneDigits}`;
