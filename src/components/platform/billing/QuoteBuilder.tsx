@@ -174,8 +174,12 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
       for (const c of (platformRes.data || [])) { const k = c.display_name?.toLowerCase(); if (k && !seen.has(k)) { seen.add(k); combined.push({ ...c, source: "platform" }); } }
       if (reqId !== searchSeqRef.current) return; // a newer search or a just-created customer supersedes this
       const q = customerSearch.trim().toLowerCase();
-      const pinned = pinnedCustomersRef.current.filter(p => (!q || [p.display_name, p.phone, p.email].some(v => v?.toLowerCase().includes(q)))).filter(p => !combined.some(c => c.source === p.source && c.id === p.id));
-      setCustomerResults([...pinned, ...combined].slice(0, 25));
+      // Query-matching pinned entries stay first; only drop combined rows that duplicate a pinned
+      // source+id (a new customer can land late in combined, since jobber rows precede platform rows).
+      const pinned = pinnedCustomersRef.current.filter(p => (!q || [p.display_name, p.phone, p.email].some(v => v?.toLowerCase().includes(q))));
+      const pinnedKeys = new Set(pinned.map(p => `${p.source}:${p.id}`));
+      const rest = combined.filter(c => !pinnedKeys.has(`${c.source}:${c.id}`));
+      setCustomerResults([...pinned, ...rest].slice(0, 25));
     }, 200);
     return () => clearTimeout(timer);
   }, [customerSearch, bizId]);
