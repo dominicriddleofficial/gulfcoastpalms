@@ -102,6 +102,9 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   // UI state
   const [customerSearch, setCustomerSearch] = useState("");
   const [newCustomerOpen, setNewCustomerOpen] = useState(false);
+  const searchSeqRef = useRef(0);
+  /** Customers created in this builder; kept at the top of the picker so Change can reselect them. */
+  const pinnedCustomersRef = useRef<CustomerResult[]>([]);
   const queryClient = useQueryClient();
   const [customerResults, setCustomerResults] = useState<CustomerResult[]>([]);
   const [showCustomerSearch, setShowCustomerSearch] = useState(false);
@@ -150,6 +153,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   // Customer search — show recent customers on focus, filter on type.
   useEffect(() => {
     const timer = setTimeout(async () => {
+      const reqId = ++searchSeqRef.current;
       const hasQuery = customerSearch && customerSearch.length >= 1;
       const like = `%${customerSearch}%`;
       const [jobberRes, platformRes] = await Promise.all([
@@ -168,7 +172,9 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
       const combined: CustomerResult[] = [];
       for (const c of (jobberRes.data || [])) { const k = c.display_name?.toLowerCase(); if (k && !seen.has(k)) { seen.add(k); combined.push({ ...c, source: "jobber" }); } }
       for (const c of (platformRes.data || [])) { const k = c.display_name?.toLowerCase(); if (k && !seen.has(k)) { seen.add(k); combined.push({ ...c, source: "platform" }); } }
-      setCustomerResults(combined.slice(0, 25));
+      if (reqId !== searchSeqRef.current) return; // a newer search or a just-created customer supersedes this
+      const pinned = pinnedCustomersRef.current.filter(p => !combined.some(c => c.source === p.source && c.id === p.id));
+      setCustomerResults([...pinned, ...combined].slice(0, 25));
     }, 200);
     return () => clearTimeout(timer);
   }, [customerSearch, bizId]);
@@ -203,13 +209,18 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
     setShowCustomerSearch(false); setCustomerSearch("");
   };
 
-  const handleNewCustomerCreated = (c: CreatedCustomer) => {
-    selectCustomer({ ...c, company_name: null, source: "platform" });
+  const handleNewCustomerCreated = (c: CreatedCustomer, opts: { addressSaved: boolean }) => {
+    const entry: CustomerResult = { ...c, company_name: null, source: "platform" };
+    searchSeqRef.current++; // drop any in-flight search response
+    pinnedCustomersRef.current = [entry, ...pinnedCustomersRef.current.filter(p => !(p.source === "platform" && p.id === c.id))];
+    setCustomerResults(prev => [entry, ...prev.filter(p => !(p.source === "platform" && p.id === c.id))].slice(0, 25));
+    selectCustomer(entry);
     // Refresh any customer lists/search caches elsewhere in the platform.
     void queryClient.invalidateQueries({
       predicate: (q) => q.queryKey.some((k) => typeof k === "string" && k.toLowerCase().includes("customer")),
     });
-    toast.success(`${c.display_name} added to customers`);
+    if (opts.addressSaved) toast.success(`${c.display_name} added to customers`);
+    else toast.warning(`${c.display_name} added to customers — address was not saved`);
   };
 
   const setQuickValid = (days: number) => {
