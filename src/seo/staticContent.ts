@@ -16,7 +16,8 @@
  *  - Wording here must stay verbatim identical to what the page renders.
  */
 
-import { servicesData } from "@/data/services";
+import { publicMarketing } from "@/data/publicMarketing";
+import { servicesData, treeServiceLinks } from "@/data/services";
 import { locations } from "@/data/locations";
 import { palmTypes } from "@/data/palmTypes";
 import { palmGuides } from "@/data/palmGuides";
@@ -50,15 +51,15 @@ function faqBlocks(faqs?: { q: string; a: string }[]): StaticBlock[] {
 /** Routes whose copy lives inline in the page component rather than a data module. */
 const literalContent: Record<string, StaticPageContent> = {
   "/": {
-    h1: "Palm Tree Trimming & Care for Florida's Emerald Coast",
+    h1: publicMarketing.heroHeading,
     subheading:
-      "Palm-tree specialists with over a thousand properties served across the Emerald Coast. Same-day estimates. No generalist crews.",
+      publicMarketing.heroText,
     blocks: [
       { paragraphs: ["Serving Perdido Key to 30A"] },
       {
-        heading: "Professional Palm Tree Services",
+        heading: publicMarketing.servicesHeading,
         paragraphs: [
-          "From palm tree trimming and diamond cutting to installation and safe removals — our focus is expert palm care across the Emerald Coast.",
+          publicMarketing.servicesText,
         ],
         links: servicesData.map((s) => ({ label: s.title, href: `/services/${s.slug}` })),
       },
@@ -69,16 +70,16 @@ const literalContent: Record<string, StaticPageContent> = {
       {
         heading: "Frequently Asked Questions",
         paragraphs: [
-          "Everything you need to know about our palm tree services across the Gulf Coast.",
+          "Questions about tree services and palm care across the Gulf Coast.",
           ...homeFaqs.flatMap((f) => [f.q, f.a]),
         ],
       },
     ],
   },
   "/services": {
-    h1: "Professional Palm Tree Services",
+    h1: publicMarketing.servicesHeading,
     subheading:
-      "From palm tree trimming and diamond cutting to installation and safe removals — our focus is expert palm care across the Emerald Coast.",
+      publicMarketing.servicesText,
     blocks: servicesData.map((s) => ({
       heading: s.title,
       paragraphs: [s.introParagraphs[0]],
@@ -88,14 +89,15 @@ const literalContent: Record<string, StaticPageContent> = {
   "/about": {
     h1: "About Gulf Coast Palms",
     subheading:
-      "Your trusted local experts for all palm tree services along Florida's Emerald Coast.",
-    blocks: [],
+      publicMarketing.aboutText,
+    blocks: [{ heading: "Tree Services & Palm Care", paragraphs: [publicMarketing.servicesText, "Our experienced tree crews include an experienced climber. Over a thousand properties served across the Emerald Coast."], links: servicesData.map((service) => ({ label: service.title, href: `/services/${service.slug}` })) }],
   },
   "/service-areas": {
-    h1: "Palm Tree Trimming Across the Emerald Coast",
+    h1: publicMarketing.areasHeading,
     subheading:
-      "Gulf Coast Palms proudly provides professional palm tree trimming, diamond cutting, and expert palm care throughout Northwest Florida's Gulf Coast communities.",
+      publicMarketing.areasText,
     blocks: [
+      { heading: publicMarketing.treeAreaHeading, paragraphs: [publicMarketing.treeAreaText], links: treeServiceLinks.map((link) => ({ label: link.label, href: link.to })) },
       {
         heading: "Communities We Serve",
         links: locations.map((l) => ({ label: `${l.city}, ${l.state}`, href: `/${l.slug}` })),
@@ -111,7 +113,7 @@ const literalContent: Record<string, StaticPageContent> = {
   "/quote": {
     h1: "Get a Free Quote",
     subheading:
-      "Tell us about your palms — we typically respond within 15 minutes during business hours.",
+      publicMarketing.quoteText,
     blocks: [],
   },
   "/jobs": {
@@ -251,12 +253,6 @@ const literalContent: Record<string, StaticPageContent> = {
     h1: "Thank You!",
     subheading:
       "We've received your request and will get back to you shortly. Our team typically responds within 15 minutes during business hours.",
-    blocks: [],
-  },
-  "/services/tree-trimming-removal": {
-    h1: "Tree Trimming & Removal — NW Florida",
-    subheading:
-      "Expert trimming and safe removal for oaks, pines, crape myrtles, and more. Licensed, insured, and serving the entire Emerald Coast.",
     blocks: [],
   },
   "/services/landscaping-services": {
@@ -773,7 +769,7 @@ export function buildStaticContent(): Record<string, StaticPageContent> {
       subheading: s.heroSubheading,
       blocks: [
         { paragraphs: s.introParagraphs },
-        { heading: "Benefits", list: s.benefits },
+        { heading: s.scopeHeading ?? "What's Included", list: s.benefits },
         { heading: s.secondaryHeading, paragraphs: s.secondaryContent },
         ...(s.procesSteps
           ? [
@@ -791,7 +787,11 @@ export function buildStaticContent(): Record<string, StaticPageContent> {
           ? [{ heading: s.warrantySection.heading, paragraphs: s.warrantySection.content }]
           : []),
         ...faqBlocks(s.faqs),
-        { heading: s.ctaHeading, paragraphs: [s.ctaText] },
+        { heading: "Related Services", links: s.relatedLinks.map((link) => ({ label: link.label, href: link.to })) },
+        { heading: s.ctaHeading, paragraphs: [s.ctaText], links: [
+          { label: "Get a Free Quote", href: `/quote?${new URLSearchParams({ service: s.title, source: `service_${s.slug}` }).toString()}` },
+          { label: "Call (850) 910-1290", href: "tel:8509101290" },
+        ] },
       ],
     };
   }
@@ -805,6 +805,7 @@ export function buildStaticContent(): Record<string, StaticPageContent> {
         { paragraphs: l.introParagraphs },
         ...(l.highlight ? [{ paragraphs: [l.highlight] }] : []),
         { heading: `Our Services in ${l.city}`, list: l.services },
+        { heading: publicMarketing.treeAreaHeading, paragraphs: [publicMarketing.treeAreaText], links: treeServiceLinks.map((link) => ({ label: link.label, href: link.to })) },
         {
           heading: l.whyChooseTitle,
           list: l.whyChoosePoints,

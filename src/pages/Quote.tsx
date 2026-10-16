@@ -81,8 +81,8 @@ const Quote = () => {
   return (
     <Layout>
       <SEOHead
-        title="Get a Free Palm Tree Quote | Gulf Coast Palms"
-        description="Request a free, no-obligation quote for palm tree trimming, removal, installation, or hurricane prep across Northwest Florida."
+        title="Get a Free Tree Service & Palm Care Quote | Gulf Coast Palms"
+        description="Request a free quote for tree removal, tree trimming, storm cleanup or palm care across the Emerald Coast. Call or text (850) 910-1290."
         canonicalUrl="/quote"
       />
       <section className="section-padding">

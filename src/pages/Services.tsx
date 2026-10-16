@@ -29,7 +29,7 @@ const fadeUp = {
 const Services = () => {
   return (
     <Layout>
-      <SEOHead title="Palm Tree Services — Trimming, Removal, Installation | Gulf Coast Palms" description="Full-service palm care across NW Florida. Trimming, diamond cutting, trunk skinning, installation, removal, and hurricane prep. Free estimates." canonicalUrl="/services" />
+      <SEOHead title="Tree Services & Palm Care | Gulf Coast Palms | Emerald Coast FL" description="Tree removal, tree trimming, storm cleanup and palm care including trimming, installation and diamond cutting across the Emerald Coast. Free quotes." canonicalUrl="/services" />
       <section className="bg-palm-dark section-padding text-center">
         <div className="container mx-auto">
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="font-body text-sm uppercase tracking-[0.2em] text-palm-gold font-semibold mb-3">

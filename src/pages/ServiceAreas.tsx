@@ -21,8 +21,8 @@ const ServiceAreas = () => {
   return (
     <Layout>
       <SEOHead
-        title="Palm Tree Service Areas | Gulf Coast Palms NW Florida"
-        description="Gulf Coast Palms serves Navarre, Gulf Breeze, Pensacola, Fort Walton Beach, Destin, 30A, Perdido Key, and all of NW Florida. View our full service coverage area."
+        title="Tree Services & Palm Care Service Areas | Gulf Coast Palms"
+        description="Tree trimming, removal, storm cleanup and palm care across Navarre, Gulf Breeze, Pensacola, Fort Walton Beach, Destin, 30A and Perdido Key."
         canonicalUrl="/service-areas"
       />
       <section className="py-20 md:py-28 bg-palm-dark">

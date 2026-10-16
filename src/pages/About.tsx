@@ -20,8 +20,8 @@ const About = () => {
   return (
     <Layout>
       <SEOHead
-        title="About Gulf Coast Palms | Navarre Beach's Palm Tree Specialists"
-        description="Family-owned and operated in Navarre Beach, FL. Learn why NW Florida homeowners trust Gulf Coast Palms for expert palm tree trimming, removal, and hurricane preparation."
+        title="About Gulf Coast Palms | Tree Services & Palm Care"
+        description="Experienced tree crews, an experienced climber and established palm expertise across Northwest Florida’s Emerald Coast. Call (850) 910-1290."
         canonicalUrl="/about"
       />
       {/* Hero */}
