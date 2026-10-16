@@ -13,7 +13,9 @@ import { toast } from "sonner";
 import { format, addDays } from "date-fns";
 import QuotePreviewPanel from "./QuotePreviewPanel";
 import SendQuoteModal from "./SendQuoteModal";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { UserPlus } from "lucide-react";
+import NewCustomerSheet, { type CreatedCustomer } from "./NewCustomerSheet";
 import { generateQuoteNumber } from "@/hooks/usePlatformQuotes";
 import { downloadElementAsPdf } from "@/lib/download-pdf";
 import { buildQuoteMessage, getQuotePublicUrl } from "@/lib/quote-message";
@@ -99,6 +101,8 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
 
   // UI state
   const [customerSearch, setCustomerSearch] = useState("");
+  const [newCustomerOpen, setNewCustomerOpen] = useState(false);
+  const queryClient = useQueryClient();
   const [customerResults, setCustomerResults] = useState<CustomerResult[]>([]);
   const [showCustomerSearch, setShowCustomerSearch] = useState(false);
   const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
@@ -197,6 +201,15 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
     setCustomerName(c.display_name); setCustomerEmail(c.email || ""); setCustomerPhone(c.phone || "");
     setRecipientName(c.display_name); setEditingRecipientName(false);
     setShowCustomerSearch(false); setCustomerSearch("");
+  };
+
+  const handleNewCustomerCreated = (c: CreatedCustomer) => {
+    selectCustomer({ ...c, company_name: null, source: "platform" });
+    // Refresh any customer lists/search caches elsewhere in the platform.
+    void queryClient.invalidateQueries({
+      predicate: (q) => q.queryKey.some((k) => typeof k === "string" && k.toLowerCase().includes("customer")),
+    });
+    toast.success(`${c.display_name} added to customers`);
   };
 
   const setQuickValid = (days: number) => {
@@ -529,11 +542,20 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                 <p className="font-mono text-[10px] text-muted-foreground">{activeBiz?.shortcode?.toUpperCase()}</p>
               </div>
               <div className="bg-card border border-border rounded-lg p-3 space-y-2">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <p className="font-body text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Prepared For</p>
-                  {customerId && !editingQuote && (
-                    <button className="font-body text-[10px] text-primary hover:underline" onClick={() => { setCustomerId(null); setCustomerName(""); setRecipientName(""); setEditingRecipientName(false); setShowCustomerSearch(true); }}>Change</button>
-                  )}
+                  <div className="flex items-center gap-3">
+                    {customerId && !editingQuote && (
+                      <button className="font-body text-[10px] text-primary hover:underline" onClick={() => { setCustomerId(null); setCustomerName(""); setRecipientName(""); setEditingRecipientName(false); setShowCustomerSearch(true); }}>Change</button>
+                    )}
+                    {!editingQuote && (
+                      <Button type="button" size="sm" variant="outline" data-testid="quote-new-customer"
+                        className="h-7 px-2 text-xs border-primary/40 text-primary hover:bg-primary/10 hover:text-primary"
+                        onClick={() => { setShowCustomerSearch(false); setNewCustomerOpen(true); }}>
+                        <UserPlus className="w-3.5 h-3.5 mr-1" />New customer
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 {customerId || editingQuote ? (
                   <div>
@@ -582,7 +604,10 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                             <p className="font-body text-[10px] text-muted-foreground">{[c.phone, c.email].filter(Boolean).join(" · ")}</p>
                           </button>
                         )) : (
-                          <p className="px-3 py-3 font-body text-xs text-muted-foreground text-center">No customers found</p>
+                          <div className="px-3 py-3 text-center space-y-1">
+                            <p className="font-body text-xs text-muted-foreground">No customers found</p>
+                            <button type="button" className="font-body text-xs text-primary hover:underline" onClick={() => { setShowCustomerSearch(false); setNewCustomerOpen(true); }}>+ New customer</button>
+                          </div>
                         )}
                       </div>
                     )}
@@ -889,6 +914,9 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
           </div>
         </SheetContent>
       </Sheet>
+      {!editingQuote && (
+        <NewCustomerSheet open={newCustomerOpen} businessId={bizId} onOpenChange={setNewCustomerOpen} onCreated={handleNewCustomerCreated} />
+      )}
     </>
   );
 }
