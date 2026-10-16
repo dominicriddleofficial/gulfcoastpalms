@@ -63,6 +63,9 @@ vi.mock("@/integrations/supabase/client", () => ({ supabase: {
         if (op === "delete") db.lines = db.lines.filter(l => !matches(l));
         return { data: structuredClone(selected), error: null };
       }
+      if (table === "platform_customers" && op === "insert") {
+        return { data: { id: "new-cust", display_name: value.display_name, email: value.email, phone: value.phone }, error: null };
+      }
       return { data: [], error: null };
     };
     query.single = async () => execute();
@@ -71,6 +74,12 @@ vi.mock("@/integrations/supabase/client", () => ({ supabase: {
     return query;
   },
 } }));
+
+vi.mock("@/components/platform/AddressAutocomplete", () => ({
+  default: ({ value, onTextChange, label }: { value: string; onTextChange: (v: string) => void; label?: string }) => (
+    <input aria-label={label} value={value} onChange={(e) => onTextChange(e.target.value)} />
+  ),
+}));
 
 function fixture(): QuoteEditData {
   const quote = {
@@ -247,5 +256,48 @@ describe("Editing saved quotes", () => {
     fireEvent.click(button); fireEvent.click(button);
     await waitFor(() => expect(completed).toHaveBeenCalledOnce());
     expect(db.writes.filter(w => w.table === "platform_quotes" && w.op === "update")).toHaveLength(1);
+  });
+
+  it("adds a new customer from the quote builder without touching quote fields", async () => {
+    setup(null);
+    await waitFor(() => expect(db.rpc).toHaveBeenCalled());
+    fireEvent.change(screen.getByPlaceholderText("Describe the full job scope shown to the customer…"), { target: { value: "Remove oak" } });
+    fireEvent.change(screen.getAllByLabelText("Line description")[0], { target: { value: "Oak removal" } });
+    fireEvent.change(screen.getAllByLabelText("Unit price")[0], { target: { value: "900" } });
+    fireEvent.change(screen.getByPlaceholderText("Internal notes…"), { target: { value: "Gate code 12" } });
+    const dates = document.querySelectorAll<HTMLInputElement>('input[type="date"]');
+    fireEvent.change(dates[1], { target: { value: "2026-12-01" } });
+    fireEvent.click(screen.getByTestId("quote-new-customer"));
+    fireEvent.change(await screen.findByLabelText("First name *"), { target: { value: " Ann " } });
+    fireEvent.change(screen.getByLabelText("Last name"), { target: { value: "Lee" } });
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "ann@x.co" } });
+    fireEvent.change(screen.getByLabelText("Phone"), { target: { value: "8505551234" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save customer" }));
+    await waitFor(() => expect(screen.getByTestId("quote-recipient-name-edit")).toHaveTextContent("Ann Lee"));
+    expect(screen.queryByTestId("new-customer-sheet")).toBeNull();
+    expect(document.body.textContent).toContain("ann@x.co");
+    expect(document.body.textContent).toContain("(850) 555-1234");
+    expect(screen.getByPlaceholderText("Describe the full job scope shown to the customer…")).toHaveValue("Remove oak");
+    expect(screen.getAllByLabelText("Line description")[0]).toHaveValue("Oak removal");
+    expect(screen.getAllByLabelText("Unit price")[0]).toHaveValue(900);
+    expect(screen.getByPlaceholderText("Internal notes…")).toHaveValue("Gate code 12");
+    expect(document.querySelectorAll<HTMLInputElement>('input[type="date"]')[1]).toHaveValue("2026-12-01");
+    expect(db.writes).toEqual([{ table: "platform_customers", op: "insert", value: expect.objectContaining({ business_id: "gcp", display_name: "Ann Lee" }) }]);
+    expect(completed).not.toHaveBeenCalled(); expect(db.invoke).not.toHaveBeenCalled();
+
+    // Change -> new customer is immediately pickable even though the search mock returns nothing
+    fireEvent.click(screen.getByRole("button", { name: "Change" }));
+    await act(async () => { await new Promise(r => setTimeout(r, 250)); });
+    fireEvent.click(screen.getByRole("button", { name: /Ann Lee/ }));
+    expect(screen.getByTestId("quote-recipient-name-edit")).toHaveTextContent("Ann Lee");
+
+    // Unsaved cancel leaves the selection alone and writes nothing
+    fireEvent.click(screen.getByTestId("quote-new-customer"));
+    fireEvent.change(await screen.findByLabelText("First name *"), { target: { value: "Zed" } });
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(screen.queryByTestId("new-customer-sheet")).toBeNull());
+    expect(screen.getByTestId("quote-recipient-name-edit")).toHaveTextContent("Ann Lee");
+    expect(db.writes).toHaveLength(1);
+    expect(completed).not.toHaveBeenCalled();
   });
 });

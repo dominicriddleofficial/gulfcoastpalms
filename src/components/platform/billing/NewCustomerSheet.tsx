@@ -20,7 +20,7 @@ interface Props {
   open: boolean;
   businessId: string;
   onOpenChange: (open: boolean) => void;
-  onCreated: (customer: CreatedCustomer) => void;
+  onCreated: (customer: CreatedCustomer, opts: { addressSaved: boolean }) => void;
 }
 
 function fmtPhone(raw: string) {
@@ -54,9 +54,14 @@ export default function NewCustomerSheet({ open, businessId, onOpenChange, onCre
     setStateField("FL"); setZip(""); setNotes(""); setVerified(null); setError(null); setSavedCustomer(null);
   };
 
-  const close = () => { if (savingRef.current) return; reset(); onOpenChange(false); };
+  const finish = (c: CreatedCustomer, addressSaved: boolean) => { reset(); onCreated(c, { addressSaved }); onOpenChange(false); };
 
-  const finish = (c: CreatedCustomer) => { reset(); onCreated(c); onOpenChange(false); };
+  /** Dismissing after the customer row exists finalizes it (never discards or re-creates it). */
+  const close = () => {
+    if (savingRef.current) return;
+    if (savedCustomer) { finish(savedCustomer, false); return; }
+    reset(); onOpenChange(false);
+  };
 
   const handleSave = async () => {
     if (savingRef.current) return;
@@ -71,8 +76,8 @@ export default function NewCustomerSheet({ open, businessId, onOpenChange, onCre
     }
     if (!businessId) { setError("No workspace for this quote."); return; }
     savingRef.current = true; setSaving(true);
+    let cust: CreatedCustomer | null = savedCustomer;
     try {
-      let cust = savedCustomer;
       if (!cust) {
         const { data, error: custErr } = await supabase.from("platform_customers").insert({
           business_id: businessId,
@@ -114,9 +119,12 @@ export default function NewCustomerSheet({ open, businessId, onOpenChange, onCre
           return;
         }
       }
-      finish(cust);
+      finish(cust, true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
+      const msg = e instanceof Error ? e.message : "Network error";
+      setError(cust
+        ? `Customer was saved, but the address could not be saved (${msg}). Retry to save the address, or continue without it.`
+        : `Could not save customer (${msg}). Please try again.`);
     } finally {
       savingRef.current = false; setSaving(false);
     }
@@ -126,7 +134,7 @@ export default function NewCustomerSheet({ open, businessId, onOpenChange, onCre
 
   return (
     <Sheet open={open} onOpenChange={(o) => { if (!o) close(); }}>
-      <SheetContent side="bottom" className="max-h-[92vh] overflow-y-auto rounded-t-2xl sm:max-w-lg sm:mx-auto" data-testid="new-customer-sheet">
+      <SheetContent side="bottom" className="ops-theme bg-background text-foreground border-border max-h-[92vh] overflow-y-auto rounded-t-2xl sm:max-w-lg sm:mx-auto" data-testid="new-customer-sheet">
         <SheetHeader>
           <SheetTitle className="font-display">New customer</SheetTitle>
           <SheetDescription className="font-body text-xs">Saved to your customer list and added to this quote.</SheetDescription>
@@ -138,6 +146,7 @@ export default function NewCustomerSheet({ open, businessId, onOpenChange, onCre
           </div>
           <div><Label htmlFor="nc-phone">Phone</Label><Input id="nc-phone" type="tel" inputMode="tel" autoComplete="tel" value={phone} disabled={locked} onChange={(e) => setPhone(fmtPhone(e.target.value))} placeholder="(850) 555-1234" /></div>
           <div><Label htmlFor="nc-email">Email</Label><Input id="nc-email" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" value={email} disabled={locked} onChange={(e) => setEmail(e.target.value)} maxLength={255} /></div>
+          <fieldset disabled={saving} className="space-y-3 min-w-0 border-0 p-0 m-0">
           <AddressAutocomplete
             label="Property address (optional)"
             value={address}
@@ -152,16 +161,17 @@ export default function NewCustomerSheet({ open, businessId, onOpenChange, onCre
             <div><Label htmlFor="nc-state">State</Label><Input id="nc-state" value={stateField} disabled={saving} onChange={(e) => setStateField(e.target.value)} maxLength={2} /></div>
           </div>
           <div><Label htmlFor="nc-zip">ZIP</Label><Input id="nc-zip" inputMode="numeric" autoComplete="postal-code" value={zip} disabled={saving} onChange={(e) => setZip(e.target.value)} maxLength={10} /></div>
+          </fieldset>
           <div><Label htmlFor="nc-notes">Internal notes</Label><Textarea id="nc-notes" rows={2} value={notes} disabled={locked} onChange={(e) => setNotes(e.target.value)} maxLength={2000} /></div>
           {error && <p role="alert" className="font-body text-xs text-destructive">{error}</p>}
         </div>
-        <div className="flex gap-2 pb-[env(safe-area-inset-bottom)]">
+        <div className="flex flex-wrap gap-2 pb-[env(safe-area-inset-bottom)]">
           {savedCustomer ? (
-            <Button variant="outline" className="flex-1" disabled={saving} onClick={() => finish(savedCustomer)}>Continue without address</Button>
+            <Button variant="outline" className="flex-1 min-w-[140px] h-auto min-h-10 whitespace-normal" disabled={saving} onClick={() => finish(savedCustomer, false)}>Continue without address</Button>
           ) : (
-            <Button variant="outline" className="flex-1" disabled={saving} onClick={close}>Cancel</Button>
+            <Button variant="outline" className="flex-1 min-w-[140px]" disabled={saving} onClick={close}>Cancel</Button>
           )}
-          <Button className="flex-1" disabled={saving} onClick={handleSave}>
+          <Button className="flex-1 min-w-[140px]" disabled={saving} onClick={handleSave}>
             {saving ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Saving…</> : savedCustomer ? "Retry address" : "Save customer"}
           </Button>
         </div>

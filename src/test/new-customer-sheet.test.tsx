@@ -92,4 +92,17 @@ describe("NewCustomerSheet", () => {
     expect(onCreated).not.toHaveBeenCalled();
     expect(inserts).toHaveLength(0);
   });
+
+  it("dismissing after a partial save finalizes the saved customer without re-inserting", async () => {
+    propFail = 1;
+    const { onCreated } = setup();
+    fireEvent.change(screen.getByLabelText("First name *"), { target: { value: "Di" } });
+    fireEvent.change(screen.getByLabelText("Property address (optional)"), { target: { value: "3 Elm" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save customer" }));
+    await screen.findByRole("alert");
+    fireEvent.keyDown(document.activeElement || document.body, { key: "Escape" });
+    await waitFor(() => expect(onCreated).toHaveBeenCalledTimes(1));
+    expect(onCreated.mock.calls[0][1]).toEqual({ addressSaved: false });
+    expect(inserts.filter((i) => i.table === "platform_customers")).toHaveLength(1);
+  });
 });
