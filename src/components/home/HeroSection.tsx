@@ -77,22 +77,22 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.35 }}
-          className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center"
+          className="grid grid-cols-2 sm:flex sm:flex-row gap-3 sm:gap-4 justify-center items-center"
         >
           <QuoteRequestButton
             source="hero"
-            className="w-full sm:w-auto md:px-8 md:py-4 md:text-lg shadow-brand hover:-translate-y-0.5 transition-transform"
+            className="col-span-2 w-full sm:w-auto md:px-8 md:py-4 md:text-lg shadow-brand hover:-translate-y-0.5 transition-transform"
           >
             Get a Free Quote Online
           </QuoteRequestButton>
           <Link
             to="/services/tree-trimming-removal"
-            className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl border border-primary-foreground/25 bg-primary-foreground/5 backdrop-blur-sm text-primary-foreground font-body font-semibold text-lg hover:bg-primary-foreground/12 hover:border-primary-foreground/50 transition-all"
+            className="inline-flex items-center justify-center gap-2 px-3 sm:px-8 py-4 rounded-xl border border-primary-foreground/25 bg-primary-foreground/5 backdrop-blur-sm text-primary-foreground font-body font-semibold text-base sm:text-lg hover:bg-primary-foreground/12 hover:border-primary-foreground/50 transition-all"
           >
             Tree Services
             <ArrowRight className="w-5 h-5" />
           </Link>
-          <Link to="/services/palm-tree-trimming" className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl border border-primary-foreground/25 bg-primary-foreground/5 text-primary-foreground font-body font-semibold text-lg hover:bg-primary-foreground/12 transition-colors">
+          <Link to="/services/palm-tree-trimming" className="inline-flex items-center justify-center gap-2 px-3 sm:px-8 py-4 rounded-xl border border-primary-foreground/25 bg-primary-foreground/5 text-primary-foreground font-body font-semibold text-base sm:text-lg hover:bg-primary-foreground/12 transition-colors">
             Palm Care <ArrowRight className="w-5 h-5" />
           </Link>
         </motion.div>

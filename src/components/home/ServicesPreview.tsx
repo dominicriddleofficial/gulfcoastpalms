@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { serviceGroups } from "@/data/services";
 import { publicMarketing } from "@/data/publicMarketing";
 import palmTrimming from "@/assets/palm-trimming.jpg";
+import QuoteRequestButton from "@/components/cta/QuoteRequestButton";
 
 const ServicesPreview = () => (
   <section className="section-padding bg-background" aria-labelledby="home-services-heading">
@@ -29,6 +30,7 @@ const ServicesPreview = () => (
           </article>
         ))}
       </div>
+      <div className="mt-8 text-center"><QuoteRequestButton source="home_services" /></div>
       <div className="flex flex-wrap justify-center gap-6 mt-8 font-body text-primary">
         <Link to="/services">All Services <ArrowRight className="inline w-4 h-4" /></Link>
         <Link to="/services/landscaping-services">Landscaping</Link>
