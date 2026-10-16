@@ -57,14 +57,14 @@ const Navbar = () => {
     <header className={`sticky top-0 z-50 bg-background/90 backdrop-blur-md border-b border-border transition-[height,box-shadow] duration-200 ${scrolled ? "shadow-sm" : ""}`}>
       <div className={`container mx-auto flex items-center justify-between px-4 lg:px-8 transition-[height] duration-200 ${scrolled ? "h-14 lg:h-16" : "h-16 lg:h-20"}`}>
         <Link to="/" className="flex flex-col items-start shrink-0">
-          <span className={`font-display font-bold text-primary transition-all ${scrolled ? "text-lg lg:text-xl" : "text-lg lg:text-2xl"}`}>
+          <span className="font-display font-bold text-primary text-lg xl:text-xl whitespace-nowrap">
             Gulf Coast <span className="text-palm-light">Palms</span>
           </span>
           <span className="font-body text-[11px] lg:text-xs font-medium text-foreground">Tree Services &amp; Palm Care</span>
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden lg:flex items-center gap-4 xl:gap-6">
+        <nav className="hidden lg:flex items-center gap-3 xl:gap-4">
           <Link to="/" className={`whitespace-nowrap font-body font-medium text-[13px] xl:text-sm uppercase tracking-wider transition-colors hover:text-primary ${location.pathname === "/" ? "text-primary" : "text-muted-foreground"}`}>
             Home
           </Link>

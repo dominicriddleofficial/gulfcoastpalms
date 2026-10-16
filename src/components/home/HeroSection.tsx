@@ -137,9 +137,6 @@ const HeroSection = () => {
             Hurricane Season — Emergency Service
             <span className="hidden md:inline"> Available</span>
           </Link>
-          <Link to="/services/palm-tree-trimming" className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl border border-primary-foreground/25 bg-primary-foreground/5 text-primary-foreground font-body font-semibold text-lg hover:bg-primary-foreground/12 transition-colors">
-            Palm Care <ArrowRight className="w-5 h-5" />
-          </Link>
         </motion.div>
       </div>
     </section>
