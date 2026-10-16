@@ -173,7 +173,8 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
       for (const c of (jobberRes.data || [])) { const k = c.display_name?.toLowerCase(); if (k && !seen.has(k)) { seen.add(k); combined.push({ ...c, source: "jobber" }); } }
       for (const c of (platformRes.data || [])) { const k = c.display_name?.toLowerCase(); if (k && !seen.has(k)) { seen.add(k); combined.push({ ...c, source: "platform" }); } }
       if (reqId !== searchSeqRef.current) return; // a newer search or a just-created customer supersedes this
-      const pinned = pinnedCustomersRef.current.filter(p => !combined.some(c => c.source === p.source && c.id === p.id));
+      const q = customerSearch.trim().toLowerCase();
+      const pinned = pinnedCustomersRef.current.filter(p => (!q || [p.display_name, p.phone, p.email].some(v => v?.toLowerCase().includes(q)))).filter(p => !combined.some(c => c.source === p.source && c.id === p.id));
       setCustomerResults([...pinned, ...combined].slice(0, 25));
     }, 200);
     return () => clearTimeout(timer);
