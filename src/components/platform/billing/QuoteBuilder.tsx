@@ -604,7 +604,10 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                             <p className="font-body text-[10px] text-muted-foreground">{[c.phone, c.email].filter(Boolean).join(" · ")}</p>
                           </button>
                         )) : (
-                          <p className="px-3 py-3 font-body text-xs text-muted-foreground text-center">No customers found</p>
+                          <div className="px-3 py-3 text-center space-y-1">
+                            <p className="font-body text-xs text-muted-foreground">No customers found</p>
+                            <button type="button" className="font-body text-xs text-primary hover:underline" onClick={() => { setShowCustomerSearch(false); setNewCustomerOpen(true); }}>+ New customer</button>
+                          </div>
                         )}
                       </div>
                     )}
@@ -911,6 +914,9 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
           </div>
         </SheetContent>
       </Sheet>
+      {!editingQuote && (
+        <NewCustomerSheet open={newCustomerOpen} businessId={bizId} onOpenChange={setNewCustomerOpen} onCreated={handleNewCustomerCreated} />
+      )}
     </>
   );
 }
