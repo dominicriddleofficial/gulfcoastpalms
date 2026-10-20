@@ -14,7 +14,7 @@ import {
   Activity, ShieldAlert, BookText, Rocket, TestTube, AlertCircle,
   Sparkles,
 } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import UniversalSearch from "./UniversalSearch";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -96,30 +96,31 @@ export default function PlatformBottomNav({ businessId, onSignOut, workspaceShor
   return (
     <>
       <nav
-        className="fixed bottom-0 inset-x-0 z-40 lg:hidden bg-card/95 backdrop-blur-xl border-t border-border"
+        aria-label="Primary navigation"
+        className="platform-bottom-nav fixed bottom-0 inset-x-0 z-40 lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <div className="flex items-stretch h-16">
+        <div className="flex items-stretch h-16 px-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const content = (
               <div className={cn(
-                "flex flex-col items-center justify-center gap-1 w-full h-full min-h-[48px] relative transition-transform active:scale-95"
+                "platform-bottom-item flex flex-col items-center justify-center gap-1 w-full h-full min-h-[48px] relative transition-transform active:scale-95"
               )}>
                 {item.active && (
-                  <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-[3px] rounded-b-full bg-primary" />
+                  <span className="platform-bottom-active absolute top-1 left-1/2 -translate-x-1/2 w-10 h-[2px] rounded-full bg-primary" />
                 )}
                 <Icon
                   className={cn(
                     "w-[22px] h-[22px] transition-colors duration-150",
-                    item.active ? "text-primary" : "text-muted-foreground/70"
+                    item.active ? "text-primary" : "text-muted-foreground"
                   )}
                   fill={item.active ? "currentColor" : "none"}
                   fillOpacity={item.active ? 0.15 : 0}
                 />
                 <span className={cn(
-                  "font-body text-[10px] font-medium uppercase tracking-wide transition-colors duration-150",
-                  item.active ? "text-primary" : "text-muted-foreground/60"
+                  "font-body text-[10px] font-medium transition-colors duration-150",
+                  item.active ? "text-primary" : "text-muted-foreground"
                 )}>
                   {item.label}
                 </span>
@@ -143,6 +144,7 @@ export default function PlatformBottomNav({ businessId, onSignOut, workspaceShor
                 <Link
                   key={item.key}
                   to={item.to}
+                  aria-current={item.active ? "page" : undefined}
                   className="flex-1 flex"
                   onPointerDown={() => warmRoute(item.to)}
                   onTouchStart={() => warmRoute(item.to)}
@@ -182,10 +184,11 @@ export default function PlatformBottomNav({ businessId, onSignOut, workspaceShor
       <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
         <SheetContent
           side="bottom"
+          aria-describedby={undefined}
           className="bg-card border-t border-border rounded-t-2xl p-0 max-h-[85vh] overflow-y-auto"
         >
           <div className="px-4 pt-3 pb-2 flex items-center justify-between border-b border-border">
-            <h3 className="font-display text-sm font-semibold text-foreground tracking-tight">Menu</h3>
+            <SheetTitle className="font-display text-sm font-semibold text-foreground tracking-tight">Menu</SheetTitle>
           </div>
           <div className="p-2">
             {(() => {
@@ -211,7 +214,7 @@ export default function PlatformBottomNav({ businessId, onSignOut, workspaceShor
                 );
                 const inner = (
                   <>
-                    <Icon className={cn("w-[20px] h-[20px]", isActive ? "text-primary" : "text-muted-foreground/70")} />
+                    <Icon className={cn("w-[20px] h-[20px]", isActive ? "text-primary" : "text-muted-foreground")} />
                     <span className="flex-1">{item.label}</span>
                   </>
                 );
@@ -267,6 +270,7 @@ export default function PlatformBottomNav({ businessId, onSignOut, workspaceShor
       <Sheet open={searchOpen} onOpenChange={setSearchOpen}>
         <SheetContent
           side="top"
+          aria-describedby={undefined}
           className="ops-theme p-0 h-auto max-h-[92vh] overflow-hidden border-0"
           style={{
             background: "#0e110f",
@@ -278,12 +282,12 @@ export default function PlatformBottomNav({ businessId, onSignOut, workspaceShor
             className="flex items-center justify-between px-4 pt-4 pb-3"
             style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
           >
-            <h3
+            <SheetTitle
               className="font-display text-[15px] font-semibold tracking-tight"
               style={{ color: "#f3f4f6" }}
             >
               Search
-            </h3>
+            </SheetTitle>
             <button
               onClick={() => setSearchOpen(false)}
               className="p-1.5 rounded-lg transition-colors"

@@ -1,3 +1,4 @@
+import "@/styles/platform.css";
 import { useState, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -34,26 +35,11 @@ import { WorkspaceThemeProvider, getWorkspaceThemeFromBusiness, workspaceThemeVa
 
 function PlatformAuraBackground() {
   return (
-    <>
-      <style>{`@keyframes platformAuraPulse { 0%,100% { opacity: 0.85; } 50% { opacity: 1; } }`}</style>
-      {/* Strong bottom-anchored radial glow */}
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-x-0 bottom-0 h-[70vh] z-0"
-        style={{
-          background: "radial-gradient(ellipse 80% 60% at 50% 100%, rgba(var(--biz-accent-rgb), 0.22), rgba(var(--biz-accent-rgb), 0.08) 40%, transparent 70%)",
-          animation: "platformAuraPulse 6s ease-in-out infinite",
-        }}
-      />
-      {/* Soft linear fade bottom → top */}
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-0 z-0"
-        style={{
-          background: "linear-gradient(to top, rgba(var(--biz-accent-rgb), 0.06) 0%, transparent 50%)",
-        }}
-      />
-    </>
+    <div className="platform-atmosphere" aria-hidden="true">
+      <div className="platform-aurora platform-aurora-primary" />
+      <div className="platform-aurora platform-aurora-secondary" />
+      <div className="platform-grid" />
+    </div>
   );
 }
 
@@ -413,7 +399,7 @@ export default function PlatformLayout({ children }: Props) {
 
   return (
     <WorkspaceThemeProvider shortcode={workspaceTheme.shortcode}>
-    <div className="ops-theme min-h-screen bg-background flex relative" style={workspaceThemeVars(workspaceTheme)}>
+    <div className="ops-theme platform-shell min-h-screen bg-background flex relative" style={workspaceThemeVars(workspaceTheme)}>
       <PlatformAuraBackground />
 
       {sidebarOpen && (
@@ -422,7 +408,7 @@ export default function PlatformLayout({ children }: Props) {
 
       {/* Sidebar */}
       <aside className={cn(
-        "fixed inset-y-0 left-0 z-50 w-[240px] bg-card/80 backdrop-blur-xl border-r border-border flex flex-col transition-transform duration-200 lg:translate-x-0 lg:static lg:z-auto",
+        "platform-sidebar fixed inset-y-0 left-0 z-50 w-[240px] border-r border-border flex flex-col transition-transform duration-200 lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:shrink-0 lg:z-30",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         {/* Brand header */}
@@ -430,14 +416,14 @@ export default function PlatformLayout({ children }: Props) {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
-                <span className="text-primary font-display text-xs font-bold tracking-tight">FS</span>
+                <span className="text-primary font-display text-xs font-bold tracking-tight">{selectedBiz?.shortcode || "GCP"}</span>
               </div>
               <div>
-                <h2 className="font-display text-[13px] font-semibold text-foreground leading-tight tracking-tight">Field Ops</h2>
-                <p className="font-body text-[10px] text-muted-foreground tracking-wide">Operations Platform</p>
+                <h2 className="font-display text-[13px] font-semibold text-foreground leading-tight tracking-tight">Command Center</h2>
+                <p className="font-body text-[10px] text-muted-foreground tracking-wide">OPERATIONS WORKSPACE</p>
               </div>
             </div>
-            <button className="lg:hidden text-muted-foreground hover:text-foreground transition-colors" onClick={() => setSidebarOpen(false)}>
+            <button aria-label="Close navigation" className="lg:hidden p-2 text-muted-foreground hover:text-foreground transition-colors" onClick={() => setSidebarOpen(false)}>
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -457,9 +443,9 @@ export default function PlatformLayout({ children }: Props) {
                 location.pathname === item.path ||
                 (item.path !== "/platform" && location.pathname.startsWith(item.path + "/"));
               const className = cn(
-                "group flex items-center gap-2.5 px-3 py-2 min-h-[44px] rounded-lg font-body text-[13px] font-medium transition-all duration-150",
+                "platform-nav-item group flex items-center gap-2.5 px-3 py-2 min-h-[44px] rounded-lg font-body text-[13px] font-medium transition-all duration-150",
                 isActive
-                  ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
+                  ? "platform-nav-active text-primary"
                   : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
               );
               const inner = (
@@ -488,6 +474,7 @@ export default function PlatformLayout({ children }: Props) {
                 <Link
                   key={item.path}
                   to={item.path}
+                  aria-current={isActive ? "page" : undefined}
                   onClick={() => setSidebarOpen(false)}
                   onMouseEnter={() => { prefetchRoute(item.path); prefetchNavData(item.path); }}
                   onFocus={() => { prefetchRoute(item.path); prefetchNavData(item.path); }}
@@ -500,7 +487,7 @@ export default function PlatformLayout({ children }: Props) {
 
             return (
               <div key={section.label}>
-                <p className="px-3 mb-1.5 font-display text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/50">
+                <p className="px-3 mb-1.5 font-display text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                   {section.label}
                 </p>
                 {section.items && (
@@ -513,7 +500,7 @@ export default function PlatformLayout({ children }: Props) {
                     {section.subgroups.map((sg, idx) => (
                       <div key={sg.label || `sg-${idx}`}>
                         {sg.label && (
-                          <p className="px-3 mt-2 mb-1 font-display text-[9px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/40">
+                          <p className="px-3 mt-2 mb-1 font-display text-[9px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                             {sg.label}
                           </p>
                         )}
@@ -551,22 +538,22 @@ export default function PlatformLayout({ children }: Props) {
       </aside>
 
       {/* Main content */}
-      <div className="flex-1 min-w-0 flex flex-col">
+      <div className="relative z-10 flex-1 min-w-0 flex flex-col">
         {/* Top bar */}
-        <header className="border-b border-border bg-card/50 backdrop-blur-md px-4 py-3 flex items-center gap-3 sticky top-0 z-30">
-          <button onClick={() => setSidebarOpen(true)} className="text-muted-foreground hover:text-primary lg:hidden transition-colors">
+        <header className="platform-topbar border-b border-border px-4 md:px-7 flex items-center gap-3 sticky top-0 z-30">
+          <button aria-label="Open navigation" onClick={() => setSidebarOpen(true)} className="platform-menu-button text-muted-foreground hover:text-primary lg:hidden transition-colors">
             <Menu className="w-5 h-5" />
           </button>
           
           {/* Page context with business logo */}
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2.5">
             {selectedBiz && <SidebarBizLogo business={selectedBiz} />}
-            <h1 className="font-display text-[15px] font-semibold text-foreground tracking-tight">{pageTitle}</h1>
-            <span className="text-border">·</span>
-            <span className="font-body text-[12px] text-muted-foreground">{contextLabel}</span>
+            <span className="font-display text-[14px] font-semibold text-foreground tracking-tight truncate">{pageTitle}</span>
+            <span className="hidden md:inline text-muted-foreground/50">/</span>
+            <span className="hidden md:inline font-body text-[12px] text-muted-foreground truncate">{contextLabel}</span>
           </div>
 
-          <div className="flex-1 flex justify-center">
+          <div className="ml-auto flex min-w-0 justify-end md:flex-1 md:justify-center">
             <UniversalSearch businessId={auth.selectedBusinessId} />
           </div>
           <NotificationPanel />
@@ -574,7 +561,7 @@ export default function PlatformLayout({ children }: Props) {
         <OutageBanner />
         <OfflineModeBanner />
 
-        <main className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full pb-20 lg:pb-6">{children}</main>
+        <main className="platform-main flex-1 p-4 md:p-7 max-w-7xl mx-auto w-full">{children}</main>
 
         {/* Mobile bottom navigation */}
         <PlatformBottomNav businessId={auth.selectedBusinessId} onSignOut={auth.signOut} workspaceShortcode={selectedBiz?.shortcode} />

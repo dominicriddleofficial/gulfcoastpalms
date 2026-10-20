@@ -1,10 +1,10 @@
 import { useEffect, lazy, Suspense } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { startOfWeek, endOfWeek } from "date-fns";
+import { startOfWeek, endOfWeek, format } from "date-fns";
 import PlatformLayout from "@/components/platform/PlatformLayout";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { prefetchDashboardScheduledJobs } from "@/hooks/useDashboardScheduledJobs";
-import { InlineBadge } from "@/components/platform/BusinessSwitcher";
+import { CalendarDays } from "lucide-react";
 import TodaySection from "@/components/platform/dashboard/TodaySection";
 import ReliabilitySection from "@/components/platform/dashboard/ReliabilitySection";
 import HeadlineSection from "@/components/platform/dashboard/HeadlineSection";
@@ -20,8 +20,8 @@ function ScheduledValueChartSkeleton() {
   return (
     <div
       aria-hidden
-      className="w-full rounded-xl border border-white/5 bg-white/[0.02]"
-      style={{ height: 280 }}
+      className="command-panel command-skeleton w-full"
+      style={{ height: 430 }}
     />
   );
 }
@@ -47,56 +47,31 @@ export default function PlatformDashboard() {
 
   return (
     <PlatformLayout>
-      <div
-        className="platform-dashboard-bg -m-4 md:-m-6 p-4 md:p-6"
-        style={{
-          background: `
-            radial-gradient(ellipse 70% 50% at 50% 0%, rgba(var(--biz-accent-rgb), 0.28) 0%, rgba(var(--biz-accent-rgb), 0.08) 45%, transparent 70%),
-            radial-gradient(ellipse 40% 30% at 15% 40%, rgba(var(--biz-accent-rgb), 0.12) 0%, transparent 60%),
-            radial-gradient(ellipse 35% 25% at 85% 20%, rgba(var(--biz-accent-rgb), 0.10) 0%, transparent 55%),
-            var(--biz-background-hex)
-          `,
-        }}
-      >
-        <div className="space-y-5 max-w-7xl mx-auto">
-          <header className="flex items-center justify-between gap-4">
+      <div className="command-dashboard">
+          <header className="command-heading">
             <div>
-              <h1
-                className="font-display font-bold"
-                style={{
-                  fontSize: "28px",
-                  letterSpacing: "-0.02em",
-                  color: "#fff",
-                }}
-              >
-                Command Center
-              </h1>
-              <div className="mt-1 flex items-center gap-2 flex-wrap">
-                {selectedBiz && (
-                  <InlineBadge
-                    shortcode={selectedBiz.shortcode}
-                    color={selectedBiz.default_business_color}
-                  />
-                )}
-                <p
-                  className="font-body"
-                  style={{ fontSize: "13px", color: "hsl(220 8% 50%)" }}
-                >
-                  {selectedBiz?.public_brand_name ?? "All Businesses"} · Platform schedule
-                </p>
-              </div>
+              <p className="command-eyebrow">Operations overview</p>
+              <h1>Command Center</h1>
+              <p className="command-subtitle">
+                {selectedBiz?.public_brand_name ?? "All Businesses"} · Your business at a glance
+              </p>
+            </div>
+            <div className="command-date">
+              <CalendarDays className="h-3.5 w-3.5" />
+              <time dateTime={format(new Date(), "yyyy-MM-dd")}>{format(new Date(), "EEE, MMM d, yyyy")}</time>
             </div>
           </header>
 
           <HeadlineSection />
-          <UnpaidJobsTile />
-          <YearlyClientsTile />
+          <div className="command-attention">
+            <UnpaidJobsTile />
+            <YearlyClientsTile />
+          </div>
           <Suspense fallback={<ScheduledValueChartSkeleton />}>
             <ScheduledValueChart />
           </Suspense>
           <TodaySection />
           <ReliabilitySection />
-        </div>
       </div>
     </PlatformLayout>
   );

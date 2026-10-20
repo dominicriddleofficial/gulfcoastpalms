@@ -270,7 +270,7 @@ export default function NotificationPanel() {
 
   const trigger = (
     <button
-      className="text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-lg hover:bg-white/5 relative"
+      className="text-muted-foreground hover:text-foreground transition-colors w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/5 relative"
       aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
     >
       <Bell className="w-4 h-4" />

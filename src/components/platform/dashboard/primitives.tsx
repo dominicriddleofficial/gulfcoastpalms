@@ -14,29 +14,11 @@ export function SectionCard({
   children: ReactNode;
 }) {
   return (
-    <section
-      className="rounded-2xl p-4 md:p-5 space-y-4"
-      style={{
-        background: "rgba(255,255,255,0.04)",
-        border: "1px solid rgba(var(--biz-accent-rgb),0.10)",
-      }}
-    >
-      <header className="flex items-start justify-between gap-2">
+    <section className="command-panel">
+      <header className="command-panel-header">
         <div>
-          <h3
-            className="font-display font-semibold tracking-tight"
-            style={{ color: "#fff", fontSize: "14px" }}
-          >
-            {title}
-          </h3>
-          {subtitle && (
-            <p
-              className="font-body"
-              style={{ fontSize: "11px", color: "hsl(220 8% 50%)" }}
-            >
-              {subtitle}
-            </p>
-          )}
+          <h3 className="command-panel-title">{title}</h3>
+          {subtitle && <p className="command-panel-subtitle">{subtitle}</p>}
         </div>
         {action}
       </header>
@@ -70,43 +52,16 @@ export function MetricTile({
           : "#fff";
 
   const inner = (
-    <div
-      className="rounded-xl p-3 transition-colors h-full"
-      style={{
-        background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(var(--biz-accent-rgb),0.10)",
-      }}
-    >
-      <div
-        className="font-body uppercase"
-        style={{
-          fontSize: "9.5px",
-          letterSpacing: "0.14em",
-          color: "hsl(220 8% 55%)",
-        }}
-      >
-        {label}
-      </div>
-      <div
-        className="font-display font-bold mt-1.5"
-        style={{ fontSize: "22px", color: valueColor, letterSpacing: "-0.02em" }}
-      >
-        {loading ? "—" : value}
-      </div>
-      {hint && (
-        <div
-          className="font-body mt-1 truncate"
-          style={{ fontSize: "10.5px", color: "hsl(220 8% 50%)" }}
-        >
-          {hint}
-        </div>
-      )}
+    <div className="command-metric h-full">
+      <div className="command-metric-label">{label}</div>
+      <div className="command-metric-value" style={{ color: valueColor }}>{loading ? "—" : value}</div>
+      {hint && <div className="command-metric-hint">{hint}</div>}
     </div>
   );
 
   if (!to) return inner;
   return (
-    <Link to={to} className="block focus:outline-none">
+    <Link to={to} className="block rounded-xl">
       {inner}
     </Link>
   );

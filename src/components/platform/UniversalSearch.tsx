@@ -503,7 +503,7 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
             "rounded-2xl overflow-y-auto motion-safe:animate-fade-in",
             embedded
               ? "mt-3 max-h-[75vh]"
-              : "absolute top-full left-0 right-0 mt-2 z-[70] max-h-[65vh] min-w-[280px] md:min-w-[380px]"
+              : "absolute top-full right-0 md:left-0 mt-2 z-[70] max-h-[65vh] min-w-[280px] md:min-w-[380px]"
           )}
           style={{
             background: "rgba(14,17,15,0.96)",
