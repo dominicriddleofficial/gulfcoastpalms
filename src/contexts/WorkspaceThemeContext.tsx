@@ -213,6 +213,7 @@ export function workspaceThemeVars(theme: WorkspaceTheme): CSSProperties {
     ["--biz-accent-rgb" as string]: theme.accentRgb,
     ["--biz-background-hex" as string]: theme.backgroundHex,
     ["--biz-card-hex" as string]: theme.cardHex,
+    ["--platform-fade-mix" as string]: theme.shortcode === "PPS" ? "22%" : "58%",
     ["--accent-color" as string]: theme.accentHex,
     ["--accent-glow" as string]: `rgba(${theme.accentRgb}, ${subtleGlowOpacity})`,
     ["--primary-color" as string]: theme.primaryHex,

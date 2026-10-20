@@ -11,6 +11,13 @@
   width: 650px; height: 850px; left: -420px; top: 28vh;
   background: radial-gradient(ellipse at center, rgba(var(--biz-accent-rgb), .09), transparent 65%);
 }
+.platform-fade {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 50%;
+  background: linear-gradient(to top,
+    color-mix(in srgb, rgb(var(--biz-accent-rgb)) var(--platform-fade-mix, 58%), var(--biz-background-hex)) 0%,
+    color-mix(in srgb, rgb(var(--biz-accent-rgb)) calc(var(--platform-fade-mix, 58%) / 2.4), var(--biz-background-hex)) 34%,
+    transparent 100%);
+}
 .platform-grid {
   position: absolute; inset: 0; opacity: .2;
   background-image: linear-gradient(rgba(var(--biz-accent-rgb), .12) 1px, transparent 1px), linear-gradient(90deg, rgba(var(--biz-accent-rgb), .12) 1px, transparent 1px);
