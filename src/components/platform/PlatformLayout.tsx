@@ -38,6 +38,7 @@ function PlatformAuraBackground() {
     <div className="platform-atmosphere" aria-hidden="true">
       <div className="platform-aurora platform-aurora-primary" />
       <div className="platform-aurora platform-aurora-secondary" />
+      <div className="platform-fade" />
       <div className="platform-grid" />
     </div>
   );
