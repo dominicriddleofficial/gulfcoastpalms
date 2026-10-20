@@ -1,19 +1,19 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Plus, X } from "lucide-react";
+import { Plus, X, FileText, Briefcase, UserPlus, Receipt, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useOfflineMode } from "@/hooks/useOfflineMode";
 import { OFFLINE_WRITE_TOOLTIP } from "@/lib/offlineMode";
 
-interface QuickAction { label: string; path: string; emoji: string; ownerOnly?: boolean; }
+interface QuickAction { label: string; path: string; icon: typeof Plus; ownerOnly?: boolean; }
 
 const ACTIONS: QuickAction[] = [
-  { label: "New Quote",   path: "/platform/quotes/new",    emoji: "📋" },
-  { label: "New Job",     path: "/platform/jobs/new",      emoji: "🔧" },
-  { label: "New Customer",path: "/platform/customers/new", emoji: "👤" },
-  { label: "New Invoice", path: "/platform/invoices/new",  emoji: "💵", ownerOnly: true },
-  { label: "Log a Lead",  path: "/platform/leads/new",     emoji: "📞" },
+  { label: "New Quote",   path: "/platform/quotes/new",    icon: FileText },
+  { label: "New Job",     path: "/platform/jobs/new",      icon: Briefcase },
+  { label: "New Customer",path: "/platform/customers/new", icon: UserPlus },
+  { label: "New Invoice", path: "/platform/invoices/new",  icon: Receipt, ownerOnly: true },
+  { label: "Log a Lead",  path: "/platform/leads/new",     icon: Target },
 ];
 
 interface Props {
@@ -97,7 +97,7 @@ export default function QuickActionFAB({ brandColor = "var(--button-bg)" }: Prop
               onClick={() => handleAction(action.path)}
               className="flex items-center gap-2.5 pl-3 pr-4 py-2.5 rounded-xl bg-card border border-border shadow-lg hover:bg-secondary/60 transition-colors group"
             >
-              <span className="text-base">{action.emoji}</span>
+              <action.icon className="w-4 h-4 text-primary" />
               <span className="font-body text-sm font-medium text-foreground whitespace-nowrap">
                 {action.label}
               </span>
@@ -112,11 +112,12 @@ export default function QuickActionFAB({ brandColor = "var(--button-bg)" }: Prop
         aria-disabled={offline}
         title={offline ? OFFLINE_WRITE_TOOLTIP : undefined}
         className={cn(
-          "w-12 h-12 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95",
-          open && "rotate-45",
+          "platform-fab w-12 h-12 rounded-2xl shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95",
+          open && "platform-fab-open",
           offline && "opacity-40 cursor-not-allowed hover:scale-100",
         )}
         style={{ backgroundColor: brandColor }}
+        aria-expanded={open}
         aria-label={open ? "Close quick actions" : "Open quick actions"}
       >
         {open ? (

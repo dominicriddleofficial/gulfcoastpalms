@@ -166,38 +166,38 @@
 
 /* Platform dark tech theme — premium SaaS feel */
 .ops-theme {
-  --background: 0 0% 10%;
-  --foreground: 220 10% 92%;
-  --card: 0 0% 16%;
-  --card-foreground: 220 10% 92%;
-  --popover: 220 14% 9%;
-  --popover-foreground: 220 10% 92%;
-  --primary: 138 100% 39%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 220 12% 12%;
-  --secondary-foreground: 220 10% 85%;
-  --muted: 220 12% 11%;
-  --muted-foreground: 220 8% 50%;
-  --accent: 138 100% 39%;
-  --accent-foreground: 220 16% 4%;
-  --destructive: 0 72% 51%;
+  --background: 195 29% 3%;
+  --foreground: 160 15% 94%;
+  --card: 195 25% 6%;
+  --card-foreground: 160 15% 94%;
+  --popover: 195 20% 8%;
+  --popover-foreground: 160 15% 94%;
+  --primary: 159 80% 56%;
+  --primary-foreground: 158 65% 5%;
+  --secondary: 190 16% 11%;
+  --secondary-foreground: 160 12% 88%;
+  --muted: 190 16% 10%;
+  --muted-foreground: 180 6% 62%;
+  --accent: 159 80% 56%;
+  --accent-foreground: 158 65% 5%;
+  --destructive: 0 72% 58%;
   --destructive-foreground: 0 0% 100%;
-  --border: 220 12% 14%;
-  --input: 220 12% 14%;
-  --ring: 142 71% 45%;
-  --accent-color: #00C853;
-  --accent-glow: rgba(0, 200, 83, 0.35);
+  --border: 185 13% 15%;
+  --input: 185 13% 18%;
+  --ring: 159 80% 56%;
+  --accent-color: #34E8A8;
+  --accent-glow: rgba(52, 232, 168, 0.18);
   --primary-color: #1B5E20;
-  --badge-color: #00C853;
-  --button-bg: #00C853;
-  --button-text: #FFFFFF;
+  --badge-color: #34E8A8;
+  --button-bg: #34E8A8;
+  --button-text: #04130E;
   --biz-primary-hex: #1B5E20;
-  --biz-accent-hex: #00C853;
-  --biz-accent-rgb: 0, 200, 83;
-  --biz-background-hex: #1A1A1A;
-  --biz-card-hex: #2A2A2A;
+  --biz-accent-hex: #34E8A8;
+  --biz-accent-rgb: 52, 232, 168;
+  --biz-background-hex: #050809;
+  --biz-card-hex: #0C1214;
   --font-display: 'Inter', sans-serif;
-  --font-body: 'Outfit', sans-serif;
+  --font-body: 'Inter', sans-serif;
 }
 
 /* Platform-specific refinements */
@@ -338,15 +338,7 @@
   -webkit-text-fill-color: rgba(255, 255, 255, 0.55) !important;
 }
 
-.platform-dashboard-bg {
-  background:
-    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(var(--biz-accent-rgb), 0.28) 0%, rgba(var(--biz-accent-rgb), 0.08) 45%, transparent 70%),
-    radial-gradient(ellipse 40% 30% at 15% 40%, rgba(var(--biz-accent-rgb), 0.12) 0%, transparent 60%),
-    radial-gradient(ellipse 35% 25% at 85% 20%, rgba(var(--biz-accent-rgb), 0.10) 0%, transparent 55%),
-    var(--biz-background-hex) !important;
-  min-height: 100vh;
-  animation: glow-breathe 12s ease-in-out infinite;
-}
+
 
 @layer utilities {
   .text-gradient-primary {

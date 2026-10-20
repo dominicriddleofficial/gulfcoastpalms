@@ -46,25 +46,25 @@ const GCP_THEME: WorkspaceTheme = {
   shortcode: "GCP",
   label: "Gulf Coast Palms",
   primaryHex: "#1B5E20",
-  accentHex: "#00C853",
-  buttonTextHex: "#FFFFFF",
-  accentRgb: "0, 200, 83",
-  backgroundHex: "#1A1A1A",
-  cardHex: "#2A2A2A",
-  statusBarHex: "#1B5E20",
+  accentHex: "#34E8A8",
+  buttonTextHex: "#04130E",
+  accentRgb: "52, 232, 168",
+  backgroundHex: "#050809",
+  cardHex: "#0C1214",
+  statusBarHex: "#050809",
   hsl: {
-    background: "0 0% 10%",
-    card: "0 0% 16%",
-    popover: "0 0% 12%",
-    primary: "138 100% 39%",         // #00C853 as active UI accent
-    primaryForeground: "0 0% 100%",
-    secondary: "0 0% 14%",
-    muted: "0 0% 13%",
-    accent: "138 100% 39%",          // #00C853
-    accentForeground: "0 0% 6%",
-    border: "0 0% 18%",
-    input: "0 0% 18%",
-    ring: "138 100% 39%",
+    background: "195 29% 3%",
+    card: "195 25% 6%",
+    popover: "195 20% 8%",
+    primary: "159 80% 56%",
+    primaryForeground: "158 65% 5%",
+    secondary: "190 16% 11%",
+    muted: "190 16% 10%",
+    accent: "159 80% 56%",
+    accentForeground: "158 65% 5%",
+    border: "185 13% 15%",
+    input: "185 13% 18%",
+    ring: "159 80% 56%",
   },
 };
 
@@ -147,30 +147,35 @@ export function WorkspaceThemeProvider({ shortcode, applyGlobally = true, childr
   useEffect(() => {
     if (!applyGlobally || typeof document === "undefined") return;
     const root = document.documentElement;
-    root.style.setProperty("--biz-primary-hex", theme.primaryHex);
-    root.style.setProperty("--biz-accent-hex", theme.accentHex);
-    root.style.setProperty("--biz-accent-rgb", theme.accentRgb);
-    root.style.setProperty("--biz-background-hex", theme.backgroundHex);
-    root.style.setProperty("--biz-card-hex", theme.cardHex);
-    root.style.setProperty("--accent-color", theme.accentHex);
-    root.style.setProperty("--accent-glow", `rgba(${theme.accentRgb}, ${theme.shortcode === "PPS" ? "0.22" : "0.35"})`);
-    root.style.setProperty("--primary-color", theme.primaryHex);
-    root.style.setProperty("--badge-color", theme.accentHex);
-    root.style.setProperty("--button-bg", theme.accentHex);
-    root.style.setProperty("--button-text", theme.buttonTextHex);
+    // Portaled dialogs and menus render outside .ops-theme. Apply the same
+    // semantic tokens while the workspace is mounted, then restore the site.
+    const vars = {
+      ...workspaceThemeVars(theme),
+      "--foreground": "160 15% 94%",
+      "--card-foreground": "160 15% 94%",
+      "--popover-foreground": "160 15% 94%",
+      "--secondary-foreground": "160 12% 88%",
+      "--muted-foreground": "180 6% 62%",
+      "--font-display": "'Inter', sans-serif",
+      "--font-body": "'Inter', sans-serif",
+    } as Record<string, string>;
+    const previous = new Map(Object.keys(vars).map(key => [key, root.style.getPropertyValue(key)]));
+    const previousWorkspace = root.dataset.workspaceTheme;
+    for (const [key, value] of Object.entries(vars)) root.style.setProperty(key, value);
     root.dataset.workspaceTheme = theme.shortcode;
 
-    // PWA / mobile status bar
     const themeMeta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
-    if (themeMeta && themeMeta.getAttribute("content") !== theme.statusBarHex) {
-      themeMeta.setAttribute("content", theme.statusBarHex);
-    }
-    // NOTE: previously this hook forced a full `window.location.replace()`
-    // on every workspace switch to bust SW caches. That made workspace
-    // switching feel like a fresh app load. The CSS variables we set above
-    // already re-skin the entire `.ops-theme` shell instantly, and React
-    // Query keys include selectedBusinessId so data swaps in-memory.
-    // Hard reloads are no longer needed.
+    const previousStatusBar = themeMeta?.getAttribute("content");
+    themeMeta?.setAttribute("content", theme.statusBarHex);
+    return () => {
+      for (const [key, value] of previous) {
+        if (value) root.style.setProperty(key, value);
+        else root.style.removeProperty(key);
+      }
+      if (previousWorkspace) root.dataset.workspaceTheme = previousWorkspace;
+      else delete root.dataset.workspaceTheme;
+      if (previousStatusBar != null) themeMeta?.setAttribute("content", previousStatusBar);
+    };
   }, [theme, applyGlobally]);
 
   return (

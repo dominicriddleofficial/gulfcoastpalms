@@ -13,13 +13,14 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Phone } from "lucide-react";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const GREEN = "var(--accent-color)";
-const GREEN_DIM = "rgba(var(--biz-accent-rgb),0.5)";
-const GREEN_FAINT = "rgba(var(--biz-accent-rgb),0.25)";
+const GREEN_DIM = "#8195a2";
+const GREEN_FAINT = "#61717f";
 const RED = "#f87171";
-const CARD_BORDER = "rgba(var(--biz-accent-rgb),0.15)";
+const CARD_BORDER = "rgba(255,255,255,0.08)";
 
 // A job counts as "completed" if it's not cancelled/deleted AND either has an
 // explicit completion status OR is scheduled in the past. Jobber imports rarely
@@ -417,10 +418,7 @@ function StatCard({ label, value, sub, icon: Icon, highlight }: {
   label: string; value: string; sub?: string; icon: any; highlight?: boolean;
 }) {
   return (
-    <div className="rounded-xl p-4 space-y-2" style={{
-      background: "rgba(255,255,255,0.03)",
-      border: `1px solid ${CARD_BORDER}`,
-    }}>
+    <div className="command-kpi space-y-2">
       <div className="flex items-center justify-between">
         <span className="font-body text-[10px] text-muted-foreground uppercase tracking-wider">{label}</span>
         <Icon className="w-4 h-4" style={{ color: GREEN_DIM }} />
@@ -435,10 +433,7 @@ function ChartSection({ title, subtitle, children, empty }: {
   title: string; subtitle: string; children: React.ReactNode; empty?: boolean;
 }) {
   return (
-    <div className="rounded-xl p-5 space-y-4" style={{
-      background: "rgba(255,255,255,0.03)",
-      border: `1px solid ${CARD_BORDER}`,
-    }}>
+    <div className="command-panel space-y-5">
       <div className="flex items-center gap-2">
         <BarChart3 className="w-4 h-4" style={{ color: GREEN }} />
         <div>
@@ -473,14 +468,17 @@ function LoadingSkeleton() {
 }
 
 const customTooltipStyle = {
-  backgroundColor: "rgba(10,15,10,0.95)",
+  backgroundColor: "#101b1ef5",
   border: `1px solid ${CARD_BORDER}`,
-  borderRadius: "8px",
+  borderRadius: "10px",
+  boxShadow: "0 8px 30px #0008",
+  padding: "12px 15px",
   fontSize: "12px",
   color: "#fff",
 };
 
 export default function PlatformAnalytics() {
+  const reducedMotion = usePrefersReducedMotion();
   const { selectedBusinessId } = useBusinessContext();
   const queryClient = useQueryClient();
   const { isOwner } = useUserRole();
@@ -624,7 +622,7 @@ export default function PlatformAnalytics() {
 
   return (
     <PlatformLayout>
-      <div className="space-y-6">
+      <div className="platform-analytics space-y-6">
         <ConversionFunnelWidget days={30} businessId={selectedBusinessId} />
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -665,7 +663,7 @@ export default function PlatformAnalytics() {
         </div>
 
         {/* SECTION 1 — Hero Revenue */}
-        <div className="rounded-xl p-6 text-center" style={{
+        <div className="command-panel p-6 text-center" style={{
           background: "rgba(var(--biz-accent-rgb),0.05)",
           border: `1px solid ${CARD_BORDER}`,
         }}>
@@ -719,20 +717,20 @@ export default function PlatformAnalytics() {
             <AreaChart data={revenueChartData}>
               <defs>
                 <linearGradient id="greenGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={GREEN} stopOpacity={0.35} />
+                  <stop offset="5%" stopColor={GREEN} stopOpacity={0.24} />
                   <stop offset="95%" stopColor={GREEN} stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-              <XAxis dataKey="name" tick={{ fill: "#888", fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis tickFormatter={v => `$${(v / 1000).toFixed(0)}k`} tick={{ fill: "#888", fontSize: 11 }} axisLine={false} tickLine={false} width={45} />
+              <CartesianGrid vertical={false} strokeDasharray="2 5" stroke="rgba(255,255,255,0.05)" />
+              <XAxis dataKey="name" tick={{ fill: "#94a4a7", fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis tickFormatter={v => `$${(v / 1000).toFixed(0)}k`} tick={{ fill: "#94a4a7", fontSize: 11 }} axisLine={false} tickLine={false} width={45} />
               <Tooltip
                 contentStyle={customTooltipStyle}
                 labelStyle={{ color: "#ddd", fontWeight: 600 }}
                 formatter={(v: number, name) => [`$${Number(v).toLocaleString()}`, String(name)]}
               />
-              <Area type="monotone" dataKey={`${selectedYear - 1}`} stroke={GREEN_DIM} strokeWidth={1.5} strokeDasharray="4 4" fill="none" name={`${selectedYear - 1}`} />
-              <Area type="monotone" dataKey={selectedYear.toString()} stroke={GREEN} strokeWidth={2.5} fill="url(#greenGrad)" name={`${selectedYear}`} />
+              <Area isAnimationActive={!reducedMotion} animationDuration={600} type="monotone" dataKey={`${selectedYear - 1}`} stroke={GREEN_DIM} strokeWidth={1.5} strokeDasharray="4 4" fill="none" name={`${selectedYear - 1}`} />
+              <Area isAnimationActive={!reducedMotion} animationDuration={600} type="monotone" dataKey={selectedYear.toString()} stroke={GREEN} strokeWidth={2.5} fill="url(#greenGrad)" name={`${selectedYear}`} />
             </AreaChart>
           </ResponsiveContainer>
         </ChartSection>
@@ -760,11 +758,11 @@ export default function PlatformAnalytics() {
           <ChartSection title={`Jobs Completed Per Month — ${selectedYear}`} subtitle="Volume of work each month" empty={curJobs.length === 0}>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={jobCountChartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="name" tick={{ fill: "#888", fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis allowDecimals={false} tick={{ fill: "#888", fontSize: 11 }} axisLine={false} tickLine={false} width={30} />
+                <CartesianGrid vertical={false} strokeDasharray="2 5" stroke="rgba(255,255,255,0.05)" />
+                <XAxis dataKey="name" tick={{ fill: "#94a4a7", fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis allowDecimals={false} tick={{ fill: "#94a4a7", fontSize: 11 }} axisLine={false} tickLine={false} width={30} />
                 <Tooltip contentStyle={customTooltipStyle} />
-                <Bar dataKey="jobs" fill={GREEN} radius={[4, 4, 0, 0]} opacity={0.8} />
+                <Bar isAnimationActive={!reducedMotion} animationDuration={600} maxBarSize={30} dataKey="jobs" fill={GREEN} radius={[5, 5, 0, 0]} opacity={0.9} />
               </BarChart>
             </ResponsiveContainer>
           </ChartSection>
@@ -774,18 +772,18 @@ export default function PlatformAnalytics() {
         <ChartSection title="Year Over Year Revenue" subtitle="Monthly comparison across years" empty={curJobs.length === 0 && prevJobs.length === 0}>
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={yoyChartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-              <XAxis dataKey="name" tick={{ fill: "#888", fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis tickFormatter={v => `$${(v / 1000).toFixed(0)}k`} tick={{ fill: "#888", fontSize: 11 }} axisLine={false} tickLine={false} width={45} />
+              <CartesianGrid vertical={false} strokeDasharray="2 5" stroke="rgba(255,255,255,0.05)" />
+              <XAxis dataKey="name" tick={{ fill: "#94a4a7", fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis tickFormatter={v => `$${(v / 1000).toFixed(0)}k`} tick={{ fill: "#94a4a7", fontSize: 11 }} axisLine={false} tickLine={false} width={45} />
               <Tooltip
                 contentStyle={customTooltipStyle}
                 labelStyle={{ color: "#ddd", fontWeight: 600 }}
                 formatter={(v: number, name) => [`$${Number(v).toLocaleString()}`, String(name)]}
               />
               <Legend wrapperStyle={{ fontSize: 11, color: "#888" }} />
-              <Line type="monotone" dataKey={selectedYear.toString()} stroke={GREEN} strokeWidth={2.5} dot={false} name={`${selectedYear}`} />
-              <Line type="monotone" dataKey={`${selectedYear - 1}`} stroke={GREEN_DIM} strokeWidth={2} dot={false} name={`${selectedYear - 1}`} />
-              <Line type="monotone" dataKey={`${selectedYear - 2}`} stroke={GREEN_FAINT} strokeWidth={1.5} strokeDasharray="4 4" dot={false} name={`${selectedYear - 2}`} />
+              <Line isAnimationActive={!reducedMotion} animationDuration={600} type="monotone" dataKey={selectedYear.toString()} stroke={GREEN} strokeWidth={2.5} dot={false} name={`${selectedYear}`} />
+              <Line isAnimationActive={!reducedMotion} animationDuration={600} type="monotone" dataKey={`${selectedYear - 1}`} stroke={GREEN_DIM} strokeWidth={2} dot={false} name={`${selectedYear - 1}`} />
+              <Line isAnimationActive={!reducedMotion} animationDuration={600} type="monotone" dataKey={`${selectedYear - 2}`} stroke={GREEN_FAINT} strokeWidth={1.5} strokeDasharray="4 4" dot={false} name={`${selectedYear - 2}`} />
             </LineChart>
           </ResponsiveContainer>
         </ChartSection>
