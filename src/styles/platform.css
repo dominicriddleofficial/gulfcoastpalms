@@ -13,10 +13,14 @@
 }
 .platform-fade {
   position: absolute; left: 0; right: 0; bottom: 0; height: 50%;
-  background: linear-gradient(to top,
-    color-mix(in srgb, rgb(var(--biz-accent-rgb)) var(--platform-fade-mix, 58%), var(--biz-background-hex)) 0%,
-    color-mix(in srgb, rgb(var(--biz-accent-rgb)) calc(var(--platform-fade-mix, 58%) / 2.4), var(--biz-background-hex)) 34%,
-    transparent 100%);
+  background:
+    radial-gradient(120% 95% at 50% 108%,
+      rgba(var(--biz-accent-rgb), var(--platform-fade-bloom, 0)),
+      transparent 72%),
+    linear-gradient(to top,
+      color-mix(in srgb, rgb(var(--biz-accent-rgb)) var(--platform-fade-mix, 58%), var(--biz-background-hex)) 0%,
+      color-mix(in srgb, rgb(var(--biz-accent-rgb)) var(--platform-fade-mid-mix, calc(var(--platform-fade-mix, 58%) / 2.4)), var(--biz-background-hex)) 38%,
+      transparent 100%);
 }
 .platform-grid {
   position: absolute; inset: 0; opacity: .2;

@@ -213,7 +213,12 @@ export function workspaceThemeVars(theme: WorkspaceTheme): CSSProperties {
     ["--biz-accent-rgb" as string]: theme.accentRgb,
     ["--biz-background-hex" as string]: theme.backgroundHex,
     ["--biz-card-hex" as string]: theme.cardHex,
-    ["--platform-fade-mix" as string]: theme.shortcode === "PPS" ? "22%" : "58%",
+    // GCP: richer glowing emerald fade — strong at the bottom edge and held
+    // through the middle, plus a broad soft bloom. PPS keeps its original
+    // softer monochrome fade (mid stop 22/2.4 ≈ 9%, no bloom).
+    ["--platform-fade-mix" as string]: theme.shortcode === "PPS" ? "22%" : "72%",
+    ["--platform-fade-mid-mix" as string]: theme.shortcode === "PPS" ? "9%" : "48%",
+    ["--platform-fade-bloom" as string]: theme.shortcode === "PPS" ? "0" : "0.3",
     ["--accent-color" as string]: theme.accentHex,
     ["--accent-glow" as string]: `rgba(${theme.accentRgb}, ${subtleGlowOpacity})`,
     ["--primary-color" as string]: theme.primaryHex,
