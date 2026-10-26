@@ -8,6 +8,13 @@
       "when": 1793051990647,
       "tag": "0000_arborist_quotes",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793052360142,
+      "tag": "0001_arborist_revoke_anon",
+      "breakpoints": true
     }
   ]
 }
