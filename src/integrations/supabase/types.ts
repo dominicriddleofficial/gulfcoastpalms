@@ -2743,6 +2743,68 @@ export type Database = {
           },
         ]
       }
+      platform_arborist_quotes: {
+        Row: {
+          arborist_name: string
+          author_id: string
+          business_id: string
+          created_at: string
+          customer_name: string
+          general_notes: string
+          id: string
+          property_address: string
+          reviewed_at: string | null
+          status: string
+          submitted_at: string | null
+          trees: Json
+          updated_at: string
+          version: number
+          visit_date: string
+        }
+        Insert: {
+          arborist_name?: string
+          author_id: string
+          business_id: string
+          created_at?: string
+          customer_name?: string
+          general_notes?: string
+          id?: string
+          property_address?: string
+          reviewed_at?: string | null
+          status?: string
+          submitted_at?: string | null
+          trees?: Json
+          updated_at?: string
+          version?: number
+          visit_date?: string
+        }
+        Update: {
+          arborist_name?: string
+          author_id?: string
+          business_id?: string
+          created_at?: string
+          customer_name?: string
+          general_notes?: string
+          id?: string
+          property_address?: string
+          reviewed_at?: string | null
+          status?: string
+          submitted_at?: string | null
+          trees?: Json
+          updated_at?: string
+          version?: number
+          visit_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_arborist_quotes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_clock_sessions: {
         Row: {
           admin_notes: string | null
@@ -6450,6 +6512,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      arborist_can_access: {
+        Args: { _author_id: string; _business_id: string }
+        Returns: boolean
+      }
+      arborist_can_review: { Args: { _business_id: string }; Returns: boolean }
+      arborist_photo_access: {
+        Args: { _name: string; _write?: boolean }
+        Returns: boolean
+      }
       backfill_jobber_to_platform: {
         Args: never
         Returns: {
