@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { format, startOfToday, addDays, isToday, isTomorrow, isWithinInterval } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
@@ -558,6 +559,7 @@ export default function PlatformCrew() {
         </div>
         <div className="px-4 pb-1.5">
           <LastSyncedLabel />
+          {auth.businesses.find(b => b.id === businessId)?.shortcode.toUpperCase() === "GCP" && <Link to="/platform/arborist-quotes" className="inline-flex items-center gap-2 min-h-11 text-sm font-medium text-primary"><Camera className="h-4 w-4" />Arborist Quotes</Link>}
         </div>
 
         {/* Tabs */}

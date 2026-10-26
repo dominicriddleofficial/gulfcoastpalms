@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PlatformLayout from "@/components/platform/PlatformLayout";
+import QuotesSectionNav from "@/components/platform/QuotesSectionNav";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import {
   usePlatformQuotes, QUOTE_STATUSES, fetchQuoteLineItems, fetchQuoteVersions,
@@ -159,6 +160,7 @@ export default function PlatformQuotes() {
 
   return (
     <PlatformLayout>
+      {getBiz(selectedBusinessId || "")?.shortcode.toUpperCase() === "GCP" && <QuotesSectionNav />}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>

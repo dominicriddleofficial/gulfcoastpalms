@@ -350,7 +350,7 @@ export default function PlatformLayout({ children }: Props) {
     i.path === location.pathname ||
     (i.path !== "/platform" && location.pathname.startsWith(i.path + "/")),
   );
-  const pageTitle = currentPage?.label || "Platform";
+  const pageTitle = location.pathname === "/platform/arborist-quotes" ? "Arborist Quotes" : currentPage?.label || "Platform";
 
   // Auto-sync Jobber if last sync > 30 minutes ago
   // Reset auto-sync flag when workspace changes — otherwise PPS gets stale Jobber data
@@ -442,6 +442,7 @@ export default function PlatformLayout({ children }: Props) {
             const renderItem = (item: NavItem) => {
               const isActive =
                 location.pathname === item.path ||
+                (item.path === "/platform/quotes" && location.pathname === "/platform/arborist-quotes") ||
                 (item.path !== "/platform" && location.pathname.startsWith(item.path + "/"));
               const className = cn(
                 "platform-nav-item group flex items-center gap-2.5 px-3 py-2 min-h-[44px] rounded-lg font-body text-[13px] font-medium transition-all duration-150",
