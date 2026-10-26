@@ -28,7 +28,12 @@ await db.exec(`INSERT INTO auth.users VALUES ('${owner}'),('${otherOwner}'),('${
 INSERT INTO workspaces VALUES ('${workspace}','${owner}'),('${otherWorkspace}','${otherOwner}');
 INSERT INTO businesses VALUES ('${biz}','${workspace}','GCP'),('${otherBiz}','${otherWorkspace}','GCP'),('${pps}','${workspace}','PPS');
 INSERT INTO user_business_access VALUES ('${crew}','${biz}','crew','active'),('${secondCrew}','${biz}','crew','active'),('${office}','${biz}','office_manager','active'),('${crew}','${pps}','crew','active');`);
-await db.exec(await fs.readFile(new URL('../supabase/migrations/20261026150000_arborist_quotes.sql', import.meta.url),'utf8'));
+// Emulate Supabase's explicit default EXECUTE grants to anon, so the revoke migration is exercised.
+await db.exec(`ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO anon;`);
+// Live bucket is created with the storage tool, so the isolated fixture seeds it here.
+await db.exec(`INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types) VALUES ('arborist-quote-photos','arborist-quote-photos',false,10485760,ARRAY['image/jpeg']);`);
+for (const file of ['0000_arborist_quotes.sql','0001_arborist_revoke_anon.sql'])
+  await db.exec(await fs.readFile(new URL(`../drizzle/migrations/${file}`, import.meta.url),'utf8'));
 let checks=0;
 const check=(value,msg)=>{assert.ok(value,msg);checks++;};
 const login=async id=>{await db.exec(`RESET ROLE; SET ROLE authenticated; SELECT set_config('request.jwt.claim.sub','${id}',false);`);};
@@ -81,6 +86,11 @@ await db.exec(`RESET ROLE; SET ROLE anon; SELECT set_config('request.jwt.claim.s
 await denied(()=>db.query(`SELECT * FROM platform_arborist_quotes`),'anonymous report access denied');
 await denied(()=>db.query(`SELECT public.arborist_photo_access($1,false)`,[photoPath]),'anonymous photo access denied');
 await db.exec(`RESET ROLE;`);
+for (const fn of ['arborist_can_review(uuid)','arborist_can_access(uuid,uuid)','arborist_photo_access(text,boolean)','validate_arborist_quote()'])
+  check((await db.query(`SELECT has_function_privilege('anon','public.${fn}','EXECUTE') AS ok`)).rows[0].ok===false,`anon cannot execute ${fn}`);
+for (const fn of ['arborist_can_review(uuid)','arborist_can_access(uuid,uuid)','arborist_photo_access(text,boolean)'])
+  check((await db.query(`SELECT has_function_privilege('authenticated','public.${fn}','EXECUTE') AS ok`)).rows[0].ok===true,`authenticated keeps ${fn}`);
+check((await db.query(`SELECT has_table_privilege('anon','public.platform_arborist_quotes','SELECT') OR has_table_privilege('anon','public.platform_arborist_quotes','INSERT') AS ok`)).rows[0].ok===false,'anon has no table access');
 check((await db.query(`SELECT public FROM storage.buckets WHERE id='arborist-quote-photos'`)).rows[0].public===false,'photo bucket private');
 console.log(`PASS: ${checks} isolated PostgreSQL migration, permissions, validation, and concurrency checks`);
 await db.close();
