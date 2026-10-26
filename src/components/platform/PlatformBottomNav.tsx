@@ -83,7 +83,7 @@ export default function PlatformBottomNav({ businessId, onSignOut, workspaceShor
   const isDashboard = path === "/platform";
   const isSchedule = path === "/platform/schedule";
   const isInvoices = path === "/platform/invoices";
-  const isMore = morePaths.includes(path);
+  const isMore = path === "/platform/arborist-quotes" || morePaths.includes(path);
 
   const navItems = [
     { key: "dashboard", label: "Home", icon: LayoutDashboard, active: isDashboard, to: "/platform" as const, type: "link" as const },

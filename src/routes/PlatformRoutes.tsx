@@ -8,6 +8,7 @@ const PlatformDashboard = lazy(() => import("@/pages/platform/PlatformDashboard"
 const PlatformLeads = lazy(() => import("@/pages/platform/PlatformLeads"));
 const PlatformCustomers = lazy(() => import("@/pages/platform/PlatformCustomers"));
 const PlatformQuotes = lazy(() => import("@/pages/platform/PlatformQuotes"));
+const PlatformArboristQuotes = lazy(() => import("@/pages/platform/PlatformArboristQuotes"));
 const PlatformQuoteDisplay = lazy(() => import("@/pages/platform/PlatformQuoteDisplay"));
 const PlatformJobs = lazy(() => import("@/pages/platform/PlatformJobs"));
 const PlatformSchedule = lazy(() => import("@/pages/platform/PlatformSchedule"));
@@ -55,6 +56,7 @@ export const PlatformRoutes = () => (
     <Route path="/platform/leads" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformLeads /></RoleRoute>)} />
     <Route path="/platform/customers" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformCustomers /></RoleRoute>)} />
     <Route path="/platform/quotes" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformQuotes /></RoleRoute>)} />
+    <Route path="/platform/arborist-quotes" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager","crew"]}><PlatformArboristQuotes /></RoleRoute>)} />
     <Route path="/platform/quote-display" element={withPlatformAuth(<PlatformQuoteDisplay />)} />
     <Route path="/platform/quote-display/:shortcode/:quoteId" element={withPlatformAuth(<PlatformQuoteDisplay />)} />
     <Route path="/platform/jobs" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformJobs /></RoleRoute>)} />
