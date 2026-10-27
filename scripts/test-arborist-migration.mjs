@@ -252,6 +252,7 @@ for (const fn of ['quote_pricing_fingerprint(uuid)','approve_quote_options(uuid,
   for (const role of ['anon','authenticated']) check((await db.query(`SELECT has_function_privilege('${role}','public.${fn}','EXECUTE') AS ok`)).rows[0].ok===false,`${role} cannot execute ${fn}`);
 // ---- 0006: accepted scope/identity, converted state, public read, atomic edit, invoice once ----
 {
+  await db.exec(`RESET ROLE; GRANT ALL ON platform_invoices, platform_invoice_line_items, platform_quote_versions, platform_customers, platform_properties TO service_role;`);
   await service();
   for (const [col,val] of [['scope_of_work',"'changed'"],['public_notes',"'changed'"],['billing_name',"'Someone else'"],['property_id',`'${uuid(998)}'`],['valid_until',"'2030-01-01'"]])
     await guestErr(()=>db.query(`UPDATE platform_quotes SET ${col}=${val} WHERE id=$1`,[Q]),"can't be changed",`accepted ${col} frozen`);
