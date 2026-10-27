@@ -143,7 +143,7 @@ await guestErr(()=>db.query(`SELECT * FROM arborist_link_issue($1,$2,$3,$4)`,[ow
 // expiry + revoke
 const second=(await db.query(`SELECT * FROM arborist_link_issue($1,$2,$3)`,[owner,biz,h('d')])).rows[0];
 await db.query(`UPDATE platform_arborist_quote_links SET expires_at=now()-interval '1 second' WHERE token_hash=$1`,[h('d')]);
-check((await db.query(`SELECT arborist_link_resolve($1) AS r`,[h('d')])).rows[0].r.state==='expired','expired link rejected');
+{const s=(await db.query(`SELECT arborist_link_resolve($1) AS r`,[h('d')])).rows[0].r.state;check(s==='expired','expired link rejected: '+s);}
 await guestErr(()=>db.query(`SELECT arborist_link_revoke($1,$2)`,[crew,second.report_id]),'not_allowed','crew cannot revoke');
 await db.query(`SELECT * FROM arborist_link_issue($1,$2,$3,$4)`,[owner,biz,h('e'),second.report_id]);
 check((await db.query(`SELECT arborist_link_revoke($1,$2) AS n`,[office,second.report_id])).rows[0].n===1,'office disables link');
