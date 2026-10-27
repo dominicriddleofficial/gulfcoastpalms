@@ -129,6 +129,52 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "approved_by name required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // ── Customer-option quotes (GCP): authoritative server-side approval ──
+    // Selected IDs are validated against this quote, group rules enforced, totals recalculated
+    // in cents from saved prices, and the accepted choices recorded in one transaction.
+    const { data: optionLines } = await supabase.from("platform_quote_line_items")
+      .select("option_kind").eq("quote_id", quote_id);
+    const usesOptions = (optionLines || []).some((l: { option_kind?: string }) => l.option_kind && l.option_kind !== "required");
+    if (usesOptions) {
+      const rawSelected = body.selected_option_ids;
+      const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!Array.isArray(rawSelected) || rawSelected.length > 100 || rawSelected.some((v: unknown) => typeof v !== "string" || !uuidRe.test(v))) {
+        return new Response(JSON.stringify({ error: "Choose your options, then approve again." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const { data: result, error: rpcError } = await supabase.rpc("approve_quote_options", {
+        _quote_id: quote_id, _approved_by: approved_by.trim().slice(0, 200), _selected: rawSelected,
+        _fingerprint: typeof body.pricing_fingerprint === "string" ? body.pricing_fingerprint : "",
+      });
+      if (rpcError) {
+        const code = rpcError.message || "";
+        const map: Record<string, [number, string]> = {
+          quote_stale: [409, "This quote was updated. Please reload the page to see the latest prices before approving."],
+          quote_choose_one: [400, "Choose exactly one option in each choice group."],
+          quote_invalid_option: [400, "One of the chosen options isn't part of this quote. Reload the page and try again."],
+          quote_already_approved: [409, "This quote was already approved with different choices."],
+          quote_closed: [409, "This quote is no longer open for approval."],
+          quote_not_found: [404, "Quote not found."],
+          quote_bad_name: [400, "approved_by name required"],
+        };
+        const [status, message] = map[code] ?? [500, "Failed to approve quote"];
+        if (status === 500) console.error(`[approve-quote] option approval failed for ${quote?.quote_number}`);
+        return new Response(JSON.stringify({ error: message }), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const optionResult = result as { status: string; snapshot: { total: number } };
+      if (optionResult.status === "approved" && !quote?.approval_sms_sent) {
+        try {
+          const totalStr = `$${Number(optionResult.snapshot.total).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+          const smsResp = await fetch(`${supabaseUrl}/functions/v1/send-sms`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${serviceKey}` },
+            body: JSON.stringify({ to: ownerPhone, message: `Quote approved: ${quote?.quote_number || "quote"} — ${customerName} — ${totalStr} (customer chose options). View: ${adminQuoteUrl}` }),
+          });
+          if (smsResp.ok) await supabase.from("platform_quotes").update({ approval_sms_sent: true, approval_sms_sent_at: new Date().toISOString() }).eq("id", quote_id);
+        } catch { /* owner alert is best-effort */ }
+      }
+      return new Response(JSON.stringify({ success: true, status: optionResult.status, snapshot: optionResult.snapshot }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     const alreadyApproved =
       quote?.status === "approved" || quote?.status === "accepted" || quote?.status === "won";
 
@@ -212,9 +258,11 @@ Deno.serve(async (req) => {
         if (invErr || !inv) throw invErr || new Error("Failed to create invoice");
 
         // Copy line items to invoice
-        if (lineItems && lineItems.length > 0) {
+        // Never invoice options the customer did not choose.
+        const chosenLines = (lineItems || []).filter((li: Record<string, unknown>) => !li.option_kind || li.option_kind === "required" || li.customer_selected === true);
+        if (chosenLines.length > 0) {
           await supabase.from("platform_invoice_line_items").insert(
-            lineItems.map((li: Record<string, unknown>, i: number) => ({
+            chosenLines.map((li: Record<string, unknown>, i: number) => ({
               business_id: quote.business_id,
               invoice_id: inv.id,
               description: li.description as string,

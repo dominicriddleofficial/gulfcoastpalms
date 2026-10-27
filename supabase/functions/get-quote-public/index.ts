@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
     // Fetch line items
     const { data: lineItems } = await supabase
       .from("platform_quote_line_items")
-      .select("description, quantity, unit_price, line_total, line_type")
+      .select("id, description, quantity, unit_price, discount_amount, taxable_flag, line_total, line_type, option_kind, option_group, default_selected, customer_selected")
       .eq("quote_id", quote.id)
       .order("sort_order", { ascending: true });
 
@@ -134,6 +134,8 @@ Deno.serve(async (req) => {
     }
 
     const approvalToken = await signApprovalToken(quote.id, serviceKey);
+    // Customer options: the page must approve the exact pricing it was shown.
+    const { data: pricingFingerprint } = await supabase.rpc("quote_pricing_fingerprint", { _quote_id: quote.id });
 
     return new Response(JSON.stringify({
       id: quote.id,
@@ -162,6 +164,9 @@ Deno.serve(async (req) => {
       deposit_required: quote.deposit_required_flag || false,
       deposit_amount: quote.deposit_amount_calculated || 0,
       line_items: lineItems || [],
+      discount_total: quote.discount_total || 0,
+      pricing_fingerprint: pricingFingerprint || null,
+      accepted_snapshot: (quote as { accepted_snapshot?: unknown }).accepted_snapshot ?? null,
       approval_token: approvalToken,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
