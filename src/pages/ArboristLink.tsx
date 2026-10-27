@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { CheckCircle2, LockKeyhole, TriangleAlert } from "lucide-react";
 import { ArboristApiContext, ArboristQuoteEditor, type ArboristApi } from "@/components/platform/arborist/ArboristQuoteEditor";
@@ -11,15 +12,34 @@ type PageState = "loading" | "error" | LinkState;
 
 /** Standalone, no-login GCP field form opened from a private single-quote link. */
 export default function ArboristLink() {
-  const [token] = useState(() => readLinkToken());
+  const location = useLocation();
+  const [token, setToken] = useState(() => readLinkToken());
   const [state, setState] = useState<PageState>(token ? "loading" : "invalid");
   const [report, setReport] = useState<ArboristQuote | null>(null);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
 
+  // A new link opened in this same tab (hash change / in-app navigation) replaces the current one:
+  // the previous report is cleared before the new token is checked, so it's never shown or saved.
   useEffect(() => {
-    if (!token) return;
+    const pick = () => {
+      if (!window.location.hash || window.location.hash === "#") return;
+      const next = readLinkToken();
+      setToken(current => {
+        if (current === next) return current;
+        setReport(null); setExpiresAt(null); setLoadError(null);
+        setState(next ? "loading" : "invalid");
+        return next;
+      });
+    };
+    pick();
+    window.addEventListener("hashchange", pick);
+    return () => window.removeEventListener("hashchange", pick);
+  }, [location.key, location.hash]);
+
+  useEffect(() => {
+    if (!token) { setReport(null); setState("invalid"); return; }
     let live = true;
     setState("loading");
     loadGuestReport(token).then(result => { if (!live) return; setReport(result.report); setExpiresAt(result.expiresAt); setState("ok"); })
@@ -62,7 +82,7 @@ export default function ArboristLink() {
         {state === "submitted" && message("Quote received", "Thanks — the office has your tree notes and photos. This link is now closed for edits.", true)}
         {(state === "invalid" || state === "expired" || state === "revoked") && message(state === "expired" ? "Link expired" : state === "revoked" ? "Link turned off" : "Link not valid", stateMessage(state))}
         {state === "ok" && report && <ArboristApiContext.Provider value={api}>
-          <ArboristQuoteEditor initial={report} crewView heading="Internal arborist quote"
+          <ArboristQuoteEditor key={`${token}:${report.id}`} initial={report} crewView heading="Internal arborist quote"
             intro={<p className="mt-2 text-xs text-muted-foreground">For Gulf Coast Palms office review only — the customer doesn't see this.{expiresAt ? ` Link works until ${new Date(expiresAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}.` : ""}</p>}
             onSaved={saved => { if (saved.status === "submitted") setState("submitted"); else setReport(saved); }} />
         </ArboristApiContext.Provider>}
