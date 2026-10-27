@@ -22,6 +22,13 @@
       "when": 1793065681380,
       "tag": "0002_arborist_quote_links",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793065959875,
+      "tag": "0003_arborist_links_column_grants",
+      "breakpoints": true
     }
   ]
 }
