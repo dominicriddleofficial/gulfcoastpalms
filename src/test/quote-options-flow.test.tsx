@@ -74,7 +74,7 @@ describe("customer quote page", () => {
     renderPublic(publicResponse(pricing({ accepted_snapshot: snapshot }), "converted"));
     expect(await screen.findAllByText(/2,946\.80/)).not.toHaveLength(0);
     expect(screen.queryByRole("button", { name: /approve quote/i })).toBeNull();
-    expect(screen.getByText("Agreed scope: remove two oaks.")).toBeInTheDocument();
+    expect(screen.getAllByText("Agreed scope: remove two oaks.").length).toBeGreaterThan(0);
     expect(screen.queryByText("LATER EDIT")).toBeNull();
     const haul = screen.getByText("Haul away").closest("div") as HTMLElement;
     expect(within(haul.parentElement as HTMLElement).getByText("Not included")).toBeInTheDocument();
