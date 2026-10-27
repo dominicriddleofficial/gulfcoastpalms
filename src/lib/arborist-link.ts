@@ -42,16 +42,40 @@ export function smsComposeHref(message: string) {
   return `sms:?&body=${encodeURIComponent(message)}`;
 }
 
-/** Reads the token captured from the URL fragment (moved to tab storage before trackers load). */
+const TOKEN_IN_HASH = /(?:^#|&)t=([A-Za-z0-9_-]{43})(?:&|$)/;
+let memoryToken: string | null = null;
+
+function rememberToken(token: string | null) {
+  memoryToken = token;
+  try {
+    if (token) sessionStorage.setItem(ARBORIST_LINK_STORAGE_KEY, token);
+    else sessionStorage.removeItem(ARBORIST_LINK_STORAGE_KEY);
+  } catch { /* storage blocked: memory copy still works for this page */ }
+}
+
+/**
+ * Reads the private link token. A fragment in the address bar (or the early capture in index.html)
+ * always wins and replaces any earlier token; a malformed one clears it, so an invalid link can never
+ * reopen a previous quote. The fragment is always removed from the address bar.
+ */
 export function readLinkToken(): string | null {
-  const fromHash = /(?:^#|&)t=([A-Za-z0-9_-]{43})(?:&|$)/.exec(window.location.hash)?.[1];
-  if (fromHash) {
-    try { sessionStorage.setItem(ARBORIST_LINK_STORAGE_KEY, fromHash); } catch { /* private mode */ }
-    window.history.replaceState(null, "", window.location.pathname);
-    return fromHash;
+  const w = window as Window & { __gcpArboristToken?: string };
+  const hash = window.location.hash;
+  let incoming: string | undefined;
+  if (hash && hash !== "#") {
+    incoming = TOKEN_IN_HASH.exec(hash)?.[1] ?? "";
+    try { window.history.replaceState(null, "", window.location.pathname); } catch { /* best effort */ }
+  } else if (typeof w.__gcpArboristToken === "string") {
+    incoming = w.__gcpArboristToken;
   }
+  delete w.__gcpArboristToken;
+  if (incoming !== undefined) { rememberToken(incoming || null); return incoming || null; }
+  if (memoryToken) return memoryToken;
   try { return sessionStorage.getItem(ARBORIST_LINK_STORAGE_KEY); } catch { return null; }
 }
+
+/** Test-only: forget the in-memory token. */
+export function resetLinkTokenForTests() { memoryToken = null; }
 
 async function staffToken() {
   const { data } = await supabase.auth.getSession();

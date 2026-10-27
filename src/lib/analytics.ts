@@ -200,7 +200,7 @@ export function isUntrackedPath(pathname: string) {
 
 export function trackEvent(event: ConversionEvent | string, params?: EventParams) {
   if (typeof window === "undefined") return;
-  if (isUntrackedPath(window.location.pathname)) return;
+  if (isUntrackedPath(window.location.pathname) || isUntrackedPath(params?.page_path ?? "")) return;
   const path = params?.page_path || window.location.pathname;
   const session = getSessionId();
   if (!shouldSend(event, path, session)) return;

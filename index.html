@@ -2,19 +2,30 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <script>
+    <script data-arborist-capture>
       // Private arborist quote links: move the access key out of the address bar before any tracking script runs.
+      // Each step is isolated so a blocked storage API can never leave the key in the URL or let trackers load.
       (function () {
+        var path = "";
+        try { path = location.pathname.replace(/\/+$/, ""); } catch (e) {}
+        if (path !== "/arborist-link") return;
+        window.__gcpNoTracking = true;
         try {
-          if (location.pathname.replace(/\/+$/, "") === "/arborist-link") {
-            window.__gcpNoTracking = true;
-            var m = document.createElement("meta"); m.name = "referrer"; m.content = "no-referrer"; document.head.appendChild(m);
-            var r = document.createElement("meta"); r.name = "robots"; r.content = "noindex, nofollow"; document.head.appendChild(r);
-            var t = /(?:^#|&)t=([A-Za-z0-9_-]{43})(?:&|$)/.exec(location.hash);
-            if (t) sessionStorage.setItem("gcp-arborist-link", t[1]);
-            if (location.hash) history.replaceState(null, "", location.pathname);
-          }
+          var m = document.createElement("meta"); m.name = "referrer"; m.content = "no-referrer"; document.head.appendChild(m);
+          var r = document.createElement("meta"); r.name = "robots"; r.content = "noindex, nofollow"; document.head.appendChild(r);
         } catch (e) {}
+        var hash = "";
+        try { hash = location.hash || ""; } catch (e) {}
+        if (!hash || hash === "#") return;
+        var t = /(?:^#|&)t=([A-Za-z0-9_-]{43})(?:&|$)/.exec(hash);
+        // In-memory hand-off for the app; "" marks an explicit invalid link so no earlier token is reused.
+        window.__gcpArboristToken = t ? t[1] : "";
+        try {
+          if (t) sessionStorage.setItem("gcp-arborist-link", t[1]);
+          else sessionStorage.removeItem("gcp-arborist-link");
+        } catch (e) {}
+        try { history.replaceState(null, "", location.pathname); }
+        catch (e) { try { location.replace(location.pathname + "#"); } catch (e2) {} }
       })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -75,6 +86,7 @@
     gtag('config', 'AW-11356668550');
     }
     function loadGA(){
+      if (window.__gcpNoTracking || /^\/arborist-link(\/|$)/.test(location.pathname)) return;
       var s = document.createElement('script');
       s.async = true;
       s.src = 'https://www.googletagmanager.com/gtag/js?id=G-8FNKZVRWGY';
@@ -92,6 +104,7 @@
     // Defer Meta Pixel until the browser is idle so it doesn't compete with
     // first paint / hero render. Matches the GA loader above.
     function loadMetaPixel(){
+      if (window.__gcpNoTracking || /^\/arborist-link(\/|$)/.test(location.pathname)) return;
       !function(f,b,e,v,n,t,s)
       {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
       n.callMethod.apply(n,arguments):n.queue.push(arguments)};
