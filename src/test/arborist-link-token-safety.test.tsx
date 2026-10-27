@@ -105,4 +105,41 @@ describe("private link token never leaks", () => {
     expect(screen.queryByDisplayValue("New Customer")).toBeNull();
     expect(bodies().map(b => b.token)).toEqual([OLD, NEW]);
   });
+
+  // A slow save/submit/error from link A must never change link B's page or reach the server as B.
+  for (const outcome of ["draft", "submitted", "revoked"] as const) {
+    it(`a late link A ${outcome} result after switching to link B leaves B unchanged`, async () => {
+      let releaseA: () => void = () => {};
+      fetchMock.mockImplementation((_url, init: RequestInit) => {
+        const body = JSON.parse(String(init.body));
+        if (body.action === "load") return reply(200, { state: "ok", expires_at: "2026-11-02T00:00:00Z", report: body.token === OLD ? report("r-old", "Old Customer") : report("r-new", "New Customer") });
+        if (body.action === "save" && body.token === OLD) return new Promise<Response>(done => {
+          releaseA = () => done(outcome === "revoked"
+            ? new Response(JSON.stringify({ state: "revoked" }), { status: 410 })
+            : new Response(JSON.stringify({ report: { ...report("r-old", "Old Customer"), status: outcome, version: 2 } }), { status: 200 }));
+        });
+        return reply(500, {});
+      });
+      window.history.replaceState(null, "", `/arborist-link#t=${OLD}`);
+      render(<MemoryRouter><HelmetProvider><QueryClientProvider client={new QueryClient()}><ArboristLink /></QueryClientProvider></HelmetProvider></MemoryRouter>);
+      expect(await screen.findByDisplayValue("Old Customer")).toBeInTheDocument();
+      await act(async () => {
+        screen.getByRole("button", { name: outcome === "draft" ? /Save draft/ : /Submit for review/ }).click();
+      });
+      await act(async () => {
+        window.history.replaceState(null, "", `/arborist-link#t=${NEW}`);
+        window.dispatchEvent(new HashChangeEvent("hashchange"));
+      });
+      expect(await screen.findByDisplayValue("New Customer")).toBeInTheDocument();
+      await act(async () => { releaseA(); await new Promise(r => setTimeout(r, 20)); });
+
+      expect(screen.getByDisplayValue("New Customer")).toBeInTheDocument();
+      expect(screen.queryByDisplayValue("Old Customer")).toBeNull();
+      expect(screen.queryByText("Quote received")).toBeNull();
+      expect(screen.queryByText("Link turned off")).toBeNull();
+      const calls = bodies();
+      expect(calls.filter(b => b.token === NEW).map(b => b.action)).toEqual(["load"]);
+      expect(calls.filter(b => b.action === "save").every(b => b.token === OLD)).toBe(true);
+    });
+  }
 });
