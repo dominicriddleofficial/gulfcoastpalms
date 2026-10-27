@@ -17,9 +17,24 @@ CREATE TABLE public.user_business_access (user_id uuid, business_id uuid, role_n
 CREATE TABLE public.platform_quotes (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), business_id uuid NOT NULL, quote_number text NOT NULL DEFAULT 'Q', customer_id uuid, status text NOT NULL DEFAULT 'draft',
   subtotal numeric DEFAULT 0, discount_total numeric DEFAULT 0, tax_rate numeric DEFAULT 0, tax_total numeric DEFAULT 0, total numeric DEFAULT 0,
   deposit_required_flag boolean DEFAULT false, deposit_type text DEFAULT 'percentage', deposit_value numeric DEFAULT 50, deposit_amount_calculated numeric DEFAULT 0,
-  version_number integer DEFAULT 1, approved_by text, approved_at timestamptz, accepted_at timestamptz, deleted_at timestamptz, updated_at timestamptz DEFAULT now());
+  version_number integer DEFAULT 1, approved_by text, approved_at timestamptz, accepted_at timestamptz, deleted_at timestamptz, updated_at timestamptz DEFAULT now(),
+  property_id uuid, billing_name text, scope_of_work text, public_notes text, internal_notes text, valid_until date, is_read_only boolean NOT NULL DEFAULT false, last_modified_by_user_id uuid);
+CREATE FUNCTION public.touch_updated_at() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at := clock_timestamp(); RETURN NEW; END $$;
+CREATE TRIGGER touch_quotes BEFORE UPDATE ON public.platform_quotes FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+CREATE TABLE public.platform_customers (id uuid PRIMARY KEY, display_name text);
+CREATE TABLE public.platform_properties (id uuid PRIMARY KEY, address_1 text, city text, state text, zip text);
+CREATE TABLE public.platform_quote_versions (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), quote_id uuid NOT NULL, business_id uuid NOT NULL, version_number int NOT NULL, snapshot_json jsonb NOT NULL, created_by_user_id uuid, created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE public.platform_invoices (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), business_id uuid NOT NULL, invoice_number text NOT NULL, customer_id uuid, property_id uuid, quote_id uuid, status text NOT NULL DEFAULT 'draft',
+  issue_date date, due_date date, terms text, subtotal numeric, discount_total numeric, tax_rate numeric, tax_total numeric, total numeric, amount_paid numeric, balance_due numeric, public_notes text, internal_notes text, billing_name text, deleted_at timestamptz, created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE public.platform_invoice_line_items (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), business_id uuid NOT NULL, invoice_id uuid NOT NULL, description text NOT NULL, quantity numeric NOT NULL, unit text, unit_price numeric NOT NULL, discount_amount numeric DEFAULT 0, taxable_flag boolean DEFAULT true, line_total numeric NOT NULL, sort_order int DEFAULT 0, created_at timestamptz NOT NULL DEFAULT now());
+CREATE SEQUENCE public.inv_seq;
+CREATE FUNCTION public.generate_next_number(_business_id uuid, _record_type text) RETURNS text LANGUAGE sql SECURITY DEFINER AS $$ SELECT 'INV-' || lpad(nextval('public.inv_seq')::text, 4, '0') $$;
+CREATE FUNCTION public.user_has_any_role(_user_id uuid, _business_id uuid, _roles text[]) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
+ SELECT ('owner' = ANY(_roles) AND EXISTS (SELECT 1 FROM public.workspaces w JOIN public.businesses b ON b.workspace_id=w.id WHERE w.owner_user_id=_user_id AND b.id=_business_id))
+ OR EXISTS (SELECT 1 FROM public.user_business_access WHERE user_id=_user_id AND business_id=_business_id AND role_name = ANY(_roles) AND active_status='active') $$;
 CREATE TABLE public.platform_quote_line_items (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), quote_id uuid NOT NULL, business_id uuid NOT NULL, description text NOT NULL,
-  quantity numeric NOT NULL DEFAULT 1, unit_price numeric NOT NULL DEFAULT 0, discount_amount numeric DEFAULT 0, taxable_flag boolean DEFAULT true, line_total numeric NOT NULL DEFAULT 0, sort_order integer DEFAULT 0);
+  quantity numeric NOT NULL DEFAULT 1, unit_price numeric NOT NULL DEFAULT 0, discount_amount numeric DEFAULT 0, taxable_flag boolean DEFAULT true, line_total numeric NOT NULL DEFAULT 0, sort_order integer DEFAULT 0,
+  unit text DEFAULT 'each', line_type text DEFAULT 'service', service_catalog_id uuid, created_at timestamptz NOT NULL DEFAULT now());
 CREATE TABLE storage.buckets (id text PRIMARY KEY, name text, public boolean, file_size_limit bigint, allowed_mime_types text[]);
 CREATE TABLE storage.objects (id uuid DEFAULT gen_random_uuid(), bucket_id text, name text);
 ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
@@ -41,7 +56,7 @@ INSERT INTO user_business_access VALUES ('${crew}','${biz}','crew','active'),('$
 await db.exec(`ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO anon, authenticated; ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated;`);
 // Live bucket is created with the storage tool, so the isolated fixture seeds it here.
 await db.exec(`INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types) VALUES ('arborist-quote-photos','arborist-quote-photos',false,10485760,ARRAY['image/jpeg']);`);
-for (const file of ['0000_arborist_quotes.sql','0001_arborist_revoke_anon.sql','0002_arborist_quote_links.sql','0003_arborist_links_column_grants.sql','0004_quote_options.sql','0005_arborist_link_lock_order.sql'])
+for (const file of ['0000_arborist_quotes.sql','0001_arborist_revoke_anon.sql','0002_arborist_quote_links.sql','0003_arborist_links_column_grants.sql','0004_quote_options.sql','0005_arborist_link_lock_order.sql','0006_quote_options_integrity.sql'])
   await db.exec(await fs.readFile(new URL(`../drizzle/migrations/${file}`, import.meta.url),'utf8'));
 let checks=0;
 const check=(value,msg)=>{assert.ok(value,msg);checks++;};
