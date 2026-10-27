@@ -32,10 +32,10 @@ INSERT INTO workspaces VALUES ('${workspace}','${owner}'),('${otherWorkspace}','
 INSERT INTO businesses VALUES ('${biz}','${workspace}','GCP'),('${otherBiz}','${otherWorkspace}','GCP'),('${pps}','${workspace}','PPS');
 INSERT INTO user_business_access VALUES ('${crew}','${biz}','crew','active'),('${secondCrew}','${biz}','crew','active'),('${office}','${biz}','office_manager','active'),('${crew}','${pps}','crew','active');`);
 // Emulate Supabase's explicit default EXECUTE grants to anon, so the revoke migration is exercised.
-await db.exec(`ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO anon, authenticated;`);
+await db.exec(`ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO anon, authenticated; ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated;`);
 // Live bucket is created with the storage tool, so the isolated fixture seeds it here.
 await db.exec(`INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types) VALUES ('arborist-quote-photos','arborist-quote-photos',false,10485760,ARRAY['image/jpeg']);`);
-for (const file of ['0000_arborist_quotes.sql','0001_arborist_revoke_anon.sql','0002_arborist_quote_links.sql'])
+for (const file of ['0000_arborist_quotes.sql','0001_arborist_revoke_anon.sql','0002_arborist_quote_links.sql','0003_arborist_links_column_grants.sql'])
   await db.exec(await fs.readFile(new URL(`../drizzle/migrations/${file}`, import.meta.url),'utf8'));
 let checks=0;
 const check=(value,msg)=>{assert.ok(value,msg);checks++;};
@@ -165,6 +165,7 @@ for (const fn of ['arborist_user_can_review(uuid,uuid)','arborist_link_lock(text
   check((await db.query(`SELECT has_function_privilege('service_role','public.${fn}','EXECUTE') AS ok`)).rows[0].ok===true,`service_role executes ${fn}`);
 }
 check((await db.query(`SELECT has_table_privilege('anon','public.platform_arborist_quote_links','SELECT') AS ok`)).rows[0].ok===false,'anon has no link table access');
+check((await db.query(`SELECT has_column_privilege('authenticated','public.platform_arborist_quote_links','token_hash','SELECT') OR has_table_privilege('authenticated','public.platform_arborist_quote_links','INSERT,UPDATE,DELETE') AS ok`)).rows[0].ok===false,'authenticated cannot read hashes or write links despite default grants');
 check((await db.query(`SELECT has_function_privilege('authenticated','public.validate_arborist_quote()','EXECUTE') AS ok`)).rows[0].ok===false,'trigger fn not callable');
 console.log(`PASS: ${checks} isolated PostgreSQL migration, permissions, validation, and concurrency checks`);
 await db.close();
