@@ -64,6 +64,11 @@ function ArboristWorkspace({ businessId, userId, canReview }: { businessId: stri
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [linkOpen, setLinkOpen] = useState(false);
+  useEffect(() => {
+    if (linkedOpened || !linkedReportId) return;
+    const match = reports.find(report => report.id === linkedReportId);
+    if (match) { setSelected(match); setLinkedOpened(true); }
+  }, [reports, linkedReportId, linkedOpened]);
   const saved = (report: ArboristQuote) => {
     qc.setQueryData<ArboristQuote[]>(arboristQuotesKey(businessId, userId), current => [report, ...(current || []).filter(item => item.id !== report.id)]);
     void qc.invalidateQueries({ queryKey: arboristQuotesKey(businessId, userId) });
