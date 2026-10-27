@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth: { getSession: async () => ({ data: { session: null } }) }, storage: { from: () => ({ createSignedUrls: async () => ({ data: [], error: null }) }) } } }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
@@ -83,7 +84,7 @@ describe("private link token never leaks", () => {
       return new Promise<Response>(done => { releaseNew = () => done(new Response(JSON.stringify({ state: "ok", expires_at: "2026-11-02T00:00:00Z", report: report("r-new", "New Customer") }), { status: 200 })); });
     });
     window.history.replaceState(null, "", `/arborist-link#t=${OLD}`);
-    render(<MemoryRouter><HelmetProvider><ArboristLink /></HelmetProvider></MemoryRouter>);
+    render(<MemoryRouter><HelmetProvider><QueryClientProvider client={new QueryClient()}><ArboristLink /></QueryClientProvider></HelmetProvider></MemoryRouter>);
     expect(await screen.findByDisplayValue("Old Customer")).toBeInTheDocument();
 
     await act(async () => {
