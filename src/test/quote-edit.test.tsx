@@ -96,7 +96,7 @@ function fixture(): QuoteEditData {
     id: `item-${i}`, business_id: "gcp", quote_id: "quote-37", description: `Tree removal ${i + 1}`,
     quantity: 1, unit: "each", unit_price: price, line_total: price, discount_amount: 0,
     taxable_flag: true, sort_order: i, line_type: "service", service_catalog_id: null,
-    created_at: "2026-10-15T15:00:00Z",
+    created_at: "2026-10-15T15:00:00Z", option_kind: "required", option_group: null, default_selected: true, customer_selected: null,
   }));
   return { quote, items, customer: { id: "customer-1", display_name: "Sean Whitehead", email: null, phone: null } };
 }
