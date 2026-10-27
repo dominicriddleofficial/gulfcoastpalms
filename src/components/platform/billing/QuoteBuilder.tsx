@@ -91,6 +91,8 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   const [bizId] = useState(existing?.business_id || businessId || businesses[0]?.id || "");
   const activeBiz = businesses.find(b => b.id === bizId);
   const optionsEnabled = activeBiz?.shortcode?.toUpperCase() === "GCP";
+  /** Lines counted in the proposed total: required work plus proposed options. */
+  const inProposedTotal = (l: LineItem) => !optionsEnabled || l.kind === "required" || l.proposed;
 
   // Form state
   const [customerId, setCustomerId] = useState<string | null>(existing?.customer_id ?? null);
@@ -237,8 +239,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
       }
       return next;
     });
-  /** Lines counted in the proposed total: required work plus proposed options. */
-  const inProposedTotal = (l: LineItem) => !optionsEnabled || l.kind === "required" || l.proposed;
+
 
   const addSavedItem = (item: SavedItem) => {
     setLineItems([...lineItems, { id: newLineId(), description: item.description || item.name, qty: "1", price: String(item.default_price), kind: "required", group: "", proposed: true }]);
