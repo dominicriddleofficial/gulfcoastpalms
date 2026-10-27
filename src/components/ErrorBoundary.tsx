@@ -27,7 +27,7 @@ class ErrorBoundary extends Component<Props, State> {
       error_message: error.message,
       error_stack: error.stack || "",
       component_stack: info.componentStack || "",
-      page_url: window.location.href,
+      page_url: window.location.href.split("#")[0],
       user_agent: navigator.userAgent,
     }).then(() => {}, () => {});
   }
