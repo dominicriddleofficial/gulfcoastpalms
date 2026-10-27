@@ -41,7 +41,7 @@ INSERT INTO user_business_access VALUES ('${crew}','${biz}','crew','active'),('$
 await db.exec(`ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO anon, authenticated; ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated;`);
 // Live bucket is created with the storage tool, so the isolated fixture seeds it here.
 await db.exec(`INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types) VALUES ('arborist-quote-photos','arborist-quote-photos',false,10485760,ARRAY['image/jpeg']);`);
-for (const file of ['0000_arborist_quotes.sql','0001_arborist_revoke_anon.sql','0002_arborist_quote_links.sql','0003_arborist_links_column_grants.sql','0004_quote_options.sql'])
+for (const file of ['0000_arborist_quotes.sql','0001_arborist_revoke_anon.sql','0002_arborist_quote_links.sql','0003_arborist_links_column_grants.sql','0004_quote_options.sql','0005_arborist_link_lock_order.sql'])
   await db.exec(await fs.readFile(new URL(`../drizzle/migrations/${file}`, import.meta.url),'utf8'));
 let checks=0;
 const check=(value,msg)=>{assert.ok(value,msg);checks++;};
@@ -235,5 +235,18 @@ await guestErr(()=>db.query(`INSERT INTO platform_quotes(business_id,source_arbo
 await db.exec(`RESET ROLE;`);
 for (const fn of ['quote_pricing_fingerprint(uuid)','approve_quote_options(uuid,text,uuid[],text)','guard_quote_line_options()','guard_quote_options_header()'])
   for (const role of ['anon','authenticated']) check((await db.query(`SELECT has_function_privilege('${role}','public.${fn}','EXECUTE') AS ok`)).rows[0].ok===false,`${role} cannot execute ${fn}`);
+// ---- Unified lock order (0005): every link path locks the report row before any link row ----
+{
+  const src = async fn => (await db.query(`SELECT prosrc FROM pg_proc WHERE proname=$1`,[fn])).rows[0].prosrc;
+  const lock = await src('arborist_link_lock');
+  const reportAt = lock.indexOf('platform_arborist_quotes WHERE id = target_report'), linkAt = lock.search(/platform_arborist_quote_links WHERE token_hash = _token_hash FOR UPDATE/);
+  check(reportAt>0 && linkAt>reportAt && !/quote_links l WHERE l.token_hash = _token_hash FOR UPDATE/.test(lock),'guest save/load locks report before link');
+  for (const fn of ['arborist_link_issue','arborist_link_revoke']) {
+    const body = await src(fn);
+    check(body.indexOf('platform_arborist_quotes q WHERE q.id = _report_id')>0 && body.indexOf('platform_arborist_quotes q WHERE q.id = _report_id') < body.indexOf('UPDATE public.platform_arborist_quote_links'),`${fn} locks report before link`);
+  }
+  check(lock.indexOf('link_revoked')>linkAt && lock.indexOf('link_expired')>linkAt && lock.indexOf('link_submitted')>linkAt,'revoke/expiry/status rechecked under both locks');
+  check((await db.query(`SELECT has_function_privilege('anon','public.arborist_link_lock(text)','EXECUTE') OR has_function_privilege('authenticated','public.arborist_link_lock(text)','EXECUTE') AS ok`)).rows[0].ok===false,'lock helper stays service-only');
+}
 console.log(`PASS: ${checks} isolated PostgreSQL migration, permissions, validation, and concurrency checks`);
 await db.close();

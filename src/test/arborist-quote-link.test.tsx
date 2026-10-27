@@ -2,13 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HelmetProvider } from "react-helmet-async";
+import { MemoryRouter } from "react-router-dom";
 
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth: { getSession: async () => ({ data: { session: { access_token: "staff-jwt" } } }) }, storage: { from: () => ({ createSignedUrls: async () => ({ data: [], error: null }) }) } } }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 import ArboristLink from "@/pages/ArboristLink";
 import { SendQuoteLinkDialog } from "@/components/platform/arborist/SendQuoteLinkDialog";
-import { readLinkToken } from "@/lib/arborist-link";
+import { readLinkToken, resetLinkTokenForTests } from "@/lib/arborist-link";
 
 const TOKEN = "A".repeat(43);
 const tree = (over = {}) => ({ id: "11111111-1111-4111-8111-111111111111", species: "Oak", service: "Tree removal", location: "", description: "Remove", customerDiscussion: "Haul away", priceType: "fixed", priceMin: "500", priceMax: "", photos: [] as { id: string; path: string; name: string }[], ...over });
@@ -19,11 +20,12 @@ const calls = () => fetchMock.mock.calls.map(c => JSON.parse(String((c[1] as Req
 
 function renderGuest() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(<HelmetProvider><QueryClientProvider client={qc}><ArboristLink /></QueryClientProvider></HelmetProvider>);
+  return render(<MemoryRouter><HelmetProvider><QueryClientProvider client={qc}><ArboristLink /></QueryClientProvider></HelmetProvider></MemoryRouter>);
 }
 
 beforeEach(() => {
   sessionStorage.clear();
+  resetLinkTokenForTests();
   window.history.replaceState(null, "", "/arborist-link");
   fetchMock = vi.fn();
   vi.stubGlobal("fetch", fetchMock);
