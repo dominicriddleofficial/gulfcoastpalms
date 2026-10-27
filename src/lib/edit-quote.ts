@@ -43,6 +43,7 @@ export async function saveEditedQuote(
     .select("*").eq("id", quote.id).eq("business_id", quote.business_id).single();
   if (readError || !current) throw new Error(readError?.message || "Quote could not be loaded.");
   if (current.is_read_only || current.deleted_at) throw new Error("This quote cannot be edited.");
+  if (current.accepted_snapshot) throw new Error("This quote was accepted with the customer's choices and can't be edited. Create a new quote for any changes.");
   if (current.updated_at !== quote.updated_at) {
     throw new Error("This quote changed while you were editing. Reopen it to load the latest version.");
   }
