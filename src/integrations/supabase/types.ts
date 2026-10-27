@@ -4557,11 +4557,15 @@ export type Database = {
         Row: {
           business_id: string
           created_at: string
+          customer_selected: boolean | null
+          default_selected: boolean
           description: string
           discount_amount: number | null
           id: string
           line_total: number
           line_type: string | null
+          option_group: string | null
+          option_kind: string
           quantity: number
           quote_id: string
           service_catalog_id: string | null
@@ -4573,11 +4577,15 @@ export type Database = {
         Insert: {
           business_id: string
           created_at?: string
+          customer_selected?: boolean | null
+          default_selected?: boolean
           description: string
           discount_amount?: number | null
           id?: string
           line_total?: number
           line_type?: string | null
+          option_group?: string | null
+          option_kind?: string
           quantity?: number
           quote_id: string
           service_catalog_id?: string | null
@@ -4589,11 +4597,15 @@ export type Database = {
         Update: {
           business_id?: string
           created_at?: string
+          customer_selected?: boolean | null
+          default_selected?: boolean
           description?: string
           discount_amount?: number | null
           id?: string
           line_total?: number
           line_type?: string | null
+          option_group?: string | null
+          option_kind?: string
           quantity?: number
           quote_id?: string
           service_catalog_id?: string | null
@@ -4667,6 +4679,7 @@ export type Database = {
       platform_quotes: {
         Row: {
           accepted_at: string | null
+          accepted_snapshot: Json | null
           approval_sms_sent: boolean
           approval_sms_sent_at: string | null
           approved_at: string | null
@@ -4700,6 +4713,7 @@ export type Database = {
           scope_of_work: string | null
           sent_at: string | null
           source: string
+          source_arborist_quote_id: string | null
           status: string
           subtotal: number | null
           tax_rate: number | null
@@ -4712,6 +4726,7 @@ export type Database = {
         }
         Insert: {
           accepted_at?: string | null
+          accepted_snapshot?: Json | null
           approval_sms_sent?: boolean
           approval_sms_sent_at?: string | null
           approved_at?: string | null
@@ -4745,6 +4760,7 @@ export type Database = {
           scope_of_work?: string | null
           sent_at?: string | null
           source?: string
+          source_arborist_quote_id?: string | null
           status?: string
           subtotal?: number | null
           tax_rate?: number | null
@@ -4757,6 +4773,7 @@ export type Database = {
         }
         Update: {
           accepted_at?: string | null
+          accepted_snapshot?: Json | null
           approval_sms_sent?: boolean
           approval_sms_sent_at?: string | null
           approved_at?: string | null
@@ -4790,6 +4807,7 @@ export type Database = {
           scope_of_work?: string | null
           sent_at?: string | null
           source?: string
+          source_arborist_quote_id?: string | null
           status?: string
           subtotal?: number | null
           tax_rate?: number | null
@@ -4827,6 +4845,13 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "platform_properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_quotes_source_arborist_quote_id_fkey"
+            columns: ["source_arborist_quote_id"]
+            isOneToOne: false
+            referencedRelation: "platform_arborist_quotes"
             referencedColumns: ["id"]
           },
         ]
@@ -6560,6 +6585,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_quote_options: {
+        Args: {
+          _approved_by: string
+          _fingerprint: string
+          _quote_id: string
+          _selected: string[]
+        }
+        Returns: Json
+      }
       arborist_can_access: {
         Args: { _author_id: string; _business_id: string }
         Returns: boolean
@@ -6954,6 +6988,10 @@ export type Database = {
           created_count: number
           skipped_count: number
         }[]
+      }
+      quote_pricing_fingerprint: {
+        Args: { _quote_id: string }
+        Returns: string
       }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
