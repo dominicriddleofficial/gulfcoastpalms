@@ -791,6 +791,36 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                           )}
                         </div>
                       </div>
+                      {line.arborist && (
+                        <div className="md:col-span-5 flex flex-wrap items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/5 px-2.5 py-1.5" data-testid="arborist-price-reference">
+                          <span className="font-body text-[11px] text-amber-200">Staff only · {line.arborist.suggestion}</span>
+                          {line.arborist.fixedPrice && !line.priceConfirmed && (
+                            <button type="button" className="font-body text-[11px] font-semibold text-primary underline"
+                              onClick={() => updateLine(line.id, "price", line.arborist?.fixedPrice ?? "")}>Use ${line.arborist.fixedPrice}</button>
+                          )}
+                          {!line.priceConfirmed && <span className="font-body text-[11px] text-muted-foreground">Price not confirmed</span>}
+                        </div>
+                      )}
+                      {optionsEnabled && (
+                        <div className="md:col-span-5 flex flex-wrap items-center gap-2" data-testid="line-option-controls">
+                          <select aria-label="Line type" value={line.kind}
+                            onChange={e => updateOption(line.id, { kind: e.target.value as OptionKind, proposed: e.target.value === "required" ? true : line.kind === "required" ? false : line.proposed })}
+                            className="h-8 rounded-md border border-border bg-secondary/50 px-2 font-body text-xs text-foreground">
+                            {(Object.keys(OPTION_KIND_LABELS) as OptionKind[]).map(k => <option key={k} value={k}>{OPTION_KIND_LABELS[k]}</option>)}
+                          </select>
+                          {line.kind === "alternative" && (
+                            <Input aria-label="Choice group name" placeholder="Group, e.g. Debris handling" maxLength={120} value={line.group}
+                              onChange={e => updateOption(line.id, { group: e.target.value })} className="h-8 w-48 bg-secondary/50 border-border font-body text-xs" />
+                          )}
+                          {line.kind !== "required" && (
+                            <label className="flex items-center gap-1.5 font-body text-xs text-muted-foreground">
+                              <input type={line.kind === "alternative" ? "radio" : "checkbox"} aria-label="Proposed choice" checked={line.proposed}
+                                onChange={e => updateOption(line.id, { proposed: line.kind === "alternative" ? true : e.target.checked })} className="accent-primary" />
+                              {line.kind === "alternative" ? "Proposed choice" : "Pre-selected for customer"}
+                            </label>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

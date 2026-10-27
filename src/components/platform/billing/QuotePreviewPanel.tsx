@@ -37,7 +37,7 @@ interface QuotePreviewData {
   customerName: string;
   customerEmail?: string;
   customerPhone?: string;
-  lineItems: Array<{ description: string; quantity: number; unit_price: number; line_total: number }>;
+  lineItems: Array<{ description: string; quantity: number; unit_price: number; line_total: number; optionLabel?: string; excluded?: boolean }>;
   subtotal: number;
   taxRate: number;
   taxAmount: number;
@@ -181,7 +181,7 @@ export default function QuotePreviewPanel({ data }: { data: QuotePreviewData }) 
             <tbody>
               {data.lineItems.map((item, i) => (
                 <tr key={i} style={{ borderBottom: `1px solid ${brand.lineDivider}` }}>
-                  <td style={{ padding: "10px 12px", color: "#fff", fontSize: "14px" }}>{item.description}</td>
+                  <td style={{ padding: "10px 12px", color: item.excluded ? brand.secondaryText : "#fff", fontSize: "14px" }}>{item.description}{item.optionLabel && <span style={{ display: "block", fontSize: "11px", color: brand.secondaryText }}>{item.optionLabel}</span>}</td>
                   <td style={{ padding: "10px 8px", textAlign: "center", color: brand.secondaryText }}>{item.quantity}</td>
                   <td style={{ padding: "10px 8px", textAlign: "right", color: brand.secondaryText }}>{fmt(item.unit_price)}</td>
                   <td style={{ padding: "10px 12px", textAlign: "right", color: "#fff", fontWeight: 500 }}>{fmt(item.line_total)}</td>
