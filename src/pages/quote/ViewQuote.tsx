@@ -5,6 +5,8 @@ import { toast } from "@/hooks/use-toast";
 import DocumentBrandMark from "@/components/platform/billing/DocumentBrandMark";
 import { downloadElementAsPdf } from "@/lib/download-pdf";
 import PrintQuoteDocument from "@/components/documents/PrintQuoteDocument";
+import { QuoteOptionChoices } from "@/components/quote/QuoteOptionChoices";
+import { computeOptionTotals, defaultSelection, hasOptions, isIncluded, selectionErrors, type OptionLine } from "@/lib/quote-options";
 import { documentFilename } from "@/components/documents/printTheme";
 
 /* ── Brand tokens ── */
@@ -39,7 +41,12 @@ type QuoteData = {
   created_at?: string;
   public_notes?: string;
   scope_of_work?: string;
-  line_items?: Array<{ description: string; quantity: number; unit_price: number; line_total: number; line_type?: string }>;
+  line_items?: Array<{ id?: string; description: string; quantity: number; unit_price: number; line_total: number; line_type?: string;
+    discount_amount?: number | null; taxable_flag?: boolean | null; option_kind?: string | null; option_group?: string | null;
+    default_selected?: boolean | null; customer_selected?: boolean | null }>;
+  discount_total?: number;
+  pricing_fingerprint?: string | null;
+  accepted_snapshot?: { selected_option_ids?: string[]; subtotal: number; tax_total: number; discount_total: number; total: number } | null;
   subtotal?: number;
   tax_total?: number;
   tax_rate?: number;
@@ -145,6 +152,7 @@ export default function ViewQuote() {
   const [changeSubmitted, setChangeSubmitted] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
+  const [selectedOptions, setSelectedOptions] = useState<string[] | null>(null);
 
   const brandKey = shortcode?.toLowerCase() || "gcp";
   const brand = BRAND[brandKey] || BRAND.gcp;
@@ -184,11 +192,16 @@ export default function ViewQuote() {
       const resp = await fetch(`${baseUrl}/approve-quote`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quote_id: quote.id, approved_by: approverName.trim(), approval_token: quote.approval_token }),
+        body: JSON.stringify({ quote_id: quote.id, approved_by: approverName.trim(), approval_token: quote.approval_token,
+          ...(usesOptions ? { selected_option_ids: chosenOptions, pricing_fingerprint: quote.pricing_fingerprint } : {}) }),
       });
       const data = await resp.json();
       if (!resp.ok || data.error) throw new Error(data.error || "Approval failed");
       setApproved(true);
+      if (usesOptions && data.snapshot) {
+        // Show the server-recorded choices and totals, never the client's own numbers.
+        setQuote(current => current ? { ...current, status: "approved", accepted_snapshot: data.snapshot, total: data.snapshot.total, subtotal: data.snapshot.subtotal, tax_total: data.snapshot.tax_total } : current);
+      }
 
       // PPS quotes proceed directly to Stripe Checkout for the 20% deposit.
       // GCP quotes are approval-only — payment is handled later via invoice.
@@ -332,7 +345,14 @@ export default function ViewQuote() {
   };
   const badge = statusBadge();
 
-  const grandTotal = quote.total || 0;
+  const optionLines = (quote.line_items || []).filter(l => l.id) as OptionLine[];
+  const usesOptions = hasOptions(optionLines);
+  const chosenOptions = quote.accepted_snapshot?.selected_option_ids ?? selectedOptions ?? defaultSelection(optionLines);
+  const optionTotals = usesOptions
+    ? (quote.accepted_snapshot ?? computeOptionTotals(optionLines, chosenOptions, { taxRate: Number(quote.tax_rate) || 0, discountTotal: Number(quote.discount_total) || 0 }))
+    : null;
+  const optionProblems = usesOptions && !isApproved ? selectionErrors(optionLines, chosenOptions) : [];
+  const grandTotal = optionTotals ? Number(optionTotals.total) : (quote.total || 0);
 
   /* Payment milestones — 20/40/40 */
   const milestones: Array<{ label: string; amount: number; status: "paid" | "next" | "upcoming"; date: string | null }> = [
