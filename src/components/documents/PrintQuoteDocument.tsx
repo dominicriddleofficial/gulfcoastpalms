@@ -21,6 +21,8 @@ export interface PrintQuoteData {
   customer_email?: string | null;
   scope_of_work?: string | null;
   line_items?: Array<{ description: string; quantity: number; unit_price: number; line_total: number }>;
+  /** Customer options that were not chosen; listed as excluded and never totalled. */
+  excluded_items?: string[];
   subtotal?: number | null;
   tax_total?: number | null;
   tax_rate?: number | null;
@@ -110,6 +112,9 @@ export default function PrintQuoteDocument({ data }: { data: PrintQuoteData }) {
             ))}
           </tbody>
         </table>
+        {data.excluded_items && data.excluded_items.length > 0 && (
+          <p style={{ fontSize: 11, color: PRINT.secondary, marginTop: 8 }}>Not selected (not included in total): {data.excluded_items.join("; ")}</p>
+        )}
       </div>
 
       <div style={{ display: "flex", justifyContent: "flex-end", padding: "14px 24px 0" }}>

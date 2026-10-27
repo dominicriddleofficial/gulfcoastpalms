@@ -193,8 +193,14 @@ function postEvent(payload: Record<string, unknown>) {
   } catch { /* swallow */ }
 }
 
+/** Private guest-link pages (e.g. arborist quote links) are never tracked. */
+export function isUntrackedPath(pathname: string) {
+  return /^\/arborist-link(\/|$)/.test(pathname);
+}
+
 export function trackEvent(event: ConversionEvent | string, params?: EventParams) {
   if (typeof window === "undefined") return;
+  if (isUntrackedPath(window.location.pathname)) return;
   const path = params?.page_path || window.location.pathname;
   const session = getSessionId();
   if (!shouldSend(event, path, session)) return;

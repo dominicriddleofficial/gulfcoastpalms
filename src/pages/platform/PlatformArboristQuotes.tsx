@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Check, ClipboardCopy, Link2, MapPin, Pencil, Plus, Search, Trees } from "lucide-react";
 import { toast } from "sonner";
@@ -44,6 +44,7 @@ function ReportReview({ report, canReview, canEdit, disabled, onBack, onEdit, on
     {report.general_notes && <section className={panel}><h2 className="font-semibold mb-3">Whole-job notes</h2><p className="text-sm text-muted-foreground whitespace-pre-wrap break-words leading-relaxed">{report.general_notes}</p></section>}
     <div className="flex flex-wrap gap-3"><Button variant="outline" onClick={async () => { const text = arboristReviewSummary(report); if (await copyTextToClipboard(text)) toast.success("Internal summary copied"); else setManualCopy(text); }}><ClipboardCopy className="mr-2 h-4 w-4" />Copy internal summary</Button>
       {canEdit && <Button variant="outline" disabled={disabled || saving} onClick={onEdit}><Pencil className="mr-2 h-4 w-4" />Edit report</Button>}
+      {canReview && (report.status === "submitted" || report.status === "reviewed") && <Button variant="outline" asChild><Link to={`/platform/quotes/new?arborist=${report.id}`}><Plus className="mr-2 h-4 w-4" />Create customer quote</Link></Button>}
       {canReview && report.status === "submitted" && <Button disabled={disabled || saving} onClick={() => void markReviewed()}><Check className="mr-2 h-4 w-4" />{saving ? "Saving…" : "Mark reviewed"}</Button>}
     </div>
     <Dialog open={!!manualCopy} onOpenChange={open => { if (!open) setManualCopy(null); }}><DialogContent><DialogHeader><DialogTitle>Copy internal summary</DialogTitle><DialogDescription>Select and copy this internal report text.</DialogDescription></DialogHeader><Textarea readOnly className="min-h-80" value={manualCopy || ""} onFocus={event => event.target.select()} /></DialogContent></Dialog>
@@ -57,9 +58,17 @@ function ArboristWorkspace({ businessId, userId, canReview }: { businessId: stri
   const reports = query.data || [];
   const [editing, setEditing] = useState<ArboristQuote | null>(null);
   const [selected, setSelected] = useState<ArboristQuote | null>(null);
+  const [searchParams] = useSearchParams();
+  const linkedReportId = searchParams.get("report");
+  const [linkedOpened, setLinkedOpened] = useState(false);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [linkOpen, setLinkOpen] = useState(false);
+  useEffect(() => {
+    if (linkedOpened || !linkedReportId) return;
+    const match = reports.find(report => report.id === linkedReportId);
+    if (match) { setSelected(match); setLinkedOpened(true); }
+  }, [reports, linkedReportId, linkedOpened]);
   const saved = (report: ArboristQuote) => {
     qc.setQueryData<ArboristQuote[]>(arboristQuotesKey(businessId, userId), current => [report, ...(current || []).filter(item => item.id !== report.id)]);
     void qc.invalidateQueries({ queryKey: arboristQuotesKey(businessId, userId) });

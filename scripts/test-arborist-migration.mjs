@@ -14,6 +14,12 @@ GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated, anon;
 CREATE TABLE public.workspaces (id uuid PRIMARY KEY, owner_user_id uuid);
 CREATE TABLE public.businesses (id uuid PRIMARY KEY, workspace_id uuid, shortcode text);
 CREATE TABLE public.user_business_access (user_id uuid, business_id uuid, role_name text, active_status text);
+CREATE TABLE public.platform_quotes (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), business_id uuid NOT NULL, quote_number text NOT NULL DEFAULT 'Q', customer_id uuid, status text NOT NULL DEFAULT 'draft',
+  subtotal numeric DEFAULT 0, discount_total numeric DEFAULT 0, tax_rate numeric DEFAULT 0, tax_total numeric DEFAULT 0, total numeric DEFAULT 0,
+  deposit_required_flag boolean DEFAULT false, deposit_type text DEFAULT 'percentage', deposit_value numeric DEFAULT 50, deposit_amount_calculated numeric DEFAULT 0,
+  version_number integer DEFAULT 1, approved_by text, approved_at timestamptz, accepted_at timestamptz, deleted_at timestamptz, updated_at timestamptz DEFAULT now());
+CREATE TABLE public.platform_quote_line_items (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), quote_id uuid NOT NULL, business_id uuid NOT NULL, description text NOT NULL,
+  quantity numeric NOT NULL DEFAULT 1, unit_price numeric NOT NULL DEFAULT 0, discount_amount numeric DEFAULT 0, taxable_flag boolean DEFAULT true, line_total numeric NOT NULL DEFAULT 0, sort_order integer DEFAULT 0);
 CREATE TABLE storage.buckets (id text PRIMARY KEY, name text, public boolean, file_size_limit bigint, allowed_mime_types text[]);
 CREATE TABLE storage.objects (id uuid DEFAULT gen_random_uuid(), bucket_id text, name text);
 ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
@@ -35,7 +41,7 @@ INSERT INTO user_business_access VALUES ('${crew}','${biz}','crew','active'),('$
 await db.exec(`ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO anon, authenticated; ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated;`);
 // Live bucket is created with the storage tool, so the isolated fixture seeds it here.
 await db.exec(`INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types) VALUES ('arborist-quote-photos','arborist-quote-photos',false,10485760,ARRAY['image/jpeg']);`);
-for (const file of ['0000_arborist_quotes.sql','0001_arborist_revoke_anon.sql','0002_arborist_quote_links.sql','0003_arborist_links_column_grants.sql'])
+for (const file of ['0000_arborist_quotes.sql','0001_arborist_revoke_anon.sql','0002_arborist_quote_links.sql','0003_arborist_links_column_grants.sql','0004_quote_options.sql'])
   await db.exec(await fs.readFile(new URL(`../drizzle/migrations/${file}`, import.meta.url),'utf8'));
 let checks=0;
 const check=(value,msg)=>{assert.ok(value,msg);checks++;};
@@ -167,5 +173,67 @@ for (const fn of ['arborist_user_can_review(uuid,uuid)','arborist_link_lock(text
 check((await db.query(`SELECT has_table_privilege('anon','public.platform_arborist_quote_links','SELECT') AS ok`)).rows[0].ok===false,'anon has no link table access');
 check((await db.query(`SELECT has_column_privilege('authenticated','public.platform_arborist_quote_links','token_hash','SELECT') OR has_table_privilege('authenticated','public.platform_arborist_quote_links','INSERT,UPDATE,DELETE') AS ok`)).rows[0].ok===false,'authenticated cannot read hashes or write links despite default grants');
 check((await db.query(`SELECT has_function_privilege('authenticated','public.validate_arborist_quote()','EXECUTE') AS ok`)).rows[0].ok===false,'trigger fn not callable');
+
+// ---- Quote options + arborist conversion (0004) ----
+await db.exec(`RESET ROLE; GRANT SELECT, INSERT, UPDATE, DELETE ON platform_quotes, platform_quote_line_items TO authenticated, service_role;`);
+const Q=uuid(200), QP=uuid(201), QL=uuid(202);
+const L={req:uuid(210),stump:uuid(211),haul:uuid(212),road:uuid(213),foreign:uuid(214)};
+await service();
+await db.query(`INSERT INTO platform_quotes(id,business_id,status,tax_rate,discount_total,total) VALUES ($1,$2,'sent',7,50,0),($3,$4,'sent',0,0,0),($5,$2,'sent',0,0,100)`,[Q,biz,QP,pps,QL]);
+await db.query(`INSERT INTO platform_quote_line_items(id,quote_id,business_id,description,quantity,unit_price,option_kind,option_group,default_selected,sort_order) VALUES
+ ($1,$6,$7,'Remove 2 oaks',2,1200.10,'required',NULL,true,0),($2,$6,$7,'Stump grinding',1,250,'optional',NULL,false,1),
+ ($3,$6,$7,'Haul away',1,400,'alternative','Debris handling',true,2),($4,$6,$7,'Roadside placement',1,150.55,'alternative','Debris handling',false,3),
+ ($5,$8,$7,'Legacy line',1,100,'required',NULL,true,0)`,[L.req,L.stump,L.haul,L.road,L.foreign,Q,biz,QL]);
+await guestErr(()=>db.query(`INSERT INTO platform_quote_line_items(quote_id,business_id,description,option_kind,default_selected) VALUES ($1,$2,'x','optional',true)`,[QP,pps]),'only available for Gulf Coast Palms','PPS cannot use options');
+await guestErr(()=>db.query(`INSERT INTO platform_quote_line_items(quote_id,business_id,description,option_kind) VALUES ($1,$2,'x','alternative')`,[Q,biz]),'option_group_check','alternative needs group');
+await guestErr(()=>db.query(`UPDATE platform_quote_line_items SET customer_selected=true WHERE id=$1`,[L.stump]),'recorded only when the customer approves','selection cannot be forged');
+await guestErr(()=>db.query(`UPDATE platform_quotes SET accepted_snapshot='{}' WHERE id=$1`,[Q]),'only by customer approval','snapshot cannot be forged');
+const fp=async id=>(await db.query(`SELECT quote_pricing_fingerprint($1) f`,[id])).rows[0].f;
+let f=await fp(Q);
+const approve=(sel,fpr=f,id=Q)=>db.query(`SELECT approve_quote_options($1,'Jane Customer',$2::uuid[],$3) r`,[id,sel,fpr]);
+await guestErr(()=>approve([L.stump]),'quote_choose_one','alternative group requires one choice');
+await guestErr(()=>approve([L.haul,L.road]),'quote_choose_one','both alternatives rejected');
+await guestErr(()=>approve([L.haul,L.req]),'quote_invalid_option','required line is not a selectable option');
+await guestErr(()=>approve([L.haul,L.foreign]),'quote_invalid_option','foreign quote line rejected');
+await guestErr(()=>approve([L.haul,uuid(999)]),'quote_invalid_option','unknown id rejected');
+await guestErr(()=>approve([L.haul],'deadbeef'),'quote_stale','stale fingerprint rejected');
+// staff edits a price after customer loaded the page
+await db.query(`UPDATE platform_quote_line_items SET unit_price=401 WHERE id=$1`,[L.haul]);
+await guestErr(()=>approve([L.haul]),'quote_stale','tampered/changed price rejected');
+await db.query(`UPDATE platform_quote_line_items SET unit_price=400 WHERE id=$1`,[L.haul]);
+f=await fp(Q);
+r=(await approve([L.stump,L.road])).rows[0].r;
+// required 2400.20 + stump 250 + road 150.55 = 2800.75; tax 7% = 196.05 (196.0525); discount 50 => 2946.80
+check(r.status==='approved'&&Number(r.snapshot.subtotal)===2800.75&&Number(r.snapshot.tax_total)===196.05&&Number(r.snapshot.total)===2946.8,'server recalculates exact total: '+JSON.stringify([r.snapshot?.subtotal,r.snapshot?.tax_total,r.snapshot?.total]));
+const qrow=(await db.query(`SELECT status,total,approved_by,accepted_snapshot FROM platform_quotes WHERE id=$1`,[Q])).rows[0];
+check(qrow.status==='approved'&&Number(qrow.total)===2946.8&&qrow.approved_by==='Jane Customer'&&qrow.accepted_snapshot.version_number===1,'approval recorded with approver/version');
+const sel=(await db.query(`SELECT id,customer_selected FROM platform_quote_line_items WHERE quote_id=$1`,[Q])).rows;
+check(sel.find(x=>x.id===L.haul).customer_selected===false&&sel.find(x=>x.id===L.road).customer_selected===true&&sel.find(x=>x.id===L.req).customer_selected===true,'chosen lines flagged, unchosen excluded');
+check((await approve([L.road,L.stump])).rows[0].r.status==='already_approved','repeat approval with same choices is idempotent');
+await guestErr(()=>approve([L.haul]),'quote_already_approved','repeat approval with different choices refused');
+await guestErr(()=>db.query(`UPDATE platform_quote_line_items SET unit_price=1 WHERE id=$1`,[L.req]),'accepted with the customer','accepted lines frozen');
+await guestErr(()=>db.query(`DELETE FROM platform_quote_line_items WHERE id=$1`,[L.haul]),'accepted with the customer','accepted lines cannot be deleted');
+await guestErr(()=>db.query(`UPDATE platform_quotes SET total=1 WHERE id=$1`,[Q]),'prices can','accepted totals frozen');
+await guestErr(()=>db.query(`UPDATE platform_quotes SET accepted_snapshot='{}' WHERE id=$1`,[Q]),'cannot be changed','accepted snapshot immutable');
+await db.query(`UPDATE platform_quotes SET status='won' WHERE id=$1`,[Q]);
+check(true,'status can still move to won after acceptance');
+// legacy quote with no options approves through the same rules with no choices
+r=(await db.query(`SELECT approve_quote_options($1,'Bob',NULL,$2) r`,[QL,await fp(QL)])).rows[0].r;
+check(Number(r.snapshot.total)===100,'legacy-style quote total unchanged');
+// arborist conversion linkage
+await clearClaims(); await login(office);
+const Q2=uuid(220);
+await guestErr(()=>db.query(`INSERT INTO platform_quotes(id,business_id,source_arborist_quote_id) VALUES ($1,$2,$3)`,[Q2,biz,second.report_id]),'submitted arborist report','draft report cannot be converted');
+await db.query(`INSERT INTO platform_quotes(id,business_id,source_arborist_quote_id) VALUES ($1,$2,$3)`,[Q2,biz,linkReport]);
+check(true,'office converts a submitted report');
+await guestErr(()=>db.query(`INSERT INTO platform_quotes(business_id,source_arborist_quote_id) VALUES ($1,$2)`,[biz,linkReport]),'duplicate','second conversion of same report blocked');
+await guestErr(()=>db.query(`UPDATE platform_quotes SET source_arborist_quote_id=NULL WHERE id=$1`,[Q2]),'cannot be changed','source link permanent');
+await login(crew);
+await guestErr(()=>db.query(`INSERT INTO platform_quotes(business_id,source_arborist_quote_id) VALUES ($1,$2)`,[biz,reportId]),'Only the office','crew cannot convert reports');
+await login(office);
+await guestErr(()=>db.query(`INSERT INTO platform_quotes(business_id,source_arborist_quote_id) VALUES ($1,$2)`,[pps,reportId]),'Only the office','cross-business conversion blocked');
+await db.exec(`RESET ROLE;`);
+for (const fn of ['quote_pricing_fingerprint(uuid)','approve_quote_options(uuid,text,uuid[],text)','guard_quote_line_options()','guard_quote_options_header()'])
+  for (const role of ['anon','authenticated']) check((await db.query(`SELECT has_function_privilege('${role}','public.${fn}','EXECUTE') AS ok`)).rows[0].ok===false,`${role} cannot execute ${fn}`);
 console.log(`PASS: ${checks} isolated PostgreSQL migration, permissions, validation, and concurrency checks`);
 await db.close();

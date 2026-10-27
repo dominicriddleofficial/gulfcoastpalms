@@ -1,7 +1,6 @@
-# Public GCP tree services release
-- [x] Equal tree/palm branding, navigation and homepage
-- [x] Shared tree hub and three substantial services with initial HTML/schema
-- [x] Inclusive quote choices and URL preselection without delivery changes
-- [x] Owner-confirmed review evidence and broad metadata/AI summaries
-- [x] Mock tests and browser route/preselection checks; no publication
-- [ ] Full production prerender/SEO gate and separate app TypeScript results: unavailable in automatic preview build log; run independently before deployment.
+# Arborist + quote workflow (GCP)
+- [x] 1. Private arborist quote link (guest form, staff send/disable/replace)
+- [x] 1a. Suppress GA/Ads/Meta + app analytics on private link page
+- [x] 2. Arborist report -> customer quote draft (staff-only, price confirmation, dedupe)
+- [x] 3. Customer-selectable quote options (required / optional / pick-one groups, server-authoritative approval, invoices use chosen lines)
+- [ ] Phone walkthrough of owner builder + customer choice page in preview (not yet done)

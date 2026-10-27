@@ -20,6 +20,8 @@ import { generateQuoteNumber } from "@/hooks/usePlatformQuotes";
 import { downloadElementAsPdf } from "@/lib/download-pdf";
 import { buildQuoteMessage, getQuotePublicUrl } from "@/lib/quote-message";
 import { saveEditedQuote, type QuoteEditData } from "@/lib/edit-quote";
+import { OPTION_KIND_LABELS, builderOptionErrors, type OptionKind } from "@/lib/quote-options";
+import type { ArboristDraftLine } from "@/lib/arborist-to-quote";
 
 interface LineItem {
   id: string;
@@ -27,6 +29,22 @@ interface LineItem {
   qty: string;
   price: string;
   original?: QuoteEditData["items"][number];
+  /** GCP customer options: required work, optional add-on, or one choice in a named pick-one group. */
+  kind: OptionKind;
+  group: string;
+  /** Proposed default selection for optional/pick-one lines. */
+  proposed: boolean;
+  /** Staff-only arborist price reference; the line price must be entered/confirmed explicitly. */
+  arborist?: ArboristDraftLine;
+  priceConfirmed?: boolean;
+}
+
+export interface ArboristQuoteSource {
+  reportId: string;
+  customerName: string;
+  propertyAddress: string;
+  scope: string;
+  lines: ArboristDraftLine[];
 }
 
 interface SavedItem {
@@ -58,18 +76,23 @@ interface QuoteBuilderProps {
   onClose: () => void;
   onCreated: () => void;
   editingQuote?: QuoteEditData;
+  /** Prefill from a submitted arborist report (GCP); creates a traceable draft on save only. */
+  arboristSource?: ArboristQuoteSource;
 }
 
 function newLineId() { return crypto.randomUUID(); }
 const roundMoney = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
 const lineAmount = (line: LineItem) => roundMoney((Number(line.qty) || 0) * (Number(line.price) || 0) - (line.original?.discount_amount ?? 0));
 
-export default function QuoteBuilder({ businessId, businesses, userId, onClose, onCreated, editingQuote }: QuoteBuilderProps) {
+export default function QuoteBuilder({ businessId, businesses, userId, onClose, onCreated, editingQuote, arboristSource }: QuoteBuilderProps) {
   const existing = editingQuote?.quote;
   const editSnapshot = useRef(editingQuote);
   const editSavingRef = useRef(false);
   const [bizId] = useState(existing?.business_id || businessId || businesses[0]?.id || "");
   const activeBiz = businesses.find(b => b.id === bizId);
+  const optionsEnabled = activeBiz?.shortcode?.toUpperCase() === "GCP";
+  /** Lines counted in the proposed total: required work plus proposed options. */
+  const inProposedTotal = (l: LineItem) => !optionsEnabled || l.kind === "required" || l.proposed;
 
   // Form state
   const [customerId, setCustomerId] = useState<string | null>(existing?.customer_id ?? null);
@@ -84,10 +107,14 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   const [quoteNumber, setQuoteNumber] = useState(existing?.quote_number ?? "Generating…");
   const [quoteDate, setQuoteDate] = useState(format(existing ? new Date(existing.created_at) : new Date(), "yyyy-MM-dd"));
   const [validUntil, setValidUntil] = useState(existing ? existing.valid_until ?? "" : format(addDays(new Date(), 30), "yyyy-MM-dd"));
-  const [scopeOfWork, setScopeOfWork] = useState(existing?.scope_of_work ?? "");
+  const [scopeOfWork, setScopeOfWork] = useState(existing?.scope_of_work ?? arboristSource?.scope ?? "");
   const [lineItems, setLineItems] = useState<LineItem[]>(editingQuote?.items.length
-    ? editingQuote.items.map(item => ({ id: item.id, description: item.description, qty: String(item.quantity), price: String(item.unit_price), original: item }))
-    : [{ id: newLineId(), description: "", qty: "1", price: "" }]);
+    ? editingQuote.items.map(item => ({ id: item.id, description: item.description, qty: String(item.quantity), price: String(item.unit_price), original: item,
+        kind: (item.option_kind === "optional" || item.option_kind === "alternative" ? item.option_kind : "required") as OptionKind,
+        group: item.option_group ?? "", proposed: item.option_kind === "required" ? true : !!item.default_selected }))
+    : arboristSource?.lines.length
+    ? arboristSource.lines.map(line => ({ id: newLineId(), description: line.description, qty: "1", price: "", kind: "required" as OptionKind, group: "", proposed: true, arborist: line, priceConfirmed: false }))
+    : [{ id: newLineId(), description: "", qty: "1", price: "", kind: "required", group: "", proposed: true }]);
   const [taxEnabled, setTaxEnabled] = useState(existing ? Number(existing.tax_rate) > 0 : true);
   const [taxRate, setTaxRate] = useState(String(existing?.tax_rate ?? 7));
   const [discountEnabled, setDiscountEnabled] = useState(Number(existing?.discount_total ?? 0) > 0);
@@ -190,20 +217,32 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   }, [activeBiz?.public_brand_name, existing]);
 
   // Calculations
-  const subtotal = useMemo(() => roundMoney(lineItems.reduce((s, l) => s + lineAmount(l), 0)), [lineItems]);
-  const taxableSubtotal = lineItems.filter(l => l.original?.taxable_flag !== false).reduce((s, l) => s + lineAmount(l), 0);
+  const subtotal = useMemo(() => roundMoney(lineItems.filter(inProposedTotal).reduce((s, l) => s + lineAmount(l), 0)), [lineItems, optionsEnabled]);
+  const taxableSubtotal = lineItems.filter(inProposedTotal).filter(l => l.original?.taxable_flag !== false).reduce((s, l) => s + lineAmount(l), 0);
   const taxAmount = taxEnabled ? roundMoney(taxableSubtotal * (Number(taxRate) || 0) / 100) : 0;
   const discountAmount = discountEnabled ? roundMoney(discountType === "%" ? subtotal * (Number(discountValue) || 0) / 100 : Number(discountValue) || 0) : 0;
   const total = Math.max(0, roundMoney(subtotal + taxAmount - discountAmount));
   const depositAmount = depositEnabled ? roundMoney(depositType === "%" ? total * (Number(depositValue) || 0) / 100 : Number(depositValue) || 0) : 0;
 
-  const addLine = () => setLineItems([...lineItems, { id: newLineId(), description: "", qty: "1", price: "" }]);
+  const addLine = () => setLineItems([...lineItems, { id: newLineId(), description: "", qty: "1", price: "", kind: "required", group: "", proposed: true }]);
   const removeLine = (id: string) => setLineItems(lineItems.filter(l => l.id !== id));
   const updateLine = (id: string, field: "description" | "qty" | "price", val: string) =>
-    setLineItems(lineItems.map(l => l.id === id ? { ...l, [field]: val } : l));
+    setLineItems(lineItems.map(l => l.id === id ? { ...l, [field]: val, ...(field === "price" ? { priceConfirmed: true } : {}) } : l));
+  const updateOption = (id: string, patch: Partial<Pick<LineItem, "kind" | "group" | "proposed">>) =>
+    setLineItems(current => {
+      const target = current.find(l => l.id === id);
+      const next = current.map(l => l.id === id ? { ...l, ...patch } : l);
+      // Proposing one choice in a pick-one group un-proposes the others in that group.
+      if (target && patch.proposed && (patch.kind ?? target.kind) === "alternative") {
+        const group = (patch.group ?? target.group).trim();
+        return next.map(l => l.id !== id && l.kind === "alternative" && l.group.trim() === group ? { ...l, proposed: false } : l);
+      }
+      return next;
+    });
+
 
   const addSavedItem = (item: SavedItem) => {
-    setLineItems([...lineItems, { id: newLineId(), description: item.description || item.name, qty: "1", price: String(item.default_price) }]);
+    setLineItems([...lineItems, { id: newLineId(), description: item.description || item.name, qty: "1", price: String(item.default_price), kind: "required", group: "", proposed: true }]);
     setShowSavedItems(false);
   };
 
@@ -244,6 +283,9 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
     lineItems: lineItems.filter(l => l.description.trim()).map(l => ({
       description: l.description, quantity: Number(l.qty) || 1,
       unit_price: Number(l.price) || 0, line_total: lineAmount(l),
+      optionLabel: optionsEnabled && l.kind !== "required"
+        ? `${l.kind === "alternative" ? `${l.group.trim() || "Choice"} — pick one` : "Optional add-on"}${l.proposed ? " · proposed" : " · not in total"}` : undefined,
+      excluded: !inProposedTotal(l),
     })),
     subtotal, taxRate: taxEnabled ? Number(taxRate) : 0, taxAmount, discountAmount, total,
     depositRequired: depositEnabled, depositAmount, scopeOfWork, publicNotes,
@@ -256,12 +298,28 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
    * before any share link is generated — the old flow built the link from a
    * "PENDING" placeholder and could text a dead URL.
    */
+  /** Option + arborist price checks shared by create and edit. Returns false (with a message) when blocked. */
+  const checkOptionsAndPrices = (validLines: LineItem[]) => {
+    if (validLines.some(l => l.arborist && (!l.priceConfirmed || l.price.trim() === "" || !(Number(l.price) >= 0)))) {
+      toast.error("Enter or confirm the exact price for every tree line before saving."); return false;
+    }
+    if (!optionsEnabled) return true;
+    const problems = builderOptionErrors(validLines.map(l => ({ id: l.id, description: l.description, quantity: Number(l.qty), unit_price: Number(l.price),
+      option_kind: l.kind, option_group: l.kind === "alternative" ? l.group.trim() : null, default_selected: l.kind === "required" ? true : l.proposed })));
+    if (problems.length) { toast.error(problems[0]); return false; }
+    return true;
+  };
+  const optionFields = (l: LineItem) => optionsEnabled
+    ? { option_kind: l.kind, option_group: l.kind === "alternative" ? l.group.trim() : null, default_selected: l.kind === "required" ? true : l.proposed }
+    : { option_kind: "required", option_group: null, default_selected: true };
+
   const persistQuote = async (): Promise<{ id: string; quote_number: string } | null> => {
     if (editingQuote && editSnapshot.current) {
       if (editSavingRef.current) return null;
       if (!userId) { toast.error("Sign in before saving the quote"); return null; }
       const validLines = lineItems.filter(l => l.description.trim());
       if (!validLines.length) { toast.error("Add at least one line item"); return null; }
+      if (!checkOptionsAndPrices(validLines)) return null;
       if (lineItems.some(l => !l.description.trim() && (l.price !== "" || l.original))) {
         toast.error("Enter a description or remove the empty line"); return null;
       }
@@ -286,7 +344,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
           unit: l.original?.unit ?? "each", discount_amount: l.original?.discount_amount ?? 0,
           taxable_flag: l.original?.taxable_flag ?? true, line_type: l.original?.line_type ?? "service",
           service_catalog_id: l.original?.service_catalog_id ?? null,
-          line_total: lineAmount(l), sort_order: i,
+          line_total: lineAmount(l), sort_order: i, ...optionFields(l),
         })), userId);
         editSnapshot.current = result;
         if (result.historyWarning) toast.warning(result.historyWarning);
@@ -306,6 +364,13 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
     if (!customerId) { toast.error("Please select a customer"); return null; }
     const validLines = lineItems.filter(l => l.description.trim());
     if (validLines.length === 0) { toast.error("Add at least one line item"); return null; }
+    if (!checkOptionsAndPrices(validLines)) return null;
+    if (arboristSource) {
+      // Never create a second customer quote for the same arborist report.
+      const { data: prior } = await supabase.from("platform_quotes").select("id, quote_number")
+        .eq("source_arborist_quote_id", arboristSource.reportId).maybeSingle();
+      if (prior) { toast.error(`Quote ${prior.quote_number} already exists for this arborist report — opening it.`); window.location.assign(`/platform/quotes/${prior.id}/edit`); return null; }
+    }
 
     setSaving(true);
 
@@ -335,8 +400,16 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
       valid_until: validUntil, scope_of_work: scopeOfWork || null,
       internal_notes: internalNotes || null, public_notes: publicNotes || null,
       created_by_user_id: userId, last_modified_by_user_id: userId,
+      ...(arboristSource ? { source_arborist_quote_id: arboristSource.reportId } : {}),
     }).select().single();
 
+    if (error && arboristSource && error.code === "23505") {
+      setSaving(false);
+      const { data: prior } = await supabase.from("platform_quotes").select("id").eq("source_arborist_quote_id", arboristSource.reportId).maybeSingle();
+      toast.error("A customer quote already exists for this arborist report — opening it.");
+      if (prior) window.location.assign(`/platform/quotes/${prior.id}/edit`);
+      return null;
+    }
     if (error || !quote) { toast.error(error?.message || "Failed to create quote"); setSaving(false); return null; }
 
     // Insert line items
@@ -345,7 +418,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
         business_id: bizId, quote_id: quote.id, description: l.description,
         quantity: Number(l.qty) || 1, unit: "each", unit_price: Number(l.price) || 0,
         discount_amount: 0, taxable_flag: true,
-        line_total: (Number(l.qty) || 1) * (Number(l.price) || 0), sort_order: i,
+        line_total: (Number(l.qty) || 1) * (Number(l.price) || 0), sort_order: i, ...optionFields(l),
       }))
     );
     if (lineErr) {
@@ -558,6 +631,18 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                 <p className="font-mono text-[10px] text-muted-foreground">{activeBiz?.shortcode?.toUpperCase()}</p>
               </div>
               <div className="bg-card border border-border rounded-lg p-3 space-y-2">
+                {arboristSource && (
+                  <div className="rounded-md border border-primary/25 bg-primary/5 p-2 space-y-1" data-testid="arborist-customer-hint">
+                    <p className="font-body text-[11px] text-foreground">From arborist report: <span className="font-semibold">{arboristSource.customerName || "No name"}</span>{arboristSource.propertyAddress ? ` · ${arboristSource.propertyAddress}` : ""}</p>
+                    <p className="font-body text-[10px] text-muted-foreground">Choose the matching customer, or add a new one. Nothing is matched automatically.</p>
+                    <div className="flex flex-wrap gap-3">
+                      {arboristSource.customerName && !customerId && (
+                        <button type="button" className="font-body text-[10px] text-primary hover:underline" onClick={() => { setCustomerSearch(arboristSource.customerName); setShowCustomerSearch(true); }}>Search “{arboristSource.customerName}”</button>
+                      )}
+                      <a className="font-body text-[10px] text-primary hover:underline" href={`/platform/arborist-quotes?report=${arboristSource.reportId}`} target="_blank" rel="noreferrer">View arborist report & photos</a>
+                    </div>
+                  </div>
+                )}
                 <div className="flex items-center justify-between gap-2">
                   <p className="font-body text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Prepared For</p>
                   <div className="flex items-center gap-3">
@@ -719,6 +804,36 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                           )}
                         </div>
                       </div>
+                      {line.arborist && (
+                        <div className="md:col-span-5 flex flex-wrap items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/5 px-2.5 py-1.5" data-testid="arborist-price-reference">
+                          <span className="font-body text-[11px] text-amber-200">Staff only · {line.arborist.suggestion}</span>
+                          {line.arborist.fixedPrice && !line.priceConfirmed && (
+                            <button type="button" className="font-body text-[11px] font-semibold text-primary underline"
+                              onClick={() => updateLine(line.id, "price", line.arborist?.fixedPrice ?? "")}>Use ${line.arborist.fixedPrice}</button>
+                          )}
+                          {!line.priceConfirmed && <span className="font-body text-[11px] text-muted-foreground">Price not confirmed</span>}
+                        </div>
+                      )}
+                      {optionsEnabled && (
+                        <div className="md:col-span-5 flex flex-wrap items-center gap-2" data-testid="line-option-controls">
+                          <select aria-label="Line type" value={line.kind}
+                            onChange={e => updateOption(line.id, { kind: e.target.value as OptionKind, proposed: e.target.value === "required" ? true : line.kind === "required" ? false : line.proposed })}
+                            className="h-8 rounded-md border border-border bg-secondary/50 px-2 font-body text-xs text-foreground">
+                            {(Object.keys(OPTION_KIND_LABELS) as OptionKind[]).map(k => <option key={k} value={k}>{OPTION_KIND_LABELS[k]}</option>)}
+                          </select>
+                          {line.kind === "alternative" && (
+                            <Input aria-label="Choice group name" placeholder="Group, e.g. Debris handling" maxLength={120} value={line.group}
+                              onChange={e => updateOption(line.id, { group: e.target.value })} className="h-8 w-48 bg-secondary/50 border-border font-body text-xs" />
+                          )}
+                          {line.kind !== "required" && (
+                            <label className="flex items-center gap-1.5 font-body text-xs text-muted-foreground">
+                              <input type={line.kind === "alternative" ? "radio" : "checkbox"} aria-label="Proposed choice" checked={line.proposed}
+                                onChange={e => updateOption(line.id, { proposed: line.kind === "alternative" ? true : e.target.checked })} className="accent-primary" />
+                              {line.kind === "alternative" ? "Proposed choice" : "Pre-selected for customer"}
+                            </label>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

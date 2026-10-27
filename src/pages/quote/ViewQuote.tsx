@@ -5,6 +5,8 @@ import { toast } from "@/hooks/use-toast";
 import DocumentBrandMark from "@/components/platform/billing/DocumentBrandMark";
 import { downloadElementAsPdf } from "@/lib/download-pdf";
 import PrintQuoteDocument from "@/components/documents/PrintQuoteDocument";
+import { QuoteOptionChoices } from "@/components/quote/QuoteOptionChoices";
+import { computeOptionTotals, defaultSelection, hasOptions, isIncluded, selectionErrors, type OptionLine } from "@/lib/quote-options";
 import { documentFilename } from "@/components/documents/printTheme";
 
 /* ── Brand tokens ── */
@@ -39,7 +41,12 @@ type QuoteData = {
   created_at?: string;
   public_notes?: string;
   scope_of_work?: string;
-  line_items?: Array<{ description: string; quantity: number; unit_price: number; line_total: number; line_type?: string }>;
+  line_items?: Array<{ id?: string; description: string; quantity: number; unit_price: number; line_total: number; line_type?: string;
+    discount_amount?: number | null; taxable_flag?: boolean | null; option_kind?: string | null; option_group?: string | null;
+    default_selected?: boolean | null; customer_selected?: boolean | null }>;
+  discount_total?: number;
+  pricing_fingerprint?: string | null;
+  accepted_snapshot?: { selected_option_ids?: string[]; subtotal: number; tax_total: number; discount_total: number; total: number } | null;
   subtotal?: number;
   tax_total?: number;
   tax_rate?: number;
@@ -145,6 +152,7 @@ export default function ViewQuote() {
   const [changeSubmitted, setChangeSubmitted] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
+  const [selectedOptions, setSelectedOptions] = useState<string[] | null>(null);
 
   const brandKey = shortcode?.toLowerCase() || "gcp";
   const brand = BRAND[brandKey] || BRAND.gcp;
@@ -184,11 +192,16 @@ export default function ViewQuote() {
       const resp = await fetch(`${baseUrl}/approve-quote`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quote_id: quote.id, approved_by: approverName.trim(), approval_token: quote.approval_token }),
+        body: JSON.stringify({ quote_id: quote.id, approved_by: approverName.trim(), approval_token: quote.approval_token,
+          ...(usesOptions ? { selected_option_ids: chosenOptions, pricing_fingerprint: quote.pricing_fingerprint } : {}) }),
       });
       const data = await resp.json();
       if (!resp.ok || data.error) throw new Error(data.error || "Approval failed");
       setApproved(true);
+      if (usesOptions && data.snapshot) {
+        // Show the server-recorded choices and totals, never the client's own numbers.
+        setQuote(current => current ? { ...current, status: "approved", accepted_snapshot: data.snapshot, total: data.snapshot.total, subtotal: data.snapshot.subtotal, tax_total: data.snapshot.tax_total } : current);
+      }
 
       // PPS quotes proceed directly to Stripe Checkout for the 20% deposit.
       // GCP quotes are approval-only — payment is handled later via invoice.
@@ -332,7 +345,16 @@ export default function ViewQuote() {
   };
   const badge = statusBadge();
 
-  const grandTotal = quote.total || 0;
+  const optionLines = (quote.line_items || []).filter(l => l.id) as OptionLine[];
+  const usesOptions = hasOptions(optionLines);
+  const chosenOptions = quote.accepted_snapshot?.selected_option_ids ?? selectedOptions ?? defaultSelection(optionLines);
+  const optionTotals = usesOptions
+    ? (quote.accepted_snapshot
+      ? { subtotal: Number(quote.accepted_snapshot.subtotal), taxTotal: Number(quote.accepted_snapshot.tax_total), discountTotal: Number(quote.accepted_snapshot.discount_total), total: Number(quote.accepted_snapshot.total) }
+      : computeOptionTotals(optionLines, chosenOptions, { taxRate: Number(quote.tax_rate) || 0, discountTotal: Number(quote.discount_total) || 0 }))
+    : null;
+  const optionProblems = usesOptions && !isApproved ? selectionErrors(optionLines, chosenOptions) : [];
+  const grandTotal = optionTotals ? Number(optionTotals.total) : (quote.total || 0);
 
   /* Payment milestones — 20/40/40 */
   const milestones: Array<{ label: string; amount: number; status: "paid" | "next" | "upcoming"; date: string | null }> = [
@@ -455,7 +477,13 @@ export default function ViewQuote() {
                 <span style={{ textAlign: "right" }}>Total</span>
               </div>
 
-              {quote.line_items && quote.line_items.length > 0 ? (
+              {usesOptions ? (
+                <div data-testid="quote-option-choices">
+                  {!isApproved && <p style={{ marginTop: 12, fontSize: 13, color: labelColor }}>Choose your options below — the total updates as you go.</p>}
+                  <QuoteOptionChoices lines={optionLines} selected={chosenOptions} accent={accent} muted={labelColor} border={cardBorder}
+                    onChange={isApproved || approved ? undefined : setSelectedOptions} disabled={approving} />
+                </div>
+              ) : quote.line_items && quote.line_items.length > 0 ? (
                 quote.line_items.map((item, i) => (
                   <div key={i} style={{
                     display: "grid", gridTemplateColumns: "1fr 48px 80px 80px", gap: 8,
@@ -476,16 +504,22 @@ export default function ViewQuote() {
             {/* ── TOTALS ── */}
             <div style={{ padding: "16px 20px 0" }}>
               <div style={{ marginTop: 8, paddingTop: 12, borderTop: `1px solid ${cardBorder}`, display: "flex", flexDirection: "column", gap: 6 }}>
-                {quote.subtotal != null && (
+                {(optionTotals ? optionTotals.subtotal : quote.subtotal) != null && (
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
                     <span style={{ color: labelColor }}>Subtotal</span>
-                    <span style={{ color: "#fff" }}>${fmt(quote.subtotal)}</span>
+                    <span style={{ color: "#fff" }} data-testid="quote-subtotal">${fmt(Number(optionTotals ? optionTotals.subtotal : quote.subtotal))}</span>
                   </div>
                 )}
-                {quote.tax_total != null && quote.tax_total > 0 && (
+                {optionTotals && optionTotals.discountTotal > 0 && (
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
+                    <span style={{ color: labelColor }}>Discount</span>
+                    <span style={{ color: "#fff" }}>-${fmt(optionTotals.discountTotal)}</span>
+                  </div>
+                )}
+                {Number(optionTotals ? optionTotals.taxTotal : quote.tax_total) > 0 && (
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
                     <span style={{ color: labelColor }}>Tax{quote.tax_rate ? ` (${quote.tax_rate}%)` : ""}</span>
-                    <span style={{ color: "#fff" }}>${fmt(quote.tax_total)}</span>
+                    <span style={{ color: "#fff" }}>${fmt(Number(optionTotals ? optionTotals.taxTotal : quote.tax_total))}</span>
                   </div>
                 )}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginTop: 8, paddingTop: 16, paddingBottom: 6, borderTop: `1px solid ${cardBorder}`, lineHeight: 1.5 }}>
@@ -589,9 +623,11 @@ export default function ViewQuote() {
                         <span style={{ fontSize: 12, color: labelColor, lineHeight: 1.5 }}>I agree to the scope of work, pricing, and payment terms outlined above</span>
                       </label>
 
+                      {optionProblems.length > 0 && <p role="alert" style={{ fontSize: 13, color: "#fbbf24", marginBottom: 12 }}>{optionProblems[0]}</p>}
+                      {usesOptions && <p style={{ fontSize: 13, color: labelColor, marginBottom: 12 }}>You're approving the selected options for <strong style={{ color: "#fff" }}>${fmt(grandTotal)}</strong>.</p>}
                       <button
                         onClick={() => setShowApproveConfirm(true)}
-                        disabled={!agreedToTerms || !hasSignature}
+                        disabled={!agreedToTerms || !hasSignature || optionProblems.length > 0}
                         style={{
                           width: "100%", padding: 16, borderRadius: 10, border: "none",
                           cursor: (!agreedToTerms || !hasSignature) ? "not-allowed" : "pointer",
@@ -737,9 +773,10 @@ export default function ViewQuote() {
               customer_phone: quote.customer_phone,
               customer_email: quote.customer_email,
               scope_of_work: quote.scope_of_work || quote.public_notes,
-              line_items: quote.line_items,
-              subtotal: quote.subtotal,
-              tax_total: quote.tax_total,
+              line_items: usesOptions ? optionLines.filter(l => isIncluded(l, chosenOptions)).map(l => ({ ...l, line_total: Math.round(((Number(l.quantity) || 0) * (Number(l.unit_price) || 0) - (Number(l.discount_amount) || 0)) * 100) / 100 })) : quote.line_items,
+              excluded_items: usesOptions ? optionLines.filter(l => !isIncluded(l, chosenOptions)).map(l => l.description) : undefined,
+              subtotal: optionTotals ? Number(optionTotals.subtotal) : quote.subtotal,
+              tax_total: optionTotals ? Number(optionTotals.taxTotal) : quote.tax_total,
               tax_rate: quote.tax_rate,
               total: grandTotal,
               approved_at: quote.approved_at,

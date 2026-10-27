@@ -58,6 +58,10 @@ export interface PlatformQuote {
 }
 
 export interface QuoteLineItem {
+  option_kind?: string | null;
+  option_group?: string | null;
+  default_selected?: boolean | null;
+  customer_selected?: boolean | null;
   id: string;
   quote_id: string;
   business_id: string;
