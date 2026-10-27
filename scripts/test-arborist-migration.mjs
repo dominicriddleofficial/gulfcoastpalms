@@ -155,10 +155,10 @@ check((await db.query(`UPDATE platform_arborist_quotes SET general_notes='x' WHE
 await db.exec(`RESET ROLE; SELECT set_config('app.arborist_link_report','',false);`);
 await login(office);
 check((await db.query(`SELECT * FROM platform_arborist_quotes WHERE id=$1`,[linkReport])).rows[0]?.status==='submitted','submitted link report in staff list');
-check((await db.query(`SELECT * FROM platform_arborist_quote_links`)).rows.length===4,'staff can see link status');
+check((await db.query(`SELECT id,report_id,expires_at,revoked_at FROM platform_arborist_quote_links`)).rows.length===4,'staff can see link status');
 await denied(()=>db.query(`SELECT token_hash FROM platform_arborist_quote_links`),'staff cannot read token hashes');
 await login(crew);
-check((await db.query(`SELECT * FROM platform_arborist_quote_links`)).rows.length===0,'crew cannot see links');
+check((await db.query(`SELECT id,report_id,expires_at,revoked_at FROM platform_arborist_quote_links`)).rows.length===0,'crew cannot see links');
 await db.exec(`RESET ROLE;`);
 for (const fn of ['arborist_user_can_review(uuid,uuid)','arborist_link_lock(text)','arborist_link_issue(uuid,uuid,text,uuid,text,text,text)','arborist_link_revoke(uuid,uuid)','arborist_link_resolve(text)','arborist_link_save(text,integer,jsonb,text)','arborist_link_photo_target(text,uuid,uuid)']) {
   for (const role of ['anon','authenticated','public']) check((await db.query(`SELECT has_function_privilege('${role}','public.${fn}','EXECUTE') AS ok`)).rows[0].ok===false,`${role} cannot execute ${fn}`);
