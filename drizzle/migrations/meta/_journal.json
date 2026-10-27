@@ -36,6 +36,13 @@
       "when": 1793066426441,
       "tag": "0004_quote_options",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793067002593,
+      "tag": "0005_arborist_link_lock_order",
+      "breakpoints": true
     }
   ]
 }
