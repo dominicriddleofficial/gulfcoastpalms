@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Check, ClipboardCopy, Link2, MapPin, Pencil, Plus, Search, Trees } from "lucide-react";
 import { toast } from "sonner";
@@ -58,6 +58,9 @@ function ArboristWorkspace({ businessId, userId, canReview }: { businessId: stri
   const reports = query.data || [];
   const [editing, setEditing] = useState<ArboristQuote | null>(null);
   const [selected, setSelected] = useState<ArboristQuote | null>(null);
+  const [searchParams] = useSearchParams();
+  const linkedReportId = searchParams.get("report");
+  const [linkedOpened, setLinkedOpened] = useState(false);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [linkOpen, setLinkOpen] = useState(false);
