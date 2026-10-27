@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { CheckCircle2, LockKeyhole, TriangleAlert } from "lucide-react";
@@ -14,6 +14,7 @@ type PageState = "loading" | "error" | LinkState;
 export default function ArboristLink() {
   const location = useLocation();
   const [token, setToken] = useState(() => readLinkToken());
+  const tokenRef = useRef(token);
   const [state, setState] = useState<PageState>(token ? "loading" : "invalid");
   const [report, setReport] = useState<ArboristQuote | null>(null);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
@@ -26,12 +27,11 @@ export default function ArboristLink() {
     const pick = () => {
       if (!window.location.hash || window.location.hash === "#") return;
       const next = readLinkToken();
-      setToken(current => {
-        if (current === next) return current;
-        setReport(null); setExpiresAt(null); setLoadError(null);
-        setState(next ? "loading" : "invalid");
-        return next;
-      });
+      if (next === tokenRef.current) return;
+      tokenRef.current = next;
+      setReport(null); setExpiresAt(null); setLoadError(null);
+      setState(next ? "loading" : "invalid");
+      setToken(next);
     };
     pick();
     window.addEventListener("hashchange", pick);
@@ -41,6 +41,7 @@ export default function ArboristLink() {
   useEffect(() => {
     if (!token) { setReport(null); setState("invalid"); return; }
     let live = true;
+    setReport(null);
     setState("loading");
     loadGuestReport(token).then(result => { if (!live) return; setReport(result.report); setExpiresAt(result.expiresAt); setState("ok"); })
       .catch(error => { if (!live) return; if (error instanceof ArboristLinkError && error.state) setState(error.state); else { setLoadError(error instanceof Error ? error.message : "Could not open this link."); setState("error"); } });
