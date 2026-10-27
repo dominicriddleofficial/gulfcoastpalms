@@ -9,7 +9,7 @@ CREATE ROLE authenticated; CREATE ROLE anon; CREATE ROLE service_role;
 CREATE SCHEMA auth; CREATE SCHEMA storage;
 CREATE TABLE auth.users (id uuid PRIMARY KEY);
 CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT nullif(current_setting('request.jwt.claim.sub', true),'')::uuid $$;
-GRANT USAGE ON SCHEMA auth, storage TO authenticated, anon;
+GRANT USAGE ON SCHEMA auth, storage TO authenticated, anon, service_role;
 GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated, anon;
 CREATE TABLE public.workspaces (id uuid PRIMARY KEY, owner_user_id uuid);
 CREATE TABLE public.businesses (id uuid PRIMARY KEY, workspace_id uuid, shortcode text);
