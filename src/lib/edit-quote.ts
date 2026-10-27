@@ -39,6 +39,12 @@ export async function saveEditedQuote(
     throw new Error("The line items do not belong to this quote.");
   }
 
+  // Quotes with customer options save header + all line changes + history in ONE database transaction,
+  // so totals and choices can never be half-saved or interleave with a customer approval.
+  if ([...original.items, ...items].some(item => (item.option_kind ?? "required") !== "required")) {
+    return saveQuoteEditAtomically(original, changes, items, userId);
+  }
+
   const { data: current, error: readError } = await supabase.from("platform_quotes")
     .select("*").eq("id", quote.id).eq("business_id", quote.business_id).single();
   if (readError || !current) throw new Error(readError?.message || "Quote could not be loaded.");
@@ -147,4 +153,33 @@ export async function saveEditedQuote(
     historyWarning = "Quote updated, but the version history could not be saved.";
   }
   return { quote: savedQuote, items: savedItems, customer: original.customer, historyWarning };
+}
+
+async function saveQuoteEditAtomically(
+  original: QuoteEditData, changes: QuoteChanges, items: EditedQuoteLine[], userId: string,
+): Promise<QuoteEditData & { historyWarning?: string }> {
+  const { quote } = original;
+  const lines = items.map(({ created_at: _created, customer_selected: _sel, ...line }) => line);
+  const { data, error } = await supabase.rpc("save_quote_edit", {
+    _quote_id: quote.id, _expected_updated_at: quote.updated_at,
+    _changes: JSON.parse(JSON.stringify(changes)), _lines: JSON.parse(JSON.stringify(lines)),
+  });
+  if (!error && data) {
+    const saved = data as unknown as { quote: Quote; items: QuoteLine[] };
+    return { quote: saved.quote, items: saved.items, customer: original.customer };
+  }
+  const message = error?.message || "";
+  // A database refusal is final and nothing was saved. Only an unknown outcome (dropped connection) is re-checked.
+  if (error?.code) throw new Error(message || "The quote could not be saved.");
+  const { data: observed } = await supabase.from("platform_quotes").select("*")
+    .eq("id", quote.id).eq("business_id", quote.business_id).maybeSingle();
+  if (observed && observed.version_number === (quote.version_number ?? 1) + 1 && observed.last_modified_by_user_id === userId) {
+    const { data: savedLines } = await supabase.from("platform_quote_line_items").select("*")
+      .eq("quote_id", quote.id).eq("business_id", quote.business_id).order("sort_order");
+    return { quote: observed, items: savedLines ?? [], customer: original.customer };
+  }
+  if (observed && observed.version_number === quote.version_number) {
+    throw new Error("The quote wasn't saved. Check your connection and try again.");
+  }
+  throw new Error("Could not confirm whether the changes saved. Reopen the quote to check its latest version before editing again.");
 }

@@ -304,6 +304,9 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
       toast.error("Enter or confirm the exact price for every tree line before saving."); return false;
     }
     if (!optionsEnabled) return true;
+    if (validLines.some(l => l.kind !== "required") && discountEnabled && discountType === "%" && Number(discountValue) > 0) {
+      toast.error("Quotes with customer choices use a fixed-dollar discount. Switch the discount to $ before saving."); return false;
+    }
     const problems = builderOptionErrors(validLines.map(l => ({ id: l.id, description: l.description, quantity: Number(l.qty), unit_price: Number(l.price),
       option_kind: l.kind, option_group: l.kind === "alternative" ? l.group.trim() : null, default_selected: l.kind === "required" ? true : l.proposed })));
     if (problems.length) { toast.error(problems[0]); return false; }
@@ -868,6 +871,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                       <div className="flex items-center gap-1">
                         <Input type="number" value={discountValue} onChange={e => setDiscountValue(e.target.value)} className="w-14 h-7 text-xs text-right bg-secondary/50 border-border" />
                         <button onClick={() => setDiscountType(discountType === "$" ? "%" : "$")} className="text-xs font-bold text-primary border border-primary/30 rounded px-1.5 py-0.5">{discountType}</button>
+                        {optionsEnabled && lineItems.some(l => l.kind !== "required") && <span className="font-body text-[10px] text-muted-foreground" data-testid="fixed-discount-note">Fixed $ only with customer choices</span>}
                         <span className="text-sm text-foreground ml-2">-${discountAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                       </div>
                     )}

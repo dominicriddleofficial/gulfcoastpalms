@@ -6,7 +6,7 @@ import DocumentBrandMark from "@/components/platform/billing/DocumentBrandMark";
 import { downloadElementAsPdf } from "@/lib/download-pdf";
 import PrintQuoteDocument from "@/components/documents/PrintQuoteDocument";
 import { QuoteOptionChoices } from "@/components/quote/QuoteOptionChoices";
-import { computeOptionTotals, defaultSelection, hasOptions, isIncluded, selectionErrors, type OptionLine } from "@/lib/quote-options";
+import { computeOptionTotals, defaultSelection, hasOptions, isIncluded, lineCents, selectionErrors, snapshotOptionLines, type AcceptedQuoteSnapshot, type OptionLine } from "@/lib/quote-options";
 import { documentFilename } from "@/components/documents/printTheme";
 
 /* ── Brand tokens ── */
@@ -46,7 +46,7 @@ type QuoteData = {
     default_selected?: boolean | null; customer_selected?: boolean | null }>;
   discount_total?: number;
   pricing_fingerprint?: string | null;
-  accepted_snapshot?: { selected_option_ids?: string[]; subtotal: number; tax_total: number; discount_total: number; total: number } | null;
+  accepted_snapshot?: AcceptedQuoteSnapshot | null;
   subtotal?: number;
   tax_total?: number;
   tax_rate?: number;
@@ -200,7 +200,7 @@ export default function ViewQuote() {
       setApproved(true);
       if (usesOptions && data.snapshot) {
         // Show the server-recorded choices and totals, never the client's own numbers.
-        setQuote(current => current ? { ...current, status: "approved", accepted_snapshot: data.snapshot, total: data.snapshot.total, subtotal: data.snapshot.subtotal, tax_total: data.snapshot.tax_total } : current);
+        setQuote(current => current ? { ...current, status: "approved", accepted_snapshot: data.snapshot, total: data.snapshot.total, subtotal: data.snapshot.subtotal, tax_total: data.snapshot.tax_total, discount_total: data.snapshot.discount_total } : current);
       }
 
       // PPS quotes proceed directly to Stripe Checkout for the 20% deposit.
@@ -303,7 +303,8 @@ export default function ViewQuote() {
 
   if (!quote) return null;
 
-  const isApproved = quote.status === "approved" || quote.status === "accepted" || quote.status === "won";
+  // An accepted snapshot keeps the quote accepted regardless of later status (e.g. "converted" to a job).
+  const isApproved = !!quote.accepted_snapshot || ["approved", "accepted", "won", "converted"].includes(quote.status || "");
   const isExpired = quote.status === "expired";
   const isDeclined = quote.status === "declined";
   const isChangesReq = quote.status === "changes_requested";
@@ -345,7 +346,8 @@ export default function ViewQuote() {
   };
   const badge = statusBadge();
 
-  const optionLines = (quote.line_items || []).filter(l => l.id) as OptionLine[];
+  // Accepted quotes show the exact agreed lines from the snapshot, never later data.
+  const optionLines = (quote.accepted_snapshot?.lines?.length ? snapshotOptionLines(quote.accepted_snapshot) : (quote.line_items || []).filter(l => l.id)) as OptionLine[];
   const usesOptions = hasOptions(optionLines);
   const chosenOptions = quote.accepted_snapshot?.selected_option_ids ?? selectedOptions ?? defaultSelection(optionLines);
   const optionTotals = usesOptions
@@ -773,12 +775,13 @@ export default function ViewQuote() {
               customer_phone: quote.customer_phone,
               customer_email: quote.customer_email,
               scope_of_work: quote.scope_of_work || quote.public_notes,
-              line_items: usesOptions ? optionLines.filter(l => isIncluded(l, chosenOptions)).map(l => ({ ...l, line_total: Math.round(((Number(l.quantity) || 0) * (Number(l.unit_price) || 0) - (Number(l.discount_amount) || 0)) * 100) / 100 })) : quote.line_items,
+              line_items: usesOptions ? optionLines.filter(l => isIncluded(l, chosenOptions)).map(l => ({ ...l, line_total: lineCents(l) / 100 })) : quote.line_items,
               excluded_items: usesOptions ? optionLines.filter(l => !isIncluded(l, chosenOptions)).map(l => l.description) : undefined,
               subtotal: optionTotals ? Number(optionTotals.subtotal) : quote.subtotal,
               tax_total: optionTotals ? Number(optionTotals.taxTotal) : quote.tax_total,
               tax_rate: quote.tax_rate,
               total: grandTotal,
+              discount_total: optionTotals ? Number(optionTotals.discountTotal) : quote.discount_total,
               approved_at: quote.approved_at,
               approved_by: quote.approved_by,
               is_approved: isApproved,

@@ -25,6 +25,7 @@ export interface PrintQuoteData {
   excluded_items?: string[];
   subtotal?: number | null;
   tax_total?: number | null;
+  discount_total?: number | null;
   tax_rate?: number | null;
   total: number;
   approved_at?: string | null;
@@ -123,6 +124,12 @@ export default function PrintQuoteDocument({ data }: { data: PrintQuoteData }) {
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "3px 0" }}>
               <span style={{ color: PRINT.secondary }}>Subtotal</span>
               <span>${fmt(data.subtotal)}</span>
+            </div>
+          )}
+          {data.discount_total != null && data.discount_total > 0 && (
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "3px 0" }}>
+              <span style={{ color: PRINT.secondary }}>Discount</span>
+              <span>-${fmt(data.discount_total)}</span>
             </div>
           )}
           {data.tax_total != null && data.tax_total > 0 && (

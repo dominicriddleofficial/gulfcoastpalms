@@ -6972,6 +6972,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      invoice_accepted_quote: { Args: { _quote_id: string }; Returns: Json }
       is_workspace_owner: { Args: { _user_id: string }; Returns: boolean }
       move_to_dlq: {
         Args: {
@@ -6993,6 +6994,7 @@ export type Database = {
         Args: { _quote_id: string }
         Returns: string
       }
+      quote_public_pricing: { Args: { _quote_id: string }; Returns: Json }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
@@ -7003,6 +7005,15 @@ export type Database = {
       }
       refresh_business_kpi_snapshots: { Args: never; Returns: number }
       run_jobber_auto_sync: { Args: never; Returns: undefined }
+      save_quote_edit: {
+        Args: {
+          _changes: Json
+          _expected_updated_at: string
+          _lines: Json
+          _quote_id: string
+        }
+        Returns: Json
+      }
       set_yearly_trimming_for_job: {
         Args: {
           _customer_id: string

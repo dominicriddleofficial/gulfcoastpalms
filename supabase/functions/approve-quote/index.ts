@@ -172,11 +172,14 @@ Deno.serve(async (req) => {
           if (smsResp.ok) await supabase.from("platform_quotes").update({ approval_sms_sent: true, approval_sms_sent_at: new Date().toISOString() }).eq("id", quote_id);
         } catch { /* owner alert is best-effort */ }
       }
-      return new Response(JSON.stringify({ success: true, status: optionResult.status, snapshot: optionResult.snapshot }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      // Customer options are Gulf Coast Palms only, and GCP approvals never auto-create an invoice
+      // (same rule as the legacy path below, which auto-invoices PPS only). The office invoices an
+      // accepted option quote with invoice_accepted_quote: one invoice, chosen lines, agreed totals.
+      return new Response(JSON.stringify({ success: true, status: optionResult.status, snapshot: optionResult.snapshot, invoice_number: null }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const alreadyApproved =
-      quote?.status === "approved" || quote?.status === "accepted" || quote?.status === "won";
+      quote?.status === "approved" || quote?.status === "accepted" || quote?.status === "won" || quote?.status === "converted";
 
     if (alreadyApproved) {
       console.log(`[approve-quote] quote ${quote?.quote_number} already approved — returning idempotent success`);
@@ -197,7 +200,7 @@ Deno.serve(async (req) => {
         accepted_at: new Date().toISOString(),
       })
       .eq("id", quote_id)
-      .not("status", "in", "(approved,accepted,won)")
+      .not("status", "in", "(approved,accepted,won,converted)")
       .select("id");
 
     if (error) {

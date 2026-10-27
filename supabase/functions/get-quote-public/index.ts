@@ -1,3 +1,4 @@
+import { publicPricingFields, type PublicPricing } from "./pricing.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
@@ -66,7 +67,7 @@ Deno.serve(async (req) => {
     // Fetch quote
     const { data: quote, error: qErr } = await supabase
       .from("platform_quotes")
-      .select("id, quote_number, billing_name, total, subtotal, tax_rate, tax_total, status, valid_until, public_notes, scope_of_work, created_at, customer_id, property_id, business_id, deposit_required_flag, deposit_amount_calculated, approved_at, approved_by, accepted_at")
+      .select("id, quote_number, billing_name, total, subtotal, tax_rate, tax_total, discount_total, accepted_snapshot, status, valid_until, public_notes, scope_of_work, created_at, customer_id, property_id, business_id, deposit_required_flag, deposit_amount_calculated, approved_at, approved_by, accepted_at")
       .eq("id", quote_id)
       .single();
 
@@ -121,52 +122,51 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fetch line items
-    const { data: lineItems } = await supabase
-      .from("platform_quote_line_items")
-      .select("id, description, quantity, unit_price, discount_amount, taxable_flag, line_total, line_type, option_kind, option_group, default_selected, customer_selected")
-      .eq("quote_id", quote.id)
-      .order("sort_order", { ascending: true });
-
     // Mark as viewed if first time
     if (!quote.status || quote.status === "sent") {
       await supabase.from("platform_quotes").update({ status: "viewed", first_viewed_at: new Date().toISOString() }).eq("id", quote.id);
     }
 
     const approvalToken = await signApprovalToken(quote.id, serviceKey);
-    // Customer options: the page must approve the exact pricing it was shown.
-    const { data: pricingFingerprint } = await supabase.rpc("quote_pricing_fingerprint", { _quote_id: quote.id });
+    // One consistent read of totals, discount, lines, fingerprint and accepted choices.
+    const { data: pricingRow, error: pricingErr } = await supabase.rpc("quote_public_pricing", { _quote_id: quote.id });
+    if (pricingErr || !pricingRow) throw new Error("pricing unavailable");
+    const priced = publicPricingFields(pricingRow as PublicPricing, {
+      scope_of_work: quote.scope_of_work, public_notes: quote.public_notes, valid_until: quote.valid_until,
+      customer_name: customerName, customer_address: customerAddress, billing_name: billingName,
+      approved_at: quote.approved_at || quote.accepted_at || null, approved_by: quote.approved_by || null,
+    });
 
     return new Response(JSON.stringify({
       id: quote.id,
       quote_number: quote.quote_number,
-      total: quote.total || 0,
-      subtotal: quote.subtotal || 0,
-      tax_rate: quote.tax_rate || 0,
-      tax_total: quote.tax_total || 0,
+      total: priced.total,
+      subtotal: priced.subtotal,
+      tax_rate: priced.tax_rate,
+      tax_total: priced.tax_total,
+      discount_total: priced.discount_total,
       status: quote.status,
-      valid_until: quote.valid_until,
+      valid_until: priced.valid_until,
       created_at: quote.created_at,
-      approved_at: quote.approved_at || quote.accepted_at || null,
-      approved_by: quote.approved_by || null,
-      public_notes: quote.public_notes,
-      scope_of_work: quote.scope_of_work,
-      customer_name: customerName,
-      billing_name: billingName,
+      approved_at: priced.approved_at,
+      approved_by: priced.approved_by,
+      public_notes: priced.public_notes,
+      scope_of_work: priced.scope_of_work,
+      customer_name: priced.customer_name,
+      billing_name: priced.billing_name,
       customer_email: customerEmail,
       customer_phone: customerPhone,
-      customer_address: customerAddress,
+      customer_address: priced.customer_address,
       business_name: biz?.public_brand_name || "",
       shortcode: biz?.shortcode || "",
       logo_url: biz?.logo_url,
       business_phone: biz?.support_phone,
       business_email: biz?.support_email,
       deposit_required: quote.deposit_required_flag || false,
-      deposit_amount: quote.deposit_amount_calculated || 0,
-      line_items: lineItems || [],
-      discount_total: quote.discount_total || 0,
-      pricing_fingerprint: pricingFingerprint || null,
-      accepted_snapshot: (quote as { accepted_snapshot?: unknown }).accepted_snapshot ?? null,
+      deposit_amount: priced.deposit_amount,
+      line_items: priced.line_items,
+      pricing_fingerprint: priced.pricing_fingerprint,
+      accepted_snapshot: priced.accepted_snapshot,
       approval_token: approvalToken,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
