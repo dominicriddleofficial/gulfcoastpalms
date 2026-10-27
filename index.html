@@ -2,6 +2,20 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      // Private arborist quote links: move the access key out of the address bar before any tracking script runs.
+      (function () {
+        try {
+          if (location.pathname.replace(/\/+$/, "") === "/arborist-link") {
+            var m = document.createElement("meta"); m.name = "referrer"; m.content = "no-referrer"; document.head.appendChild(m);
+            var r = document.createElement("meta"); r.name = "robots"; r.content = "noindex, nofollow"; document.head.appendChild(r);
+            var t = /(?:^#|&)t=([A-Za-z0-9_-]{43})(?:&|$)/.exec(location.hash);
+            if (t) sessionStorage.setItem("gcp-arborist-link", t[1]);
+            if (location.hash) history.replaceState(null, "", location.pathname);
+          }
+        } catch (e) {}
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gulf Coast Palms | Tree Services & Palm Care on the Emerald Coast</title>
     <meta data-rh="true" name="description" content="Tree trimming, tree removal, storm cleanup and palm care across Navarre, Pensacola, Destin and the Emerald Coast. Free quotes — (850) 910-1290.">

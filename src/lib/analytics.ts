@@ -221,7 +221,7 @@ export function trackEvent(event: ConversionEvent | string, params?: EventParams
   postEvent({
     event_name: event,
     page_path: path,
-    page_url: window.location.href,
+    page_url: window.location.href.split("#")[0],
     referrer: document.referrer || null,
     business_type: params?.business_type || detectBusinessType(path),
     source_component: params?.source || null,
@@ -240,7 +240,7 @@ export function trackEvent(event: ConversionEvent | string, params?: EventParams
 export function trackPageView(path?: string) {
   if (typeof window === "undefined") return;
   const finalPath = path || (typeof window !== "undefined" ? window.location.pathname : "/");
-  trackEvent("page_view", { page_path: finalPath, page_location: window.location.href });
+  trackEvent("page_view", { page_path: finalPath, page_location: window.location.href.split("#")[0] });
 }
 
 // Predefined event helpers

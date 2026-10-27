@@ -2743,6 +2743,54 @@ export type Database = {
           },
         ]
       }
+      platform_arborist_quote_links: {
+        Row: {
+          business_id: string
+          created_at: string
+          created_by: string
+          expires_at: string
+          id: string
+          report_id: string
+          revoked_at: string | null
+          token_hash: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          created_by: string
+          expires_at: string
+          id?: string
+          report_id: string
+          revoked_at?: string | null
+          token_hash: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          id?: string
+          report_id?: string
+          revoked_at?: string | null
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_arborist_quote_links_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_arborist_quote_links_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "platform_arborist_quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_arborist_quotes: {
         Row: {
           arborist_name: string
@@ -6517,8 +6565,71 @@ export type Database = {
         Returns: boolean
       }
       arborist_can_review: { Args: { _business_id: string }; Returns: boolean }
+      arborist_link_issue: {
+        Args: {
+          _arborist_name?: string
+          _business_id: string
+          _customer_name?: string
+          _property_address?: string
+          _report_id?: string
+          _token_hash: string
+          _user_id: string
+        }
+        Returns: {
+          expires_at: string
+          report_id: string
+        }[]
+      }
+      arborist_link_lock: {
+        Args: { _token_hash: string }
+        Returns: {
+          arborist_name: string
+          author_id: string
+          business_id: string
+          created_at: string
+          customer_name: string
+          general_notes: string
+          id: string
+          property_address: string
+          reviewed_at: string | null
+          status: string
+          submitted_at: string | null
+          trees: Json
+          updated_at: string
+          version: number
+          visit_date: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "platform_arborist_quotes"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      arborist_link_photo_target: {
+        Args: { _photo_id: string; _token_hash: string; _tree_id: string }
+        Returns: string
+      }
+      arborist_link_resolve: { Args: { _token_hash: string }; Returns: Json }
+      arborist_link_revoke: {
+        Args: { _report_id: string; _user_id: string }
+        Returns: number
+      }
+      arborist_link_save: {
+        Args: {
+          _expected_version: number
+          _fields: Json
+          _status: string
+          _token_hash: string
+        }
+        Returns: Json
+      }
       arborist_photo_access: {
         Args: { _name: string; _write?: boolean }
+        Returns: boolean
+      }
+      arborist_user_can_review: {
+        Args: { _business_id: string; _user_id: string }
         Returns: boolean
       }
       backfill_jobber_to_platform: {
