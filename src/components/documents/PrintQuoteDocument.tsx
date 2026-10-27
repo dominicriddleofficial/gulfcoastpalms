@@ -21,6 +21,8 @@ export interface PrintQuoteData {
   customer_email?: string | null;
   scope_of_work?: string | null;
   line_items?: Array<{ description: string; quantity: number; unit_price: number; line_total: number }>;
+  /** Customer options that were not chosen; listed as excluded and never totalled. */
+  excluded_items?: string[];
   subtotal?: number | null;
   tax_total?: number | null;
   tax_rate?: number | null;

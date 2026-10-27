@@ -623,6 +623,8 @@ export default function ViewQuote() {
                         <span style={{ fontSize: 12, color: labelColor, lineHeight: 1.5 }}>I agree to the scope of work, pricing, and payment terms outlined above</span>
                       </label>
 
+                      {optionProblems.length > 0 && <p role="alert" style={{ fontSize: 13, color: "#fbbf24", marginBottom: 12 }}>{optionProblems[0]}</p>}
+                      {usesOptions && <p style={{ fontSize: 13, color: labelColor, marginBottom: 12 }}>You're approving the selected options for <strong style={{ color: "#fff" }}>${fmt(grandTotal)}</strong>.</p>}
                       <button
                         onClick={() => setShowApproveConfirm(true)}
                         disabled={!agreedToTerms || !hasSignature || optionProblems.length > 0}
