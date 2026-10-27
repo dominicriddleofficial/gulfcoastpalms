@@ -20,6 +20,8 @@ import { generateQuoteNumber } from "@/hooks/usePlatformQuotes";
 import { downloadElementAsPdf } from "@/lib/download-pdf";
 import { buildQuoteMessage, getQuotePublicUrl } from "@/lib/quote-message";
 import { saveEditedQuote, type QuoteEditData } from "@/lib/edit-quote";
+import { OPTION_KIND_LABELS, builderOptionErrors, type OptionKind } from "@/lib/quote-options";
+import type { ArboristDraftLine } from "@/lib/arborist-to-quote";
 
 interface LineItem {
   id: string;
@@ -27,6 +29,22 @@ interface LineItem {
   qty: string;
   price: string;
   original?: QuoteEditData["items"][number];
+  /** GCP customer options: required work, optional add-on, or one choice in a named pick-one group. */
+  kind: OptionKind;
+  group: string;
+  /** Proposed default selection for optional/pick-one lines. */
+  proposed: boolean;
+  /** Staff-only arborist price reference; the line price must be entered/confirmed explicitly. */
+  arborist?: ArboristDraftLine;
+  priceConfirmed?: boolean;
+}
+
+export interface ArboristQuoteSource {
+  reportId: string;
+  customerName: string;
+  propertyAddress: string;
+  scope: string;
+  lines: ArboristDraftLine[];
 }
 
 interface SavedItem {
@@ -58,18 +76,21 @@ interface QuoteBuilderProps {
   onClose: () => void;
   onCreated: () => void;
   editingQuote?: QuoteEditData;
+  /** Prefill from a submitted arborist report (GCP); creates a traceable draft on save only. */
+  arboristSource?: ArboristQuoteSource;
 }
 
 function newLineId() { return crypto.randomUUID(); }
 const roundMoney = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
 const lineAmount = (line: LineItem) => roundMoney((Number(line.qty) || 0) * (Number(line.price) || 0) - (line.original?.discount_amount ?? 0));
 
-export default function QuoteBuilder({ businessId, businesses, userId, onClose, onCreated, editingQuote }: QuoteBuilderProps) {
+export default function QuoteBuilder({ businessId, businesses, userId, onClose, onCreated, editingQuote, arboristSource }: QuoteBuilderProps) {
   const existing = editingQuote?.quote;
   const editSnapshot = useRef(editingQuote);
   const editSavingRef = useRef(false);
   const [bizId] = useState(existing?.business_id || businessId || businesses[0]?.id || "");
   const activeBiz = businesses.find(b => b.id === bizId);
+  const optionsEnabled = activeBiz?.shortcode?.toUpperCase() === "GCP";
 
   // Form state
   const [customerId, setCustomerId] = useState<string | null>(existing?.customer_id ?? null);
@@ -86,7 +107,11 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   const [validUntil, setValidUntil] = useState(existing ? existing.valid_until ?? "" : format(addDays(new Date(), 30), "yyyy-MM-dd"));
   const [scopeOfWork, setScopeOfWork] = useState(existing?.scope_of_work ?? "");
   const [lineItems, setLineItems] = useState<LineItem[]>(editingQuote?.items.length
-    ? editingQuote.items.map(item => ({ id: item.id, description: item.description, qty: String(item.quantity), price: String(item.unit_price), original: item }))
+    ? editingQuote.items.map(item => ({ id: item.id, description: item.description, qty: String(item.quantity), price: String(item.unit_price), original: item,
+        kind: (item.option_kind === "optional" || item.option_kind === "alternative" ? item.option_kind : "required") as OptionKind,
+        group: item.option_group ?? "", proposed: item.option_kind === "required" ? true : !!item.default_selected }))
+    : arboristSource?.lines.length
+    ? arboristSource.lines.map(line => ({ id: newLineId(), description: line.description, qty: "1", price: "", kind: "required" as OptionKind, group: "", proposed: true, arborist: line, priceConfirmed: false }))
     : [{ id: newLineId(), description: "", qty: "1", price: "" }]);
   const [taxEnabled, setTaxEnabled] = useState(existing ? Number(existing.tax_rate) > 0 : true);
   const [taxRate, setTaxRate] = useState(String(existing?.tax_rate ?? 7));
