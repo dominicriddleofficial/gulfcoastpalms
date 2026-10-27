@@ -631,6 +631,18 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                 <p className="font-mono text-[10px] text-muted-foreground">{activeBiz?.shortcode?.toUpperCase()}</p>
               </div>
               <div className="bg-card border border-border rounded-lg p-3 space-y-2">
+                {arboristSource && (
+                  <div className="rounded-md border border-primary/25 bg-primary/5 p-2 space-y-1" data-testid="arborist-customer-hint">
+                    <p className="font-body text-[11px] text-foreground">From arborist report: <span className="font-semibold">{arboristSource.customerName || "No name"}</span>{arboristSource.propertyAddress ? ` · ${arboristSource.propertyAddress}` : ""}</p>
+                    <p className="font-body text-[10px] text-muted-foreground">Choose the matching customer, or add a new one. Nothing is matched automatically.</p>
+                    <div className="flex flex-wrap gap-3">
+                      {arboristSource.customerName && !customerId && (
+                        <button type="button" className="font-body text-[10px] text-primary hover:underline" onClick={() => { setCustomerSearch(arboristSource.customerName); setShowCustomerSearch(true); }}>Search “{arboristSource.customerName}”</button>
+                      )}
+                      <a className="font-body text-[10px] text-primary hover:underline" href={`/platform/arborist-quotes?report=${arboristSource.reportId}`} target="_blank" rel="noreferrer">View arborist report & photos</a>
+                    </div>
+                  </div>
+                )}
                 <div className="flex items-center justify-between gap-2">
                   <p className="font-body text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Prepared For</p>
                   <div className="flex items-center gap-3">
