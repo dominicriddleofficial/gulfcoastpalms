@@ -1,3 +1,4 @@
+import { hasOptions, includedForDownstream, kindOf } from "@/lib/quote-options";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PlatformLayout from "@/components/platform/PlatformLayout";
@@ -328,7 +329,12 @@ async function handleConvertToInvoice(quote: PlatformQuote, businesses: Array<Re
     if (numErr) throw numErr;
 
     // Fetch quote line items
-    const { data: lineItems } = await supabase.from("platform_quote_line_items").select("*").eq("quote_id", quote.id).order("sort_order");
+    const { data: allLines } = await supabase.from("platform_quote_line_items").select("*").eq("quote_id", quote.id).order("sort_order");
+    // Option quotes invoice only required work plus what the customer chose, using the accepted totals.
+    if (allLines && hasOptions(allLines) && !(quote as { accepted_snapshot?: unknown }).accepted_snapshot) {
+      throw new Error("The customer hasn't approved their choices yet. Invoice after they approve the quote.");
+    }
+    const lineItems = allLines && hasOptions(allLines) ? includedForDownstream(allLines) : allLines;
 
     // Create invoice
     const { data: inv, error: invErr } = await supabase.from("platform_invoices").insert({
@@ -564,7 +570,10 @@ function QuoteDetail({ quote, biz, businesses, onUpdate, onClose, onCopyQuoteMes
                 if (prop) address = `${prop.address_1}, ${prop.city}, ${prop.state} ${prop.zip}`.trim();
               }
 
-              const scopeLines = lineItems.map(li => `• ${li.description} (${li.quantity} ${li.unit})`).join("\n");
+              if (hasOptions(lineItems) && !(quote as { accepted_snapshot?: unknown }).accepted_snapshot) {
+                toast.error("The customer hasn't approved their choices yet."); return;
+              }
+              const scopeLines = (hasOptions(lineItems) ? includedForDownstream(lineItems) : lineItems).map(li => `• ${li.description} (${li.quantity} ${li.unit})`).join("\n");
               const description = [quote.scope_of_work, scopeLines, quote.public_notes]
                 .filter(Boolean).join("\n\n").trim() || undefined;
 
@@ -653,7 +662,12 @@ function QuoteDetail({ quote, biz, businesses, onUpdate, onClose, onCopyQuoteMes
             {lineItems.map(li => (
               <div key={li.id} className="bg-secondary/50 rounded-lg p-3 space-y-1">
                 <div className="flex justify-between">
-                  <p className="font-body text-sm text-foreground">{li.description}</p>
+                  <p className="font-body text-sm text-foreground">{li.description}
+                    {kindOf(li) !== "required" && <span className="block font-body text-[10px] text-muted-foreground">
+                      {kindOf(li) === "alternative" ? `${li.option_group} — pick one` : "Optional add-on"}
+                      {li.customer_selected === true ? " · customer chose" : li.customer_selected === false ? " · not chosen" : li.default_selected ? " · proposed" : ""}
+                    </span>}
+                  </p>
                   <p className="font-mono text-sm text-foreground font-medium">${li.line_total.toFixed(2)}</p>
                 </div>
                 <p className="font-body text-xs text-muted-foreground">
