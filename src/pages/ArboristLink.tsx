@@ -49,17 +49,31 @@ export default function ArboristLink() {
   }, [token, attempt]);
 
   const api = useMemo<ArboristApi>(() => {
-    const guard = async <T,>(work: () => Promise<T>) => {
-      try { return await work(); }
-      catch (error) { if (error instanceof ArboristLinkError && error.state) setState(error.state); throw error; }
-    };
     const key = token ?? "";
+    const stale = () => tokenRef.current !== key;
+    // Every call is bound to the link it was made for. Work started under an earlier link never
+    // runs, and its late result or error never changes the page now showing a different link.
+    const guard = async <T,>(work: () => Promise<T>) => {
+      if (!key || stale()) throw new Error("This link changed. Reload to continue.");
+      try {
+        const result = await work();
+        if (stale()) throw new Error("This link changed. Reload to continue.");
+        return result;
+      } catch (error) {
+        if (!stale() && error instanceof ArboristLinkError && error.state) setState(error.state);
+        throw error;
+      }
+    };
     return {
       save: (r, status) => guard(() => saveGuestReport(key, r, status)),
       upload: (_r, treeId, photoId, blob) => guard(() => uploadGuestPhoto(key, treeId, photoId, blob)),
       signUrls: paths => guard(() => signGuestPhotos(key, paths)),
     };
   }, [token]);
+  const onSaved = (boundToken: string | null, reportId: string) => (saved: ArboristQuote) => {
+    if (tokenRef.current !== boundToken || saved.id !== reportId) return;
+    if (saved.status === "submitted") setState("submitted"); else setReport(saved);
+  };
 
   const message = (title: string, body: string, ok = false) => <div className="rounded-2xl border border-border bg-card/95 p-6 text-center space-y-3" role={ok ? "status" : "alert"}>
     {ok ? <CheckCircle2 className="h-10 w-10 text-primary mx-auto" /> : <TriangleAlert className="h-10 w-10 text-amber-300 mx-auto" />}
@@ -85,7 +99,7 @@ export default function ArboristLink() {
         {state === "ok" && report && <ArboristApiContext.Provider value={api}>
           <ArboristQuoteEditor key={`${token}:${report.id}`} initial={report} crewView heading="Internal arborist quote"
             intro={<p className="mt-2 text-xs text-muted-foreground">For Gulf Coast Palms office review only — the customer doesn't see this.{expiresAt ? ` Link works until ${new Date(expiresAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}.` : ""}</p>}
-            onSaved={saved => { if (saved.status === "submitted") setState("submitted"); else setReport(saved); }} />
+            onSaved={onSaved(token, report.id)} />
         </ArboristApiContext.Provider>}
       </main>
     </div>
