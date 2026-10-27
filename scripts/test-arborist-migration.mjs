@@ -41,7 +41,7 @@ INSERT INTO user_business_access VALUES ('${crew}','${biz}','crew','active'),('$
 await db.exec(`ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO anon, authenticated; ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated;`);
 // Live bucket is created with the storage tool, so the isolated fixture seeds it here.
 await db.exec(`INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types) VALUES ('arborist-quote-photos','arborist-quote-photos',false,10485760,ARRAY['image/jpeg']);`);
-for (const file of ['0000_arborist_quotes.sql','0001_arborist_revoke_anon.sql','0002_arborist_quote_links.sql','0003_arborist_links_column_grants.sql','0004_quote_options.sql'].map(f=>f))
+for (const file of ['0000_arborist_quotes.sql','0001_arborist_revoke_anon.sql','0002_arborist_quote_links.sql','0003_arborist_links_column_grants.sql','0004_quote_options.sql'])
   await db.exec(await fs.readFile(new URL(`../drizzle/migrations/${file}`, import.meta.url),'utf8'));
 let checks=0;
 const check=(value,msg)=>{assert.ok(value,msg);checks++;};
