@@ -349,7 +349,9 @@ export default function ViewQuote() {
   const usesOptions = hasOptions(optionLines);
   const chosenOptions = quote.accepted_snapshot?.selected_option_ids ?? selectedOptions ?? defaultSelection(optionLines);
   const optionTotals = usesOptions
-    ? (quote.accepted_snapshot ?? computeOptionTotals(optionLines, chosenOptions, { taxRate: Number(quote.tax_rate) || 0, discountTotal: Number(quote.discount_total) || 0 }))
+    ? (quote.accepted_snapshot
+      ? { subtotal: Number(quote.accepted_snapshot.subtotal), taxTotal: Number(quote.accepted_snapshot.tax_total), discountTotal: Number(quote.accepted_snapshot.discount_total), total: Number(quote.accepted_snapshot.total) }
+      : computeOptionTotals(optionLines, chosenOptions, { taxRate: Number(quote.tax_rate) || 0, discountTotal: Number(quote.discount_total) || 0 }))
     : null;
   const optionProblems = usesOptions && !isApproved ? selectionErrors(optionLines, chosenOptions) : [];
   const grandTotal = optionTotals ? Number(optionTotals.total) : (quote.total || 0);
@@ -508,16 +510,16 @@ export default function ViewQuote() {
                     <span style={{ color: "#fff" }} data-testid="quote-subtotal">${fmt(Number(optionTotals ? optionTotals.subtotal : quote.subtotal))}</span>
                   </div>
                 )}
-                {optionTotals && Number(optionTotals.discountTotal ?? (optionTotals as { discount_total?: number }).discount_total) > 0 && (
+                {optionTotals && optionTotals.discountTotal > 0 && (
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
                     <span style={{ color: labelColor }}>Discount</span>
-                    <span style={{ color: "#fff" }}>-${fmt(Number(optionTotals.discountTotal ?? (optionTotals as { discount_total?: number }).discount_total))}</span>
+                    <span style={{ color: "#fff" }}>-${fmt(optionTotals.discountTotal)}</span>
                   </div>
                 )}
-                {Number(optionTotals ? (optionTotals as { taxTotal?: number; tax_total?: number }).taxTotal ?? (optionTotals as { tax_total?: number }).tax_total : quote.tax_total) > 0 && (
+                {Number(optionTotals ? optionTotals.taxTotal : quote.tax_total) > 0 && (
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
                     <span style={{ color: labelColor }}>Tax{quote.tax_rate ? ` (${quote.tax_rate}%)` : ""}</span>
-                    <span style={{ color: "#fff" }}>${fmt(Number(optionTotals ? (optionTotals as { taxTotal?: number; tax_total?: number }).taxTotal ?? (optionTotals as { tax_total?: number }).tax_total : quote.tax_total))}</span>
+                    <span style={{ color: "#fff" }}>${fmt(Number(optionTotals ? optionTotals.taxTotal : quote.tax_total))}</span>
                   </div>
                 )}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginTop: 8, paddingTop: 16, paddingBottom: 6, borderTop: `1px solid ${cardBorder}`, lineHeight: 1.5 }}>
@@ -623,7 +625,7 @@ export default function ViewQuote() {
 
                       <button
                         onClick={() => setShowApproveConfirm(true)}
-                        disabled={!agreedToTerms || !hasSignature}
+                        disabled={!agreedToTerms || !hasSignature || optionProblems.length > 0}
                         style={{
                           width: "100%", padding: 16, borderRadius: 10, border: "none",
                           cursor: (!agreedToTerms || !hasSignature) ? "not-allowed" : "pointer",
@@ -772,7 +774,7 @@ export default function ViewQuote() {
               line_items: usesOptions ? optionLines.filter(l => isIncluded(l, chosenOptions)).map(l => ({ ...l, line_total: Math.round(((Number(l.quantity) || 0) * (Number(l.unit_price) || 0) - (Number(l.discount_amount) || 0)) * 100) / 100 })) : quote.line_items,
               excluded_items: usesOptions ? optionLines.filter(l => !isIncluded(l, chosenOptions)).map(l => l.description) : undefined,
               subtotal: optionTotals ? Number(optionTotals.subtotal) : quote.subtotal,
-              tax_total: optionTotals ? Number((optionTotals as { taxTotal?: number; tax_total?: number }).taxTotal ?? (optionTotals as { tax_total?: number }).tax_total) : quote.tax_total,
+              tax_total: optionTotals ? Number(optionTotals.taxTotal) : quote.tax_total,
               tax_rate: quote.tax_rate,
               total: grandTotal,
               approved_at: quote.approved_at,
