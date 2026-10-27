@@ -228,7 +228,7 @@ check((await approve([L.road,L.stump])).rows[0].r.status==='already_approved','r
 await guestErr(()=>approve([L.haul]),'quote_already_approved','repeat approval with different choices refused');
 await guestErr(()=>db.query(`UPDATE platform_quote_line_items SET unit_price=1 WHERE id=$1`,[L.req]),'accepted with the customer','accepted lines frozen');
 await guestErr(()=>db.query(`DELETE FROM platform_quote_line_items WHERE id=$1`,[L.haul]),'accepted with the customer','accepted lines cannot be deleted');
-await guestErr(()=>db.query(`UPDATE platform_quotes SET total=1 WHERE id=$1`,[Q]),'prices can','accepted totals frozen');
+await guestErr(()=>db.query(`UPDATE platform_quotes SET total=1 WHERE id=$1`,[Q]),"can't be changed",'accepted totals frozen');
 await guestErr(()=>db.query(`UPDATE platform_quotes SET accepted_snapshot='{}' WHERE id=$1`,[Q]),'cannot be changed','accepted snapshot immutable');
 await db.query(`UPDATE platform_quotes SET status='won' WHERE id=$1`,[Q]);
 check(true,'status can still move to won after acceptance');
@@ -250,6 +250,72 @@ await guestErr(()=>db.query(`INSERT INTO platform_quotes(business_id,source_arbo
 await db.exec(`RESET ROLE;`);
 for (const fn of ['quote_pricing_fingerprint(uuid)','approve_quote_options(uuid,text,uuid[],text)','guard_quote_line_options()','guard_quote_options_header()'])
   for (const role of ['anon','authenticated']) check((await db.query(`SELECT has_function_privilege('${role}','public.${fn}','EXECUTE') AS ok`)).rows[0].ok===false,`${role} cannot execute ${fn}`);
+// ---- 0006: accepted scope/identity, converted state, public read, atomic edit, invoice once ----
+{
+  await service();
+  for (const [col,val] of [['scope_of_work',"'changed'"],['public_notes',"'changed'"],['billing_name',"'Someone else'"],['property_id',`'${uuid(998)}'`],['valid_until',"'2030-01-01'"]])
+    await guestErr(()=>db.query(`UPDATE platform_quotes SET ${col}=${val} WHERE id=$1`,[Q]),"can't be changed",`accepted ${col} frozen`);
+  const snap=(await db.query(`SELECT accepted_snapshot s FROM platform_quotes WHERE id=$1`,[Q])).rows[0].s;
+  check(['scope_of_work','public_notes','valid_until','customer_id','property_id','billing_name','customer_name','customer_address','quote_number'].every(k=>k in snap),'snapshot records full agreed scope and identity');
+  await db.query(`UPDATE platform_quotes SET status='converted' WHERE id=$1`,[Q]);
+  check((await approve([L.road,L.stump])).rows[0].r.status==='already_approved','converted (job created) quote still accepted; same-choice retry returns original');
+  await guestErr(()=>approve([L.haul,L.stump]),'quote_already_approved','converted quote refuses different choices');
+  const pub=(await db.query(`SELECT quote_public_pricing($1) p`,[Q])).rows[0].p;
+  check(Number(pub.discount_total)===50 && pub.accepted_snapshot?.total===snap.total && pub.fingerprint===(await fp(Q)) && pub.line_items.length===4,'public read returns discount, accepted snapshot, lines and matching fingerprint together');
+  // legacy (no options) approved quote cannot start offering options; ordinary edits still work
+  const QA=uuid(230); await db.query(`INSERT INTO platform_quotes(id,business_id,status) VALUES ($1,$2,'approved')`,[QA,biz]);
+  await db.query(`INSERT INTO platform_quote_line_items(quote_id,business_id,description,unit_price) VALUES ($1,$2,'Trim',100)`,[QA,biz]);
+  await guestErr(()=>db.query(`INSERT INTO platform_quote_line_items(quote_id,business_id,description,option_kind,default_selected) VALUES ($1,$2,'Stump','optional',false)`,[QA,biz]),'already approved or invoiced','approved legacy quote cannot gain options');
+  await db.query(`UPDATE platform_quote_line_items SET unit_price=120 WHERE quote_id=$1`,[QA]); check(true,'ordinary edit of approved legacy quote still allowed');
+  const QI=uuid(231); await db.query(`INSERT INTO platform_quotes(id,business_id,status) VALUES ($1,$2,'sent')`,[QI,biz]);
+  await db.query(`INSERT INTO platform_invoices(business_id,invoice_number,quote_id) VALUES ($1,'INV-X',$2)`,[biz,QI]);
+  await guestErr(()=>db.query(`INSERT INTO platform_quote_line_items(quote_id,business_id,description,option_kind,option_group) VALUES ($1,$2,'Haul','alternative','Debris')`,[QI,biz]),'already approved or invoiced','invoiced legacy quote cannot gain options');
+
+  // invoice once from the accepted snapshot
+  await db.exec(`RESET ROLE; GRANT SELECT, INSERT, UPDATE, DELETE ON platform_invoices, platform_invoice_line_items, platform_quote_versions, platform_customers, platform_properties TO authenticated;`);
+  await clearClaims(); await login(crew);
+  await guestErr(()=>db.query(`SELECT invoice_accepted_quote($1)`,[Q]),'Only the office','crew cannot invoice');
+  await clearClaims(); await login(office);
+  const QN=uuid(232); await db.query(`INSERT INTO platform_quotes(id,business_id,status) VALUES ($1,$2,'sent')`,[QN,biz]);
+  await guestErr(()=>db.query(`SELECT invoice_accepted_quote($1)`,[QN]),"hasn't approved",'unapproved quote cannot be invoiced');
+  const i1=(await db.query(`SELECT invoice_accepted_quote($1) r`,[Q])).rows[0].r;
+  const i2=(await db.query(`SELECT invoice_accepted_quote($1) r`,[Q])).rows[0].r;
+  check(i1.status==='created' && i2.status==='existing' && i2.invoice_id===i1.invoice_id,'invoice retry returns the same invoice');
+  const inv=(await db.query(`SELECT total,subtotal,discount_total,(SELECT array_agg(description ORDER BY sort_order) FROM platform_invoice_line_items WHERE invoice_id=i.id) d FROM platform_invoices i WHERE quote_id=$1`,[Q])).rows;
+  check(inv.length===1 && Number(inv[0].total)===Number(snap.total) && Number(inv[0].discount_total)===50 && inv[0].d.join('|')==='Remove 2 oaks|Stump grinding|Roadside placement','one invoice, accepted totals, chosen lines only: '+JSON.stringify(inv[0]?.d));
+
+  // one-transaction edit with expected revision
+  const QE=uuid(240), E1=uuid(241), E2=uuid(242), E3=uuid(243), E4=uuid(244);
+  await db.query(`INSERT INTO platform_quotes(id,business_id,status,subtotal,total) VALUES ($1,$2,'draft',300,300),($3,$2,'draft',0,0)`,[QE,biz,uuid(245)]);
+  await db.query(`INSERT INTO platform_quote_line_items(id,quote_id,business_id,description,unit_price,line_total,sort_order) VALUES ($1,$3,$4,'Remove oak',200,200,0),($2,$3,$4,'Old line',100,100,1),($5,$6,$4,'Other quote line',5,5,0)`,[E1,E2,QE,biz,uuid(246),uuid(245)]);
+  const head=async()=>(await db.query(`SELECT updated_at,version_number,total FROM platform_quotes WHERE id=$1`,[QE])).rows[0];
+  const lineIds=async()=>(await db.query(`SELECT id FROM platform_quote_line_items WHERE quote_id=$1 ORDER BY sort_order`,[QE])).rows.map(x=>x.id).join(',');
+  let h0=await head();
+  const lines=[{id:E1,description:'Remove oak',quantity:1,unit_price:200,line_total:200,sort_order:0},
+    {id:E3,description:'Haul away',quantity:1,unit_price:250,line_total:250,sort_order:1,option_kind:'alternative',option_group:'Debris handling',default_selected:true},
+    {id:E4,description:'Roadside',quantity:1.5,unit_price:33.33,line_total:50,sort_order:2,option_kind:'alternative',option_group:'Debris handling',default_selected:false}];
+  const save=(ls,at=h0.updated_at,ch={total:450,subtotal:450})=>db.query(`SELECT save_quote_edit($1,$2,$3::jsonb,$4::jsonb) r`,[QE,at,JSON.stringify(ch),JSON.stringify(ls)]);
+  await guestErr(()=>save(lines,new Date(0).toISOString()),'changed while you were editing','stale revision rejected');
+  await guestErr(()=>save([...lines,{id:uuid(246),description:'steal',quantity:1,unit_price:1,line_total:1}]),'do not belong','line from another quote rejected');
+  await guestErr(()=>save([...lines,{id:uuid(247),description:'',quantity:1,unit_price:1,line_total:1}]),'Add a description','invalid line rejected');
+  let h1=await head();
+  check(h1.version_number===h0.version_number && String(h1.updated_at)===String(h0.updated_at) && (await lineIds())===`${E1},${E2}` && Number(h1.total)===300,'failed edits change nothing (header and lines roll back together)');
+  check((await db.query(`SELECT description FROM platform_quote_line_items WHERE id=$1`,[uuid(246)])).rows[0].description==='Other quote line','other quote untouched');
+  const res=(await save(lines)).rows[0].r;
+  const h2=await head();
+  check(h2.version_number===h0.version_number+1 && Number(h2.total)===450 && (await lineIds())===`${E1},${E3},${E4}` && res.items.length===3,'edit saves header, adds options, removes lines in one step');
+  check((await db.query(`SELECT count(*)::int n FROM platform_quote_versions WHERE quote_id=$1 AND version_number=$2`,[QE,h2.version_number])).rows[0].n===1,'version history written in the same transaction');
+  await guestErr(()=>save(lines),'changed while you were editing','second save with the old revision rejected (concurrent edit)');
+  const l4=(await db.query(`SELECT option_kind,option_group,default_selected FROM platform_quote_line_items WHERE id=$1`,[E4])).rows[0];
+  check(l4.option_kind==='alternative'&&l4.option_group==='Debris handling'&&l4.default_selected===false,'option fields saved');
+  // fractional quantity rounding matches the client (1.5 x 33.33 = 49.995 -> 50.00; 2.5 x 10.01 = 25.025 -> 25.03)
+  check((await db.query(`SELECT round((1.5*33.33)*100)::int a, round((2.5*10.01)*100)::int b`)).rows[0].a===5000,'server rounds half-cents up');
+  await clearClaims(); await db.exec(`SET ROLE anon;`);
+  await guestErr(()=>db.query(`SELECT save_quote_edit($1,now(),'{}'::jsonb,'[]'::jsonb)`,[QE]),'permission denied','anon cannot call edit');
+  await clearClaims();
+  for (const [fn,role,ok] of [['quote_public_pricing(uuid)','anon',false],['quote_public_pricing(uuid)','authenticated',false],['save_quote_edit(uuid,timestamptz,jsonb,jsonb)','anon',false],['save_quote_edit(uuid,timestamptz,jsonb,jsonb)','authenticated',true],['invoice_accepted_quote(uuid)','anon',false],['invoice_accepted_quote(uuid)','authenticated',true]])
+    check((await db.query(`SELECT has_function_privilege('${role}','public.${fn}','EXECUTE') ok`)).rows[0].ok===ok,`${role} ${ok?'can':'cannot'} execute ${fn}`);
+}
 // ---- Unified lock order (0005): every link path locks the report row before any link row ----
 {
   const src = async fn => (await db.query(`SELECT prosrc FROM pg_proc WHERE proname=$1`,[fn])).rows[0].prosrc;
