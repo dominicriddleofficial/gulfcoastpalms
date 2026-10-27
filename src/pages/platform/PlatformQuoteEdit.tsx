@@ -28,6 +28,7 @@ export default function PlatformQuoteEdit() {
           .select("*").eq("id", quoteId).single();
         if (quoteError || !quote) throw new Error(quoteError?.message || "Quote not found.");
         if (quote.is_read_only || quote.deleted_at) throw new Error("This quote is read-only and cannot be edited.");
+        if (quote.accepted_snapshot) throw new Error("This quote was accepted with the customer's choices and can't be edited. Create a new quote for any changes.");
         const [lines, customer] = await Promise.all([
           supabase.from("platform_quote_line_items").select("*")
             .eq("quote_id", quote.id).eq("business_id", quote.business_id).order("sort_order"),
