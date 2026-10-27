@@ -13,7 +13,7 @@ import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useWriteGuard } from "@/hooks/useOfflineMode";
 import { arboristQuotesKey, saveArboristQuote, useArboristQuotes } from "@/hooks/useArboristQuotes";
-import { ARBORIST_STATUSES, arboristReviewSummary, newArboristQuote, priceLabel, type ArboristQuote } from "@/lib/arborist-quotes";
+import { ARBORIST_STATUSES, arboristReviewSummary, newArboristQuote, priceLabel, quoteTotals, totalLabel, type ArboristQuote } from "@/lib/arborist-quotes";
 import { ArboristQuoteEditor, PrivateNote, SignedPhotos, Status, Totals, errorText, panel, selectClass } from "@/components/platform/arborist/ArboristQuoteEditor";
 import { ArboristLinkPanel, SendQuoteLinkDialog } from "@/components/platform/arborist/SendQuoteLinkDialog";
 import { copyTextToClipboard } from "@/lib/quote-message";
