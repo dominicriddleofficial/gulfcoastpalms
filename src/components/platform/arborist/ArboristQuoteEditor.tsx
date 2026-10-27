@@ -81,6 +81,8 @@ export function ArboristQuoteEditor({ initial, onBack, onSaved, disabled = false
   const urls = useRef(new Set<string>());
   const savingRef = useRef(false);
   const errorRef = useRef<HTMLDivElement>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
   useEffect(() => () => { urls.current.forEach(url => URL.revokeObjectURL(url)); }, []);
   useEffect(() => {
     const warn = (event: BeforeUnloadEvent) => { if (dirty) { event.preventDefault(); event.returnValue = ""; } };
@@ -144,23 +146,33 @@ export function ArboristQuoteEditor({ initial, onBack, onSaved, disabled = false
     if (messages.length) return;
     savingRef.current = true; setBusy(true);
     let working = report;
+    // Stop the whole save sequence if this form was closed (e.g. a different link opened)
+    // or the server answered for a different report.
+    const current = (r: ArboristQuote) => {
+      if (!mountedRef.current) return false;
+      if (r.id !== initial.id) throw new Error("This form changed. Reload to continue.");
+      return true;
+    };
     try {
       if (pending.length) {
         // Create/save the parent draft before any upload. A failed upload never submits a partial report.
         working = await api.save(working, "draft");
+        if (!current(working)) return;
         setReport(working);
         for (const photo of pending) {
           const path = await api.upload(working, photo.treeId, photo.id, photo.blob);
+          if (!mountedRef.current) return;
           working = { ...working, trees: working.trees.map(tree => tree.id === photo.treeId ? { ...tree, photos: [...tree.photos, { id: photo.id, path, name: photo.name }] } : tree) };
           setReport(working); discardPending([photo.id]);
         }
       }
       const saved = await api.save(working, status);
+      if (!current(saved)) return;
       setReport(saved); setDirty(false);
       toast.success(status === "submitted" ? "Submitted for office review" : "Draft saved");
       onSaved(saved);
-    } catch (error) { setErrors([errorText(error)]); }
-    finally { savingRef.current = false; setBusy(false); }
+    } catch (error) { if (mountedRef.current) setErrors([errorText(error)]); }
+    finally { savingRef.current = false; if (mountedRef.current) setBusy(false); }
   };
   const locked = busy || preparing || disabled;
   return <form className="space-y-5" onSubmit={event => { event.preventDefault(); void save("submitted"); }}>
