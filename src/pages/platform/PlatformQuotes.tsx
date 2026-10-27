@@ -321,6 +321,19 @@ export default function PlatformQuotes() {
 
 async function handleConvertToInvoice(quote: PlatformQuote, businesses: Array<Record<string, unknown>>, refetch: () => void) {
   try {
+    // Option quotes: one invoice, built in one database step from the customer's accepted choices.
+    // Retrying (or a second tap) returns the same invoice instead of creating another.
+    const { data: kinds } = await supabase.from("platform_quote_line_items").select("option_kind").eq("quote_id", quote.id);
+    if ((kinds || []).some(k => k.option_kind && k.option_kind !== "required")) {
+      const { data, error } = await supabase.rpc("invoice_accepted_quote", { _quote_id: quote.id });
+      if (error) throw new Error(error.message);
+      const result = data as { status: string; invoice_number: string };
+      toast.success(result.status === "existing"
+        ? `Invoice ${result.invoice_number} already exists for quote ${quote.quote_number}`
+        : `Invoice ${result.invoice_number} created from quote ${quote.quote_number}`);
+      refetch();
+      return;
+    }
     // Generate invoice number
     const { data: invNum, error: numErr } = await supabase.rpc("generate_next_number", {
       _business_id: quote.business_id,
