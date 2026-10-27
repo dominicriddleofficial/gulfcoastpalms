@@ -112,6 +112,9 @@ export default function PrintQuoteDocument({ data }: { data: PrintQuoteData }) {
             ))}
           </tbody>
         </table>
+        {data.excluded_items && data.excluded_items.length > 0 && (
+          <p style={{ fontSize: 11, color: PRINT.secondary, marginTop: 8 }}>Not selected (not included in total): {data.excluded_items.join("; ")}</p>
+        )}
       </div>
 
       <div style={{ display: "flex", justifyContent: "flex-end", padding: "14px 24px 0" }}>
