@@ -21,7 +21,9 @@ export const OPTION_KIND_LABELS: Record<OptionKind, string> = { required: "Requi
 export const kindOf = (line: OptionLine): OptionKind =>
   line.option_kind === "optional" || line.option_kind === "alternative" ? line.option_kind : "required";
 export const hasOptions = (lines: OptionLine[]) => lines.some(line => kindOf(line) !== "required");
-export const lineCents = (line: OptionLine) => Math.round(((Number(line.quantity) || 0) * (Number(line.unit_price) || 0) - (Number(line.discount_amount) || 0)) * 100);
+/** Round to whole cents like PostgreSQL numeric round(): half-cents go up, without binary float drift (2.5 x 10.01 = 25.03). */
+export const roundCents = (value: number) => Math.round(Number(value.toFixed(6)));
+export const lineCents = (line: OptionLine) => roundCents(((Number(line.quantity) || 0) * (Number(line.unit_price) || 0) - (Number(line.discount_amount) || 0)) * 100);
 
 export function defaultSelection(lines: OptionLine[]): string[] {
   return lines.filter(line => kindOf(line) !== "required" && line.default_selected).map(line => line.id);
@@ -40,8 +42,8 @@ export function computeOptionTotals(lines: OptionLine[], selected: string[] | Re
     sub += cents;
     if (line.taxable_flag !== false) taxable += cents;
   }
-  const tax = Math.round(taxable * (Number(opts.taxRate) || 0) / 100);
-  const discount = Math.min(Math.round((Number(opts.discountTotal) || 0) * 100), sub);
+  const tax = roundCents(taxable * (Number(opts.taxRate) || 0) / 100);
+  const discount = Math.min(roundCents((Number(opts.discountTotal) || 0) * 100), sub);
   const total = Math.max(0, sub + tax - discount);
   return { subtotal: sub / 100, taxTotal: tax / 100, discountTotal: discount / 100, total: total / 100 };
 }
@@ -92,4 +94,22 @@ export function builderOptionErrors(lines: OptionLine[]): string[] {
  */
 export function includedForDownstream<T extends OptionLine>(lines: T[]): T[] {
   return lines.filter(line => kindOf(line) === "required" || line.customer_selected === true);
+}
+
+/** What the customer agreed to, recorded by the server at approval. Immutable. */
+export interface AcceptedQuoteSnapshot {
+  selected_option_ids?: string[];
+  subtotal: number; tax_total: number; discount_total: number; total: number; tax_rate?: number; deposit_amount?: number;
+  approved_by?: string; approved_at?: string; version_number?: number;
+  scope_of_work?: string | null; public_notes?: string | null; valid_until?: string | null;
+  customer_name?: string | null; customer_address?: string | null; billing_name?: string | null;
+  lines?: Array<{ id: string; description: string; option_kind: string; option_group: string | null; quantity: number; unit_price: number;
+    taxable_flag?: boolean; line_total: number; selected: boolean }>;
+}
+export function snapshotOptionLines(snapshot: AcceptedQuoteSnapshot): OptionLine[] {
+  return (snapshot.lines ?? []).map(line => ({
+    id: line.id, description: line.description, quantity: Number(line.quantity), unit_price: Number(line.unit_price),
+    taxable_flag: line.taxable_flag ?? true, option_kind: line.option_kind, option_group: line.option_group,
+    default_selected: line.selected, customer_selected: line.selected,
+  }));
 }

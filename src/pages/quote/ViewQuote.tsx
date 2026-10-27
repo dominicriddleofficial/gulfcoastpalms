@@ -200,7 +200,7 @@ export default function ViewQuote() {
       setApproved(true);
       if (usesOptions && data.snapshot) {
         // Show the server-recorded choices and totals, never the client's own numbers.
-        setQuote(current => current ? { ...current, status: "approved", accepted_snapshot: data.snapshot, total: data.snapshot.total, subtotal: data.snapshot.subtotal, tax_total: data.snapshot.tax_total } : current);
+        setQuote(current => current ? { ...current, status: "approved", accepted_snapshot: data.snapshot, total: data.snapshot.total, subtotal: data.snapshot.subtotal, tax_total: data.snapshot.tax_total, discount_total: data.snapshot.discount_total } : current);
       }
 
       // PPS quotes proceed directly to Stripe Checkout for the 20% deposit.
