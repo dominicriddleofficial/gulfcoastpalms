@@ -6,6 +6,25 @@ export interface PublicPricing {
   subtotal: number | null; discount_total: number | null; tax_rate: number | null; tax_total: number | null; total: number | null;
   deposit_amount: number | null; accepted_snapshot: AcceptedSnapshot | null; fingerprint: string | null;
   line_items: Array<Record<string, unknown>>;
+  quote: PublicQuoteHeader;
+  customer?: { display_name: string | null; email: string | null; phone: string | null } | null;
+  property_address?: string | null;
+}
+export interface PublicQuoteHeader {
+  id: string; quote_number: string; status: string | null; business_id: string; created_at: string;
+  valid_until: string | null; public_notes: string | null; scope_of_work: string | null; billing_name: string | null;
+  deposit_required_flag: boolean | null; approved_at: string | null; approved_by: string | null; accepted_at: string | null;
+}
+
+/** Live identity built only from the same single read as the prices and fingerprint. */
+export function liveIdentityFrom(row: PublicPricing): LiveIdentity {
+  const q = row.quote;
+  return {
+    scope_of_work: q.scope_of_work, public_notes: q.public_notes, valid_until: q.valid_until,
+    customer_name: q.billing_name || row.customer?.display_name || "Customer",
+    customer_address: row.property_address ?? null, billing_name: q.billing_name || null,
+    approved_at: q.approved_at || q.accepted_at || null, approved_by: q.approved_by || null,
+  };
 }
 export interface AcceptedSnapshot {
   subtotal: number; tax_total: number; discount_total: number; total: number; tax_rate?: number; deposit_amount?: number;
