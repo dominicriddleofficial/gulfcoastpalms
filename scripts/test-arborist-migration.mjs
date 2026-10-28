@@ -17,7 +17,7 @@ CREATE TABLE public.user_business_access (user_id uuid, business_id uuid, role_n
 CREATE TABLE public.platform_quotes (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), business_id uuid NOT NULL, quote_number text NOT NULL DEFAULT 'Q', customer_id uuid, status text NOT NULL DEFAULT 'draft',
   subtotal numeric DEFAULT 0, discount_total numeric DEFAULT 0, tax_rate numeric DEFAULT 0, tax_total numeric DEFAULT 0, total numeric DEFAULT 0,
   deposit_required_flag boolean DEFAULT false, deposit_type text DEFAULT 'percentage', deposit_value numeric DEFAULT 50, deposit_amount_calculated numeric DEFAULT 0,
-  version_number integer DEFAULT 1, approved_by text, approved_at timestamptz, accepted_at timestamptz, deleted_at timestamptz, updated_at timestamptz DEFAULT now(),
+  version_number integer DEFAULT 1, approved_by text, approved_at timestamptz, accepted_at timestamptz, deleted_at timestamptz, updated_at timestamptz DEFAULT now(), created_at timestamptz DEFAULT now(),
   property_id uuid, billing_name text, scope_of_work text, public_notes text, internal_notes text, valid_until date, is_read_only boolean NOT NULL DEFAULT false, last_modified_by_user_id uuid);
 CREATE FUNCTION public.touch_updated_at() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at := clock_timestamp(); RETURN NEW; END $$;
 CREATE TRIGGER touch_quotes BEFORE UPDATE ON public.platform_quotes FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
