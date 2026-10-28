@@ -265,7 +265,7 @@ for (const fn of ['quote_pricing_fingerprint(uuid)','approve_quote_options(uuid,
   check(Number(pub.discount_total)===50 && pub.accepted_snapshot?.total===snap.total && pub.fingerprint===(await fp(Q)) && pub.line_items.length===4,'public read returns discount, accepted snapshot, lines and matching fingerprint together');
   check(pub.quote?.scope_of_work===snap.scope_of_work && !('internal_notes' in pub.quote),'public read includes header/scope in same snapshot, no internal notes');
   // 0007: visible scope/identity edits change the fingerprint and arrive together with it
-  { const QS=uuid(240); await db.query(`INSERT INTO platform_quotes(id,business_id,status,scope_of_work,internal_notes) VALUES ($1,$2,'sent','Old scope','secret')`,[QS,biz]);
+  { const QS=uuid(941); await db.query(`INSERT INTO platform_quotes(id,business_id,status,scope_of_work,internal_notes) VALUES ($1,$2,'sent','Old scope','secret')`,[QS,biz]);
     const a=(await db.query(`SELECT quote_public_pricing($1) p`,[QS])).rows[0].p;
     for (const [col,val] of [['scope_of_work',"'New scope'"],['public_notes',"'n'"],['billing_name',"'B'"],['valid_until',"'2031-01-01'"],['property_id',`'${uuid(997)}'`]]) {
       const before=await fp(QS); await db.query(`UPDATE platform_quotes SET ${col}=${val} WHERE id=$1`,[QS]);
