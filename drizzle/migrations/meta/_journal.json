@@ -50,6 +50,13 @@
       "when": 1793067542693,
       "tag": "0006_quote_options_integrity",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793215006504,
+      "tag": "0007_quote_public_consistent_read",
+      "breakpoints": true
     }
   ]
 }

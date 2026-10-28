@@ -17,11 +17,11 @@ CREATE TABLE public.user_business_access (user_id uuid, business_id uuid, role_n
 CREATE TABLE public.platform_quotes (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), business_id uuid NOT NULL, quote_number text NOT NULL DEFAULT 'Q', customer_id uuid, status text NOT NULL DEFAULT 'draft',
   subtotal numeric DEFAULT 0, discount_total numeric DEFAULT 0, tax_rate numeric DEFAULT 0, tax_total numeric DEFAULT 0, total numeric DEFAULT 0,
   deposit_required_flag boolean DEFAULT false, deposit_type text DEFAULT 'percentage', deposit_value numeric DEFAULT 50, deposit_amount_calculated numeric DEFAULT 0,
-  version_number integer DEFAULT 1, approved_by text, approved_at timestamptz, accepted_at timestamptz, deleted_at timestamptz, updated_at timestamptz DEFAULT now(),
+  version_number integer DEFAULT 1, approved_by text, approved_at timestamptz, accepted_at timestamptz, deleted_at timestamptz, updated_at timestamptz DEFAULT now(), created_at timestamptz DEFAULT now(),
   property_id uuid, billing_name text, scope_of_work text, public_notes text, internal_notes text, valid_until date, is_read_only boolean NOT NULL DEFAULT false, last_modified_by_user_id uuid);
 CREATE FUNCTION public.touch_updated_at() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at := clock_timestamp(); RETURN NEW; END $$;
 CREATE TRIGGER touch_quotes BEFORE UPDATE ON public.platform_quotes FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
-CREATE TABLE public.platform_customers (id uuid PRIMARY KEY, display_name text);
+CREATE TABLE public.platform_customers (id uuid PRIMARY KEY, display_name text, email text, phone text);
 CREATE TABLE public.platform_properties (id uuid PRIMARY KEY, address_1 text, city text, state text, zip text);
 CREATE TABLE public.platform_quote_versions (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), quote_id uuid NOT NULL, business_id uuid NOT NULL, version_number int NOT NULL, snapshot_json jsonb NOT NULL, created_by_user_id uuid, created_at timestamptz NOT NULL DEFAULT now());
 CREATE TABLE public.platform_invoices (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), business_id uuid NOT NULL, invoice_number text NOT NULL, customer_id uuid, property_id uuid, quote_id uuid, status text NOT NULL DEFAULT 'draft',
@@ -56,7 +56,7 @@ INSERT INTO user_business_access VALUES ('${crew}','${biz}','crew','active'),('$
 await db.exec(`ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO anon, authenticated; ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated;`);
 // Live bucket is created with the storage tool, so the isolated fixture seeds it here.
 await db.exec(`INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types) VALUES ('arborist-quote-photos','arborist-quote-photos',false,10485760,ARRAY['image/jpeg']);`);
-for (const file of ['0000_arborist_quotes.sql','0001_arborist_revoke_anon.sql','0002_arborist_quote_links.sql','0003_arborist_links_column_grants.sql','0004_quote_options.sql','0005_arborist_link_lock_order.sql','0006_quote_options_integrity.sql'])
+for (const file of ['0000_arborist_quotes.sql','0001_arborist_revoke_anon.sql','0002_arborist_quote_links.sql','0003_arborist_links_column_grants.sql','0004_quote_options.sql','0005_arborist_link_lock_order.sql','0006_quote_options_integrity.sql','0007_quote_public_consistent_read.sql'])
   await db.exec(await fs.readFile(new URL(`../drizzle/migrations/${file}`, import.meta.url),'utf8'));
 let checks=0;
 const check=(value,msg)=>{assert.ok(value,msg);checks++;};
@@ -263,6 +263,17 @@ for (const fn of ['quote_pricing_fingerprint(uuid)','approve_quote_options(uuid,
   await guestErr(()=>approve([L.haul,L.stump]),'quote_already_approved','converted quote refuses different choices');
   const pub=(await db.query(`SELECT quote_public_pricing($1) p`,[Q])).rows[0].p;
   check(Number(pub.discount_total)===50 && pub.accepted_snapshot?.total===snap.total && pub.fingerprint===(await fp(Q)) && pub.line_items.length===4,'public read returns discount, accepted snapshot, lines and matching fingerprint together');
+  check(pub.quote?.scope_of_work===snap.scope_of_work && !('internal_notes' in pub.quote),'public read includes header/scope in same snapshot, no internal notes');
+  // 0007: visible scope/identity edits change the fingerprint and arrive together with it
+  { const QS=uuid(941); await db.query(`INSERT INTO platform_quotes(id,business_id,status,scope_of_work,internal_notes) VALUES ($1,$2,'sent','Old scope','secret')`,[QS,biz]);
+    const a=(await db.query(`SELECT quote_public_pricing($1) p`,[QS])).rows[0].p;
+    for (const [col,val] of [['scope_of_work',"'New scope'"],['public_notes',"'n'"],['billing_name',"'B'"],['valid_until',"'2031-01-01'"],['property_id',`'${uuid(997)}'`]]) {
+      const before=await fp(QS); await db.query(`UPDATE platform_quotes SET ${col}=${val} WHERE id=$1`,[QS]);
+      check(before!==await fp(QS),`fingerprint binds visible ${col}`); }
+    const b=(await db.query(`SELECT quote_public_pricing($1) p`,[QS])).rows[0].p;
+    check(a.quote.scope_of_work==='Old scope' && b.quote.scope_of_work==='New scope' && a.fingerprint!==b.fingerprint && b.fingerprint===(await fp(QS)),'each read pairs its own scope with its own fingerprint (no old scope + new price)');
+    check(!JSON.stringify(b).includes('secret'),'internal notes never in public read');
+    await guestErr(()=>db.query(`SELECT approve_quote_options($1,'X','{}',$2)`,[QS,a.fingerprint]),'quote_stale','approval with fingerprint from old scope is refused'); }
   // legacy (no options) approved quote cannot start offering options; ordinary edits still work
   const QA=uuid(230); await db.query(`INSERT INTO platform_quotes(id,business_id,status) VALUES ($1,$2,'approved')`,[QA,biz]);
   await db.query(`INSERT INTO platform_quote_line_items(quote_id,business_id,description,unit_price) VALUES ($1,$2,'Trim',100)`,[QA,biz]);

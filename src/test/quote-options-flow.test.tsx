@@ -14,7 +14,7 @@ vi.mock("@/integrations/supabase/client", () => ({ supabase: {
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 import ViewQuote from "@/pages/quote/ViewQuote";
-import { publicPricingFields, type PublicPricing } from "../../supabase/functions/get-quote-public/pricing";
+import { publicPricingFields, liveIdentityFrom, type PublicPricing } from "../../supabase/functions/get-quote-public/pricing";
 import { saveEditedQuote, type QuoteEditData } from "@/lib/edit-quote";
 import { computeOptionTotals, lineCents } from "@/lib/quote-options";
 
@@ -33,7 +33,10 @@ const snapshot = {
 };
 const pricing = (over: Partial<PublicPricing> = {}): PublicPricing => ({
   subtotal: 2650.2, discount_total: 50, tax_rate: 7, tax_total: 185.51, total: 2785.71, deposit_amount: 0,
-  accepted_snapshot: null, fingerprint: "fp-1", line_items: liveLines, ...over,
+  accepted_snapshot: null, fingerprint: "fp-1", line_items: liveLines,
+  quote: { id: "q1", quote_number: "GCP-Q-000100", status: "sent", business_id: "b1", created_at: "2026-10-15T00:00:00Z", valid_until: "2027-01-01",
+    public_notes: null, scope_of_work: "LATER EDIT", billing_name: null, deposit_required_flag: false, approved_at: null, approved_by: null, accepted_at: null },
+  customer: { display_name: "Renamed Customer", email: null, phone: null }, property_address: "99 Moved Ave", ...over,
 });
 const live = { scope_of_work: "LATER EDIT", public_notes: null, valid_until: "2027-01-01", customer_name: "Renamed Customer", customer_address: "99 Moved Ave", billing_name: null, approved_at: null, approved_by: null };
 
@@ -50,13 +53,20 @@ beforeEach(() => { rpc.mockReset(); fromCalls.length = 0; });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe("get-quote-public response shape", () => {
-  it("SELECTs discount and accepted snapshot and reads pricing/lines/fingerprint in one call", () => {
+  it("reads header, scope, identity, prices and fingerprint from one database call only", () => {
     const src = readFileSync(resolve(__dirname, "../../supabase/functions/get-quote-public/index.ts"), "utf8");
-    const select = /from\("platform_quotes"\)\s*\.select\("([^"]+)"\)/.exec(src)?.[1] ?? "";
-    expect(select).toContain("discount_total");
-    expect(select).toContain("accepted_snapshot");
     expect(src).toContain('rpc("quote_public_pricing"');
-    expect(src).not.toContain('from("platform_quote_line_items")');
+    for (const t of ["platform_quote_line_items", "platform_customers", "platform_properties"]) expect(src).not.toContain(`from("${t}")`);
+    expect(src).not.toMatch(/from\("platform_quotes"\)\s*\.select/);
+    expect(src).toContain('.or("status.is.null,status.eq.sent")');
+  });
+  it("never pairs an old scope or recipient with a newer price/fingerprint", () => {
+    const before = pricing({ fingerprint: "fp-old", quote: { ...pricing().quote, scope_of_work: "Old scope" }, customer: { display_name: "Old Name", email: null, phone: null } });
+    const after = pricing({ fingerprint: "fp-new", total: 9999, quote: { ...pricing().quote, scope_of_work: "New scope", billing_name: "New Bill" }, property_address: "2 New Rd" });
+    const a = publicPricingFields(before, liveIdentityFrom(before)); const b = publicPricingFields(after, liveIdentityFrom(after));
+    expect([a.scope_of_work, a.customer_name, a.pricing_fingerprint]).toEqual(["Old scope", "Old Name", "fp-old"]);
+    expect([b.scope_of_work, b.customer_name, b.customer_address, b.total, b.pricing_fingerprint]).toEqual(["New scope", "New Bill", "2 New Rd", 9999, "fp-new"]);
+    expect(JSON.stringify(b)).not.toContain("internal_notes");
   });
   it("an accepted quote returns the agreed totals, discount, scope and identity, not later edits", () => {
     const out = publicPricingFields(pricing({ accepted_snapshot: snapshot }), live);

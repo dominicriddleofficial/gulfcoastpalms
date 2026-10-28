@@ -1,4 +1,4 @@
-import { publicPricingFields, type PublicPricing } from "./pricing.ts";
+import { publicPricingFields, liveIdentityFrom, type PublicPricing } from "./pricing.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
@@ -64,16 +64,14 @@ Deno.serve(async (req) => {
       return await denyNotFound("missing_shortcode");
     }
 
-    // Fetch quote
-    const { data: quote, error: qErr } = await supabase
-      .from("platform_quotes")
-      .select("id, quote_number, billing_name, total, subtotal, tax_rate, tax_total, discount_total, accepted_snapshot, status, valid_until, public_notes, scope_of_work, created_at, customer_id, property_id, business_id, deposit_required_flag, deposit_amount_calculated, approved_at, approved_by, accepted_at")
-      .eq("id", quote_id)
-      .single();
-
-    if (qErr || !quote) {
+    // ONE database statement returns every customer-facing field: header, scope, identity, totals, lines, fingerprint.
+    const { data: pricingRow, error: pricingErr } = await supabase.rpc("quote_public_pricing", { _quote_id: quote_id });
+    if (pricingErr) throw new Error("pricing unavailable");
+    if (!pricingRow) {
       return new Response(JSON.stringify({ error: "Quote not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
+    const row = pricingRow as PublicPricing;
+    const quote = row.quote;
 
     // Fetch business
     const { data: biz } = await supabase
@@ -88,54 +86,19 @@ Deno.serve(async (req) => {
       return await denyNotFound("shortcode_mismatch");
     }
 
-    // Fetch customer
-    let customerName = "Customer";
-    let customerEmail: string | null = null;
-    let customerPhone: string | null = null;
-    if (quote.customer_id) {
-      const { data: cust } = await supabase
-        .from("platform_customers")
-        .select("display_name, email, phone")
-        .eq("id", quote.customer_id)
-        .single();
-      if (cust) {
-        customerName = cust.display_name;
-        customerEmail = cust.email;
-        customerPhone = cust.phone;
-      }
-    }
-
-    // Recipient name override saved on the quote — the customer record is never changed.
-    const billingName = (quote as { billing_name?: string | null }).billing_name || null;
-    if (billingName) customerName = billingName;
-
-    let customerAddress: string | null = null;
-    if (quote.property_id) {
-      const { data: property } = await supabase
-        .from("platform_properties")
-        .select("address_1, city, state, zip")
-        .eq("id", quote.property_id)
-        .single();
-
-      if (property) {
-        customerAddress = [property.address_1, property.city, property.state, property.zip].filter(Boolean).join(", ");
-      }
-    }
-
-    // Mark as viewed if first time
-    if (!quote.status || quote.status === "sent") {
-      await supabase.from("platform_quotes").update({ status: "viewed", first_viewed_at: new Date().toISOString() }).eq("id", quote.id);
+    // Mark as viewed only if it is still unsent/sent at this moment — never overwrite a concurrent approval.
+    let status = quote.status;
+    if (!status || status === "sent") {
+      const { data: viewed } = await supabase.from("platform_quotes")
+        .update({ status: "viewed", first_viewed_at: new Date().toISOString() })
+        .eq("id", quote.id).or("status.is.null,status.eq.sent").select("status");
+      if (viewed && viewed.length > 0) status = "viewed";
     }
 
     const approvalToken = await signApprovalToken(quote.id, serviceKey);
-    // One consistent read of totals, discount, lines, fingerprint and accepted choices.
-    const { data: pricingRow, error: pricingErr } = await supabase.rpc("quote_public_pricing", { _quote_id: quote.id });
-    if (pricingErr || !pricingRow) throw new Error("pricing unavailable");
-    const priced = publicPricingFields(pricingRow as PublicPricing, {
-      scope_of_work: quote.scope_of_work, public_notes: quote.public_notes, valid_until: quote.valid_until,
-      customer_name: customerName, customer_address: customerAddress, billing_name: billingName,
-      approved_at: quote.approved_at || quote.accepted_at || null, approved_by: quote.approved_by || null,
-    });
+    const priced = publicPricingFields(row, liveIdentityFrom(row));
+    const customerEmail = row.customer?.email ?? null;
+    const customerPhone = row.customer?.phone ?? null;
 
     return new Response(JSON.stringify({
       id: quote.id,
@@ -145,7 +108,7 @@ Deno.serve(async (req) => {
       tax_rate: priced.tax_rate,
       tax_total: priced.tax_total,
       discount_total: priced.discount_total,
-      status: quote.status,
+      status,
       valid_until: priced.valid_until,
       created_at: quote.created_at,
       approved_at: priced.approved_at,
