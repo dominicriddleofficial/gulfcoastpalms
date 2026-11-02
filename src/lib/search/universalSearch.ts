@@ -127,6 +127,34 @@ export function parseRecordParams(search: string): { id: string; source: RecordS
   return { id, source, propertyId: p.get(PROPERTY_PARAM) };
 }
 
+// ── Role permissions (mirror PlatformRoutes RoleRoute allow-lists) ─────────
+
+export type SearchRole = "owner" | "office_manager" | "manager" | "crew" | null;
+
+const ROUTE_ROLES: Record<SearchEntityType, ReadonlyArray<Exclude<SearchRole, null>>> = {
+  customer: ["owner", "office_manager", "manager"],
+  property: ["owner", "office_manager", "manager"], // opens on the customers page
+  lead: ["owner", "office_manager", "manager"],
+  quote: ["owner", "office_manager", "manager"],
+  job: ["owner", "office_manager", "manager"],
+  invoice: ["owner", "office_manager"],
+  crew: ["owner", "office_manager"], // opens on the settings page
+};
+
+/** Record types whose destination page this role may open. Unknown role → nothing. */
+export function allowedSearchTypes(role: SearchRole): Set<SearchEntityType> {
+  const out = new Set<SearchEntityType>();
+  if (!role) return out;
+  (Object.keys(ROUTE_ROLES) as SearchEntityType[]).forEach((t) => { if (ROUTE_ROLES[t].includes(role)) out.add(t); });
+  return out;
+}
+
+const SPEC_TYPE: Record<string, SearchEntityType> = {
+  jobber_clients: "customer", platform_customers: "customer", jobber_jobs: "job", platform_jobs: "job",
+  platform_invoices: "invoice", platform_quotes: "quote", platform_leads: "lead",
+  jobber_properties: "property", platform_properties: "property", platform_crew_members: "crew",
+};
+
 // ── Runner ──────────────────────────────────────────────────────────────────
 
 type Row = Record<string, unknown>;
@@ -153,7 +181,7 @@ export async function runUniversalSearch(
   client: SearchClient,
   businessId: string,
   input: string,
-  opts: { isOwner: boolean },
+  opts: { isOwner: boolean; allowedTypes: Set<SearchEntityType> },
 ): Promise<SearchOutcome> {
   const q = normalizeQuery(input);
   const like = containsPattern(q);
@@ -194,13 +222,14 @@ export async function runUniversalSearch(
       .or(ilikeOr([["display_name", like], ["email", like], ["phone", like], ["phone", phone]])).limit(5) },
   ];
 
-  const settled = await Promise.all(specs.map(async (sp) => {
+  const permitted = specs.filter((sp) => opts.allowedTypes.has(SPEC_TYPE[sp.key]));
+  const settled = await Promise.all(permitted.map(async (sp) => {
     try { return { key: sp.key, res: await sp.run() }; }
     catch (error) { return { key: sp.key, res: { data: null, error } as QueryResult }; }
   }));
 
   const failedSources: string[] = [];
-  const rows: Record<string, Row[]> = {};
+  const rows: Record<string, Row[]> = Object.fromEntries(specs.map((sp) => [sp.key, [] as Row[]]));
   for (const { key, res } of settled) {
     if (res.error) failedSources.push(key);
     rows[key] = res.data ?? [];
@@ -209,7 +238,7 @@ export async function runUniversalSearch(
   const out: SearchResult[] = [];
   const push = (r: Omit<SearchResult, "path"> & { path?: string }) => {
     const path = r.path ?? recordPath(r.type, r.id, r.source);
-    if (path) out.push({ ...r, path });
+    if (path && opts.allowedTypes.has(r.type)) out.push({ ...r, path });
   };
 
   for (const [key, source] of [["platform_customers", "platform"], ["jobber_clients", "jobber"]] as const) {
