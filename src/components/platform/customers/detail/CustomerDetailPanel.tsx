@@ -296,6 +296,7 @@ export default function CustomerDetailPanel({
   const hasContact = !!(customer.phone || customer.secondary_phone || customer.email);
 
   return (
+    <TzContext.Provider value={profile.data?.timeZone ?? DEFAULT_BUSINESS_TZ}>
     <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-4 sm:px-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] space-y-6" data-testid="customer-detail-scroll">
       <SheetHeader className="text-left space-y-2 pr-10">
         <div className="flex items-center gap-2 flex-wrap">
@@ -417,5 +418,6 @@ export default function CustomerDetailPanel({
         />
       )}
     </div>
+    </TzContext.Provider>
   );
 }
