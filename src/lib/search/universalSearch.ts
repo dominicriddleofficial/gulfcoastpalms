@@ -172,6 +172,8 @@ export interface SearchClient { from: (t: string) => unknown }
 export interface SearchOutcome {
   results: SearchResult[];
   failedSources: string[];
+  /** Number of sources actually queried for this role. */
+  attempted: number;
 }
 
 const s = (v: unknown): string | null => (typeof v === "string" && v.length > 0 ? v : null);
@@ -318,5 +320,5 @@ export async function runUniversalSearch(
     .sort((a, b) => a.r.rank - b.r.rank || a.i - b.i)
     .map(({ r }) => r);
 
-  return { results, failedSources };
+  return { results, failedSources, attempted: permitted.length };
 }

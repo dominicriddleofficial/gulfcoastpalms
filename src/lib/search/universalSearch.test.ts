@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   normalizeQuery, ilikeOr, containsPattern, numberPattern, recordPath, parseRecordParams, runUniversalSearch,
 } from "./universalSearch";
+import { allowedSearchTypes } from "./universalSearch";
+const ALL = allowedSearchTypes("owner");
 
 describe("normalizeQuery", () => {
   it("strips displayed prefixes, # and leading zeros from record numbers", () => {
@@ -72,7 +74,7 @@ describe("runUniversalSearch", () => {
       platform_customers: [{ id: "p1", display_name: "Jane Doe" }],
       jobber_clients: [{ id: "j1", display_name: "Jane Doe" }],
     });
-    const { results } = await runUniversalSearch(c, "biz", "Jane", { isOwner: true });
+    const { results } = await runUniversalSearch(c, "biz", "Jane", { isOwner: true, allowedTypes: ALL });
     const customers = results.filter((r) => r.type === "customer");
     expect(customers.map((r) => `${r.source}:${r.id}`)).toEqual(["platform:p1", "jobber:j1"]);
     expect(customers[1].path).toBe("/platform/customers?open=j1&source=jobber");
@@ -82,24 +84,24 @@ describe("runUniversalSearch", () => {
       { id: "i2", invoice_number: "GCP-I-001018" },
       { id: "i1", invoice_number: "GCP-I-000018" },
     ] });
-    const { results } = await runUniversalSearch(c, "biz", "18", { isOwner: false });
+    const { results } = await runUniversalSearch(c, "biz", "18", { isOwner: false, allowedTypes: ALL });
     expect(results[0].id).toBe("i1");
     expect(results[0].path).toBe("/platform/invoices?open=i1");
   });
   it("matches formatted phones from an unformatted query", async () => {
     const c = mockClient({});
-    await runUniversalSearch(c, "biz", "334701", { isOwner: false });
+    await runUniversalSearch(c, "biz", "334701", { isOwner: false, allowedTypes: ALL });
     const pc = c.calls.find((x) => x.table === "platform_customers");
     expect(pc?.or).toContain('phone.ilike."%3%3%4%7%0%1%"');
   });
   it("reports backend failures instead of pretending there are no matches", async () => {
     const c = mockClient({}, ["platform_invoices"]);
-    const out = await runUniversalSearch(c, "biz", "334701", { isOwner: false });
+    const out = await runUniversalSearch(c, "biz", "334701", { isOwner: false, allowedTypes: ALL });
     expect(out.failedSources).toEqual(["platform_invoices"]);
   });
   it("omits properties without an owning customer", async () => {
     const c = mockClient({ platform_properties: [{ id: "pp1", customer_id: null, address_1: "1 Main" }] });
-    const { results } = await runUniversalSearch(c, "biz", "Main", { isOwner: false });
+    const { results } = await runUniversalSearch(c, "biz", "Main", { isOwner: false, allowedTypes: ALL });
     expect(results.find((r) => r.type === "property")).toBeUndefined();
   });
 });
