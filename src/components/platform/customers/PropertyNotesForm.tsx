@@ -41,14 +41,18 @@ export default function PropertyNotesForm({ customerId, businessId }: PropertyNo
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     const fetch = async () => {
       setLoading(true);
-      const { data } = await supabase
+      setNotes(EMPTY);
+      const { data, error } = await supabase
         .from("customer_property_notes")
         .select("*")
         .eq("customer_id", customerId)
         .eq("business_id", businessId)
         .maybeSingle();
+      if (cancelled) return;
+      if (error) toast.error("Couldn't load property notes");
       if (data) {
         setNotes({
           id: data.id,
@@ -65,6 +69,7 @@ export default function PropertyNotesForm({ customerId, businessId }: PropertyNo
       setLoading(false);
     };
     fetch();
+    return () => { cancelled = true; };
   }, [customerId, businessId]);
 
   const handleSave = async () => {
@@ -86,13 +91,21 @@ export default function PropertyNotesForm({ customerId, businessId }: PropertyNo
       const { error } = await supabase
         .from("customer_property_notes")
         .update(payload)
-        .eq("id", notes.id);
+        .eq("id", notes.id)
+        .eq("business_id", businessId);
       if (error) toast.error("Failed to save"); else toast.success("Property notes saved");
     } else {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("customer_property_notes")
-        .insert(payload);
-      if (error) toast.error("Failed to save"); else toast.success("Property notes saved");
+        .insert(payload)
+        .select("id")
+        .single();
+      if (error) toast.error("Failed to save");
+      else {
+        // Keep the new id so a second Save updates instead of inserting a duplicate.
+        setNotes((n) => ({ ...n, id: data.id }));
+        toast.success("Property notes saved");
+      }
     }
     setSaving(false);
   };
