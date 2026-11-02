@@ -143,7 +143,7 @@ function Stat({ label, value, sub }: { label: string; value: string; sub?: strin
   return (
     <div className="rounded-lg border border-border bg-secondary/40 p-2.5 min-w-0">
       <p className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className="text-sm font-semibold text-foreground break-words">{value}</p>
+      <p className="text-[13px] sm:text-sm font-semibold leading-snug text-foreground [overflow-wrap:normal] [word-break:keep-all]">{value}</p>
       {sub && <p className="text-[11px] text-muted-foreground break-words">{sub}</p>}
     </div>
   );
