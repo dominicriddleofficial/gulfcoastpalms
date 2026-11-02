@@ -22,6 +22,24 @@ import { toast } from "@/hooks/use-toast";
 import EditAddressDialog from "@/components/platform/EditAddressDialog";
 import { useUserRole } from "@/hooks/useUserRole";
 import { platformCustomersKey, fetchPlatformCustomersList } from "@/hooks/usePlatformCustomersList";
+import { useRecordDeepLink, type DeepLinkTarget } from "@/hooks/useRecordDeepLink";
+import DeepLinkNotice from "@/components/platform/DeepLinkNotice";
+
+/** Load one customer by id + source, scoped to the business (RLS still applies). */
+export async function fetchCustomerRecord(t: DeepLinkTarget, businessId: string): Promise<UnifiedCustomer | null> {
+  if (t.source === "jobber") {
+    const { data, error } = await supabase.from("jobber_clients")
+      .select("id, jobber_id, display_name, company_name, email, phone, secondary_phone, created_at, business_id")
+      .eq("id", t.id).eq("business_id", businessId).maybeSingle();
+    if (error) throw error;
+    return data ? { first_name: null, last_name: null, ...data, display_name: data.display_name ?? "Customer", source: "jobber" } : null;
+  }
+  const { data, error } = await supabase.from("platform_customers")
+    .select("id, business_id, display_name, company_name, email, phone, secondary_phone, created_at")
+    .eq("id", t.id).eq("business_id", businessId).maybeSingle();
+  if (error) throw error;
+  return data ? { first_name: null, last_name: null, ...data, source: "platform" } : null;
+}
 
 type UnifiedCustomer = {
   id: string;
@@ -65,6 +83,17 @@ export default function PlatformCustomers() {
   const customers: UnifiedCustomer[] = (customersQuery.data ?? []) as UnifiedCustomer[];
   const loading = !!selectedBusinessId && customersQuery.isLoading;
 
+  const [focusPropertyId, setFocusPropertyId] = useState<string | null>(null);
+  const deepLink = useRecordDeepLink<UnifiedCustomer>({
+    businessId: selectedBusinessId,
+    listLoading: loading,
+    findInList: (t) => customers.find((c) => c.id === t.id && c.source === t.source),
+    fetchOne: fetchCustomerRecord,
+    onOpen: (c, t) => { setFocusPropertyId(t.propertyId); setSelectedCustomer(c); },
+    onClear: () => setSelectedCustomer(null),
+  });
+  const closeCustomer = () => { setSelectedCustomer(null); setFocusPropertyId(null); deepLink.clear(); };
+
   const invalidateCustomers = () =>
     qc.invalidateQueries({ queryKey: platformCustomersKey(selectedBusinessId) });
 
@@ -99,6 +128,8 @@ export default function PlatformCustomers() {
             <Plus className="w-4 h-4" /> New Customer
           </Button>
         </div>
+
+        <DeepLinkNotice status={deepLink.status} label="customer" onDismiss={deepLink.clear} />
 
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -156,9 +187,9 @@ export default function PlatformCustomers() {
       </div>
 
       {/* Detail drawer */}
-      <Sheet open={!!selectedCustomer} onOpenChange={(open) => !open && setSelectedCustomer(null)}>
+      <Sheet open={!!selectedCustomer} onOpenChange={(open) => !open && closeCustomer()}>
         <SheetContent className="w-full sm:max-w-lg bg-card border-border overflow-y-auto">
-          {selectedCustomer && <CustomerDetail customer={selectedCustomer} />}
+          {selectedCustomer && <CustomerDetail key={`${selectedCustomer.source}-${selectedCustomer.id}`} customer={selectedCustomer} focusPropertyId={focusPropertyId} />}
         </SheetContent>
       </Sheet>
 
@@ -291,7 +322,7 @@ function CreateCustomerForm({ businesses, selectedBusinessId, onCreated }: {
   );
 }
 
-function CustomerDetail({ customer }: { customer: UnifiedCustomer }) {
+function CustomerDetail({ customer, focusPropertyId = null }: { customer: UnifiedCustomer; focusPropertyId?: string | null }) {
   const { selectedBusinessId } = usePlatformAuth();
   const { isStaff } = useUserRole();
   const [properties, setProperties] = useState<JobberProperty[]>([]);
@@ -383,7 +414,13 @@ function CustomerDetail({ customer }: { customer: UnifiedCustomer }) {
           ) : (
             <div className="space-y-2">
               {properties.map((p) => (
-                <div key={p.id} className="bg-secondary/40 border border-border rounded-lg p-3">
+                <div
+                  key={p.id}
+                  id={`property-${p.id}`}
+                  data-focused={p.id === focusPropertyId || undefined}
+                  ref={p.id === focusPropertyId ? (el) => el?.scrollIntoView({ block: "center" }) : undefined}
+                  className={`bg-secondary/40 border rounded-lg p-3 ${p.id === focusPropertyId ? "border-primary ring-1 ring-primary" : "border-border"}`}
+                >
                   <div className="flex items-start gap-2">
                     <MapPin className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
                     <div className="min-w-0 flex-1">
