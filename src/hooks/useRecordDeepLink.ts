@@ -81,3 +81,12 @@ export function useRecordDeepLink<T>(opts: Options<T>) {
 
   return { status, target, clear };
 }
+
+/** Clear the record params when a detail view that was open gets closed (any close path). */
+export function useClearOnClose(selected: unknown, clear: () => void) {
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    if (selected) { wasOpen.current = true; return; }
+    if (wasOpen.current) { wasOpen.current = false; clear(); }
+  }, [selected, clear]);
+}

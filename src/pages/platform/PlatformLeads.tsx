@@ -21,6 +21,9 @@ import { format, formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { PlatformLead } from "@/hooks/usePlatformLeads";
 
+import { useRecordDeepLink, useClearOnClose, type DeepLinkTarget } from "@/hooks/useRecordDeepLink";
+import DeepLinkNotice from "@/components/platform/DeepLinkNotice";
+
 function LeadStatusBadge({ status }: { status: string }) {
   const s = LEAD_STATUSES.find(ls => ls.value === status);
   if (!s) return <span className="text-xs text-muted-foreground">{status}</span>;
@@ -50,6 +53,13 @@ function UrgencyDot({ createdAt, status }: { createdAt: string; status: string }
   return <span className="w-2 h-2 rounded-full bg-muted-foreground/50 inline-block" />;
 }
 
+async function fetchLeadRecord(t: DeepLinkTarget, businessId: string): Promise<PlatformLead | null> {
+  const { data, error } = await supabase.from("platform_leads").select("*")
+    .eq("id", t.id).eq("business_id", businessId).maybeSingle();
+  if (error) throw error;
+  return (data as unknown as PlatformLead | null) ?? null;
+}
+
 export default function PlatformLeads() {
   const { selectedBusinessId, businesses } = usePlatformAuth();
   const {
@@ -59,6 +69,15 @@ export default function PlatformLeads() {
 
   const [selectedLead, setSelectedLead] = useState<PlatformLead | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const deepLink = useRecordDeepLink<PlatformLead>({
+    businessId: selectedBusinessId,
+    listLoading: loading,
+    findInList: (t) => leads.find((l) => l.id === t.id),
+    fetchOne: fetchLeadRecord,
+    onOpen: (l) => setSelectedLead(l),
+    onClear: () => setSelectedLead(null),
+  });
+  useClearOnClose(selectedLead, deepLink.clear);
 
   const getBizInfo = (bizId: string) => businesses.find(b => b.id === bizId);
 
