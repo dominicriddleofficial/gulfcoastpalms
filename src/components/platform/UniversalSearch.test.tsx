@@ -10,20 +10,23 @@ vi.mock("@/lib/search/universalSearch", async (orig) => ({
 }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
 vi.mock("@/hooks/usePlatformAuth", () => ({ usePlatformAuth: () => ({ isOwner: true }) }));
-vi.mock("@/hooks/useRecentActivity", () => ({ useRecentActivity: () => ({ data: [], isLoading: false }) }));
+let mockRole: string | null = "owner";
+let mockActivity: Array<Record<string, unknown>> = [];
+vi.mock("@/hooks/useUserRole", () => ({ useUserRole: () => ({ role: mockRole, isLoading: false }) }));
+vi.mock("@/hooks/useRecentActivity", () => ({ useRecentActivity: () => ({ data: mockActivity, isLoading: false }) }));
 
 import UniversalSearch from "./UniversalSearch";
 
 function Loc() { const l = useLocation(); return <span data-testid="loc">{l.pathname + l.search}</span>; }
 
 const res = (id: string, title: string): SearchOutcome => ({
-  failedSources: [],
+  failedSources: [], attempted: 10,
   results: [{ type: "invoice", id, source: "platform", title, subtitle: "", rank: 0, path: `/platform/invoices?open=${id}` }],
 });
 
 function deferred<T>() { let r!: (v: T) => void; const p = new Promise<T>((x) => { r = x; }); return { p, r }; }
 
-beforeEach(() => { run.mockReset(); });
+beforeEach(() => { run.mockReset(); mockRole = "owner"; mockActivity = []; });
 
 describe("UniversalSearch (embedded / mobile)", () => {
   it("navigates to the exact record and tells the parent sheet to close", async () => {
@@ -55,14 +58,14 @@ describe("UniversalSearch (embedded / mobile)", () => {
     const { rerender } = render(<MemoryRouter><UniversalSearch businessId="gcp" embedded autoOpen /></MemoryRouter>);
     fireEvent.change(screen.getByLabelText("Search records"), { target: { value: "334701" } });
     await waitFor(() => expect(run).toHaveBeenCalledWith(expect.anything(), "gcp", "334701"));
-    run.mockResolvedValue({ results: [], failedSources: [] });
+    run.mockResolvedValue({ results: [], failedSources: [], attempted: 10 });
     rerender(<MemoryRouter><UniversalSearch businessId="pps" embedded autoOpen /></MemoryRouter>);
     await act(async () => { slow.r(res("gcp-inv", "GCP-ONLY")); });
     expect(screen.queryByText(/GCP-ONLY/)).toBeNull();
   });
 
   it("shows a connection error instead of 'No matches' when search fails", async () => {
-    run.mockResolvedValue({ results: [], failedSources: Array.from({ length: 10 }, (_, i) => `t${i}`) });
+    run.mockResolvedValue({ results: [], failedSources: Array.from({ length: 10 }, (_, i) => `t${i}`), attempted: 10 });
     render(<MemoryRouter><UniversalSearch businessId="biz" embedded autoOpen /></MemoryRouter>);
     fireEvent.change(screen.getByLabelText("Search records"), { target: { value: "334701" } });
     expect(await screen.findByRole("alert")).toHaveTextContent(/couldn't reach/i);
@@ -78,5 +81,38 @@ describe("UniversalSearch (embedded / mobile)", () => {
     fireEvent.keyDown(input, { key: "ArrowDown" });
     fireEvent.keyDown(input, { key: "Enter" });
     expect(screen.getByTestId("loc").textContent).toBe("/?open=inv-9".replace("/?", "/platform/invoices?"));
+  });
+
+  it("ignores Enter/Arrow on old results while a new query is still loading", async () => {
+    const second = deferred<SearchOutcome>();
+    run.mockResolvedValueOnce(res("inv-a", "RESULT-A")).mockImplementationOnce(() => second.p);
+    render(<MemoryRouter initialEntries={["/platform"]}><UniversalSearch businessId="biz" embedded autoOpen /><Loc /></MemoryRouter>);
+    const input = screen.getByLabelText("Search records");
+    fireEvent.change(input, { target: { value: "aa" } });
+    await screen.findByText("RESULT-A");
+    fireEvent.change(input, { target: { value: "bb" } });
+    expect(screen.queryByText("RESULT-A")).toBeNull();
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(screen.getByTestId("loc").textContent).toBe("/platform");
+    await act(async () => { second.r(res("inv-b", "RESULT-B")); });
+    await screen.findByText("RESULT-B");
+  });
+
+  it("hides recent invoice activity from managers, who can't open invoices", async () => {
+    mockRole = "manager";
+    const base = { title: "", number: null, status: null, total: null, createdAt: new Date().toISOString(), createdByUserId: "u", createdByName: null, sourceSystem: null };
+    mockActivity = [{ ...base, kind: "invoice", id: "i1", number: "INV-SECRET" }, { ...base, kind: "job", id: "j1", number: "JOB-OK" }];
+    render(<MemoryRouter><UniversalSearch businessId="biz" embedded autoOpen /></MemoryRouter>);
+    expect(await screen.findByText(/JOB-OK/)).toBeTruthy();
+    expect(screen.queryByText(/INV-SECRET/)).toBeNull();
+  });
+
+  it("crew role gets no search queries at all", async () => {
+    mockRole = "crew";
+    render(<MemoryRouter><UniversalSearch businessId="biz" embedded autoOpen /></MemoryRouter>);
+    fireEvent.change(screen.getByLabelText("Search records"), { target: { value: "smith" } });
+    await new Promise((r) => setTimeout(r, 400));
+    expect(run).not.toHaveBeenCalled();
   });
 });
