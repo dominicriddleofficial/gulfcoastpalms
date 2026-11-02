@@ -167,12 +167,59 @@ const SCHEDULED = new Set(["scheduled", "upcoming", "confirmed"]);
 const ACTIVE = new Set(["in_progress", "on_my_way", "arrived", "started"]);
 const isDateOnly = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d);
 
+export const DEFAULT_BUSINESS_TZ = "America/Chicago";
+
+function zoneParts(ms: number, tz: string) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+  }).formatToParts(new Date(ms));
+  const g = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? 0);
+  return { y: g("year"), mo: g("month"), d: g("day"), h: g("hour") % 24, mi: g("minute"), s: g("second") };
+}
+
+/** yyyy-mm-dd for an instant, in the business's time zone (not the viewer's). */
+export function dateKeyInZone(at: Date, tz: string): string {
+  const p = zoneParts(at.getTime(), tz);
+  return `${p.y}-${String(p.mo).padStart(2, "0")}-${String(p.d).padStart(2, "0")}`;
+}
+
+/** Business-local date + wall-clock time → UTC ISO timestamp (DST-safe). */
+export function zonedToUtcIso(date: string, time: string, tz: string): string | null {
+  const dm = date.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const tm = time.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if (!dm || !tm) return null;
+  const wall = Date.UTC(+dm[1], +dm[2] - 1, +dm[3], +tm[1], +tm[2], +(tm[3] ?? 0));
+  const offsetAt = (ms: number) => {
+    const p = zoneParts(ms, tz);
+    return Date.UTC(p.y, p.mo - 1, p.d, p.h, p.mi, p.s) - ms;
+  };
+  let ms = wall - offsetAt(wall);
+  ms = wall - offsetAt(ms);
+  return new Date(ms).toISOString();
+}
+
+/** Display for a booking: local time when known, else the date only. */
+export function formatBooking(e: Pick<ServiceEvent, "date">, tz: string, now = new Date()): string {
+  if (!e.date) return "Date not recorded";
+  if (isDateOnly(e.date)) {
+    if (e.date === dateKeyInZone(now, tz)) return "Today";
+    const [y, m, d] = e.date.split("-").map(Number);
+    return new Intl.DateTimeFormat("en-US", { timeZone: "UTC", month: "short", day: "numeric", year: "numeric" }).format(new Date(Date.UTC(y, m - 1, d, 12)));
+  }
+  const at = new Date(e.date);
+  const time = new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit", timeZoneName: "short" }).format(at);
+  if (dateKeyInZone(at, tz) === dateKeyInZone(now, tz)) return `Today, ${time}`;
+  const day = new Intl.DateTimeFormat("en-US", { timeZone: tz, month: "short", day: "numeric", year: "numeric" }).format(at);
+  return `${day}, ${time}`;
+}
+
 export const localDateKey = (now: Date) =>
   `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
 /** Upcoming means: date-only booking today or later, or a timestamp still in the future. */
-function upcomingOrOverdue(date: string, now: Date): "scheduled" | "overdue" {
-  if (isDateOnly(date)) return date >= localDateKey(now) ? "scheduled" : "overdue";
+function upcomingOrOverdue(date: string, now: Date, tz: string): "scheduled" | "overdue" {
+  if (isDateOnly(date)) return date >= dateKeyInZone(now, tz) ? "scheduled" : "overdue";
   return new Date(date).getTime() >= now.getTime() ? "scheduled" : "overdue";
 }
 
@@ -185,6 +232,7 @@ export type JobberJobRow = {
 export function jobberJobEvents(
   jobs: JobberJobRow[], completedAt: Map<string, string>, now: Date,
   mapProperty: (id: string | null) => string | null = (id) => id,
+  tz: string = DEFAULT_BUSINESS_TZ,
 ): ServiceEvent[] {
   const out: ServiceEvent[] = [];
   for (const j of jobs) {
@@ -198,7 +246,7 @@ export function jobberJobEvents(
     } else if (vs === "late" && j.scheduled_start) {
       out.push({ ...base, status: "overdue", date: j.scheduled_start, dateKind: "scheduled" });
     } else if (SCHEDULED.has(vs) && j.scheduled_start) {
-      out.push({ ...base, status: upcomingOrOverdue(j.scheduled_start, now), date: j.scheduled_start, dateKind: "scheduled" });
+      out.push({ ...base, status: upcomingOrOverdue(j.scheduled_start, now, tz), date: j.scheduled_start, dateKind: "scheduled" });
     }
   }
   return out;
@@ -211,12 +259,13 @@ export type PlatformJobRow = {
 };
 export type PlatformVisitRow = {
   id: string; job_id: string; property_id: string | null; status: string | null;
-  scheduled_date: string | null; actual_start_at: string | null; actual_end_at: string | null;
+  scheduled_date: string | null; scheduled_start_time?: string | null; actual_start_at: string | null; actual_end_at: string | null;
 };
 
 export function platformJobEvents(
   jobs: PlatformJobRow[], visits: PlatformVisitRow[], now: Date,
   mapProperty: (id: string | null) => string | null = (id) => id,
+  tz: string = DEFAULT_BUSINESS_TZ,
 ): ServiceEvent[] {
   const byJob = new Map<string, PlatformVisitRow[]>();
   for (const v of visits) {
@@ -237,7 +286,7 @@ export function platformJobEvents(
         else if (j.scheduled_start) out.push({ ...base, status: "completed", date: j.scheduled_start, dateKind: "scheduled" });
         else out.push({ ...base, status: "completed", date: null, dateKind: "unknown" });
       } else if (SCHEDULED.has(js) && j.scheduled_start) {
-        out.push({ ...base, status: upcomingOrOverdue(j.scheduled_start, now), date: j.scheduled_start, dateKind: "scheduled" });
+        out.push({ ...base, status: upcomingOrOverdue(j.scheduled_start, now, tz), date: j.scheduled_start, dateKind: "scheduled" });
       } else if (ACTIVE.has(js)) {
         out.push({ ...base, status: "in_progress", date: j.scheduled_start, dateKind: j.scheduled_start ? "scheduled" : "unknown" });
       }
@@ -255,7 +304,10 @@ export function platformJobEvents(
       } else if (ACTIVE.has(s)) {
         out.push({ ...base, status: "in_progress", date: v.actual_start_at ?? v.scheduled_date, dateKind: v.actual_start_at ? "actual" : v.scheduled_date ? "scheduled" : "unknown" });
       } else if (SCHEDULED.has(s) && v.scheduled_date) {
-        out.push({ ...base, status: upcomingOrOverdue(v.scheduled_date, now), date: v.scheduled_date, dateKind: "scheduled" });
+        // Use the booked local time when present; missing-time visits stay date-only.
+        const at = v.scheduled_start_time ? zonedToUtcIso(v.scheduled_date, v.scheduled_start_time, tz) : null;
+        const when = at ?? v.scheduled_date;
+        out.push({ ...base, status: upcomingOrOverdue(when, now, tz), date: when, dateKind: "scheduled" });
       }
     }
   }

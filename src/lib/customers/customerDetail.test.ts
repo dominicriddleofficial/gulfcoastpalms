@@ -173,3 +173,44 @@ describe("contact preference + business guard", () => {
     expect(document.querySelectorAll("textarea").length).toBe(0);
   });
 });
+
+import { zonedToUtcIso, formatBooking, dateKeyInZone } from "./customerDetail";
+
+describe("native visit times in the business time zone", () => {
+  const TZ = "America/Chicago";
+  // 15:00Z on Nov 2 2026 = 9:00 AM CST.
+  const job = { id: "j", job_number: "1", title: null, status: "scheduled", property_id: "A", scheduled_start: null, completed_at: null, deleted_at: null };
+  const visit = (id: string, time: string | null) => ({
+    id, job_id: "j", property_id: null, status: "scheduled", scheduled_date: "2026-11-02",
+    scheduled_start_time: time, actual_start_at: null, actual_end_at: null,
+  });
+
+  it("converts local date+time to the right instant", () => {
+    expect(zonedToUtcIso("2026-11-02", "08:00:00", TZ)).toBe("2026-11-02T14:00:00.000Z");
+    expect(zonedToUtcIso("2026-07-01", "08:00", TZ)).toBe("2026-07-01T13:00:00.000Z");
+  });
+
+  it("earlier today is past due, later today is next, ordered by time", () => {
+    const ev = platformJobEvents([job], [visit("late", "16:00:00"), visit("early", "08:00:00"), visit("mid", "11:30:00")], NOW, (x) => x, TZ);
+    expect(ev.find((e) => e.key === "visit:early")?.status).toBe("overdue");
+    const s = summarize(ev);
+    expect(s.nextScheduled?.key).toBe("visit:mid");
+    expect(formatBooking(s.nextScheduled as NonNullable<typeof s.nextScheduled>, TZ, NOW)).toMatch(/^Today, 11:30 AM C[SD]T$/);
+  });
+
+  it("missing time stays date-only for today", () => {
+    const ev = platformJobEvents([job], [visit("nt", null)], NOW, (x) => x, TZ);
+    expect(ev[0]).toMatchObject({ status: "scheduled", date: "2026-11-02" });
+    expect(formatBooking(ev[0], TZ, NOW)).toBe("Today");
+  });
+
+  it("uses the business zone, not the viewer's", () => {
+    // 05:30Z Nov 3 is still Nov 2 (11:30 PM) in Chicago, Nov 3 in Tokyo.
+    const late = new Date("2026-11-03T05:30:00Z");
+    expect(dateKeyInZone(late, TZ)).toBe("2026-11-02");
+    const ev = platformJobEvents([job], [visit("v", "23:45:00")], late, (x) => x, TZ);
+    expect(ev[0].status).toBe("scheduled");
+    const tokyo = platformJobEvents([job], [visit("v", "23:45:00")], late, (x) => x, "Asia/Tokyo");
+    expect(tokyo[0].status).toBe("overdue");
+  });
+});

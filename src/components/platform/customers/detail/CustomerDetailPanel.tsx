@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -18,7 +18,7 @@ import RecurringContractForm from "@/components/platform/customers/RecurringCont
 import { useCustomerProfile, customerProfileKey, type ProfileProperty } from "@/hooks/useCustomerProfile";
 import {
   parsePhone, mailtoHref, addressLines, fullAddress, appleMapsDirectionsUrl, copyText,
-  summarize, summarizeByProperty, lastServiceText, usablePreference, localDateKey,
+  summarize, summarizeByProperty, lastServiceText, usablePreference, formatBooking, DEFAULT_BUSINESS_TZ,
   type ServiceEvent, type ServiceSummary,
 } from "@/lib/customers/customerDetail";
 import { recordPath } from "@/lib/search/universalSearch";
@@ -61,9 +61,10 @@ function Section({ title, icon, children, aside }: { title: string; icon: ReactN
   );
 }
 
+const TzContext = createContext<string>(DEFAULT_BUSINESS_TZ);
+
 const fmtDate = (d: string | null) => {
   if (!d) return "Date not recorded";
-  if (d === localDateKey(new Date())) return "Today";
   const dt = new Date(d.length === 10 ? `${d}T12:00:00` : d);
   return Number.isNaN(dt.getTime()) ? "—" : format(dt, "MMM d, yyyy");
 };
@@ -119,6 +120,7 @@ const STATUS_CLS: Record<ServiceEvent["status"], string> = {
 };
 
 function HistoryList({ events }: { events: ServiceEvent[] }) {
+  const tz = useContext(TzContext);
   if (!events.length) return null;
   return (
     <ul className="divide-y divide-border rounded-lg border border-border">
@@ -128,7 +130,7 @@ function HistoryList({ events }: { events: ServiceEvent[] }) {
             <div className="min-w-0 flex-1">
               <p className="text-sm text-foreground truncate">{e.label}</p>
               <p className={`text-xs ${STATUS_CLS[e.status]}`}>
-                {STATUS_LABEL[e.status]} · {fmtDate(e.date)}{e.status === "completed" && e.dateKind === "scheduled" ? " (planned date)" : ""}
+                {STATUS_LABEL[e.status]} · {e.status === "completed" ? fmtDate(e.date) : formatBooking(e, tz)}{e.status === "completed" && e.dateKind === "scheduled" ? " (planned date)" : ""}
               </p>
             </div>
             <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -143,7 +145,7 @@ function Stat({ label, value, sub }: { label: string; value: string; sub?: strin
   return (
     <div className="rounded-lg border border-border bg-secondary/40 p-2.5 min-w-0">
       <p className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className="text-[13px] sm:text-sm font-semibold leading-snug text-foreground [overflow-wrap:normal] [word-break:keep-all]">{value}</p>
+      <p className="text-[13px] sm:text-sm font-semibold leading-snug text-foreground hyphens-none [overflow-wrap:break-word]">{value}</p>
       {sub && <p className="text-[11px] text-muted-foreground break-words">{sub}</p>}
     </div>
   );
@@ -151,13 +153,14 @@ function Stat({ label, value, sub }: { label: string; value: string; sub?: strin
 
 function ServiceStats({ s, status, extra }: { s: ServiceSummary | null; status: "loading" | "error" | "ok"; extra?: ReactNode }) {
   const v = (x: string) => (status === "ok" ? x : status === "loading" ? "…" : "Unavailable");
+  const tz = useContext(TzContext);
   const last = status === "ok" && s ? lastServiceText(s, fmtDate) : null;
   return (
     <>
       {extra}
       <Stat label="Completed visits" value={v(String(s?.completed ?? 0))} />
       <Stat label="Last service" value={last ? last.value : v("")} sub={last?.sub} />
-      <Stat label="Next visit" value={v(s?.nextScheduled ? fmtDate(s.nextScheduled.date) : "Not booked")} />
+      <Stat label="Next visit" value={v(s?.nextScheduled ? formatBooking(s.nextScheduled, tz) : "Not booked")} />
     </>
   );
 }
@@ -293,6 +296,7 @@ export default function CustomerDetailPanel({
   const hasContact = !!(customer.phone || customer.secondary_phone || customer.email);
 
   return (
+    <TzContext.Provider value={profile.data?.timeZone ?? DEFAULT_BUSINESS_TZ}>
     <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-4 sm:px-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] space-y-6" data-testid="customer-detail-scroll">
       <SheetHeader className="text-left space-y-2 pr-10">
         <div className="flex items-center gap-2 flex-wrap">
@@ -414,5 +418,6 @@ export default function CustomerDetailPanel({
         />
       )}
     </div>
+    </TzContext.Provider>
   );
 }
