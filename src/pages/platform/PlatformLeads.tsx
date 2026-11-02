@@ -75,10 +75,11 @@ export default function PlatformLeads() {
     listLoading: loading,
     findInList: (t) => leads.find((l) => l.id === t.id),
     fetchOne: fetchLeadRecord,
+    identify: (l) => ({ id: l.id, businessId: l.business_id, source: "platform" }),
     onOpen: (l) => setSelectedLead(l),
     onClear: () => setSelectedLead(null),
   });
-  useClearOnClose(selectedLead, deepLink.clear);
+  useClearOnClose(selectedLead, deepLink);
 
   const getBizInfo = (bizId: string) => businesses.find(b => b.id === bizId);
 

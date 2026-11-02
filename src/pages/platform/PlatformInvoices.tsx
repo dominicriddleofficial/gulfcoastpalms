@@ -79,10 +79,11 @@ export default function PlatformInvoices() {
     listLoading: loading,
     findInList: (t) => invoices.find((i) => i.id === t.id),
     fetchOne: fetchInvoiceRecord,
+    identify: (i) => ({ id: i.id, businessId: i.business_id, source: "platform" }),
     onOpen: (i) => setSelectedInvoice(i),
     onClear: () => setSelectedInvoice(null),
   });
-  useClearOnClose(selectedInvoice, deepLink.clear);
+  useClearOnClose(selectedInvoice, deepLink);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 

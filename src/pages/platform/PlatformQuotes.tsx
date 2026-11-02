@@ -125,10 +125,11 @@ export default function PlatformQuotes() {
     listLoading: loading,
     findInList: (t) => quotes.find((q) => q.id === t.id),
     fetchOne: fetchQuoteRecord,
+    identify: (q) => ({ id: q.id, businessId: q.business_id, source: "platform" }),
     onOpen: (q) => setSelectedQuote(q),
     onClear: () => setSelectedQuote(null),
   });
-  useClearOnClose(selectedQuote, deepLink.clear);
+  useClearOnClose(selectedQuote, deepLink);
   const { createdTick } = useCreateSheets();
   useEffect(() => { refetch(); }, [createdTick, refetch]);
 
