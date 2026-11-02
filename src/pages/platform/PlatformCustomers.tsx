@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+import { customerForBusiness } from "@/lib/customers/customerDetail";
 import CustomerDetailPanel from "@/components/platform/customers/detail/CustomerDetailPanel";
 import { toast } from "@/hooks/use-toast";
 import EditAddressDialog from "@/components/platform/EditAddressDialog";
@@ -78,6 +79,8 @@ export default function PlatformCustomers() {
     queryKey: platformCustomersKey(selectedBusinessId),
     queryFn: () => fetchPlatformCustomersList(selectedBusinessId),
     enabled: !!selectedBusinessId,
+    // Don't show the previous business's customers while this one loads.
+    placeholderData: undefined,
   });
   const customers: UnifiedCustomer[] = (customersQuery.data ?? []) as UnifiedCustomer[];
   const loading = !!selectedBusinessId && customersQuery.isLoading;
@@ -92,6 +95,11 @@ export default function PlatformCustomers() {
     onOpen: (c, t) => { setFocusPropertyId(t.propertyId); setSelectedCustomer(c); },
     onClear: () => setSelectedCustomer(null),
   });
+  // Never show a customer from another business, not even for one frame after a switch.
+  const visibleCustomer = customerForBusiness(selectedCustomer, selectedBusinessId);
+  useEffect(() => {
+    setSelectedCustomer((c) => customerForBusiness(c, selectedBusinessId));
+  }, [selectedBusinessId]);
   const closeCustomer = () => { setSelectedCustomer(null); setFocusPropertyId(null); deepLink.clear(); };
 
   const invalidateCustomers = () =>
@@ -187,9 +195,9 @@ export default function PlatformCustomers() {
       </div>
 
       {/* Detail drawer */}
-      <Sheet open={!!selectedCustomer} onOpenChange={(open) => !open && closeCustomer()}>
-        <SheetContent className="ops-theme w-full max-w-full sm:max-w-2xl bg-background text-foreground border-border overflow-y-auto overflow-x-hidden px-4 sm:px-6 pt-[max(1.5rem,env(safe-area-inset-top))]">
-          {selectedCustomer && selectedBusinessId && <CustomerDetailPanel key={`${selectedBusinessId}-${selectedCustomer.source}-${selectedCustomer.id}`} customer={selectedCustomer} businessId={selectedBusinessId} focusPropertyId={focusPropertyId} />}
+      <Sheet open={!!visibleCustomer} onOpenChange={(open) => !open && closeCustomer()}>
+        <SheetContent className="ops-theme flex flex-col p-0 w-full max-w-full sm:max-w-2xl bg-background text-foreground border-border overflow-hidden [&>button]:z-10 [&>button]:top-[max(0.5rem,env(safe-area-inset-top))] [&>button]:right-2 [&>button]:p-3 [&>button]:rounded-full [&>button]:bg-secondary [&>button]:opacity-100">
+          {visibleCustomer && selectedBusinessId && <CustomerDetailPanel key={`${selectedBusinessId}-${visibleCustomer.source}-${visibleCustomer.id}`} customer={visibleCustomer} businessId={selectedBusinessId} focusPropertyId={focusPropertyId} />}
         </SheetContent>
       </Sheet>
 

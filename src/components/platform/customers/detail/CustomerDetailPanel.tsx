@@ -18,7 +18,8 @@ import RecurringContractForm from "@/components/platform/customers/RecurringCont
 import { useCustomerProfile, customerProfileKey, type ProfileProperty } from "@/hooks/useCustomerProfile";
 import {
   parsePhone, mailtoHref, addressLines, fullAddress, appleMapsDirectionsUrl, copyText,
-  summarize, summarizeByProperty, type ServiceEvent, type ServiceSummary,
+  summarize, summarizeByProperty, lastServiceText, usablePreference, localDateKey,
+  type ServiceEvent, type ServiceSummary,
 } from "@/lib/customers/customerDetail";
 import { recordPath } from "@/lib/search/universalSearch";
 
@@ -61,7 +62,8 @@ function Section({ title, icon, children, aside }: { title: string; icon: ReactN
 }
 
 const fmtDate = (d: string | null) => {
-  if (!d) return "—";
+  if (!d) return "Date not recorded";
+  if (d === localDateKey(new Date())) return "Today";
   const dt = new Date(d.length === 10 ? `${d}T12:00:00` : d);
   return Number.isNaN(dt.getTime()) ? "—" : format(dt, "MMM d, yyyy");
 };
@@ -142,20 +144,26 @@ function Stat({ label, value, sub }: { label: string; value: string; sub?: strin
     <div className="rounded-lg border border-border bg-secondary/40 p-2.5 min-w-0">
       <p className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</p>
       <p className="text-sm font-semibold text-foreground break-words">{value}</p>
-      {sub && <p className="text-[11px] text-muted-foreground truncate">{sub}</p>}
+      {sub && <p className="text-[11px] text-muted-foreground break-words">{sub}</p>}
     </div>
   );
 }
 
-function SummaryStats({ s, status }: { s: ServiceSummary | null; status: "loading" | "error" | "ok" }) {
+function ServiceStats({ s, status, extra }: { s: ServiceSummary | null; status: "loading" | "error" | "ok"; extra?: ReactNode }) {
   const v = (x: string) => (status === "ok" ? x : status === "loading" ? "…" : "Unavailable");
+  const last = status === "ok" && s ? lastServiceText(s, fmtDate) : null;
   return (
-    <div className="grid grid-cols-3 gap-2">
+    <>
+      {extra}
       <Stat label="Completed visits" value={v(String(s?.completed ?? 0))} />
-      <Stat label="Last service" value={v(s?.lastCompleted ? fmtDate(s.lastCompleted.date) : "None recorded")} />
+      <Stat label="Last service" value={last ? last.value : v("")} sub={last?.sub} />
       <Stat label="Next visit" value={v(s?.nextScheduled ? fmtDate(s.nextScheduled.date) : "Not booked")} />
-    </div>
+    </>
   );
+}
+
+function SummaryStats({ s, status }: { s: ServiceSummary | null; status: "loading" | "error" | "ok" }) {
+  return <div className="grid grid-cols-3 gap-2"><ServiceStats s={s} status={status} /></div>;
 }
 
 function PropertyCard({
@@ -276,18 +284,22 @@ export default function CustomerDetailPanel({
   const unlinked = events.filter((e) => !e.propertyId || !knownIds.has(e.propertyId));
   const unlinkedSummary = unlinked.length ? summarize(unlinked) : null;
 
-  const blocked = !!profile.data?.prefs?.doNotContact;
-  const preferred = profile.data?.prefs?.preferredMethod;
+  // Contact actions stay off until we know the customer's contact restrictions.
+  const contactState: "loading" | "error" | "ambiguous" | "blocked" | "ok" =
+    profile.isLoading ? "loading" : profile.isError || !profile.data ? "error"
+      : profile.data.linkAmbiguous ? "ambiguous" : profile.data.prefs?.doNotContact ? "blocked" : "ok";
+  const blocked = contactState !== "ok";
+  const preferred = contactState === "ok" ? usablePreference(profile.data?.prefs?.preferredMethod, customer) : null;
   const hasContact = !!(customer.phone || customer.secondary_phone || customer.email);
 
   return (
-    <div className="space-y-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+    <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-4 sm:px-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] space-y-6" data-testid="customer-detail-scroll">
       <SheetHeader className="text-left space-y-2 pr-10">
         <div className="flex items-center gap-2 flex-wrap">
           <span className={`text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border ${customer.source === "jobber" ? "border-border bg-secondary text-muted-foreground" : "border-primary/30 bg-primary/10 text-primary"}`}>
             {customer.source === "jobber" ? "Synced from Jobber" : "Added in app"}
           </span>
-          <span className="text-xs text-muted-foreground">Customer since {fmtDate(customer.created_at)}</span>
+          <span className="text-xs text-muted-foreground">{customer.source === "jobber" ? "Imported from Jobber" : "Added to the app"} {fmtDate(customer.created_at)}</span>
         </div>
         <SheetTitle className="font-display text-2xl leading-tight break-words">{customer.display_name}</SheetTitle>
         {customer.company_name && customer.company_name !== customer.display_name && (
@@ -296,10 +308,11 @@ export default function CustomerDetailPanel({
       </SheetHeader>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <Stat label="Properties" value={profile.isLoading ? "…" : profile.isError ? "Unavailable" : String(properties.length)} />
-        <Stat label="Completed visits" value={historyStatus === "ok" ? String(overall?.completed ?? 0) : historyStatus === "loading" ? "…" : "Unavailable"} />
-        <Stat label="Last service" value={historyStatus === "ok" ? (overall?.lastCompleted ? fmtDate(overall.lastCompleted.date) : "None recorded") : historyStatus === "loading" ? "…" : "Unavailable"} />
-        <Stat label="Next visit" value={historyStatus === "ok" ? (overall?.nextScheduled ? fmtDate(overall.nextScheduled.date) : "Not booked") : historyStatus === "loading" ? "…" : "Unavailable"} />
+        <ServiceStats
+          s={overall}
+          status={historyStatus}
+          extra={<Stat label="Properties" value={profile.isLoading ? "…" : profile.isError ? "Unavailable" : String(properties.length)} />}
+        />
       </div>
       {profile.isError && (
         <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm flex items-center justify-between gap-3">
@@ -309,8 +322,17 @@ export default function CustomerDetailPanel({
       )}
 
       <Section title="Contact" icon={<Phone className="w-3.5 h-3.5" />}
-        aside={preferred ? <span className="text-xs text-muted-foreground">Prefers {preferred}</span> : undefined}>
-        {blocked && (
+        aside={preferred ? <span className="text-xs text-muted-foreground">{preferred}</span> : undefined}>
+        {contactState === "loading" && hasContact && <p className="text-xs text-muted-foreground">Checking contact preferences… Call, text and email turn on in a moment.</p>}
+        {(contactState === "error" || contactState === "ambiguous") && hasContact && (
+          <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+            <span>{contactState === "error"
+              ? "Couldn't check whether this customer can be contacted, so call, text and email are off. Use Retry above."
+              : "This customer matches more than one record, so call, text and email are off until that's sorted out."} Copy still works.</span>
+          </div>
+        )}
+        {contactState === "blocked" && (
           <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm flex items-start gap-2">
             <Ban className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
             <span>Marked <strong>do not contact</strong>. Call, text and email buttons are turned off.</span>
@@ -383,10 +405,10 @@ export default function CustomerDetailPanel({
         <EditAddressDialog
           open
           onOpenChange={(o) => !o && setEditing(null)}
-          target={customer.source === "jobber" ? "jobber_property" : "platform_property"}
+          target={editing.kind}
           propertyId={editing.id}
           businessId={businessId}
-          customerId={customer.source === "jobber" ? null : customer.id}
+          customerId={editing.kind === "platform_property" ? editing.ownerCustomerId : null}
           initial={{ address_1: editing.street1 || "", city: editing.city, state: editing.state, zip: editing.zip, verified: editing.verified }}
           onSaved={() => qc.invalidateQueries({ queryKey: customerProfileKey(businessId, customer.source, customer.id) })}
         />
