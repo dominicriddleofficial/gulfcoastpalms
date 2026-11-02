@@ -38,6 +38,9 @@ const EMPTY: PropertyNotes = {
 export default function PropertyNotesForm({ customerId, businessId }: PropertyNotesFormProps) {
   const [notes, setNotes] = useState<PropertyNotes>(EMPTY);
   const [loading, setLoading] = useState(true);
+  // Save stays off until we know whether a notes row already exists.
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -45,6 +48,7 @@ export default function PropertyNotesForm({ customerId, businessId }: PropertyNo
     const fetch = async () => {
       setLoading(true);
       setNotes(EMPTY);
+      setLoadFailed(false);
       const { data, error } = await supabase
         .from("customer_property_notes")
         .select("*")
@@ -52,7 +56,11 @@ export default function PropertyNotesForm({ customerId, businessId }: PropertyNo
         .eq("business_id", businessId)
         .maybeSingle();
       if (cancelled) return;
-      if (error) toast.error("Couldn't load property notes");
+      if (error) {
+        setLoadFailed(true);
+        setLoading(false);
+        return;
+      }
       if (data) {
         setNotes({
           id: data.id,
@@ -70,9 +78,10 @@ export default function PropertyNotesForm({ customerId, businessId }: PropertyNo
     };
     fetch();
     return () => { cancelled = true; };
-  }, [customerId, businessId]);
+  }, [customerId, businessId, reloadKey]);
 
   const handleSave = async () => {
+    if (loading || loadFailed) return;
     setSaving(true);
     const payload = {
       customer_id: customerId,
@@ -88,12 +97,16 @@ export default function PropertyNotesForm({ customerId, businessId }: PropertyNo
     };
 
     if (notes.id) {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("customer_property_notes")
         .update(payload)
         .eq("id", notes.id)
-        .eq("business_id", businessId);
-      if (error) toast.error("Failed to save"); else toast.success("Property notes saved");
+        .eq("customer_id", customerId)
+        .eq("business_id", businessId)
+        .select("id");
+      if (error) toast.error("Failed to save");
+      else if (!data || data.length === 0) toast.error("Notes weren't saved — they may have been removed or you don't have access. Reload and try again.");
+      else toast.success("Property notes saved");
     } else {
       const { data, error } = await supabase
         .from("customer_property_notes")
@@ -111,6 +124,14 @@ export default function PropertyNotesForm({ customerId, businessId }: PropertyNo
   };
 
   if (loading) return <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />;
+  if (loadFailed) {
+    return (
+      <div className="flex items-center justify-between gap-3 text-sm">
+        <span className="text-muted-foreground">Couldn't load crew notes. Nothing was changed.</span>
+        <Button size="sm" variant="outline" className="min-h-11" onClick={() => setReloadKey((k) => k + 1)}>Retry</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
