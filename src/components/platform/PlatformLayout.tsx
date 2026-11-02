@@ -548,14 +548,14 @@ export default function PlatformLayout({ children }: Props) {
           </button>
           
           {/* Page context with business logo */}
-          <div className="flex min-w-0 items-center gap-2.5">
+          <div className="flex min-w-0 flex-1 items-center gap-2.5 md:flex-none">
             {selectedBiz && <SidebarBizLogo business={selectedBiz} />}
             <span className="font-display text-[14px] font-semibold text-foreground tracking-tight truncate">{pageTitle}</span>
             <span className="hidden md:inline text-muted-foreground/50">/</span>
             <span className="hidden md:inline font-body text-[12px] text-muted-foreground truncate">{contextLabel}</span>
           </div>
 
-          <div className="ml-auto flex min-w-0 justify-end md:flex-1 md:justify-center">
+          <div className="ml-auto flex shrink-0 justify-end md:flex-1 md:justify-center">
             <UniversalSearch businessId={auth.selectedBusinessId} />
           </div>
           <NotificationPanel />

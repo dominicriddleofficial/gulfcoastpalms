@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import UniversalSearch from "./UniversalSearch";
+import MobileSearchSheet from "./MobileSearchSheet";
 import { useUserRole } from "@/hooks/useUserRole";
 
 interface MoreItem {
@@ -266,42 +266,8 @@ export default function PlatformBottomNav({ businessId, onSignOut, workspaceShor
         </SheetContent>
       </Sheet>
 
-      {/* Search modal (mobile) */}
-      <Sheet open={searchOpen} onOpenChange={setSearchOpen}>
-        <SheetContent
-          side="top"
-          aria-describedby={undefined}
-          className="ops-theme p-0 h-auto max-h-[92vh] overflow-hidden border-0"
-          style={{
-            background: "#0e110f",
-            boxShadow: "0 24px 60px -20px rgba(0,0,0,0.7)",
-            borderBottom: "1px solid rgba(0,200,83,0.18)",
-          }}
-        >
-          <div
-            className="flex items-center justify-between px-4 pt-4 pb-3"
-            style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
-          >
-            <SheetTitle
-              className="font-display text-[15px] font-semibold tracking-tight"
-              style={{ color: "#f3f4f6" }}
-            >
-              Search
-            </SheetTitle>
-            <button
-              onClick={() => setSearchOpen(false)}
-              className="p-1.5 rounded-lg transition-colors"
-              style={{ color: "#9ca3af" }}
-              aria-label="Close search"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="px-4 pt-3 pb-4 overflow-y-auto max-h-[calc(92vh-56px)]">
-            <UniversalSearch businessId={businessId} autoOpen embedded />
-          </div>
-        </SheetContent>
-      </Sheet>
+      {/* Search (mobile) — shared with the header search button */}
+      <MobileSearchSheet open={searchOpen} onOpenChange={setSearchOpen} businessId={businessId} />
     </>
   );
 }
