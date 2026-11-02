@@ -74,9 +74,10 @@ export function rankFor(q: NormalizedQuery, fields: Array<string | null | undefi
     if (!f) continue;
     const v = f.toLowerCase();
     if (v === needle) return 0;
-    if (q.digits.length >= 4) {
-      const fd = f.replace(/\D/g, "");
-      if (fd && (fd === q.digits || fd.replace(/^0+/, "") === q.numberCore)) return 0;
+    const fd = f.replace(/\D/g, "");
+    if (fd) {
+      if (q.numberCore && fd.replace(/^0+(?=\d)/, "") === q.numberCore) return 0;
+      if (q.digits.length >= 7 && fd === q.digits) return 0;
     }
     if (v.startsWith(needle)) best = Math.min(best, 1);
   }

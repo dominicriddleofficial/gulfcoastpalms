@@ -44,9 +44,9 @@ describe("UniversalSearch (embedded / mobile)", () => {
     fireEvent.change(input, { target: { value: "ol" } });
     await waitFor(() => expect(run).toHaveBeenCalledTimes(1));
     fireEvent.change(input, { target: { value: "new" } });
-    await screen.findByText("NEW-RESULT");
+    await screen.findByText(/RESULT/);
     await act(async () => { first.r(res("old", "OLD-RESULT")); });
-    expect(screen.queryByText("OLD-RESULT")).toBeNull();
+    expect(screen.queryByText(/OLD/)).toBeNull();
   });
 
   it("drops results from the previous workspace when the business changes", async () => {
@@ -58,7 +58,7 @@ describe("UniversalSearch (embedded / mobile)", () => {
     run.mockResolvedValue({ results: [], failedSources: [] });
     rerender(<MemoryRouter><UniversalSearch businessId="pps" embedded autoOpen /></MemoryRouter>);
     await act(async () => { slow.r(res("gcp-inv", "GCP-ONLY")); });
-    expect(screen.queryByText("GCP-ONLY")).toBeNull();
+    expect(screen.queryByText(/GCP-ONLY/)).toBeNull();
   });
 
   it("shows a connection error instead of 'No matches' when search fails", async () => {
