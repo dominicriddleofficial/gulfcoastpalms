@@ -1,96 +1,89 @@
-## Findings
+# CRM A–Z audit (read-only) and next build batches
 
-### Problem 1 — Analytics revenue is empty for recent months
+Nothing was changed, sent, or written. Search and customer profile were left out because they're already done. Approving this plan only approves the build order below. Each batch still gets its own confirmation before any build starts.
 
-**Root cause: Analytics and the dashboard read from different tables.**
+## Coverage
 
-| Source | Used by | June 2026 jobs | June 2026 revenue |
+| Area | Code | Data (totals only) | Browser |
 |---|---|---|---|
-| `jobber_jobs` | Analytics page (`fetchAnalytics` in `PlatformAnalytics.tsx`) | **3** | **$150** |
-| `platform_jobs` (+ visits, deduped with `jobber_jobs`) | HOME dashboard (`useDashboardScheduledJobs`) | **75** | **$30,300** |
+| Leads, quotes, approval | yes | yes | no |
+| Climber reports and guest link | the conversion path only | no | no |
+| Jobs, visits, schedule, route | yes | yes | no |
+| Recurring contracts and services | yes | yes | no |
+| Invoices, payments, Stripe | yes | yes | no |
+| Texts, reviews, yearly reminders, scheduled jobs | yes | list of scheduled jobs | no |
+| Analytics and finance | yes | no | no |
+| Crew, offline, clock-ins, end-of-day | yes | clock-ins only | no |
+| Roles and business separation | screen rules only | no | no |
 
-Sub-findings (GCP, `business_id = b0000…0001`):
+I didn't run a signed-in browser pass this time.
 
-- `PlatformAnalytics.fetchAnalytics` queries **only** `jobber_jobs` (lines 119–127) plus the legacy `jobs`/`invoices` tables. It never touches `platform_jobs` / `platform_job_visits`.
-- `useDashboardScheduledJobs` (HOME) queries `platform_job_visits` + `platform_jobs` + `jobber_jobs` and dedupes by `source_record_id`.
-- Of the 75 platform_jobs in June 2026, **70 have `source_system = NULL`** (created natively in the app), and only 5 came from Jobber. Those 70 native jobs are completely invisible to Analytics.
-- Jobber sync is stale: `max(jobber_jobs.synced_at) = 2026-05-08`, `max(updated_at) = 2026-06-15`. So even the Jobber side hasn't been refreshed in ~5 weeks.
-- Full month-by-month comparison for 2026 confirms divergence starts in May:
+## Current numbers (GCP, read-only)
+- **37 invoices past their due date, $25,858.45 unpaid.** None of them is marked "overdue". No background job changes the status, and no automatic overdue reminder has ever gone out.
+- **930 past visits still say "scheduled"**, the oldest from May 12, 2025. 178 upcoming visits, and none has a crew assigned in the app.
+- 34 leads still "new" after more than 3 days. 6 leads came in the last 30 days, and none is linked to a quote.
+- 3 approved quotes have no job or invoice yet.
+- 112 visits have ever been marked complete. This fits your rule that crew never complete jobs.
+- Recurring services has 0 rows. The review-request auto-send job is turned off. All other scheduled jobs are on.
 
-```
-        jobber_jobs        platform_jobs
-month   count   revenue    count   revenue
-May     17      $9,844     45      $9,844
-Jun      3      $150       75      $30,300
-Jul      6      $1,270     12      $1,270
-```
+## A) Confirmed problems
 
-**Recommendation:** point Analytics at the same unified source the dashboard uses. Cleanest path: build a unified fetcher that pulls `platform_jobs` (filtered by `business_id`, `deleted_at IS NULL`, status not in archived/canceled/deleted) and unions any `jobber_jobs` whose `id` is not already referenced by `platform_jobs.source_record_id`. Treat `total` (platform) and `total_amount` (jobber) as the revenue field. Drop the legacy `jobs` / `invoices` fallback, or only use it for years where neither table has data (2024 historical). This will make the 2026 chart, "Best Month", "Avg Job Value", "Jobs Completed", Geographic, and Service-Type sections all match the dashboard immediately.
+**Critical (money)**
+1. **A failed Stripe payment can never be recovered.** If the first attempt to record a payment fails, every Stripe retry is treated as a duplicate and skipped. A customer can pay and the invoice stays unpaid. (`stripe-webhook/index.ts:60-78`, `:227-242`)
+2. **Stripe saves without checking for errors.** The payment record and the invoice update are saved without checking whether they worked, and the event is still marked a success. This can leave a payment with no record, or an invoice that's off. (`:133-175`)
+3. **Two payments at the same moment can overwrite each other.** Stripe and manual payments each read the amount paid, add to it and save. (`stripe-webhook:150-175`, `record-invoice-payment.ts:66-98`)
+4. **Refunds are only logged.** The invoice still shows the money as collected. (`stripe-webhook:199-204`)
 
-### Problem 2 — "Can't see how many people called or texted"
+**High**
+5. **Converting a quote to a job:**
+   - marks the deposit "collected" whenever one was required, even if nothing was paid
+   - puts the visit on **today's** date
+   - doesn't check whether the visit and quote saved, so a job can end up with no visit. (`platform-conversions.ts:87-111`)
+6. **Completing one visit completes the whole job,** even when the job has more visits. The status words also don't match: the job gets "completed" and the visit gets "complete". (`update-visit-status/index.ts:227-244`)
+7. **Offline "complete" and "start" changes skip the normal path,** so the schedule and the Jobber copy can stay open. (`offline/sync.ts:36-46`)
+8. **Yearly reminders that fail are never retried,** and a missed day loses that reminder window. (`process-yearly-reminders:71-107`)
+9. **Any signed-in user can text any number.** The texting function doesn't check the business, and the limit is per internet address. (`send-sms/index.ts:56-131`)
+10. **Invoices and payments are hidden on screen for managers, but the database still lets any business member read them.** (`PlatformRoutes.tsx:64-65` compared with the invoice and payment access rules)
 
-**Last 30 days, Gulf Coast Palms website:**
+**Medium**
+11. **Overdue is never worked out from the due date.** The overdue count and filter only read the saved status, so they show 0. (`usePlatformInvoices.ts:143-168`)
+12. **The Payments page total can count failed or pending rows.** (`usePlatformInvoices.ts:224-227`)
+13. **Recurring contracts make a job but no visit, crew or property,** so it never shows on the schedule. (`process-recurring-contracts:112-145`)
+14. **Route order ignores appointment times.** It just picks the closest stop next. (`RouteView.tsx:52-99`)
+15. **The money and analytics pages don't match:**
+    - Income counts only fully paid invoices, so deposits and part payments are missing.
+    - Analytics counts any past scheduled job as earned.
+16. **Turning a lead into a customer marks the lead "won"** before any quote is approved. (`platform-conversions.ts:16-54`)
+17. **Notifications show only the latest 20** and aren't limited to the business you have open.
 
-```
-event_name              count
-call_now_click          6
-text_us_click           14
-```
+Yearly rebooking: there's a nightly yearly-rebooking job, so rebooking may not depend only on jobs being marked complete. I didn't trace how that job picks customers.
 
-Per-page breakdown (what the widget shows today):
+## B) Built, but needs setup or better screens
+- An office **"close out the day"** screen. Past visits get marked done or skipped in bulk, then the next step comes up: invoice, rebook or review. This replaces depending on crew to complete jobs.
+- **Assign crew to visits.** All 178 upcoming visits are unassigned in the app.
+- Review requests stay manual. Add a "needs review request" list built from paid invoices.
+- Show the climber report → quote step on the report itself, with a customer/address check.
+- The **reconciliation** page exists. Add checks for the problems above, such as a payment with no matching invoice change.
 
-```
-call_now_click  /services/palm-tree-trimming  2
-                /quote                        2
-                /about                        1
-                /                             1
-text_us_click   /quote                        10
-                /services/palm-tree-trimming  2
-                /                             1
-                /palm-tree-cost               1
-```
+## C) Useful additions
+- **Collections:** automatic overdue status, a list of unpaid invoices grouped by how late they are, and reminder texts you approve one at a time.
+- **Speed-to-lead:** an alert for leads still "new" after 24 hours, and a reminder to follow up on quotes sent 7+ days ago.
+- A **rebooking list** for yearly-trimming customers who have no job next year.
+- Route order that respects appointment times.
 
-Findings:
+## Next build batches, in order
+1. **Payments you can trust:** fix items 1–4 and 12, and save each payment and its invoice update together.
+2. **Collections:** item 11, overdue status, the unpaid-by-lateness list and approved reminders.
+3. **Quote → job → close-out:** fix items 5 and 6, then build the office close-out screen and match the offline path (item 7).
+4. **Who can do what:** items 9 and 10, plus notifications per business.
+5. **Dispatch:** crew assignment, recurring visits that reach the schedule (item 13), and route order by appointment time.
+6. **Getting work in:** lead and quote follow-up alerts, and yearly rebooking reminders that retry (item 8).
 
-1. **The RankCard restyle renders correctly** — rows + magnitude bars come through fine (verified against `ConversionFunnelWidget.tsx` lines 234–294). Data is present, so the lists are not empty.
-2. **There is no glanceable total anywhere on the page.** Only the per-page list — no "20 total texts / 6 total calls" headline. That's almost certainly what the user is missing post-restyle (the previous funnel was probably more obvious at-a-glance).
-3. **Other call/text event names are not being counted.** The DB also has `phone_click`, `sticky_bar_call_click`, `sticky_bar_text_click` events being emitted (last 60d), but the widget only counts `call_now_click` and `text_us_click`. Including the sticky-bar variants will materially increase the totals.
-4. `analytics_events` still has no `business_id` column — these queries remain workspace-wide (acceptable today; GCP is the only public site emitting events).
-
-## Recommended Fix Plan
-
-### A. Unify Analytics revenue source (Problem 1)
-
-In `src/pages/platform/PlatformAnalytics.tsx`:
-
-1. Replace the `jobber_jobs`-only queries inside `fetchAnalytics` with a unified query helper:
-   - Pull `platform_jobs` rows for the year, filtered by `business_id`, `deleted_at IS NULL`, status not in (`archived`,`canceled`,`cancelled`,`deleted`,`draft`).
-   - Pull `jobber_jobs` rows for the year (same `business_id`, scheduled in range).
-   - Build a Set of `platform_jobs.source_record_id` values; drop any `jobber_jobs` whose `id` is in that Set (already imported).
-   - Map both into the existing `UnifiedJob` shape (`total` for platform, `total_amount` for jobber). Use `platform_jobs.title` and `platform_customers.display_name` for service/customer attribution where available; fall back to jobber fields.
-2. Apply the same union to `currentYear`, `prevYear`, `twoYearsAgo`, and `prevYearSamePeriod`.
-3. Keep the legacy `jobs`/`invoices` fallback only for **years strictly before the earliest year that has any platform/jobber data** (so 2024 historical still renders), to avoid double-counting 2025/2026.
-4. Re-verify against DB: after change, June 2026 should report 75 jobs / $30,300 to match the dashboard.
-
-No schema changes. No edits outside `PlatformAnalytics.tsx` (and possibly a small local helper).
-
-### B. Surface call/text totals (Problem 2)
-
-In `src/components/platform/ConversionFunnelWidget.tsx`:
-
-1. Extend `fetchFunnel` to also count `phone_click`, `sticky_bar_call_click`, `sticky_bar_text_click` and roll them into the call/text page lists and totals. Total calls = sum of `call_now_click + phone_click + sticky_bar_call_click`. Total texts = sum of `text_us_click + sticky_bar_text_click`.
-2. Add two prominent stat tiles above (or alongside) the existing Call/SMS RankCards: **Total Calls (30d)** and **Total Texts (30d)**, styled as the existing accent panels (`rgba(255,255,255,0.03)` bg, `--biz-accent-rgb` border, `font-display` big number, small "last 30 days" subtitle, Phone/MessageSquare icon).
-3. Optionally show a small delta vs. prior 30 days under each total.
-4. Keep the per-page RankCards underneath unchanged.
-
-No schema changes. Single-file edit.
-
-### Verification
-
-- After A: re-run the month-by-month query above; Analytics 2026 chart should match dashboard counts.
-- After B: 30-day totals should read approximately Calls ≈ 6+ (plus any sticky-bar / phone_click hits) and Texts ≈ 14+.
-
-## Out of scope
-
-- Re-enabling / fixing the Jobber sync schedule (separate concern; data is fine without it once Analytics reads `platform_jobs`).
-- Adding `business_id` to `analytics_events` (would be a larger migration).
+## Not checked
+- Whether Stripe failures have actually happened in live data.
+- The live database access rules.
+- The full security of the climber guest link.
+- How the nightly yearly-rebooking job works.
+- Jobber two-way sync accuracy.
+- Imports.
+- Any signed-in browser walkthrough.
