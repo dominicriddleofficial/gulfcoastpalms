@@ -104,4 +104,16 @@ describe("runUniversalSearch", () => {
     const { results } = await runUniversalSearch(c, "biz", "Main", { isOwner: false, allowedTypes: ALL });
     expect(results.find((r) => r.type === "property")).toBeUndefined();
   });
+  it("follows page permissions: managers never query invoices or crew; crew queries nothing", async () => {
+    expect([...allowedSearchTypes("manager")].sort()).toEqual(["customer", "job", "lead", "property", "quote"]);
+    expect(allowedSearchTypes("crew").size).toBe(0);
+    expect(allowedSearchTypes(null).size).toBe(0);
+    expect(allowedSearchTypes("office_manager").has("invoice")).toBe(true);
+    const c = mockClient({ platform_invoices: [{ id: "i1", invoice_number: "GCP-I-000018" }] });
+    const { results } = await runUniversalSearch(c, "biz", "18", { isOwner: false, allowedTypes: allowedSearchTypes("manager") });
+    const tables = c.calls.map((x) => x.table);
+    expect(tables).not.toContain("platform_invoices");
+    expect(tables).not.toContain("platform_crew_members");
+    expect(results.find((r) => r.type === "invoice")).toBeUndefined();
+  });
 });
