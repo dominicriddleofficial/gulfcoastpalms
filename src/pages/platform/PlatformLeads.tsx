@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import type { PlatformLead } from "@/hooks/usePlatformLeads";
 
 import { useRecordDeepLink, useClearOnClose, type DeepLinkTarget } from "@/hooks/useRecordDeepLink";
+import { supabase } from "@/integrations/supabase/client";
 import DeepLinkNotice from "@/components/platform/DeepLinkNotice";
 
 function LeadStatusBadge({ status }: { status: string }) {
