@@ -99,7 +99,7 @@ function KPICard({ icon: Icon, label, value, color }: { icon: React.ComponentTyp
 
 async function fetchQuoteRecord(t: DeepLinkTarget, businessId: string): Promise<PlatformQuote | null> {
   const { data, error } = await supabase.from("platform_quotes").select("*")
-    .eq("id", t.id).eq("business_id", businessId).maybeSingle();
+    .eq("id", t.id).eq("business_id", businessId).is("deleted_at", null).maybeSingle();
   if (error) throw error;
   if (!data) return null;
   let name = "";

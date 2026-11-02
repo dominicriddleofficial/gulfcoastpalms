@@ -44,7 +44,7 @@ import DeepLinkNotice from "@/components/platform/DeepLinkNotice";
 async function fetchInvoiceRecord(t: DeepLinkTarget, businessId: string): Promise<PlatformInvoice | null> {
   const { data, error } = await supabase.from("platform_invoices")
     .select("*, platform_customers(display_name), platform_properties(address_1, city), platform_jobs(job_number)")
-    .eq("id", t.id).eq("business_id", businessId).maybeSingle();
+    .eq("id", t.id).eq("business_id", businessId).is("deleted_at", null).maybeSingle();
   if (error) throw error;
   if (!data) return null;
   const inv = data as unknown as PlatformInvoice & {
