@@ -196,7 +196,7 @@ export default function PlatformCustomers() {
 
       {/* Detail drawer */}
       <Sheet open={!!visibleCustomer} onOpenChange={(open) => !open && closeCustomer()}>
-        <SheetContent className="ops-theme flex flex-col p-0 w-full max-w-full sm:max-w-2xl bg-background text-foreground border-border overflow-hidden [&>button]:z-10 [&>button]:top-[max(0.5rem,env(safe-area-inset-top))] [&>button]:right-2 [&>button]:p-3 [&>button]:rounded-full [&>button]:bg-secondary [&>button]:opacity-100">
+        <SheetContent className="ops-theme flex flex-col p-0 w-full max-w-full sm:max-w-2xl bg-background text-foreground border-border overflow-hidden [&>button]:z-10 [&>button]:top-[max(0.5rem,env(safe-area-inset-top))] [&>button]:right-2 [&>button]:p-3.5 [&>button]:rounded-full [&>button]:bg-secondary [&>button]:opacity-100">
           {visibleCustomer && selectedBusinessId && <CustomerDetailPanel key={`${selectedBusinessId}-${visibleCustomer.source}-${visibleCustomer.id}`} customer={visibleCustomer} businessId={selectedBusinessId} focusPropertyId={focusPropertyId} />}
         </SheetContent>
       </Sheet>
