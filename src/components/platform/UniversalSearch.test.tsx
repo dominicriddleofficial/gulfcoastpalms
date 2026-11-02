@@ -31,7 +31,7 @@ describe("UniversalSearch (embedded / mobile)", () => {
     const onNavigate = vi.fn();
     render(<MemoryRouter initialEntries={["/platform/invoices"]}><UniversalSearch businessId="biz" embedded autoOpen onNavigate={onNavigate} /><Loc /></MemoryRouter>);
     fireEvent.change(screen.getByLabelText("Search records"), { target: { value: "18" } });
-    fireEvent.click(await screen.findByText(/GCP-I-000018/));
+    fireEvent.click(await screen.findByRole("option"));
     expect(screen.getByTestId("loc").textContent).toBe("/platform/invoices?open=inv-1");
     expect(onNavigate).toHaveBeenCalledTimes(1);
   });
