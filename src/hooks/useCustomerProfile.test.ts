@@ -39,6 +39,7 @@ const NOW = new Date("2026-11-02T15:00:00Z");
 beforeEach(() => {
   calls.length = 0;
   for (const k of Object.keys(db)) delete db[k];
+  db.businesses = [{ id: BIZ, timezone: "America/Chicago" }];
   db.jobber_clients = [{ id: JC, jobber_id: "EXT-1", business_id: BIZ }];
   // Linked by INTERNAL id (one of the 3 production profiles of this shape).
   db.platform_customers = [
@@ -96,7 +97,7 @@ describe("fetchCustomerProfile linkage", () => {
     const j = await fetchCustomerProfile("jobber", JC, BIZ, NOW);
     expect(j.prefs).not.toBeNull();
     expect(j.events.some((e) => e.jobId === "jj-x")).toBe(false);
-    for (const c of calls) expect(c.filters).toContain(`business_id=${BIZ}`);
+    for (const c of calls) expect(c.filters).toContain(c.table === "businesses" ? `id=${BIZ}` : `business_id=${BIZ}`);
   });
 
   it("rejects ambiguous links instead of guessing", async () => {
