@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  jobberJobEvents, platformJobEvents,
+  jobberJobEvents, platformJobEvents, DEFAULT_BUSINESS_TZ,
   type JobberJobRow, type PlatformJobRow, type PlatformVisitRow, type ServiceEvent,
 } from "@/lib/customers/customerDetail";
 
@@ -34,7 +34,14 @@ export type CustomerProfile = {
   prefs: ContactPrefs | null;
   /** True when more than one record matched; contact stays off rather than guessing. */
   linkAmbiguous: boolean;
+  /** Business time zone used to read booked visit times. */
+  timeZone: string;
 };
+
+function validTz(tz: string | null | undefined): string | null {
+  if (!tz) return null;
+  try { new Intl.DateTimeFormat("en-US", { timeZone: tz }); return tz; } catch { return null; }
+}
 
 type Page<T> = { data: T[] | null; error: { message: string } | null };
 const PAGE = 1000;
@@ -98,7 +105,7 @@ async function resolveIdentity(source: "jobber" | "platform", id: string, busine
 }
 
 const PJ_COLS = "id, job_number, title, status, property_id, scheduled_start, completed_at, deleted_at, source_system, source_record_id";
-const PV_COLS = "id, job_id, property_id, status, scheduled_date, actual_start_at, actual_end_at";
+const PV_COLS = "id, job_id, property_id, status, scheduled_date, scheduled_start_time, actual_start_at, actual_end_at";
 type PJ = PlatformJobRow & { source_system: string | null; source_record_id: string | null };
 type PP = {
   id: string; property_label: string | null; address_1: string | null; address_2: string | null; city: string | null;
@@ -114,7 +121,11 @@ type JP = {
 export async function fetchCustomerProfile(
   source: "jobber" | "platform", customerId: string, businessId: string, now = new Date(),
 ): Promise<CustomerProfile> {
-  const ident = await resolveIdentity(source, customerId, businessId);
+  const [ident, bizRes] = await Promise.all([
+    resolveIdentity(source, customerId, businessId),
+    supabase.from("businesses").select("timezone").eq("id", businessId).maybeSingle(),
+  ]);
+  const timeZone = validTz(bizRes.data?.timezone) ?? DEFAULT_BUSINESS_TZ;
   const jc = ident.jobber;
   const pc = ident.platform;
 
@@ -194,8 +205,8 @@ export async function fetchCustomerProfile(
   }
 
   const events = [
-    ...jobberJobEvents(jJobs, completedAt, now, mapJobber),
-    ...platformJobEvents(keptJobs, visits, now, mapPlatform),
+    ...jobberJobEvents(jJobs, completedAt, now, mapJobber, timeZone),
+    ...platformJobEvents(keptJobs, visits, now, mapPlatform, timeZone),
   ];
 
   return {
@@ -203,6 +214,7 @@ export async function fetchCustomerProfile(
     events,
     prefs: pc ? { doNotContact: !!pc.do_not_contact_flag, preferredMethod: pc.preferred_contact_method } : null,
     linkAmbiguous: ident.ambiguous,
+    timeZone,
   };
 }
 
