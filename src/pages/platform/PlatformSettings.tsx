@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { toast as sonnerToast } from "sonner";
 import { format } from "date-fns";
 import TeamMembersSection from "@/components/platform/settings/TeamMembersSection";
+import CrewMembersSection from "@/components/platform/settings/CrewMembersSection";
 import { CrewTrackingSection } from "@/components/platform/settings/CrewTrackingSection";
 import DataExportSection from "@/components/platform/settings/DataExportSection";
 import ReviewRequestTextSection from "@/components/platform/settings/ReviewRequestTextSection";
@@ -121,6 +122,8 @@ export default function PlatformSettings() {
 
             {/* Team Members (owner-only — handled inside the component) */}
             <TeamMembersSection />
+
+            <CrewMembersSection businessId={selectedBusinessId} />
 
             {/* Crew Tracking */}
             <div id="crew-tracking">

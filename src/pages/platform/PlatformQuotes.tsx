@@ -31,6 +31,9 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { buildQuoteMessage, getQuotePublicUrl, copyTextToClipboard } from "@/lib/quote-message";
 
+import { useRecordDeepLink, useClearOnClose, type DeepLinkTarget } from "@/hooks/useRecordDeepLink";
+import DeepLinkNotice from "@/components/platform/DeepLinkNotice";
+
 /**
  * Promote a draft quote to "sent" then build its customer-ready message.
  * Shared by the list row action and the detail panel so there is exactly one
@@ -94,6 +97,19 @@ function KPICard({ icon: Icon, label, value, color }: { icon: React.ComponentTyp
   );
 }
 
+async function fetchQuoteRecord(t: DeepLinkTarget, businessId: string): Promise<PlatformQuote | null> {
+  const { data, error } = await supabase.from("platform_quotes").select("*")
+    .eq("id", t.id).eq("business_id", businessId).maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  let name = "";
+  if (data.customer_id) {
+    const { data: c } = await supabase.from("platform_customers").select("display_name").eq("id", data.customer_id).maybeSingle();
+    name = c?.display_name ?? "";
+  }
+  return { ...data, customer_name: data.billing_name || name || "Unknown", customer_display_name: name } as unknown as PlatformQuote;
+}
+
 export default function PlatformQuotes() {
   const { selectedBusinessId, businesses } = usePlatformAuth();
   const navigate = useNavigate();
@@ -104,6 +120,15 @@ export default function PlatformQuotes() {
 
   const [selectedQuote, setSelectedQuote] = useState<PlatformQuote | null>(null);
   const [manualCopyText, setManualCopyText] = useState<string | null>(null);
+  const deepLink = useRecordDeepLink<PlatformQuote>({
+    businessId: selectedBusinessId,
+    listLoading: loading,
+    findInList: (t) => quotes.find((q) => q.id === t.id),
+    fetchOne: fetchQuoteRecord,
+    onOpen: (q) => setSelectedQuote(q),
+    onClear: () => setSelectedQuote(null),
+  });
+  useClearOnClose(selectedQuote, deepLink.clear);
   const { createdTick } = useCreateSheets();
   useEffect(() => { refetch(); }, [createdTick, refetch]);
 
@@ -163,6 +188,7 @@ export default function PlatformQuotes() {
     <PlatformLayout>
       {getBiz(selectedBusinessId || "")?.shortcode.toUpperCase() === "GCP" && <QuotesSectionNav />}
       <div className="space-y-4">
+        <DeepLinkNotice status={deepLink.status} label="quote" onDismiss={deepLink.clear} />
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-display text-xl font-bold text-foreground tracking-tight">Quotes</h1>

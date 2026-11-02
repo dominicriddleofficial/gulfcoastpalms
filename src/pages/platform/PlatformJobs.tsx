@@ -42,6 +42,9 @@ import EditAddressDialog from "@/components/platform/EditAddressDialog";
 import VisitTimer from "@/components/platform/jobs/VisitTimer";
 import { platformJobsListKey, fetchPlatformJobsList } from "@/hooks/usePlatformJobsList";
 
+import { useRecordDeepLink, useClearOnClose, type DeepLinkTarget } from "@/hooks/useRecordDeepLink";
+import DeepLinkNotice from "@/components/platform/DeepLinkNotice";
+
 type JobberJob = {
   id: string;
   jobber_id: string;
@@ -87,6 +90,40 @@ function JobStatusBadge({ job }: { job: JobberJob }) {
   );
 }
 
+/** Load one job directly (outside list filters / archived exclusions), scoped to the business. */
+async function fetchJobRecord(t: DeepLinkTarget, businessId: string): Promise<JobberJob | null> {
+  if (t.source === "jobber") {
+    const { data, error } = await supabase.from("jobber_jobs")
+      .select("id, jobber_id, title, status, visit_status, scheduled_start, scheduled_end, client_name, client_phone, property_address, assigned_employee_names, internal_notes, job_number, total_amount, business_id")
+      .eq("id", t.id).eq("business_id", businessId).maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+    return {
+      ...data, jobber_id: data.jobber_id ?? data.id, status: data.status ?? "scheduled",
+      total_amount: data.total_amount == null ? null : Number(data.total_amount),
+      source: "jobber", missing_address: !data.property_address?.trim(),
+    };
+  }
+  const { data, error } = await supabase.from("platform_jobs")
+    .select("id, title, status, scheduled_start, scheduled_end, internal_notes, job_number, total, business_id, customer_id, property_id")
+    .eq("id", t.id).eq("business_id", businessId).is("deleted_at", null).maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  const [cust, prop] = await Promise.all([
+    data.customer_id ? supabase.from("platform_customers").select("display_name, phone").eq("id", data.customer_id).maybeSingle() : Promise.resolve({ data: null }),
+    data.property_id ? supabase.from("platform_properties").select("address_1, city").eq("id", data.property_id).maybeSingle() : Promise.resolve({ data: null }),
+  ]);
+  const address = [prop.data?.address_1?.trim(), prop.data?.city?.trim()].filter(Boolean).join(", ") || null;
+  return {
+    id: data.id, jobber_id: "", title: data.title, status: data.status ?? "scheduled", visit_status: null,
+    scheduled_start: data.scheduled_start, scheduled_end: data.scheduled_end,
+    client_name: cust.data?.display_name ?? null, client_phone: cust.data?.phone ?? null,
+    property_address: address, assigned_employee_names: null, internal_notes: data.internal_notes,
+    job_number: data.job_number, total_amount: data.total == null ? null : Number(data.total),
+    business_id: data.business_id, source: "platform", missing_address: !address,
+  };
+}
+
 export default function PlatformJobs() {
   const { selectedBusinessId, businesses } = usePlatformAuth();
   const { open: openSheet, createdTick } = useCreateSheets();
@@ -104,6 +141,16 @@ export default function PlatformJobs() {
   });
   const jobs: JobberJob[] = (jobsQuery.data ?? []) as JobberJob[];
   const loading = jobsQuery.isLoading;
+
+  const deepLink = useRecordDeepLink<JobberJob>({
+    businessId: selectedBusinessId,
+    listLoading: loading,
+    findInList: (t) => jobs.find((j) => j.id === t.id && (j.source ?? "jobber") === t.source),
+    fetchOne: fetchJobRecord,
+    onOpen: (j) => setSelectedJob(j),
+    onClear: () => setSelectedJob(null),
+  });
+  useClearOnClose(selectedJob, deepLink.clear);
 
   // Invalidate on cross-component creation/mutation broadcast.
   useEffect(() => {
@@ -147,6 +194,7 @@ export default function PlatformJobs() {
   return (
     <PlatformLayout>
       <div className="space-y-4">
+        <DeepLinkNotice status={deepLink.status} label="job" onDismiss={deepLink.clear} />
         <div className="flex items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2 flex-wrap">

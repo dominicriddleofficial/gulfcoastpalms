@@ -38,6 +38,28 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+
+import { useRecordDeepLink, useClearOnClose, type DeepLinkTarget } from "@/hooks/useRecordDeepLink";
+import DeepLinkNotice from "@/components/platform/DeepLinkNotice";
+async function fetchInvoiceRecord(t: DeepLinkTarget, businessId: string): Promise<PlatformInvoice | null> {
+  const { data, error } = await supabase.from("platform_invoices")
+    .select("*, platform_customers(display_name), platform_properties(address_1, city), platform_jobs(job_number)")
+    .eq("id", t.id).eq("business_id", businessId).maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  const inv = data as unknown as PlatformInvoice & {
+    platform_customers?: { display_name: string | null } | null;
+    platform_properties?: { address_1: string | null; city: string | null } | null;
+    platform_jobs?: { job_number: string | null } | null;
+  };
+  return {
+    ...inv,
+    customer_name: inv.billing_name || inv.platform_customers?.display_name || null,
+    property_address: inv.platform_properties ? `${inv.platform_properties.address_1}, ${inv.platform_properties.city}` : null,
+    job_number: inv.platform_jobs?.job_number || null,
+  } as PlatformInvoice;
+}
+
 export default function PlatformInvoices() {
   type PlatformInvoiceUpdate = Database["public"]["Tables"]["platform_invoices"]["Update"];
 
@@ -52,6 +74,15 @@ export default function PlatformInvoices() {
   const [paidInvoice, setPaidInvoice] = useState<PlatformInvoice | null>(null);
   const [savingPayment, setSavingPayment] = useState(false);
   const paymentPending = useRef(false);
+  const deepLink = useRecordDeepLink<PlatformInvoice>({
+    businessId: selectedBusinessId,
+    listLoading: loading,
+    findInList: (t) => invoices.find((i) => i.id === t.id),
+    fetchOne: fetchInvoiceRecord,
+    onOpen: (i) => setSelectedInvoice(i),
+    onClear: () => setSelectedInvoice(null),
+  });
+  useClearOnClose(selectedInvoice, deepLink.clear);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -236,6 +267,7 @@ export default function PlatformInvoices() {
   return (
     <PlatformLayout>
       <div className="space-y-4">
+        <DeepLinkNotice status={deepLink.status} label="invoice" onDismiss={deepLink.clear} />
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
