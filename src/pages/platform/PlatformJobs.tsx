@@ -194,6 +194,7 @@ export default function PlatformJobs() {
   return (
     <PlatformLayout>
       <div className="space-y-4">
+        <DeepLinkNotice status={deepLink.status} label="job" onDismiss={deepLink.clear} />
         <div className="flex items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2 flex-wrap">

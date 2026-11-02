@@ -84,6 +84,7 @@ export default function PlatformLeads() {
   return (
     <PlatformLayout>
       <div className="space-y-4">
+        <DeepLinkNotice status={deepLink.status} label="lead" onDismiss={deepLink.clear} />
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
