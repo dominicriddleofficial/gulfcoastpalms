@@ -188,6 +188,7 @@ export default function PlatformQuotes() {
     <PlatformLayout>
       {getBiz(selectedBusinessId || "")?.shortcode.toUpperCase() === "GCP" && <QuotesSectionNav />}
       <div className="space-y-4">
+        <DeepLinkNotice status={deepLink.status} label="quote" onDismiss={deepLink.clear} />
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-display text-xl font-bold text-foreground tracking-tight">Quotes</h1>
