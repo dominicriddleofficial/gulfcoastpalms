@@ -89,6 +89,7 @@ export default function PlatformCustomers() {
     listLoading: loading,
     findInList: (t) => customers.find((c) => c.id === t.id && c.source === t.source),
     fetchOne: fetchCustomerRecord,
+    identify: (c) => ({ id: c.id, businessId: c.business_id, source: c.source }),
     onOpen: (c, t) => { setFocusPropertyId(t.propertyId); setSelectedCustomer(c); },
     onClear: () => setSelectedCustomer(null),
   });

@@ -9,7 +9,8 @@ import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import { useRecentActivity, type RecentActivityItem } from "@/hooks/useRecentActivity";
-import { runUniversalSearch, recordPath, type SearchResult } from "@/lib/search/universalSearch";
+import { runUniversalSearch, recordPath, allowedSearchTypes, type SearchResult } from "@/lib/search/universalSearch";
+import { useUserRole } from "@/hooks/useUserRole";
 import MobileSearchSheet from "./MobileSearchSheet";
 
 const JOB_STATUS_MAP: Record<string, { bg: string; text: string; label: string }> = {
@@ -174,7 +175,12 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
   const requestSeq = useRef(0);
   const navigate = useNavigate();
   const { isOwner } = usePlatformAuth();
-  const { data: recentActivity = [], isLoading: activityLoading } = useRecentActivity({ businessId, isOwner });
+  const { role } = useUserRole();
+  // Only offer record types whose page this role can open (mirrors PlatformRoutes).
+  const allowedKey = [...allowedSearchTypes(role)].sort().join(",");
+  const allowedTypes = useMemo(() => new Set(allowedKey ? allowedKey.split(",") : []) as Set<SearchResult["type"]>, [allowedKey]);
+  const { data: rawActivity = [], isLoading: activityLoading } = useRecentActivity({ businessId, isOwner });
+  const recentActivity = useMemo(() => rawActivity.filter((i) => allowedTypes.has(i.kind)), [rawActivity, allowedTypes]);
 
   const isDesktop = () => typeof window === "undefined" || !window.matchMedia || window.matchMedia("(min-width: 768px)").matches;
 
@@ -215,14 +221,16 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
     const q = query.trim();
     const seq = ++requestSeq.current;
     setActiveIndex(-1);
-    if (q.length < 2 || !businessId) { setResults([]); setLoading(false); setError("none"); return; }
+    // Invalidate the previous query's results immediately so they can't be selected.
+    setResults([]); setError("none");
+    if (q.length < 2 || !businessId || allowedTypes.size === 0) { setLoading(false); return; }
     setLoading(true);
     const timer = setTimeout(async () => {
       try {
-        const out = await runUniversalSearch(supabase, businessId, q, { isOwner });
+        const out = await runUniversalSearch(supabase, businessId, q, { isOwner, allowedTypes });
         if (seq !== requestSeq.current) return; // stale response
         setResults(out.results);
-        setError(out.failedSources.length === 0 ? "none" : out.failedSources.length >= 10 ? "total" : "partial");
+        setError(out.failedSources.length === 0 ? "none" : out.failedSources.length >= out.attempted ? "total" : "partial");
       } catch {
         if (seq !== requestSeq.current) return;
         setResults([]); setError("total");
@@ -231,7 +239,7 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
       }
     }, DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [query, businessId, isOwner]);
+  }, [query, businessId, isOwner, allowedTypes]);
 
   const go = useCallback((path: string) => {
     setOpen(false);
@@ -280,7 +288,8 @@ export default function UniversalSearch({ businessId, autoOpen = false, embedded
       else { setOpen(false); inputRef.current?.blur(); }
       return;
     }
-    if (!flat.length) return;
+    // Ignore selection until results belong to the query currently typed.
+    if (loading || !flat.length) return;
     if (e.key === "ArrowDown") { e.preventDefault(); setActiveIndex((i) => (i + 1) % flat.length); }
     else if (e.key === "ArrowUp") { e.preventDefault(); setActiveIndex((i) => (i <= 0 ? flat.length - 1 : i - 1)); }
     else if (e.key === "Enter") {

@@ -12,9 +12,11 @@ export default function CrewMembersSection({ businessId }: { businessId: string 
   const focusRef = useRef<HTMLLIElement | null>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
 
-  const { data = [], isLoading, isError } = useQuery({
+  const { data: rawData, isLoading: queryLoading, isError, isPlaceholderData } = useQuery({
     queryKey: ["platform-crew-members", businessId],
     enabled: !!businessId,
+    // Never show the previous workspace's roster while this one loads.
+    placeholderData: undefined,
     queryFn: async () => {
       const { data, error } = await supabase.from("platform_crew_members")
         .select("id, display_name, role, phone, email, status")
@@ -24,6 +26,8 @@ export default function CrewMembersSection({ businessId }: { businessId: string 
       return data ?? [];
     },
   });
+  const data = isPlaceholderData ? [] : rawData ?? [];
+  const isLoading = queryLoading || isPlaceholderData;
 
   useEffect(() => {
     if (!focusId || isLoading) return;

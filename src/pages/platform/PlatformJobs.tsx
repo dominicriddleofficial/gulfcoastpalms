@@ -147,10 +147,11 @@ export default function PlatformJobs() {
     listLoading: loading,
     findInList: (t) => jobs.find((j) => j.id === t.id && (j.source ?? "jobber") === t.source),
     fetchOne: fetchJobRecord,
+    identify: (j) => ({ id: j.id, businessId: j.business_id, source: j.source === "platform" ? "platform" : "jobber" }),
     onOpen: (j) => setSelectedJob(j),
     onClear: () => setSelectedJob(null),
   });
-  useClearOnClose(selectedJob, deepLink.clear);
+  useClearOnClose(selectedJob, deepLink);
 
   // Invalidate on cross-component creation/mutation broadcast.
   useEffect(() => {

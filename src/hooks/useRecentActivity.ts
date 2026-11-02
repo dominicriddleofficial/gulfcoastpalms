@@ -36,6 +36,7 @@ export function useRecentActivity({ businessId, isOwner }: Params) {
           "id, job_number, title, status, created_at, created_by_user_id, source_system, scheduled_start"
         )
         .eq("business_id", businessId)
+        .is("deleted_at", null)
         .order("created_at", { ascending: false })
         .limit(15);
 
@@ -46,6 +47,7 @@ export function useRecentActivity({ businessId, isOwner }: Params) {
               "id, invoice_number, total, status, created_at, created_by_user_id"
             )
             .eq("business_id", businessId)
+        .is("deleted_at", null)
             .order("created_at", { ascending: false })
             .limit(15)
         : Promise.resolve({ data: [] as Array<Record<string, unknown>>, error: null });
@@ -57,6 +59,7 @@ export function useRecentActivity({ businessId, isOwner }: Params) {
               "id, quote_number, total, status, created_at, created_by_user_id"
             )
             .eq("business_id", businessId)
+        .is("deleted_at", null)
             .order("created_at", { ascending: false })
             .limit(15)
         : Promise.resolve({ data: [] as Array<Record<string, unknown>>, error: null });

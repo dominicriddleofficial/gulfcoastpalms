@@ -99,7 +99,7 @@ function KPICard({ icon: Icon, label, value, color }: { icon: React.ComponentTyp
 
 async function fetchQuoteRecord(t: DeepLinkTarget, businessId: string): Promise<PlatformQuote | null> {
   const { data, error } = await supabase.from("platform_quotes").select("*")
-    .eq("id", t.id).eq("business_id", businessId).maybeSingle();
+    .eq("id", t.id).eq("business_id", businessId).is("deleted_at", null).maybeSingle();
   if (error) throw error;
   if (!data) return null;
   let name = "";
@@ -125,10 +125,11 @@ export default function PlatformQuotes() {
     listLoading: loading,
     findInList: (t) => quotes.find((q) => q.id === t.id),
     fetchOne: fetchQuoteRecord,
+    identify: (q) => ({ id: q.id, businessId: q.business_id, source: "platform" }),
     onOpen: (q) => setSelectedQuote(q),
     onClear: () => setSelectedQuote(null),
   });
-  useClearOnClose(selectedQuote, deepLink.clear);
+  useClearOnClose(selectedQuote, deepLink);
   const { createdTick } = useCreateSheets();
   useEffect(() => { refetch(); }, [createdTick, refetch]);
 
