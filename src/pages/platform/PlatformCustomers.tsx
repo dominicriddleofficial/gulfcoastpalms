@@ -16,8 +16,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import PropertyNotesForm from "@/components/platform/customers/PropertyNotesForm";
-import RecurringContractForm from "@/components/platform/customers/RecurringContractForm";
+import CustomerDetailPanel from "@/components/platform/customers/detail/CustomerDetailPanel";
 import { toast } from "@/hooks/use-toast";
 import EditAddressDialog from "@/components/platform/EditAddressDialog";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -189,8 +188,8 @@ export default function PlatformCustomers() {
 
       {/* Detail drawer */}
       <Sheet open={!!selectedCustomer} onOpenChange={(open) => !open && closeCustomer()}>
-        <SheetContent className="w-full sm:max-w-lg bg-card border-border overflow-y-auto">
-          {selectedCustomer && <CustomerDetail key={`${selectedCustomer.source}-${selectedCustomer.id}`} customer={selectedCustomer} focusPropertyId={focusPropertyId} />}
+        <SheetContent className="ops-theme w-full max-w-full sm:max-w-2xl bg-background text-foreground border-border overflow-y-auto overflow-x-hidden px-4 sm:px-6 pt-[max(1.5rem,env(safe-area-inset-top))]">
+          {selectedCustomer && selectedBusinessId && <CustomerDetailPanel key={`${selectedBusinessId}-${selectedCustomer.source}-${selectedCustomer.id}`} customer={selectedCustomer} businessId={selectedBusinessId} focusPropertyId={focusPropertyId} />}
         </SheetContent>
       </Sheet>
 
@@ -319,191 +318,6 @@ function CreateCustomerForm({ businesses, selectedBusinessId, onCreated }: {
           {submitting ? "Creating..." : "Create Customer"}
         </Button>
       </form>
-    </>
-  );
-}
-
-function CustomerDetail({ customer, focusPropertyId = null }: { customer: UnifiedCustomer; focusPropertyId?: string | null }) {
-  const { selectedBusinessId } = usePlatformAuth();
-  const { isStaff } = useUserRole();
-  const [properties, setProperties] = useState<JobberProperty[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<JobberProperty | null>(null);
-  const [prefersCheck, setPrefersCheck] = useState(false);
-
-  useEffect(() => {
-    if (customer.source === "jobber") return;
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase
-        .from("platform_customers")
-        .select("prefers_check")
-        .eq("id", customer.id)
-        .maybeSingle();
-      if (!cancelled) setPrefersCheck(!!data?.prefers_check);
-    })();
-    return () => { cancelled = true; };
-  }, [customer.id, customer.source]);
-
-  const togglePrefersCheck = async (value: boolean) => {
-    setPrefersCheck(value);
-    const { error } = await supabase
-      .from("platform_customers")
-      .update({ prefers_check: value })
-      .eq("id", customer.id);
-    if (error) {
-      setPrefersCheck(!value);
-      toast({ title: "Could not update", description: error.message, variant: "destructive" });
-    }
-  };
-
-  const fetchProperties = async () => {
-      setLoading(true);
-      if (customer.source === "jobber") {
-        const { data } = await supabase
-          .from("jobber_properties")
-          .select("id, street1, street2, city, state, zip, country, address_verified")
-          .eq("client_id", customer.id)
-          .order("created_at", { ascending: false });
-        setProperties((data as JobberProperty[]) || []);
-      } else {
-        const { data } = await supabase
-          .from("platform_properties")
-          .select("id, address_1, address_2, city, state, zip, country, address_verified")
-          .eq("customer_id", customer.id)
-          .order("created_at", { ascending: false });
-        setProperties(((data || []) as any[]).map(p => ({
-          id: p.id, street1: p.address_1, street2: p.address_2,
-          city: p.city, state: p.state, zip: p.zip, country: p.country,
-          address_verified: p.address_verified,
-        })));
-      }
-      setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchProperties();
-  }, [customer.id, customer.source]);
-
-  return (
-    <>
-      <SheetHeader>
-        <SheetTitle className="font-display flex items-center gap-2 flex-wrap">
-          {customer.display_name}
-          {customer.source === "jobber" ? (
-            <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-accent/40 text-accent-foreground border border-accent">Jobber</span>
-          ) : (
-            <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">Manual</span>
-          )}
-        </SheetTitle>
-      </SheetHeader>
-
-      <div className="mt-6 space-y-6">
-        <div className="space-y-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Contact</h3>
-          {customer.phone && <p className="text-sm flex items-center gap-2"><Phone className="w-4 h-4 text-muted-foreground" /> {customer.phone}</p>}
-          {customer.secondary_phone && <p className="text-sm flex items-center gap-2"><Phone className="w-4 h-4 text-muted-foreground" /> {customer.secondary_phone}</p>}
-          {customer.email && <p className="text-sm flex items-center gap-2"><Mail className="w-4 h-4 text-muted-foreground" /> {customer.email}</p>}
-        </div>
-
-        <div className="space-y-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Properties ({properties.length})</h3>
-          {loading ? (
-            <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          ) : properties.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No properties yet</p>
-          ) : (
-            <div className="space-y-2">
-              {properties.map((p) => (
-                <div
-                  key={p.id}
-                  id={`property-${p.id}`}
-                  data-focused={p.id === focusPropertyId || undefined}
-                  ref={p.id === focusPropertyId ? (el) => el?.scrollIntoView({ block: "center" }) : undefined}
-                  className={`bg-secondary/40 border rounded-lg p-3 ${p.id === focusPropertyId ? "border-primary ring-1 ring-primary" : "border-border"}`}
-                >
-                  <div className="flex items-start gap-2">
-                    <MapPin className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm text-foreground">{p.street1 || "No street"}</p>
-                      {(p.city || p.state || p.zip) && (
-                        <p className="text-xs text-muted-foreground">
-                          {[p.city, p.state, p.zip].filter(Boolean).join(", ")}
-                        </p>
-                      )}
-                      {p.address_verified ? (
-                        <p className="text-[10px] text-primary flex items-center gap-1 mt-1">
-                          <CheckCircle2 className="w-3 h-3" /> Verified
-                        </p>
-                      ) : (
-                        <p className="text-[10px] text-amber-500 flex items-center gap-1 mt-1">
-                          <AlertTriangle className="w-3 h-3" /> Unverified
-                        </p>
-                      )}
-                    </div>
-                    {isStaff && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 px-2 text-xs"
-                        onClick={() => setEditing(p)}
-                      >
-                        <Pencil className="w-3 h-3 mr-1" /> Edit
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-2 pt-4 border-t border-border">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Details</h3>
-          {customer.source !== "jobber" && (
-            <label className="flex items-start gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={prefersCheck}
-                onChange={(e) => togglePrefersCheck(e.target.checked)}
-                className="mt-0.5 accent-primary w-4 h-4"
-              />
-              <span className="text-xs text-muted-foreground leading-snug">
-                Prefers check / invoice by mail-in
-                <span className="block text-[10px] opacity-70">New invoices default to check payment.</span>
-              </span>
-            </label>
-          )}
-          {customer.jobber_id && <p className="text-xs text-muted-foreground">Jobber ID: {customer.jobber_id}</p>}
-          <p className="text-xs text-muted-foreground">Created {format(new Date(customer.created_at), "MMM d, yyyy")}</p>
-        </div>
-
-        {selectedBusinessId && customer.source === "jobber" && (
-          <>
-            <PropertyNotesForm customerId={customer.id} businessId={selectedBusinessId} />
-            <RecurringContractForm customerId={customer.id} businessId={selectedBusinessId} />
-          </>
-        )}
-      </div>
-
-      {editing && selectedBusinessId && (
-        <EditAddressDialog
-          open={!!editing}
-          onOpenChange={(o) => !o && setEditing(null)}
-          target={customer.source === "jobber" ? "jobber_property" : "platform_property"}
-          propertyId={editing.id}
-          businessId={selectedBusinessId}
-          customerId={customer.source === "jobber" ? null : customer.id}
-          initial={{
-            address_1: editing.street1 || "",
-            city: editing.city,
-            state: editing.state,
-            zip: editing.zip,
-            verified: !!editing.address_verified,
-          }}
-          onSaved={() => fetchProperties()}
-        />
-      )}
     </>
   );
 }
