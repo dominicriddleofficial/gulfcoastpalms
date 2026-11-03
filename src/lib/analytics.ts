@@ -287,7 +287,7 @@ export function handleTrackedClick(e: Event) {
       || el.getAttribute("data-call-source") || "page_body";
     const click_id = uid();
     if (anchor) {
-      const isCall = anchor.getAttribute("href")!.startsWith("tel:");
+      const isCall = (anchor.getAttribute("href") ?? "").startsWith("tel:");
       trackEvent(isCall ? "call_tap" : "text_tap", { placement: placementOf(anchor), channel: isCall ? "call" : "text", click_id });
       return;
     }
