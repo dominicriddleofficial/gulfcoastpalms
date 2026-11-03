@@ -57,6 +57,13 @@
       "when": 1793215006504,
       "tag": "0007_quote_public_consistent_read",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793672846066,
+      "tag": "0008_finance_allocations_bank_review",
+      "breakpoints": true
     }
   ]
 }
