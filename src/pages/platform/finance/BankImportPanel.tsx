@@ -26,6 +26,8 @@ interface TxnRow { id: string; txn_date: string; description: string; amount_cen
 
 const NONE = "__none__";
 
+const PAGE = 300;
+
 export default function BankImportPanel({ businessId, year, summary, onChanged }: { businessId: string; year: number; summary: CashSummary | null; onChanged: () => void }) {
   const { toast } = useToast();
   const [file, setFile] = useState<{ name: string; text: string } | null>(null);
@@ -117,6 +119,7 @@ export default function BankImportPanel({ businessId, year, summary, onChanged }
   const [note, setNote] = useState("");
   const matchedIds = useMemo(() => new Set((rows ?? []).filter((r) => r.matched_id).map((r) => r.matched_id as string)), [rows]);
 
+  const [limit, setLimit] = useState(PAGE);
   const shown = (rows ?? []).filter((r) => filter === "all" || r.classification === "needs_review" || issueById.has(r.id));
   const dupInFile = parsed ? parsed.rows.filter((r) => existingFp.data?.has(r.fingerprint)).length : 0;
 
@@ -168,7 +171,7 @@ export default function BankImportPanel({ businessId, year, summary, onChanged }
       {txns.isError && <p className="text-xs text-destructive">Couldn't load bank rows.</p>}
       {rows && shown.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">{rows.length ? "Everything is sorted." : "No bank rows imported for this year."}</p>}
       <ul className="divide-y divide-border/50 max-h-[520px] overflow-y-auto">
-        {shown.slice(0, 300).map((r) => {
+        {shown.slice(0, limit).map((r) => {
           const sugg = suggestMatches({ txnDate: r.txn_date, amountCents: r.amount_cents }, candidates).filter((c) => !matchedIds.has(c.id) || c.id === r.matched_id);
           const matchedTo = r.matched_id ? candidates.find((c) => c.id === r.matched_id) : null;
           return (

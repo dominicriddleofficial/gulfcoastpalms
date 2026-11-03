@@ -59,7 +59,7 @@ export async function loadCashData(businessId: string, year: number): Promise<Ca
   // are matched to but fall outside this year's window, so valid matches aren't reported broken.
   const matchedOf = (t: string) => [...new Set(bank.filter((b) => b.matched_type === t && b.matched_id).map((b) => b.matched_id as string))];
   const [evidencePayments, mIncome, mPayroll, mExpenses, tzRow] = await Promise.all([
-    byIds<PaymentRow>([...new Set(paidInvoices.map((i) => i.id))], (ids) => supabase.from("platform_payments").select(PAY_COLS).eq("business_id", businessId).in("invoice_id", ids))
+    byIdsAllRows<PaymentRow>([...new Set(paidInvoices.map((i) => i.id))], (ids, f, t) => supabase.from("platform_payments").select(PAY_COLS).eq("business_id", businessId).in("invoice_id", ids).order("id").range(f, t))
       .then(async (rows) => [...rows, ...await byIds<PaymentRow>(matchedOf("payment"), (ids) => supabase.from("platform_payments").select(PAY_COLS).eq("business_id", businessId).in("id", ids))]),
     byIds<IncomeRow>(matchedOf("income").filter((id) => !income.some((r) => r.id === id)), (ids) => supabase.from("finance_income").select("id, business_id, income_date, amount, customer_name, service_type, source").eq("business_id", businessId).in("id", ids)),
     byIds<PayrollRow>(matchedOf("payroll").filter((id) => !payroll.some((r) => r.id === id)), (ids) => supabase.from("finance_payroll_payments").select("id, business_id, pay_date, total_amount, pay_type, payment_method, member_id").eq("business_id", businessId).in("id", ids)),
@@ -83,6 +83,16 @@ async function byIds<T>(ids: string[], q: (ids: string[]) => PromiseLike<{ data:
     const { data, error } = await q(ids.slice(i, i + 150));
     if (error) throw new Error(error.message);
     out.push(...((data as T[] | null) ?? []));
+  }
+  return out;
+}
+
+/** Like byIds, but for one-to-many lookups (e.g. payments per invoice): pages every chunk past the 1000-row cap. */
+export async function byIdsAllRows<T>(ids: string[], q: (ids: string[], from: number, to: number) => PromiseLike<{ data: unknown; error: { message: string } | null }>): Promise<T[]> {
+  const out: T[] = [];
+  for (let i = 0; i < ids.length; i += 150) {
+    const chunk = ids.slice(i, i + 150);
+    out.push(...await fetchAllPages<T>((f, t) => q(chunk, f, t) as never));
   }
   return out;
 }
