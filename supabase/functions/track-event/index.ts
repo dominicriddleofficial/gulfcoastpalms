@@ -33,7 +33,7 @@ const KNOWN_EVENTS = new Set([
   "quote_request_submitted", "quote_request_abandoned",
   "call_now_click", "text_us_click",
   "sticky_bar_call_click", "sticky_bar_text_click",
-  "call_tap",
+  "call_tap", "text_tap",
   "chat_opened", "chat_message_sent", "chat_lead_captured",
   "mobile_menu_opened", "mobile_menu_link_clicked",
   "service_page_cta_click", "location_page_cta_click",
@@ -63,14 +63,54 @@ async function hashIp(ip: string): Promise<string | null> {
   }
 }
 
+// Mirrors src/seo/indexing-policy.mjs isPrivateRoute: never store app, portal, payment or customer-link pages.
+function isPrivatePath(p: string): boolean {
+  const path = p.split(/[?#]/)[0].replace(/\/+$/, "") || "/";
+  return /^\/(platform|portal|admin|ops|app|employee|pay|q|arborist-link)(\/|$)/.test(path)
+    || path.startsWith("/quote/") || path.startsWith("/.lovable/");
+}
+const KEEP_QUERY = /^(utm_(source|medium|campaign|term|content)|gclid|fbclid|msclkid)$/;
+function safeUrl(raw: unknown): string | null {
+  if (typeof raw !== "string" || !raw) return null;
+  try {
+    const u = new URL(raw);
+    if (!/^https?:$/.test(u.protocol)) return null;
+    const keep = new URLSearchParams();
+    u.searchParams.forEach((v, k) => { if (KEEP_QUERY.test(k)) keep.set(k, v.slice(0, 120)); });
+    const q = keep.toString();
+    return `${u.origin}${u.pathname}${q ? `?${q}` : ""}`.slice(0, 1000);
+  } catch { return null; }
+}
+function safeOrigin(raw: unknown): string | null {
+  if (typeof raw !== "string" || !raw) return null;
+  try { const u = new URL(raw); return /^https?:$/.test(u.protocol) ? u.origin : null; } catch { return null; }
+}
+const SAFE_PROPS = new Set(["placement", "cta_text", "click_id", "form_source", "service", "lead_source", "channel", "position", "plan_type", "sop_type", "value"]);
+function safeProps(p: unknown): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  if (!p || typeof p !== "object" || Array.isArray(p)) return out;
+  for (const [k, v] of Object.entries(p as Record<string, unknown>)) {
+    if (!SAFE_PROPS.has(k)) continue;
+    if (typeof v === "string") out[k] = v.slice(0, 80);
+    else if (typeof v === "number" && Number.isFinite(v)) out[k] = v;
+    else if (typeof v === "boolean") out[k] = v;
+  }
+  return out;
+}
+
 function normalize(e: IncomingEvent, ipHash: string | null, ua: string | null) {
   const event = clamp(e.event_name, 80);
   if (!event || !KNOWN_EVENTS.has(event)) return null;
+  const rawPath = clamp(e.page_path, 500);
+  const path = rawPath ? rawPath.split(/[?#]/)[0] : null;
+  if (!path || isPrivatePath(path)) return null;
+  const pageUrl = safeUrl(e.page_url);
+  if (pageUrl && isPrivatePath(new URL(pageUrl).pathname)) return null;
   return {
     event_name: event,
-    page_path: clamp(e.page_path, 500),
-    page_url: clamp(e.page_url, 1000),
-    referrer: clamp(e.referrer, 1000),
+    page_path: path,
+    page_url: pageUrl,
+    referrer: safeOrigin(e.referrer),
     business_type: clamp(e.business_type, 32),
     source_component: clamp(e.source_component, 80),
     utm_source: clamp(e.utm_source, 120),
@@ -82,13 +122,12 @@ function normalize(e: IncomingEvent, ipHash: string | null, ua: string | null) {
     user_agent: ua ? ua.slice(0, 500) : null,
     visitor_id: clamp(e.visitor_id, 64),
     session_id: clamp(e.session_id, 64),
-    customer_id: clamp(e.customer_id, 36),
-    lead_id: clamp(e.lead_id, 36),
-    quote_id: clamp(e.quote_id, 36),
-    invoice_id: clamp(e.invoice_id, 36),
-    properties: (e.properties && typeof e.properties === "object" && !Array.isArray(e.properties))
-      ? e.properties
-      : {},
+    // Public tracking never links to customer records.
+    customer_id: null,
+    lead_id: null,
+    quote_id: null,
+    invoice_id: null,
+    properties: safeProps(e.properties),
     ip_hash: ipHash,
   };
 }
