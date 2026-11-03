@@ -165,7 +165,7 @@ export default function BankImportPanel({ businessId, year, summary, onChanged }
 
       <div className="flex items-center justify-between">
         <p className="text-xs">{rows ? `${rows.length} bank rows in ${year}` : "Loading bank rows…"}</p>
-        <Select value={filter} onValueChange={(v) => setFilter(v as "open" | "all")}><SelectTrigger className="h-8 w-36"><SelectValue /></SelectTrigger>
+        <Select value={filter} onValueChange={(v) => { setFilter(v as "open" | "all"); setLimit(PAGE); }}><SelectTrigger className="h-8 w-36"><SelectValue /></SelectTrigger>
           <SelectContent><SelectItem value="open">Needs review</SelectItem><SelectItem value="all">All rows</SelectItem></SelectContent></Select>
       </div>
       {txns.isError && <p className="text-xs text-destructive">Couldn't load bank rows.</p>}
@@ -222,6 +222,10 @@ export default function BankImportPanel({ businessId, year, summary, onChanged }
           );
         })}
       </ul>
+      {shown.length > 0 && <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground pt-1">
+        <span>Showing {Math.min(limit, shown.length)} of {shown.length} rows</span>
+        {shown.length > limit && <Button size="sm" variant="outline" className="h-8" onClick={() => setLimit((l) => l + PAGE)}>Show {Math.min(PAGE, shown.length - limit)} more</Button>}
+      </div>}
     </Card>
   );
 }
