@@ -221,3 +221,38 @@ describe("native visit times in the business time zone", () => {
     expect(tokyo[0].inferred).toBe(true);
   });
 });
+
+describe("complete status without a finish time", () => {
+  const NOWX = new Date("2026-06-15T15:00:00Z");
+  const job = (id: string, extra: Record<string, unknown> = {}) => ({ id, job_number: id, title: null, status: "completed", property_id: "A", scheduled_start: null, completed_at: null, deleted_at: null, ...extra });
+  const visit = (id: string, status: string, date: string | null, extra: Record<string, string | null> = {}) => ({ id, job_id: "j", property_id: null as string | null, status, scheduled_date: date, actual_start_at: null, actual_end_at: null, ...extra });
+
+  it("future or today planned dates stay upcoming, never past service", () => {
+    const ev = platformJobEvents([job("j", { status: "scheduled" })], [visit("f", "completed", "2026-06-20"), visit("t", "completed", "2026-06-15")], NOWX);
+    expect(summarize(ev).completed).toBe(0);
+    expect(ev.every((e) => e.status === "scheduled")).toBe(true);
+  });
+  it("a past planned date counts once as recorded, and a real finish time stays actual", () => {
+    const ev = platformJobEvents([job("j", { status: "scheduled" })], [visit("p", "completed", "2026-06-01"), visit("a", "completed", "2026-05-01", { actual_end_at: "2026-05-01T18:00:00Z" })], NOWX);
+    expect(summarize(ev).completed).toBe(2);
+    expect(ev.find((e) => e.key === "visit:a")?.dateKind).toBe("actual");
+    expect(ev.find((e) => e.key === "visit:p")?.dateKind).toBe("scheduled");
+  });
+  it("a job marked complete with a future start and no visits is not history", () => {
+    const ev = platformJobEvents([job("k", { scheduled_start: "2026-07-01T14:00:00Z" })], [], NOWX);
+    expect(summarize(ev).completed).toBe(0);
+  });
+  it("Jobber complete with a future date stays upcoming; a recorded finish counts", () => {
+    const rows = [
+      { id: "1", job_number: "1", title: null, status: "active", visit_status: "completed", scheduled_start: "2026-07-01T14:00:00Z", property_id: "A" },
+      { id: "2", job_number: "2", title: null, status: "active", visit_status: "completed", scheduled_start: "2026-07-01T14:00:00Z", property_id: "A" },
+    ];
+    const ev = jobberJobEvents(rows, new Map([["2", "2026-06-10T18:00:00Z"]]), NOWX);
+    expect(summarize(ev).completed).toBe(1);
+    expect(ev.find((e) => e.key === "jobber:2")?.dateKind).toBe("actual");
+  });
+  it("cancelled visits are left out", () => {
+    const ev = platformJobEvents([job("j", { status: "scheduled" })], [visit("c", "cancelled", "2026-06-01")], NOWX);
+    expect(ev).toHaveLength(0);
+  });
+});

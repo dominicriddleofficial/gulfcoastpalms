@@ -95,7 +95,7 @@ function safeSession(): Storage | null {
 // When storage is blocked, ids live only for this page load and are prefixed "mem-" so the
 // summary treats them as unknown identity instead of as real unique browsers.
 let memVisitor: string | null = null;
-let memSession: string | null = null;
+let memSession: { id: string; last: number } | null = null;
 
 export function getVisitorId(): string {
   try {
@@ -130,11 +130,14 @@ export function getSessionId(): string {
       return id;
     }
   } catch { /* storage blocked */ }
-  return (memSession ??= `mem-${uid()}`);
+  // In-memory sessions expire after the same 30 idle minutes as stored ones.
+  if (!memSession || now - memSession.last >= SESSION_TTL_MS) memSession = { id: `mem-${uid()}`, last: now };
+  else memSession.last = now;
+  return memSession.id;
 }
 
 /** Test hook: forget in-memory fallback ids. */
-export function __resetMemoryIds() { memVisitor = null; memSession = null; }
+export function __resetMemoryIds() { memVisitor = null; memSession = null; memUtm = null; }
 
 export function getDeviceType(): "mobile" | "tablet" | "desktop" {
   if (typeof window === "undefined") return "desktop";
@@ -149,21 +152,29 @@ interface UtmBag {
   utm_term?: string; utm_content?: string;
 }
 
-export function captureUtmFromUrl(): UtmBag {
+let memUtm: { sid: string; bag: UtmBag } | null = null;
+/**
+ * Ad tags for this visit (session). A landing with new tags replaces the old ones; tags from an
+ * earlier visit are never reused. Storage failures fall back to memory and never throw.
+ */
+export function captureUtmFromUrl(sessionId = getSessionId()): UtmBag {
   if (typeof window === "undefined") return {};
-  const ss = safeSession();
-  const cached = ss?.getItem(UTM_KEY);
-  if (cached) { try { return JSON.parse(cached) as UtmBag; } catch { /* ignore */ } }
-  const url = new URL(window.location.href);
-  const bag: UtmBag = {};
-  for (const k of ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"] as const) {
-    const v = url.searchParams.get(k);
-    if (v) bag[k] = v.slice(0, 120);
-  }
-  if (Object.keys(bag).length && ss) {
-    try { ss.setItem(UTM_KEY, JSON.stringify(bag)); } catch { /* ignore */ }
-  }
-  return bag;
+  try {
+    const bag: UtmBag = {};
+    const url = new URL(window.location.href);
+    for (const k of ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"] as const) {
+      const v = url.searchParams.get(k);
+      if (v) bag[k] = v.slice(0, 120);
+    }
+    if (Object.keys(bag).length) {
+      memUtm = { sid: sessionId, bag };
+      try { safeSession()?.setItem(UTM_KEY, JSON.stringify(memUtm)); } catch { /* ignore */ }
+      return bag;
+    }
+    let cached: { sid?: string; bag?: UtmBag } | null = memUtm;
+    try { const raw = safeSession()?.getItem(UTM_KEY); if (raw) cached = JSON.parse(raw); } catch { /* ignore */ }
+    return cached && cached.sid === sessionId && cached.bag ? cached.bag : {};
+  } catch { return {}; }
 }
 
 function detectBusinessType(path: string): string {
@@ -274,8 +285,9 @@ export function trackEvent(event: ConversionEvent | string, params?: EventParams
     const properties = safeProps(params);
     if (!shouldSend(event, path, session, properties)) return;
 
-    if (typeof window.gtag === "function") window.gtag("event", event, { ...properties, page_path: path });
+    // Production public site only, for both GA4 and our own records.
     if (!isTrackableHost(window.location.hostname, automated())) return;
+    if (typeof window.gtag === "function") window.gtag("event", event, { ...properties, page_path: path });
 
     postEvent({
       event_name: event,
@@ -287,7 +299,7 @@ export function trackEvent(event: ConversionEvent | string, params?: EventParams
       device_type: getDeviceType(),
       visitor_id: getVisitorId(),
       session_id: session,
-      ...captureUtmFromUrl(),
+      ...captureUtmFromUrl(session),
       properties,
     });
   } catch { /* analytics must never block the page */ }
@@ -297,6 +309,7 @@ export function trackEvent(event: ConversionEvent | string, params?: EventParams
  * Delegated click tracking: one event per real tap on a tel:/sms: link or
  * [data-track-cta] element. Never prevents the default action.
  */
+const clickIds = new WeakMap<Event, string>();
 export function handleTrackedClick(e: Event) {
   try {
     const target = e.target as Element | null;
@@ -305,7 +318,9 @@ export function handleTrackedClick(e: Event) {
     const placementOf = (el: Element) =>
       el.closest("[data-track-placement]")?.getAttribute("data-track-placement")
       || el.getAttribute("data-call-source") || "page_body";
-    const click_id = uid();
+    // One id per real native click: a second handler seeing the same event reuses it (and is then dropped).
+    let click_id = clickIds.get(e);
+    if (!click_id) { click_id = uid(); clickIds.set(e, click_id); }
     if (anchor) {
       const isCall = (anchor.getAttribute("href") ?? "").startsWith("tel:");
       trackEvent(isCall ? "call_tap" : "text_tap", { placement: placementOf(anchor), channel: isCall ? "call" : "text", click_id });

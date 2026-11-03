@@ -64,6 +64,8 @@ const NotFound = () => {
           </Link>
           <Link
             to="/quote"
+            data-track-cta="quote_request"
+            data-track-placement="not_found"
             className="inline-flex items-center justify-center gap-2 px-6 min-h-[48px] rounded-xl font-body font-bold"
             style={{ background: AMBER, color: "#1a1200" }}
           >

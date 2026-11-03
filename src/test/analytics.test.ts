@@ -1,6 +1,6 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 
-beforeEach(() => { vi.resetModules(); localStorage.clear(); sessionStorage.clear(); window.gtag = vi.fn(); vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true })); });
+beforeEach(() => { vi.resetModules(); localStorage.clear(); sessionStorage.clear(); window.gtag = vi.fn(); Object.defineProperty(window, "location", { configurable: true, value: new URL("https://gulfcoastpalmservices.com/") }); vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true })); });
 afterEach(() => { delete window.gtag; vi.unstubAllGlobals(); });
 
 describe("Public marketing analytics", () => {
