@@ -109,7 +109,7 @@ describe("website tracking", () => {
     } finally { spy.mockRestore(); }
   });
   it("a stored legacy 'anon' id is replaced with a real one", async () => {
-    localStorage.setItem("gcp_visitor_id", "anon");
+    localStorage.setItem("ga_visitor_id", "anon");
     const a = await load();
     expect(a.getVisitorId()).not.toBe("anon");
   });
