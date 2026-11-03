@@ -1,4 +1,4 @@
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, captureUtmFromUrl } from "@/lib/analytics";
 import { leadFormSchema } from "@/lib/validation";
 import { invokeEdge } from "@/lib/invoke-edge";
 
@@ -17,11 +17,15 @@ export interface LeadData {
   formRenderTime?: number;
 }
 
-function detectLeadSource(sourcePage?: string): string {
+/** Ad tags for this visit, shared with website analytics (same visit scope; never throws). */
+function visitUtm(): Record<string, string | undefined> {
+  try { return { ...captureUtmFromUrl() }; } catch { return {}; }
+}
+
+function detectLeadSource(sourcePage: string | undefined, utm: Record<string, string | undefined>): string {
   try {
-    const params = new URLSearchParams(window.location.search);
-    const utmSource = params.get("utm_source") || sessionStorage.getItem("utm_source") || "";
-    const utmMedium = params.get("utm_medium") || sessionStorage.getItem("utm_medium") || "";
+    const utmSource = utm.utm_source || "";
+    const utmMedium = utm.utm_medium || "";
     const page = sourcePage || window.location.pathname;
 
     if (utmSource === "google" && utmMedium === "cpc") return "Google Ads";
@@ -39,20 +43,23 @@ function detectLeadSource(sourcePage?: string): string {
   }
 }
 
-// Store UTM params on page load
-function storeUtmParams() {
+function buildPageContext(utm: Record<string, string | undefined>): Record<string, string | null> {
   try {
-    const params = new URLSearchParams(window.location.search);
-    const keys = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"];
-    keys.forEach(k => {
-      const v = params.get(k);
-      if (v) sessionStorage.setItem(k, v);
-    });
-  } catch {}
+    return {
+      website_origin: window.location.origin,
+      landing_page_url: window.location.href,
+      referrer_url: document.referrer || null,
+      utm_source: utm.utm_source ?? null,
+      utm_medium: utm.utm_medium ?? null,
+      utm_campaign: utm.utm_campaign ?? null,
+      utm_content: utm.utm_content ?? null,
+      utm_term: utm.utm_term ?? null,
+    };
+  } catch { return {}; }
 }
 
-// Auto-store on import
-storeUtmParams();
+// Record this visit's ad tags on load (same store analytics uses).
+if (typeof window !== "undefined") visitUtm();
 
 export async function submitLead(data: LeadData): Promise<{ success: boolean; error?: string }> {
   try {
@@ -76,20 +83,10 @@ export async function submitLead(data: LeadData): Promise<{ success: boolean; er
     }
     const clean = parsed.data;
 
-    const leadSource = detectLeadSource(clean.source);
-
-    const pageContext = typeof window !== "undefined"
-      ? {
-          website_origin: window.location.origin,
-          landing_page_url: window.location.href,
-          referrer_url: document.referrer || null,
-          utm_source: sessionStorage.getItem("utm_source"),
-          utm_medium: sessionStorage.getItem("utm_medium"),
-          utm_campaign: sessionStorage.getItem("utm_campaign"),
-          utm_content: sessionStorage.getItem("utm_content"),
-          utm_term: sessionStorage.getItem("utm_term"),
-        }
-      : {};
+    // Optional context: any failure here must never stop a valid lead from being sent.
+    const utm = typeof window !== "undefined" ? visitUtm() : {};
+    const leadSource = typeof window !== "undefined" ? detectLeadSource(clean.source, utm) : "Direct / Unknown";
+    const pageContext = typeof window !== "undefined" ? buildPageContext(utm) : {};
 
     // All DB writes + dedupe + SMS run server-side in the submit-lead edge
     // function (service role). Anon can't SELECT the lead tables under RLS,
@@ -123,12 +120,12 @@ export async function submitLead(data: LeadData): Promise<{ success: boolean; er
 
     // Track conversion in GA4
     // One event per successful save; a server-side duplicate isn't a new request. The id is random, not personal data.
-    if (!result.duplicate) trackEvent("lead_form_submit", {
+    if (!result.duplicate) try { trackEvent("lead_form_submit", {
       submission_id: typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`,
       form_source: data.source || "website",
       service: data.service,
       lead_source: leadSource,
-    });
+    }); } catch { /* tracking is optional */ }
 
     return { success: true };
   } catch (err: unknown) {
