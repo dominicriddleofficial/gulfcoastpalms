@@ -185,7 +185,7 @@ export default function BankImportPanel({ businessId, year, summary, onChanged }
                 </div>
               ) : (
                 <div className="flex flex-wrap gap-2">
-                  <Select value={r.classification} onValueChange={(v) => void update(r.id, { classification: v })}>
+                  <Select value={r.classification} onValueChange={(v) => void update(r.id, v === "income" || v === "expense" ? { classification: v } : { classification: v, owner_resolution: null, resolution_note: null })}>
                     <SelectTrigger aria-label="Sort this row" className="h-8 w-44"><SelectValue /></SelectTrigger>
                     <SelectContent>{CLASSES.map((c) => <SelectItem key={c.v} value={c.v}>{c.label}</SelectItem>)}</SelectContent>
                   </Select>
