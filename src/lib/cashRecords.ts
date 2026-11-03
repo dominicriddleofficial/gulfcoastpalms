@@ -124,10 +124,11 @@ export function buildCashSummary(inp: CashInput): CashSummary {
       issues.push({ kind: "bank_sign_mismatch", id: b.id, date: b.txn_date, amountCents: amt, detail: `${b.description} — marked ${c} but amount is ${amt < 0 ? "money out" : "money in"}` });
       continue;
     }
-    if (b.possible_duplicate_of) issues.push({ kind: "bank_possible_duplicate", id: b.id, date: b.txn_date, amountCents: amt, detail: `${b.description} — same date, amount and description as an earlier import` });
+    // Possible duplicates and look-alikes of recorded money are held out of totals until the owner resolves them.
+    if (b.possible_duplicate_of) { issues.push({ kind: "bank_possible_duplicate", id: b.id, date: b.txn_date, amountCents: amt, detail: `${b.description} — same date, amount and description as an earlier import; not counted` }); continue; }
     if (c === "income") {
       const lookalike = recordedReceipts.find((r) => r.amountCents === amt && Math.abs(dayNum(r.date) - dayNum(b.txn_date)) <= 5);
-      if (lookalike) issues.push({ kind: "bank_maybe_recorded", id: b.id, date: b.txn_date, amountCents: amt, detail: `${b.description} — may be ${lookalike.label}; match it instead of counting twice` });
+      if (lookalike) { issues.push({ kind: "bank_maybe_recorded", id: b.id, date: b.txn_date, amountCents: amt, detail: `${b.description} — may be ${lookalike.label}; not counted until you match it or mark it Leave out` }); continue; }
       receipts.push({ kind: "receipt", id: b.id, date: b.txn_date, amountCents: amt, label: b.description, category: b.category || "Bank deposit", vendor: "", source: "bank", method: "bank", reference: "", receiptPath: null });
     } else if (c === "expense") {
       expenses.push({ kind: "expense", id: b.id, date: b.txn_date, amountCents: -amt, label: b.description, category: b.category || "Uncategorized", vendor: b.description, source: "bank", method: "bank", reference: "", receiptPath: null });
