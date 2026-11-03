@@ -12,7 +12,6 @@ import { TrendingUp, TrendingDown, DollarSign, Briefcase, Trophy, Users, MapPin,
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Phone } from "lucide-react";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { Link } from "react-router-dom";
 import { fetchAllPages } from "@/lib/fetchAllPages";
@@ -527,40 +526,6 @@ export default function PlatformAnalytics() {
     refetchOnWindowFocus: true,
   });
 
-  // Owner-only: website tel: tap analytics from analytics_events.
-  const { data: callTaps } = useQuery({
-    queryKey: ["call-taps", selectedBusinessId],
-    enabled: !!selectedBusinessId && isOwner,
-    queryFn: async () => {
-      const since = new Date();
-      since.setDate(since.getDate() - 30);
-      const { data: rows, error } = await supabase
-        .from("analytics_events")
-        .select("created_at,page_path")
-        .eq("event_name", "call_tap")
-        .gte("created_at", since.toISOString())
-        .limit(5000);
-      if (error) throw error;
-      const now = Date.now();
-      const weekMs = 7 * 24 * 60 * 60 * 1000;
-      let week = 0;
-      const monthCount = rows?.length ?? 0;
-      const byPage = new Map<string, number>();
-      for (const r of rows ?? []) {
-        const t = new Date(r.created_at).getTime();
-        if (now - t <= weekMs) week++;
-        const p = r.page_path || "/";
-        byPage.set(p, (byPage.get(p) ?? 0) + 1);
-      }
-      const topPages = Array.from(byPage.entries())
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([page, count]) => ({ page, count }));
-      return { week, month: monthCount, topPages };
-    },
-    staleTime: 60_000,
-  });
-
   const handleSyncHistorical = async () => {
     setSyncing(true);
     try {
@@ -880,49 +845,6 @@ export default function PlatformAnalytics() {
           {cur.undated > 0 && <p className="font-body text-[10px] text-muted-foreground mt-2">{cur.undated} jobs have no date and aren't counted.</p>}
         </ChartSection>
 
-        {/* SECTION 9 — Website Call Taps (owner-only) */}
-        {isOwner && callTaps && (
-          <ChartSection
-            title="Website Call Taps"
-            subtitle="Taps on tel: links across the public website. Google Maps calls live in Google Business Profile."
-          >
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <div className="rounded-lg p-4" style={{ background: "rgba(var(--biz-accent-rgb),0.05)", border: `1px solid ${CARD_BORDER}` }}>
-                <p className="font-body text-[10px] uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
-                  <Phone className="w-3 h-3" /> Last 7 days
-                </p>
-                <p className="font-display text-3xl font-bold text-primary mt-1">{callTaps.week}</p>
-              </div>
-              <div className="rounded-lg p-4" style={{ background: "rgba(255,255,255,0.02)", border: `1px solid ${CARD_BORDER}` }}>
-                <p className="font-body text-[10px] uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
-                  <Phone className="w-3 h-3" /> Last 30 days
-                </p>
-                <p className="font-display text-3xl font-bold text-foreground mt-1">{callTaps.month}</p>
-              </div>
-            </div>
-            {callTaps.topPages.length === 0 ? (
-              <p className="font-body text-xs text-muted-foreground text-center py-4">No call taps recorded yet.</p>
-            ) : (
-              <div className="space-y-2">
-                <p className="font-body text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Top pages (30d)</p>
-                {callTaps.topPages.map(p => {
-                  const max = callTaps.topPages[0].count || 1;
-                  return (
-                    <div key={p.page} className="space-y-1">
-                      <div className="flex justify-between items-baseline">
-                        <span className="font-mono text-[11px] text-foreground truncate max-w-[70%]">{p.page}</span>
-                        <span className="font-body text-[10px] text-muted-foreground">{p.count} taps</span>
-                      </div>
-                      <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
-                        <div className="h-full rounded-full" style={{ width: `${(p.count / max) * 100}%`, background: GREEN }} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </ChartSection>
-        )}
       </div>
     </PlatformLayout>
   );

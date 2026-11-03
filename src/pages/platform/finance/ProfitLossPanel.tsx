@@ -3,8 +3,10 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { fmtPct, DIRECT_COST_CATEGORIES } from "@/lib/finance";
-import { useCashRecords } from "@/hooks/useCashRecords";
-import { fmtCents, type CashEntry } from "@/lib/cashRecords";
+import { useQueries, useQuery } from "@tanstack/react-query";
+import { cashKey, loadCashData, useCashRecords } from "@/hooks/useCashRecords";
+import { combineSummaries, fmtCents, type CashEntry, type CashSummary } from "@/lib/cashRecords";
+import { loadWorkspaceBusinesses } from "@/lib/finance";
 
 type View = "monthly" | "quarterly" | "ytd";
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -21,9 +23,19 @@ export default function ProfitLossPanel({ businessId }: { businessId: string }) 
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [quarter, setQuarter] = useState(Math.floor(new Date().getMonth() / 3) + 1);
+  const [scope, setScope] = useState<"this" | "combined">("this");
   const cash = useCashRecords(businessId, year);
   const data = cash.data && cash.data.businessId === businessId && cash.data.year === year ? cash.data : null;
-  const s = data?.summary;
+  // Combined (both): each business's own cash summary added together. Shared bills count once,
+  // as the sum of explicitly assigned shares; unassigned shared amounts stay visible as review items.
+  const ws = useQuery({ queryKey: ["workspace-businesses", businessId], queryFn: () => loadWorkspaceBusinesses(businessId), enabled: scope === "combined" });
+  const siblings = scope === "combined" && ws.data ? ws.data.businesses : [];
+  const parts = useQueries({ queries: siblings.map((b) => ({ queryKey: cashKey(b.id, year), queryFn: () => loadCashData(b.id, year) })) });
+  const combined: CashSummary | null = scope === "combined" && siblings.length > 0 && parts.every((q) => q.data && q.data.year === year)
+    ? combineSummaries(parts.map((q) => q.data?.summary as CashSummary)) : null;
+  const combinedError = scope === "combined" && (ws.isError || parts.some((q) => q.isError));
+  const s = scope === "combined" ? combined : data?.summary;
+  const loadError = scope === "combined" ? combinedError : cash.isError;
 
   const p = useMemo(() => {
     if (!s) return null;
@@ -37,8 +49,10 @@ export default function ProfitLossPanel({ businessId }: { businessId: string }) 
     const bank = sum(s.receipts.filter((r) => r.source === "bank"));
     const refunds = sum(s.refunds);
     const payroll = sum(s.payroll);
-    const unresolved = s.issues.filter((i) => i.date && months.has(Number(i.date.slice(5, 7)))).length;
-    return { payments, manual, bank, refunds, payroll, expenses, unresolved };
+    const inPIssues = s.issues.filter((i) => i.date && months.has(Number(i.date.slice(5, 7))));
+    const unresolved = inPIssues.length;
+    const unassignedShared = inPIssues.filter((i) => i.kind === "shared_unallocated").reduce((t, i) => t + i.amountCents, 0);
+    return { payments, manual, bank, refunds, payroll, expenses, unresolved, unassignedShared };
   }, [s, view, month, quarter]);
 
   const revenue = p ? p.payments + p.manual + p.bank - p.refunds : 0;
@@ -50,6 +64,10 @@ export default function ProfitLossPanel({ businessId }: { businessId: string }) 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 flex-wrap">
+        <Select value={scope} onValueChange={(v) => setScope(v as "this" | "combined")}>
+          <SelectTrigger aria-label="Business" className="h-8 w-40"><SelectValue /></SelectTrigger>
+          <SelectContent><SelectItem value="this">This business</SelectItem><SelectItem value="combined">Combined (both)</SelectItem></SelectContent>
+        </Select>
         <Select value={view} onValueChange={(v) => setView(v as View)}>
           <SelectTrigger aria-label="Period" className="h-8 w-32"><SelectValue /></SelectTrigger>
           <SelectContent><SelectItem value="monthly">Monthly</SelectItem><SelectItem value="quarterly">Quarterly</SelectItem><SelectItem value="ytd">Full year</SelectItem></SelectContent>
@@ -68,13 +86,16 @@ export default function ProfitLossPanel({ businessId }: { businessId: string }) 
           </Select>
         )}
       </div>
-      <p className="text-[11px] text-muted-foreground">Built from recorded money in and out for this business only. Shared expenses count only after you assign this business's share.</p>
+      <p className="text-[11px] text-muted-foreground">{scope === "combined"
+        ? `Both businesses${siblings.length ? ` (${siblings.map((b) => b.shortcode ?? b.public_brand_name ?? "").filter(Boolean).join(" + ")})` : ""} added together. Shared bills count once — the shares you assigned to each business.`
+        : "Built from recorded money in and out for this business only. Shared expenses count only after you assign this business's share."}</p>
 
-      {cash.isError ? <p className="text-xs text-destructive">Couldn't load records.</p> : !p ? (
+      {loadError ? <p className="text-xs text-destructive">Couldn't load records.</p> : !p ? (
         <p className="text-xs text-muted-foreground">Loading…</p>
       ) : (
         <Card className="p-5 bg-card/70 border-border space-y-5">
           {p.unresolved > 0 && <p className="text-xs text-amber-500">{p.unresolved} items in this period still need review in the Tax tab.</p>}
+          {p.unassignedShared > 0 && <p className="text-xs text-amber-500">{fmtCents(p.unassignedShared)} of shared bills isn't assigned to a business yet, so it isn't counted here.</p>}
           <Section title="Money in">
             <Line label="App payments" value={p.payments} />
             <Line label="Manual income" value={p.manual} />

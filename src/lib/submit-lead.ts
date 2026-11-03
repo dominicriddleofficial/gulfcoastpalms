@@ -122,7 +122,9 @@ export async function submitLead(data: LeadData): Promise<{ success: boolean; er
     }
 
     // Track conversion in GA4
-    trackEvent("lead_form_submit", {
+    // One event per successful save; a server-side duplicate isn't a new request. The id is random, not personal data.
+    if (!result.duplicate) trackEvent("lead_form_submit", {
+      submission_id: typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`,
       form_source: data.source || "website",
       service: data.service,
       lead_source: leadSource,

@@ -113,7 +113,7 @@ function EmailRow({ email, blocked }: { email: string; blocked: boolean }) {
 }
 
 const STATUS_LABEL: Record<ServiceEvent["status"], string> = {
-  completed: "Completed", scheduled: "Scheduled", in_progress: "In progress", overdue: "Past due, not marked done",
+  completed: "Completed", scheduled: "Scheduled", in_progress: "In progress", overdue: "Earlier today",
 };
 const STATUS_CLS: Record<ServiceEvent["status"], string> = {
   completed: "text-primary", scheduled: "text-foreground", in_progress: "text-foreground", overdue: "text-amber-500",
@@ -130,7 +130,7 @@ function HistoryList({ events }: { events: ServiceEvent[] }) {
             <div className="min-w-0 flex-1">
               <p className="text-sm text-foreground truncate">{e.label}</p>
               <p className={`text-xs ${STATUS_CLS[e.status]}`}>
-                {STATUS_LABEL[e.status]} · {e.status === "completed" ? fmtDate(e.date) : formatBooking(e, tz)}{e.status === "completed" && e.dateKind === "scheduled" ? " (planned date)" : ""}
+                {e.inferred ? "Done (by schedule)" : STATUS_LABEL[e.status]} · {e.status === "completed" ? fmtDate(e.date) : formatBooking(e, tz)}{e.status === "completed" && e.dateKind === "scheduled" && !e.inferred ? " (planned date)" : ""}
               </p>
             </div>
             <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -158,7 +158,7 @@ function ServiceStats({ s, status, extra }: { s: ServiceSummary | null; status: 
   return (
     <>
       {extra}
-      <Stat label="Completed visits" value={v(String(s?.completed ?? 0))} />
+      <Stat label="Services" value={v(String(s?.completed ?? 0))} sub={s && s.completed > 0 ? `${s.recordedCompleted} marked done · ${s.inferredFromSchedule} by schedule` : undefined} />
       <Stat label="Last service" value={last ? last.value : v("")} sub={last?.sub} />
       <Stat label="Next visit" value={v(s?.nextScheduled ? formatBooking(s.nextScheduled, tz) : "Not booked")} />
     </>

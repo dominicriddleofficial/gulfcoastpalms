@@ -47,7 +47,17 @@ export default function ConversionFunnelWidget({ businessId }: { businessId: str
   const [custom, setCustom] = useState({ from: "", to: "" });
   // Freeze "now" per selection so the query key is stable.
   const [now] = useState(() => new Date());
-  const range = useMemo(() => rangeFor(rangeKey, now, custom), [rangeKey, now, custom]);
+  // Custom ranges are whole days in the business's own time zone.
+  const tzq = useQuery({
+    queryKey: ["business-timezone", businessId], enabled: !!businessId, staleTime: 3_600_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("businesses").select("timezone").eq("id", businessId as string).maybeSingle();
+      if (error) throw new Error(error.message);
+      return (data?.timezone as string | null) || "America/Chicago";
+    },
+  });
+  const tz = tzq.data ?? "America/Chicago";
+  const range = useMemo(() => (rangeKey === "custom" && !tzq.data ? null : rangeFor(rangeKey, now, custom, tz)), [rangeKey, now, custom, tz, tzq.data]);
 
   const q = useQuery({
     queryKey: ["website-analytics", businessId, range?.from, range?.to],
@@ -92,10 +102,11 @@ export default function ConversionFunnelWidget({ businessId }: { businessId: str
         <div className="flex flex-wrap items-center gap-2 font-body text-xs">
           <label className="flex items-center gap-1">From <input aria-label="From date" type="date" value={custom.from} onChange={(e) => setCustom({ ...custom, from: e.target.value })} className="h-8 rounded-md border border-border bg-background px-2 text-foreground" /></label>
           <label className="flex items-center gap-1">To <input aria-label="To date" type="date" value={custom.to} onChange={(e) => setCustom({ ...custom, to: e.target.value })} className="h-8 rounded-md border border-border bg-background px-2 text-foreground" /></label>
-          {!range && <span className="text-muted-foreground">Pick a start and end date (up to a year).</span>}
+          {!range && <span className="text-muted-foreground">Pick a real start and end date, end on or after start (up to a year).</span>}
         </div>
       )}
 
+      {range && <p className="font-body text-[11px] text-muted-foreground">Showing: <span className="text-foreground">{range.label}</span>{rangeKey !== "custom" ? ` · days shown in ${tz.replace(/_/g, " ")} time` : ""}</p>}
       {!businessId ? <p className="font-body text-xs text-muted-foreground">Pick a business.</p>
         : q.isError ? <p className="font-body text-xs text-destructive">Couldn't load website activity: {(q.error as Error).message}. <button className="underline" onClick={() => void q.refetch()}>Try again</button></p>
         : !s ? (range ? <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">{Array.from({ length: 8 }, (_, i) => <div key={i} className="h-16 rounded-lg bg-muted/20 animate-pulse" />)}</div> : null)
@@ -121,7 +132,7 @@ function Body({ s, crm, crmError }: { s: SiteSummary; crm: CrmActivity | null; c
   const contactRate = rate(n(c, "contact_visitors"), n(c, "visitors"));
   const completion = rate(f.started_and_submitted, f.started);
   const groups = { service: [] as typeof s.pages, city: [] as typeof s.pages };
-  for (const r of s.pages) { const g = pageGroup(r.path); if (g !== "other") groups[g].push(r); }
+  for (const r of s.pages) { const g = r.grp ?? pageGroup(r.path); if (g === "service" || g === "city") groups[g].push(r); }
 
   const steps = [
     { label: "Visits", v: f.sessions, d: null as number | null, dl: "" },
@@ -140,7 +151,7 @@ function Body({ s, crm, crmError }: { s: SiteSummary; crm: CrmActivity | null; c
           const ch = change(n(c, t.k), p[t.k]);
           return (
             <div key={t.k} className="rounded-lg p-2.5 min-w-0" style={TILE} title={t.hint}>
-              <p className="font-body text-[9px] uppercase tracking-wider text-muted-foreground truncate">{t.label}</p>
+              <p className="font-body text-[11px] uppercase tracking-wider text-muted-foreground truncate">{t.label}</p>
               <p className="font-display text-lg font-bold text-foreground tabular-nums">{n(c, t.k).toLocaleString()}</p>
               <p className={`font-body text-[10px] ${ch == null ? "text-muted-foreground" : ch >= 0 ? "text-primary" : "text-destructive"}`}>{fmtChange(ch)}</p>
             </div>
@@ -158,14 +169,14 @@ function Body({ s, crm, crmError }: { s: SiteSummary; crm: CrmActivity | null; c
             <li key={st.label} className="font-body text-xs">
               <div className="flex justify-between gap-2"><span>{st.label}</span>
                 <span className="tabular-nums text-muted-foreground">{st.v.toLocaleString()}{st.d != null && <> · <span className="text-foreground">{fmtRate(rate(st.v, st.d))}</span> {st.dl}</>}</span></div>
-              <div className="h-1.5 mt-1 rounded-full bg-secondary/40"><div className="h-1.5 rounded-full" style={{ width: `${f.sessions ? Math.max(1, (st.v / f.sessions) * 100) : 0}%`, background: ACCENT }} /></div>
+              <div className="h-1.5 mt-1 rounded-full bg-secondary/40"><div className="h-1.5 rounded-full" style={{ width: `${f.sessions && st.v > 0 ? Math.max(1, (st.v / f.sessions) * 100) : 0}%`, background: ACCENT }} /></div>
             </li>
           ))}
         </ul>
       </Block>
 
-      <Block title="Daily visits and contacts" sub={`Contacts = call taps + text taps + quote requests sent · ${s.timezone.replace("America/", "")} time`}>
-        {s.daily.length === 0 ? <Empty text="No visits in this range." /> : (
+      <Block title="Daily visitors and contacts" sub={`Visitors = unique browsers that day · contacts = call taps + text taps + quote requests sent · every day shown, ${s.timezone.replace(/_/g, " ")} time`}>
+        {s.daily.every((d) => d.views === 0 && d.visitors === 0 && d.contacts === 0) ? <Empty text="No visits in this range." /> : (
           <ResponsiveContainer width="100%" height={180}>
             <AreaChart data={s.daily}>
               <CartesianGrid vertical={false} strokeDasharray="2 5" stroke="rgba(255,255,255,0.05)" />
@@ -195,7 +206,7 @@ function Body({ s, crm, crmError }: { s: SiteSummary; crm: CrmActivity | null; c
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
             {[["New leads", crm.leads], ["Leads tagged website", crm.websiteLeads], ["Quotes sent", crm.sent], ["Quotes approved", crm.approved], ["Jobs from quotes", crm.jobs], ["Invoices paid", crm.paid]].map(([l, v]) => (
               <div key={l as string} className="rounded-lg p-2.5" style={TILE}>
-                <p className="font-body text-[9px] uppercase tracking-wider text-muted-foreground">{l}</p>
+                <p className="font-body text-[11px] uppercase tracking-wider text-muted-foreground">{l}</p>
                 <p className="font-display text-lg font-bold text-foreground tabular-nums">{(v as number).toLocaleString()}</p>
               </div>
             ))}
@@ -224,7 +235,7 @@ function Coverage({ s }: { s: SiteSummary }) {
 function Rate({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
     <div className="rounded-lg p-3 min-w-0" style={{ ...TILE, background: "rgba(var(--biz-accent-rgb),0.06)" }}>
-      <p className="font-body text-[9px] uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className="font-body text-[11px] uppercase tracking-wider text-muted-foreground">{label}</p>
       <p className="font-display text-xl font-bold text-primary tabular-nums">{value}</p>
       <p className="font-body text-[10px] text-muted-foreground">{sub}</p>
     </div>

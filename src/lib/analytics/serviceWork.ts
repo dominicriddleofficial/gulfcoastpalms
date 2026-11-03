@@ -41,8 +41,9 @@ export function workState(j: ServiceJob, todayKey: string): WorkState {
   if (EXCLUDED_STATUSES.has(s)) return "excluded";
   if (!j.dateKey) return "undated";
   if (j.dateKey < todayKey) return RECORDED_DONE.has(s) ? "done_recorded" : "done_by_schedule";
-  if (RECORDED_DONE.has(s)) return "done_recorded";
-  return "booked";
+  // Future-dated work stays booked even if its status says paid/completed/invoiced.
+  if (j.dateKey > todayKey) return "booked";
+  return RECORDED_DONE.has(s) ? "done_recorded" : "booked";
 }
 export const isDone = (s: WorkState) => s === "done_recorded" || s === "done_by_schedule";
 

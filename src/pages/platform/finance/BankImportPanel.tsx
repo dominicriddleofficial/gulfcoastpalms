@@ -8,8 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Upload } from "lucide-react";
-import { guessColumns, mapBankRows, parseCsv, sha256Hex, suggestMatches, type ColumnMap, type ParsedBankRow, type RowError } from "@/lib/bankCsv";
-import { fmtCents, type CashEntry, type CashSummary } from "@/lib/cashRecords";
+import { CsvFormatError, guessColumns, mapBankRows, parseCsv, sha256Hex, suggestMatches, type ColumnMap, type ParsedBankRow, type RowError } from "@/lib/bankCsv";
+import { fmtCents, type CashSummary, type Matchable } from "@/lib/cashRecords";
 import { fetchAllPages } from "@/lib/fetchAllPages";
 import { EXPENSE_CATEGORIES } from "@/lib/finance";
 
@@ -22,10 +22,9 @@ const CLASSES = [
   { v: "excluded", label: "Leave out" },
 ] as const;
 
-interface TxnRow { id: string; txn_date: string; description: string; amount_cents: number; classification: string; category: string | null; matched_type: string | null; matched_id: string | null; possible_duplicate_of: string | null }
+interface TxnRow { id: string; txn_date: string; description: string; amount_cents: number; classification: string; category: string | null; matched_type: string | null; matched_id: string | null; possible_duplicate_of: string | null; owner_resolution: string | null; resolution_note: string | null }
 
 const NONE = "__none__";
-const matchType = (e: CashEntry) => (e.source === "payment" ? "payment" : e.source === "manual_income" ? "income" : e.source === "payroll" ? "payroll" : "expense");
 
 export default function BankImportPanel({ businessId, year, summary, onChanged }: { businessId: string; year: number; summary: CashSummary | null; onChanged: () => void }) {
   const { toast } = useToast();
@@ -41,7 +40,7 @@ export default function BankImportPanel({ businessId, year, summary, onChanged }
     queryFn: async () => ({
       businessId, year,
       rows: await fetchAllPages<TxnRow>((f, t) => supabase.from("finance_bank_transactions")
-        .select("id, txn_date, description, amount_cents, classification, category, matched_type, matched_id, possible_duplicate_of")
+        .select("id, txn_date, description, amount_cents, classification, category, matched_type, matched_id, possible_duplicate_of, owner_resolution, resolution_note")
         .eq("business_id", businessId).gte("txn_date", `${year}-01-01`).lt("txn_date", `${year + 1}-01-01`)
         .order("txn_date").order("id").range(f, t)),
     }),
@@ -75,7 +74,10 @@ export default function BankImportPanel({ businessId, year, summary, onChanged }
     if (!f) return;
     if (f.size > 5_000_000) { toast({ title: "File is too big (5 MB max)", variant: "destructive" }); return; }
     const text = await f.text();
-    const g = parseCsv(text);
+    let g: string[][];
+    try { g = parseCsv(text); } catch (e) {
+      toast({ title: "This file can't be read", description: e instanceof CsvFormatError ? e.message : "The file isn't a valid CSV.", variant: "destructive" }); return;
+    }
     if (g.length < 2) { toast({ title: "No rows found in that file", variant: "destructive" }); return; }
     const guess = guessColumns(g[0]);
     setFile({ name: f.name, text }); setGrid(g); setMap(guess);
@@ -102,19 +104,20 @@ export default function BankImportPanel({ businessId, year, summary, onChanged }
     } finally { setImporting(false); }
   };
 
-  const update = async (id: string, patch: Partial<Pick<TxnRow, "classification" | "category" | "matched_type" | "matched_id">>) => {
+  const update = async (id: string, patch: Partial<Pick<TxnRow, "classification" | "category" | "matched_type" | "matched_id" | "owner_resolution" | "resolution_note">>) => {
     const { data, error } = await supabase.from("finance_bank_transactions").update(patch).eq("id", id).eq("business_id", businessId).select("id");
     if (error || !data?.length) { toast({ title: "Didn't save", description: error?.message ?? "No change was saved.", variant: "destructive" }); return; }
     void txns.refetch(); onChanged();
   };
 
-  const candidates: CashEntry[] = useMemo(() => summary ? [
-    ...summary.receipts.filter((r) => r.source !== "bank"), ...summary.refunds,
-    ...summary.expenses.filter((e) => e.source !== "bank"), ...summary.payroll,
-  ] : [], [summary]);
+  const candidates: Matchable[] = summary?.matchables ?? [];
+  // Rows the summary is holding out (look-alikes, duplicates, broken matches, wrong sign) also need review.
+  const issueById = useMemo(() => new Map((summary?.issues ?? []).filter((i) => i.kind.startsWith("bank_")).map((i) => [i.id, i])), [summary]);
+  const [separateFor, setSeparateFor] = useState<string | null>(null);
+  const [note, setNote] = useState("");
   const matchedIds = useMemo(() => new Set((rows ?? []).filter((r) => r.matched_id).map((r) => r.matched_id as string)), [rows]);
 
-  const shown = (rows ?? []).filter((r) => filter === "all" || r.classification === "needs_review" || r.possible_duplicate_of);
+  const shown = (rows ?? []).filter((r) => filter === "all" || r.classification === "needs_review" || issueById.has(r.id));
   const dupInFile = parsed ? parsed.rows.filter((r) => existingFp.data?.has(r.fingerprint)).length : 0;
 
   return (
@@ -171,9 +174,10 @@ export default function BankImportPanel({ businessId, year, summary, onChanged }
           return (
             <li key={r.id} className="py-2 space-y-1.5">
               <div className="flex justify-between gap-2 text-xs">
-                <span className="min-w-0 break-words">{r.txn_date} · {r.description}{r.possible_duplicate_of ? <span className="text-amber-500"> · possible duplicate</span> : null}</span>
+                <span className="min-w-0 break-words">{r.txn_date} · {r.description}{r.possible_duplicate_of && !r.owner_resolution ? <span className="text-amber-500"> · possible duplicate</span> : null}{r.owner_resolution === "separate" ? <span className="text-primary"> · confirmed separate{r.resolution_note ? ` (“${r.resolution_note}”)` : ""}</span> : null}</span>
                 <span className={`tabular-nums shrink-0 ${r.amount_cents > 0 ? "text-primary" : ""}`}>{fmtCents(r.amount_cents)}</span>
               </div>
+              {issueById.get(r.id) && issueById.get(r.id)?.kind !== "bank_needs_review" && <p className="text-xs text-amber-500">{issueById.get(r.id)?.detail}</p>}
               {r.classification === "matched" ? (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   Matched to {matchedTo ? `${matchedTo.label} (${matchedTo.date})` : "a recorded item"} — not counted again.
@@ -181,7 +185,7 @@ export default function BankImportPanel({ businessId, year, summary, onChanged }
                 </div>
               ) : (
                 <div className="flex flex-wrap gap-2">
-                  <Select value={r.classification} onValueChange={(v) => void update(r.id, { classification: v })}>
+                  <Select value={r.classification} onValueChange={(v) => void update(r.id, v === "income" || v === "expense" ? { classification: v } : { classification: v, owner_resolution: null, resolution_note: null })}>
                     <SelectTrigger aria-label="Sort this row" className="h-8 w-44"><SelectValue /></SelectTrigger>
                     <SelectContent>{CLASSES.map((c) => <SelectItem key={c.v} value={c.v}>{c.label}</SelectItem>)}</SelectContent>
                   </Select>
@@ -192,10 +196,22 @@ export default function BankImportPanel({ businessId, year, summary, onChanged }
                     </Select>
                   )}
                   {sugg.length > 0 && (
-                    <Select value={NONE} onValueChange={(v) => { const c = sugg.find((x) => x.id === v); if (c) void update(r.id, { classification: "matched", matched_type: matchType(c), matched_id: c.id }); }}>
+                    <Select value={NONE} onValueChange={(v) => { const c = sugg.find((x) => x.id === v); if (c) void update(r.id, { classification: "matched", matched_type: c.type, matched_id: c.id, owner_resolution: null, resolution_note: null }); }}>
                       <SelectTrigger aria-label="Match to a recorded item" className="h-8 w-56"><SelectValue placeholder="Match to recorded item" /></SelectTrigger>
                       <SelectContent><SelectItem value={NONE} disabled>Match to recorded item…</SelectItem>{sugg.map((c) => <SelectItem key={c.id} value={c.id}>{c.date} · {c.label} · {fmtCents(c.amountCents)}</SelectItem>)}</SelectContent>
                     </Select>
+                  )}
+                  {(r.classification === "income" || r.classification === "expense") && (r.owner_resolution === "separate"
+                    ? <Button size="sm" variant="ghost" className="h-8" onClick={() => void update(r.id, { owner_resolution: null, resolution_note: null })}>Undo “separate”</Button>
+                    : issueById.get(r.id)?.kind === "bank_maybe_recorded" || issueById.get(r.id)?.kind === "bank_possible_duplicate"
+                      ? <Button size="sm" variant="outline" className="h-8" onClick={() => { setSeparateFor(r.id); setNote(""); }}>It's a separate transaction</Button>
+                      : null)}
+                  {separateFor === r.id && (
+                    <div className="flex w-full flex-wrap items-center gap-2">
+                      <Input aria-label="Why is this separate?" placeholder="Why is this separate? (e.g. second visit same day)" value={note} onChange={(e) => setNote(e.target.value)} className="h-8 flex-1 min-w-[200px] text-xs" maxLength={300} />
+                      <Button size="sm" className="h-8" disabled={note.trim().length < 3} onClick={() => { void update(r.id, { owner_resolution: "separate", resolution_note: note.trim() }); setSeparateFor(null); }}>Confirm — count it once</Button>
+                      <Button size="sm" variant="ghost" className="h-8" onClick={() => setSeparateFor(null)}>Cancel</Button>
+                    </div>
                   )}
                 </div>
               )}

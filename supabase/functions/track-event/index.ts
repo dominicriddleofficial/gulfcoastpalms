@@ -63,6 +63,8 @@ async function hashIp(ip: string): Promise<string | null> {
   }
 }
 
+// Mirrors PROD_HOSTS in src/lib/analytics.ts.
+const PROD_HOSTS = new Set(["gulfcoastpalmservices.com", "www.gulfcoastpalmservices.com", "gulfcoastpalms.lovable.app"]);
 // Mirrors src/seo/indexing-policy.mjs isPrivateRoute: never store app, portal, payment or customer-link pages.
 function isPrivatePath(p: string): boolean {
   const path = p.split(/[?#]/)[0].replace(/\/+$/, "") || "/";
@@ -85,7 +87,7 @@ function safeOrigin(raw: unknown): string | null {
   if (typeof raw !== "string" || !raw) return null;
   try { const u = new URL(raw); return /^https?:$/.test(u.protocol) ? u.origin : null; } catch { return null; }
 }
-const SAFE_PROPS = new Set(["placement", "cta_text", "click_id", "form_source", "service", "lead_source", "channel", "position", "plan_type", "sop_type", "value"]);
+const SAFE_PROPS = new Set(["placement", "cta_text", "click_id", "submission_id", "form_source", "service", "lead_source", "channel", "position", "plan_type", "sop_type", "value"]);
 function safeProps(p: unknown): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   if (!p || typeof p !== "object" || Array.isArray(p)) return out;
@@ -105,13 +107,20 @@ function normalize(e: IncomingEvent, ipHash: string | null, ua: string | null) {
   const path = rawPath ? rawPath.split(/[?#]/)[0] : null;
   if (!path || isPrivatePath(path)) return null;
   const pageUrl = safeUrl(e.page_url);
-  if (pageUrl && isPrivatePath(new URL(pageUrl).pathname)) return null;
+  // Production public site only: preview, local and unknown hosts are rejected like private pages.
+  if (!pageUrl) return null;
+  const u = new URL(pageUrl);
+  if (!PROD_HOSTS.has(u.hostname.toLowerCase()) || isPrivatePath(u.pathname)) return null;
+  const bt = clamp(e.business_type, 32);
+  if (bt === "platform") return null;
+  // Shared "anon" ids from old clients aren't real browsers; store them as unknown.
+  const ident = (v: unknown) => { const x = clamp(v, 64); return !x || x === "anon" || x === "anon-session" ? null : x; };
   return {
     event_name: event,
     page_path: path,
     page_url: pageUrl,
     referrer: safeOrigin(e.referrer),
-    business_type: clamp(e.business_type, 32),
+    business_type: bt === "PPS" ? "PPS" : "GCP",
     source_component: clamp(e.source_component, 80),
     utm_source: clamp(e.utm_source, 120),
     utm_medium: clamp(e.utm_medium, 120),
@@ -120,8 +129,8 @@ function normalize(e: IncomingEvent, ipHash: string | null, ua: string | null) {
     utm_content: clamp(e.utm_content, 120),
     device_type: clamp(e.device_type, 16),
     user_agent: ua ? ua.slice(0, 500) : null,
-    visitor_id: clamp(e.visitor_id, 64),
-    session_id: clamp(e.session_id, 64),
+    visitor_id: ident(e.visitor_id),
+    session_id: ident(e.session_id),
     // Public tracking never links to customer records.
     customer_id: null,
     lead_id: null,

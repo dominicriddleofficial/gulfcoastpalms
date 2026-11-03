@@ -159,6 +159,11 @@ export type ServiceEvent = {
   date: string | null;
   /** actual = recorded completion/start; scheduled = planned date; unknown = no date. */
   dateKind: "actual" | "scheduled" | "unknown";
+  /**
+   * True when counted as done only because its scheduled day has passed (the owner doesn't
+   * click Complete). Status is never changed in the database. False/undefined = recorded completion.
+   */
+  inferred?: boolean;
 };
 
 const COMPLETE = new Set(["complete", "completed"]);
@@ -217,10 +222,22 @@ export function formatBooking(e: Pick<ServiceEvent, "date">, tz: string, now = n
 export const localDateKey = (now: Date) =>
   `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
-/** Upcoming means: date-only booking today or later, or a timestamp still in the future. */
-function upcomingOrOverdue(date: string, now: Date, tz: string): "scheduled" | "overdue" {
-  if (isDateOnly(date)) return date >= dateKeyInZone(now, tz) ? "scheduled" : "overdue";
+/**
+ * Booking on a business-local day before today → service inferred from the schedule.
+ * Today/future → upcoming ("scheduled"), or "overdue" only for a timed booking earlier today.
+ */
+function scheduleState(date: string, now: Date, tz: string): "scheduled" | "overdue" | "inferred" {
+  const today = dateKeyInZone(now, tz);
+  const day = isDateOnly(date) ? date : dateKeyInZone(new Date(date), tz);
+  if (day < today) return "inferred";
+  if (isDateOnly(date)) return "scheduled";
   return new Date(date).getTime() >= now.getTime() ? "scheduled" : "overdue";
+}
+function scheduledEvent<B extends object>(base: B, date: string, now: Date, tz: string): B & Pick<ServiceEvent, "status" | "date" | "dateKind" | "inferred"> {
+  const st = scheduleState(date, now, tz);
+  return st === "inferred"
+    ? { ...base, status: "completed", date, dateKind: "scheduled", inferred: true }
+    : { ...base, status: st, date, dateKind: "scheduled" };
 }
 
 export type JobberJobRow = {
@@ -243,10 +260,8 @@ export function jobberJobEvents(
     const base = { key: `jobber:${j.id}`, jobId: j.id, jobSource: "jobber" as const, label, propertyId: mapProperty(j.property_id) };
     if (done || COMPLETE.has(vs)) {
       out.push({ ...base, status: "completed", date: done ?? j.scheduled_start, dateKind: done ? "actual" : j.scheduled_start ? "scheduled" : "unknown" });
-    } else if (vs === "late" && j.scheduled_start) {
-      out.push({ ...base, status: "overdue", date: j.scheduled_start, dateKind: "scheduled" });
-    } else if (SCHEDULED.has(vs) && j.scheduled_start) {
-      out.push({ ...base, status: upcomingOrOverdue(j.scheduled_start, now, tz), date: j.scheduled_start, dateKind: "scheduled" });
+    } else if ((vs === "late" || SCHEDULED.has(vs)) && j.scheduled_start) {
+      out.push(scheduledEvent(base, j.scheduled_start, now, tz));
     }
   }
   return out;
@@ -286,7 +301,7 @@ export function platformJobEvents(
         else if (j.scheduled_start) out.push({ ...base, status: "completed", date: j.scheduled_start, dateKind: "scheduled" });
         else out.push({ ...base, status: "completed", date: null, dateKind: "unknown" });
       } else if (SCHEDULED.has(js) && j.scheduled_start) {
-        out.push({ ...base, status: upcomingOrOverdue(j.scheduled_start, now, tz), date: j.scheduled_start, dateKind: "scheduled" });
+        out.push(scheduledEvent(base, j.scheduled_start, now, tz));
       } else if (ACTIVE.has(js)) {
         out.push({ ...base, status: "in_progress", date: j.scheduled_start, dateKind: j.scheduled_start ? "scheduled" : "unknown" });
       }
@@ -307,7 +322,7 @@ export function platformJobEvents(
         // Use the booked local time when present; missing-time visits stay date-only.
         const at = v.scheduled_start_time ? zonedToUtcIso(v.scheduled_date, v.scheduled_start_time, tz) : null;
         const when = at ?? v.scheduled_date;
-        out.push({ ...base, status: upcomingOrOverdue(when, now, tz), date: when, dateKind: "scheduled" });
+        out.push(scheduledEvent(base, when, now, tz));
       }
     }
   }
@@ -315,7 +330,10 @@ export function platformJobEvents(
 }
 
 export type ServiceSummary = {
+  /** All services: recorded completions + past scheduled visits inferred from the schedule. */
   completed: number;
+  recordedCompleted: number;
+  inferredFromSchedule: number;
   /** Latest completed visit that has any date (actual or planned). */
   lastCompleted: ServiceEvent | null;
   nextScheduled: ServiceEvent | null;
@@ -332,7 +350,8 @@ export function summarize(events: ServiceEvent[], recentLimit = 5): ServiceSumma
   const upcoming = events.filter((e) => e.status === "scheduled");
   const nextScheduled = upcoming.reduce<ServiceEvent | null>((best, e) => (!best || eventTime(e) < eventTime(best) ? e : best), null);
   const recent = [...events].sort((a, b) => eventTime(b) - eventTime(a)).slice(0, recentLimit);
-  return { completed: completed.length, lastCompleted, nextScheduled, recent };
+  const inferred = completed.filter((e) => e.inferred).length;
+  return { completed: completed.length, recordedCompleted: completed.length - inferred, inferredFromSchedule: inferred, lastCompleted, nextScheduled, recent };
 }
 
 /** Text for a "Last service" stat, always qualifying planned/unknown dates. */
@@ -340,6 +359,7 @@ export function lastServiceText(s: ServiceSummary, fmt: (d: string) => string): 
   if (s.completed === 0) return { value: "None recorded" };
   const e = s.lastCompleted;
   if (!e || !e.date) return { value: "Date not recorded", sub: "Completion date not recorded" };
+  if (e.inferred) return { value: fmt(e.date), sub: "Scheduled day has passed · counted by schedule" };
   if (e.dateKind === "scheduled") return { value: fmt(e.date), sub: "Planned date · completion date not recorded" };
   return { value: fmt(e.date) };
 }

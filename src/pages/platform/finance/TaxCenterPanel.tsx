@@ -23,8 +23,9 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 const ISSUE_LABEL: Record<IssueKind, string> = {
   bank_needs_review: "Bank rows not yet sorted",
   bank_possible_duplicate: "Bank rows that may be imported twice",
-  bank_maybe_recorded: "Bank deposits that may already be recorded",
+  bank_maybe_recorded: "Bank rows that may already be recorded",
   bank_sign_mismatch: "Bank rows sorted the wrong way",
+  bank_match_broken: "Bank rows whose matched record was removed or changed",
   shared_unallocated: "Shared expenses without an assigned share",
   paid_invoice_no_payment: "Paid invoices missing a payment record",
   payment_no_date: "Payments with no date",
@@ -37,6 +38,7 @@ function download(name: string, csv: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 const usd = (c: number) => (c / 100).toFixed(2);
+const ENTRY_HEADERS = ["record_id", "date", "type", "source", "description", "category", "vendor_or_person", "method", "reference", "amount", "tip_included", "receipt_on_file"];
 
 export default function TaxCenterPanel({ businessId }: { businessId: string }) {
   const { toast } = useToast();
@@ -51,6 +53,7 @@ export default function TaxCenterPanel({ businessId }: { businessId: string }) {
   const extras = useQuery({
     queryKey: ["tax-extras", businessId, year],
     queryFn: async () => {
+      // Both lists must load; a failure is shown, never treated as "none recorded".
       const [docs, q] = await Promise.all([
         fetchAllPages<TaxDoc>((f, t) => supabase.from("finance_tax_documents").select("*").eq("business_id", businessId).eq("tax_year", year).order("created_at", { ascending: false }).range(f, t)),
         supabase.from("finance_quarterly_taxes").select("*").eq("business_id", businessId).eq("tax_year", year),
@@ -76,7 +79,8 @@ export default function TaxCenterPanel({ businessId }: { businessId: string }) {
   }, [s]);
 
   const noRecords = s ? s.receipts.length + s.refunds.length + s.expenses.length + s.payroll.length === 0 : false;
-  const quarterlyPaid = (ex?.quarterly ?? []).reduce((t, q) => t + cents(q.amount_paid), 0);
+  const quarterlyPaid = ex ? ex.quarterly.reduce((t, q) => t + cents(q.amount_paid), 0) : null;
+  const extrasFailed = extras.isError;
 
   const openReceipt = async (e: CashEntry) => {
     if (!e.receiptPath) return;
@@ -91,30 +95,32 @@ export default function TaxCenterPanel({ businessId }: { businessId: string }) {
   };
 
   const entryRow = (e: CashEntry) => ({
-    date: e.date, type: e.kind, source: e.source, description: e.label, category: e.category,
+    record_id: e.id, date: e.date, type: e.kind, source: e.source, description: e.label, category: e.category,
     vendor_or_person: e.kind === "payroll" ? data?.memberNames.get(e.vendor) ?? "" : e.vendor,
     method: e.method, reference: e.reference, amount: Number(usd(e.amountCents)),
     tip_included: e.tipCents ? Number(usd(e.tipCents)) : "", receipt_on_file: e.receiptPath ? "yes" : "",
   });
   const exp = {
-    summary: () => s && download(`records-summary-${year}.csv`, toCsv([
+    summary: () => s && ex && download(`records-summary-${year}.csv`, toCsv([
       { line: "Money received (recorded)", amount: Number(usd(s.totals.receipts)) },
       { line: "  of which tips", amount: Number(usd(s.totals.tips)) },
       { line: "Refunds paid out", amount: Number(usd(s.totals.refunds)) },
       { line: "Business spending (recorded)", amount: Number(usd(s.totals.expenses)) },
       { line: "Payroll paid", amount: Number(usd(s.totals.payroll)) },
       { line: "Book net from records", amount: Number(usd(s.totals.net)) },
-      { line: "Quarterly tax payments recorded", amount: Number(usd(quarterlyPaid)) },
+      { line: "Quarterly tax payments recorded", amount: Number(usd(quarterlyPaid ?? 0)) },
       { line: "Open review items", amount: s.issues.length },
       { line: "Note", amount: "Cash records for accountant review. Not a tax calculation or filing figure." },
+      { line: "Coverage: app payments / manual income / bank rows / expenses / payroll / documents", amount: [s.coverage.payments, s.coverage.manualIncome, s.coverage.bankRows, s.coverage.expenses, s.coverage.payroll, ex.docs.length].join(" / ") },
+      { line: "Coverage note", amount: "Unsorted, possible-duplicate and look-alike bank rows are held out until reviewed (see open review items)." },
       ...MONTHS.map((m, i) => ({ line: `${m} received / refunds / spending / payroll`, amount: [s.monthly[i].receipts, s.monthly[i].refunds, s.monthly[i].expenses, s.monthly[i].payroll].map(usd).join(" / ") })),
     ])),
-    income: () => s && download(`income-and-refunds-${year}.csv`, toCsv([...s.receipts, ...s.refunds].sort((a, b) => a.date.localeCompare(b.date)).map(entryRow))),
-    expenses: () => s && download(`expenses-${year}.csv`, toCsv(s.expenses.map(entryRow))),
-    payroll: () => s && download(`payroll-${year}.csv`, toCsv(s.payroll.map(entryRow))),
-    quarterly: () => ex && download(`quarterly-tax-payments-${year}.csv`, toCsv(ex.quarterly.map((q) => ({ quarter: q.quarter, amount_paid: Number(q.amount_paid), paid_on: q.paid_on ?? "", notes: q.notes ?? "" })), ["quarter", "amount_paid", "paid_on", "notes"])),
-    documents: () => ex && download(`document-index-${year}.csv`, toCsv(ex.docs.map((d) => ({ type: d.document_type, person_or_vendor: d.person_name ?? "", file: d.file_name ?? "", uploaded: d.created_at.slice(0, 10), notes: d.notes ?? "" })), ["type", "person_or_vendor", "file", "uploaded", "notes"])),
-    issues: () => s && download(`open-review-items-${year}.csv`, toCsv(s.issues.map((i) => ({ issue: ISSUE_LABEL[i.kind], date: i.date ?? "", amount: Number(usd(i.amountCents)), detail: i.detail })), ["issue", "date", "amount", "detail"])),
+    income: () => s && download(`income-and-refunds-${year}.csv`, toCsv([...s.receipts, ...s.refunds].sort((a, b) => a.date.localeCompare(b.date)).map(entryRow), ENTRY_HEADERS)),
+    expenses: () => s && download(`expenses-${year}.csv`, toCsv(s.expenses.map(entryRow), ENTRY_HEADERS)),
+    payroll: () => s && download(`payroll-${year}.csv`, toCsv(s.payroll.map(entryRow), ENTRY_HEADERS)),
+    quarterly: () => ex && download(`quarterly-tax-payments-${year}.csv`, toCsv(ex.quarterly.map((q) => ({ record_id: q.id, quarter: q.quarter, amount_paid: Number(q.amount_paid), paid_on: q.paid_on ?? "", notes: q.notes ?? "" })), ["record_id", "quarter", "amount_paid", "paid_on", "notes"])),
+    documents: () => ex && download(`document-index-${year}.csv`, toCsv(ex.docs.map((d) => ({ record_id: d.id, type: d.document_type, person_or_vendor: d.person_name ?? "", file: d.file_name ?? "", uploaded: d.created_at.slice(0, 10), notes: d.notes ?? "" })), ["record_id", "type", "person_or_vendor", "file", "uploaded", "notes"])),
+    issues: () => s && download(`open-review-items-${year}.csv`, toCsv(s.issues.map((i) => ({ record_id: i.id, issue: ISSUE_LABEL[i.kind], date: i.date ?? "", amount: Number(usd(i.amountCents)), detail: i.detail })), ["record_id", "issue", "date", "amount", "detail"])),
   };
 
   const drillRows = s && drill ? s[drill].filter((e) => drillMonth === null || Number(e.date.slice(5, 7)) === drillMonth).sort((a, b) => a.date.localeCompare(b.date)) : [];
@@ -133,11 +139,11 @@ export default function TaxCenterPanel({ businessId }: { businessId: string }) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild><Button size="sm" variant="outline" disabled={!s}><Download className="w-4 h-4 mr-1" />Accountant files</Button></DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={exp.summary}>Summary</DropdownMenuItem>
+              <DropdownMenuItem onClick={exp.summary} disabled={!ex}>Summary{!ex ? " (waiting for tax payments/documents)" : ""}</DropdownMenuItem>
               <DropdownMenuItem onClick={exp.income}>Income and refunds</DropdownMenuItem>
               <DropdownMenuItem onClick={exp.expenses}>Expenses</DropdownMenuItem>
               <DropdownMenuItem onClick={exp.payroll}>Payroll</DropdownMenuItem>
-              <DropdownMenuItem onClick={exp.quarterly}>Quarterly tax payments</DropdownMenuItem>
+              <DropdownMenuItem onClick={exp.quarterly} disabled={!ex}>Quarterly tax payments</DropdownMenuItem>
               <DropdownMenuItem onClick={exp.documents}>Document list</DropdownMenuItem>
               <DropdownMenuItem onClick={exp.issues}>Open review items</DropdownMenuItem>
             </DropdownMenuContent>
@@ -163,7 +169,7 @@ export default function TaxCenterPanel({ businessId }: { businessId: string }) {
               <span>Bank rows: <b>{s.coverage.bankRows}</b></span>
               <span>Expenses: <b>{s.coverage.expenses}</b></span>
               <span>Payroll: <b>{s.coverage.payroll}</b></span>
-              <span>Documents: <b>{ex?.docs.length ?? "…"}</b></span>
+              <span>Documents: <b>{ex ? ex.docs.length : extrasFailed ? "couldn't load" : "…"}</b></span>
             </div>
             {(noRecords || s.coverage.expenses === 0 || s.coverage.bankRows === 0) && (
               <p className="mt-2 text-xs text-amber-500 flex gap-1.5"><AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
@@ -195,7 +201,7 @@ export default function TaxCenterPanel({ businessId }: { businessId: string }) {
                         <li key={`${i.kind}-${i.id}`} className="text-xs flex flex-wrap items-center justify-between gap-2">
                           <span className="min-w-0 break-words">{i.date ?? "No date"} · {i.detail}</span>
                           {kind === "shared_unallocated" && data?.workspaceId && (
-                            <AllocateShare expenseId={i.id} businessId={businessId} remainingCents={i.amountCents} onSaved={refresh} />
+                            <AllocateShare expenseId={i.id} businessId={businessId} currentCents={s.expenses.find((e) => e.source === "expense" && e.id === i.id)?.amountCents ?? 0} remainingCents={i.amountCents} onSaved={refresh} />
                           )}
                         </li>
                       ))}
@@ -241,6 +247,10 @@ export default function TaxCenterPanel({ businessId }: { businessId: string }) {
                       <div className="text-right shrink-0">
                         <p className="tabular-nums text-sm">{fmtCents(e.amountCents)}</p>
                         {e.receiptPath && <button className="text-primary underline" onClick={() => void openReceipt(e)}>Receipt</button>}
+                        {e.source === "expense" && e.sharedTotalCents != null && (
+                          <AllocateShare expenseId={e.id} businessId={businessId} currentCents={e.amountCents}
+                            remainingCents={s.issues.find((x) => x.kind === "shared_unallocated" && x.id === e.id)?.amountCents ?? 0} onSaved={refresh} />
+                        )}
                       </div>
                     </li>
                   ))}
@@ -268,7 +278,9 @@ export default function TaxCenterPanel({ businessId }: { businessId: string }) {
             return <QuarterRow key={`${businessId}-${year}-${q}`} quarter={q} year={year} row={row ?? null} businessId={businessId} onSaved={refresh} />;
           })}
         </div>
-        <p className="text-xs text-muted-foreground mt-2">Total recorded: <b className="text-foreground">{fmtCents(quarterlyPaid)}</b></p>
+        {extrasFailed
+          ? <p className="text-xs text-destructive mt-2">Couldn't load recorded tax payments or documents: {(extras.error as Error).message}. Totals and those exports are paused. <button className="underline" onClick={refresh}>Try again</button></p>
+          : <p className="text-xs text-muted-foreground mt-2">Total recorded: <b className="text-foreground">{quarterlyPaid == null ? "…" : fmtCents(quarterlyPaid)}</b></p>}
       </Card>
 
       <DocsCard docs={ex?.docs ?? null} businessId={businessId} workspaceId={data?.workspaceId ?? null} year={year} onOpen={openDoc} onSaved={refresh} />
@@ -345,30 +357,35 @@ function RankList({ title, rows }: { title: string; rows: Array<{ key: string; c
   );
 }
 
-function AllocateShare({ expenseId, businessId, remainingCents, onSaved }: { expenseId: string; businessId: string; remainingCents: number; onSaved: () => void }) {
+/** Set (or correct/remove) this business's share of a shared bill. Max = unassigned + current share. */
+function AllocateShare({ expenseId, businessId, currentCents, remainingCents, onSaved }: { expenseId: string; businessId: string; currentCents: number; remainingCents: number; onSaved: () => void }) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [amt, setAmt] = useState("");
   const [saving, setSaving] = useState(false);
+  const maxCents = remainingCents + currentCents;
   const save = async () => {
     const c = cents(amt);
-    if (!/^\d+(\.\d{1,2})?$/.test(amt.trim()) || c <= 0) { toast({ title: "Enter a dollar amount above zero", variant: "destructive" }); return; }
-    if (c > remainingCents) { toast({ title: `Can't be more than ${fmtCents(remainingCents)}`, variant: "destructive" }); return; }
+    if (!/^\d+(\.\d{1,2})?$/.test(amt.trim()) || c < 0) { toast({ title: "Enter a dollar amount (0 removes the share)", variant: "destructive" }); return; }
+    if (c > maxCents) { toast({ title: `Can't be more than ${fmtCents(maxCents)}`, variant: "destructive" }); return; }
     setSaving(true);
-    const { data: existing } = await supabase.from("finance_expense_allocations").select("id, amount").eq("expense_id", expenseId).eq("business_id", businessId).maybeSingle();
-    const res = existing
-      ? await supabase.from("finance_expense_allocations").update({ amount: (cents(existing.amount) + c) / 100 }).eq("id", existing.id).select("id")
-      : await supabase.from("finance_expense_allocations").insert({ expense_id: expenseId, business_id: businessId, amount: c / 100 }).select("id");
+    const { data: existing, error: readErr } = await supabase.from("finance_expense_allocations").select("id").eq("expense_id", expenseId).eq("business_id", businessId).maybeSingle();
+    if (readErr) { setSaving(false); toast({ title: "Couldn't load the current share", description: readErr.message, variant: "destructive" }); return; }
+    const res = c === 0
+      ? (existing ? await supabase.from("finance_expense_allocations").delete().eq("id", existing.id).select("id") : { data: [{ id: "" }], error: null })
+      : existing
+        ? await supabase.from("finance_expense_allocations").update({ amount: c / 100 }).eq("id", existing.id).select("id")
+        : await supabase.from("finance_expense_allocations").insert({ expense_id: expenseId, business_id: businessId, amount: c / 100 }).select("id");
     setSaving(false);
     if (res.error || !res.data?.length) { toast({ title: "Couldn't save the share", description: res.error?.message, variant: "destructive" }); return; }
-    toast({ title: "Share saved" }); setOpen(false); setAmt(""); onSaved();
+    toast({ title: c === 0 ? "Share removed" : "Share saved" }); setOpen(false); setAmt(""); onSaved();
   };
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button size="sm" variant="outline" className="h-7 text-xs">Assign this business's share</Button></DialogTrigger>
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (o) setAmt(currentCents ? (currentCents / 100).toFixed(2) : ""); }}>
+      <DialogTrigger asChild><Button size="sm" variant="outline" className="h-7 text-xs">{currentCents ? "Change share" : "Assign this business's share"}</Button></DialogTrigger>
       <DialogContent>
         <DialogHeader><DialogTitle>This business's share</DialogTitle></DialogHeader>
-        <p className="text-xs text-muted-foreground">Up to {fmtCents(remainingCents)} isn't assigned yet. Enter the part that belongs to this business. Any amount you leave unassigned stays in review.</p>
+        <p className="text-xs text-muted-foreground">Current share: {fmtCents(currentCents)}. Unassigned: {fmtCents(remainingCents)}. Enter this business's full share (up to {fmtCents(maxCents)}); enter 0 to remove it. Unassigned amounts stay in review.</p>
         <Input inputMode="decimal" placeholder="0.00" value={amt} onChange={(e) => setAmt(e.target.value)} />
         <Button onClick={save} disabled={saving}>{saving ? "Saving…" : "Save share"}</Button>
       </DialogContent>
