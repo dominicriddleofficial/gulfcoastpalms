@@ -91,18 +91,20 @@ describe("service history", () => {
     expect(summarize(ev).completed).toBe(3);
   });
 
-  it("excludes deleted/cancelled and past unconfirmed visits from completed", () => {
+  it("excludes deleted/cancelled visits; a past scheduled visit counts as service by schedule", () => {
     const ev = platformJobEvents(
       [pj("j1", { deleted_at: "2026-01-01" }), pj("j2", { status: "cancelled" }), pj("j3")],
       [pv("a", "j1", "completed"), pv("b", "j2", "completed"), pv("c", "j3", "cancelled"), pv("d", "j3", "scheduled")],
       NOW);
     const s = summarize(ev);
-    expect(s.completed).toBe(0);
+    expect(s.completed).toBe(1);
+    expect(s.recordedCompleted).toBe(0);
+    expect(s.inferredFromSchedule).toBe(1);
     expect(s.nextScheduled).toBeNull();
-    expect(ev.map((e) => e.status)).toEqual(["overdue"]);
+    expect(ev.map((e) => [e.status, e.inferred])).toEqual([["completed", true]]);
   });
 
-  it("jobber: completion evidence beats job status; late is not completed; deleted skipped", () => {
+  it("jobber: completion evidence beats job status; past late job counts by schedule; deleted skipped", () => {
     const jobs = [
       { id: "1", job_number: "1", title: null, status: "requires_invoicing", visit_status: "completed", scheduled_start: "2026-02-01T14:00:00Z", property_id: "P" },
       { id: "2", job_number: "2", title: null, status: "late", visit_status: "late", scheduled_start: "2026-03-01T14:00:00Z", property_id: "P" },
@@ -112,7 +114,10 @@ describe("service history", () => {
     ];
     const ev = jobberJobEvents(jobs, new Map([["5", "2026-04-02T18:00:00Z"]]), NOW);
     const s = summarize(ev);
-    expect(s.completed).toBe(2);
+    expect(s.completed).toBe(3);
+    expect(s.recordedCompleted).toBe(2);
+    expect(s.inferredFromSchedule).toBe(1);
+    expect(ev.find((e) => e.jobId === "2")?.inferred).toBe(true);
     expect(s.lastCompleted?.jobId).toBe("5");
     expect(s.lastCompleted?.dateKind).toBe("actual");
     expect(s.nextScheduled?.jobId).toBe("4");
@@ -211,6 +216,8 @@ describe("native visit times in the business time zone", () => {
     const ev = platformJobEvents([job], [visit("v", "23:45:00")], late, (x) => x, TZ);
     expect(ev[0].status).toBe("scheduled");
     const tokyo = platformJobEvents([job], [visit("v", "23:45:00")], late, (x) => x, "Asia/Tokyo");
-    expect(tokyo[0].status).toBe("overdue");
+    // In Tokyo that booked day is already yesterday, so it counts as service by schedule.
+    expect(tokyo[0].status).toBe("completed");
+    expect(tokyo[0].inferred).toBe(true);
   });
 });
