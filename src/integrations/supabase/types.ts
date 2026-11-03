@@ -1268,6 +1268,170 @@ export type Database = {
         }
         Relationships: []
       }
+      finance_bank_imports: {
+        Row: {
+          business_id: string
+          created_at: string
+          created_by: string | null
+          file_name: string | null
+          file_sha256: string
+          id: string
+          row_count: number
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          created_by?: string | null
+          file_name?: string | null
+          file_sha256: string
+          id?: string
+          row_count?: number
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          created_by?: string | null
+          file_name?: string | null
+          file_sha256?: string
+          id?: string
+          row_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_bank_imports_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_bank_transactions: {
+        Row: {
+          amount_cents: number
+          business_id: string
+          category: string | null
+          classification: string
+          created_at: string
+          description: string
+          id: string
+          import_id: string
+          matched_id: string | null
+          matched_type: string | null
+          note: string | null
+          possible_duplicate_of: string | null
+          raw: Json
+          reviewed_at: string | null
+          reviewed_by: string | null
+          row_fingerprint: string
+          row_index: number
+          txn_date: string
+        }
+        Insert: {
+          amount_cents: number
+          business_id: string
+          category?: string | null
+          classification?: string
+          created_at?: string
+          description?: string
+          id?: string
+          import_id: string
+          matched_id?: string | null
+          matched_type?: string | null
+          note?: string | null
+          possible_duplicate_of?: string | null
+          raw?: Json
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          row_fingerprint: string
+          row_index: number
+          txn_date: string
+        }
+        Update: {
+          amount_cents?: number
+          business_id?: string
+          category?: string | null
+          classification?: string
+          created_at?: string
+          description?: string
+          id?: string
+          import_id?: string
+          matched_id?: string | null
+          matched_type?: string | null
+          note?: string | null
+          possible_duplicate_of?: string | null
+          raw?: Json
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          row_fingerprint?: string
+          row_index?: number
+          txn_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_bank_transactions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_bank_transactions_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "finance_bank_imports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_expense_allocations: {
+        Row: {
+          amount: number
+          business_id: string
+          created_at: string
+          created_by: string | null
+          expense_id: string
+          id: string
+          note: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          business_id: string
+          created_at?: string
+          created_by?: string | null
+          expense_id: string
+          id?: string
+          note?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          business_id?: string
+          created_at?: string
+          created_by?: string | null
+          expense_id?: string
+          id?: string
+          note?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_expense_allocations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_expense_allocations_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "finance_expenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_expenses: {
         Row: {
           amount: number
@@ -6710,6 +6874,19 @@ export type Database = {
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
+      }
+      finance_import_bank_csv: {
+        Args: {
+          _business_id: string
+          _file_name: string
+          _file_sha256: string
+          _rows: Json
+        }
+        Returns: Json
+      }
+      finance_is_business_owner: {
+        Args: { _business_id: string; _user_id: string }
+        Returns: boolean
       }
       find_duplicate_customers: {
         Args: { _business_id: string; _email?: string; _phone?: string }

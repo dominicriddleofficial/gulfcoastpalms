@@ -5,6 +5,7 @@
  * - Image compression for receipt uploads (~1MB JPEG)
  * - CSV download
  */
+import { toCsv } from "@/lib/cashRecords";
 import { supabase } from "@/integrations/supabase/client";
 
 export const fmtUSD = (n: number | null | undefined): string => {
@@ -84,19 +85,7 @@ export function downloadCSV(filename: string, rows: Array<Record<string, unknown
     triggerDownload(blob, filename);
     return;
   }
-  const headers = Object.keys(rows[0]);
-  const escape = (v: unknown): string => {
-    if (v == null) return "";
-    const s = String(v);
-    if (s.includes(",") || s.includes('"') || s.includes("\n")) {
-      return `"${s.replace(/"/g, '""')}"`;
-    }
-    return s;
-  };
-  const csv = [
-    headers.join(","),
-    ...rows.map((r) => headers.map((h) => escape(r[h])).join(",")),
-  ].join("\n");
+  const csv = toCsv(rows);
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   triggerDownload(blob, filename);
 }

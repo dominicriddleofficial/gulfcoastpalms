@@ -76,9 +76,9 @@ export default function ExpensesPanel({ businessId }: { businessId: string }) {
   const byCat = useMemo(() => {
     const m = new Map<string, number>();
     for (const r of filtered) {
-      // Shared rows count as half toward this workspace's view
-      const amt = r.is_shared ? Number(r.amount) / 2 : Number(r.amount);
-      m.set(r.category, (m.get(r.category) ?? 0) + amt);
+      // Shared rows aren't split here; their share is assigned in the Tax tab.
+      if (r.is_shared) continue;
+      m.set(r.category, (m.get(r.category) ?? 0) + Number(r.amount));
     }
     return m;
   }, [filtered]);
@@ -131,6 +131,11 @@ export default function ExpensesPanel({ businessId }: { businessId: string }) {
       <Card className="p-3 bg-card/60 border-border">
         <p className="text-[10px] uppercase tracking-wide text-muted-foreground">This month total</p>
         <p className="font-display text-xl font-bold text-foreground">{fmtUSD(total)}</p>
+        {filtered.some((r) => r.is_shared) && (
+          <p className="text-[11px] text-muted-foreground">
+            Shared expenses ({fmtUSD(filtered.filter((r) => r.is_shared).reduce((s, r) => s + Number(r.amount), 0))}) aren't included. Assign each business's share in the Tax tab.
+          </p>
+        )}
         <div className="mt-2 flex gap-2 flex-wrap">
           {Array.from(byCat.entries()).map(([c, v]) => (
             <span key={c} className="text-[11px] px-2 py-0.5 rounded bg-secondary/60">

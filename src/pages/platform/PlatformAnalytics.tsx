@@ -14,6 +14,11 @@ import { toast } from "sonner";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Phone } from "lucide-react";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import { Link } from "react-router-dom";
+import { fetchAllPages } from "@/lib/fetchAllPages";
+import { dateKeyInZone, DEFAULT_BUSINESS_TZ } from "@/lib/customers/customerDetail";
+import { recordPath } from "@/lib/search/universalSearch";
+import { inPeriod, isDone, mergeServiceJobs, monthlySeries, periodFor, priorPeriod, totalsFor, workState, type JobberRow, type Period, type PeriodKind, type PlatformRow, type ServiceJob } from "@/lib/analytics/serviceWork";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const GREEN = "var(--accent-color)";
@@ -477,6 +482,32 @@ const customTooltipStyle = {
   color: "#fff",
 };
 
+const PERIOD_OPTIONS: Array<{ v: PeriodKind; label: string }> = [
+  { v: "ytd", label: "Year to date" }, { v: "year", label: "Full year" },
+  { v: "q1", label: "Q1" }, { v: "q2", label: "Q2" }, { v: "q3", label: "Q3" }, { v: "q4", label: "Q4" },
+  ...MONTHS.map((m, i) => ({ v: `m${i + 1}` as PeriodKind, label: m })),
+];
+
+/** Business-scoped, paginated reads of app + Jobber jobs for year-2 .. year (+ upcoming). */
+async function fetchServiceJobs(businessId: string, year: number) {
+  const start = `${year - 2}-01-01`;
+  const end = `${year + 2}-01-01`;
+  const [platform, jobber] = await Promise.all([
+    fetchAllPages<PlatformRow>((f, t) => supabase.from("platform_jobs")
+      .select("id, status, scheduled_start, total, title, source_record_id, source_system, deleted_at, customer:platform_customers(display_name), property:platform_properties(address_1, city, state, zip)")
+      .eq("business_id", businessId).gte("scheduled_start", start).lt("scheduled_start", end)
+      .order("id").range(f, t) as never),
+    // Pad a day either side so timestamps near midnight land on the right local date.
+    fetchAllPages<JobberRow>((f, t) => supabase.from("jobber_jobs")
+      .select("id, jobber_id, title, status, scheduled_start, total_amount, client_name, property_address")
+      .eq("business_id", businessId).gte("scheduled_start", `${year - 3}-12-31`).lt("scheduled_start", `${year + 2}-01-02`)
+      .order("id").range(f, t)),
+  ]);
+  // Mirrors outside the window still suppress their Jobber source.
+  const jobs = mergeServiceJobs(platform, jobber).filter((j) => !j.dateKey || (j.dateKey >= start && j.dateKey < end));
+  return { businessId, year, jobs, todayKey: dateKeyInZone(new Date(), DEFAULT_BUSINESS_TZ) };
+}
+
 export default function PlatformAnalytics() {
   const reducedMotion = usePrefersReducedMotion();
   const { selectedBusinessId } = useBusinessContext();
@@ -484,12 +515,13 @@ export default function PlatformAnalytics() {
   const { isOwner } = useUserRole();
   const currentActualYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentActualYear);
+  const [periodKind, setPeriodKind] = useState<PeriodKind>("ytd");
   const [syncing, setSyncing] = useState(false);
-  const years = [2024, 2025, 2026];
+  const years = Array.from({ length: currentActualYear - 2023 }, (_, i) => 2024 + i);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["platform-analytics", selectedBusinessId, selectedYear],
-    queryFn: () => fetchAnalytics(selectedBusinessId, selectedYear),
+    queryFn: () => fetchServiceJobs(selectedBusinessId as string, selectedYear),
     enabled: !!selectedBusinessId,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
@@ -550,75 +582,72 @@ export default function PlatformAnalytics() {
     return <PlatformLayout><p className="text-muted-foreground text-center py-20 font-body text-sm">Select a business to view analytics</p></PlatformLayout>;
   }
 
-  if (isLoading || !data) {
+  if (isError) {
+    return <PlatformLayout><p className="text-destructive text-center py-20 font-body text-sm">Couldn't load analytics. <button className="underline" onClick={() => void refetch()}>Try again</button></p></PlatformLayout>;
+  }
+  if (isLoading || !data || data.businessId !== selectedBusinessId || data.year !== selectedYear) {
     return <PlatformLayout><LoadingSkeleton /></PlatformLayout>;
   }
 
-  const curJobs = data.currentYear;
-  const prevJobs = data.prevYear;
-  const twoAgoJobs = data.twoYearsAgo;
+  const todayKey = data.todayKey;
+  const all = data.jobs;
+  const period = periodFor(selectedYear, periodKind, todayKey);
+  const prior = priorPeriod(period);
+  const cur = totalsFor(all, period, todayKey);
+  const prev = totalsFor(all, prior, todayKey);
+  const prevFull = totalsFor(all, periodFor(selectedYear - 1, "year", todayKey), todayKey);
+  const doneIn = (p: Period) => all.filter((j) => inPeriod(j.dateKey, p) && isDone(workState(j, todayKey)));
+  const curDone = doneIn(period);
+  const asUnified = (js: ServiceJob[]): UnifiedJob[] => js.map((j) => ({ id: j.id, scheduled_start: j.dateKey, total_amount: j.amount, client_name: j.clientName, property_address: j.address, status: j.status, title: j.title }));
+  const curJobs = asUnified(curDone);
+  const prevJobs = asUnified(doneIn(prior));
 
-  // Hero stat
-  const curRevenue = curJobs.reduce((s, j) => s + j.total_amount, 0);
-  const prevSamePeriodRev = data.prevYearSamePeriod.reduce((s: number, j: UnifiedJob) => s + j.total_amount, 0);
+  const curRevenue = Math.round(cur.doneValue);
+  const prevSamePeriodRev = Math.round(prev.doneValue);
   const yoyPct = prevSamePeriodRev > 0 ? Math.round(((curRevenue - prevSamePeriodRev) / prevSamePeriodRev) * 100) : 0;
   const yoyPositive = curRevenue >= prevSamePeriodRev;
+  const prevFullRev = Math.round(prevFull.doneValue);
+  const jobsCompleted = cur.doneJobs;
+  const prevJobsCompleted = prev.doneJobs;
+  const avgJobValue = cur.doneJobs > 0 ? cur.doneValue / cur.doneJobs : 0;
+  const prevAvgJobValue = prev.doneJobs > 0 ? prev.doneValue / prev.doneJobs : 0;
 
-  // Cards
-  const prevFullRev = prevJobs.reduce((s, j) => s + j.total_amount, 0);
-  const _now = new Date();
-  const jobsCompleted = curJobs.filter(j => isJobCompleted(j, _now)).length;
-  const prevJobsCompleted = prevJobs.filter(j => isJobCompleted(j, _now)).length;
-  const avgJobValue = curJobs.length > 0 ? curRevenue / curJobs.length : 0;
-  const prevAvgJobValue = prevJobs.length > 0 ? prevFullRev / prevJobs.length : 0;
-
-  // Best month
-  const monthlyRev = groupByMonth(curJobs);
+  const series = monthlySeries(all, selectedYear, todayKey);
+  const series2 = monthlySeries(all, selectedYear - 1, todayKey);
+  const monthlyRev = series.map((p) => p.done);
   const bestMonthIdx = monthlyRev.indexOf(Math.max(...monthlyRev));
   const bestMonthRev = monthlyRev[bestMonthIdx];
 
-  // Monthly chart data
-  const prevMonthlyRev = groupByMonth(prevJobs);
-  const twoAgoMonthlyRev = groupByMonth(twoAgoJobs);
-  const monthlyCountCur = countByMonth(curJobs);
-  const currentMonth = new Date().getMonth();
-
   const revenueChartData = MONTHS.map((name, i) => ({
     name,
-    [selectedYear]: monthlyRev[i],
-    [`${selectedYear - 1}`]: prevMonthlyRev[i],
-    isFuture: selectedYear === currentActualYear && i > currentMonth,
+    [selectedYear]: series[i].done,
+    booked: series[i].booked,
+    [`${selectedYear - 1}`]: series[i].prior,
   }));
+  const maxJobs = Math.max(...series.map((p) => p.doneJobs));
+  const jobCountChartData = MONTHS.map((name, i) => ({ name, jobs: series[i].doneJobs, isMax: series[i].doneJobs === maxJobs }));
 
-  const jobCountChartData = MONTHS.map((name, i) => ({
-    name,
-    jobs: monthlyCountCur[i],
-    isMax: monthlyCountCur[i] === Math.max(...monthlyCountCur),
-  }));
-
-  // Geographic
   const geoData = groupByCity(curJobs);
   const maxGeoCount = geoData.length > 0 ? geoData[0].count : 1;
-
-  // Service type
   const serviceData = groupByService(curJobs);
   const maxServiceRev = serviceData.length > 0 ? serviceData[0].revenue : 1;
 
-  // YoY chart
   const yoyChartData = MONTHS.map((name, i) => ({
     name,
-    [selectedYear]: monthlyRev[i],
-    [selectedYear - 1]: prevMonthlyRev[i],
-    [selectedYear - 2]: twoAgoMonthlyRev[i],
+    [selectedYear]: series[i].done,
+    [selectedYear - 1]: series[i].prior,
+    [selectedYear - 2]: series2[i].prior,
   }));
 
-  // Quick stats
+  // Customers are counted by name only within one business; this is a reporting estimate.
   const uniqueClients = new Set(curJobs.map(j => j.client_name).filter(Boolean)).size;
   const prevClients = new Set(prevJobs.map(j => j.client_name).filter(Boolean));
-  const repeatClients = curJobs.filter(j => j.client_name && prevClients.has(j.client_name));
-  const repeatCount = new Set(repeatClients.map(j => j.client_name)).size;
-  const biggestJob = curJobs.reduce((max, j) => j.total_amount > max.amount ? { amount: j.total_amount, name: j.client_name || "—" } : max, { amount: 0, name: "—" });
-  const thisMonthJobs = curJobs.filter(j => j.scheduled_start && new Date(j.scheduled_start).getMonth() === currentMonth).length;
+  const repeatCount = new Set(curJobs.filter(j => j.client_name && prevClients.has(j.client_name)).map(j => j.client_name)).size;
+  const biggest = curDone.reduce<ServiceJob | null>((m, j) => (!m || j.amount > m.amount ? j : m), null);
+  const biggestJob = { amount: Math.round(biggest?.amount ?? 0), name: biggest?.clientName || "—" };
+  const upcoming = all.filter((j) => workState(j, todayKey) === "booked").sort((a, b) => (a.dateKey ?? "").localeCompare(b.dateKey ?? ""));
+  const upcomingValue = Math.round(upcoming.reduce((t, j) => t + j.amount, 0));
+  const thisMonthJobs = all.filter((j) => j.dateKey?.slice(0, 7) === todayKey.slice(0, 7) && workState(j, todayKey) !== "excluded").length;
 
   return (
     <PlatformLayout>
@@ -628,7 +657,7 @@ export default function PlatformAnalytics() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="font-display text-xl font-bold text-foreground tracking-tight">Analytics</h1>
-            <p className="font-body text-xs text-muted-foreground">Business performance overview</p>
+            <p className="font-body text-xs text-muted-foreground">Work on the schedule before today counts as done. Booked work is shown separately. This is job value, not money received.</p>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -643,6 +672,9 @@ export default function PlatformAnalytics() {
               <RefreshCw className={cn("w-3 h-3", syncing && "animate-spin")} />
               {syncing ? "Syncing…" : "Sync Historical Data"}
             </button>
+            <select aria-label="Period" value={periodKind} onChange={(e) => setPeriodKind(e.target.value as PeriodKind)} className="h-8 rounded-lg border border-border bg-background px-2 font-body text-xs text-foreground">
+              {PERIOD_OPTIONS.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
+            </select>
             <div className="flex items-center gap-1.5">
               {years.map(y => (
                 <button
@@ -667,13 +699,13 @@ export default function PlatformAnalytics() {
           background: "rgba(var(--biz-accent-rgb),0.05)",
           border: `1px solid ${CARD_BORDER}`,
         }}>
-          <p className="font-body text-[10px] uppercase tracking-widest text-muted-foreground mb-2">{selectedYear} Revenue to Date</p>
+          <p className="font-body text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Work done — {period.label}</p>
           <p className="font-display text-4xl md:text-5xl font-bold text-primary tracking-tight">
             ${curRevenue.toLocaleString()}
           </p>
           {prevSamePeriodRev > 0 && (
             <p className="font-body text-xs text-muted-foreground mt-2 flex items-center justify-center gap-1">
-              vs {selectedYear - 1} same period: ${prevSamePeriodRev.toLocaleString()}
+              vs same period last year: ${prevSamePeriodRev.toLocaleString()}
               {yoyPositive
                 ? <span className="text-primary flex items-center gap-0.5"><TrendingUp className="w-3 h-3" /> {yoyPct}%</span>
                 : <span className="text-[#f87171] flex items-center gap-0.5"><TrendingDown className="w-3 h-3" /> {Math.abs(yoyPct)}%</span>
@@ -685,15 +717,15 @@ export default function PlatformAnalytics() {
         {/* SECTION 2 — Four Key Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <StatCard
-            label={`${selectedYear - 1} Total Revenue`}
+            label={`${selectedYear - 1} work done`}
             value={`$${prevFullRev.toLocaleString()}`}
             sub={`Full year ${selectedYear - 1}`}
             icon={DollarSign}
           />
           <StatCard
-            label={`Jobs Completed ${selectedYear}`}
+            label="Jobs done"
             value={jobsCompleted.toString()}
-            sub={prevJobsCompleted > 0 ? `vs ${prevJobsCompleted} same period last year` : undefined}
+            sub={`${cur.recordedJobs} marked done · ${cur.doneJobs - cur.recordedJobs} by schedule${prevJobsCompleted > 0 ? ` · ${prevJobsCompleted} last year` : ""}`}
             icon={Briefcase}
           />
           <StatCard
@@ -703,7 +735,7 @@ export default function PlatformAnalytics() {
             icon={TrendingUp}
           />
           <StatCard
-            label={`Best Month ${selectedYear}`}
+            label={`Best month ${selectedYear}`}
             value={bestMonthRev > 0 ? MONTHS[bestMonthIdx] : "—"}
             sub={bestMonthRev > 0 ? `$${bestMonthRev.toLocaleString()}` : "No data yet"}
             icon={Trophy}
@@ -712,7 +744,7 @@ export default function PlatformAnalytics() {
         </div>
 
         {/* SECTION 3 — Monthly Revenue */}
-        <ChartSection title={`Monthly Revenue — ${selectedYear}`} subtitle="Total job value by month" empty={curJobs.length === 0}>
+        <ChartSection title={`Job value by month — ${selectedYear}`} subtitle="Done work, booked work still ahead, and last year" empty={series.every((p) => p.done === 0 && p.booked === 0)}>
           <ResponsiveContainer width="100%" height={280}>
             <AreaChart data={revenueChartData}>
               <defs>
@@ -730,6 +762,7 @@ export default function PlatformAnalytics() {
                 formatter={(v: number, name) => [`$${Number(v).toLocaleString()}`, String(name)]}
               />
               <Area isAnimationActive={!reducedMotion} animationDuration={600} type="monotone" dataKey={`${selectedYear - 1}`} stroke={GREEN_DIM} strokeWidth={1.5} strokeDasharray="4 4" fill="none" name={`${selectedYear - 1}`} />
+              <Area isAnimationActive={!reducedMotion} animationDuration={600} type="monotone" dataKey="booked" stroke={GREEN} strokeWidth={1.5} strokeDasharray="2 3" fill="none" name="Booked" />
               <Area isAnimationActive={!reducedMotion} animationDuration={600} type="monotone" dataKey={selectedYear.toString()} stroke={GREEN} strokeWidth={2.5} fill="url(#greenGrad)" name={`${selectedYear}`} />
             </AreaChart>
           </ResponsiveContainer>
@@ -755,7 +788,7 @@ export default function PlatformAnalytics() {
             </div>
           </ChartSection>
 
-          <ChartSection title={`Jobs Completed Per Month — ${selectedYear}`} subtitle="Volume of work each month" empty={curJobs.length === 0}>
+          <ChartSection title={`Jobs done per month — ${selectedYear}`} subtitle="Counted by scheduled start date" empty={maxJobs === 0}>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={jobCountChartData}>
                 <CartesianGrid vertical={false} strokeDasharray="2 5" stroke="rgba(255,255,255,0.05)" />
@@ -769,7 +802,7 @@ export default function PlatformAnalytics() {
         </div>
 
         {/* SECTION 6 — Year Over Year */}
-        <ChartSection title="Year Over Year Revenue" subtitle="Monthly comparison across years" empty={curJobs.length === 0 && prevJobs.length === 0}>
+        <ChartSection title="Year over year" subtitle="Done job value by month" empty={yoyChartData.every((r) => !r[selectedYear] && !r[selectedYear - 1] && !r[selectedYear - 2])}>
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={yoyChartData}>
               <CartesianGrid vertical={false} strokeDasharray="2 5" stroke="rgba(255,255,255,0.05)" />
@@ -790,7 +823,7 @@ export default function PlatformAnalytics() {
 
         {/* SECTION 7 — Revenue by Service Type */}
         {serviceData.length > 1 && (
-          <ChartSection title="Revenue by Service Type" subtitle="Which services make the most money?">
+          <ChartSection title="Job value by service" subtitle={period.label}>
             <div className="space-y-3">
               {serviceData.map(s => (
                 <div key={s.service} className="space-y-1">
@@ -829,6 +862,21 @@ export default function PlatformAnalytics() {
             <p className="font-display text-lg font-bold text-foreground">{thisMonthJobs}</p>
           </div>
         </div>
+
+        {/* Booked work ahead — exact job links */}
+        <ChartSection title="Booked work ahead" subtitle={`${upcoming.length} jobs · $${upcomingValue.toLocaleString()} scheduled from today`} empty={upcoming.length === 0}>
+          <ul className="divide-y divide-border/50">
+            {upcoming.slice(0, 15).map((j) => (
+              <li key={`${j.source}-${j.id}`}>
+                <Link to={recordPath("job", j.id, j.source)} className="flex justify-between gap-3 py-2 hover:text-primary">
+                  <span className="min-w-0 font-body text-xs"><span className="text-muted-foreground mr-2">{j.dateKey}</span>{j.clientName || j.title || "Job"}</span>
+                  <span className="font-body text-xs tabular-nums shrink-0">${Math.round(j.amount).toLocaleString()}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+          {cur.undated > 0 && <p className="font-body text-[10px] text-muted-foreground mt-2">{cur.undated} jobs have no date and aren't counted.</p>}
+        </ChartSection>
 
         {/* SECTION 9 — Website Call Taps (owner-only) */}
         {isOwner && callTaps && (
