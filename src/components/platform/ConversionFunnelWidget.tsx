@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { Download, Globe, Info, Inbox } from "lucide-react";
+import { Download, Globe, Info, Inbox, RefreshCw } from "lucide-react";
 import {
   change, fmtChange, fmtRate, pageGroup, placementLabel, rangeFor, rate, summaryCsv,
   type RangeKey, type SiteSummary, type SiteTotals,
@@ -45,8 +45,14 @@ function download(name: string, csv: string) {
 export default function ConversionFunnelWidget({ businessId }: { businessId: string | null; days?: number }) {
   const [rangeKey, setRangeKey] = useState<RangeKey>("30");
   const [custom, setCustom] = useState({ from: "", to: "" });
-  // Freeze "now" per selection so the query key is stable.
-  const [now] = useState(() => new Date());
+  // "Now" is a stable boundary for the query key; Refresh (or every 5 minutes on rolling ranges)
+  // moves it forward so new visits appear. Custom date ranges keep their own fixed bounds.
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    if (rangeKey === "custom") return;
+    const t = window.setInterval(() => setNow(new Date()), 5 * 60_000);
+    return () => window.clearInterval(t);
+  }, [rangeKey]);
   // Custom ranges are whole days in the business's own time zone.
   const tzq = useQuery({
     queryKey: ["business-timezone", businessId], enabled: !!businessId, staleTime: 3_600_000,
@@ -92,6 +98,10 @@ export default function ConversionFunnelWidget({ businessId }: { businessId: str
           ))}
           <button onClick={() => setRangeKey("custom")} aria-pressed={rangeKey === "custom"}
             className={`px-2.5 py-1 rounded-md font-body text-[11px] border ${rangeKey === "custom" ? "text-primary border-primary/50 bg-primary/10" : "text-muted-foreground border-transparent hover:text-foreground"}`}>Custom</button>
+          <button onClick={() => { setNow(new Date()); void q.refetch(); void crm.refetch(); }} aria-label="Refresh website activity" title={`Updated ${now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`}
+            className="px-2.5 py-1 rounded-md font-body text-xs border border-border text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
+            <RefreshCw className={`w-3 h-3 ${q.isFetching ? "animate-spin" : ""}`} />Refresh
+          </button>
           <button onClick={() => s && download(`website-activity-${s.from.slice(0, 10)}-to-${s.to.slice(0, 10)}.csv`, summaryCsv(s))} disabled={!s}
             className="px-2.5 py-1 rounded-md font-body text-[11px] border border-border text-muted-foreground hover:text-foreground disabled:opacity-40 inline-flex items-center gap-1">
             <Download className="w-3 h-3" />CSV
