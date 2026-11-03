@@ -97,8 +97,8 @@ export function summaryCsv(s: SiteSummary): string {
     add("Totals", label, c[k] ?? 0, p[k] ?? 0);
   }
   add("Scope", "Time zone", s.timezone);
-  add("Coverage", "Rows with unknown browser identity (not counted as unique visitors)", s.coverage.unknown_identity_rows ?? 0);
-  add("Coverage", "Duplicate rows removed", s.coverage.duplicate_rows_removed);
+  add("Coverage", "Rows with unknown browser identity (not counted as unique visitors)", s.coverage?.unknown_identity_rows ?? 0);
+  add("Coverage", "Duplicate rows removed", s.coverage?.duplicate_rows_removed ?? 0);
   for (const d of s.daily) add("Daily", d.date, `${d.views} views / ${d.sessions ?? 0} visits / ${d.visitors} visitors / ${d.contacts} contacts`);
   for (const r of s.pages) add("Top pages", r.path, `${r.views} views / ${r.contacts} contacts`);
   for (const r of s.landing) add("Landing pages", r.path, `${r.sessions} visits / ${r.contacted} contacted`);
