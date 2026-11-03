@@ -246,7 +246,7 @@ function scheduledEvent<B extends object>(base: B, date: string, now: Date, tz: 
  */
 function completeWithoutActual<B extends object>(base: B, planned: string | null, now: Date, tz: string): B & Pick<ServiceEvent, "status" | "date" | "dateKind"> {
   if (!planned) return { ...base, status: "completed", date: null, dateKind: "unknown" };
-  const day = planned.length <= 10 ? planned : dateKeyInZone(new Date(planned), tz);
+  const day = isDateOnly(planned) ? planned : dateKeyInZone(new Date(planned), tz);
   return day < dateKeyInZone(now, tz)
     ? { ...base, status: "completed", date: planned, dateKind: "scheduled" }
     : { ...base, status: "scheduled", date: planned, dateKind: "scheduled" };
