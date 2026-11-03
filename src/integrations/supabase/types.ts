@@ -1319,8 +1319,12 @@ export type Database = {
           matched_id: string | null
           matched_type: string | null
           note: string | null
+          owner_resolution: string | null
           possible_duplicate_of: string | null
           raw: Json
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           row_fingerprint: string
@@ -1339,8 +1343,12 @@ export type Database = {
           matched_id?: string | null
           matched_type?: string | null
           note?: string | null
+          owner_resolution?: string | null
           possible_duplicate_of?: string | null
           raw?: Json
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           row_fingerprint: string
@@ -1359,8 +1367,12 @@ export type Database = {
           matched_id?: string | null
           matched_type?: string | null
           note?: string | null
+          owner_resolution?: string | null
           possible_duplicate_of?: string | null
           raw?: Json
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           row_fingerprint?: string
