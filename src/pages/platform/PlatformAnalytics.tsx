@@ -658,7 +658,7 @@ export default function PlatformAnalytics() {
             <h1 className="font-display text-xl font-bold text-foreground tracking-tight">Analytics</h1>
             <p className="font-body text-xs text-muted-foreground">Work on the schedule before today counts as done. Booked work is shown separately. This is job value, not money received.</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={handleSyncHistorical}
               disabled={syncing}

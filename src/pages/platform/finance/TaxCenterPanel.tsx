@@ -261,6 +261,7 @@ export default function TaxCenterPanel({ businessId }: { businessId: string }) {
       <Card className="p-3 bg-card/60 border-border">
         <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Estimated tax payments you've made — {year}</p>
         <p className="text-[11px] text-muted-foreground mb-2">Record what you actually paid. Due dates depend on your business type, so check them with your accountant.</p>
+        {s && <PlanningEstimate key={`${businessId}-${year}`} businessId={businessId} year={year} monthly={s.monthly} />}
         <div className="space-y-2">
           {[1, 2, 3, 4].map((q) => {
             const row = ex?.quarterly.find((x) => x.quarter === q);
@@ -271,6 +272,45 @@ export default function TaxCenterPanel({ businessId }: { businessId: string }) {
       </Card>
 
       <DocsCard docs={ex?.docs ?? null} businessId={businessId} workspaceId={data?.workspaceId ?? null} year={year} onOpen={openDoc} onSaved={refresh} />
+    </div>
+  );
+}
+
+/** Planning-only quarterly set-aside from a rate the owner or accountant enters. Saved on this device only. */
+export function planningAmounts(monthly: Array<{ receipts: number; refunds: number; expenses: number; payroll: number }>, ratePct: number | null): Array<{ quarter: number; netCents: number; planCents: number | null }> {
+  return [0, 1, 2, 3].map((q) => {
+    const net = monthly.slice(q * 3, q * 3 + 3).reduce((t, m) => t + m.receipts - m.refunds - m.expenses - m.payroll, 0);
+    const plan = ratePct == null || !(ratePct >= 0 && ratePct <= 100) ? null : Math.max(0, Math.round((net * ratePct) / 100));
+    return { quarter: q + 1, netCents: net, planCents: plan };
+  });
+}
+
+function PlanningEstimate({ businessId, year, monthly }: { businessId: string; year: number; monthly: Array<{ receipts: number; refunds: number; expenses: number; payroll: number }> }) {
+  const key = `tax-plan-rate:${businessId}:${year}`;
+  const [raw, setRaw] = useState(() => { try { return localStorage.getItem(key) ?? ""; } catch { return ""; } });
+  const valid = /^\d{1,2}(\.\d{1,2})?$|^100$/.test(raw.trim());
+  const ratePct = valid ? Number(raw) : null;
+  const save = (v: string) => { setRaw(v); try { if (v.trim()) localStorage.setItem(key, v.trim()); else localStorage.removeItem(key); } catch { /* ignore */ } };
+  const rows = planningAmounts(monthly, ratePct);
+  return (
+    <div className="rounded-md border border-border p-2.5 mb-3 space-y-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <Label htmlFor="plan-rate" className="text-xs">Planning rate from your accountant (optional)</Label>
+        <Input id="plan-rate" inputMode="decimal" placeholder="e.g. 20" value={raw} onChange={(e) => save(e.target.value)} className="h-8 w-20" />
+        <span className="text-xs text-muted-foreground">%</span>
+      </div>
+      <p className="text-[11px] text-muted-foreground">For planning only, using your recorded book net each quarter. It isn't a tax bill. Saved on this device only.</p>
+      {raw.trim() && !valid && <p className="text-[11px] text-destructive">Enter a number from 0 to 100.</p>}
+      {ratePct != null && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {rows.map((r) => (
+            <div key={r.quarter} className="rounded bg-secondary/20 px-2 py-1.5 text-[11px]">
+              <p className="text-muted-foreground">Q{r.quarter} book net {fmtCents(r.netCents)}</p>
+              <p className="text-foreground">Set aside about <b>{fmtCents(r.planCents ?? 0)}</b></p>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
