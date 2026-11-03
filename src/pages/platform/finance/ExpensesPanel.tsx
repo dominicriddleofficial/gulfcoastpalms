@@ -76,9 +76,9 @@ export default function ExpensesPanel({ businessId }: { businessId: string }) {
   const byCat = useMemo(() => {
     const m = new Map<string, number>();
     for (const r of filtered) {
-      // Shared rows count as half toward this workspace's view
-      const amt = r.is_shared ? Number(r.amount) / 2 : Number(r.amount);
-      m.set(r.category, (m.get(r.category) ?? 0) + amt);
+      // Shared rows aren't split here; their share is assigned in the Tax tab.
+      if (r.is_shared) continue;
+      m.set(r.category, (m.get(r.category) ?? 0) + Number(r.amount));
     }
     return m;
   }, [filtered]);
