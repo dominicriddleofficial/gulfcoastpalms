@@ -5,6 +5,7 @@
  * - Image compression for receipt uploads (~1MB JPEG)
  * - CSV download
  */
+import { toCsv } from "@/lib/cashRecords";
 import { supabase } from "@/integrations/supabase/client";
 
 export const fmtUSD = (n: number | null | undefined): string => {
