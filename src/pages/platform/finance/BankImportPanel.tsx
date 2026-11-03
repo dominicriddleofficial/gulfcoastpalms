@@ -219,4 +219,3 @@ function ColPick({ label, header, value, onChange }: { label: string; header: st
   );
 }
 
-export { Input };
