@@ -40,6 +40,8 @@ export interface CashEntry {
   kind: EntryKind; id: string; date: string; amountCents: number; label: string;
   category: string; vendor: string; source: "payment" | "manual_income" | "bank" | "expense" | "payroll";
   method: string; reference: string; receiptPath: string | null; tipCents?: number;
+  /** Shared expense only: full bill amount, so this business's share can be corrected. */
+  sharedTotalCents?: number;
 }
 export type IssueKind =
   | "bank_needs_review" | "bank_possible_duplicate" | "bank_maybe_recorded" | "bank_sign_mismatch" | "bank_match_broken"
@@ -134,7 +136,7 @@ export function buildCashSummary(inp: CashInput): CashSummary {
       if (allocated < total) issues.push({ kind: "shared_unallocated", id: e.id, date: e.expense_date, amountCents: total - allocated, detail: `Shared expense ${e.vendor ?? e.category}: share not assigned` });
       if (mine === 0) continue;
     }
-    expenses.push({ kind: "expense", id: e.id, date: e.expense_date, amountCents: mine, label: e.vendor || e.category, category: e.category, vendor: e.vendor ?? "", source: "expense", method: e.payment_method ?? "", reference: e.is_shared ? `shared, total ${fmtCents(total)}` : "", receiptPath: e.receipt_url });
+    expenses.push({ kind: "expense", id: e.id, date: e.expense_date, amountCents: mine, label: e.vendor || e.category, category: e.category, vendor: e.vendor ?? "", source: "expense", method: e.payment_method ?? "", reference: e.is_shared ? `shared, total ${fmtCents(total)}` : "", receiptPath: e.receipt_url, ...(e.is_shared ? { sharedTotalCents: total } : {}) });
   }
 
   // Bank rows: only owner-classified income/expense count; matched rows are evidence of existing records.
