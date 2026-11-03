@@ -55,7 +55,10 @@ export interface CashInput {
   /** Business time zone for timestamp → calendar-day (paid_at). */
   tz?: string;
 }
+/** A recorded item a bank row may be matched to (successful, in scope, full amount, with direction). */
+export interface Matchable { id: string; type: "payment" | "income" | "payroll" | "expense"; date: string; amountCents: number; direction: "in" | "out"; label: string }
 export interface CashSummary {
+  matchables: Matchable[];
   receipts: CashEntry[]; refunds: CashEntry[]; expenses: CashEntry[]; payroll: CashEntry[]; issues: CashIssue[];
   totals: { receipts: number; tips: number; refunds: number; expenses: number; payroll: number; net: number; excludedBank: number };
   monthly: Array<{ month: number; receipts: number; refunds: number; expenses: number; payroll: number }>;
@@ -137,9 +140,10 @@ export function buildCashSummary(inp: CashInput): CashSummary {
   // Bank rows: only owner-classified income/expense count; matched rows are evidence of existing records.
   const recordedIn = receipts.filter((r) => r.source !== "bank");
   // Money already recorded as going out: own expenses (full amount, incl. whole shared bills), payroll and refunds.
+  const recordedOutExpenses = inp.expenses.filter((e) => inYear(e.expense_date, year) && (e.is_shared || e.business_id === biz))
+    .map((e) => ({ id: e.id, date: e.expense_date, amountCents: cents(e.amount), label: `${e.vendor || e.category}${e.is_shared ? " (shared bill)" : ""}` }));
   const recordedOut: Array<{ date: string; amountCents: number; label: string }> = [
-    ...inp.expenses.filter((e) => inYear(e.expense_date, year) && (e.is_shared || e.business_id === biz))
-      .map((e) => ({ date: e.expense_date, amountCents: cents(e.amount), label: e.vendor || e.category })),
+    ...recordedOutExpenses,
     ...payroll.map((p) => ({ date: p.date, amountCents: p.amountCents, label: p.label })),
     ...refunds.map((r) => ({ date: r.date, amountCents: r.amountCents, label: r.label })),
   ];
@@ -201,7 +205,15 @@ export function buildCashSummary(inp: CashInput): CashSummary {
   };
 
   const by = <T,>(rows: T[], f: (r: T) => boolean) => rows.filter(f).length;
+  const matchables: Matchable[] = [
+    ...receipts.filter((r) => r.source === "payment").map((r) => ({ id: r.id, type: "payment" as const, date: r.date, amountCents: r.amountCents, direction: "in" as const, label: r.label })),
+    ...refunds.map((r) => ({ id: r.id, type: "payment" as const, date: r.date, amountCents: r.amountCents, direction: "out" as const, label: r.label })),
+    ...receipts.filter((r) => r.source === "manual_income").map((r) => ({ id: r.id, type: "income" as const, date: r.date, amountCents: r.amountCents, direction: "in" as const, label: r.label })),
+    ...payroll.map((r) => ({ id: r.id, type: "payroll" as const, date: r.date, amountCents: r.amountCents, direction: "out" as const, label: r.label })),
+    ...recordedOutExpenses.map((e) => ({ ...e, type: "expense" as const, direction: "out" as const })),
+  ];
   return {
+    matchables,
     receipts, refunds, expenses, payroll, issues, totals, monthly,
     byCategory: group(expenses, (e) => e.category), byVendor: group(expenses, (e) => e.vendor),
     coverage: {
@@ -268,7 +280,9 @@ export function combineSummaries(parts: CashSummary[]): CashSummary {
   };
   const coverage = { payments: 0, manualIncome: 0, bankRows: 0, expenses: 0, payroll: 0 };
   for (const p of parts) for (const k of Object.keys(coverage) as Array<keyof typeof coverage>) coverage[k] += p.coverage[k];
-  return { receipts: cat("receipts"), refunds: cat("refunds"), expenses: cat("expenses"), payroll: cat("payroll"), issues, totals, monthly, byCategory: merge("byCategory"), byVendor: merge("byVendor"), coverage };
+  const ms = new Set<string>();
+  const matchables = parts.flatMap((p) => p.matchables).filter((m) => (ms.has(`${m.type}:${m.id}`) ? false : (ms.add(`${m.type}:${m.id}`), true)));
+  return { matchables, receipts: cat("receipts"), refunds: cat("refunds"), expenses: cat("expenses"), payroll: cat("payroll"), issues, totals, monthly, byCategory: merge("byCategory"), byVendor: merge("byVendor"), coverage };
 }
 
 export function fmtCents(c: number): string {
