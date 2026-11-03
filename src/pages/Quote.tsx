@@ -62,11 +62,7 @@ const Quote = () => {
     });
 
     if (result.success) {
-      trackEvent("quote_request_completed", {
-        source: "quote_page",
-        service: form.service,
-        location: form.location,
-      });
+      // The single successful-submit event is recorded by submitLead.
       navigate("/thank-you");
     } else {
       toast({

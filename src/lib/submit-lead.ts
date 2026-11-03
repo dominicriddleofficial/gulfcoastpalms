@@ -123,9 +123,8 @@ export async function submitLead(data: LeadData): Promise<{ success: boolean; er
 
     // Track conversion in GA4
     trackEvent("lead_form_submit", {
-      source: data.source || "website",
+      form_source: data.source || "website",
       service: data.service,
-      location: data.location,
       lead_source: leadSource,
     });
 

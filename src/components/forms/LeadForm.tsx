@@ -116,7 +116,7 @@ export function LeadForm<S extends ZodTypeAny>({
 
     const result = await submitLead(payload);
     if (result.success) {
-      if (successEvent) trackEvent(successEvent, { source });
+      // submitLead records the one successful-submit event; don't add a second.
       onSuccess?.(parsed.data);
       if (redirectTo) navigate(redirectTo);
       else setSubmitting(false);
