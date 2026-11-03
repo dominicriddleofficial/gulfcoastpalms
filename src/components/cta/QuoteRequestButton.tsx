@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { ReactNode } from "react";
-import { trackEvent } from "@/lib/analytics";
 
 interface QuoteRequestButtonProps {
   source?: string;
@@ -31,7 +30,9 @@ const QuoteRequestButton = ({
 }: QuoteRequestButtonProps) => (
   <Link
     to={service ? `/quote?${new URLSearchParams({ service, source }).toString()}` : "/quote"}
-    onClick={() => trackEvent("cta_click", { placement: source, cta_text: "quote_request" })}
+    // Tracked once per real click by the site-wide delegated handler (stable click id).
+    data-track-cta="quote_request"
+    data-track-placement={source}
     className={`inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-body font-bold text-base transition-all whitespace-nowrap ${variantClasses[variant]} ${className}`}
   >
     {children ?? "Get a Free Quote"}
