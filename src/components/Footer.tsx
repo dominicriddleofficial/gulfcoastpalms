@@ -74,12 +74,12 @@ const Footer = () => {
             <div className="flex flex-col gap-3">
               <a
                 href={TEL_HREF}
-                onClick={() => trackEvent("call_now_click", { source: "footer", click_location: "footer" })}
+                data-track-placement="footer"
                 className="inline-flex items-center gap-2 font-body text-palm-sand/70 hover:text-palm-light transition-colors"
               >
                 <Phone className="w-4 h-4" /> {GCP_BUSINESS.phoneDisplay}
               </a>
-              <a href={SMS_HREF} className="inline-flex items-center gap-2 font-body text-palm-sand/70 hover:text-palm-light transition-colors">
+              <a href={SMS_HREF} data-track-placement="footer" className="inline-flex items-center gap-2 font-body text-palm-sand/70 hover:text-palm-light transition-colors">
                 <MessageSquare className="w-4 h-4" /> Text Us a Photo
               </a>
               <p className="inline-flex items-start gap-2 font-body text-palm-sand/70">

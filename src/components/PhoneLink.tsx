@@ -27,7 +27,7 @@ const PhoneLink = ({
 }: PhoneLinkProps) => (
   <a
     href={TEL_HREF}
-    onClick={() => trackEvent("call_now_click", { source })}
+    data-track-placement={source}
     className={className}
     aria-label={ariaLabel}
   >

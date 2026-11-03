@@ -31,12 +31,7 @@ const QuoteRequestButton = ({
 }: QuoteRequestButtonProps) => (
   <Link
     to={service ? `/quote?${new URLSearchParams({ service, source }).toString()}` : "/quote"}
-    onClick={() => {
-      if (source === "hero") trackEvent("hero_cta_click", { source, cta_text: "quote_request" });
-      else if (source.startsWith("service")) trackEvent("service_page_cta_click", { source, cta_text: "quote_request" });
-      else if (source.startsWith("location") || source.startsWith("area")) trackEvent("location_page_cta_click", { source, cta_text: "quote_request" });
-      trackEvent("cta_click", { source, cta_text: "quote_request" });
-    }}
+    onClick={() => trackEvent("cta_click", { placement: source, cta_text: "quote_request" })}
     className={`inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-body font-bold text-base transition-all whitespace-nowrap ${variantClasses[variant]} ${className}`}
   >
     {children ?? "Get a Free Quote"}
