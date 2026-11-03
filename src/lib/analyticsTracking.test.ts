@@ -72,4 +72,45 @@ describe("website tracking", () => {
     const a = await load();
     expect(() => a.trackEvent("cta_click", { placement: "hero" })).not.toThrow();
   });
+  it("two different real taps within a second both record (distinct click ids)", async () => {
+    const a = await load();
+    document.body.innerHTML = `<div data-track-placement="header"><a id="h" href="tel:1">Call</a></div><div data-track-placement="sticky_bar"><a id="s" href="tel:1">Call</a></div>`;
+    a.handleTrackedClick({ target: document.getElementById("h") } as unknown as Event);
+    a.handleTrackedClick({ target: document.getElementById("s") } as unknown as Event);
+    await flush();
+    const calls = posts.filter((p) => p.event_name === "call_tap");
+    expect(calls.map((c) => (c.properties as Record<string, unknown>).placement)).toEqual(["header", "sticky_bar"]);
+  });
+  it("the same interaction id is only sent once; an id-less double-fire of the same button is merged", async () => {
+    const a = await load();
+    expect(a.shouldSend("call_tap", "/", "s", { click_id: "k1" }, 0)).toBe(true);
+    expect(a.shouldSend("call_tap", "/", "s", { click_id: "k1" }, 60_000)).toBe(false);
+    expect(a.shouldSend("call_tap", "/", "s", { click_id: "k2" }, 10)).toBe(true);
+    expect(a.shouldSend("phone_click", "/", "s", { placement: "hero" }, 0)).toBe(true);
+    expect(a.shouldSend("phone_click", "/", "s", { placement: "hero" }, 500)).toBe(false);
+    expect(a.shouldSend("phone_click", "/", "s", { placement: "footer" }, 600)).toBe(true);
+  });
+  it("source/click_location aliases become the placement", async () => {
+    const a = await load();
+    expect(a.safeProps({ source: "quote_page" })).toEqual({ placement: "quote_page" });
+    expect(a.safeProps({ click_location: "footer", customer_id: "x" })).toEqual({ placement: "footer" });
+    expect(a.safeProps({ placement: "hero", source: "x" })).toEqual({ placement: "hero" });
+  });
+  it("blocked storage uses per-page memory ids, never a shared 'anon' id", async () => {
+    const a = await load();
+    const boom = () => { throw new Error("SecurityError"); };
+    const spy = vi.spyOn(Storage.prototype, "getItem").mockImplementation(boom);
+    try {
+      const v = a.getVisitorId(); const s1 = a.getSessionId();
+      expect(v).toMatch(/^mem-/); expect(s1).toMatch(/^mem-/);
+      expect(v).not.toBe("anon"); expect(a.getVisitorId()).toBe(v);
+      a.__resetMemoryIds();
+      expect(a.getVisitorId()).not.toBe(v);
+    } finally { spy.mockRestore(); }
+  });
+  it("a stored legacy 'anon' id is replaced with a real one", async () => {
+    localStorage.setItem("gcp_visitor_id", "anon");
+    const a = await load();
+    expect(a.getVisitorId()).not.toBe("anon");
+  });
 });
