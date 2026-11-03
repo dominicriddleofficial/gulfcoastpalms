@@ -358,7 +358,7 @@ function RankList({ title, rows }: { title: string; rows: Array<{ key: string; c
 }
 
 /** Set (or correct/remove) this business's share of a shared bill. Max = unassigned + current share. */
-function AllocateShare({ expenseId, businessId, currentCents, remainingCents, onSaved }: { expenseId: string; businessId: string; currentCents: number; remainingCents: number; onSaved: () => void }) {
+export function AllocateShare({ expenseId, businessId, currentCents, remainingCents, onSaved }: { expenseId: string; businessId: string; currentCents: number; remainingCents: number; onSaved: () => void }) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [amt, setAmt] = useState("");
