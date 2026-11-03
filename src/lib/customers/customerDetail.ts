@@ -359,6 +359,7 @@ export function lastServiceText(s: ServiceSummary, fmt: (d: string) => string): 
   if (s.completed === 0) return { value: "None recorded" };
   const e = s.lastCompleted;
   if (!e || !e.date) return { value: "Date not recorded", sub: "Completion date not recorded" };
+  if (e.inferred) return { value: fmt(e.date), sub: "Scheduled day has passed · counted by schedule" };
   if (e.dateKind === "scheduled") return { value: fmt(e.date), sub: "Planned date · completion date not recorded" };
   return { value: fmt(e.date) };
 }
