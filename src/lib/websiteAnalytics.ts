@@ -55,7 +55,7 @@ export function fmtChange(c: number | null): string {
 }
 
 export const PLACEMENT_LABEL: Record<string, string> = {
-  header: "Header", header_mobile: "Header (phone)", mobile_menu: "Phone menu", sticky_bar: "Bottom bar (phone)",
+  header: "Header", navbar: "Header", header_mobile: "Header (phone)", navbar_mobile: "Header (phone)", mobile_menu: "Phone menu", sticky_bar: "Bottom bar (phone)",
   footer: "Footer", hero: "Top of page", bottom_cta: "Bottom call box", quote_page: "Quote page", page_body: "In page",
   unknown: "Not recorded", public_site: "Not recorded",
 };
