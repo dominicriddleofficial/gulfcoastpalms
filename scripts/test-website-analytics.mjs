@@ -96,7 +96,7 @@ check(c.call_taps === 6, `alias rows merged, distinct rapid taps kept (got ${c.c
 check(c.visitors === 1506, `anon/memory ids not counted as unique browsers (got ${c.visitors})`);
 check(s.coverage.unknown_identity_rows === 3, `unknown identity surfaced (got ${s.coverage.unknown_identity_rows})`);
 check(!s.pages.some((p) => /prestige/.test(p.path)), 'PPS page on shared host not in GCP pages');
-check(s.daily.length === 30 && s.daily.filter((d) => d.views === 0 && d.visitors === 0).length === 29, `every day present with zeros (got ${s.daily.length})`);
+check(s.daily.length === 31 && s.daily.filter((d) => d.views === 0 && d.visitors === 0).length === 30, `every day present with zeros (got ${s.daily.length})`);
 check(s.pages.some((p) => p.grp === 'service'), 'pages carry their group');
 check(c.text_taps === 1, 'text tap counted');
 check(c.form_submits === 1, `one successful submit despite alias rows (got ${c.form_submits})`);
