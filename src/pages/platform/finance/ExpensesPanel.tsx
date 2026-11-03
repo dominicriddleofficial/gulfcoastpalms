@@ -131,6 +131,11 @@ export default function ExpensesPanel({ businessId }: { businessId: string }) {
       <Card className="p-3 bg-card/60 border-border">
         <p className="text-[10px] uppercase tracking-wide text-muted-foreground">This month total</p>
         <p className="font-display text-xl font-bold text-foreground">{fmtUSD(total)}</p>
+        {filtered.some((r) => r.is_shared) && (
+          <p className="text-[11px] text-muted-foreground">
+            Shared expenses ({fmtUSD(filtered.filter((r) => r.is_shared).reduce((s, r) => s + Number(r.amount), 0))}) aren't included. Assign each business's share in the Tax tab.
+          </p>
+        )}
         <div className="mt-2 flex gap-2 flex-wrap">
           {Array.from(byCat.entries()).map(([c, v]) => (
             <span key={c} className="text-[11px] px-2 py-0.5 rounded bg-secondary/60">
