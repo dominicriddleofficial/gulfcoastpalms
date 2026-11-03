@@ -648,7 +648,6 @@ export default function PlatformAnalytics() {
   const upcoming = all.filter((j) => workState(j, todayKey) === "booked").sort((a, b) => (a.dateKey ?? "").localeCompare(b.dateKey ?? ""));
   const upcomingValue = Math.round(upcoming.reduce((t, j) => t + j.amount, 0));
   const thisMonthJobs = all.filter((j) => j.dateKey?.slice(0, 7) === todayKey.slice(0, 7) && workState(j, todayKey) !== "excluded").length;
-  const curJobsAll = curDone;
 
   return (
     <PlatformLayout>
