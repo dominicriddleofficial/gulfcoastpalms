@@ -71,6 +71,13 @@
       "when": 1793673435005,
       "tag": "0009_finance_bank_revoke_anon",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793673919199,
+      "tag": "0010_website_analytics_summary",
+      "breakpoints": true
     }
   ]
 }

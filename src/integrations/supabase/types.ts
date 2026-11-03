@@ -7226,6 +7226,10 @@ export type Database = {
         Args: { _business_id: string; _role: string; _user_id: string }
         Returns: boolean
       }
+      website_analytics_summary: {
+        Args: { _business_id: string; _from: string; _to: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role:
