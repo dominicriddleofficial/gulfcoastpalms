@@ -652,14 +652,13 @@ export default function PlatformAnalytics() {
   return (
     <PlatformLayout>
       <div className="platform-analytics space-y-6">
-        <ConversionFunnelWidget days={30} businessId={selectedBusinessId} />
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="font-display text-xl font-bold text-foreground tracking-tight">Analytics</h1>
             <p className="font-body text-xs text-muted-foreground">Work on the schedule before today counts as done. Booked work is shown separately. This is job value, not money received.</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={handleSyncHistorical}
               disabled={syncing}
@@ -742,6 +741,9 @@ export default function PlatformAnalytics() {
             highlight={bestMonthRev > 0}
           />
         </div>
+
+        {/* Website activity sits directly under the work summary */}
+        <ConversionFunnelWidget businessId={selectedBusinessId} />
 
         {/* SECTION 3 — Monthly Revenue */}
         <ChartSection title={`Job value by month — ${selectedYear}`} subtitle="Done work, booked work still ahead, and last year" empty={series.every((p) => p.done === 0 && p.booked === 0)}>

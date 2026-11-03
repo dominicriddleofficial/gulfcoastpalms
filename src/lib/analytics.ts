@@ -21,6 +21,7 @@ export type ConversionEvent =
   | "sticky_bar_call_click"
   | "sticky_bar_text_click"
   | "call_tap"
+  | "text_tap"
   | "chat_opened"
   | "chat_message_sent"
   | "chat_lead_captured"
@@ -176,10 +177,6 @@ function postEvent(payload: Record<string, unknown>) {
   if (!SUPA_URL || !SUPA_ANON) return;
   const url = `${SUPA_URL}/functions/v1/track-event`;
   try {
-    const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
-    if ("sendBeacon" in navigator && payload.event_name === "page_view") {
-      // beacon doesn't support headers; fall back to fetch keepalive so anon key flows
-    }
     fetch(url, {
       method: "POST",
       headers: {
@@ -187,7 +184,7 @@ function postEvent(payload: Record<string, unknown>) {
         "apikey": SUPA_ANON,
         "Authorization": `Bearer ${SUPA_ANON}`,
       },
-      body: blob,
+      body: JSON.stringify(payload),
       keepalive: true,
     }).catch(() => { /* fire-and-forget */ });
   } catch { /* swallow */ }
@@ -198,49 +195,101 @@ export function isUntrackedPath(pathname: string) {
   return /^\/arborist-link(\/|$)/.test(pathname);
 }
 
+/** Only real public marketing pages are recorded; app, portal, payment and customer-link pages never are. */
+export function isTrackablePath(pathname: string): boolean {
+  const p = (pathname || "/").split(/[?#]/)[0];
+  return !isUntrackedPath(p) && !isPrivateRoute(p);
+}
+
+const PROD_HOSTS = new Set(["gulfcoastpalmservices.com", "www.gulfcoastpalmservices.com", "gulfcoastpalms.lovable.app"]);
+/** Preview, local and automated-browser traffic is never sent. */
+export function isTrackableHost(hostname: string, isAutomated = false): boolean {
+  return !isAutomated && PROD_HOSTS.has(hostname.toLowerCase());
+}
+
+const KEEP_QUERY = /^(utm_(source|medium|campaign|term|content)|gclid|fbclid|msclkid)$/;
+/** Keep only origin + path + attribution parameters. Tokens, ids and contact details are dropped. */
+export function sanitizeUrl(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  try {
+    const u = new URL(raw);
+    if (!/^https?:$/.test(u.protocol)) return null;
+    const keep = new URLSearchParams();
+    u.searchParams.forEach((v, k) => { if (KEEP_QUERY.test(k)) keep.set(k, v.slice(0, 120)); });
+    const q = keep.toString();
+    return `${u.origin}${u.pathname}${q ? `?${q}` : ""}`.slice(0, 1000);
+  } catch { return null; }
+}
+/** Referrers keep only the site they came from. */
+export function sanitizeReferrer(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  try { const u = new URL(raw); return /^https?:$/.test(u.protocol) ? u.origin : null; } catch { return null; }
+}
+
+const SAFE_PROPS = new Set(["placement", "cta_text", "click_id", "form_source", "service", "lead_source", "channel", "position", "plan_type", "sop_type", "value"]);
+function safeProps(params?: EventParams): Record<string, string | number | boolean> {
+  const out: Record<string, string | number | boolean> = {};
+  if (!params) return out;
+  for (const [k, v] of Object.entries(params)) {
+    if (v == null || RESERVED_PARAM_KEYS.has(k)) continue;
+    const key = k === "source" ? "placement" : k === "click_location" ? "placement" : k;
+    if (!SAFE_PROPS.has(key)) continue;
+    out[key] = typeof v === "string" ? v.slice(0, 80) : v;
+  }
+  return out;
+}
+
+const automated = () => typeof navigator !== "undefined" && navigator.webdriver === true;
+
 export function trackEvent(event: ConversionEvent | string, params?: EventParams) {
   if (typeof window === "undefined") return;
-  if (isUntrackedPath(window.location.pathname) || isUntrackedPath(params?.page_path ?? "")) return;
-  const path = params?.page_path || window.location.pathname;
-  const session = getSessionId();
-  if (!shouldSend(event, path, session)) return;
+  try {
+    const path = (params?.page_path || window.location.pathname).split(/[?#]/)[0] || "/";
+    if (!isTrackablePath(window.location.pathname) || !isTrackablePath(path)) return;
+    const session = getSessionId();
+    if (!shouldSend(event, path, session)) return;
+    const properties = safeProps(params);
 
-  // Keep internal operations in the owner analytics without counting them
-  // as public marketing traffic in GA4.
-  if (!isPrivateRoute(path) && typeof window.gtag === "function") {
-    window.gtag("event", event, {
-      ...params,
+    if (typeof window.gtag === "function") window.gtag("event", event, { ...properties, page_path: path });
+    if (!isTrackableHost(window.location.hostname, automated())) return;
+
+    postEvent({
+      event_name: event,
       page_path: path,
+      page_url: sanitizeUrl(window.location.href),
+      referrer: sanitizeReferrer(document.referrer),
+      business_type: detectBusinessType(path),
+      source_component: typeof properties.placement === "string" ? properties.placement : null,
+      device_type: getDeviceType(),
+      visitor_id: getVisitorId(),
+      session_id: session,
+      ...captureUtmFromUrl(),
+      properties,
     });
-  }
+  } catch { /* analytics must never block the page */ }
+}
 
-  const utm = captureUtmFromUrl();
-  const properties: Record<string, unknown> = {};
-  if (params) {
-    for (const [k, v] of Object.entries(params)) {
-      if (v == null) continue;
-      if (RESERVED_PARAM_KEYS.has(k)) continue;
-      properties[k] = v;
+/**
+ * Delegated click tracking: one event per real tap on a tel:/sms: link or
+ * [data-track-cta] element. Never prevents the default action.
+ */
+export function handleTrackedClick(e: Event) {
+  try {
+    const target = e.target as Element | null;
+    if (!target || typeof target.closest !== "function") return;
+    const anchor = target.closest("a[href^='tel:'], a[href^='sms:']") as HTMLAnchorElement | null;
+    const placementOf = (el: Element) =>
+      el.closest("[data-track-placement]")?.getAttribute("data-track-placement")
+      || el.getAttribute("data-call-source") || "page_body";
+    const click_id = uid();
+    if (anchor) {
+      const isCall = (anchor.getAttribute("href") ?? "").startsWith("tel:");
+      trackEvent(isCall ? "call_tap" : "text_tap", { placement: placementOf(anchor), channel: isCall ? "call" : "text", click_id });
+      return;
     }
-  }
-
-  postEvent({
-    event_name: event,
-    page_path: path,
-    page_url: window.location.href.split("#")[0],
-    referrer: document.referrer || null,
-    business_type: params?.business_type || detectBusinessType(path),
-    source_component: params?.source || null,
-    device_type: getDeviceType(),
-    visitor_id: getVisitorId(),
-    session_id: session,
-    customer_id: params?.customer_id || null,
-    lead_id: params?.lead_id || null,
-    quote_id: params?.quote_id || null,
-    invoice_id: params?.invoice_id || null,
-    ...utm,
-    properties,
-  });
+    const cta = target.closest("[data-track-cta]");
+    if (cta) trackEvent("cta_click", { placement: placementOf(cta), cta_text: cta.getAttribute("data-track-cta") || "cta", click_id });
+  } catch { /* never block navigation */ }
 }
 
 export function trackPageView(path?: string) {

@@ -24,7 +24,7 @@ const SmsLink = ({
 }: SmsLinkProps) => (
   <a
     href={SMS_HREF}
-    onClick={() => trackEvent("text_us_click", { source })}
+    data-track-placement={source}
     className={className}
     aria-label={ariaLabel}
   >

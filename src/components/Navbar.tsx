@@ -139,14 +139,14 @@ const Navbar = () => {
         <div className="hidden lg:flex items-center gap-2">
           <a
             href={SMS_NUMBER}
-            onClick={() => trackEvent("text_us_click", { source: "navbar" })}
+            data-track-placement="header"
             className="whitespace-nowrap inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-primary font-body font-semibold text-[13px] hover:bg-primary/10 transition-colors"
           >
             <MessageSquare className="w-4 h-4" /> Text a Photo
           </a>
           <a
             href={PHONE_NUMBER_TEL}
-            onClick={() => trackEvent("call_now_click", { source: "navbar" })}
+            data-track-placement="header"
             className="whitespace-nowrap inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-body font-semibold text-[13px] hover:bg-palm-light shadow-brand transition-all"
           >
             <Phone className="w-4 h-4" /> {PHONE_NUMBER_DISPLAY}
@@ -157,7 +157,7 @@ const Navbar = () => {
         <div className="lg:hidden flex items-center gap-2">
           <a
             href={PHONE_NUMBER_TEL}
-            onClick={() => trackEvent("call_now_click", { source: "navbar_mobile" })}
+            data-track-placement="header_mobile"
             className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg bg-primary text-primary-foreground"
             aria-label={`Call ${PHONE_NUMBER_DISPLAY}`}
           >
@@ -165,7 +165,7 @@ const Navbar = () => {
           </a>
           <a
             href={SMS_NUMBER}
-            onClick={() => trackEvent("text_us_click", { source: "navbar_mobile" })}
+            data-track-placement="header_mobile"
             className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg border-2 border-primary text-primary"
             aria-label="Text us a photo"
           >
@@ -314,14 +314,14 @@ const Navbar = () => {
                 <div className="grid grid-cols-2 gap-2">
                   <a
                     href={PHONE_NUMBER_TEL}
-                    onClick={() => { trackEvent("call_now_click", { source: "mobile_menu" }); closeAll(); }}
+                    data-track-placement="mobile_menu" onClick={closeAll}
                     className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg border-2 border-primary text-primary font-body font-semibold text-sm"
                   >
                     <Phone className="w-4 h-4" /> Call
                   </a>
                   <a
                     href={SMS_NUMBER}
-                    onClick={() => { trackEvent("text_us_click", { source: "mobile_menu" }); closeAll(); }}
+                    data-track-placement="mobile_menu" onClick={closeAll}
                     className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg border-2 border-primary text-primary font-body font-semibold text-sm"
                   >
                     <MessageSquare className="w-4 h-4" /> Text
