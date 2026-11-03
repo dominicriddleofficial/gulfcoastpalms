@@ -11,7 +11,9 @@ GRANT USAGE ON SCHEMA auth, public TO authenticated, anon; GRANT EXECUTE ON FUNC
 CREATE TYPE public.app_role AS ENUM ('admin','user');
 CREATE TABLE public.businesses (id uuid PRIMARY KEY, shortcode text, timezone text);
 CREATE TABLE public.owners (user_id uuid, business_id uuid);
-CREATE FUNCTION public.has_business_access(u uuid, b uuid) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT EXISTS (SELECT 1 FROM public.owners WHERE user_id=u AND business_id=b) $$;
+CREATE TABLE public.access (user_id uuid, business_id uuid);
+CREATE FUNCTION public.has_business_access(u uuid, b uuid) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT EXISTS (SELECT 1 FROM public.owners WHERE user_id=u AND business_id=b) OR EXISTS (SELECT 1 FROM public.access WHERE user_id=u AND business_id=b) $$;
+CREATE FUNCTION public.finance_is_business_owner(u uuid, b uuid) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT EXISTS (SELECT 1 FROM public.owners WHERE user_id=u AND business_id=b) $$;
 CREATE FUNCTION public.is_workspace_owner(u uuid) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT EXISTS (SELECT 1 FROM public.owners WHERE user_id=u) $$;
 CREATE FUNCTION public.has_role(u uuid, r public.app_role) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT false $$;
 CREATE TABLE public.analytics_events (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), event_name text, page_path text, page_url text, referrer text, business_type text, source_component text,
@@ -19,8 +21,15 @@ CREATE TABLE public.analytics_events (id uuid PRIMARY KEY DEFAULT gen_random_uui
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO anon, authenticated;
 INSERT INTO public.businesses VALUES ('00000000-0000-0000-0000-000000000001','GCP','America/Chicago'),('00000000-0000-0000-0000-000000000002','PPS','America/Chicago');
 INSERT INTO public.owners VALUES ('00000000-0000-0000-0000-0000000000aa','00000000-0000-0000-0000-000000000001'),('00000000-0000-0000-0000-0000000000aa','00000000-0000-0000-0000-000000000002');
+-- cc owns only PPS's workspace but can open GCP: owning *a* workspace must not unlock GCP analytics.
+INSERT INTO public.owners VALUES ('00000000-0000-0000-0000-0000000000cc','00000000-0000-0000-0000-000000000002');
+INSERT INTO public.access VALUES ('00000000-0000-0000-0000-0000000000cc','00000000-0000-0000-0000-000000000001');
 `);
-await db.exec(await fs.readFile(new URL('../drizzle/migrations/0010_website_analytics_summary.sql', import.meta.url), 'utf8'));
+// Apply the summary migrations in order; the latest definition wins.
+for (const f of (await fs.readdir(new URL('../drizzle/migrations/', import.meta.url))).filter((n) => /website_analytics/.test(n)).sort()) {
+  await db.exec(await fs.readFile(new URL(`../drizzle/migrations/${f}`, import.meta.url), 'utf8'));
+}
+if (process.env.WA_SQL) await db.exec(await fs.readFile(process.env.WA_SQL, 'utf8'));
 const GCP = '00000000-0000-0000-0000-000000000001', PPS = '00000000-0000-0000-0000-000000000002';
 const site = 'https://gulfcoastpalmservices.com';
 const T = "timestamptz '2026-10-15 12:00:00+00'";
@@ -48,6 +57,23 @@ const rows = [
   ins('page_view', '/', 'L', 'vl', 0, { url: 'http://localhost:8080/' }),
   ins('page_view', '/', 'PR', 'vpr', 0, { url: 'https://id-preview--x.lovable.app/' }),
   ins('page_view', '/', 'BOT', 'vbot', 0, { ua: 'Googlebot/2.1' }),
+  // Session D (new events with click ids): two different real call taps 1s apart both count; a re-sent id doesn't.
+  ins('call_tap', '/', 'D', 'v4', 0, { props: { click_id: 'k1', placement: 'header' } }),
+  ins('call_tap', '/', 'D', 'v4', 1, { props: { click_id: 'k2', placement: 'sticky_bar' } }),
+  ins('call_tap', '/', 'D', 'v4', 1, { props: { click_id: 'k2', placement: 'sticky_bar' } }),
+  // Session E (legacy, no ids): same name, different buttons 1s apart = 2 real taps.
+  ins('call_tap', '/', 'E', 'v5', 0, { props: { placement: 'header' } }),
+  ins('call_tap', '/', 'E', 'v5', 1, { props: { placement: 'footer' } }),
+  // Session E2 (legacy): the same button fired twice within 1.5s = 1.
+  ins('call_tap', '/', 'E2', 'v6', 0, { props: { placement: 'hero' } }),
+  ins('call_tap', '/', 'E2', 'v6', 1, { props: { placement: 'hero' } }),
+  // Same host, other business: PPS pages or PPS-tagged rows never count for GCP.
+  ins('page_view', '/prestige-property-services', 'X1', 'vx1', 0),
+  ins('page_view', '/', 'X2', 'vx2', 0, { bt: 'PPS' }),
+  // Shared legacy "anon" id and per-page memory ids are unknown identity, not unique browsers.
+  ins('page_view', '/', 'AN1', 'anon', 0),
+  ins('page_view', '/', 'AN2', 'anon', 0),
+  ins('page_view', '/', 'M1', 'mem-abc', 0),
   // Prior period (previous 30 days): one visitor only.
   `('page_view','/','${site}/','Z','vz', ${T} - interval '20 days','GCP',NULL,NULL,'Mozilla','{}'::jsonb,'mobile')`,
 ];
@@ -64,9 +90,14 @@ const run = async (biz, user) => {
 };
 const s = await run(GCP, '00000000-0000-0000-0000-0000000000aa');
 const c = s.current;
-check(c.sessions === 1503, `only real public visits counted (got ${c.sessions})`);
-check(c.page_views === 1503, `page views not capped at 1000 (got ${c.page_views})`);
-check(c.call_taps === 1, `one real call tap counted once across 3 legacy rows (got ${c.call_taps})`);
+check(c.sessions === 1509, `only real public visits counted (got ${c.sessions})`);
+check(c.page_views === 1506, `page views not capped at 1000, other-business rows left out (got ${c.page_views})`);
+check(c.call_taps === 6, `alias rows merged, distinct rapid taps kept (got ${c.call_taps})`);
+check(c.visitors === 1506, `anon/memory ids not counted as unique browsers (got ${c.visitors})`);
+check(s.coverage.unknown_identity_rows === 3, `unknown identity surfaced (got ${s.coverage.unknown_identity_rows})`);
+check(!s.pages.some((p) => /prestige/.test(p.path)), 'PPS page on shared host not in GCP pages');
+check(s.daily.length === 30 && s.daily.filter((d) => d.views === 0 && d.visitors === 0).length === 29, `every day present with zeros (got ${s.daily.length})`);
+check(s.pages.some((p) => p.grp === 'service'), 'pages carry their group');
 check(c.text_taps === 1, 'text tap counted');
 check(c.form_submits === 1, `one successful submit despite alias rows (got ${c.form_submits})`);
 check(c.form_start_sessions === 2, 'form starts by visit');
@@ -81,6 +112,8 @@ const p = await run(PPS, '00000000-0000-0000-0000-0000000000aa');
 check((p.current.sessions ?? 0) === 0 && p.coverage.hosts.length === 0, 'PPS does not see GCP website totals');
 let denied = false; try { await run(GCP, '00000000-0000-0000-0000-0000000000bb'); } catch { denied = true; }
 check(denied, 'non-owner is refused');
+denied = false; try { await run(GCP, '00000000-0000-0000-0000-0000000000cc'); } catch { denied = true; }
+check(denied, 'owner of another workspace with GCP access is refused');
 denied = false;
 try { await db.exec(`RESET ROLE; SET ROLE anon;`); await db.query(`SELECT public.website_analytics_summary($1, now() - interval '1 day', now())`, [GCP]); } catch { denied = true; }
 check(denied, 'signed-out visitors cannot run it');
