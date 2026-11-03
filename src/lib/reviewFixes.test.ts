@@ -163,3 +163,12 @@ describe("pagination past 1000 rows", () => {
     expect(rows).toHaveLength(2345);
   });
 });
+
+describe("old unfiltered call-tap totals are gone", () => {
+  it("Analytics page no longer reads raw website events directly", async () => {
+    const fs = await import("node:fs");
+    const src = fs.readFileSync("src/pages/platform/PlatformAnalytics.tsx", "utf8");
+    expect(src).not.toMatch(/from\("analytics_events"\)/);
+    expect(src).not.toContain("Website Call Taps");
+  });
+});
