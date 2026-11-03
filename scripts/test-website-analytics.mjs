@@ -67,6 +67,9 @@ const rows = [
   // Session E2 (legacy): the same button fired twice within 1.5s = 1.
   ins('call_tap', '/', 'E2', 'v6', 0, { props: { placement: 'hero' } }),
   ins('call_tap', '/', 'E2', 'v6', 1, { props: { placement: 'hero' } }),
+  // Session MX (mixed): one tap recorded with a click id plus an old alias row = 1 tap.
+  ins('call_tap', '/', 'MX', 'v7', 0, { props: { click_id: 'k9', placement: 'header' } }),
+  ins('call_now_click', '/', 'MX', 'v7', 1),
   // Same host, other business: PPS pages or PPS-tagged rows never count for GCP.
   ins('page_view', '/prestige-property-services', 'X1', 'vx1', 0),
   ins('page_view', '/', 'X2', 'vx2', 0, { bt: 'PPS' }),
@@ -90,10 +93,10 @@ const run = async (biz, user) => {
 };
 const s = await run(GCP, '00000000-0000-0000-0000-0000000000aa');
 const c = s.current;
-check(c.sessions === 1509, `only real public visits counted (got ${c.sessions})`);
+check(c.sessions === 1510, `only real public visits counted (got ${c.sessions})`);
 check(c.page_views === 1506, `page views not capped at 1000, other-business rows left out (got ${c.page_views})`);
-check(c.call_taps === 6, `alias rows merged, distinct rapid taps kept (got ${c.call_taps})`);
-check(c.visitors === 1506, `anon/memory ids not counted as unique browsers (got ${c.visitors})`);
+check(c.call_taps === 7, `alias rows merged, distinct rapid taps kept (got ${c.call_taps})`);
+check(c.visitors === 1507, `anon/memory ids not counted as unique browsers (got ${c.visitors})`);
 check(s.coverage.unknown_identity_rows === 3, `unknown identity surfaced (got ${s.coverage.unknown_identity_rows})`);
 check(!s.pages.some((p) => /prestige/.test(p.path)), 'PPS page on shared host not in GCP pages');
 check(s.daily.length === 31 && s.daily.filter((d) => d.views === 0 && d.visitors === 0).length === 30, `every day present with zeros (got ${s.daily.length})`);
