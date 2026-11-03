@@ -240,6 +240,18 @@ function scheduledEvent<B extends object>(base: B, date: string, now: Date, tz: 
     : { ...base, status: st, date, dateKind: "scheduled" };
 }
 
+/**
+ * Marked complete but with no recorded finish time: a past planned day is a recorded completion;
+ * a planned day today or later never becomes history — it stays upcoming.
+ */
+function completeWithoutActual<B extends object>(base: B, planned: string | null, now: Date, tz: string): B & Pick<ServiceEvent, "status" | "date" | "dateKind"> {
+  if (!planned) return { ...base, status: "completed", date: null, dateKind: "unknown" };
+  const day = planned.length <= 10 ? planned : dateKeyInZone(new Date(planned), tz);
+  return day < dateKeyInZone(now, tz)
+    ? { ...base, status: "completed", date: planned, dateKind: "scheduled" }
+    : { ...base, status: "scheduled", date: planned, dateKind: "scheduled" };
+}
+
 export type JobberJobRow = {
   id: string; job_number: string | null; title: string | null; status: string | null;
   visit_status: string | null; scheduled_start: string | null; property_id: string | null;
@@ -258,8 +270,10 @@ export function jobberJobEvents(
     const done = completedAt.get(j.id);
     const label = j.job_number ? `Job #${j.job_number}` : j.title || "Job";
     const base = { key: `jobber:${j.id}`, jobId: j.id, jobSource: "jobber" as const, label, propertyId: mapProperty(j.property_id) };
-    if (done || COMPLETE.has(vs)) {
-      out.push({ ...base, status: "completed", date: done ?? j.scheduled_start, dateKind: done ? "actual" : j.scheduled_start ? "scheduled" : "unknown" });
+    if (done) {
+      out.push({ ...base, status: "completed", date: done, dateKind: "actual" });
+    } else if (COMPLETE.has(vs)) {
+      out.push(completeWithoutActual(base, j.scheduled_start, now, tz));
     } else if ((vs === "late" || SCHEDULED.has(vs)) && j.scheduled_start) {
       out.push(scheduledEvent(base, j.scheduled_start, now, tz));
     }
@@ -298,8 +312,7 @@ export function platformJobEvents(
       const base = { key: `platform-job:${j.id}`, jobId: j.id, jobSource: "platform" as const, label, propertyId: mapProperty(j.property_id) };
       if (COMPLETE.has(js)) {
         if (j.completed_at) out.push({ ...base, status: "completed", date: j.completed_at, dateKind: "actual" });
-        else if (j.scheduled_start) out.push({ ...base, status: "completed", date: j.scheduled_start, dateKind: "scheduled" });
-        else out.push({ ...base, status: "completed", date: null, dateKind: "unknown" });
+        else out.push(completeWithoutActual(base, j.scheduled_start, now, tz));
       } else if (SCHEDULED.has(js) && j.scheduled_start) {
         out.push(scheduledEvent(base, j.scheduled_start, now, tz));
       } else if (ACTIVE.has(js)) {
@@ -314,8 +327,7 @@ export function platformJobEvents(
       if (COMPLETE.has(s)) {
         // Only a recorded finish time is a completion date; a start time is not.
         if (v.actual_end_at) out.push({ ...base, status: "completed", date: v.actual_end_at, dateKind: "actual" });
-        else if (v.scheduled_date) out.push({ ...base, status: "completed", date: v.scheduled_date, dateKind: "scheduled" });
-        else out.push({ ...base, status: "completed", date: null, dateKind: "unknown" });
+        else out.push(completeWithoutActual(base, v.scheduled_date, now, tz));
       } else if (ACTIVE.has(s)) {
         out.push({ ...base, status: "in_progress", date: v.actual_start_at ?? v.scheduled_date, dateKind: v.actual_start_at ? "actual" : v.scheduled_date ? "scheduled" : "unknown" });
       } else if (SCHEDULED.has(s) && v.scheduled_date) {
