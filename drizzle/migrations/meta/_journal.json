@@ -64,6 +64,13 @@
       "when": 1793672846066,
       "tag": "0008_finance_allocations_bank_review",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793673435005,
+      "tag": "0009_finance_bank_revoke_anon",
+      "breakpoints": true
     }
   ]
 }
