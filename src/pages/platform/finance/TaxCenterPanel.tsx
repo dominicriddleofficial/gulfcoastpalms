@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertTriangle, Download, ExternalLink, FileText, Plus, Upload, Info } from "lucide-react";
 import { TAX_DOC_TYPES } from "@/lib/finance";
 import { cashKey, useCashRecords } from "@/hooks/useCashRecords";
-import { csvCell, defaultTaxYear, fmtCents, toCsv, cents, type CashEntry, type CashIssue, type IssueKind } from "@/lib/cashRecords";
+import { defaultTaxYear, fmtCents, toCsv, cents, type CashEntry, type CashIssue, type IssueKind } from "@/lib/cashRecords";
 import { fetchAllPages } from "@/lib/fetchAllPages";
 import BankImportPanel from "@/pages/platform/finance/BankImportPanel";
 
@@ -453,4 +453,3 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   return <div className="space-y-1.5"><Label className="text-xs text-muted-foreground">{label}</Label>{children}</div>;
 }
 
-export { csvCell };
