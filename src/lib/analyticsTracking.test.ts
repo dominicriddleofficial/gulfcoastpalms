@@ -5,7 +5,7 @@ beforeEach(() => {
   posts.length = 0;
   vi.stubEnv("VITE_SUPABASE_URL", "https://example.test");
   vi.stubEnv("VITE_SUPABASE_PUBLISHABLE_KEY", "anon");
-  vi.stubGlobal("fetch", vi.fn(async (_u: string, init: RequestInit) => { posts.push(JSON.parse(await (init.body as Blob).text())); return new Response("{}"); }));
+  vi.stubGlobal("fetch", vi.fn(async (_u: string, init: RequestInit) => { posts.push(JSON.parse(String(init.body))); return new Response("{}"); }));
   Object.defineProperty(window, "location", { configurable: true, value: new URL("https://gulfcoastpalmservices.com/services/palm-tree-trimming?utm_source=google&token=SECRET&phone=8505551234") });
   vi.resetModules();
 });

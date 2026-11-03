@@ -177,10 +177,6 @@ function postEvent(payload: Record<string, unknown>) {
   if (!SUPA_URL || !SUPA_ANON) return;
   const url = `${SUPA_URL}/functions/v1/track-event`;
   try {
-    const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
-    if ("sendBeacon" in navigator && payload.event_name === "page_view") {
-      // beacon doesn't support headers; fall back to fetch keepalive so anon key flows
-    }
     fetch(url, {
       method: "POST",
       headers: {
@@ -188,7 +184,7 @@ function postEvent(payload: Record<string, unknown>) {
         "apikey": SUPA_ANON,
         "Authorization": `Bearer ${SUPA_ANON}`,
       },
-      body: blob,
+      body: JSON.stringify(payload),
       keepalive: true,
     }).catch(() => { /* fire-and-forget */ });
   } catch { /* swallow */ }
