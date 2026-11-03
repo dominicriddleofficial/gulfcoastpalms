@@ -12,7 +12,6 @@ import { TrendingUp, TrendingDown, DollarSign, Briefcase, Trophy, Users, MapPin,
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Phone } from "lucide-react";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { Link } from "react-router-dom";
 import { fetchAllPages } from "@/lib/fetchAllPages";
