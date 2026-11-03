@@ -92,33 +92,49 @@ function safeSession(): Storage | null {
   try { return typeof sessionStorage !== "undefined" ? sessionStorage : null; } catch { return null; }
 }
 
+// When storage is blocked, ids live only for this page load and are prefixed "mem-" so the
+// summary treats them as unknown identity instead of as real unique browsers.
+let memVisitor: string | null = null;
+let memSession: string | null = null;
+
 export function getVisitorId(): string {
-  const ls = safeStorage();
-  if (!ls) return "anon";
-  let id = ls.getItem(VISITOR_KEY);
-  if (!id) { id = uid(); try { ls.setItem(VISITOR_KEY, id); } catch { /* ignore */ } }
-  return id;
+  try {
+    const ls = safeStorage();
+    if (ls) {
+      let id = ls.getItem(VISITOR_KEY);
+      if (!id || id === "anon") { id = uid(); ls.setItem(VISITOR_KEY, id); }
+      if (ls.getItem(VISITOR_KEY) === id) return id;
+    }
+  } catch { /* storage blocked or full */ }
+  return (memVisitor ??= `mem-${uid()}`);
 }
 
 export function getSessionId(): string {
-  const ss = safeSession();
-  if (!ss) return "anon-session";
-  const raw = ss.getItem(SESSION_KEY);
   const now = Date.now();
-  if (raw) {
-    try {
-      const parsed = JSON.parse(raw) as { id: string; last: number };
-      if (now - parsed.last < SESSION_TTL_MS) {
-        parsed.last = now;
-        ss.setItem(SESSION_KEY, JSON.stringify(parsed));
-        return parsed.id;
+  try {
+    const ss = safeSession();
+    if (ss) {
+      const raw = ss.getItem(SESSION_KEY);
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw) as { id: string; last: number };
+          if (parsed.id && parsed.id !== "anon-session" && now - parsed.last < SESSION_TTL_MS) {
+            parsed.last = now;
+            ss.setItem(SESSION_KEY, JSON.stringify(parsed));
+            return parsed.id;
+          }
+        } catch { /* fall through */ }
       }
-    } catch { /* fall through */ }
-  }
-  const id = uid();
-  try { ss.setItem(SESSION_KEY, JSON.stringify({ id, last: now })); } catch { /* ignore */ }
-  return id;
+      const id = uid();
+      ss.setItem(SESSION_KEY, JSON.stringify({ id, last: now }));
+      return id;
+    }
+  } catch { /* storage blocked */ }
+  return (memSession ??= `mem-${uid()}`);
 }
+
+/** Test hook: forget in-memory fallback ids. */
+export function __resetMemoryIds() { memVisitor = null; memSession = null; }
 
 export function getDeviceType(): "mobile" | "tablet" | "desktop" {
   if (typeof window === "undefined") return "desktop";
@@ -156,19 +172,25 @@ function detectBusinessType(path: string): string {
   return "GCP";
 }
 
-// Dedup: never send the exact same (event,page,session) twice within 1500ms.
+/**
+ * Client de-duplication. Events carrying a click_id/submission_id are one interaction each:
+ * distinct ids always send, a repeated id never does. Events without an id (page views, legacy
+ * helpers) are dropped only when the same event, page, session, placement and label repeat
+ * within 1.5 s — a double-fired handler, not a second real action.
+ */
 const lastSent = new Map<string, number>();
-function shouldSend(event: string, page: string, session: string): boolean {
-  const key = `${event}|${page}|${session}`;
-  const now = Date.now();
+export function shouldSend(event: string, page: string, session: string, props: Record<string, unknown> = {}, now = Date.now()): boolean {
+  const id = typeof props.click_id === "string" ? props.click_id : typeof props.submission_id === "string" ? props.submission_id : null;
+  const key = id ? `id|${event}|${id}` : `${event}|${page}|${session}|${props.placement ?? ""}|${props.cta_text ?? ""}`;
   const prev = lastSent.get(key);
-  if (prev && now - prev < 1500) return false;
+  if (prev !== undefined && (id || now - prev < 1500)) return false;
   lastSent.set(key, now);
-  if (lastSent.size > 200) {
-    for (const k of Array.from(lastSent.keys()).slice(0, 100)) lastSent.delete(k);
+  if (lastSent.size > 300) {
+    for (const k of Array.from(lastSent.keys()).slice(0, 150)) lastSent.delete(k);
   }
   return true;
 }
+export function __resetDedup() { lastSent.clear(); }
 
 const SUPA_URL = (typeof import.meta !== "undefined" && import.meta.env?.VITE_SUPABASE_URL) || "";
 const SUPA_ANON = (typeof import.meta !== "undefined" && import.meta.env?.VITE_SUPABASE_PUBLISHABLE_KEY) || "";
@@ -226,14 +248,16 @@ export function sanitizeReferrer(raw: string | null | undefined): string | null 
   try { const u = new URL(raw); return /^https?:$/.test(u.protocol) ? u.origin : null; } catch { return null; }
 }
 
-const SAFE_PROPS = new Set(["placement", "cta_text", "click_id", "form_source", "service", "lead_source", "channel", "position", "plan_type", "sop_type", "value"]);
-function safeProps(params?: EventParams): Record<string, string | number | boolean> {
+const SAFE_PROPS = new Set(["placement", "cta_text", "click_id", "submission_id", "form_source", "service", "lead_source", "channel", "position", "plan_type", "sop_type", "value"]);
+export function safeProps(params?: EventParams): Record<string, string | number | boolean> {
   const out: Record<string, string | number | boolean> = {};
   if (!params) return out;
   for (const [k, v] of Object.entries(params)) {
-    if (v == null || RESERVED_PARAM_KEYS.has(k)) continue;
-    const key = k === "source" ? "placement" : k === "click_location" ? "placement" : k;
-    if (!SAFE_PROPS.has(key)) continue;
+    if (v == null) continue;
+    // Trusted aliases are normalised first, so `source`/`click_location` become the placement.
+    const key = k === "source" || k === "click_location" ? "placement" : k;
+    if (RESERVED_PARAM_KEYS.has(key) || !SAFE_PROPS.has(key)) continue;
+    if (key === "placement" && typeof out.placement === "string" && k !== "placement") continue;
     out[key] = typeof v === "string" ? v.slice(0, 80) : v;
   }
   return out;
@@ -247,8 +271,8 @@ export function trackEvent(event: ConversionEvent | string, params?: EventParams
     const path = (params?.page_path || window.location.pathname).split(/[?#]/)[0] || "/";
     if (!isTrackablePath(window.location.pathname) || !isTrackablePath(path)) return;
     const session = getSessionId();
-    if (!shouldSend(event, path, session)) return;
     const properties = safeProps(params);
+    if (!shouldSend(event, path, session, properties)) return;
 
     if (typeof window.gtag === "function") window.gtag("event", event, { ...properties, page_path: path });
     if (!isTrackableHost(window.location.hostname, automated())) return;
