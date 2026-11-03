@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach, onTestFinished } from "vitest";
 
 const invokeEdge = vi.fn();
 const trackEvent = vi.fn();
@@ -27,7 +27,9 @@ describe("quote form with blocked storage", () => {
   });
 
   it("still sends when the storage getter itself throws", async () => {
+    const orig = Object.getOwnPropertyDescriptor(window, "sessionStorage");
     Object.defineProperty(window, "sessionStorage", { configurable: true, get: () => { throw new Error("denied"); } });
+    onTestFinished(() => { if (orig) Object.defineProperty(window, "sessionStorage", orig); });
     invokeEdge.mockResolvedValue({ data: { success: true }, error: null });
     const { submitLead } = await import("./submit-lead");
     expect((await submitLead({ ...valid, formRenderTime: Date.now() - 10_000 })).success).toBe(true);
