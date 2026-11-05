@@ -33,7 +33,7 @@ Deno.serve(async req => {
     }
     if (b.action === "revoke") {
       if (!b.user_id) return json({ error: "Select a climber account." }, 400);
-      const { data, error } = await db.from("arborist_climber_access").update({ active: false }).eq("business_id", b.business_id).eq("user_id", b.user_id).select("user_id").single();
+      const { data, error } = await db.from("arborist_climber_access").update({ active: false, granted_by: identity.user.id }).eq("business_id", b.business_id).eq("user_id", b.user_id).select("user_id").single();
       if (error || !data) return json({ error: "Access could not be disabled." }, 409);
       return json({ ok: true });
     }
@@ -50,7 +50,7 @@ Deno.serve(async req => {
     let created = false;
     if (!target) {
       if (!b.password || !b.display_name) return json({ error: "New account: enter a name and initial password (12+ characters). No invitation is sent." }, 400);
-      const user = await db.auth.admin.createUser({ email, password: b.password, email_confirm: true, user_metadata: { display_name: b.display_name } });
+      const user = await db.auth.admin.createUser({ email, password: b.password, email_confirm: true, ban_duration: "876000h", user_metadata: { display_name: b.display_name } });
       if (user.error || !user.data.user) return json({ error: user.error?.message ?? "Account could not be created." }, 400);
       target = user.data.user; created = true;
     }
@@ -59,6 +59,10 @@ Deno.serve(async req => {
     if (grant.error) {
       if (created) await db.auth.admin.deleteUser(target.id);
       return json({ error: grant.error.message }, 409);
+    }
+    if (created) {
+      const activate = await db.auth.admin.updateUserById(target.id, { ban_duration: "none" });
+      if (activate.error) return json({ error: "The restricted account was saved but remains disabled. Contact the office to retry activation." }, 409);
     }
     return json({ ok: true, user_id: target.id, created, email });
   } catch { return json({ error: "Could not manage climber access. Retry without changing existing staff permissions." }, 500); }

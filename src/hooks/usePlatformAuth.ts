@@ -308,9 +308,11 @@ function usePlatformAuthState(): PlatformAuthState {
 
       const { data: climber, error: climberError } = await supabase.rpc("climber_session");
       if (isCancelled()) return;
+      if (climberError) throw climberError;
       if (!climberError && climber && typeof climber === "object" && !Array.isArray(climber)) {
         const c = climber as { business_id?: string; active?: boolean; name?: string; shortcode?: string };
         setUserId(user.id); setUserEmail(user.email ?? ""); setIsOwner(false); isAdminRef.current = false;
+        clearAllSnapshots();
         if (!c.active || !c.business_id) { setBusinessAccess([]); setAccessDenied(true); setLoading(false); return; }
         const entry: BusinessAccess = { id: "", business_id: c.business_id, role_name: "arborist_only", default_business: true,
           can_view_all_business_data: false, can_manage_leads: false, can_manage_quotes: false, can_manage_jobs: false,
