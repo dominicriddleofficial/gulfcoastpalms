@@ -22,7 +22,7 @@ const reference = (value: PriceRecommendation) => {
     : value.priceType === "range" ? `${money(priceCents(value.priceMin) ?? 0)}–${money(priceCents(value.priceMax) ?? 0)}; midpoint = ${money(cents)} (nearest cent, half up).`
     : `Fixed recommendation ${money(cents)}.`;
 };
-export interface DisposalDraft { haul: number | null; road: number | null; scope: string; conditions: string }
+export interface DisposalDraft { haul: number | null; road: number | null; scope: string; conditions: string; reference: string }
 /** Required base plus nonnegative deltas: complete totals are never added twice. */
 export function disposalAmounts(haul: number, road: number) {
   const base = Math.min(haul, road);
@@ -58,12 +58,20 @@ export function arboristQuoteDraft(report: Pick<ArboristQuote, "trees" | "proper
   if (!pricing) return { lines, scope: address ? `Tree work at ${address}.` : "", disposal: undefined };
   const p = { ...emptyReportPricing(), ...pricing };
   const whole = recommendedCents(p.wholeJob);
+  const workLines = p.basis === "whole_job"
+    ? [{ description: "All listed tree work — whole job", suggestion: reference(p.wholeJob), fixedPrice: whole === null ? null : (whole / 100).toFixed(2) }]
+    : lines;
   const base = p.basis === "whole_job" ? whole : lines.every(l => l.fixedPrice !== null)
     ? lines.reduce((sum, l) => sum + (priceCents(l.fixedPrice ?? "") ?? 0), 0) : null;
   const haulRecommendation = recommendedCents(p.haulAway), roadRecommendation = recommendedCents(p.roadside);
   const complete = (value: number | null) => p.disposalBasis === "complete" ? value : base === null || value === null ? null : base + value;
   const haul = complete(haulRecommendation), road = complete(roadRecommendation);
   const suggestion = `${p.disposalBasis === "complete" ? "Complete haul-away total" : "Base work plus additional haul-away"}: ${reference(p.haulAway)}${p.disposalBasis === "additional" ? ` Base: ${base === null ? "missing" : money(base)}.` : ""}`;
-  return { scope, lines: [{ description: "Tree work with haul-away — complete job", suggestion, fixedPrice: haul === null ? null : (haul / 100).toFixed(2) }],
-    disposal: { haul, road, scope, conditions: p.roadsideConditions.trim() } satisfies DisposalDraft };
+  // Additional disposal retains per-tree missing-price flags. A supplied complete
+  // job total replaces every tree charge; it never requires pricing trees again.
+  const draftLines = p.disposalBasis === "complete"
+    ? [{ description: "All listed tree work with haul-away — complete job", suggestion, fixedPrice: haul === null ? null : (haul / 100).toFixed(2) }]
+    : [...workLines, { description: "Haul-away — additional charge", suggestion: reference(p.haulAway), fixedPrice: haulRecommendation === null ? null : (haulRecommendation / 100).toFixed(2) }];
+  return { scope, lines: draftLines,
+    disposal: { haul, road, scope, conditions: p.roadsideConditions.trim(), reference: `Roadside ${p.disposalBasis === "complete" ? "complete job" : "additional charge"}: ${reference(p.roadside)}` } satisfies DisposalDraft };
 }

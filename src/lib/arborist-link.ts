@@ -101,7 +101,7 @@ export async function loadGuestReport(token: string) {
 }
 export async function saveGuestReport(token: string, report: ArboristQuote, status: "draft" | "submitted" | "reviewed") {
   if (status === "reviewed") throw new ArboristLinkError("Only the office can mark reports reviewed.");
-  const fields = { customer_name: report.customer_name, property_address: report.property_address, visit_date: report.visit_date, arborist_name: report.arborist_name, general_notes: report.general_notes, trees: report.trees };
+  const fields = { customer_name: report.customer_name, property_address: report.property_address, visit_date: report.visit_date, arborist_name: report.arborist_name, general_notes: report.general_notes, trees: report.trees, ...(report.pricing ? { pricing: report.pricing } : {}) };
   const data = await call<{ report: GuestRow }>({ action: "save", token, version: report.version, status, fields });
   return toQuote(data.report);
 }

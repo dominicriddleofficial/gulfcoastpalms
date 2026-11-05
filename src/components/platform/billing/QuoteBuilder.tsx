@@ -132,8 +132,10 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   const toggleDisposal = () => {
     if (disposalActive) {
       const required = lineItems.filter(l => l.kind === "required");
-      const haul = lineItems.find(l => l.group === DISPOSAL_GROUP && l.proposed);
+      const haul = lineItems.find(l => l.group === DISPOSAL_GROUP && l.description === "Haul-away");
       if (!haul) return;
+      const road = lineItems.find(l => l.group === DISPOSAL_GROUP && l.description.startsWith("Roadside placement"));
+      if (road) setRoadsidePrice((required.reduce((s, l) => s + lineAmount(l), 0) + lineAmount(road)).toFixed(2));
       const amount = required.reduce((s, l) => s + lineAmount(l), 0) + lineAmount(haul);
       setLineItems([{ id: newLineId(), description: "Tree work with haul-away — complete job", qty: "1", price: amount.toFixed(2), kind: "required", group: "", proposed: true }, ...lineItems.filter(l => l.kind === "optional")]);
       return;
@@ -781,6 +783,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
             {/* Line Items */}
             {optionsEnabled && (arboristSource || existing?.source_arborist_quote_id) && <section className="space-y-3 border border-border rounded-lg p-4">
               {!disposalActive && <label className="block space-y-2 text-sm">Complete roadside job price ($)<Input aria-label="Complete roadside job price" inputMode="decimal" value={roadsidePrice} onChange={e => setRoadsidePrice(e.target.value)} /></label>}
+              {arboristSource?.disposal?.reference && <p className="text-sm text-muted-foreground">Staff only · {arboristSource.disposal.reference}</p>}
               <Button variant="outline" disabled={saving || !!existing?.accepted_snapshot} onClick={toggleDisposal}>{disposalActive ? "Turn alternatives off — keep haul-away" : "Offer haul-away / roadside options"}</Button>
             </section>}
             <section className="space-y-3">

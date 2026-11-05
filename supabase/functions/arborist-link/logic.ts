@@ -46,14 +46,14 @@ export function mapDbError(message: string): { status: number; body: Record<stri
 
 export interface ReportRow {
   id: string; customer_name: string; property_address: string; visit_date: string; arborist_name: string;
-  general_notes: string; trees: unknown; status: string; version: number; submitted_at: string | null;
+  general_notes: string; trees: unknown; pricing?: unknown; status: string; version: number; submitted_at: string | null;
 }
 /** Whitelists report fields sent to a guest. */
 export function guestReport(row: ReportRow) {
   return {
     id: row.id, customer_name: row.customer_name, property_address: row.property_address, visit_date: row.visit_date,
     arborist_name: row.arborist_name, general_notes: row.general_notes, trees: row.trees, status: row.status,
-    version: row.version, submitted_at: row.submitted_at,
+    version: row.version, submitted_at: row.submitted_at, ...(row.pricing ? { pricing: row.pricing } : {}),
   };
 }
 
