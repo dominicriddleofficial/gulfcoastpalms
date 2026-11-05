@@ -99,6 +99,13 @@
       "when": 1793685845847,
       "tag": "0013_website_analytics_mixed_alias_dedup",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1793853549324,
+      "tag": "0014_restricted_climber_accounts_report_pricing",
+      "breakpoints": true
     }
   ]
 }
