@@ -9,6 +9,7 @@ import { prepareArboristPhoto, saveArboristQuote, uploadArboristPhoto } from "@/
 import { ARBORIST_PHOTO_BUCKET, ARBORIST_SERVICES, ARBORIST_STATUSES, MAX_TREE_PHOTOS, MAX_TREES, newArboristTree, priceLabel, quoteTotals, totalLabel, validateArboristQuote, type ArboristPhoto, type ArboristQuote, type ArboristTree } from "@/lib/arborist-quotes";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import ReportPricingFields from "./ReportPricingFields";
 
 /** Storage/save backend for the editor: signed-in staff by default, or a guest quote link. */
 export interface ArboristApi {
@@ -220,6 +221,7 @@ export function ArboristQuoteEditor({ initial, onBack, onSaved, disabled = false
         </details>;
       })}
       <section className={panel}><Field title="Whole-job notes" hint="Optional. Use this for items that apply to the entire visit."><Textarea className="min-h-28 text-base" maxLength={10000} value={report.general_notes} onChange={event => update({ general_notes: event.target.value })} placeholder="Haul away or leave by the road? Stumps included? Equipment, access, timing, or other customer requests?" /></Field></section>
+      <ReportPricingFields value={report.pricing} onChange={pricing => update({ pricing })} />
       <Totals trees={report.trees} />
     </fieldset>
     <div className={cn("sticky z-20 rounded-xl border border-border bg-card/95 p-3 backdrop-blur shadow-xl flex flex-wrap items-center justify-between gap-2", crewView ? "bottom-4" : "bottom-20 lg:bottom-4")}>
