@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { denyClimberRequest } from "../_shared/climber-deny.ts";
 
 const ALLOWED_ORIGINS = [
   "https://gulfcoastpalmservices.com",
@@ -26,6 +27,8 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const restricted = await denyClimberRequest(req, corsHeaders);
+    if (restricted) return restricted;
     const SIMPLETEXTING_API_KEY = Deno.env.get("SIMPLETEXTING_API_KEY");
     if (!SIMPLETEXTING_API_KEY) {
       console.error("SIMPLETEXTING_API_KEY not configured");

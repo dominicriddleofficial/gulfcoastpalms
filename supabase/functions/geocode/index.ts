@@ -3,6 +3,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { denyClimberRequest } from "../_shared/climber-deny.ts";
 
 async function checkRateLimit(supabase: any, identifier: string, endpoint: string, maxRequests: number, windowMinutes: number): Promise<boolean> {
   // Cleanup expired counters
@@ -33,6 +34,8 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  const restricted = await denyClimberRequest(req, corsHeaders);
+  if (restricted) return restricted;
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const mapsKey = Deno.env.get("GOOGLE_MAPS_API_KEY");
