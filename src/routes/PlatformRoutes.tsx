@@ -59,6 +59,7 @@ export const PlatformRoutes = () => (
     <Route path="/platform/quotes" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformQuotes /></RoleRoute>)} />
     <Route path="/platform/arborist-quotes" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager","crew","arborist_only"]}><PlatformArboristQuotes /></RoleRoute>)} />
     <Route path="/platform/climber-account" element={withPlatformAuth(<RoleRoute allow={["arborist_only"]}><ClimberAccount /></RoleRoute>)} />
+    <Route path="/platform/forgot-password" element={<ClimberAccount />} />
     <Route path="/platform/quote-display" element={withPlatformAuth(<PlatformQuoteDisplay />)} />
     <Route path="/platform/quote-display/:shortcode/:quoteId" element={withPlatformAuth(<PlatformQuoteDisplay />)} />
     <Route path="/platform/jobs" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformJobs /></RoleRoute>)} />
