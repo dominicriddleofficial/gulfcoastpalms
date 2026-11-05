@@ -1,4 +1,5 @@
 # Arborist + quote workflow (GCP)
+- [x] Final narrow fix: preserve required tree descriptions in disposal scope and block disabling with unrelated choice groups; 22 affected tests pass, preview build OK, public/PDF scope plumbing reviewed; no publication or real records/messages
 - [x] 1. Private arborist quote link (guest form, staff send/disable/replace)
 - [x] 1a. Suppress GA/Ads/Meta + app analytics on private link page
 - [x] 2. Arborist report -> customer quote draft (staff-only, price confirmation, dedupe)
