@@ -2,10 +2,10 @@ import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
-import { ARBORIST_PHOTO_BUCKET, type ArboristQuote, type ArboristTree } from "@/lib/arborist-quotes";
+import { ARBORIST_PHOTO_BUCKET, type ArboristQuote, type ArboristTree, type ReportPricing } from "@/lib/arborist-quotes";
 
-type ReportRow = Omit<ArboristQuote, "trees" | "status"> & { trees: Json; status: string };
-const reportFromRow = (row: ReportRow) => ({ ...row, trees: row.trees as unknown as ArboristTree[], status: row.status as ArboristQuote["status"] });
+type ReportRow = Omit<ArboristQuote, "trees" | "status" | "pricing"> & { trees: Json; pricing: Json; status: string };
+const reportFromRow = (row: ReportRow): ArboristQuote => ({ ...row, trees: row.trees as unknown as ArboristTree[], pricing: row.pricing ? row.pricing as unknown as ReportPricing : undefined, status: row.status as ArboristQuote["status"] });
 export const arboristQuotesKey = (businessId: string | null, userId: string | null) => ["arborist-quotes", businessId, userId];
 
 export function useArboristQuotes(businessId: string | null, userId: string | null) {
