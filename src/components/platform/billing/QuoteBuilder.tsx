@@ -86,6 +86,22 @@ function newLineId() { return crypto.randomUUID(); }
 const roundMoney = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
 const lineAmount = (line: LineItem) => roundMoney((Number(line.qty) || 0) * (Number(line.price) || 0) - (line.original?.discount_amount ?? 0));
 
+/** Grouped prices must not replace customer-visible work. Only copy descriptions,
+ * never arborist suggestions; normalize whitespace to recognize structured scope. */
+function disposalWorkScope(scope: string, required: LineItem[]) {
+  let result = scope;
+  const normalize = (text: string) => text.replace(/\s+/g, " ").trim();
+  for (const line of required) {
+    const description = line.description.trim();
+    // These are this toggle's pricing labels, not original work descriptions.
+    if (!description || description === "Tree work — required base" || description === "Tree work with haul-away — complete job") continue;
+    if (!normalize(result).includes(normalize(description))) {
+      result = [result, description].filter(Boolean).join("\n");
+    }
+  }
+  return result;
+}
+
 export default function QuoteBuilder({ businessId, businesses, userId, onClose, onCreated, editingQuote, arboristSource }: QuoteBuilderProps) {
   const existing = editingQuote?.quote;
   const editSnapshot = useRef(editingQuote);
@@ -131,12 +147,17 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   const [roadsidePrice, setRoadsidePrice] = useState(arboristSource?.disposal?.road === null || arboristSource?.disposal?.road === undefined ? "" : (arboristSource.disposal.road / 100).toFixed(2));
   const toggleDisposal = () => {
     if (disposalActive) {
+      if (lineItems.some(l => l.kind === "alternative" && l.group !== DISPOSAL_GROUP)) {
+        toast.error("Resolve other choice groups before turning disposal alternatives off: remove those choices or change them to required work or optional add-ons.");
+        return;
+      }
       const required = lineItems.filter(l => l.kind === "required");
       const haul = lineItems.find(l => l.group === DISPOSAL_GROUP && l.description === "Haul-away");
       if (!haul) return;
       const road = lineItems.find(l => l.group === DISPOSAL_GROUP && l.description.startsWith("Roadside placement"));
       if (road) setRoadsidePrice((required.reduce((s, l) => s + lineAmount(l), 0) + lineAmount(road)).toFixed(2));
       const amount = required.reduce((s, l) => s + lineAmount(l), 0) + lineAmount(haul);
+      setScopeOfWork(scope => disposalWorkScope(scope, required));
       setLineItems([{ id: newLineId(), description: "Tree work with haul-away — complete job", qty: "1", price: amount.toFixed(2), kind: "required", group: "", proposed: true }, ...lineItems.filter(l => l.kind === "optional")]);
       return;
     }
@@ -145,6 +166,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
     if (road === null || road <= 0 || haul <= 0 || lineItems.some(l => l.kind === "required" && l.price.trim() === "")) { toast.error("Enter valid complete haul-away and roadside prices first."); return; }
     if (lineItems.some(l => l.kind === "alternative")) { toast.error("Review existing choice groups before offering disposal alternatives."); return; }
     const amounts = disposalAmounts(haul, road);
+    setScopeOfWork(scope => disposalWorkScope(scope, lineItems.filter(l => l.kind === "required")));
     setLineItems([
       { id: newLineId(), description: "Tree work — required base", qty: "1", price: (amounts.base / 100).toFixed(2), kind: "required", group: "", proposed: true },
       { id: newLineId(), description: "Haul-away", qty: "1", price: (amounts.haulDelta / 100).toFixed(2), kind: "alternative", group: DISPOSAL_GROUP, proposed: true },
