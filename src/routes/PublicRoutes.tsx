@@ -10,6 +10,7 @@ const PrivacyPolicy = lazy(() => import("@/pages/PrivacyPolicy"));
 const OAuthConsent = lazy(() => import("@/pages/OAuthConsent"));
 const ArboristLink = lazy(() => import("@/pages/ArboristLink"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
+const ClimberAccount = lazy(() => import("@/pages/platform/ClimberAccount"));
 
 /**
  * Misc public utility/legal routes that are not part of the marketing
@@ -25,6 +26,7 @@ export const PublicRoutes = () => (
     <Route path="/privacy-policy" element={<PrivacyPolicy />} />
     <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
     <Route path="/arborist-link" element={<ArboristLink />} />
+    <Route path="/reset-password" element={<ClimberAccount />} />
     <Route path="*" element={<NotFound />} />
   </>
 );

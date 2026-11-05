@@ -4,6 +4,7 @@ import RoleRoute from "@/components/platform/RoleRoute";
 import { PlatformAuthProvider } from "@/hooks/usePlatformAuth";
 
 const PlatformLogin = lazy(() => import("@/pages/platform/PlatformLogin"));
+const ClimberAccount = lazy(() => import("@/pages/platform/ClimberAccount"));
 const PlatformDashboard = lazy(() => import("@/pages/platform/PlatformDashboard"));
 const PlatformLeads = lazy(() => import("@/pages/platform/PlatformLeads"));
 const PlatformCustomers = lazy(() => import("@/pages/platform/PlatformCustomers"));
@@ -56,7 +57,8 @@ export const PlatformRoutes = () => (
     <Route path="/platform/leads" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformLeads /></RoleRoute>)} />
     <Route path="/platform/customers" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformCustomers /></RoleRoute>)} />
     <Route path="/platform/quotes" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformQuotes /></RoleRoute>)} />
-    <Route path="/platform/arborist-quotes" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager","crew"]}><PlatformArboristQuotes /></RoleRoute>)} />
+    <Route path="/platform/arborist-quotes" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager","crew","arborist_only"]}><PlatformArboristQuotes /></RoleRoute>)} />
+    <Route path="/platform/climber-account" element={withPlatformAuth(<RoleRoute allow={["arborist_only"]}><ClimberAccount /></RoleRoute>)} />
     <Route path="/platform/quote-display" element={withPlatformAuth(<PlatformQuoteDisplay />)} />
     <Route path="/platform/quote-display/:shortcode/:quoteId" element={withPlatformAuth(<PlatformQuoteDisplay />)} />
     <Route path="/platform/jobs" element={withPlatformAuth(<RoleRoute allow={["owner","office_manager","manager"]}><PlatformJobs /></RoleRoute>)} />

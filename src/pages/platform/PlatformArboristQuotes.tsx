@@ -19,6 +19,7 @@ import { ArboristLinkPanel, SendQuoteLinkDialog } from "@/components/platform/ar
 import { copyTextToClipboard } from "@/lib/quote-message";
 import { cn } from "@/lib/utils";
 import { WorkspaceThemeProvider, getWorkspaceTheme, workspaceThemeVars } from "@/contexts/WorkspaceThemeContext";
+import ManageClimberAccess from "@/components/platform/arborist/ManageClimberAccess";
 
 
 export { ArboristQuoteEditor };
@@ -77,12 +78,13 @@ function ArboristWorkspace({ businessId, userId, canReview }: { businessId: stri
   if (editing) return <ArboristQuoteEditor key={editing.id} initial={editing} onBack={() => setEditing(null)} onSaved={saved} disabled={writeDisabled} crewView={!canReview} />;
   if (selected) {
     const latest = reports.find(report => report.id === selected.id) || selected;
-    return <ReportReview report={latest} canReview={canReview} canEdit={canReview || (latest.author_id === userId && latest.status !== "reviewed")} disabled={writeDisabled} onBack={() => setSelected(null)} onEdit={() => setEditing(latest)} onSaved={saved} />;
+    return <ReportReview report={latest} canReview={canReview} canEdit={canReview || (latest.author_id === userId && latest.status === "draft")} disabled={writeDisabled} onBack={() => setSelected(null)} onEdit={() => setEditing(latest)} onSaved={saved} />;
   }
   const filtered = reports.filter(report => (filter === "all" || report.status === filter) && `${report.customer_name} ${report.property_address} ${report.arborist_name}`.toLowerCase().includes(search.toLowerCase()));
   return <div className="space-y-5">
     <div className="flex flex-wrap items-start justify-between gap-4"><div><h1 className="font-display text-2xl font-semibold tracking-tight">Arborist Quotes</h1><p className="text-sm text-muted-foreground mt-1">Tree-by-tree field notes for a clear customer quote.</p></div><div className="flex flex-wrap gap-2">{canReview && <Button variant="outline" disabled={writeDisabled || query.isError || query.isLoading} onClick={() => setLinkOpen(true)}><Link2 className="mr-2 h-4 w-4" />Send quote link</Button>}<Button disabled={writeDisabled || query.isError || query.isLoading} onClick={() => { setSelected(null); setEditing(newArboristQuote(businessId, userId)); }}><Plus className="mr-2 h-4 w-4" />New arborist quote</Button></div></div>
     {canReview && <SendQuoteLinkDialog open={linkOpen} onOpenChange={setLinkOpen} businessId={businessId} onIssued={() => void qc.invalidateQueries({ queryKey: arboristQuotesKey(businessId, userId) })} />}
+    {canReview && <ManageClimberAccess businessId={businessId} />}
     <PrivateNote />
     <div className="grid grid-cols-3 gap-3">{(["submitted", "draft", "reviewed"] as const).map(status => <button key={status} onClick={() => setFilter(status)} className={cn("rounded-xl border bg-card p-3 sm:p-4 text-left", filter === status ? "border-primary/50" : "border-border")}><p className="text-xs text-muted-foreground">{ARBORIST_STATUSES[status]}</p><p className="font-display text-2xl font-semibold mt-1">{reports.filter(report => report.status === status).length}</p></button>)}</div>
     <div className="flex flex-wrap gap-3"><div className="relative flex-1 min-w-48"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input aria-label="Search arborist quotes" placeholder="Search customer, address, or arborist…" className="pl-10 h-11" value={search} onChange={event => setSearch(event.target.value)} /></div><select aria-label="Filter arborist quotes" className={cn(selectClass, "w-auto")} value={filter} onChange={event => setFilter(event.target.value)}><option value="all">All reports</option>{Object.entries(ARBORIST_STATUSES).map(([key, value]) => <option key={key} value={key}>{value}</option>)}</select></div>
@@ -92,10 +94,11 @@ function ArboristWorkspace({ businessId, userId, canReview }: { businessId: stri
 
 export default function PlatformArboristQuotes() {
   const auth = usePlatformAuth();
-  const { isCrew, isStaff, isLoading } = useUserRole();
+  const { isCrew, isClimber, isStaff, isLoading } = useUserRole();
   const business = auth.businesses.find(item => item.id === auth.selectedBusinessId);
   const gcp = auth.businesses.find(item => item.shortcode.toUpperCase() === "GCP");
-  const body = auth.loading || isLoading ? <p role="status" className="p-8">Loading…</p> : business?.shortcode.toUpperCase() !== "GCP" || !auth.userId ? <div className={panel}><p>Select Gulf Coast Palms to open arborist quotes.</p>{gcp && <Button className="mt-4" onClick={() => auth.setSelectedBusinessId(gcp.id)}>Open Gulf Coast Palms</Button>}</div> : <ArboristWorkspace key={`${auth.selectedBusinessId}:${auth.userId}`} businessId={auth.selectedBusinessId!} userId={auth.userId} canReview={isStaff} />;
+  const body = auth.loading || isLoading ? <p role="status" className="p-8">Loading…</p> : business?.shortcode.toUpperCase() !== "GCP" || !auth.userId || !auth.selectedBusinessId ? <div className={panel}><p>Select Gulf Coast Palms to open arborist quotes.</p>{gcp && <Button className="mt-4" onClick={() => auth.setSelectedBusinessId(gcp.id)}>Open Gulf Coast Palms</Button>}</div> : <ArboristWorkspace key={`${auth.selectedBusinessId}:${auth.userId}`} businessId={auth.selectedBusinessId} userId={auth.userId} canReview={isStaff} />;
+  if (isClimber) return <WorkspaceThemeProvider shortcode="GCP"><div className="ops-theme min-h-screen bg-background text-foreground"><div className="mx-auto max-w-5xl p-4 pb-24"><div className="flex justify-end gap-3 mb-4"><Button variant="ghost" asChild><Link to="/platform/climber-account">My account</Link></Button><Button variant="outline" onClick={() => void auth.signOut()}>Sign out</Button></div>{body}</div></div></WorkspaceThemeProvider>;
   if (isCrew) return <WorkspaceThemeProvider shortcode="GCP"><div className="ops-theme min-h-screen bg-background text-foreground" style={workspaceThemeVars(getWorkspaceTheme("GCP"))}><div className="mx-auto max-w-5xl p-4 pb-32"><Link to="/platform/crew" className="inline-flex items-center min-h-11 gap-2 text-sm text-primary mb-4"><ArrowLeft className="h-4 w-4" />My schedule</Link>{body}</div></div></WorkspaceThemeProvider>;
   return <PlatformLayout><QuotesSectionNav />{body}</PlatformLayout>;
 }

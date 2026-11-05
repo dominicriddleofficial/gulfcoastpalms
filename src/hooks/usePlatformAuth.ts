@@ -306,6 +306,23 @@ function usePlatformAuthState(): PlatformAuthState {
       const owner = !!(workspaces && workspaces.length > 0);
       const isAdmin = roles?.some(r => r.role === "admin") || false;
 
+      const { data: climber, error: climberError } = await supabase.rpc("climber_session");
+      if (isCancelled()) return;
+      if (!climberError && climber && typeof climber === "object" && !Array.isArray(climber)) {
+        const c = climber as { business_id?: string; active?: boolean; name?: string; shortcode?: string };
+        setUserId(user.id); setUserEmail(user.email ?? ""); setIsOwner(false); isAdminRef.current = false;
+        if (!c.active || !c.business_id) { setBusinessAccess([]); setAccessDenied(true); setLoading(false); return; }
+        const entry: BusinessAccess = { id: "", business_id: c.business_id, role_name: "arborist_only", default_business: true,
+          can_view_all_business_data: false, can_manage_leads: false, can_manage_quotes: false, can_manage_jobs: false,
+          can_manage_schedule: false, can_manage_invoices: false, can_manage_payments: false, can_manage_communications: false,
+          can_manage_settings: false, can_export_data: false, can_view_financials: false, can_manage_users: false, can_delete_records: false,
+          business: { id: c.business_id, public_brand_name: c.name ?? "Gulf Coast Palms", shortcode: "GCP", logo_url: null } };
+        setBusinessAccess([entry]); setSelectedBusinessIdRef.current(c.business_id); setAccessDenied(false); setLoading(false);
+        try { window.localStorage.removeItem(snapshotKey(user.id)); } catch { /* no offline CRM snapshot for climbers */ }
+        if (!window.location.pathname.match(/^\/platform\/(arborist-quotes|climber-account)$/)) navigate("/platform/arborist-quotes", { replace: true });
+        return;
+      }
+
     if (!owner && !isAdmin && (!access || access.length === 0)) {
       setUserId(user.id);
       setUserEmail(user.email || "");
@@ -464,7 +481,7 @@ function usePlatformAuthState(): PlatformAuthState {
       setAccessDenied(true);
       setLoading(false);
     }
-  }, [clearAuthState]);
+  }, [clearAuthState, navigate]);
 
   useEffect(() => {
     let cancelled = false;

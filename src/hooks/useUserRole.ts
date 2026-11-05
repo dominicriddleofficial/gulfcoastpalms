@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useBusinessContext } from "@/contexts/BusinessContext";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 
-export type PlatformRole = "owner" | "office_manager" | "manager" | "crew" | null;
+export type PlatformRole = "owner" | "office_manager" | "manager" | "crew" | "arborist_only" | null;
 
 // Module-level cache: key = `${userId}:${businessId}` → role
 const roleCache = new Map<string, PlatformRole>();
@@ -86,6 +86,7 @@ export function useUserRole() {
     isOfficeManager: role === "office_manager",
     isManager: role === "manager",
     isCrew: role === "crew",
+    isClimber: role === "arborist_only",
     /** Owner OR manager — i.e. has full operational access (not crew). */
     isStaff: role === "owner" || role === "office_manager" || role === "manager",
     isLoading,

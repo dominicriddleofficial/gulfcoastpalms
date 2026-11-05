@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { ARBORIST_PHOTO_BUCKET, type ArboristQuote, type ArboristTree } from "@/lib/arborist-quotes";
@@ -8,10 +9,17 @@ const reportFromRow = (row: ReportRow) => ({ ...row, trees: row.trees as unknown
 export const arboristQuotesKey = (businessId: string | null, userId: string | null) => ["arborist-quotes", businessId, userId];
 
 export function useArboristQuotes(businessId: string | null, userId: string | null) {
+  const qc = useQueryClient();
+  useEffect(() => {
+    if (!businessId || !userId) return;
+    const channel = supabase.channel(`arborist-${crypto.randomUUID()}`).on("postgres_changes", { event: "*", schema: "public", table: "platform_arborist_quotes", filter: `business_id=eq.${businessId}` }, () => { void qc.invalidateQueries({ queryKey: arboristQuotesKey(businessId, userId) }); }).subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [businessId, userId, qc]);
   return useQuery({
     queryKey: arboristQuotesKey(businessId, userId),
     queryFn: async () => {
-      const { data, error } = await supabase.from("platform_arborist_quotes").select("*").eq("business_id", businessId!).order("updated_at", { ascending: false });
+      if (!businessId) throw new Error("Select a business first.");
+      const { data, error } = await supabase.from("platform_arborist_quotes").select("*").eq("business_id", businessId).order("updated_at", { ascending: false });
       if (error) throw error;
       return data.map(row => reportFromRow(row));
     },
@@ -27,7 +35,7 @@ export async function saveArboristQuote(report: ArboristQuote, status: ArboristQ
   const fields = {
     customer_name: report.customer_name.trim(), property_address: report.property_address.trim(),
     visit_date: report.visit_date, arborist_name: report.arborist_name.trim(), general_notes: report.general_notes.trim(),
-    trees: report.trees as unknown as Json, status,
+    trees: report.trees as unknown as Json, pricing: (report.pricing ?? null) as unknown as Json, status,
   };
   const query = report.version === 0
     ? supabase.from("platform_arborist_quotes").insert({ ...fields, id: report.id, business_id: report.business_id, author_id: report.author_id })
