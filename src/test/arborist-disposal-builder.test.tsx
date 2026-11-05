@@ -15,7 +15,7 @@ const fixture = (items?: QuoteEditData["items"]): QuoteEditData => ({
   customer: { id: "c", display_name: "Fixture", email: null, phone: null },
   items: items ?? [{ id: "base", quote_id: "q", business_id: "gcp", description: "All tree work with haul-away", quantity: 1, unit_price: 7500, line_total: 7500, option_kind: "required", default_selected: true, discount_amount: 0, taxable_flag: true } as QuoteEditData["items"][number]] });
 function show(d = fixture()) { return render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><QuoteBuilder businessId="gcp" businesses={[{ id: "gcp", shortcode: "GCP", public_brand_name: "Gulf Coast Palms", logo_url: null }]} userId="office" editingQuote={d} onClose={vi.fn()} onCreated={vi.fn()} /></QueryClientProvider>); }
-beforeEach(() => rpc.mockReset()); afterEach(cleanup);
+beforeEach(() => { rpc.mockReset(); }); afterEach(cleanup);
 describe("office-opted disposal choices", () => {
   it("saves two complete totals only after enabling, reopens and turns off keeping haul-away", async () => {
     const view = show();
