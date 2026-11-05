@@ -1,3 +1,4 @@
+import { denyClimberRequest } from "../_shared/climber-deny.ts";
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsHeaders } from 'npm:@supabase/supabase-js/cors'
 
@@ -43,6 +44,8 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
+  const restricted = await denyClimberRequest(req, corsHeaders);
+  if (restricted) return restricted;
 
   const supabase = createClient(SUPABASE_URL, SERVICE_KEY)
   const today = new Date()

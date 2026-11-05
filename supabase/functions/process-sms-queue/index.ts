@@ -1,3 +1,4 @@
+import { denyClimberRequest } from "../_shared/climber-deny.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
@@ -22,6 +23,8 @@ function inQuietHours(now: Date, startHour: number, endHour: number): boolean {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const restricted = await denyClimberRequest(req, corsHeaders);
+  if (restricted) return restricted;
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;

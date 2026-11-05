@@ -1,3 +1,4 @@
+import { denyClimberRequest } from "../_shared/climber-deny.ts";
 // NOTE: post_job enrollment was intentionally removed from the app — nothing
 // enqueues sequence_type 'post_job' any more. post_lead is still active and is
 // still enrolled (submit-lead) and processed here.
@@ -20,6 +21,8 @@ const SEQUENCES: Record<string, { delay_hours: number; subject: string; type: st
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const restricted = await denyClimberRequest(req, corsHeaders);
+  if (restricted) return restricted;
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;

@@ -1,3 +1,4 @@
+import { denyClimberRequest } from "../_shared/climber-deny.ts";
 // AUTOMATIC SENDING IS INTENTIONALLY DISABLED: the pg_cron job 'process-review-queue'
 // is inactive and no code path enqueues rows into review_requests. Review requests are
 // sent MANUALLY from the job screen. This function is kept only so automation can be
@@ -54,6 +55,8 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
+  const restricted = await denyClimberRequest(req, corsHeaders);
+  if (restricted) return restricted;
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;

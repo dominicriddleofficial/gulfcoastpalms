@@ -1,3 +1,4 @@
+import { denyClimberRequest } from "../_shared/climber-deny.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
@@ -82,6 +83,8 @@ function formatMessageHtml(value: string | null | undefined): string {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const restricted = await denyClimberRequest(req, corsHeaders);
+  if (restricted) return restricted;
 
   try {
     // Auth gate — require a valid user JWT (or the service-role key for
