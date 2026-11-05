@@ -46,8 +46,8 @@ describe("arborist report to customer quote draft", () => {
     expect(draft.lines[0].description).not.toMatch(/cheap|\$|800/);
     expect(draft.scope).toBe("Tree work at 1 Main St.");
   });
-  it("never turns a range or unsure price into a usable price", () => {
-    expect(arboristQuoteDraft({ trees: [tree({})], property_address: "" }).lines[0].fixedPrice).toBeNull();
+  it("uses range midpoint while leaving unsure prices for office entry", () => {
+    expect(arboristQuoteDraft({ trees: [tree({})], property_address: "" }).lines[0].fixedPrice).toBe("1000.00");
     expect(arboristQuoteDraft({ trees: [tree({ priceType: "unsure", priceMin: "" })], property_address: "" }).lines[0].fixedPrice).toBeNull();
     expect(arboristQuoteDraft({ trees: [tree({ priceType: "fixed", priceMin: "650" })], property_address: "" }).lines[0].fixedPrice).toBe("650.00");
   });

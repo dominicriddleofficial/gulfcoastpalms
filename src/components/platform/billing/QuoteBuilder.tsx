@@ -21,7 +21,8 @@ import { downloadElementAsPdf } from "@/lib/download-pdf";
 import { buildQuoteMessage, getQuotePublicUrl } from "@/lib/quote-message";
 import { saveEditedQuote, type QuoteEditData } from "@/lib/edit-quote";
 import { OPTION_KIND_LABELS, builderOptionErrors, type OptionKind } from "@/lib/quote-options";
-import type { ArboristDraftLine } from "@/lib/arborist-to-quote";
+import { DISPOSAL_GROUP, disposalAmounts, type DisposalDraft, type ArboristDraftLine } from "@/lib/arborist-to-quote";
+import { priceCents } from "@/lib/arborist-quotes";
 
 interface LineItem {
   id: string;
@@ -45,6 +46,7 @@ export interface ArboristQuoteSource {
   propertyAddress: string;
   scope: string;
   lines: ArboristDraftLine[];
+  disposal?: DisposalDraft;
 }
 
 interface SavedItem {
@@ -113,18 +115,43 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
         kind: (item.option_kind === "optional" || item.option_kind === "alternative" ? item.option_kind : "required") as OptionKind,
         group: item.option_group ?? "", proposed: item.option_kind === "required" ? true : !!item.default_selected }))
     : arboristSource?.lines.length
-    ? arboristSource.lines.map(line => ({ id: newLineId(), description: line.description, qty: "1", price: "", kind: "required" as OptionKind, group: "", proposed: true, arborist: line, priceConfirmed: false }))
+    ? arboristSource.lines.map(line => ({ id: newLineId(), description: line.description, qty: "1", price: line.fixedPrice ?? "", kind: "required" as OptionKind, group: "", proposed: true, arborist: line, priceConfirmed: line.fixedPrice !== null }))
     : [{ id: newLineId(), description: "", qty: "1", price: "", kind: "required", group: "", proposed: true }]);
-  const [taxEnabled, setTaxEnabled] = useState(existing ? Number(existing.tax_rate) > 0 : true);
+  const [taxEnabled, setTaxEnabled] = useState(existing ? Number(existing.tax_rate) > 0 : !arboristSource);
   const [taxRate, setTaxRate] = useState(String(existing?.tax_rate ?? 7));
   const [discountEnabled, setDiscountEnabled] = useState(Number(existing?.discount_total ?? 0) > 0);
   const [discountType, setDiscountType] = useState<"$" | "%">("$");
   const [discountValue, setDiscountValue] = useState(String(existing?.discount_total ?? 0));
-  const [depositEnabled, setDepositEnabled] = useState(existing ? !!existing.deposit_required_flag : true);
+  const [depositEnabled, setDepositEnabled] = useState(existing ? !!existing.deposit_required_flag : !arboristSource);
   const [depositType, setDepositType] = useState<"%" | "$">(existing?.deposit_type === "fixed" ? "$" : "%");
   const [depositValue, setDepositValue] = useState(String(existing?.deposit_value ?? 50));
   const [publicNotes, setPublicNotes] = useState(existing?.public_notes ?? "");
   const [internalNotes, setInternalNotes] = useState(existing?.internal_notes ?? "");
+  const disposalActive = lineItems.some(l => l.kind === "alternative" && l.group === DISPOSAL_GROUP);
+  const [roadsidePrice, setRoadsidePrice] = useState(arboristSource?.disposal?.road === null || arboristSource?.disposal?.road === undefined ? "" : (arboristSource.disposal.road / 100).toFixed(2));
+  const toggleDisposal = () => {
+    if (disposalActive) {
+      const required = lineItems.filter(l => l.kind === "required");
+      const haul = lineItems.find(l => l.group === DISPOSAL_GROUP && l.description === "Haul-away");
+      if (!haul) return;
+      const road = lineItems.find(l => l.group === DISPOSAL_GROUP && l.description.startsWith("Roadside placement"));
+      if (road) setRoadsidePrice((required.reduce((s, l) => s + lineAmount(l), 0) + lineAmount(road)).toFixed(2));
+      const amount = required.reduce((s, l) => s + lineAmount(l), 0) + lineAmount(haul);
+      setLineItems([{ id: newLineId(), description: "Tree work with haul-away — complete job", qty: "1", price: amount.toFixed(2), kind: "required", group: "", proposed: true }, ...lineItems.filter(l => l.kind === "optional")]);
+      return;
+    }
+    const road = priceCents(roadsidePrice);
+    const haul = Math.round(lineItems.filter(l => l.kind === "required").reduce((s, l) => s + lineAmount(l), 0) * 100);
+    if (road === null || road <= 0 || haul <= 0 || lineItems.some(l => l.kind === "required" && l.price.trim() === "")) { toast.error("Enter valid complete haul-away and roadside prices first."); return; }
+    if (lineItems.some(l => l.kind === "alternative")) { toast.error("Review existing choice groups before offering disposal alternatives."); return; }
+    const amounts = disposalAmounts(haul, road);
+    setLineItems([
+      { id: newLineId(), description: "Tree work — required base", qty: "1", price: (amounts.base / 100).toFixed(2), kind: "required", group: "", proposed: true },
+      { id: newLineId(), description: "Haul-away", qty: "1", price: (amounts.haulDelta / 100).toFixed(2), kind: "alternative", group: DISPOSAL_GROUP, proposed: true },
+      { id: newLineId(), description: `Roadside placement${arboristSource?.disposal?.conditions ? ` — ${arboristSource.disposal.conditions}` : ""}`, qty: "1", price: (amounts.roadDelta / 100).toFixed(2), kind: "alternative", group: DISPOSAL_GROUP, proposed: false },
+      ...lineItems.filter(l => l.kind === "optional"),
+    ]);
+  };
 
   // UI state
   const [customerSearch, setCustomerSearch] = useState("");
@@ -301,7 +328,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   /** Option + arborist price checks shared by create and edit. Returns false (with a message) when blocked. */
   const checkOptionsAndPrices = (validLines: LineItem[]) => {
     if (validLines.some(l => l.arborist && (!l.priceConfirmed || l.price.trim() === "" || !(Number(l.price) >= 0)))) {
-      toast.error("Enter or confirm the exact price for every tree line before saving."); return false;
+      toast.error("Enter an exact price for each missing or ambiguous recommendation before saving."); return false;
     }
     if (!optionsEnabled) return true;
     if (validLines.some(l => l.kind !== "required") && discountEnabled && discountType === "%" && Number(discountValue) > 0) {
@@ -754,6 +781,11 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
             </section>
 
             {/* Line Items */}
+            {optionsEnabled && (arboristSource || existing?.source_arborist_quote_id) && <section className="space-y-3 border border-border rounded-lg p-4">
+              {!disposalActive && <label className="block space-y-2 text-sm">Complete roadside job price ($)<Input aria-label="Complete roadside job price" inputMode="decimal" value={roadsidePrice} onChange={e => setRoadsidePrice(e.target.value)} /></label>}
+              {arboristSource?.disposal?.reference && <p className="text-sm text-muted-foreground">Staff only · {arboristSource.disposal.reference}</p>}
+              <Button variant="outline" disabled={saving || !!existing?.accepted_snapshot} onClick={toggleDisposal}>{disposalActive ? "Turn alternatives off — keep haul-away" : "Offer haul-away / roadside options"}</Button>
+            </section>}
             <section className="space-y-3">
               <div className="flex items-center justify-between">
                 <SectionHeader title="Line Items" icon={Package} />
@@ -809,7 +841,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                       </div>
                       {line.arborist && (
                         <div className="md:col-span-5 flex flex-wrap items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/5 px-2.5 py-1.5" data-testid="arborist-price-reference">
-                          <span className="font-body text-[11px] text-amber-200">Staff only · {line.arborist.suggestion}</span>
+                          <span className="font-body text-sm text-muted-foreground">Staff only · {line.arborist.suggestion}</span>
                           {line.arborist.fixedPrice && !line.priceConfirmed && (
                             <button type="button" className="font-body text-[11px] font-semibold text-primary underline"
                               onClick={() => updateLine(line.id, "price", line.arborist?.fixedPrice ?? "")}>Use ${line.arborist.fixedPrice}</button>

@@ -5,6 +5,21 @@ export const MAX_TREE_PHOTOS = 8;
 export const MAX_TREES = 100;
 
 export interface ArboristPhoto { id: string; path: string; name: string }
+export interface PriceRecommendation {
+  priceType: "fixed" | "range" | "unsure";
+  priceMin: string;
+  priceMax: string;
+}
+export interface ReportPricing {
+  basis: "per_tree" | "whole_job";
+  wholeJob: PriceRecommendation;
+  disposalBasis: "additional" | "complete";
+  haulAway: PriceRecommendation;
+  roadside: PriceRecommendation;
+  roadsideConditions: string;
+}
+export const emptyRecommendation = (): PriceRecommendation => ({ priceType: "unsure", priceMin: "", priceMax: "" });
+export const emptyReportPricing = (): ReportPricing => ({ basis: "per_tree", wholeJob: emptyRecommendation(), disposalBasis: "additional", haulAway: emptyRecommendation(), roadside: emptyRecommendation(), roadsideConditions: "" });
 export interface ArboristTree {
   id: string;
   species: string;
@@ -26,6 +41,7 @@ export interface ArboristQuote {
   visit_date: string;
   arborist_name: string;
   general_notes: string;
+  pricing?: ReportPricing;
   trees: ArboristTree[];
   status: keyof typeof ARBORIST_STATUSES;
   version: number;
@@ -41,7 +57,7 @@ export function newArboristTree(): ArboristTree {
 export function newArboristQuote(businessId: string, authorId: string): ArboristQuote {
   const today = new Date();
   const date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-  return { id: crypto.randomUUID(), business_id: businessId, author_id: authorId, customer_name: "", property_address: "", visit_date: date, arborist_name: "", general_notes: "", trees: [newArboristTree()], status: "draft", version: 0, created_at: "", updated_at: "", submitted_at: null, reviewed_at: null };
+  return { id: crypto.randomUUID(), business_id: businessId, author_id: authorId, customer_name: "", property_address: "", visit_date: date, arborist_name: "", general_notes: "", pricing: emptyReportPricing(), trees: [newArboristTree()], status: "draft", version: 0, created_at: "", updated_at: "", submitted_at: null, reviewed_at: null };
 }
 
 // Work in cents so per-tree ranges add up exactly. Empty is never a zero-dollar quote.
@@ -80,6 +96,12 @@ export function validateArboristQuote(quote: ArboristQuote, submitting: boolean)
     if (!quote.customer_name.trim()) errors.push("Enter the customer name.");
     if (!quote.property_address.trim()) errors.push("Enter the property address.");
     if (!quote.arborist_name.trim()) errors.push("Enter the arborist's name.");
+  }
+  if (quote.pricing) {
+    for (const [label, r] of [["Whole-job", quote.pricing.wholeJob], ["Haul-away", quote.pricing.haulAway], ["Roadside", quote.pricing.roadside]] as const) {
+      if (r.priceType !== "unsure" && ((r.priceMin.trim() && priceCents(r.priceMin) === null) || (r.priceType === "range" && r.priceMax.trim() && priceCents(r.priceMax) === null))) errors.push(`${label}: enter valid prices with up to two decimals.`);
+      if (r.priceType === "range" && priceCents(r.priceMin) !== null && priceCents(r.priceMax) !== null && Number(r.priceMax) < Number(r.priceMin)) errors.push(`${label}: high price must be at least low price.`);
+    }
   }
   quote.trees.forEach((tree, i) => {
     const prefix = `Tree ${i + 1}:`;

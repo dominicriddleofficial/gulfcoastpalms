@@ -21,20 +21,22 @@ export default function PlatformQuoteNew() {
 
   useEffect(() => {
     if (!arboristId) return;
+    setSource(null); setSourceError("");
     let cancelled = false;
     (async () => {
       try {
         if (!UUID.test(arboristId)) throw new Error("Arborist report not found.");
         // Reopen the existing draft instead of creating a duplicate customer quote.
-        const { data: prior } = await supabase.from("platform_quotes").select("id").eq("source_arborist_quote_id", arboristId).maybeSingle();
+        const { data: prior } = await supabase.from("platform_quotes").select("id").eq("source_arborist_quote_id", arboristId).eq("business_id", selectedBusinessId ?? "").maybeSingle();
+        if (cancelled) return;
         if (prior) { navigate(`/platform/quotes/${prior.id}/edit`, { replace: true }); return; }
         const { data: report, error } = await supabase.from("platform_arborist_quotes")
-          .select("id, business_id, status, customer_name, property_address, trees").eq("id", arboristId).maybeSingle();
+          .select("id, business_id, status, customer_name, property_address, trees, pricing").eq("id", arboristId).eq("business_id", selectedBusinessId ?? "").maybeSingle();
         if (error || !report) throw new Error("Arborist report not found or you don't have access.");
         if (report.status !== "submitted" && report.status !== "reviewed") throw new Error("Only submitted arborist reports can become customer quotes.");
         if (report.business_id !== selectedBusinessId) throw new Error("Switch to Gulf Coast Palms to create this quote.");
-        const draft = arboristQuoteDraft({ trees: report.trees as unknown as ArboristTree[], property_address: report.property_address });
-        if (!cancelled) setSource({ reportId: report.id, customerName: report.customer_name, propertyAddress: report.property_address, scope: draft.scope, lines: draft.lines });
+        const draft = arboristQuoteDraft({ trees: report.trees as unknown as ArboristTree[], property_address: report.property_address, pricing: report.pricing as unknown as import("@/lib/arborist-quotes").ReportPricing | undefined });
+        if (!cancelled) setSource({ reportId: report.id, customerName: report.customer_name, propertyAddress: report.property_address, scope: draft.scope, lines: draft.lines, disposal: draft.disposal });
       } catch (err) { if (!cancelled) setSourceError(err instanceof Error ? err.message : "Could not load the arborist report."); }
     })();
     return () => { cancelled = true; };

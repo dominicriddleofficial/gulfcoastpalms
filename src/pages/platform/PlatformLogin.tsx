@@ -115,7 +115,8 @@ export default function PlatformLogin() {
       return;
     }
 
-    navigate(nextPath);
+    const { data: climber } = await supabase.rpc("climber_session");
+    navigate(climber ? "/platform/arborist-quotes" : nextPath);
   };
 
   if (checkingSession) {
@@ -128,6 +129,7 @@ export default function PlatformLogin() {
 
   return (
     <div className="ops-theme relative min-h-screen flex items-center justify-center px-4 overflow-hidden bg-[#05070a]">
+      <Button className="absolute bottom-6 z-10" variant="ghost" onClick={() => navigate("/platform/forgot-password")}>Forgot password?</Button>
       <style>{`
         @keyframes loginOrbA { 0%,100% { transform: translate3d(-8%, 4%, 0) scale(1); opacity: 0.55; } 50% { transform: translate3d(6%, -6%, 0) scale(1.12); opacity: 0.75; } }
         @keyframes loginOrbB { 0%,100% { transform: translate3d(6%, -4%, 0) scale(1.08); opacity: 0.4; } 50% { transform: translate3d(-4%, 6%, 0) scale(1); opacity: 0.6; } }

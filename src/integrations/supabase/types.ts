@@ -95,6 +95,44 @@ export type Database = {
         }
         Relationships: []
       }
+      arborist_climber_access: {
+        Row: {
+          active: boolean
+          business_id: string
+          created_at: string
+          granted_by: string
+          id: string
+          role_name: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          business_id: string
+          created_at?: string
+          granted_by: string
+          id?: string
+          role_name?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          business_id?: string
+          created_at?: string
+          granted_by?: string
+          id?: string
+          role_name?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arborist_climber_access_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action_type: string
@@ -2976,6 +3014,7 @@ export type Database = {
           customer_name: string
           general_notes: string
           id: string
+          pricing: Json | null
           property_address: string
           reviewed_at: string | null
           status: string
@@ -2993,6 +3032,7 @@ export type Database = {
           customer_name?: string
           general_notes?: string
           id?: string
+          pricing?: Json | null
           property_address?: string
           reviewed_at?: string | null
           status?: string
@@ -3010,6 +3050,7 @@ export type Database = {
           customer_name?: string
           general_notes?: string
           id?: string
+          pricing?: Json | null
           property_address?: string
           reviewed_at?: string | null
           status?: string
@@ -6800,6 +6841,7 @@ export type Database = {
           customer_name: string
           general_notes: string
           id: string
+          pricing: Json | null
           property_address: string
           reviewed_at: string | null
           status: string
@@ -6852,6 +6894,8 @@ export type Database = {
           visits_inserted: number
         }[]
       }
+      climber_can_work: { Args: { _business_id: string }; Returns: boolean }
+      climber_session: { Args: never; Returns: Json }
       close_clock_session_with_reason: {
         Args: { _clock_out_at: string; _reason: string; _session_id: string }
         Returns: undefined
@@ -7162,6 +7206,7 @@ export type Database = {
         Returns: boolean
       }
       invoice_accepted_quote: { Args: { _quote_id: string }; Returns: Json }
+      is_restricted_climber: { Args: { _user_id: string }; Returns: boolean }
       is_workspace_owner: { Args: { _user_id: string }; Returns: boolean }
       move_to_dlq: {
         Args: {

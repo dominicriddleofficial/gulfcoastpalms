@@ -121,12 +121,12 @@ Deno.serve(async (req) => {
   if (accessErr) return json({ error: accessErr.message }, 500);
   if (!hasAccess) return json({ error: "You do not have access to this workspace" }, 403);
 
-  const { data: roleName } = await admin.rpc("get_user_role", {
+  const { data: roleName, error: roleError } = await admin.rpc("get_user_role", {
     _user_id: user.id,
     _business_id: payload.business_id,
   });
   const allowedRoles = new Set(["owner", "manager", "office_manager", "admin"]);
-  if (roleName && !allowedRoles.has(String(roleName))) {
+  if (roleError || !allowedRoles.has(String(roleName))) {
     return json({ error: `Role "${roleName}" cannot create jobs` }, 403);
   }
 

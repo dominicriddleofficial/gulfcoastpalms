@@ -129,7 +129,7 @@ export function parseRecordParams(search: string): { id: string; source: RecordS
 
 // ── Role permissions (mirror PlatformRoutes RoleRoute allow-lists) ─────────
 
-export type SearchRole = "owner" | "office_manager" | "manager" | "crew" | null;
+export type SearchRole = "owner" | "office_manager" | "manager" | "crew" | "arborist_only" | null;
 
 const ROUTE_ROLES: Record<SearchEntityType, ReadonlyArray<Exclude<SearchRole, null>>> = {
   customer: ["owner", "office_manager", "manager"],

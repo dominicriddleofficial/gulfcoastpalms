@@ -73,6 +73,7 @@ Deno.serve(async req => {
         customer_name: cleanText(fields.customer_name, 300), property_address: cleanText(fields.property_address, 1000),
         visit_date: typeof fields.visit_date === "string" ? fields.visit_date : "", arborist_name: cleanText(fields.arborist_name, 300),
         general_notes: cleanText(fields.general_notes, 10000), trees: Array.isArray(fields.trees) ? fields.trees : null,
+        ...(fields.pricing !== undefined ? { pricing: fields.pricing } : {}),
       };
       const { data, error } = await db.rpc("arborist_link_save", { _token_hash: tokenHash, _expected_version: version, _fields: whitelisted, _status: status });
       return error ? fail(error) : json({ report: guestReport(data as ReportRow) });

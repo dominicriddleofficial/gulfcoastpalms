@@ -23,7 +23,7 @@ export default function RoleRoute({ allow, redirectTo = "/platform/crew", childr
 
   // While the role or auth is still resolving, render children — the
   // underlying page shows its own loading state via usePlatformAuth.
-  if (isLoading || authLoading) return <>{children}</>;
+  if (isLoading || authLoading) return <p role="status" className="ops-theme p-8 bg-background text-foreground">Loading access…</p>;
 
   // Not signed in → let the page handle the redirect via usePlatformAuth.
   if (!userId) return <>{children}</>;
@@ -47,6 +47,7 @@ export default function RoleRoute({ allow, redirectTo = "/platform/crew", childr
   }
 
   if (!allow.includes(role)) {
+    if (role === "arborist_only") return <Navigate to="/platform/arborist-quotes" replace />;
     // Avoid redirect loops: if the redirect target is the same place this
     // role would just be bounced from again, show an inline error instead.
     const safeRedirects: Record<string, Array<Exclude<PlatformRole, null>>> = {
