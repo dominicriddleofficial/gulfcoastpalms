@@ -5,6 +5,21 @@ export const MAX_TREE_PHOTOS = 8;
 export const MAX_TREES = 100;
 
 export interface ArboristPhoto { id: string; path: string; name: string }
+export interface PriceRecommendation {
+  priceType: "fixed" | "range" | "unsure";
+  priceMin: string;
+  priceMax: string;
+}
+export interface ReportPricing {
+  basis: "per_tree" | "whole_job";
+  wholeJob: PriceRecommendation;
+  disposalBasis: "additional" | "complete";
+  haulAway: PriceRecommendation;
+  roadside: PriceRecommendation;
+  roadsideConditions: string;
+}
+export const emptyRecommendation = (): PriceRecommendation => ({ priceType: "unsure", priceMin: "", priceMax: "" });
+export const emptyReportPricing = (): ReportPricing => ({ basis: "per_tree", wholeJob: emptyRecommendation(), disposalBasis: "additional", haulAway: emptyRecommendation(), roadside: emptyRecommendation(), roadsideConditions: "" });
 export interface ArboristTree {
   id: string;
   species: string;
@@ -26,6 +41,7 @@ export interface ArboristQuote {
   visit_date: string;
   arborist_name: string;
   general_notes: string;
+  pricing?: ReportPricing;
   trees: ArboristTree[];
   status: keyof typeof ARBORIST_STATUSES;
   version: number;
