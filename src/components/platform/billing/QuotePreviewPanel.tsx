@@ -174,7 +174,7 @@ export default function QuotePreviewPanel({ data }: { data: QuotePreviewData }) 
             <thead>
               <tr style={{ backgroundColor: brand.tableHeaderBg, borderBottom: `1px solid rgba(${brand.accentRgb}, 0.2)` }}>
                 <th style={{ textAlign: "left", padding: "10px 12px", fontSize: "10px", fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: brand.secondaryText }}>Description</th>
-                <th style={{ textAlign: "center", padding: "10px 8px", width: 50, fontSize: "10px", fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: brand.secondaryText, width: 80 }}>Qty</th>
+                <th style={{ textAlign: "center", padding: "10px 8px", width: 80, fontSize: "10px", fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: brand.secondaryText }}>Qty</th>
                 <th style={{ textAlign: "right", padding: "10px 8px", width: 90, fontSize: "10px", fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: brand.secondaryText }}>Unit Price</th>
                 <th style={{ textAlign: "right", padding: "10px 12px", width: 90, fontSize: "10px", fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: brand.secondaryText }}>Total</th>
               </tr>
