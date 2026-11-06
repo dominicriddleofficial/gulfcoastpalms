@@ -68,6 +68,7 @@ export default function PlatformQuoteNew() {
       }))}
       userId={userId}
       arboristSource={source ?? undefined}
+      startWithAssistant={!arboristId && params.get("assistant") === "1"}
       onClose={() => navigate(-1)}
       onCreated={() => { notifyCreated(); navigate("/platform/quotes"); }}
     />
