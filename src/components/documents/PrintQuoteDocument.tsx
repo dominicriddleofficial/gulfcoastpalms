@@ -98,7 +98,7 @@ export default function PrintQuoteDocument({ data }: { data: PrintQuoteData }) {
           <thead>
             <tr style={{ background: PRINT.tableHeaderBg }}>
               <th style={{ textAlign: "left", padding: "8px 10px", ...label, marginBottom: 0 }}>Item</th>
-              <th style={{ textAlign: "center", padding: "8px 6px", width: 48, ...label, marginBottom: 0 }}>Qty</th>
+              <th style={{ textAlign: "center", padding: "8px 6px", width: 72, ...label, marginBottom: 0 }}>Qty</th>
               <th style={{ textAlign: "right", padding: "8px 6px", width: 90, ...label, marginBottom: 0 }}>Unit</th>
               <th style={{ textAlign: "right", padding: "8px 10px", width: 90, ...label, marginBottom: 0 }}>Total</th>
             </tr>
