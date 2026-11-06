@@ -107,7 +107,7 @@ async function fetchQuoteRecord(t: DeepLinkTarget, businessId: string): Promise<
     const { data: c } = await supabase.from("platform_customers").select("display_name").eq("id", data.customer_id).maybeSingle();
     name = c?.display_name ?? "";
   }
-  return { ...data, customer_name: data.billing_name || name || "Unknown", customer_display_name: name } as unknown as PlatformQuote;
+  return { ...data, customer_name: data.billing_name || name || (data.customer_id ? "Unknown" : "No customer yet"), customer_display_name: name } as unknown as PlatformQuote;
 }
 
 export default function PlatformQuotes() {
