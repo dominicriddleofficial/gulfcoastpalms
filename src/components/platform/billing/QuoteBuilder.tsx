@@ -293,7 +293,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   }, [activeBiz?.public_brand_name, existing]);
 
   // Calculations
-  const subtotal = useMemo(() => roundMoney(lineItems.filter(inProposedTotal).reduce((s, l) => s + lineAmount(l), 0)), [lineItems, optionsEnabled]);
+  const subtotal = useMemo(() => lineItems.filter(inProposedTotal).reduce((s, l) => s + Math.round(lineAmount(l) * 100), 0) / 100, [lineItems, optionsEnabled]);
   const taxableSubtotal = lineItems.filter(inProposedTotal).filter(l => l.original?.taxable_flag !== false).reduce((s, l) => s + lineAmount(l), 0);
   const taxAmount = taxEnabled ? roundMoney(taxableSubtotal * (Number(taxRate) || 0) / 100) : 0;
   const discountAmount = discountEnabled ? roundMoney(discountType === "%" ? subtotal * (Number(discountValue) || 0) / 100 : Number(discountValue) || 0) : 0;
