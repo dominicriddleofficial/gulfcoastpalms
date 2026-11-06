@@ -5,6 +5,7 @@ import { toast } from "@/hooks/use-toast";
 import DocumentBrandMark from "@/components/platform/billing/DocumentBrandMark";
 import { downloadElementAsPdf } from "@/lib/download-pdf";
 import PrintQuoteDocument from "@/components/documents/PrintQuoteDocument";
+import { publicDepositPlan } from "@/lib/quote-deposit";
 import { formatQuantity, unitPriceSuffix } from "@/lib/quote-units";
 import { QuoteOptionChoices } from "@/components/quote/QuoteOptionChoices";
 import { computeOptionTotals, defaultSelection, hasOptions, isIncluded, lineCents, selectionErrors, snapshotOptionLines, type AcceptedQuoteSnapshot, type OptionLine } from "@/lib/quote-options";
@@ -522,82 +523,22 @@ export default function ViewQuote() {
               </div>
             </div>
 
-            {/* ── PAYMENT MILESTONES (PPS only) ── */}
-            {showDepositFlow && (
-            <div style={{ padding: "20px 20px 24px" }}>
-              <div style={{
-                borderRadius: 12, overflow: "hidden",
-                background: "#0f0f0f", border: `1px solid ${cardBorder}`,
-              }}>
-                {/* Progress bar */}
-                <div style={{ height: 6, width: "100%", background: cardBorder }}>
-                  <div style={{ height: "100%", width: `${progressPct}%`, background: accent, borderRadius: "0 3px 3px 0", transition: "width 0.7s ease" }} />
+            {/* ── DEPOSIT (only when this quote requires one) ── */}
+            {depositPlan && (
+            <div data-testid="quote-deposit" style={{ padding: "20px 20px 24px" }}>
+              <div style={{ borderRadius: 12, background: "#0f0f0f", border: `1px solid ${cardBorder}`, padding: 16, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                <div style={{ flex: "1 1 160px", minWidth: 0 }}>
+                  <p style={{ color: "#fff", fontSize: 14, fontWeight: 600 }}>Deposit to schedule</p>
+                  <p style={{ fontSize: 16, fontWeight: 700, marginTop: 4, color: "#fff" }}>${fmt(depositPlan.amount)}</p>
+                  <p style={{ fontSize: 12, color: labelColor, marginTop: 4 }}>
+                    {isApproved ? "Pay your deposit securely online." : "Due after you approve this quote."}
+                  </p>
                 </div>
-
-                <div style={{ padding: 0 }}>
-                  {milestones.map((ms, i) => (
-                    <div key={i} style={{
-                      display: "flex", alignItems: "center", gap: 14,
-                      padding: "16px 16px",
-                      borderBottom: i < milestones.length - 1 ? `1px solid #1a1a1a` : "none",
-                    }}>
-                      {/* Circle indicator */}
-                      <div style={{ flexShrink: 0 }}>
-                        {ms.status === "paid" ? (
-                          <div style={{ width: 32, height: 32, borderRadius: "50%", background: `rgba(${accentRgb}, 0.2)`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <Check className="w-4 h-4" style={{ color: accent }} />
-                          </div>
-                        ) : (
-                          <div style={{
-                            width: 32, height: 32, borderRadius: "50%",
-                            border: `2px solid ${ms.status === "next" ? accent : "#333"}`,
-                            background: "transparent",
-                          }} />
-                        )}
-                      </div>
-
-                      {/* Label + amount (left aligned) */}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ color: "#fff", fontSize: 14, fontWeight: 600, lineHeight: 1.3 }}>{ms.label}</p>
-                        <p style={{ fontSize: 16, fontWeight: 700, marginTop: 4, color: ms.status === "paid" ? accent : "#fff" }}>
-                          ${fmt(ms.amount)}
-                        </p>
-                      </div>
-
-                      {/* Status badge (right) */}
-                      <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-                        {ms.status === "paid" && (
-                          <>
-                            <span style={{ padding: "3px 10px", borderRadius: 20, background: `rgba(${accentRgb}, 0.12)`, color: accent, fontSize: 11, fontWeight: 600 }}>Paid</span>
-                            {ms.date && <span style={{ fontSize: 10, color: labelColor }}>{ms.date}</span>}
-                          </>
-                        )}
-                        {ms.status === "next" && (
-                          <>
-                            <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(234,179,8,0.12)", color: "#eab308", fontSize: 11, fontWeight: 600 }}>Next Payment</span>
-                            <button
-                              onClick={handlePayDeposit}
-                              style={{
-                              display: "inline-flex", alignItems: "center", gap: 6,
-                              padding: "6px 14px", borderRadius: 8, border: "none",
-                              background: accent, color: "#000", fontSize: 12, fontWeight: 600,
-                              cursor: "pointer", fontFamily: "'Inter', sans-serif",
-                              transition: "box-shadow 0.2s",
-                            }}
-                              onMouseEnter={(e) => (e.currentTarget.style.boxShadow = `0 0 16px rgba(${accentRgb}, 0.3)`)}
-                              onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "none")}
-                            >
-                              <Send className="w-3 h-3" /> Pay Now
-                            </button>
-                          </>
-                        )}
-                        {ms.status === "upcoming" && (
-                          <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(161,161,170,0.1)", color: "#71717a", fontSize: 11, fontWeight: 600 }}>Upcoming</span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                {isApproved && (
+                  <button onClick={handlePayDeposit} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, border: "none", background: accent, color: "#000", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Inter', sans-serif" }}>
+                    <Send className="w-3 h-3" /> Pay deposit
+                  </button>
+                )}
               </div>
             </div>
             )}
