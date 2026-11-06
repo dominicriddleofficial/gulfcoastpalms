@@ -246,15 +246,15 @@ export default function QuotePreviewPanel({ data }: { data: QuotePreviewData }) 
         </div>
       )}
 
-      {/* Validity notice */}
-      <div style={{ padding: "0 32px 24px" }}>
+      {/* Validity notice (only when an expiry date is set) */}
+      {data.validUntil && <div style={{ padding: "0 32px 24px" }}>
         <div style={{
           background: `rgba(${brand.accentRgb}, 0.05)`, border: `1px solid rgba(${brand.accentRgb}, 0.12)`,
           borderRadius: "8px", padding: "12px 16px", fontSize: "11px", color: brand.secondaryText, textAlign: "center",
         }}>
           This quote is valid until {data.validUntil}. Pricing subject to change after expiration.
         </div>
-      </div>
+      </div>}
 
       {/* Footer */}
       <div style={{
