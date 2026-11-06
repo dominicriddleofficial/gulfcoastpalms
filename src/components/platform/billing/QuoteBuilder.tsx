@@ -119,6 +119,9 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   const activeBiz = businesses.find(b => b.id === bizId);
   const optionsEnabled = activeBiz?.shortcode?.toUpperCase() === "GCP";
   /** Lines counted in the proposed total: required work plus proposed options. */
+  /** Customer can be chosen on a new quote, or once on an unassigned unsent draft (server enforces this too). */
+  const canAssignCustomer = !existing || (!existing.customer_id && existing.status === "draft" && !existing.sent_at && !existing.accepted_snapshot);
+  const [assistantOpen, setAssistantOpen] = useState(false);
   const inProposedTotal = (l: LineItem) => !optionsEnabled || l.kind === "required" || l.proposed;
 
   // Form state
@@ -386,6 +389,21 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
     ? { option_kind: l.kind, option_group: l.kind === "alternative" ? l.group.trim() : null, default_selected: l.kind === "required" ? true : l.proposed }
     : { option_kind: "required", option_group: null, default_selected: true };
 
+  /** Jobber picks become a same-workspace platform customer; returns the platform customer id. */
+  const resolveCustomer = async (): Promise<string | null> => {
+    if (!customerId) return null;
+    if (customerSource !== "jobber") return customerId;
+    const { data: found } = await supabase.from("platform_customers").select("id")
+      .eq("business_id", bizId).eq("source_system", "jobber").eq("source_record_id", customerId).maybeSingle();
+    if (found) return found.id;
+    const { data: newCust, error: custErr } = await supabase.from("platform_customers").insert({
+      business_id: bizId, display_name: customerName, email: customerEmail || null,
+      phone: customerPhone || null, source_system: "jobber", source_record_id: customerId,
+    }).select("id").single();
+    if (custErr || !newCust) { toast.error("Failed to create customer record"); return null; }
+    return newCust.id;
+  };
+
   const persistQuote = async (): Promise<{ id: string; quote_number: string } | null> => {
     if (editingQuote && editSnapshot.current) {
       if (editSavingRef.current) return null;
@@ -421,6 +439,14 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
         })), userId);
         editSnapshot.current = result;
         if (result.historyWarning) toast.warning(result.historyWarning);
+        if (canAssignCustomer && customerId && !result.quote.customer_id) {
+          const resolved = await resolveCustomer();
+          if (!resolved) return null;
+          const { data: assigned, error: assignErr } = await supabase.from("platform_quotes").update({ customer_id: resolved, last_modified_by_user_id: userId })
+            .eq("id", result.quote.id).eq("business_id", bizId).is("customer_id", null).eq("status", "draft").select("*").single();
+          if (assignErr || !assigned) { toast.error(`Changes saved, but the customer couldn't be attached: ${assignErr?.message ?? "not confirmed"}`); return null; }
+          editSnapshot.current = { ...result, quote: assigned };
+        }
         const saved = { id: result.quote.id, quote_number: result.quote.quote_number };
         setSavedQuote(saved);
         return saved;
@@ -434,7 +460,6 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
     }
     if (savedQuote) return savedQuote;
     if (!bizId) return null;
-    if (!customerId) { toast.error("Please select a customer"); return null; }
     const validLines = lineItems.filter(l => l.description.trim());
     if (validLines.length === 0) { toast.error("Add at least one line item"); return null; }
     if (!checkOptionsAndPrices(validLines)) return null;
@@ -447,21 +472,9 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
 
     setSaving(true);
 
-    // Resolve customer
-    let resolvedCustomerId = customerId;
-    if (customerSource === "jobber" && customerId) {
-      const { data: existing } = await supabase.from("platform_customers").select("id")
-        .eq("business_id", bizId).eq("source_system", "jobber").eq("source_record_id", customerId).maybeSingle();
-      if (existing) { resolvedCustomerId = existing.id; }
-      else {
-        const { data: newCust, error: custErr } = await supabase.from("platform_customers").insert({
-          business_id: bizId, display_name: customerName, email: customerEmail || null,
-          phone: customerPhone || null, source_system: "jobber", source_record_id: customerId,
-        }).select("id").single();
-        if (custErr || !newCust) { toast.error("Failed to create customer record"); setSaving(false); return null; }
-        resolvedCustomerId = newCust.id;
-      }
-    }
+    // Resolve customer (none is allowed: an unassigned draft gets its customer later, before sending)
+    const resolvedCustomerId = customerId ? await resolveCustomer() : null;
+    if (customerId && !resolvedCustomerId) { setSaving(false); return null; }
 
     const { data: quote, error } = await supabase.from("platform_quotes").insert({
       business_id: bizId, quote_number: quoteNumber, customer_id: resolvedCustomerId,
@@ -719,10 +732,10 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                 <div className="flex items-center justify-between gap-2">
                   <p className="font-body text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Prepared For</p>
                   <div className="flex items-center gap-3">
-                    {customerId && !editingQuote && (
+                    {customerId && canAssignCustomer && (
                       <button className="font-body text-[10px] text-primary hover:underline" onClick={() => { setCustomerId(null); setCustomerName(""); setRecipientName(""); setEditingRecipientName(false); setShowCustomerSearch(true); }}>Change</button>
                     )}
-                    {!editingQuote && (
+                    {canAssignCustomer && (
                       <Button type="button" size="sm" variant="outline" data-testid="quote-new-customer"
                         className="h-7 px-2 text-xs border-primary/40 text-primary hover:bg-primary/10 hover:text-primary"
                         onClick={() => { setShowCustomerSearch(false); setNewCustomerOpen(true); }}>
@@ -731,7 +744,9 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                     )}
                   </div>
                 </div>
-                {customerId || editingQuote ? (
+                {!customerId && !canAssignCustomer ? (
+                  <p className="font-body text-xs text-muted-foreground">No customer on this quote.</p>
+                ) : customerId ? (
                   <div>
                     <div className="space-y-1">
                       <label className="font-body text-[10px] font-medium text-muted-foreground uppercase tracking-wider">To</label>
@@ -765,6 +780,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                   </div>
                 ) : (
                   <div className="relative">
+                    <p className="font-body text-[11px] text-muted-foreground mb-1.5" data-testid="quote-unassigned-note">You can save a draft without a customer. Choose one before sending or sharing.</p>
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                     <Input placeholder="Search customer…" value={customerSearch}
                       onChange={e => { setCustomerSearch(e.target.value); setShowCustomerSearch(true); }}
@@ -991,7 +1007,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
               </Button>
               {!editingQuote && <Button className="flex-1 font-body text-sm" disabled={saving}
                 onClick={() => {
-                  if (!customerId) { toast.error("Please select a customer"); return; }
+                  if (!customerId) { toast.error("Choose a customer before sending. You can save this as a draft without one."); return; }
                   if (lineItems.filter(l => l.description.trim()).length === 0) { toast.error("Add at least one line item"); return; }
                   // Save first — the send sheet needs the real quote link.
                   void openSendModal();
@@ -1124,7 +1140,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
           </div>
         </SheetContent>
       </Sheet>
-      {!editingQuote && (
+      {canAssignCustomer && (
         <NewCustomerSheet open={newCustomerOpen} businessId={bizId} onOpenChange={setNewCustomerOpen} onCreated={handleNewCustomerCreated} />
       )}
     </>
