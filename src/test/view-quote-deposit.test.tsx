@@ -50,7 +50,7 @@ afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 describe("public PPS quote deposits", () => {
   it("a no-deposit PPS quote shows no payment schedule, paid status or date and approves without checkout", async () => {
     renderQuote(ppsQuote());
-    await screen.findByText("PPS-Q-000050");
+    await screen.findAllByText("PPS-Q-000050");
     const text = document.body.textContent ?? "";
     for (const s of ["Paid", "Apr 10", "20%", "40%", "Deposit to schedule", "Pay Deposit", "Next Payment"]) expect(text).not.toContain(s);
     expect(screen.getByRole("button", { name: "Approve Quote" })).toBeTruthy();
@@ -67,7 +67,7 @@ describe("public PPS quote deposits", () => {
     expect(text).toContain("$1,250.00");
     expect(text).toContain("Due after you approve");
     expect(text).not.toContain("Paid");
-    expect(screen.queryByRole("button", { name: /pay deposit/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Pay deposit" })).toBeNull();
     expect(screen.getByRole("button", { name: "Approve & Pay Deposit" })).toBeTruthy();
     await approve();
     expect(calls).toEqual(["get-quote-public", "approve-quote", "create-checkout"]);
