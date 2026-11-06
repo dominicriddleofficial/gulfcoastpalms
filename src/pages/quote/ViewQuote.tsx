@@ -159,9 +159,9 @@ export default function ViewQuote() {
   const brand = BRAND[brandKey] || BRAND.gcp;
   const accent = brand.accent;
   const accentRgb = brand.accentRgb;
-  // GCP = quote-only flow (no deposit schedule, no checkout on approval).
-  // PPS = deposit/payment schedule + Stripe checkout on approval.
-  const showDepositFlow = brandKey === "pps";
+  // A deposit flow exists only when THIS quote requires one with a saved amount — never by brand.
+  const depositPlan = quote ? publicDepositPlan(quote) : null;
+  const showDepositFlow = depositPlan !== null;
 
   const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
   const baseUrl = `https://${projectId}.supabase.co/functions/v1`;
@@ -204,8 +204,7 @@ export default function ViewQuote() {
         setQuote(current => current ? { ...current, status: "approved", accepted_snapshot: data.snapshot, total: data.snapshot.total, subtotal: data.snapshot.subtotal, tax_total: data.snapshot.tax_total, discount_total: data.snapshot.discount_total } : current);
       }
 
-      // PPS quotes proceed directly to Stripe Checkout for the 20% deposit.
-      // GCP quotes are approval-only — payment is handled later via invoice.
+      // Only quotes that require a saved deposit continue to checkout; all others are approval-only.
       if (showDepositFlow) {
         try {
           const checkoutResp = await fetch(`${baseUrl}/create-checkout`, {
@@ -359,15 +358,6 @@ export default function ViewQuote() {
   const optionProblems = usesOptions && !isApproved ? selectionErrors(optionLines, chosenOptions) : [];
   const grandTotal = optionTotals ? Number(optionTotals.total) : (quote.total || 0);
 
-  /* Payment milestones — 20/40/40 */
-  const milestones: Array<{ label: string; amount: number; status: "paid" | "next" | "upcoming"; date: string | null }> = [
-    { label: "Deposit to Schedule — 20%", amount: grandTotal * 0.2, status: isApproved ? "paid" : "next", date: isApproved ? "Apr 10, 2026" : null },
-    { label: "Day of Install — 40%", amount: grandTotal * 0.4, status: isApproved ? "next" : "upcoming", date: null },
-    { label: "On Completion — 40%", amount: grandTotal * 0.4, status: "upcoming", date: null },
-  ];
-
-  const paidTotal = milestones.filter(m => m.status === "paid").reduce((s, m) => s + m.amount, 0);
-  const progressPct = grandTotal > 0 ? (paidTotal / grandTotal) * 100 : 0;
 
   /* ── Card shared styles ── */
   const cardBg = "#141414";
