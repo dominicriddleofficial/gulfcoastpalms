@@ -368,6 +368,15 @@ export default function ViewQuote() {
   return (
     <>
       <style>{`
+        .vq-line { display: grid; grid-template-columns: minmax(0, 1fr) 76px 100px 92px; gap: 8px; }
+        .vq-line > span { min-width: 0; }
+        @media (max-width: 560px) {
+          .vq-head { display: none !important; }
+          .vq-line { grid-template-columns: auto 1fr auto; row-gap: 6px; }
+          .vq-line > .vq-desc { grid-column: 1 / -1; }
+          .vq-line > span:nth-child(2) { text-align: left !important; }
+          .vq-line > span:nth-child(3) { text-align: center !important; }
+        }
         @media print { .no-print { display: none !important; } body, html { background: #09090b !important; } * { -webkit-print-color-adjust: exact !important; color-adjust: exact !important; print-color-adjust: exact !important; } }
         @keyframes auraPulse {
           0%, 100% { opacity: 0.85; transform: scale(1); }
@@ -459,8 +468,7 @@ export default function ViewQuote() {
 
             {/* ── LINE ITEMS ── */}
             <div style={{ padding: "20px 20px 0" }}>
-              <div style={{
-                display: "grid", gridTemplateColumns: "1fr 64px 88px 84px", gap: 8,
+              <div className="vq-line vq-head" style={{
                 paddingBottom: 8, marginBottom: 4,
                 fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: labelColor,
                 borderBottom: `1px solid ${cardBorder}`,
@@ -479,12 +487,11 @@ export default function ViewQuote() {
                 </div>
               ) : quote.line_items && quote.line_items.length > 0 ? (
                 quote.line_items.map((item, i) => (
-                  <div key={i} style={{
-                    display: "grid", gridTemplateColumns: "1fr 64px 88px 84px", gap: 8,
+                  <div key={i} className="vq-line" data-testid="quote-line" style={{
                     padding: "14px 0", alignItems: "center",
                     borderBottom: i < (quote.line_items?.length ?? 0) - 1 ? `1px solid #1a1a1a` : "none",
                   }}>
-                    <span style={{ color: "#fff", fontSize: 14, lineHeight: 1.4 }}>{item.description}</span>
+                    <span className="vq-desc" style={{ color: "#fff", fontSize: 14, lineHeight: 1.4, overflowWrap: "anywhere", whiteSpace: "pre-wrap" }}>{item.description}</span>
                     <span style={{ textAlign: "center", fontSize: 13, color: labelColor }}>{formatQuantity(item.quantity, item.unit)}</span>
                     <span style={{ textAlign: "right", fontSize: 13, color: labelColor }}>${fmt(item.unit_price)}{unitPriceSuffix(item.unit)}</span>
                     <span style={{ textAlign: "right", fontSize: 14, color: "#fff", fontWeight: 500 }}>${fmt(item.line_total)}</span>
