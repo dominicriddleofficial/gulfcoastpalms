@@ -161,7 +161,8 @@ export default function ViewQuote() {
   const accent = brand.accent;
   const accentRgb = brand.accentRgb;
   // A deposit flow exists only when THIS quote requires one with a saved amount — never by brand.
-  const depositPlan = quote ? publicDepositPlan(quote) : null;
+  // GCP stays approval-only (payment later by invoice); only PPS collects a deposit, and only the one the office saved.
+  const depositPlan = quote && brandKey === "pps" ? publicDepositPlan(quote) : null;
   const showDepositFlow = depositPlan !== null;
 
   const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;

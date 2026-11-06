@@ -72,4 +72,13 @@ describe("public PPS quote deposits", () => {
     await approve();
     expect(calls).toEqual(["get-quote-public", "approve-quote", "create-checkout"]);
   });
+
+  it("a GCP quote with a saved deposit stays approval-only and never starts checkout", async () => {
+    renderQuote(ppsQuote({ shortcode: "GCP", quote_number: "GCP-Q-000050", business_name: "Gulf Coast Palms", deposit_required: true, deposit_amount: 1250 }));
+    await screen.findAllByText("GCP-Q-000050");
+    expect(screen.queryByTestId("quote-deposit")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Approve & Pay Deposit" })).toBeNull();
+    await approve();
+    expect(calls).toEqual(["get-quote-public", "approve-quote"]);
+  });
 });
