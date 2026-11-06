@@ -23,9 +23,9 @@ const BRAND: Record<string, {
   pps: {
     name: "Prestige Property Services", tagline: "NW Florida's Premier Property Services",
     bg: "#0a0a0a", cardBg: "#111111", accent: "#ffffff", accentRgb: "255, 255, 255",
-    secondaryText: "#888888", borderColor: "rgba(255, 255, 255, 0.08)", lineDivider: "rgba(255,255,255,0.06)",
-    tableHeaderBg: "rgba(255, 255, 255, 0.05)",
-    glowGradient: "radial-gradient(ellipse 80% 40% at 50% 0%, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 40%, transparent 70%)",
+    secondaryText: "#b4b4bb", borderColor: "rgba(255, 255, 255, 0.12)", lineDivider: "rgba(255,255,255,0.08)",
+    tableHeaderBg: "rgba(255, 255, 255, 0.07)",
+    glowGradient: "radial-gradient(ellipse 80% 40% at 50% 0%, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.04) 40%, transparent 70%)",
     payBtnBg: "#ffffff", payBtnText: "#0a0a0a",
     footerInfo: "prestigepropertyservices.com",
   },
