@@ -23,6 +23,11 @@ import { saveEditedQuote, type QuoteEditData } from "@/lib/edit-quote";
 import { OPTION_KIND_LABELS, builderOptionErrors, type OptionKind } from "@/lib/quote-options";
 import { DISPOSAL_GROUP, disposalAmounts, type DisposalDraft, type ArboristDraftLine } from "@/lib/arborist-to-quote";
 import { priceCents } from "@/lib/arborist-quotes";
+import { QUOTE_UNITS, normalizeUnit } from "@/lib/quote-units";
+import { builderHasWork, type AppliedLine } from "@/lib/quote-ai";
+import QuoteAssistant from "./QuoteAssistant";
+import { WorkspaceThemeProvider, getWorkspaceThemeFromBusiness, workspaceThemeVars } from "@/contexts/WorkspaceThemeContext";
+import { Sparkles } from "lucide-react";
 
 interface LineItem {
   id: string;
@@ -38,6 +43,10 @@ interface LineItem {
   /** Staff-only arborist price reference; the line price must be entered/confirmed explicitly. */
   arborist?: ArboristDraftLine;
   priceConfirmed?: boolean;
+  /** Billing unit label ("each", "sq ft", …); persisted to the line's unit column. */
+  unit?: string;
+  /** AI draft line whose quantity/price was missing or unclear; blocks saving until resolved. */
+  aiIssue?: string | null;
 }
 
 export interface ArboristQuoteSource {
@@ -127,7 +136,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   const [validUntil, setValidUntil] = useState(existing ? existing.valid_until ?? "" : format(addDays(new Date(), 30), "yyyy-MM-dd"));
   const [scopeOfWork, setScopeOfWork] = useState(existing?.scope_of_work ?? arboristSource?.scope ?? "");
   const [lineItems, setLineItems] = useState<LineItem[]>(editingQuote?.items.length
-    ? editingQuote.items.map(item => ({ id: item.id, description: item.description, qty: String(item.quantity), price: String(item.unit_price), original: item,
+    ? editingQuote.items.map(item => ({ id: item.id, description: item.description, qty: String(item.quantity), price: String(item.unit_price), original: item, unit: normalizeUnit(item.unit),
         kind: (item.option_kind === "optional" || item.option_kind === "alternative" ? item.option_kind : "required") as OptionKind,
         group: item.option_group ?? "", proposed: item.option_kind === "required" ? true : !!item.default_selected }))
     : arboristSource?.lines.length
@@ -275,8 +284,17 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
 
   const addLine = () => setLineItems([...lineItems, { id: newLineId(), description: "", qty: "1", price: "", kind: "required", group: "", proposed: true }]);
   const removeLine = (id: string) => setLineItems(lineItems.filter(l => l.id !== id));
-  const updateLine = (id: string, field: "description" | "qty" | "price", val: string) =>
-    setLineItems(lineItems.map(l => l.id === id ? { ...l, [field]: val, ...(field === "price" ? { priceConfirmed: true } : {}) } : l));
+  const updateLine = (id: string, field: "description" | "qty" | "price" | "unit", val: string) =>
+    setLineItems(lineItems.map(l => l.id === id ? { ...l, [field]: val, ...(field === "price" ? { priceConfirmed: true } : {}),
+      ...((field === "price" || field === "qty") && l.aiIssue ? { aiIssue: null } : {}) } : l));
+  /** Replace scope + lines with a reviewed AI draft. Tax, discount, deposit and customer are untouched. */
+  const applyAiDraft = (draft: { scope: string; lines: AppliedLine[] }) => {
+    setScopeOfWork(draft.scope);
+    setLineItems(draft.lines.length ? draft.lines.map(l => ({ id: newLineId(), description: l.description, qty: l.qty, price: l.price, unit: l.unit,
+      aiIssue: l.issue, kind: "required" as OptionKind, group: "", proposed: true }))
+      : [{ id: newLineId(), description: "", qty: "1", price: "", kind: "required", group: "", proposed: true }]);
+    toast.success("Draft applied — review it, then choose a customer and save.");
+  };
   const updateOption = (id: string, patch: Partial<Pick<LineItem, "kind" | "group" | "proposed">>) =>
     setLineItems(current => {
       const target = current.find(l => l.id === id);
@@ -330,7 +348,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
     quoteNumber, quoteDate, validUntil,
     customerName: displayToName || "Customer Name", customerEmail, customerPhone,
     lineItems: lineItems.filter(l => l.description.trim()).map(l => ({
-      description: l.description, quantity: Number(l.qty) || 1,
+      description: l.description, quantity: Number(l.qty) || 1, unit: l.unit ?? "each",
       unit_price: Number(l.price) || 0, line_total: lineAmount(l),
       optionLabel: optionsEnabled && l.kind !== "required"
         ? `${l.kind === "alternative" ? `${l.group.trim() || "Choice"} — pick one` : "Optional add-on"}${l.proposed ? " · proposed" : " · not in total"}` : undefined,
@@ -349,6 +367,9 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
    */
   /** Option + arborist price checks shared by create and edit. Returns false (with a message) when blocked. */
   const checkOptionsAndPrices = (validLines: LineItem[]) => {
+    if (validLines.some(l => l.aiIssue || (l.unit && l.unit !== "each" && !(Number(l.qty) > 0)))) {
+      toast.error("Enter the missing quantity or price on each flagged line before saving."); return false;
+    }
     if (validLines.some(l => l.arborist && (!l.priceConfirmed || l.price.trim() === "" || !(Number(l.price) >= 0)))) {
       toast.error("Enter an exact price for each missing or ambiguous recommendation before saving."); return false;
     }
@@ -393,7 +414,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
         }, validLines.map((l, i) => ({
           ...l.original, id: l.id, quote_id: editingQuote.quote.id, business_id: bizId,
           description: l.description, quantity: Number(l.qty), unit_price: Number(l.price),
-          unit: l.original?.unit ?? "each", discount_amount: l.original?.discount_amount ?? 0,
+          unit: l.unit ?? l.original?.unit ?? "each", discount_amount: l.original?.discount_amount ?? 0,
           taxable_flag: l.original?.taxable_flag ?? true, line_type: l.original?.line_type ?? "service",
           service_catalog_id: l.original?.service_catalog_id ?? null,
           line_total: lineAmount(l), sort_order: i, ...optionFields(l),
@@ -468,7 +489,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
     const { error: lineErr } = await supabase.from("platform_quote_line_items").insert(
       validLines.map((l, i) => ({
         business_id: bizId, quote_id: quote.id, description: l.description,
-        quantity: Number(l.qty) || 1, unit: "each", unit_price: Number(l.price) || 0,
+        quantity: Number(l.qty) || 1, unit: l.unit ?? "each", unit_price: Number(l.price) || 0,
         discount_amount: 0, taxable_flag: true,
         line_total: (Number(l.qty) || 1) * (Number(l.price) || 0), sort_order: i, ...optionFields(l),
       }))
