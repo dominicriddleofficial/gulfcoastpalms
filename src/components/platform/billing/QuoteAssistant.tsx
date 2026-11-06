@@ -24,21 +24,36 @@ export interface QuoteAssistantProps {
   onApply: (draft: { scope: string; lines: AppliedLine[] }) => void;
 }
 
-async function callQuoteAi(body: FormData | string, signal: AbortSignal): Promise<Record<string, unknown>> {
+/** Request deadlines: uploads+transcription can be slow on mobile; generation is bounded too. */
+export const TRANSCRIBE_TIMEOUT_MS = 120_000;
+export const GENERATE_TIMEOUT_MS = 90_000;
+
+async function callQuoteAi(body: FormData | string, signal: AbortSignal, timeoutMs: number): Promise<Record<string, unknown>> {
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
   if (!token) throw new Error("Your session expired. Sign in again.");
   let res: Response;
+  // Combine the manual Cancel with a hard deadline so a stalled request never spins forever.
+  const ctrl = new AbortController();
+  let timedOut = false;
+  const onAbort = () => ctrl.abort();
+  signal.addEventListener("abort", onAbort);
+  const timer = window.setTimeout(() => { timedOut = true; ctrl.abort(); }, timeoutMs);
   try {
     res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/quote-ai`, {
-      method: "POST", signal, body,
+      method: "POST", signal: ctrl.signal, body,
       headers: { Authorization: `Bearer ${token}`, apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY, ...(typeof body === "string" ? { "Content-Type": "application/json" } : {}) },
     });
   } catch (err) {
+    window.clearTimeout(timer); signal.removeEventListener("abort", onAbort);
+    if (timedOut) throw new Error("The request took too long and was stopped. Try again — your work is kept.");
     if (signal.aborted) throw err;
-    throw new Error("Upload failed or timed out. Check your connection and try again — your work is kept.");
+    throw new Error("Upload failed. Check your connection and try again — your work is kept.");
   }
-  const payload = await res.json().catch(() => ({})) as Record<string, unknown>;
+  let payload: Record<string, unknown>;
+  try { payload = await res.json().catch(() => ({})) as Record<string, unknown>; }
+  finally { window.clearTimeout(timer); signal.removeEventListener("abort", onAbort); }
+  if (timedOut) throw new Error("The request took too long and was stopped. Try again — your work is kept.");
   if (!res.ok) throw new Error(typeof payload.error === "string" ? payload.error : `The quote assistant failed (${res.status}).`);
   return payload;
 }
@@ -73,6 +88,8 @@ export default function QuoteAssistant({ open, onOpenChange, businessId, hasExis
   const [busy, setBusy] = useState<"" | "transcribing" | "generating">("");
   const [error, setError] = useState("");
   const [recording, setRecording] = useState(false);
+  /** Waiting for the microphone permission prompt; blocks a second request. */
+  const [starting, setStarting] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [scope, setScope] = useState("");
   const [lines, setLines] = useState<ReviewLine[] | null>(null);
@@ -83,6 +100,11 @@ export default function QuoteAssistant({ open, onOpenChange, businessId, hasExis
   const timerRef = useRef<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const seqRef = useRef(0);
+  /** Microphone session: bumped on every start and on close/unmount/workspace change, so late results are ignored. */
+  const micSessionRef = useRef(0);
+  const startingRef = useRef(false);
+  const openRef = useRef(open);
+  openRef.current = open;
   const fileInput = useRef<HTMLInputElement>(null);
 
   const releaseMic = useCallback((discard: boolean) => {
@@ -95,11 +117,20 @@ export default function QuoteAssistant({ open, onOpenChange, businessId, hasExis
   }, []);
 
   const cancelWork = useCallback(() => { seqRef.current++; abortRef.current?.abort(); abortRef.current = null; setBusy(""); }, []);
+  /** Invalidate the current mic session (pending permission, live recording, pending stop/upload) and release tracks. */
+  const endMicSession = useCallback(() => {
+    micSessionRef.current++; startingRef.current = false; setStarting(false); releaseMic(true);
+  }, [releaseMic]);
 
   // Closing, unmounting or switching workspace stops the mic and drops in-flight results.
-  useEffect(() => { if (!open) { releaseMic(true); cancelWork(); setConfirmReplace(false); } }, [open, releaseMic, cancelWork]);
-  useEffect(() => () => { releaseMic(true); cancelWork(); }, [releaseMic, cancelWork]);
-  useEffect(() => { cancelWork(); setLines(null); setScope(""); setError(""); }, [businessId, cancelWork]);
+  useEffect(() => { if (!open) { endMicSession(); cancelWork(); setConfirmReplace(false); } }, [open, endMicSession, cancelWork]);
+  useEffect(() => () => { endMicSession(); cancelWork(); }, [endMicSession, cancelWork]);
+  const firstBiz = useRef(businessId);
+  useEffect(() => {
+    if (firstBiz.current === businessId) return;
+    firstBiz.current = businessId;
+    endMicSession(); cancelWork(); setTranscript(""); setLines(null); setScope(""); setError(""); setUnresolvedNotes([]); setConfirmReplace(false);
+  }, [businessId, endMicSession, cancelWork]);
 
   const transcribe = async (file: File) => {
     setError("");
@@ -114,28 +145,37 @@ export default function QuoteAssistant({ open, onOpenChange, businessId, hasExis
         if (upload.size > MAX_BYTES) throw new Error("That memo is too long once converted. Record a shorter memo.");
       }
       const form = new FormData(); form.append("business_id", businessId); form.append("file", upload, upload.name);
-      const res = await callQuoteAi(form, ctrl.signal);
+      const res = await callQuoteAi(form, ctrl.signal, TRANSCRIBE_TIMEOUT_MS);
       if (seq !== seqRef.current) return;
       const text = typeof res.text === "string" ? res.text.trim() : "";
       if (!text) throw new Error("No speech was found in that recording.");
-      setTranscript(prev => (prev.trim() ? `${prev.trim()}\n${text}` : text).slice(0, MAX_CHARS));
+      // Never truncate: an over-long description is shown in full and blocked from generating until shortened.
+      setTranscript(prev => (prev.trim() ? `${prev.trim()}\n${text}` : text));
     } catch (err) {
       if (seq === seqRef.current && !ctrl.signal.aborted) setError(err instanceof Error ? err.message : "Transcription failed.");
     } finally { if (seq === seqRef.current) setBusy(""); }
   };
 
   const startRecording = async () => {
+    if (startingRef.current || recorderRef.current) return;
     setError("");
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") { setError("Recording isn't supported in this browser. Upload a voice memo or use keyboard dictation instead."); return; }
+    const session = ++micSessionRef.current;
+    const live = () => session === micSessionRef.current && openRef.current;
+    startingRef.current = true; setStarting(true);
+    let stream: MediaStream | null = null;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      if (!open) { stream.getTracks().forEach(t => t.stop()); return; }
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (!live()) { stream.getTracks().forEach(t => t.stop()); return; }
       const mime = recorderMime();
       const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
       const chunks: Blob[] = [];
+      const own = stream;
       rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
       rec.onstop = () => {
-        stream.getTracks().forEach(t => t.stop()); streamRef.current = null; recorderRef.current = null;
+        own.getTracks().forEach(t => t.stop());
+        if (recorderRef.current === rec) { streamRef.current = null; recorderRef.current = null; }
+        if (!live()) return; // closed, unmounted or workspace changed: discard this recording
         const type = (rec.mimeType || mime || "audio/webm").split(";")[0];
         const ext = type.includes("mp4") ? "m4a" : type.includes("wav") ? "wav" : "webm";
         void transcribe(new File(chunks, `recording.${ext}`, { type: type.replace("video/", "audio/") }));
@@ -144,19 +184,26 @@ export default function QuoteAssistant({ open, onOpenChange, businessId, hasExis
       rec.start(1000); setRecording(true); setSeconds(0);
       timerRef.current = window.setInterval(() => setSeconds(s => { if (s + 1 >= MAX_RECORD_SECONDS) releaseMic(false); return s + 1; }), 1000);
     } catch (err) {
+      // Always release a granted stream if the recorder could not be created or started.
+      stream?.getTracks().forEach(t => t.stop());
+      if (recorderRef.current && streamRef.current === stream) { recorderRef.current = null; streamRef.current = null; }
+      if (session !== micSessionRef.current) return;
       const name = err instanceof DOMException ? err.name : "";
       setError(name === "NotAllowedError" ? "Microphone access was blocked. Allow the microphone in your browser settings, or upload a voice memo." :
         name === "NotFoundError" ? "No microphone was found on this device." : "Couldn't start recording. Try uploading a voice memo instead.");
+    } finally {
+      if (session === micSessionRef.current) { startingRef.current = false; setStarting(false); }
     }
   };
 
   const generate = async () => {
     setError("");
     if (!transcript.trim()) { setError("Type, dictate or record a description first."); return; }
+    if (transcript.length > MAX_CHARS) { setError(`The description is over ${MAX_CHARS.toLocaleString()} characters. Shorten it, then generate.`); return; }
     const seq = ++seqRef.current; const ctrl = new AbortController(); abortRef.current = ctrl;
     setBusy("generating");
     try {
-      const res = await callQuoteAi(JSON.stringify({ business_id: businessId, transcript }), ctrl.signal);
+      const res = await callQuoteAi(JSON.stringify({ business_id: businessId, transcript }), ctrl.signal, GENERATE_TIMEOUT_MS);
       if (seq !== seqRef.current) return;
       const draft = parseAiDraft(res.draft);
       if (!draft.lines.length && !draft.sections.length) throw new Error("No quotable work was found in that description.");
@@ -191,23 +238,27 @@ export default function QuoteAssistant({ open, onOpenChange, businessId, hasExis
                 <Square className="w-4 h-4 mr-1.5" />Stop · {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
               </Button>
             ) : (
-              <Button type="button" variant="outline" disabled={!!busy} onClick={() => void startRecording()}><Mic className="w-4 h-4 mr-1.5" />Record voice memo</Button>
+              <Button type="button" variant="outline" disabled={!!busy || starting} onClick={() => void startRecording()}>
+                {starting ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Mic className="w-4 h-4 mr-1.5" />}{starting ? "Waiting for microphone…" : "Record voice memo"}
+              </Button>
             )}
-            <Button type="button" variant="outline" disabled={!!busy || recording} onClick={() => fileInput.current?.click()}><Upload className="w-4 h-4 mr-1.5" />Upload memo</Button>
+            <Button type="button" variant="outline" disabled={!!busy || recording || starting} onClick={() => fileInput.current?.click()}><Upload className="w-4 h-4 mr-1.5" />Upload memo</Button>
             <input ref={fileInput} type="file" className="hidden" data-testid="quote-ai-file"
               accept="audio/*,.m4a,.mp4,.aac,.webm,.wav,.mp3"
               onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void transcribe(f); }} />
           </div>
           <div>
             <label htmlFor="quote-ai-transcript" className="font-body text-[11px] font-medium text-muted-foreground mb-1 block">Description (edit freely)</label>
-            <Textarea id="quote-ai-transcript" value={transcript} maxLength={MAX_CHARS} onChange={e => setTranscript(e.target.value)}
+            <Textarea id="quote-ai-transcript" value={transcript} onChange={e => setTranscript(e.target.value)}
               placeholder="e.g. Patio 605 sq ft at $7.50 a square foot: prep, vapor barrier, base coat with flake, top coat…"
               className="bg-card border-border font-body text-sm min-h-[120px]" />
-            <p className="font-body text-[10px] text-muted-foreground mt-1">{transcript.length.toLocaleString()} / {MAX_CHARS.toLocaleString()}</p>
+            <p className={`font-body text-[10px] mt-1 ${transcript.length > MAX_CHARS ? "text-amber-400" : "text-muted-foreground"}`} data-testid="quote-ai-count">
+              {transcript.length.toLocaleString()} / {MAX_CHARS.toLocaleString()}{transcript.length > MAX_CHARS ? " — too long to generate; shorten it (nothing was cut)" : ""}
+            </p>
           </div>
           {busy && <p role="status" className="font-body text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />{busy === "transcribing" ? "Transcribing your memo…" : "Building your quote draft…"}<button type="button" className="text-primary underline text-xs" onClick={cancelWork}>Cancel</button></p>}
           {error && <p role="alert" className="font-body text-sm text-destructive flex items-start gap-2"><AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />{error}</p>}
-          <Button type="button" className="w-full" disabled={!!busy || recording || !transcript.trim()} onClick={() => void generate()}><Sparkles className="w-4 h-4 mr-1.5" />Generate quote</Button>
+          <Button type="button" className="w-full" disabled={!!busy || recording || starting || !transcript.trim() || transcript.length > MAX_CHARS} onClick={() => void generate()}><Sparkles className="w-4 h-4 mr-1.5" />Generate quote</Button>
 
           {lines && (
             <section className="space-y-3 border-t border-border pt-4" aria-label="Generated draft">
