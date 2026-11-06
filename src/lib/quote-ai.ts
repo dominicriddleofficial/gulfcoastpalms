@@ -63,9 +63,14 @@ export function signedDollarsToCents(text: string): number | null {
 }
 
 /** Builder line amount in exact cents: same rounding as the AI review (integer milli-quantity × cents). */
+const bounded = (text: string, max: number) => {
+  const n = Number(String(text ?? "").replace(/[$,\s]/g, ""));
+  return Number.isFinite(n) && Math.abs(n) <= max ? n : 0;
+};
 export function builderLineCents(qty: string, price: string, discountDollars = 0): number {
-  const q = parseQty(qty) ?? 0;
-  const rate = signedDollarsToCents(price) ?? 0;
+  // Typed values use the exact parsers; legacy stored values (e.g. 3-decimal prices) fall back to bounded rounding.
+  const q = parseQty(qty) ?? Math.max(0, bounded(qty, MAX_QTY));
+  const rate = signedDollarsToCents(price) ?? Math.round(bounded(price, MAX_RATE_CENTS / 100) * 100);
   return lineCents(q, rate) - Math.round((Number(discountDollars) || 0) * 100);
 }
 

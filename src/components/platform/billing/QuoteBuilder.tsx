@@ -24,7 +24,7 @@ import { OPTION_KIND_LABELS, builderOptionErrors, type OptionKind } from "@/lib/
 import { DISPOSAL_GROUP, disposalAmounts, type DisposalDraft, type ArboristDraftLine } from "@/lib/arborist-to-quote";
 import { priceCents } from "@/lib/arborist-quotes";
 import { QUOTE_UNITS, normalizeUnit } from "@/lib/quote-units";
-import { builderHasWork, type AppliedLine } from "@/lib/quote-ai";
+import { aiLineProblem, builderHasWork, builderLineCents, parseQty, type AppliedLine } from "@/lib/quote-ai";
 import QuoteAssistant from "./QuoteAssistant";
 import { WorkspaceThemeProvider, getWorkspaceThemeFromBusiness, workspaceThemeVars } from "@/contexts/WorkspaceThemeContext";
 import { Sparkles } from "lucide-react";
