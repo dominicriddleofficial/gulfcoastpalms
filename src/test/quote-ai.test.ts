@@ -100,7 +100,7 @@ describe("quote AI server permissions", () => {
   });
 });
 
-import { aiLineProblem, builderLineCents, signedDollarsToCents, MAX_RATE_CENTS } from "@/lib/quote-ai";
+import { aiLineProblem, builderLineCents, signedDollarsToCents, parseQty, MAX_RATE_CENTS } from "@/lib/quote-ai";
 import { publicDepositPlan } from "@/lib/quote-deposit";
 describe("bounded money and AI line status", () => {
   it("rejects huge or non-finite rates and quantities", () => {
