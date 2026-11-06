@@ -34,19 +34,50 @@ export function parseAiDraft(raw: unknown): AiDraft {
 /** Editable review row. Strings so the user can type freely; money is derived in cents. */
 export interface ReviewLine { id: string; description: string; qty: string; unit: string; rate: string; issue: string | null }
 
-/** Exact dollars→cents from user text ("7.5", "$1,200.00"); null when not a valid non-negative amount. */
+/** Largest accepted unit rate ($1,000,000.00) and quantity; anything bigger is a typo, not a price. */
+export const MAX_RATE_CENTS = 100_000_000;
+export const MAX_QTY = 1_000_000;
+
+/** Exact dollars→cents from user text ("7.5", "$1,200.00"); null when not a valid, bounded non-negative amount. */
 export function dollarsToCents(text: string): number | null {
-  const t = text.replace(/[$,\s]/g, "");
-  if (!/^\d+(\.\d{1,2})?$/.test(t)) return null;
+  const t = String(text ?? "").replace(/[$,\s]/g, "");
+  if (!/^\d{1,9}(\.\d{1,2})?$/.test(t)) return null;
   const [whole, frac = ""] = t.split(".");
-  return Number(whole) * 100 + Number((frac + "00").slice(0, 2));
+  const cents = Number(whole) * 100 + Number((frac + "00").slice(0, 2));
+  return Number.isSafeInteger(cents) && cents <= MAX_RATE_CENTS ? cents : null;
 }
 
 export function parseQty(text: string): number | null {
-  const t = text.replace(/[,\s]/g, "");
-  if (!/^\d+(\.\d{1,3})?$/.test(t)) return null;
+  const t = String(text ?? "").replace(/[,\s]/g, "");
+  if (!/^\d{1,7}(\.\d{1,3})?$/.test(t)) return null;
   const n = Number(t);
-  return n > 0 ? n : null;
+  return n > 0 && n <= MAX_QTY ? n : null;
+}
+
+/** Signed builder money text → cents (option deltas may be negative). Invalid or out-of-range text → null. */
+export function signedDollarsToCents(text: string): number | null {
+  const t = String(text ?? "").trim();
+  const neg = t.startsWith("-");
+  const c = dollarsToCents(neg ? t.slice(1) : t);
+  return c === null ? null : neg ? -c : c;
+}
+
+/** Builder line amount in exact cents: same rounding as the AI review (integer milli-quantity × cents). */
+export function builderLineCents(qty: string, price: string, discountDollars = 0): number {
+  const q = parseQty(qty) ?? 0;
+  const rate = signedDollarsToCents(price) ?? 0;
+  return lineCents(q, rate) - Math.round((Number(discountDollars) || 0) * 100);
+}
+
+/**
+ * AI-origin builder lines stay unresolved until they have BOTH a valid quantity and an explicit positive rate.
+ * Derived from the current values every time, so editing one field (or deleting a rate) can never clear it.
+ */
+export function aiLineProblem(qty: string, price: string, note?: string | null): string | null {
+  if (parseQty(qty) === null) return note || "Enter a quantity.";
+  const rate = dollarsToCents(price);
+  if (rate === null || rate === 0) return note || "Enter a price.";
+  return null;
 }
 
 /** Line amount in cents, rounded half-up once. Uses integer milli-quantities to avoid float drift. */

@@ -45,7 +45,9 @@ interface LineItem {
   priceConfirmed?: boolean;
   /** Billing unit label ("each", "sq ft", …); persisted to the line's unit column. */
   unit?: string;
-  /** AI draft line whose quantity/price was missing or unclear; blocks saving until resolved. */
+  /** Line came from an AI draft: it blocks saving until it has a valid quantity AND an explicit positive rate. */
+  aiOrigin?: boolean;
+  /** The AI's original note about a missing/unclear value (shown until resolved). */
   aiIssue?: string | null;
 }
 
@@ -95,7 +97,9 @@ interface QuoteBuilderProps {
 
 function newLineId() { return crypto.randomUUID(); }
 const roundMoney = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
-const lineAmount = (line: LineItem) => roundMoney((Number(line.qty) || 0) * (Number(line.price) || 0) - (line.original?.discount_amount ?? 0));
+/** Exact-cents line amount (same calculation as the AI review); persisted line_total uses this too. */
+const lineAmount = (line: LineItem) => builderLineCents(line.qty, line.price, line.original?.discount_amount ?? 0) / 100;
+const lineAiProblem = (line: LineItem) => (line.aiOrigin ? aiLineProblem(line.qty, line.price, line.aiIssue) : null);
 
 /** Grouped prices must not replace customer-visible work. Only copy descriptions,
  * never arborist suggestions; normalize whitespace to recognize structured scope. */
@@ -300,12 +304,12 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   const removeLine = (id: string) => setLineItems(lineItems.filter(l => l.id !== id));
   const updateLine = (id: string, field: "description" | "qty" | "price" | "unit", val: string) =>
     setLineItems(lineItems.map(l => l.id === id ? { ...l, [field]: val, ...(field === "price" ? { priceConfirmed: true } : {}),
-      ...((field === "price" || field === "qty") && l.aiIssue ? { aiIssue: null } : {}) } : l));
+ } : l));
   /** Replace scope + lines with a reviewed AI draft. Tax, discount, deposit and customer are untouched. */
   const applyAiDraft = (draft: { scope: string; lines: AppliedLine[] }) => {
     setScopeOfWork(draft.scope);
     setLineItems(draft.lines.length ? draft.lines.map(l => ({ id: newLineId(), description: l.description, qty: l.qty, price: l.price, unit: l.unit,
-      aiIssue: l.issue, kind: "required" as OptionKind, group: "", proposed: true }))
+      aiOrigin: true, aiIssue: l.issue, kind: "required" as OptionKind, group: "", proposed: true }))
       : [{ id: newLineId(), description: "", qty: "1", price: "", kind: "required", group: "", proposed: true }]);
     toast.success("Draft applied — review it, then choose a customer and save.");
   };
@@ -382,7 +386,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
    */
   /** Option + arborist price checks shared by create and edit. Returns false (with a message) when blocked. */
   const checkOptionsAndPrices = (validLines: LineItem[]) => {
-    if (validLines.some(l => l.aiIssue || (l.unit && l.unit !== "each" && !(Number(l.qty) > 0)))) {
+    if (validLines.some(l => lineAiProblem(l) !== null || (l.unit && l.unit !== "each" && parseQty(l.qty) === null))) {
       toast.error("Enter the missing quantity or price on each flagged line before saving."); return false;
     }
     if (validLines.some(l => l.arborist && (!l.priceConfirmed || l.price.trim() === "" || !(Number(l.price) >= 0)))) {
@@ -516,7 +520,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
         business_id: bizId, quote_id: quote.id, description: l.description,
         quantity: Number(l.qty) || 1, unit: l.unit ?? "each", unit_price: Number(l.price) || 0,
         discount_amount: 0, taxable_flag: true,
-        line_total: (Number(l.qty) || 1) * (Number(l.price) || 0), sort_order: i, ...optionFields(l),
+        line_total: lineAmount(l), sort_order: i, ...optionFields(l),
       }))
     );
     if (lineErr) {
@@ -925,8 +929,8 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                           )}
                         </div>
                       </div>
-                      {line.aiIssue && (
-                        <p className="md:col-span-6 font-body text-xs text-amber-400" data-testid="ai-line-issue">Needs price: {line.aiIssue}</p>
+                      {lineAiProblem(line) && (
+                        <p className="md:col-span-6 font-body text-xs text-amber-400" data-testid="ai-line-issue">Needs attention: {lineAiProblem(line)}</p>
                       )}
                       {line.arborist && (
                         <div className="md:col-span-6 flex flex-wrap items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/5 px-2.5 py-1.5" data-testid="arborist-price-reference">
