@@ -87,8 +87,8 @@ Deno.serve(async (req) => {
     }
 
     // Unassigned drafts have no recipient yet: they are private to the office editor and never public.
-    const { data: owner } = await supabase.from("platform_quotes").select("customer_id").eq("id", quote.id).maybeSingle();
-    if (!owner?.customer_id) {
+    // (quote_public_pricing returns customer = null exactly when the quote has no customer.)
+    if (!row.customer) {
       return await denyNotFound("unassigned_quote");
     }
 
