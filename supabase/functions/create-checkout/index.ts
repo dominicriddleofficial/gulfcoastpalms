@@ -76,22 +76,6 @@ async function createInvoiceFromQuote(supabaseAdmin: any, quoteId: string): Prom
 
   if (qErr || !quote) throw new Error(`Quote not found: ${qErr?.message}`);
 
-  // If a deposit invoice already exists for this quote, reuse it
-  const { data: existing } = await supabaseAdmin
-    .from("platform_invoices")
-    .select("id, status")
-    .eq("quote_id", quoteId)
-    .eq("deposit_required", true)
-    .not("status", "in", "(paid,void)")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (existing?.id) {
-    log("Reusing existing deposit invoice", { invoice_id: existing.id });
-    return existing.id;
-  }
-
   // Only an approved quote with a customer that itself requires a saved deposit can start checkout.
   if (!quote.customer_id) throw new CheckoutRefusal("This quote is not available for payment.");
   if (!["approved", "accepted", "won", "converted"].includes(String(quote.status))) {
@@ -100,6 +84,23 @@ async function createInvoiceFromQuote(supabaseAdmin: any, quoteId: string): Prom
   const depositPlan = quoteDepositAmount(quote);
   if (!depositPlan) throw new CheckoutRefusal("This quote does not require a deposit.");
   const depositAmount = depositPlan;
+
+
+  // If a deposit invoice already exists for this quote, reuse it
+  const { data: existing } = await supabaseAdmin
+    .from("platform_invoices")
+    .select("id, status, deposit_amount")
+    .eq("quote_id", quoteId)
+    .eq("deposit_required", true)
+    .not("status", "in", "(paid,void)")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existing?.id && Math.round(Number(existing.deposit_amount) * 100) === Math.round(depositAmount * 100)) {
+    log("Reusing existing deposit invoice", { invoice_id: existing.id });
+    return existing.id;
+  }
 
   // Generate invoice number
   const { data: numData, error: numErr } = await supabaseAdmin.rpc("generate_next_number", {
@@ -321,6 +322,11 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
+    if (error instanceof CheckoutRefusal) {
+      return new Response(JSON.stringify({ error: true, message: error.message, code: "NOT_PAYABLE" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     log("ERROR", { message: (error as Error).message });
     return new Response(JSON.stringify({ error: true, message: (error as Error).message || "Payment processing failed. Please try again.", code: "SERVER_ERROR" }), {
       headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
