@@ -99,3 +99,36 @@ describe("quote AI server permissions", () => {
     expect(audioUploadType("a.exe", 10)).toHaveProperty("error");
   });
 });
+
+import { aiLineProblem, builderLineCents, signedDollarsToCents, parseQty, MAX_RATE_CENTS } from "@/lib/quote-ai";
+import { publicDepositPlan } from "@/lib/quote-deposit";
+describe("bounded money and AI line status", () => {
+  it("rejects huge or non-finite rates and quantities", () => {
+    expect(dollarsToCents("1e308")).toBeNull();
+    expect(dollarsToCents("99999999999")).toBeNull();
+    expect(dollarsToCents("1000000.00")).toBe(MAX_RATE_CENTS);
+    expect(parseQty("1e9")).toBeNull();
+    expect(parseQty("Infinity")).toBeNull();
+  });
+  it("derives AI unresolved status from both quantity and rate", () => {
+    expect(aiLineProblem("605", "", "Price not stated")).toBe("Price not stated");
+    expect(aiLineProblem("", "7.50", null)).toBe("Enter a quantity.");
+    expect(aiLineProblem("605", "0", null)).toBe("Enter a price.");
+    expect(aiLineProblem("605", "7.50", "Price not stated")).toBeNull();
+  });
+  it("builder line cents match the review calculation for the PPS areas", () => {
+    expect(builderLineCents("605", "7.50")).toBe(453750);
+    expect(builderLineCents("975", "6.50")).toBe(633750);
+    expect(signedDollarsToCents("-1000.00")).toBe(-100000);
+  });
+});
+describe("public deposit plan", () => {
+  it("shows no deposit for a quote that doesn't require one, regardless of brand", () => {
+    expect(publicDepositPlan({ deposit_required: false, deposit_amount: 0, total: 10875 })).toBeNull();
+    expect(publicDepositPlan({ deposit_required: true, deposit_amount: 0, total: 10875 })).toBeNull();
+  });
+  it("uses the saved deposit amount exactly", () => {
+    expect(publicDepositPlan({ deposit_required: true, deposit_amount: 250, total: 10875 })).toEqual({ amountCents: 25000, amount: 250 });
+    expect(publicDepositPlan({ deposit_required: true, deposit_amount: 20000, total: 10875 })).toBeNull();
+  });
+});

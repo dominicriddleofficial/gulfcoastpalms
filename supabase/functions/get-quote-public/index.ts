@@ -86,6 +86,12 @@ Deno.serve(async (req) => {
       return await denyNotFound("shortcode_mismatch");
     }
 
+    // Unassigned drafts have no recipient yet: they are private to the office editor and never public.
+    // (quote_public_pricing returns customer = null exactly when the quote has no customer.)
+    if (!row.customer) {
+      return await denyNotFound("unassigned_quote");
+    }
+
     // Mark as viewed only if it is still unsent/sent at this moment — never overwrite a concurrent approval.
     let status = quote.status;
     if (!status || status === "sent") {

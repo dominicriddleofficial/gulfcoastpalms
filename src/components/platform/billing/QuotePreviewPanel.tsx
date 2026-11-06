@@ -9,7 +9,7 @@ import { formatQuantity, unitPriceSuffix } from "@/lib/quote-units";
 const BRAND: Record<string, {
   name: string; tagline: string; bg: string; cardBg: string; accent: string;
   accentRgb: string; secondaryText: string; borderColor: string; lineDivider: string;
-  tableHeaderBg: string; glowGradient: string; payBtnBg: string; payBtnText: string; footerInfo: string;
+  tableHeaderBg: string; glowGradient: string; payBtnBg: string; payBtnText: string;
 }> = {
   gcp: {
     name: "Gulf Coast Palms", tagline: "Professional Palm Tree Services — NW Florida",
@@ -18,7 +18,6 @@ const BRAND: Record<string, {
     tableHeaderBg: "rgba(34, 197, 94, 0.08)",
     glowGradient: "radial-gradient(ellipse 80% 40% at 50% 0%, rgba(34, 197, 94, 0.25) 0%, rgba(34, 197, 94, 0.08) 40%, transparent 70%)",
     payBtnBg: "#22c55e", payBtnText: "#ffffff",
-    footerInfo: "gulfcoastpalmservices.com · (850) 910-1290",
   },
   pps: {
     name: "Prestige Property Services", tagline: "NW Florida's Premier Property Services",
@@ -27,7 +26,6 @@ const BRAND: Record<string, {
     tableHeaderBg: "rgba(255, 255, 255, 0.07)",
     glowGradient: "radial-gradient(ellipse 80% 40% at 50% 0%, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.04) 40%, transparent 70%)",
     payBtnBg: "#ffffff", payBtnText: "#0a0a0a",
-    footerInfo: "prestigepropertyservices.com",
   },
 };
 
@@ -53,6 +51,9 @@ interface QuotePreviewData {
   isDraft: boolean;
   status?: string;
   logoUrl?: string | null;
+  /** Saved workspace contact details; the footer shows only these. */
+  businessPhone?: string | null;
+  businessEmail?: string | null;
 }
 
 export default function QuotePreviewPanel({ data }: { data: QuotePreviewData }) {
@@ -169,8 +170,18 @@ export default function QuotePreviewPanel({ data }: { data: QuotePreviewData }) 
 
       {/* Line Items */}
       {data.lineItems.length > 0 && (
-        <div style={{ padding: "0 32px", marginBottom: "24px" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
+        <div style={{ padding: "0 32px", marginBottom: "24px", containerType: "inline-size", containerName: "qp" }}>
+          <style>{`
+            @container qp (max-width: 560px) {
+              .qp-table thead { display: none; }
+              .qp-table tr.qp-row { display: grid; grid-template-columns: auto 1fr auto; align-items: baseline; }
+              .qp-table tr.qp-row td { padding: 4px 8px !important; }
+              .qp-table tr.qp-row td:first-child { grid-column: 1 / -1; padding-top: 10px !important; }
+              .qp-table tr.qp-row td:nth-child(2) { text-align: left !important; }
+              .qp-table tr.qp-row td:last-child { padding-bottom: 10px !important; }
+            }
+          `}</style>
+          <table className="qp-table" style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
             <thead>
               <tr style={{ backgroundColor: brand.tableHeaderBg, borderBottom: `1px solid rgba(${brand.accentRgb}, 0.2)` }}>
                 <th style={{ textAlign: "left", padding: "10px 12px", fontSize: "10px", fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: brand.secondaryText }}>Description</th>
@@ -181,10 +192,10 @@ export default function QuotePreviewPanel({ data }: { data: QuotePreviewData }) 
             </thead>
             <tbody>
               {data.lineItems.map((item, i) => (
-                <tr key={i} style={{ borderBottom: `1px solid ${brand.lineDivider}` }}>
-                  <td style={{ padding: "10px 12px", color: item.excluded ? brand.secondaryText : "#fff", fontSize: "14px" }}>{item.description}{item.optionLabel && <span style={{ display: "block", fontSize: "11px", color: brand.secondaryText }}>{item.optionLabel}</span>}</td>
-                  <td style={{ padding: "10px 8px", textAlign: "center", color: brand.secondaryText, whiteSpace: "nowrap" }}>{formatQuantity(item.quantity, item.unit)}</td>
-                  <td style={{ padding: "10px 8px", textAlign: "right", color: brand.secondaryText, whiteSpace: "nowrap" }}>{fmt(item.unit_price)}{unitPriceSuffix(item.unit)}</td>
+                <tr key={i} className="qp-row" data-testid="preview-line" style={{ borderBottom: `1px solid ${brand.lineDivider}` }}>
+                  <td style={{ padding: "10px 12px", color: item.excluded ? brand.secondaryText : "#fff", fontSize: "14px", overflowWrap: "anywhere" }}>{item.description}{item.optionLabel && <span style={{ display: "block", fontSize: "11px", color: brand.secondaryText }}>{item.optionLabel}</span>}</td>
+                  <td style={{ padding: "10px 8px", textAlign: "center", color: brand.secondaryText }}>{formatQuantity(item.quantity, item.unit)}</td>
+                  <td style={{ padding: "10px 8px", textAlign: "right", color: brand.secondaryText }}>{fmt(item.unit_price)}{unitPriceSuffix(item.unit)}</td>
                   <td style={{ padding: "10px 12px", textAlign: "right", color: "#fff", fontWeight: 500 }}>{fmt(item.line_total)}</td>
                 </tr>
               ))}
@@ -235,15 +246,15 @@ export default function QuotePreviewPanel({ data }: { data: QuotePreviewData }) 
         </div>
       )}
 
-      {/* Validity notice */}
-      <div style={{ padding: "0 32px 24px" }}>
+      {/* Validity notice (only when an expiry date is set) */}
+      {data.validUntil && <div style={{ padding: "0 32px 24px" }}>
         <div style={{
           background: `rgba(${brand.accentRgb}, 0.05)`, border: `1px solid rgba(${brand.accentRgb}, 0.12)`,
           borderRadius: "8px", padding: "12px 16px", fontSize: "11px", color: brand.secondaryText, textAlign: "center",
         }}>
           This quote is valid until {data.validUntil}. Pricing subject to change after expiration.
         </div>
-      </div>
+      </div>}
 
       {/* Footer */}
       <div style={{
@@ -252,7 +263,7 @@ export default function QuotePreviewPanel({ data }: { data: QuotePreviewData }) 
         padding: "16px 32px", textAlign: "center",
       }}>
         <div style={{ fontSize: "12px", color: brand.secondaryText }}>Thank you for considering {data.businessName || brand.name}</div>
-        <div style={{ fontSize: "11px", color: brand.secondaryText, opacity: 0.6, marginTop: "4px" }}>{brand.footerInfo}</div>
+        <div style={{ fontSize: "11px", color: brand.secondaryText, opacity: 0.6, marginTop: "4px" }}>{[data.businessEmail, data.businessPhone].filter(Boolean).join(" · ")}</div>
       </div>
     </div>
   );

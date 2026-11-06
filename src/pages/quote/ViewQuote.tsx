@@ -5,6 +5,7 @@ import { toast } from "@/hooks/use-toast";
 import DocumentBrandMark from "@/components/platform/billing/DocumentBrandMark";
 import { downloadElementAsPdf } from "@/lib/download-pdf";
 import PrintQuoteDocument from "@/components/documents/PrintQuoteDocument";
+import { publicDepositPlan } from "@/lib/quote-deposit";
 import { formatQuantity, unitPriceSuffix } from "@/lib/quote-units";
 import { QuoteOptionChoices } from "@/components/quote/QuoteOptionChoices";
 import { computeOptionTotals, defaultSelection, hasOptions, isIncluded, lineCents, selectionErrors, snapshotOptionLines, type AcceptedQuoteSnapshot, type OptionLine } from "@/lib/quote-options";
@@ -159,9 +160,9 @@ export default function ViewQuote() {
   const brand = BRAND[brandKey] || BRAND.gcp;
   const accent = brand.accent;
   const accentRgb = brand.accentRgb;
-  // GCP = quote-only flow (no deposit schedule, no checkout on approval).
-  // PPS = deposit/payment schedule + Stripe checkout on approval.
-  const showDepositFlow = brandKey === "pps";
+  // A deposit flow exists only when THIS quote requires one with a saved amount — never by brand.
+  const depositPlan = quote ? publicDepositPlan(quote) : null;
+  const showDepositFlow = depositPlan !== null;
 
   const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
   const baseUrl = `https://${projectId}.supabase.co/functions/v1`;
@@ -204,8 +205,7 @@ export default function ViewQuote() {
         setQuote(current => current ? { ...current, status: "approved", accepted_snapshot: data.snapshot, total: data.snapshot.total, subtotal: data.snapshot.subtotal, tax_total: data.snapshot.tax_total, discount_total: data.snapshot.discount_total } : current);
       }
 
-      // PPS quotes proceed directly to Stripe Checkout for the 20% deposit.
-      // GCP quotes are approval-only — payment is handled later via invoice.
+      // Only quotes that require a saved deposit continue to checkout; all others are approval-only.
       if (showDepositFlow) {
         try {
           const checkoutResp = await fetch(`${baseUrl}/create-checkout`, {
@@ -359,15 +359,6 @@ export default function ViewQuote() {
   const optionProblems = usesOptions && !isApproved ? selectionErrors(optionLines, chosenOptions) : [];
   const grandTotal = optionTotals ? Number(optionTotals.total) : (quote.total || 0);
 
-  /* Payment milestones — 20/40/40 */
-  const milestones: Array<{ label: string; amount: number; status: "paid" | "next" | "upcoming"; date: string | null }> = [
-    { label: "Deposit to Schedule — 20%", amount: grandTotal * 0.2, status: isApproved ? "paid" : "next", date: isApproved ? "Apr 10, 2026" : null },
-    { label: "Day of Install — 40%", amount: grandTotal * 0.4, status: isApproved ? "next" : "upcoming", date: null },
-    { label: "On Completion — 40%", amount: grandTotal * 0.4, status: "upcoming", date: null },
-  ];
-
-  const paidTotal = milestones.filter(m => m.status === "paid").reduce((s, m) => s + m.amount, 0);
-  const progressPct = grandTotal > 0 ? (paidTotal / grandTotal) * 100 : 0;
 
   /* ── Card shared styles ── */
   const cardBg = "#141414";
@@ -377,6 +368,15 @@ export default function ViewQuote() {
   return (
     <>
       <style>{`
+        .vq-line { display: grid; grid-template-columns: minmax(0, 1fr) 76px 100px 92px; gap: 8px; }
+        .vq-line > span { min-width: 0; }
+        @media (max-width: 560px) {
+          .vq-head { display: none !important; }
+          .vq-line { grid-template-columns: auto 1fr auto; row-gap: 6px; }
+          .vq-line > .vq-desc { grid-column: 1 / -1; }
+          .vq-line > span:nth-child(2) { text-align: left !important; }
+          .vq-line > span:nth-child(3) { text-align: center !important; }
+        }
         @media print { .no-print { display: none !important; } body, html { background: #09090b !important; } * { -webkit-print-color-adjust: exact !important; color-adjust: exact !important; print-color-adjust: exact !important; } }
         @keyframes auraPulse {
           0%, 100% { opacity: 0.85; transform: scale(1); }
@@ -468,8 +468,7 @@ export default function ViewQuote() {
 
             {/* ── LINE ITEMS ── */}
             <div style={{ padding: "20px 20px 0" }}>
-              <div style={{
-                display: "grid", gridTemplateColumns: "1fr 64px 88px 84px", gap: 8,
+              <div className="vq-line vq-head" style={{
                 paddingBottom: 8, marginBottom: 4,
                 fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: labelColor,
                 borderBottom: `1px solid ${cardBorder}`,
@@ -488,12 +487,11 @@ export default function ViewQuote() {
                 </div>
               ) : quote.line_items && quote.line_items.length > 0 ? (
                 quote.line_items.map((item, i) => (
-                  <div key={i} style={{
-                    display: "grid", gridTemplateColumns: "1fr 64px 88px 84px", gap: 8,
+                  <div key={i} className="vq-line" data-testid="quote-line" style={{
                     padding: "14px 0", alignItems: "center",
                     borderBottom: i < (quote.line_items?.length ?? 0) - 1 ? `1px solid #1a1a1a` : "none",
                   }}>
-                    <span style={{ color: "#fff", fontSize: 14, lineHeight: 1.4 }}>{item.description}</span>
+                    <span className="vq-desc" style={{ color: "#fff", fontSize: 14, lineHeight: 1.4, overflowWrap: "anywhere", whiteSpace: "pre-wrap" }}>{item.description}</span>
                     <span style={{ textAlign: "center", fontSize: 13, color: labelColor }}>{formatQuantity(item.quantity, item.unit)}</span>
                     <span style={{ textAlign: "right", fontSize: 13, color: labelColor }}>${fmt(item.unit_price)}{unitPriceSuffix(item.unit)}</span>
                     <span style={{ textAlign: "right", fontSize: 14, color: "#fff", fontWeight: 500 }}>${fmt(item.line_total)}</span>
@@ -532,82 +530,22 @@ export default function ViewQuote() {
               </div>
             </div>
 
-            {/* ── PAYMENT MILESTONES (PPS only) ── */}
-            {showDepositFlow && (
-            <div style={{ padding: "20px 20px 24px" }}>
-              <div style={{
-                borderRadius: 12, overflow: "hidden",
-                background: "#0f0f0f", border: `1px solid ${cardBorder}`,
-              }}>
-                {/* Progress bar */}
-                <div style={{ height: 6, width: "100%", background: cardBorder }}>
-                  <div style={{ height: "100%", width: `${progressPct}%`, background: accent, borderRadius: "0 3px 3px 0", transition: "width 0.7s ease" }} />
+            {/* ── DEPOSIT (only when this quote requires one) ── */}
+            {depositPlan && (
+            <div data-testid="quote-deposit" style={{ padding: "20px 20px 24px" }}>
+              <div style={{ borderRadius: 12, background: "#0f0f0f", border: `1px solid ${cardBorder}`, padding: 16, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                <div style={{ flex: "1 1 160px", minWidth: 0 }}>
+                  <p style={{ color: "#fff", fontSize: 14, fontWeight: 600 }}>Deposit to schedule</p>
+                  <p style={{ fontSize: 16, fontWeight: 700, marginTop: 4, color: "#fff" }}>${fmt(depositPlan.amount)}</p>
+                  <p style={{ fontSize: 12, color: labelColor, marginTop: 4 }}>
+                    {isApproved ? "Pay your deposit securely online." : "Due after you approve this quote."}
+                  </p>
                 </div>
-
-                <div style={{ padding: 0 }}>
-                  {milestones.map((ms, i) => (
-                    <div key={i} style={{
-                      display: "flex", alignItems: "center", gap: 14,
-                      padding: "16px 16px",
-                      borderBottom: i < milestones.length - 1 ? `1px solid #1a1a1a` : "none",
-                    }}>
-                      {/* Circle indicator */}
-                      <div style={{ flexShrink: 0 }}>
-                        {ms.status === "paid" ? (
-                          <div style={{ width: 32, height: 32, borderRadius: "50%", background: `rgba(${accentRgb}, 0.2)`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <Check className="w-4 h-4" style={{ color: accent }} />
-                          </div>
-                        ) : (
-                          <div style={{
-                            width: 32, height: 32, borderRadius: "50%",
-                            border: `2px solid ${ms.status === "next" ? accent : "#333"}`,
-                            background: "transparent",
-                          }} />
-                        )}
-                      </div>
-
-                      {/* Label + amount (left aligned) */}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ color: "#fff", fontSize: 14, fontWeight: 600, lineHeight: 1.3 }}>{ms.label}</p>
-                        <p style={{ fontSize: 16, fontWeight: 700, marginTop: 4, color: ms.status === "paid" ? accent : "#fff" }}>
-                          ${fmt(ms.amount)}
-                        </p>
-                      </div>
-
-                      {/* Status badge (right) */}
-                      <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-                        {ms.status === "paid" && (
-                          <>
-                            <span style={{ padding: "3px 10px", borderRadius: 20, background: `rgba(${accentRgb}, 0.12)`, color: accent, fontSize: 11, fontWeight: 600 }}>Paid</span>
-                            {ms.date && <span style={{ fontSize: 10, color: labelColor }}>{ms.date}</span>}
-                          </>
-                        )}
-                        {ms.status === "next" && (
-                          <>
-                            <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(234,179,8,0.12)", color: "#eab308", fontSize: 11, fontWeight: 600 }}>Next Payment</span>
-                            <button
-                              onClick={handlePayDeposit}
-                              style={{
-                              display: "inline-flex", alignItems: "center", gap: 6,
-                              padding: "6px 14px", borderRadius: 8, border: "none",
-                              background: accent, color: "#000", fontSize: 12, fontWeight: 600,
-                              cursor: "pointer", fontFamily: "'Inter', sans-serif",
-                              transition: "box-shadow 0.2s",
-                            }}
-                              onMouseEnter={(e) => (e.currentTarget.style.boxShadow = `0 0 16px rgba(${accentRgb}, 0.3)`)}
-                              onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "none")}
-                            >
-                              <Send className="w-3 h-3" /> Pay Now
-                            </button>
-                          </>
-                        )}
-                        {ms.status === "upcoming" && (
-                          <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(161,161,170,0.1)", color: "#71717a", fontSize: 11, fontWeight: 600 }}>Upcoming</span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                {isApproved && (
+                  <button onClick={handlePayDeposit} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, border: "none", background: accent, color: "#000", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Inter', sans-serif" }}>
+                    <Send className="w-3 h-3" /> Pay deposit
+                  </button>
+                )}
               </div>
             </div>
             )}
