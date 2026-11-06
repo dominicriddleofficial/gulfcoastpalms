@@ -65,6 +65,11 @@ Deno.serve(async (req) => {
       .eq("id", quote_id)
       .single();
 
+    // A quote without a customer is an office-only draft: it can never be approved or changed publicly.
+    if (!quote || !quote.customer_id) {
+      return new Response(JSON.stringify({ error: "Quote not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     // Determine brand (GCP vs PPS) from business shortcode
     let shortcode = "gcp";
     if (quote?.business_id) {

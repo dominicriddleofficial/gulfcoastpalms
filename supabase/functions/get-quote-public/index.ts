@@ -86,6 +86,12 @@ Deno.serve(async (req) => {
       return await denyNotFound("shortcode_mismatch");
     }
 
+    // Unassigned drafts have no recipient yet: they are private to the office editor and never public.
+    const { data: owner } = await supabase.from("platform_quotes").select("customer_id").eq("id", quote.id).maybeSingle();
+    if (!owner?.customer_id) {
+      return await denyNotFound("unassigned_quote");
+    }
+
     // Mark as viewed only if it is still unsent/sent at this moment — never overwrite a concurrent approval.
     let status = quote.status;
     if (!status || status === "sent") {

@@ -53,6 +53,19 @@ async function checkRateLimit(supabase: any, identifier: string, endpoint: strin
  * Auto-create a deposit invoice from an approved/sent quote.
  * Returns the invoice ID, ready to be checked out.
  */
+class CheckoutRefusal extends Error {}
+
+/** Saved deposit amount in dollars (accepted snapshot first), or null when no deposit applies. */
+export function quoteDepositAmount(quote: { deposit_required_flag?: boolean | null; deposit_amount_calculated?: number | null; total?: number | null; accepted_snapshot?: { deposit_amount?: number; total?: number } | null }): number | null {
+  if (quote.deposit_required_flag !== true) return null;
+  const raw = Number(quote.accepted_snapshot?.deposit_amount ?? quote.deposit_amount_calculated);
+  if (!Number.isFinite(raw) || raw <= 0) return null;
+  const cents = Math.round(raw * 100);
+  const total = Number(quote.accepted_snapshot?.total ?? quote.total);
+  if (!Number.isFinite(total) || cents > Math.round(total * 100)) return null;
+  return cents / 100;
+}
+
 async function createInvoiceFromQuote(supabaseAdmin: any, quoteId: string): Promise<string> {
   // Pull quote with line items + customer + business
   const { data: quote, error: qErr } = await supabaseAdmin
@@ -79,11 +92,14 @@ async function createInvoiceFromQuote(supabaseAdmin: any, quoteId: string): Prom
     return existing.id;
   }
 
-  const grandTotal = Number(quote.total) || 0;
-  if (grandTotal <= 0) throw new Error("Quote has no total amount");
-
-  // 20% deposit (matches the milestone ladder shown in ViewQuote.tsx)
-  const depositAmount = Number((grandTotal * 0.2).toFixed(2));
+  // Only an approved quote with a customer that itself requires a saved deposit can start checkout.
+  if (!quote.customer_id) throw new CheckoutRefusal("This quote is not available for payment.");
+  if (!["approved", "accepted", "won", "converted"].includes(String(quote.status))) {
+    throw new CheckoutRefusal("Please approve the quote before paying a deposit.");
+  }
+  const depositPlan = quoteDepositAmount(quote);
+  if (!depositPlan) throw new CheckoutRefusal("This quote does not require a deposit.");
+  const depositAmount = depositPlan;
 
   // Generate invoice number
   const { data: numData, error: numErr } = await supabaseAdmin.rpc("generate_next_number", {
@@ -113,7 +129,7 @@ async function createInvoiceFromQuote(supabaseAdmin: any, quoteId: string): Prom
       deposit_required: true,
       deposit_amount: depositAmount,
       deposit_paid: false,
-      public_notes: `Deposit (20%) for quote ${quote.quote_number}`,
+      public_notes: `Deposit for quote ${quote.quote_number}`,
       sent_at: new Date().toISOString(),
     })
     .select("id")
@@ -125,7 +141,7 @@ async function createInvoiceFromQuote(supabaseAdmin: any, quoteId: string): Prom
   await supabaseAdmin.from("platform_invoice_line_items").insert({
     business_id: quote.business_id,
     invoice_id: newInvoice.id,
-    description: `Deposit (20%) — Quote ${quote.quote_number}`,
+    description: `Deposit — Quote ${quote.quote_number}`,
     quantity: 1,
     unit_price: depositAmount,
     line_total: depositAmount,
