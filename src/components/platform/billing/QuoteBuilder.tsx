@@ -89,6 +89,8 @@ interface QuoteBuilderProps {
   editingQuote?: QuoteEditData;
   /** Prefill from a submitted arborist report (GCP); creates a traceable draft on save only. */
   arboristSource?: ArboristQuoteSource;
+  /** Open "Describe your quote" immediately (from the Quotes page shortcut). */
+  startWithAssistant?: boolean;
 }
 
 function newLineId() { return crypto.randomUUID(); }
@@ -111,7 +113,7 @@ function disposalWorkScope(scope: string, required: LineItem[]) {
   return result;
 }
 
-export default function QuoteBuilder({ businessId, businesses, userId, onClose, onCreated, editingQuote, arboristSource }: QuoteBuilderProps) {
+export default function QuoteBuilder({ businessId, businesses, userId, onClose, onCreated, editingQuote, arboristSource, startWithAssistant }: QuoteBuilderProps) {
   const existing = editingQuote?.quote;
   const editSnapshot = useRef(editingQuote);
   const editSavingRef = useRef(false);
@@ -121,7 +123,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   /** Lines counted in the proposed total: required work plus proposed options. */
   /** Customer can be chosen on a new quote, or once on an unassigned unsent draft (server enforces this too). */
   const canAssignCustomer = !existing || (!existing.customer_id && existing.status === "draft" && !existing.sent_at && !existing.accepted_snapshot);
-  const [assistantOpen, setAssistantOpen] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(!!startWithAssistant);
   const inProposedTotal = (l: LineItem) => !optionsEnabled || l.kind === "required" || l.proposed;
 
   // Form state
@@ -1049,7 +1051,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
 
       {/* Mobile Preview */}
       <Sheet open={showMobilePreview} onOpenChange={setShowMobilePreview}>
-        <SheetContent side="bottom" className="h-[95vh] p-0 bg-[#0a0f0a] border-t border-border overflow-hidden flex flex-col">
+        <SheetContent side="bottom" className="h-[95vh] p-0 bg-background border-t border-border overflow-hidden flex flex-col">
           <SheetHeader className="px-4 pt-4 pb-2 shrink-0">
             <SheetTitle className="text-foreground font-display text-base">Quote Preview</SheetTitle>
           </SheetHeader>
