@@ -68,30 +68,13 @@ const GCP_THEME: WorkspaceTheme = {
   },
 };
 
+/** PPS uses the same approved near-black + emerald platform look as GCP;
+ * only its identity (name, logo, records) differs. */
 const PPS_THEME: WorkspaceTheme = {
+  ...GCP_THEME,
   shortcode: "PPS",
   label: "Prestige Property Services",
-  primaryHex: "#2A2A2A",
-  accentHex: "#F0F0F0",
-  buttonTextHex: "#0A0A0A",
-  accentRgb: "240, 240, 240",
-  backgroundHex: "#1A1A1A",
-  cardHex: "#2A2A2A",
-  statusBarHex: "#2A2A2A",
-  hsl: {
-    background: "0 0% 10%",
-    card: "0 0% 16%",
-    popover: "0 0% 12%",
-    primary: "0 0% 100%",            // neon white
-    primaryForeground: "0 0% 6%",
-    secondary: "0 0% 14%",
-    muted: "0 0% 13%",
-    accent: "0 0% 94%",              // #F0F0F0
-    accentForeground: "0 0% 6%",
-    border: "0 0% 30%",
-    input: "0 0% 22%",
-    ring: "0 0% 100%",
-  },
+  hsl: { ...GCP_THEME.hsl },
 };
 
 const THEME_REGISTRY: Record<string, WorkspaceTheme> = {
@@ -194,7 +177,7 @@ export function useWorkspaceTheme() {
  * for the active workspace. Apply to the platform shell element.
  */
 export function workspaceThemeVars(theme: WorkspaceTheme): CSSProperties {
-  const subtleGlowOpacity = theme.shortcode === "PPS" ? "0.22" : "0.35";
+  const subtleGlowOpacity = "0.35";
   return {
     ["--background" as string]: theme.hsl.background,
     ["--card" as string]: theme.hsl.card,
@@ -213,12 +196,11 @@ export function workspaceThemeVars(theme: WorkspaceTheme): CSSProperties {
     ["--biz-accent-rgb" as string]: theme.accentRgb,
     ["--biz-background-hex" as string]: theme.backgroundHex,
     ["--biz-card-hex" as string]: theme.cardHex,
-    // GCP: richer glowing emerald fade — strong at the bottom edge and held
-    // through the middle, plus a broad soft bloom. PPS keeps its original
-    // softer monochrome fade (mid stop 22/2.4 ≈ 9%, no bloom).
-    ["--platform-fade-mix" as string]: theme.shortcode === "PPS" ? "22%" : "72%",
-    ["--platform-fade-mid-mix" as string]: theme.shortcode === "PPS" ? "9%" : "48%",
-    ["--platform-fade-bloom" as string]: theme.shortcode === "PPS" ? "0" : "0.3",
+    // Both workspaces: richer glowing emerald fade — strong at the bottom edge
+    // and held through the middle, plus a broad soft bloom.
+    ["--platform-fade-mix" as string]: "72%",
+    ["--platform-fade-mid-mix" as string]: "48%",
+    ["--platform-fade-bloom" as string]: "0.3",
     ["--accent-color" as string]: theme.accentHex,
     ["--accent-glow" as string]: `rgba(${theme.accentRgb}, ${subtleGlowOpacity})`,
     ["--primary-color" as string]: theme.primaryHex,

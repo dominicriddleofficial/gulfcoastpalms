@@ -21,10 +21,15 @@ describe("workspace theme lifecycle", () => {
     expect(meta.content).toBe('#1a5c38');
     root.style.removeProperty('--background'); meta.remove();
   });
-  it("keeps the PPS accent when switching workspaces", () => {
+  it("gives PPS the same near-black emerald surfaces as GCP while keeping its identity", () => {
     const view = render(<WorkspaceThemeProvider shortcode="GCP"><div /></WorkspaceThemeProvider>);
     expect(document.documentElement.style.getPropertyValue('--accent-color')).toBe('#34E8A8');
     view.rerender(<WorkspaceThemeProvider shortcode="PPS"><div /></WorkspaceThemeProvider>);
-    expect(document.documentElement.style.getPropertyValue('--accent-color')).toBe('#F0F0F0');
+    const root = document.documentElement;
+    expect(root.style.getPropertyValue('--accent-color')).toBe('#34E8A8');
+    expect(root.style.getPropertyValue('--background')).toBe('195 29% 3%');
+    expect(root.style.getPropertyValue('--card')).toBe('195 25% 6%');
+    expect(root.dataset.workspaceTheme).toBe('PPS');
+    view.unmount();
   });
 });
