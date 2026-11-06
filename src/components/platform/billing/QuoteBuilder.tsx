@@ -675,9 +675,10 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
     setManualCopyText(message);
   };
 
+  const workspaceTheme = getWorkspaceThemeFromBusiness(activeBiz);
   return (
-    <>
-      <div className="ops-theme fixed inset-0 z-50 bg-background text-foreground flex flex-col invoice-form">
+    <WorkspaceThemeProvider shortcode={workspaceTheme.shortcode}>
+      <div className="ops-theme fixed inset-0 z-50 bg-background text-foreground flex flex-col invoice-form" style={workspaceThemeVars(workspaceTheme)} data-workspace={workspaceTheme.shortcode}>
         {/* Top bar */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
           <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -696,6 +697,11 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {!existing?.accepted_snapshot && (
+              <Button size="sm" className="font-body text-xs" onClick={() => setAssistantOpen(true)} data-testid="quote-ai-open" aria-label="Describe your quote">
+                <Sparkles className="w-3.5 h-3.5 sm:mr-1" /><span className="hidden sm:inline">Describe your quote</span>
+              </Button>
+            )}
             <Button variant="outline" size="sm" className="font-body text-xs md:hidden" onClick={() => setShowMobilePreview(true)}>
               <Eye className="w-3.5 h-3.5" />
             </Button>
@@ -779,8 +785,9 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                     {customerPhone && <p className="font-body text-xs text-muted-foreground">{customerPhone}</p>}
                   </div>
                 ) : (
+                  <div>
+                  <p className="font-body text-[11px] text-muted-foreground mb-1.5" data-testid="quote-unassigned-note">You can save a draft without a customer. Choose one before sending or sharing.</p>
                   <div className="relative">
-                    <p className="font-body text-[11px] text-muted-foreground mb-1.5" data-testid="quote-unassigned-note">You can save a draft without a customer. Choose one before sending or sharing.</p>
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                     <Input placeholder="Search customer…" value={customerSearch}
                       onChange={e => { setCustomerSearch(e.target.value); setShowCustomerSearch(true); }}
@@ -801,6 +808,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                         )}
                       </div>
                     )}
+                  </div>
                   </div>
                 )}
               </div>
@@ -871,9 +879,10 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                   </Button>
                 </div>
               </div>
-              <div className="hidden md:grid md:grid-cols-[1fr_80px_100px_100px_32px] gap-2 px-1">
+              <div className="hidden md:grid md:grid-cols-[1fr_70px_90px_100px_100px_32px] gap-2 px-1">
                 <span className="font-body text-[10px] font-medium text-muted-foreground uppercase">Description</span>
                 <span className="font-body text-[10px] font-medium text-muted-foreground uppercase text-center">Qty</span>
+                <span className="font-body text-[10px] font-medium text-muted-foreground uppercase text-center">Unit</span>
                 <span className="font-body text-[10px] font-medium text-muted-foreground uppercase text-right">Unit Price</span>
                 <span className="font-body text-[10px] font-medium text-muted-foreground uppercase text-right">Total</span>
                 <span />
@@ -882,11 +891,17 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                 {lineItems.map(line => {
                   const lineTotal = lineAmount(line);
                   return (
-                    <div key={line.id} className="grid grid-cols-1 md:grid-cols-[1fr_80px_100px_100px_32px] gap-2 bg-card border border-border rounded-lg p-2.5 md:p-2 md:rounded-none md:border-0 md:border-b md:bg-transparent">
+                    <div key={line.id} className="grid grid-cols-1 md:grid-cols-[1fr_70px_90px_100px_100px_32px] gap-2 bg-card border border-border rounded-lg p-2.5 md:p-2 md:rounded-none md:border-0 md:border-b md:bg-transparent">
                       <Input aria-label="Line description" placeholder="Service description…" value={line.description} onChange={e => updateLine(line.id, "description", e.target.value)} className="bg-secondary/50 border-border font-body text-sm" />
                       <div className="flex gap-2 md:contents">
                         <div className="flex-1 md:flex-none">
                           <Input aria-label="Quantity" type="number" min="0.01" step="any" placeholder="Qty" value={line.qty} onChange={e => updateLine(line.id, "qty", e.target.value)} className="bg-secondary/50 border-border font-body text-sm text-center" />
+                        </div>
+                        <div className="flex-1 md:flex-none">
+                          <select aria-label="Unit" value={line.unit ?? "each"} onChange={e => updateLine(line.id, "unit", e.target.value)}
+                            className="h-10 w-full rounded-md border border-border bg-secondary/50 px-1.5 font-body text-sm text-foreground">
+                            {[...new Set([...QUOTE_UNITS, line.unit ?? "each"])].map(u => <option key={u} value={u}>{u}</option>)}
+                          </select>
                         </div>
                         <div className="flex-1 md:flex-none">
                           <Input aria-label="Unit price" type="number" min="0" step="0.01" placeholder="$0.00" value={line.price} onChange={e => updateLine(line.id, "price", e.target.value)} className="bg-secondary/50 border-border font-body text-sm text-right" />
@@ -898,8 +913,11 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                           )}
                         </div>
                       </div>
+                      {line.aiIssue && (
+                        <p className="md:col-span-6 font-body text-xs text-amber-400" data-testid="ai-line-issue">Needs price: {line.aiIssue}</p>
+                      )}
                       {line.arborist && (
-                        <div className="md:col-span-5 flex flex-wrap items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/5 px-2.5 py-1.5" data-testid="arborist-price-reference">
+                        <div className="md:col-span-6 flex flex-wrap items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/5 px-2.5 py-1.5" data-testid="arborist-price-reference">
                           <span className="font-body text-sm text-muted-foreground">Staff only · {line.arborist.suggestion}</span>
                           {line.arborist.fixedPrice && !line.priceConfirmed && (
                             <button type="button" className="font-body text-[11px] font-semibold text-primary underline"
@@ -909,7 +927,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                         </div>
                       )}
                       {optionsEnabled && (
-                        <div className="md:col-span-5 flex flex-wrap items-center gap-2" data-testid="line-option-controls">
+                        <div className="md:col-span-6 flex flex-wrap items-center gap-2" data-testid="line-option-controls">
                           <select aria-label="Line type" value={line.kind}
                             onChange={e => updateOption(line.id, { kind: e.target.value as OptionKind, proposed: e.target.value === "required" ? true : line.kind === "required" ? false : line.proposed })}
                             className="h-8 rounded-md border border-border bg-secondary/50 px-2 font-body text-xs text-foreground">
@@ -1143,7 +1161,11 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
       {canAssignCustomer && (
         <NewCustomerSheet open={newCustomerOpen} businessId={bizId} onOpenChange={setNewCustomerOpen} onCreated={handleNewCustomerCreated} />
       )}
-    </>
+      <QuoteAssistant open={assistantOpen} onOpenChange={setAssistantOpen} businessId={bizId}
+        hasExistingWork={builderHasWork(scopeOfWork, lineItems)}
+        settingsSummary={`tax ${taxEnabled ? `on at ${taxRate}%` : "off"}, discount ${discountEnabled ? "on" : "off"}, deposit ${depositEnabled ? `on (${depositType === "%" ? `${depositValue}%` : `$${depositValue}`})` : "off"}`}
+        onApply={applyAiDraft} />
+    </WorkspaceThemeProvider>
   );
 }
 
