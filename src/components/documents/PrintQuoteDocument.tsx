@@ -3,6 +3,7 @@
  * the PDF helper. No status pill, no signature pad, no approve / request
  * buttons — approved quotes print a plain signature proof instead.
  */
+import { formatQuantity, unitPriceSuffix } from "@/lib/quote-units";
 import DocumentBrandMark from "@/components/platform/billing/DocumentBrandMark";
 import { PRINT } from "./printTheme";
 
@@ -20,7 +21,7 @@ export interface PrintQuoteData {
   customer_phone?: string | null;
   customer_email?: string | null;
   scope_of_work?: string | null;
-  line_items?: Array<{ description: string; quantity: number; unit_price: number; line_total: number }>;
+  line_items?: Array<{ description: string; quantity: number; unit?: string | null; unit_price: number; line_total: number }>;
   /** Customer options that were not chosen; listed as excluded and never totalled. */
   excluded_items?: string[];
   subtotal?: number | null;
@@ -97,7 +98,7 @@ export default function PrintQuoteDocument({ data }: { data: PrintQuoteData }) {
           <thead>
             <tr style={{ background: PRINT.tableHeaderBg }}>
               <th style={{ textAlign: "left", padding: "8px 10px", ...label, marginBottom: 0 }}>Item</th>
-              <th style={{ textAlign: "center", padding: "8px 6px", width: 48, ...label, marginBottom: 0 }}>Qty</th>
+              <th style={{ textAlign: "center", padding: "8px 6px", width: 72, ...label, marginBottom: 0 }}>Qty</th>
               <th style={{ textAlign: "right", padding: "8px 6px", width: 90, ...label, marginBottom: 0 }}>Unit</th>
               <th style={{ textAlign: "right", padding: "8px 10px", width: 90, ...label, marginBottom: 0 }}>Total</th>
             </tr>
@@ -106,8 +107,8 @@ export default function PrintQuoteDocument({ data }: { data: PrintQuoteData }) {
             {items.map((item, i) => (
               <tr key={i} style={{ borderBottom: `1px solid ${PRINT.divider}` }}>
                 <td style={{ padding: "9px 10px", fontSize: 13 }}>{item.description}</td>
-                <td style={{ padding: "9px 6px", textAlign: "center", color: PRINT.secondary }}>{item.quantity}</td>
-                <td style={{ padding: "9px 6px", textAlign: "right", color: PRINT.secondary }}>${fmt(item.unit_price)}</td>
+                <td style={{ padding: "9px 6px", textAlign: "center", color: PRINT.secondary, whiteSpace: "nowrap" }}>{formatQuantity(item.quantity, item.unit)}</td>
+                <td style={{ padding: "9px 6px", textAlign: "right", color: PRINT.secondary, whiteSpace: "nowrap" }}>${fmt(item.unit_price)}{unitPriceSuffix(item.unit)}</td>
                 <td style={{ padding: "9px 10px", textAlign: "right", fontWeight: 600 }}>${fmt(item.line_total)}</td>
               </tr>
             ))}

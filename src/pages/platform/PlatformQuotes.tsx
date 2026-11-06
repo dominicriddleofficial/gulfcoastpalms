@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Textarea } from "@/components/ui/textarea";
 import {
   Search, Plus, FileText, DollarSign, Clock, Hash, Trash2,
-  Send, CheckCircle, XCircle, History, ChevronRight, Receipt,
+  Send, Sparkles, CheckCircle, XCircle, History, ChevronRight, Receipt,
   Link2, MoreHorizontal, Copy, TrendingUp, Eye, Briefcase,
   MessageSquare, ClipboardCopy, Pencil,
 } from "lucide-react";
@@ -107,7 +107,7 @@ async function fetchQuoteRecord(t: DeepLinkTarget, businessId: string): Promise<
     const { data: c } = await supabase.from("platform_customers").select("display_name").eq("id", data.customer_id).maybeSingle();
     name = c?.display_name ?? "";
   }
-  return { ...data, customer_name: data.billing_name || name || "Unknown", customer_display_name: name } as unknown as PlatformQuote;
+  return { ...data, customer_name: data.billing_name || name || (data.customer_id ? "Unknown" : "No customer yet"), customer_display_name: name } as unknown as PlatformQuote;
 }
 
 export default function PlatformQuotes() {
@@ -162,11 +162,13 @@ export default function PlatformQuotes() {
   };
 
   const copyQuoteLink = (q: PlatformQuote) => {
+    if (!q.customer_id) { toast.error("Choose a customer in Edit Quote before sharing or sending this draft."); return; }
     navigator.clipboard.writeText(getQuoteUrl(q));
     toast.success("Quote link copied");
   };
 
   const copyQuoteMessage = async (q: PlatformQuote) => {
+    if (!q.customer_id) { toast.error("Choose a customer in Edit Quote before sharing or sending this draft."); return; }
     const biz = getBiz(q.business_id) as { public_brand_name?: string; shortcode?: string } | undefined;
     const text = await prepareQuoteCopy(q, biz);
     if (!text) return;
@@ -195,9 +197,14 @@ export default function PlatformQuotes() {
             <h1 className="font-display text-xl font-bold text-foreground tracking-tight">Quotes</h1>
             <p className="font-body text-xs text-muted-foreground">{quotes.length} total</p>
           </div>
-          <Button size="sm" className="font-body text-xs" onClick={() => navigate("/platform/quotes/new")} disabled={!selectedBusinessId}>
-            <Plus className="w-3.5 h-3.5 mr-1" /> New Quote
-          </Button>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" className="font-body text-xs border-primary/40 text-primary" onClick={() => navigate("/platform/quotes/new?assistant=1")} disabled={!selectedBusinessId}>
+              <Sparkles className="w-3.5 h-3.5 mr-1" /> Describe your quote
+            </Button>
+            <Button size="sm" className="font-body text-xs" onClick={() => navigate("/platform/quotes/new")} disabled={!selectedBusinessId}>
+              <Plus className="w-3.5 h-3.5 mr-1" /> New Quote
+            </Button>
+          </div>
         </div>
 
         {/* KPI cards */}
@@ -555,7 +562,10 @@ function QuoteDetail({ quote, biz, businesses, onUpdate, onClose, onCopyQuoteMes
 
       <div className="flex items-center gap-2 flex-wrap">
         <QuoteStatusBadge status={quote.status} />
-        {quote.status === "draft" && (
+        {quote.status === "draft" && !quote.customer_id && (
+          <span className="font-body text-[11px] text-amber-400" data-testid="quote-needs-customer">No customer yet — choose one in Edit Quote before sending.</span>
+        )}
+        {quote.status === "draft" && quote.customer_id && (
           <Button size="sm" variant="outline" className="gap-1 border-border text-xs" onClick={() => updateStatus("sent")}>
             <Send className="w-3 h-3" /> Mark Sent
           </Button>

@@ -107,7 +107,7 @@ export async function fetchPlatformQuotes(
 
   return (data as any[]).map(q => ({
     ...q,
-    customer_name: q.billing_name || customerMap.get(q.customer_id) || "Unknown",
+    customer_name: q.billing_name || customerMap.get(q.customer_id) || (q.customer_id ? "Unknown" : "No customer yet"),
     customer_display_name: customerMap.get(q.customer_id) || "",
   })) as PlatformQuote[];
 }

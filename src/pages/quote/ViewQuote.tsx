@@ -5,6 +5,7 @@ import { toast } from "@/hooks/use-toast";
 import DocumentBrandMark from "@/components/platform/billing/DocumentBrandMark";
 import { downloadElementAsPdf } from "@/lib/download-pdf";
 import PrintQuoteDocument from "@/components/documents/PrintQuoteDocument";
+import { formatQuantity, unitPriceSuffix } from "@/lib/quote-units";
 import { QuoteOptionChoices } from "@/components/quote/QuoteOptionChoices";
 import { computeOptionTotals, defaultSelection, hasOptions, isIncluded, lineCents, selectionErrors, snapshotOptionLines, type AcceptedQuoteSnapshot, type OptionLine } from "@/lib/quote-options";
 import { documentFilename } from "@/components/documents/printTheme";
@@ -41,7 +42,7 @@ type QuoteData = {
   created_at?: string;
   public_notes?: string;
   scope_of_work?: string;
-  line_items?: Array<{ id?: string; description: string; quantity: number; unit_price: number; line_total: number; line_type?: string;
+  line_items?: Array<{ id?: string; description: string; quantity: number; unit?: string | null; unit_price: number; line_total: number; line_type?: string;
     discount_amount?: number | null; taxable_flag?: boolean | null; option_kind?: string | null; option_group?: string | null;
     default_selected?: boolean | null; customer_selected?: boolean | null }>;
   discount_total?: number;
@@ -468,7 +469,7 @@ export default function ViewQuote() {
             {/* ── LINE ITEMS ── */}
             <div style={{ padding: "20px 20px 0" }}>
               <div style={{
-                display: "grid", gridTemplateColumns: "1fr 48px 80px 80px", gap: 8,
+                display: "grid", gridTemplateColumns: "1fr 64px 88px 84px", gap: 8,
                 paddingBottom: 8, marginBottom: 4,
                 fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: labelColor,
                 borderBottom: `1px solid ${cardBorder}`,
@@ -488,13 +489,13 @@ export default function ViewQuote() {
               ) : quote.line_items && quote.line_items.length > 0 ? (
                 quote.line_items.map((item, i) => (
                   <div key={i} style={{
-                    display: "grid", gridTemplateColumns: "1fr 48px 80px 80px", gap: 8,
+                    display: "grid", gridTemplateColumns: "1fr 64px 88px 84px", gap: 8,
                     padding: "14px 0", alignItems: "center",
                     borderBottom: i < (quote.line_items?.length ?? 0) - 1 ? `1px solid #1a1a1a` : "none",
                   }}>
                     <span style={{ color: "#fff", fontSize: 14, lineHeight: 1.4 }}>{item.description}</span>
-                    <span style={{ textAlign: "center", fontSize: 13, color: labelColor }}>{item.quantity}</span>
-                    <span style={{ textAlign: "right", fontSize: 13, color: labelColor }}>${fmt(item.unit_price)}</span>
+                    <span style={{ textAlign: "center", fontSize: 13, color: labelColor }}>{formatQuantity(item.quantity, item.unit)}</span>
+                    <span style={{ textAlign: "right", fontSize: 13, color: labelColor }}>${fmt(item.unit_price)}{unitPriceSuffix(item.unit)}</span>
                     <span style={{ textAlign: "right", fontSize: 14, color: "#fff", fontWeight: 500 }}>${fmt(item.line_total)}</span>
                   </div>
                 ))

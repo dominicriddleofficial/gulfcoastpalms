@@ -4,6 +4,7 @@
  * Prestige: dark monochrome + white accents.
  */
 import { getBusinessLogo } from "@/lib/business-logos";
+import { formatQuantity, unitPriceSuffix } from "@/lib/quote-units";
 
 const BRAND: Record<string, {
   name: string; tagline: string; bg: string; cardBg: string; accent: string;
@@ -22,9 +23,9 @@ const BRAND: Record<string, {
   pps: {
     name: "Prestige Property Services", tagline: "NW Florida's Premier Property Services",
     bg: "#0a0a0a", cardBg: "#111111", accent: "#ffffff", accentRgb: "255, 255, 255",
-    secondaryText: "#888888", borderColor: "rgba(255, 255, 255, 0.08)", lineDivider: "rgba(255,255,255,0.06)",
-    tableHeaderBg: "rgba(255, 255, 255, 0.05)",
-    glowGradient: "radial-gradient(ellipse 80% 40% at 50% 0%, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 40%, transparent 70%)",
+    secondaryText: "#b4b4bb", borderColor: "rgba(255, 255, 255, 0.12)", lineDivider: "rgba(255,255,255,0.08)",
+    tableHeaderBg: "rgba(255, 255, 255, 0.07)",
+    glowGradient: "radial-gradient(ellipse 80% 40% at 50% 0%, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.04) 40%, transparent 70%)",
     payBtnBg: "#ffffff", payBtnText: "#0a0a0a",
     footerInfo: "prestigepropertyservices.com",
   },
@@ -37,7 +38,7 @@ interface QuotePreviewData {
   customerName: string;
   customerEmail?: string;
   customerPhone?: string;
-  lineItems: Array<{ description: string; quantity: number; unit_price: number; line_total: number; optionLabel?: string; excluded?: boolean }>;
+  lineItems: Array<{ description: string; quantity: number; unit?: string | null; unit_price: number; line_total: number; optionLabel?: string; excluded?: boolean }>;
   subtotal: number;
   taxRate: number;
   taxAmount: number;
@@ -173,7 +174,7 @@ export default function QuotePreviewPanel({ data }: { data: QuotePreviewData }) 
             <thead>
               <tr style={{ backgroundColor: brand.tableHeaderBg, borderBottom: `1px solid rgba(${brand.accentRgb}, 0.2)` }}>
                 <th style={{ textAlign: "left", padding: "10px 12px", fontSize: "10px", fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: brand.secondaryText }}>Description</th>
-                <th style={{ textAlign: "center", padding: "10px 8px", width: 50, fontSize: "10px", fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: brand.secondaryText }}>Qty</th>
+                <th style={{ textAlign: "center", padding: "10px 8px", width: 80, fontSize: "10px", fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: brand.secondaryText }}>Qty</th>
                 <th style={{ textAlign: "right", padding: "10px 8px", width: 90, fontSize: "10px", fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: brand.secondaryText }}>Unit Price</th>
                 <th style={{ textAlign: "right", padding: "10px 12px", width: 90, fontSize: "10px", fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: brand.secondaryText }}>Total</th>
               </tr>
@@ -182,8 +183,8 @@ export default function QuotePreviewPanel({ data }: { data: QuotePreviewData }) 
               {data.lineItems.map((item, i) => (
                 <tr key={i} style={{ borderBottom: `1px solid ${brand.lineDivider}` }}>
                   <td style={{ padding: "10px 12px", color: item.excluded ? brand.secondaryText : "#fff", fontSize: "14px" }}>{item.description}{item.optionLabel && <span style={{ display: "block", fontSize: "11px", color: brand.secondaryText }}>{item.optionLabel}</span>}</td>
-                  <td style={{ padding: "10px 8px", textAlign: "center", color: brand.secondaryText }}>{item.quantity}</td>
-                  <td style={{ padding: "10px 8px", textAlign: "right", color: brand.secondaryText }}>{fmt(item.unit_price)}</td>
+                  <td style={{ padding: "10px 8px", textAlign: "center", color: brand.secondaryText, whiteSpace: "nowrap" }}>{formatQuantity(item.quantity, item.unit)}</td>
+                  <td style={{ padding: "10px 8px", textAlign: "right", color: brand.secondaryText, whiteSpace: "nowrap" }}>{fmt(item.unit_price)}{unitPriceSuffix(item.unit)}</td>
                   <td style={{ padding: "10px 12px", textAlign: "right", color: "#fff", fontWeight: 500 }}>{fmt(item.line_total)}</td>
                 </tr>
               ))}
