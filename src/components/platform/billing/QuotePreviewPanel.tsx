@@ -170,9 +170,9 @@ export default function QuotePreviewPanel({ data }: { data: QuotePreviewData }) 
 
       {/* Line Items */}
       {data.lineItems.length > 0 && (
-        <div style={{ padding: "0 32px", marginBottom: "24px" }}>
+        <div style={{ padding: "0 32px", marginBottom: "24px", containerType: "inline-size", containerName: "qp" }}>
           <style>{`
-            @media (max-width: 560px) {
+            @container qp (max-width: 560px) {
               .qp-table thead { display: none; }
               .qp-table tr.qp-row { display: grid; grid-template-columns: auto 1fr auto; align-items: baseline; }
               .qp-table tr.qp-row td { padding: 4px 8px !important; }
