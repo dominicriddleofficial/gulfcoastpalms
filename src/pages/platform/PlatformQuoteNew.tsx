@@ -59,7 +59,7 @@ export default function PlatformQuoteNew() {
   }
   return (
     <QuoteBuilder
-      key={source?.reportId ?? "new"}
+      key={`${selectedBusinessId}:${source?.reportId ?? "new"}`}
       businessId={selectedBusinessId}
       businesses={businesses.map(b => ({
         id: b.id, public_brand_name: b.public_brand_name,
