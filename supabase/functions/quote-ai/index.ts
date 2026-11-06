@@ -2,7 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createOpenAI } from "npm:@ai-sdk/openai@3";
 import { streamText, Output, jsonSchema, APICallError, NoObjectGeneratedError } from "npm:ai@6";
-import { decideQuoteAiAccess, audioUploadType, MAX_AUDIO_BYTES, MAX_TRANSCRIPT_CHARS } from "./authz.ts";
+import { decideQuoteAiAccess, audioUploadType, MAX_AUDIO_BYTES, MAX_TRANSCRIPT_CHARS, shapeTranscript } from "./authz.ts";
 
 const GATEWAY = "https://ai.gateway.lovable.dev/v1";
 const TRANSCRIBE_MODEL = "openai/gpt-transcribe";
@@ -109,8 +109,8 @@ async function transcribe(req: Request, apiKey: string) {
   }
   const text = (finalText ?? deltas).trim();
   if (finalText === null && !deltas) return json({ error: "Transcription ended before finishing. Try again." }, 502);
-  if (!text) return json({ error: "No speech was found in that recording." }, 422);
-  return json({ text: text.slice(0, MAX_TRANSCRIPT_CHARS) });
+  const shaped = shapeTranscript(text);
+  return "error" in shaped ? json({ error: shaped.error }, shaped.status) : json({ text: shaped.text });
 }
 
 async function generate(req: Request, apiKey: string) {
