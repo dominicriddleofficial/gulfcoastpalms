@@ -171,7 +171,17 @@ export default function QuotePreviewPanel({ data }: { data: QuotePreviewData }) 
       {/* Line Items */}
       {data.lineItems.length > 0 && (
         <div style={{ padding: "0 32px", marginBottom: "24px" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
+          <style>{`
+            @media (max-width: 560px) {
+              .qp-table thead { display: none; }
+              .qp-table tr.qp-row { display: grid; grid-template-columns: auto 1fr auto; align-items: baseline; }
+              .qp-table tr.qp-row td { padding: 4px 8px !important; }
+              .qp-table tr.qp-row td:first-child { grid-column: 1 / -1; padding-top: 10px !important; }
+              .qp-table tr.qp-row td:nth-child(2) { text-align: left !important; }
+              .qp-table tr.qp-row td:last-child { padding-bottom: 10px !important; }
+            }
+          `}</style>
+          <table className="qp-table" style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
             <thead>
               <tr style={{ backgroundColor: brand.tableHeaderBg, borderBottom: `1px solid rgba(${brand.accentRgb}, 0.2)` }}>
                 <th style={{ textAlign: "left", padding: "10px 12px", fontSize: "10px", fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: brand.secondaryText }}>Description</th>
@@ -182,7 +192,7 @@ export default function QuotePreviewPanel({ data }: { data: QuotePreviewData }) 
             </thead>
             <tbody>
               {data.lineItems.map((item, i) => (
-                <tr key={i} style={{ borderBottom: `1px solid ${brand.lineDivider}` }}>
+                <tr key={i} className="qp-row" data-testid="preview-line" style={{ borderBottom: `1px solid ${brand.lineDivider}` }}>
                   <td style={{ padding: "10px 12px", color: item.excluded ? brand.secondaryText : "#fff", fontSize: "14px", overflowWrap: "anywhere" }}>{item.description}{item.optionLabel && <span style={{ display: "block", fontSize: "11px", color: brand.secondaryText }}>{item.optionLabel}</span>}</td>
                   <td style={{ padding: "10px 8px", textAlign: "center", color: brand.secondaryText }}>{formatQuantity(item.quantity, item.unit)}</td>
                   <td style={{ padding: "10px 8px", textAlign: "right", color: brand.secondaryText }}>{fmt(item.unit_price)}{unitPriceSuffix(item.unit)}</td>
