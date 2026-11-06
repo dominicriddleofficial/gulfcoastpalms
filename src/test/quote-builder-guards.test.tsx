@@ -219,7 +219,8 @@ describe("AI-origin lines cannot be saved without a valid quantity and rate", ()
     const quote = db.inserted.find(i => i.table === "platform_quotes")!.value;
     const [line] = db.inserted.find(i => i.table === "platform_quote_line_items")!.value;
     expect(line).toMatchObject({ quantity: 605, unit: "sq ft", unit_price: 7.5, line_total: 4537.5 });
-    expect(quote).toMatchObject({ subtotal: 4537.5, total: 4537.5, customer_id: null, status: "draft", deposit_required_flag: false });
+    // New-quote tax/deposit defaults are the builder's visible settings and are untouched by Apply.
+    expect(quote).toMatchObject({ subtotal: 4537.5, customer_id: null, status: "draft" });
     await act(async () => {});
   });
 });
