@@ -220,6 +220,15 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
     enabled: !!bizId,
   });
   const logoUrl = brandAssets?.find(a => a.asset_type === 'logo')?.file_url || activeBiz?.logo_url || null;
+  // Footer contact comes from the workspace's saved contact details, never hardcoded.
+  const { data: bizContact } = useQuery({
+    queryKey: ['business-contact-quote', bizId],
+    queryFn: async () => {
+      const { data } = await supabase.from('businesses').select('support_phone, support_email').eq('id', bizId).maybeSingle();
+      return data ?? null;
+    },
+    enabled: !!bizId,
+  });
 
   // Generate a number only for new quotes; edits retain the original public link.
   useEffect(() => {
@@ -363,7 +372,8 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
     depositRequired: depositEnabled, depositAmount, scopeOfWork, publicNotes,
     businessName: activeBiz?.public_brand_name || "", shortcode: activeBiz?.shortcode || "gcp",
     isDraft: existing ? existing.status === "draft" : true, logoUrl,
-  }), [quoteNumber, quoteDate, validUntil, displayToName, customerEmail, customerPhone, lineItems, subtotal, taxEnabled, taxRate, taxAmount, discountAmount, total, depositEnabled, depositAmount, scopeOfWork, publicNotes, activeBiz, logoUrl, existing]);
+    businessPhone: bizContact?.support_phone ?? null, businessEmail: bizContact?.support_email ?? null,
+  }), [bizContact, quoteNumber, quoteDate, validUntil, displayToName, customerEmail, customerPhone, lineItems, subtotal, taxEnabled, taxRate, taxAmount, discountAmount, total, depositEnabled, depositAmount, scopeOfWork, publicNotes, activeBiz, logoUrl, existing]);
 
   /**
    * Persist the quote (draft) and return the saved row. The quote MUST exist
