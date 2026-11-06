@@ -36,3 +36,16 @@ export function audioUploadType(name: string, size: number): { type: string } | 
   if (!type) return { error: "Unsupported audio format. Use m4a, mp4, webm, wav or mp3." };
   return { type };
 }
+
+/** Hard safety ceiling for a single transcription response (well above the generation limit). */
+export const MAX_TRANSCRIPT_RESPONSE_CHARS = 100_000;
+
+/** Shapes a finished transcript: returns it whole, or an explicit error — never a silently cut transcript. */
+export function shapeTranscript(raw: string): { text: string } | { error: string; status: number } {
+  const text = raw.trim();
+  if (!text) return { error: "No speech was found in that recording.", status: 422 };
+  if (text.length > MAX_TRANSCRIPT_RESPONSE_CHARS) {
+    return { error: "That recording is too long to transcribe in full. Split it into shorter memos.", status: 413 };
+  }
+  return { text };
+}

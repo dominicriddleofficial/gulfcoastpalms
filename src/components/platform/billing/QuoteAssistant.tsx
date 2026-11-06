@@ -32,6 +32,8 @@ async function callQuoteAi(body: FormData | string, signal: AbortSignal, timeout
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
   if (!token) throw new Error("Your session expired. Sign in again.");
+  // Cancelled while waiting for the session: the abort event already fired, so check now.
+  if (signal.aborted) throw new DOMException("Aborted", "AbortError");
   let res: Response;
   // Combine the manual Cancel with a hard deadline so a stalled request never spins forever.
   const ctrl = new AbortController();
