@@ -399,18 +399,18 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   /** Option + arborist price checks shared by create and edit. Returns false (with a message) when blocked. */
   const checkOptionsAndPrices = (validLines: LineItem[]) => {
     if (validLines.some(l => lineAiProblem(l) !== null || (l.unit && l.unit !== "each" && parseQty(l.qty) === null))) {
-      toast.error("Enter the missing quantity or price on each flagged line before saving."); return false;
+      reportSaveError("Enter the missing quantity or price on each flagged line before saving."); return false;
     }
     if (validLines.some(l => l.arborist && (!l.priceConfirmed || l.price.trim() === "" || !(Number(l.price) >= 0)))) {
-      toast.error("Enter an exact price for each missing or ambiguous recommendation before saving."); return false;
+      reportSaveError("Enter an exact price for each missing or ambiguous recommendation before saving."); return false;
     }
     if (!optionsEnabled) return true;
     if (validLines.some(l => l.kind !== "required") && discountEnabled && discountType === "%" && Number(discountValue) > 0) {
-      toast.error("Quotes with customer choices use a fixed-dollar discount. Switch the discount to $ before saving."); return false;
+      reportSaveError("Quotes with customer choices use a fixed-dollar discount. Switch the discount to $ before saving."); return false;
     }
     const problems = builderOptionErrors(validLines.map(l => ({ id: l.id, description: l.description, quantity: Number(l.qty), unit_price: Number(l.price),
       option_kind: l.kind, option_group: l.kind === "alternative" ? l.group.trim() : null, default_selected: l.kind === "required" ? true : l.proposed })));
-    if (problems.length) { toast.error(problems[0]); return false; }
+    if (problems.length) { reportSaveError(problems[0]); return false; }
     return true;
   };
   const optionFields = (l: LineItem) => optionsEnabled
@@ -434,20 +434,21 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
 
   const persistQuote = async (): Promise<{ id: string; quote_number: string } | null> => {
     setSaveError(null);
+    const pricedLines = lineItems.filter(l => l.description.trim());
+    if (!checkOptionsAndPrices(pricedLines)) return null;
     if (deposit.error) { reportSaveError(deposit.error); return null; }
     if (editingQuote && editSnapshot.current) {
       if (editSavingRef.current) return null;
-      if (!userId) { toast.error("Sign in before saving the quote"); return null; }
+      if (!userId) { reportSaveError("Sign in before saving the quote"); return null; }
       const validLines = lineItems.filter(l => l.description.trim());
-      if (!validLines.length) { toast.error("Add at least one line item"); return null; }
-      if (!checkOptionsAndPrices(validLines)) return null;
+      if (!validLines.length) { reportSaveError("Add at least one line item"); return null; }
       if (lineItems.some(l => !l.description.trim() && (l.price !== "" || l.original))) {
-        toast.error("Enter a description or remove the empty line"); return null;
+        reportSaveError("Enter a description or remove the empty line"); return null;
       }
       if (![taxRate, discountValue, depositValue].every(v => Number.isFinite(Number(v)) && Number(v) >= 0) ||
         Number(taxRate) > 100 || (discountEnabled && discountAmount > subtotal) ||
         (depositEnabled && depositAmount > total)) {
-        toast.error("Check the tax, discount, and deposit amounts"); return null;
+        reportSaveError("Check the tax, discount, and deposit amounts"); return null;
       }
       editSavingRef.current = true;
       setSaving(true);
@@ -474,7 +475,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
           if (!resolved) return null;
           const { data: assigned, error: assignErr } = await supabase.from("platform_quotes").update({ customer_id: resolved, last_modified_by_user_id: userId })
             .eq("id", result.quote.id).eq("business_id", bizId).is("customer_id", null).eq("status", "draft").select("*").single();
-          if (assignErr || !assigned) { toast.error(`Changes saved, but the customer couldn't be attached: ${assignErr?.message ?? "not confirmed"}`); return null; }
+          if (assignErr || !assigned) { reportSaveError(`Changes saved, but the customer couldn't be attached: ${assignErr?.message ?? "not confirmed"}`); return null; }
           editSnapshot.current = { ...result, quote: assigned };
         }
         const saved = { id: result.quote.id, quote_number: result.quote.quote_number };
@@ -491,8 +492,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
     if (savedQuote) return savedQuote;
     if (!bizId) return null;
     const validLines = lineItems.filter(l => l.description.trim());
-    if (validLines.length === 0) { toast.error("Add at least one line item"); return null; }
-    if (!checkOptionsAndPrices(validLines)) return null;
+    if (validLines.length === 0) { reportSaveError("Add at least one line item"); return null; }
     if (arboristSource) {
       // Never create a second customer quote for the same arborist report.
       const { data: prior } = await supabase.from("platform_quotes").select("id, quote_number")
@@ -526,7 +526,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
       if (prior) window.location.assign(`/platform/quotes/${prior.id}/edit`);
       return null;
     }
-    if (error || !quote) { toast.error(error?.message || "Failed to create quote"); setSaving(false); return null; }
+    if (error || !quote) { reportSaveError(error?.message || "Failed to create quote. Check your connection and retry."); setSaving(false); return null; }
 
     // Insert line items
     const { error: lineErr } = await supabase.from("platform_quote_line_items").insert(
@@ -538,7 +538,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
       }))
     );
     if (lineErr) {
-      toast.error(`Quote saved but line items failed to save: ${lineErr.message}. Not sending — fix the quote before it goes out.`);
+      reportSaveError(`Quote saved but line items failed to save: ${lineErr.message}. Not sending — fix the quote before it goes out.`);
       setSaving(false);
       return null;
     }
@@ -561,7 +561,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
       .eq("id", quote.id)
       .single();
     if (verifyErr || !verified?.id) {
-      toast.error("Could not confirm the quote saved. Nothing was sent — please retry.");
+      reportSaveError("Could not confirm the quote saved. Nothing was sent — please retry.");
       setSaving(false);
       return null;
     }
