@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { editorDeposit } from "@/lib/quote-editor-deposit";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Search, Plus, X, Calendar, User, Building2, FileText,
@@ -208,6 +210,15 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   const mobilePreviewRef = useRef<HTMLDivElement>(null);
   const [showSendModal, setShowSendModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const reportSaveError = (message: string) => { setSaveError(message); toast.error(message); };
+  const scopeRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    const textarea = scopeRef.current;
+    if (!textarea) return;
+    textarea.style.height = "auto";
+    textarea.style.height = `${Math.max(192, textarea.scrollHeight)}px`;
+  }, [scopeOfWork]);
   /** The persisted quote, available only AFTER a successful save. The public
    *  link is derived from this — never from an unsaved placeholder. */
   const [savedQuote, setSavedQuote] = useState<{ id: string; quote_number: string } | null>(null);
@@ -298,7 +309,8 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   const taxAmount = taxEnabled ? roundMoney(taxableSubtotal * (Number(taxRate) || 0) / 100) : 0;
   const discountAmount = discountEnabled ? roundMoney(discountType === "%" ? subtotal * (Number(discountValue) || 0) / 100 : Number(discountValue) || 0) : 0;
   const total = Math.max(0, roundMoney(subtotal + taxAmount - discountAmount));
-  const depositAmount = depositEnabled ? roundMoney(depositType === "%" ? total * (Number(depositValue) || 0) / 100 : Number(depositValue) || 0) : 0;
+  const deposit = editorDeposit(total, depositEnabled, depositType, depositValue);
+  const depositAmount = deposit.amount;
 
   const addLine = () => setLineItems([...lineItems, { id: newLineId(), description: "", qty: "1", price: "", kind: "required", group: "", proposed: true }]);
   const removeLine = (id: string) => setLineItems(lineItems.filter(l => l.id !== id));
@@ -421,6 +433,8 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   };
 
   const persistQuote = async (): Promise<{ id: string; quote_number: string } | null> => {
+    setSaveError(null);
+    if (deposit.error) { reportSaveError(deposit.error); return null; }
     if (editingQuote && editSnapshot.current) {
       if (editSavingRef.current) return null;
       if (!userId) { toast.error("Sign in before saving the quote"); return null; }
@@ -467,7 +481,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
         setSavedQuote(saved);
         return saved;
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Could not save quote changes");
+        reportSaveError(error instanceof Error ? error.message : "Could not save quote changes. Check your connection and retry; your work is still here.");
         return null;
       } finally {
         editSavingRef.current = false;
@@ -727,9 +741,9 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
           </div>
         </div>
 
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 min-h-0 flex overflow-hidden">
           {/* Left: Form */}
-          <fieldset disabled={saving} className="flex-1 min-w-0 md:w-[60%] overflow-y-auto p-4 md:p-6 space-y-6">
+          <fieldset disabled={saving} className="flex-1 min-h-0 min-w-0 md:w-[60%] overflow-y-auto overscroll-contain p-4 md:p-6 space-y-6">
             {/* Business & Customer */}
             <section className="space-y-4">
               <SectionHeader title="Business & Customer" icon={Building2} />
@@ -856,10 +870,10 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                 </div>
               </div>
               <div>
-                <label className="font-body text-[10px] font-medium text-muted-foreground mb-1 block">Scope of Work</label>
-                <Textarea value={scopeOfWork} onChange={e => setScopeOfWork(e.target.value)}
+                <label htmlFor="quote-scope" className="font-body text-[10px] font-medium text-muted-foreground mb-1 block">Scope of Work</label>
+                <Textarea id="quote-scope" ref={scopeRef} value={scopeOfWork} onChange={e => setScopeOfWork(e.target.value)}
                   placeholder="Describe the full job scope shown to the customer…"
-                  className="bg-card border-border font-body text-sm min-h-[80px]" />
+                  className="bg-card border-border font-body text-base leading-relaxed min-h-48 resize-none overflow-hidden" />
               </div>
             </section>
 
@@ -1005,15 +1019,24 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                     <span className="font-body text-base font-bold text-foreground">Total</span>
                     <span className="font-body text-xl font-bold text-primary">${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <button onClick={() => setDepositEnabled(!depositEnabled)} className="flex items-center gap-1.5 font-body text-sm text-muted-foreground hover:text-foreground">
-                      <div className={cn("w-3.5 h-3.5 rounded border transition-colors", depositEnabled ? "bg-primary border-primary" : "border-border")} /> Deposit Required
-                    </button>
+                  <div className="space-y-3 border-t border-border pt-3">
+                    <label htmlFor="quote-deposit-required" className="flex min-h-12 items-center gap-3 cursor-pointer font-body text-sm text-foreground">
+                      <Checkbox id="quote-deposit-required" checked={depositEnabled} className="h-6 w-6" onCheckedChange={value => setDepositEnabled(value === true)} />
+                      Deposit Required
+                    </label>
                     {depositEnabled && (
-                      <div className="flex items-center gap-1">
-                        <Input type="number" value={depositValue} onChange={e => setDepositValue(e.target.value)} className="w-14 h-7 text-xs text-right bg-secondary/50 border-border" />
-                        <button onClick={() => setDepositType(depositType === "%" ? "$" : "%")} className="text-xs font-bold text-primary border border-primary/30 rounded px-1.5 py-0.5">{depositType}</button>
-                        <span className="text-sm text-primary ml-2">${depositAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                      <div className="space-y-3">
+                        <div className="flex flex-wrap gap-2">
+                          <Button type="button" variant={depositType === "%" && depositValue === "25" ? "default" : "outline"} className="min-h-11" onClick={() => { setDepositType("%"); setDepositValue("25"); }}>25%</Button>
+                          <Button type="button" variant="outline" className="min-h-11" aria-pressed={depositType === "%"} onClick={() => setDepositType("%")}>Custom %</Button>
+                          <Button type="button" variant="outline" className="min-h-11" aria-pressed={depositType === "$"} onClick={() => setDepositType("$")}>Fixed $</Button>
+                        </div>
+                        <label className="block text-sm text-muted-foreground">{depositType === "%" ? "Deposit percentage" : "Deposit amount ($)"}
+                          <Input aria-label={depositType === "%" ? "Deposit percentage" : "Deposit amount ($)"} type="number" inputMode="decimal" min="0.01" max={depositType === "%" ? 100 : total} step="0.01" value={depositValue} onChange={e => setDepositValue(e.target.value)} className="mt-1 h-12 text-base bg-secondary/50 border-border" aria-invalid={!!deposit.error} aria-describedby={deposit.error ? "quote-deposit-error" : undefined} />
+                        </label>
+                        {deposit.error && <p id="quote-deposit-error" className="text-sm text-destructive">{deposit.error}</p>}
+                        <div className="flex justify-between gap-2 text-sm"><span className="text-muted-foreground">Required deposit</span><span className="text-primary">${depositAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></div>
+                        <div className="flex justify-between gap-2 text-sm"><span className="text-muted-foreground">Remaining balance</span><span className="text-foreground">${deposit.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></div>
                       </div>
                     )}
                   </div>
@@ -1034,21 +1057,6 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
               </div>
             </section>
 
-            {/* Actions */}
-            <section className="flex flex-col sm:flex-row gap-2 pb-8">
-              <Button variant="outline" className="flex-1 font-body text-sm" disabled={saving} onClick={() => { void handleSaveDraft(); }}>
-                <Save className="w-4 h-4 mr-1.5" /> {saving ? "Saving…" : editingQuote ? "Save Changes" : "Save as Draft"}
-              </Button>
-              {!editingQuote && <Button className="flex-1 font-body text-sm" disabled={saving}
-                onClick={() => {
-                  if (!customerId) { toast.error("Choose a customer before sending. You can save this as a draft without one."); return; }
-                  if (lineItems.filter(l => l.description.trim()).length === 0) { toast.error("Add at least one line item"); return; }
-                  // Save first — the send sheet needs the real quote link.
-                  void openSendModal();
-                }}>
-                <Send className="w-4 h-4 mr-1.5" /> {saving && !showSendModal ? "Saving…" : "Send Quote"}
-              </Button>}
-            </section>
           </fieldset>
 
           {/* Right: Live Preview */}
@@ -1061,6 +1069,18 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
             </div>
           </div>
         </div>
+        <footer className="shrink-0 border-t border-border bg-background px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]">
+          {saveError && <p role="alert" className="text-sm text-destructive mb-3">{saveError}</p>}
+          <div className="flex gap-2">
+            <Button className="flex-1 min-h-12 font-body text-sm" disabled={saving} onClick={() => { void handleSaveDraft(); }}>
+              <Save className="w-4 h-4 mr-1.5" /> {saving ? "Saving…" : editingQuote ? "Save Changes" : "Save as Draft"}
+            </Button>
+            {!editingQuote && <Button variant="outline" className="flex-1 min-h-12" disabled={saving} onClick={() => {
+              if (!customerId) { reportSaveError("Choose a customer before sending. You can save this as a draft without one."); return; }
+              void openSendModal();
+            }}><Send className="w-4 h-4 mr-1.5" /> Send Quote</Button>}
+          </div>
+        </footer>
       </div>
 
       {/* Mobile Preview */}
