@@ -11,7 +11,7 @@ export interface WorkspaceTheme {
   shortcode: string;
   /** Brand label, used for accessibility / debugging */
   label: string;
-  /** Primary brand hex (dark company colour, exposed as --primary-color) */
+  /** Primary brand hex, exposed as --primary-color */
   primaryHex: string;
   /** Bright accent hex (used for highlights, charts, progress bars) */
   accentHex: string;
