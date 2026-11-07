@@ -11,6 +11,7 @@
   width: 650px; height: 850px; left: -420px; top: 28vh;
   background: radial-gradient(ellipse at center, rgba(var(--biz-accent-rgb), .09), transparent 65%);
 }
+:root[data-workspace-theme='PPS'] :is(.platform-aurora-primary, .platform-aurora-secondary) { display: none; }
 .platform-fade {
   position: absolute; left: 0; right: 0; bottom: 0; height: 50%;
   background:
