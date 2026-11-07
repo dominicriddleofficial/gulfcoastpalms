@@ -220,15 +220,19 @@ export function useWorkspaceTheme() {
  * for the active workspace. Apply to the platform shell element.
  */
 export function workspaceThemeVars(theme: WorkspaceTheme): CSSProperties {
-  const subtleGlowOpacity = "0.35";
   return {
     ["--background" as string]: theme.hsl.background,
+    ["--foreground" as string]: theme.hsl.foreground,
     ["--card" as string]: theme.hsl.card,
+    ["--card-foreground" as string]: theme.hsl.cardForeground,
     ["--popover" as string]: theme.hsl.popover,
+    ["--popover-foreground" as string]: theme.hsl.popoverForeground,
     ["--primary" as string]: theme.hsl.primary,
     ["--primary-foreground" as string]: theme.hsl.primaryForeground,
     ["--secondary" as string]: theme.hsl.secondary,
+    ["--secondary-foreground" as string]: theme.hsl.secondaryForeground,
     ["--muted" as string]: theme.hsl.muted,
+    ["--muted-foreground" as string]: theme.hsl.mutedForeground,
     ["--accent" as string]: theme.hsl.accent,
     ["--accent-foreground" as string]: theme.hsl.accentForeground,
     ["--border" as string]: theme.hsl.border,
@@ -239,13 +243,13 @@ export function workspaceThemeVars(theme: WorkspaceTheme): CSSProperties {
     ["--biz-accent-rgb" as string]: theme.accentRgb,
     ["--biz-background-hex" as string]: theme.backgroundHex,
     ["--biz-card-hex" as string]: theme.cardHex,
-    // Both workspaces: richer glowing emerald fade — strong at the bottom edge
-    // and held through the middle, plus a broad soft bloom.
-    ["--platform-fade-mix" as string]: "72%",
-    ["--platform-fade-mid-mix" as string]: "48%",
-    ["--platform-fade-bloom" as string]: "0.3",
+    // The shared bottom-half layout uses each workspace's own color recipe.
+    ["--platform-fade-mix" as string]: theme.fade.bottomMix,
+    ["--platform-fade-mid-mix" as string]: theme.fade.midMix,
+    ["--platform-fade-bloom" as string]: theme.fade.bloom,
+    ["--platform-tooltip-background" as string]: theme.tooltipBackground,
     ["--accent-color" as string]: theme.accentHex,
-    ["--accent-glow" as string]: `rgba(${theme.accentRgb}, ${subtleGlowOpacity})`,
+    ["--accent-glow" as string]: `rgba(${theme.accentRgb}, ${theme.glowOpacity})`,
     ["--primary-color" as string]: theme.primaryHex,
     ["--badge-color" as string]: theme.accentHex,
     ["--button-bg" as string]: theme.accentHex,
