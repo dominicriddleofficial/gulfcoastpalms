@@ -163,8 +163,14 @@ export default function QuotePreviewPanel({ data }: { data: QuotePreviewData }) 
           <div style={{
             background: `rgba(${brand.accentRgb}, 0.05)`, border: `1px solid rgba(${brand.accentRgb}, 0.12)`,
             borderRadius: "8px", padding: "16px", fontSize: "13px", color: "#d4d4d8", lineHeight: 1.6,
-            whiteSpace: "pre-wrap",
-          }}>{data.scopeOfWork}</div>
+            whiteSpace: "pre-wrap", overflowWrap: "anywhere",
+          }}>{data.scopeOfWork.split(/\n\s*\n/).map((paragraph, i) => {
+            const [heading, ...lines] = paragraph.split("\n");
+            const section = lines.some(line => /^\s*•/.test(line));
+            return <div key={i} className={i ? "mt-4" : undefined}>
+              {section ? <><strong className="block mb-2">{heading}</strong>{lines.map((line, j) => <div key={j} className={/^\s*•/.test(line) ? "pl-3 -indent-3 mb-1" : "mt-2"}>{line}</div>)}</> : paragraph}
+            </div>;
+          })}</div>
         </div>
       )}
 
