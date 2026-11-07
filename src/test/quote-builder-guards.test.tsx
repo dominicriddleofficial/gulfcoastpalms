@@ -113,6 +113,45 @@ async function pickCustomer(name: string) {
 }
 
 describe("Unassigned draft customer selection", () => {
+  it("saves an unassigned PPS draft with 25% deposit and preserves it after reopening", async () => {
+    const view = setup(fixture());
+    fireEvent.click(screen.getByRole("checkbox", { name: "Deposit Required" }));
+    fireEvent.click(screen.getByRole("button", { name: "25%" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save Changes" }));
+    await waitFor(() => expect(db.quote.deposit_value).toBe(25));
+    expect(db.quote).toMatchObject({ customer_id: null, status: "draft", total: 10875,
+      deposit_required_flag: true, deposit_type: "percentage", deposit_amount_calculated: 2718.75 });
+    expect(db.lines.map(l => l.id)).toEqual(["item-0", "item-1"]);
+    expect(db.invoke).not.toHaveBeenCalled();
+    view.unmount();
+    setup({ quote: structuredClone(db.quote), items: structuredClone(db.lines), customer: null } as QuoteEditData);
+    expect(screen.getByRole("checkbox", { name: "Deposit Required" })).toBeChecked();
+    expect(screen.getByLabelText("Deposit percentage")).toHaveValue(25);
+    expect(screen.getAllByText("$2,718.75").length).toBeGreaterThan(0);
+    expect(screen.getByText("$8,156.25")).toBeTruthy();
+  });
+
+  it("blocks a required zero or excessive deposit with a persistent error and keeps work editable", async () => {
+    setup(fixture());
+    fireEvent.click(screen.getByRole("checkbox", { name: "Deposit Required" }));
+    for (const value of ["0", "101", ""]) {
+      fireEvent.change(screen.getByLabelText("Deposit percentage"), { target: { value } });
+      fireEvent.click(screen.getByRole("button", { name: "Save Changes" }));
+      expect(screen.getByRole("alert")).toHaveTextContent("no more than 100");
+      expect(db.writes).toHaveLength(0);
+    }
+  });
+
+  it("keeps a concurrency refusal visible and preserves unsaved scope", async () => {
+    setup(fixture());
+    fireEvent.change(screen.getByLabelText("Scope of Work"), { target: { value: "Patio revised scope" } });
+    db.quote.updated_at = "2026-11-07T00:00:00Z";
+    fireEvent.click(screen.getByRole("button", { name: "Save Changes" }));
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Reopen it"));
+    expect(screen.getByLabelText("Scope of Work")).toHaveValue("Patio revised scope");
+    expect(db.writes).toHaveLength(0);
+  });
+
   it("offers only same-workspace customers and attaches the chosen one on save", async () => {
     setup(fixture());
     fireEvent.focus(screen.getByPlaceholderText("Search customer…"));
