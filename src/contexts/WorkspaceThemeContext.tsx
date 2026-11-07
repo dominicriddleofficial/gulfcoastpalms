@@ -11,7 +11,7 @@ export interface WorkspaceTheme {
   shortcode: string;
   /** Brand label, used for accessibility / debugging */
   label: string;
-  /** Primary brand hex (dark company colour, exposed as --primary-color) */
+  /** Primary brand hex, exposed as --primary-color */
   primaryHex: string;
   /** Bright accent hex (used for highlights, charts, progress bars) */
   accentHex: string;
@@ -28,18 +28,31 @@ export interface WorkspaceTheme {
   /** HSL strings (no `hsl()` wrapper) for shadcn semantic tokens */
   hsl: {
     background: string;
+    foreground: string;
     card: string;
+    cardForeground: string;
     popover: string;
+    popoverForeground: string;
     primary: string;
     primaryForeground: string;
     secondary: string;
+    secondaryForeground: string;
     muted: string;
+    mutedForeground: string;
     accent: string;
     accentForeground: string;
     border: string;
     input: string;
     ring: string;
   };
+  /** Bottom-half atmosphere; each workspace keeps its own approved recipe. */
+  fade: {
+    bottomMix: string;
+    midMix: string;
+    bloom: string;
+  };
+  glowOpacity: string;
+  tooltipBackground: string;
 }
 
 const GCP_THEME: WorkspaceTheme = {
@@ -54,27 +67,62 @@ const GCP_THEME: WorkspaceTheme = {
   statusBarHex: "#050809",
   hsl: {
     background: "195 29% 3%",
+    foreground: "160 15% 94%",
     card: "195 25% 6%",
+    cardForeground: "160 15% 94%",
     popover: "195 20% 8%",
+    popoverForeground: "160 15% 94%",
     primary: "159 80% 56%",
     primaryForeground: "158 65% 5%",
     secondary: "190 16% 11%",
+    secondaryForeground: "160 12% 88%",
     muted: "190 16% 10%",
+    mutedForeground: "180 6% 62%",
     accent: "159 80% 56%",
     accentForeground: "158 65% 5%",
     border: "185 13% 15%",
     input: "185 13% 18%",
     ring: "159 80% 56%",
   },
+  fade: { bottomMix: "72%", midMix: "48%", bloom: "0.3" },
+  glowOpacity: "0.35",
+  tooltipBackground: "#101b1eef",
 };
 
-/** PPS uses the same approved near-black + emerald platform look as GCP;
- * only its identity (name, logo, records) differs. */
+/** Prestige keeps GCP's modern dark layout with its own neutral charcoal,
+ * white and silver identity rather than inheriting the emerald palette. */
 const PPS_THEME: WorkspaceTheme = {
-  ...GCP_THEME,
   shortcode: "PPS",
   label: "Prestige Property Services",
-  hsl: { ...GCP_THEME.hsl },
+  primaryHex: "#D4D4D8",
+  accentHex: "#F4F4F5",
+  buttonTextHex: "#09090B",
+  accentRgb: "244, 244, 245",
+  backgroundHex: "#09090B",
+  cardHex: "#131316",
+  statusBarHex: "#09090B",
+  hsl: {
+    background: "240 10% 3.9%",
+    foreground: "0 0% 98%",
+    card: "240 9% 8%",
+    cardForeground: "0 0% 98%",
+    popover: "240 6% 10%",
+    popoverForeground: "0 0% 98%",
+    primary: "240 5% 96%",
+    primaryForeground: "240 10% 3.9%",
+    secondary: "240 4% 16%",
+    secondaryForeground: "0 0% 90%",
+    muted: "240 5% 13%",
+    mutedForeground: "240 5% 65%",
+    accent: "240 5% 96%",
+    accentForeground: "240 10% 3.9%",
+    border: "240 5% 20%",
+    input: "240 5% 26%",
+    ring: "240 5% 96%",
+  },
+  fade: { bottomMix: "50%", midMix: "18%", bloom: "0.24" },
+  glowOpacity: "0.28",
+  tooltipBackground: "#18181bef",
 };
 
 const THEME_REGISTRY: Record<string, WorkspaceTheme> = {
@@ -134,11 +182,6 @@ export function WorkspaceThemeProvider({ shortcode, applyGlobally = true, childr
     // semantic tokens while the workspace is mounted, then restore the site.
     const vars = {
       ...workspaceThemeVars(theme),
-      "--foreground": "160 15% 94%",
-      "--card-foreground": "160 15% 94%",
-      "--popover-foreground": "160 15% 94%",
-      "--secondary-foreground": "160 12% 88%",
-      "--muted-foreground": "180 6% 62%",
       "--font-display": "'Inter', sans-serif",
       "--font-body": "'Inter', sans-serif",
     } as Record<string, string>;
@@ -177,15 +220,19 @@ export function useWorkspaceTheme() {
  * for the active workspace. Apply to the platform shell element.
  */
 export function workspaceThemeVars(theme: WorkspaceTheme): CSSProperties {
-  const subtleGlowOpacity = "0.35";
   return {
     ["--background" as string]: theme.hsl.background,
+    ["--foreground" as string]: theme.hsl.foreground,
     ["--card" as string]: theme.hsl.card,
+    ["--card-foreground" as string]: theme.hsl.cardForeground,
     ["--popover" as string]: theme.hsl.popover,
+    ["--popover-foreground" as string]: theme.hsl.popoverForeground,
     ["--primary" as string]: theme.hsl.primary,
     ["--primary-foreground" as string]: theme.hsl.primaryForeground,
     ["--secondary" as string]: theme.hsl.secondary,
+    ["--secondary-foreground" as string]: theme.hsl.secondaryForeground,
     ["--muted" as string]: theme.hsl.muted,
+    ["--muted-foreground" as string]: theme.hsl.mutedForeground,
     ["--accent" as string]: theme.hsl.accent,
     ["--accent-foreground" as string]: theme.hsl.accentForeground,
     ["--border" as string]: theme.hsl.border,
@@ -196,13 +243,13 @@ export function workspaceThemeVars(theme: WorkspaceTheme): CSSProperties {
     ["--biz-accent-rgb" as string]: theme.accentRgb,
     ["--biz-background-hex" as string]: theme.backgroundHex,
     ["--biz-card-hex" as string]: theme.cardHex,
-    // Both workspaces: richer glowing emerald fade — strong at the bottom edge
-    // and held through the middle, plus a broad soft bloom.
-    ["--platform-fade-mix" as string]: "72%",
-    ["--platform-fade-mid-mix" as string]: "48%",
-    ["--platform-fade-bloom" as string]: "0.3",
+    // The shared bottom-half layout uses each workspace's own color recipe.
+    ["--platform-fade-mix" as string]: theme.fade.bottomMix,
+    ["--platform-fade-mid-mix" as string]: theme.fade.midMix,
+    ["--platform-fade-bloom" as string]: theme.fade.bloom,
+    ["--platform-tooltip-background" as string]: theme.tooltipBackground,
     ["--accent-color" as string]: theme.accentHex,
-    ["--accent-glow" as string]: `rgba(${theme.accentRgb}, ${subtleGlowOpacity})`,
+    ["--accent-glow" as string]: `rgba(${theme.accentRgb}, ${theme.glowOpacity})`,
     ["--primary-color" as string]: theme.primaryHex,
     ["--badge-color" as string]: theme.accentHex,
     ["--button-bg" as string]: theme.accentHex,

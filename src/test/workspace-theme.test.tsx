@@ -21,14 +21,26 @@ describe("workspace theme lifecycle", () => {
     expect(meta.content).toBe('#1a5c38');
     root.style.removeProperty('--background'); meta.remove();
   });
-  it("gives PPS the same near-black emerald surfaces as GCP while keeping its identity", () => {
+  it("keeps GCP emerald and switches PPS to neutral charcoal and white", () => {
     const view = render(<WorkspaceThemeProvider shortcode="GCP"><div /></WorkspaceThemeProvider>);
-    expect(document.documentElement.style.getPropertyValue('--accent-color')).toBe('#34E8A8');
-    view.rerender(<WorkspaceThemeProvider shortcode="PPS"><div /></WorkspaceThemeProvider>);
     const root = document.documentElement;
     expect(root.style.getPropertyValue('--accent-color')).toBe('#34E8A8');
     expect(root.style.getPropertyValue('--background')).toBe('195 29% 3%');
-    expect(root.style.getPropertyValue('--card')).toBe('195 25% 6%');
+    expect(root.style.getPropertyValue('--foreground')).toBe('160 15% 94%');
+    expect(root.style.getPropertyValue('--platform-fade-mix')).toBe('72%');
+    expect(root.style.getPropertyValue('--platform-fade-mid-mix')).toBe('48%');
+    expect(root.style.getPropertyValue('--platform-fade-bloom')).toBe('0.3');
+
+    view.rerender(<WorkspaceThemeProvider shortcode="PPS"><div /></WorkspaceThemeProvider>);
+    expect(root.style.getPropertyValue('--accent-color')).toBe('#F4F4F5');
+    expect(root.style.getPropertyValue('--background')).toBe('240 10% 3.9%');
+    expect(root.style.getPropertyValue('--foreground')).toBe('0 0% 98%');
+    expect(root.style.getPropertyValue('--card')).toBe('240 9% 8%');
+    expect(root.style.getPropertyValue('--primary-foreground')).toBe('240 10% 3.9%');
+    expect(root.style.getPropertyValue('--platform-fade-mix')).toBe('50%');
+    expect(root.style.getPropertyValue('--platform-fade-mid-mix')).toBe('18%');
+    expect(root.style.getPropertyValue('--platform-fade-bloom')).toBe('0.24');
+    expect(root.style.getPropertyValue('--platform-tooltip-background')).toBe('#18181bef');
     expect(root.dataset.workspaceTheme).toBe('PPS');
     view.unmount();
   });
