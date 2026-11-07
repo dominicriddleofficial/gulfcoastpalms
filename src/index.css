@@ -200,6 +200,40 @@
   --font-body: 'Inter', sans-serif;
 }
 
+/* Portaled platform panels render outside the shell's inline theme styles.
+   Let Prestige panels inherit the active root tokens instead of resetting to
+   the GCP defaults above; destructive colors keep their semantic meaning. */
+:root[data-workspace-theme='PPS'] .ops-theme {
+  --background: inherit;
+  --foreground: inherit;
+  --card: inherit;
+  --card-foreground: inherit;
+  --popover: inherit;
+  --popover-foreground: inherit;
+  --primary: inherit;
+  --primary-foreground: inherit;
+  --secondary: inherit;
+  --secondary-foreground: inherit;
+  --muted: inherit;
+  --muted-foreground: inherit;
+  --accent: inherit;
+  --accent-foreground: inherit;
+  --border: inherit;
+  --input: inherit;
+  --ring: inherit;
+  --accent-color: inherit;
+  --accent-glow: inherit;
+  --primary-color: inherit;
+  --badge-color: inherit;
+  --button-bg: inherit;
+  --button-text: inherit;
+  --biz-primary-hex: inherit;
+  --biz-accent-hex: inherit;
+  --biz-accent-rgb: inherit;
+  --biz-background-hex: inherit;
+  --biz-card-hex: inherit;
+}
+
 /* Platform-specific refinements */
 .ops-theme .platform-card {
   background: linear-gradient(145deg, hsl(var(--card)), hsl(var(--background)));
