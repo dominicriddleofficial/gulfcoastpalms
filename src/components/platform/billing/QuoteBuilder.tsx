@@ -732,7 +732,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                 <Sparkles className="w-3.5 h-3.5 sm:mr-1" /><span className="hidden sm:inline">Describe your quote</span>
               </Button>
             )}
-            <Button variant="outline" size="sm" className="font-body text-xs md:hidden" onClick={() => setShowMobilePreview(true)}>
+            <Button aria-label="Quote Preview" variant="outline" size="sm" className="font-body text-xs md:hidden" onClick={() => setShowMobilePreview(true)}>
               <Eye className="w-3.5 h-3.5" />
             </Button>
             <Button variant="outline" size="sm" className="font-body text-xs hidden md:flex" onClick={() => setShowMobilePreview(true)}>
@@ -1085,14 +1085,14 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
 
       {/* Mobile Preview */}
       <Sheet open={showMobilePreview} onOpenChange={setShowMobilePreview}>
-        <SheetContent side="bottom" className="h-[95vh] p-0 bg-background border-t border-border overflow-hidden flex flex-col">
+        <SheetContent side="bottom" className="h-[95dvh] p-0 bg-background border-t border-border overflow-hidden flex flex-col">
           <SheetHeader className="px-4 pt-4 pb-2 shrink-0">
             <SheetTitle className="text-foreground font-display text-base">Quote Preview</SheetTitle>
           </SheetHeader>
-          <div className="flex-1 overflow-y-auto px-4 pb-4">
+          <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4">
             <div className="max-w-[480px] mx-auto" ref={mobilePreviewRef}><QuotePreviewPanel data={previewData} /></div>
           </div>
-          <div className="shrink-0 px-4 py-3 border-t border-border bg-background flex gap-2">
+          <div className="shrink-0 px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] border-t border-border bg-background flex gap-2">
             <Button variant="outline" className="flex-1 font-body text-sm" onClick={async () => {
               try {
                 await downloadElementAsPdf(mobilePreviewRef.current, `Quote-${quoteNumber || "draft"}.pdf`);
