@@ -216,8 +216,18 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   useEffect(() => {
     const textarea = scopeRef.current;
     if (!textarea) return;
-    textarea.style.height = "auto";
-    textarea.style.height = `${Math.max(192, textarea.scrollHeight)}px`;
+    const resize = () => {
+      textarea.style.height = "auto";
+      textarea.style.height = `${Math.max(192, textarea.scrollHeight + 2)}px`;
+    };
+    resize();
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(entries => {
+      const width = entries[0]?.contentRect.width;
+      if (width !== lastWidth) { lastWidth = width; resize(); }
+    });
+    let lastWidth: number | undefined;
+    observer?.observe(textarea);
+    return () => observer?.disconnect();
   }, [scopeOfWork]);
   /** The persisted quote, available only AFTER a successful save. The public
    *  link is derived from this — never from an unsaved placeholder. */
