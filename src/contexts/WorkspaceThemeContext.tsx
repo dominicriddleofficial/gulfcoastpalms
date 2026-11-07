@@ -120,7 +120,7 @@ const PPS_THEME: WorkspaceTheme = {
     input: "240 5% 26%",
     ring: "240 5% 96%",
   },
-  fade: { bottomMix: "50%", midMix: "18%", bloom: "0.24" },
+  fade: { bottomMix: "72%", midMix: "48%", bloom: "0.3" },
   glowOpacity: "0.28",
   tooltipBackground: "#18181bef",
 };

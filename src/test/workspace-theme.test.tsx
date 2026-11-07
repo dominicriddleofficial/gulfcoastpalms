@@ -37,9 +37,9 @@ describe("workspace theme lifecycle", () => {
     expect(root.style.getPropertyValue('--foreground')).toBe('0 0% 98%');
     expect(root.style.getPropertyValue('--card')).toBe('240 9% 8%');
     expect(root.style.getPropertyValue('--primary-foreground')).toBe('240 10% 3.9%');
-    expect(root.style.getPropertyValue('--platform-fade-mix')).toBe('50%');
-    expect(root.style.getPropertyValue('--platform-fade-mid-mix')).toBe('18%');
-    expect(root.style.getPropertyValue('--platform-fade-bloom')).toBe('0.24');
+    expect(root.style.getPropertyValue('--platform-fade-mix')).toBe('72%');
+    expect(root.style.getPropertyValue('--platform-fade-mid-mix')).toBe('48%');
+    expect(root.style.getPropertyValue('--platform-fade-bloom')).toBe('0.3');
     expect(root.style.getPropertyValue('--platform-tooltip-background')).toBe('#18181bef');
     expect(root.dataset.workspaceTheme).toBe('PPS');
     view.unmount();
