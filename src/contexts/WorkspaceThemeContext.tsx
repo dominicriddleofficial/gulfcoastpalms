@@ -28,18 +28,31 @@ export interface WorkspaceTheme {
   /** HSL strings (no `hsl()` wrapper) for shadcn semantic tokens */
   hsl: {
     background: string;
+    foreground: string;
     card: string;
+    cardForeground: string;
     popover: string;
+    popoverForeground: string;
     primary: string;
     primaryForeground: string;
     secondary: string;
+    secondaryForeground: string;
     muted: string;
+    mutedForeground: string;
     accent: string;
     accentForeground: string;
     border: string;
     input: string;
     ring: string;
   };
+  /** Bottom-half atmosphere; each workspace keeps its own approved recipe. */
+  fade: {
+    bottomMix: string;
+    midMix: string;
+    bloom: string;
+  };
+  glowOpacity: string;
+  tooltipBackground: string;
 }
 
 const GCP_THEME: WorkspaceTheme = {
