@@ -182,11 +182,6 @@ export function WorkspaceThemeProvider({ shortcode, applyGlobally = true, childr
     // semantic tokens while the workspace is mounted, then restore the site.
     const vars = {
       ...workspaceThemeVars(theme),
-      "--foreground": "160 15% 94%",
-      "--card-foreground": "160 15% 94%",
-      "--popover-foreground": "160 15% 94%",
-      "--secondary-foreground": "160 12% 88%",
-      "--muted-foreground": "180 6% 62%",
       "--font-display": "'Inter', sans-serif",
       "--font-body": "'Inter', sans-serif",
     } as Record<string, string>;
