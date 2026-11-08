@@ -1,4 +1,5 @@
 # Arborist + quote workflow (GCP)
+- [ ] Diagnose mobile GCP-Q-000054 preview/save, harden verified editor failure paths, recover authorized customer/scope and verify persisted lines without publication.
 - [x] Replace new disposal pairing with independent customer add-ons; 68 focused tests and 238 isolated SQL checks; editor/reopen and public mobile/desktop fixtures verified; no production writes or publication.
 - [x] Fix mobile deposit/save controls and readable scope; 28 focused tests pass; owner-authenticated PPS-Q-000007 update and version 2 readback verified without sending or publishing.
 - [x] Final narrow fix: preserve required tree descriptions in disposal scope and block disabling with unrelated choice groups; 22 affected tests pass, preview build OK, public/PDF scope plumbing reviewed; no publication or real records/messages
