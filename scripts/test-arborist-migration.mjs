@@ -341,5 +341,28 @@ for (const fn of ['quote_pricing_fingerprint(uuid)','approve_quote_options(uuid,
   check(lock.indexOf('link_revoked')>linkAt && lock.indexOf('link_expired')>linkAt && lock.indexOf('link_submitted')>linkAt,'revoke/expiry/status rechecked under both locks');
   check((await db.query(`SELECT has_function_privilege('anon','public.arborist_link_lock(text)','EXECUTE') OR has_function_privilege('authenticated','public.arborist_link_lock(text)','EXECUTE') AS ok`)).rows[0].ok===false,'lock helper stays service-only');
 }
+// Independent extras: all eight selections use the existing authoritative approval/invoice functions.
+for (let mask = 0; mask < 8; mask++) {
+  await service();
+  const q = uuid(400 + mask), ids = Array.from({ length: 4 }, (_, i) => uuid(500 + mask * 4 + i));
+  const amounts = [1300, 200, 100, 250];
+  await db.query(`INSERT INTO platform_quotes(id,business_id,status,tax_rate,discount_total) VALUES ($1,$2,'sent',0,0)`, [q,biz]);
+  for (let i = 0; i < 4; i++) await db.query(`INSERT INTO platform_quote_line_items(id,quote_id,business_id,description,quantity,unit_price,line_total,option_kind,default_selected,sort_order) VALUES ($1,$2,$3,$4,1,$5,$5,$6,$7,$8)`,
+    [ids[i],q,biz,['Branches / leave trunk','Haul-away','Stump grinding','Cut trunk to ground'][i],amounts[i],i ? 'optional' : 'required',i === 0,i]);
+  const selected = ids.slice(1).filter((_,i) => mask & (1 << i));
+  const expected = 1300 + amounts.slice(1).reduce((sum,n,i) => sum + (mask & (1 << i) ? n : 0),0);
+  const fingerprint = await fp(q);
+  await guestErr(() => approve(selected,'stale',q),'quote_stale','independent extras still reject stale prices');
+  await guestErr(() => approve([ids[0]],fingerprint,q),'quote_invalid_option','required base cannot be selected/deselected by ids');
+  const result = (await approve(selected,fingerprint,q)).rows[0].r;
+  check(Number(result.snapshot.total) === expected, `mask ${mask} authoritative total ${expected}`);
+  check(JSON.stringify(result.snapshot.selected_option_ids.slice().sort()) === JSON.stringify(selected.slice().sort()), 'exact customer selection persisted');
+  check(result.snapshot.lines.filter(l => l.selected).length === selected.length + 1, 'snapshot includes base and only chosen extras');
+  await guestErr(() => db.query(`UPDATE platform_quote_line_items SET unit_price=1 WHERE id=$1`,[ids[0]]),'accepted with the customer','accepted extras snapshot stays frozen');
+  await clearClaims(); await login(office);
+  const invoice = (await db.query(`SELECT invoice_accepted_quote($1) r`,[q])).rows[0].r;
+  const row = (await db.query(`SELECT total,(SELECT count(*)::int FROM platform_invoice_line_items WHERE invoice_id=i.id) n FROM platform_invoices i WHERE id=$1`,[invoice.invoice_id])).rows[0];
+  check(Number(row.total) === expected && row.n === selected.length + 1, 'isolated invoice never bills excluded extras');
+}
 console.log(`PASS: ${checks} isolated PostgreSQL migration, permissions, validation, and concurrency checks`);
 await db.close();

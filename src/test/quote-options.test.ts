@@ -11,6 +11,26 @@ const lines: OptionLine[] = [
 ];
 
 describe("customer quote options", () => {
+  const extras: OptionLine[] = [
+    { id: "base", description: "Removing branches and leaving base of trunk", quantity: 1, unit_price: 1300, option_kind: "required", default_selected: true },
+    { id: "haul", description: "Haul-away", quantity: 1, unit_price: 200, option_kind: "optional", default_selected: false },
+    { id: "stump", description: "Stump grinding", quantity: 1, unit_price: 100, option_kind: "optional", default_selected: false },
+    { id: "trunk", description: "Cut remaining trunk down to ground level", quantity: 1, unit_price: 250, option_kind: "optional", default_selected: false },
+  ];
+  it.each([
+    [[], 1300], [["haul"], 1500], [["stump"], 1400], [["trunk"], 1550],
+    [["haul", "stump"], 1600], [["haul", "trunk"], 1750], [["stump", "trunk"], 1650], [["haul", "stump", "trunk"], 1850],
+  ] as [string[], number][])("independent selection %j totals %s and bills only selected extras", (selected, total) => {
+    expect(computeOptionTotals(extras, selected, { taxRate: 0, discountTotal: 0 }).total).toBe(total);
+    expect(selectionErrors(extras, selected)).toEqual([]);
+    expect(includedForDownstream(extras.map(l => ({ ...l, customer_selected: selected.includes(l.id) }))).map(l => l.id)).toEqual(["base", ...extras.filter(l => selected.includes(l.id)).map(l => l.id)]);
+  });
+  it("starts with no forced extra and requires a non-deselectable base", () => {
+    expect(defaultSelection(extras)).toEqual([]);
+    expect(builderOptionErrors(extras)).toEqual([]);
+    expect(builderOptionErrors(extras.slice(1))).toEqual(["Add at least one required line of work."]);
+    expect(selectionErrors(extras, ["base"]).length).toBeGreaterThan(0);
+  });
   it("totals only required work plus chosen options, never every alternative", () => {
     expect(computeOptionTotals(lines, defaultSelection(lines), { taxRate: 0, discountTotal: 0 }).total).toBe(1050);
     expect(computeOptionTotals(lines, ["h2", "s1"], { taxRate: 0, discountTotal: 0 }).total).toBe(1050);

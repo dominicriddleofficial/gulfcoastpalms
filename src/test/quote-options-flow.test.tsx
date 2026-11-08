@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { readFileSync } from "node:fs";
@@ -80,6 +80,41 @@ describe("get-quote-public response shape", () => {
 });
 
 describe("customer quote page", () => {
+  it("allows independent add-ons, sends only chosen ids and fingerprint, then shows the immutable server snapshot", async () => {
+    const extras = [
+      { ...liveLines[0], quantity: 1, unit_price: 1300, line_total: 1300, description: "Removing branches and leaving base of trunk" },
+      { ...liveLines[1], option_kind: "optional", option_group: null, default_selected: false, unit_price: 200, line_total: 200 },
+      { ...liveLines[3], unit_price: 100, line_total: 100 },
+      { ...liveLines[2], option_kind: "optional", option_group: null, default_selected: false, unit_price: 250, line_total: 250, description: "Cut remaining trunk down to ground level" },
+    ];
+    const body = publicResponse(pricing({ line_items: extras, tax_rate: 0, discount_total: 0 }), "sent");
+    renderPublic(body);
+    await screen.findAllByText(/1,300\.00/);
+    const haul = screen.getByRole("switch", { name: /Haul away/ });
+    expect(haul).toHaveAttribute("aria-checked", "false");
+    expect(screen.queryByRole("switch", { name: /Removing branches/ })).toBeNull();
+    fireEvent.click(haul);
+    fireEvent.click(screen.getByRole("switch", { name: /Cut remaining trunk/ }));
+    expect(haul).toHaveAttribute("aria-checked", "true");
+    expect(screen.getAllByText(/1,750\.00/).length).toBeGreaterThan(0);
+    const accepted = { ...snapshot, selected_option_ids: [ID.haul, ID.road], subtotal: 1750, tax_total: 0, discount_total: 0, total: 1750,
+      lines: extras.map(l => ({ ...l, selected: l.option_kind === "required" || l.id === ID.haul || l.id === ID.road })) };
+    const fetchMock = vi.mocked(fetch);
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({ success: true, snapshot: accepted })));
+    const canvas = document.querySelector("canvas");
+    if (!canvas) throw new Error("Signature canvas missing");
+    vi.spyOn(canvas, "getContext").mockReturnValue({ beginPath() {}, moveTo() {}, lineTo() {}, stroke() {}, clearRect() {} } as never);
+    fireEvent.mouseDown(canvas, { clientX: 1, clientY: 1 }); fireEvent.mouseMove(canvas, { clientX: 20, clientY: 20 }); fireEvent.mouseUp(canvas);
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Approve Quote" }));
+    fireEvent.change(screen.getByPlaceholderText("Enter your full name"), { target: { value: "Fixture Customer" } });
+    fireEvent.click(screen.getByRole("button", { name: "Confirm Approval" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body))).toMatchObject({ selected_option_ids: [ID.haul, ID.road], pricing_fingerprint: "fp-1" });
+    await waitFor(() => expect(screen.queryByRole("switch")).toBeNull());
+    expect(screen.getAllByText(/1,750\.00/).length).toBeGreaterThan(0);
+    expect(fetchMock.mock.calls[1][0]).toContain("approve-quote");
+  });
   it("reloads an accepted quote that became a job with the customer's choices, agreed totals and no approve button", async () => {
     renderPublic(publicResponse(pricing({ accepted_snapshot: snapshot }), "converted"));
     expect(await screen.findAllByText(/2,946\.80/)).not.toHaveLength(0);
