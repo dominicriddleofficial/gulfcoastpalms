@@ -22,9 +22,8 @@ import { generateQuoteNumber } from "@/hooks/usePlatformQuotes";
 import { downloadElementAsPdf } from "@/lib/download-pdf";
 import { buildQuoteMessage, getQuotePublicUrl } from "@/lib/quote-message";
 import { saveEditedQuote, type QuoteEditData } from "@/lib/edit-quote";
-import { OPTION_KIND_LABELS, builderOptionErrors, type OptionKind } from "@/lib/quote-options";
-import { DISPOSAL_GROUP, disposalAmounts, type DisposalDraft, type ArboristDraftLine } from "@/lib/arborist-to-quote";
-import { priceCents } from "@/lib/arborist-quotes";
+import { builderOptionErrors, type OptionKind } from "@/lib/quote-options";
+import { type DisposalDraft, type ArboristDraftLine } from "@/lib/arborist-to-quote";
 import { QUOTE_UNITS, normalizeUnit } from "@/lib/quote-units";
 import { aiLineProblem, builderHasWork, builderLineCents, parseQty, type AppliedLine } from "@/lib/quote-ai";
 import QuoteAssistant from "./QuoteAssistant";
@@ -103,22 +102,6 @@ const roundMoney = (value: number) => Math.round((value + Number.EPSILON) * 100)
 const lineAmount = (line: LineItem) => builderLineCents(line.qty, line.price, line.original?.discount_amount ?? 0) / 100;
 const lineAiProblem = (line: LineItem) => (line.aiOrigin ? aiLineProblem(line.qty, line.price, line.aiIssue) : null);
 
-/** Grouped prices must not replace customer-visible work. Only copy descriptions,
- * never arborist suggestions; normalize whitespace to recognize structured scope. */
-function disposalWorkScope(scope: string, required: LineItem[]) {
-  let result = scope;
-  const normalize = (text: string) => text.replace(/\s+/g, " ").trim();
-  for (const line of required) {
-    const description = line.description.trim();
-    // These are this toggle's pricing labels, not original work descriptions.
-    if (!description || description === "Tree work — required base" || description === "Tree work with haul-away — complete job") continue;
-    if (!normalize(result).includes(normalize(description))) {
-      result = [result, description].filter(Boolean).join("\n");
-    }
-  }
-  return result;
-}
-
 export default function QuoteBuilder({ businessId, businesses, userId, onClose, onCreated, editingQuote, arboristSource, startWithAssistant }: QuoteBuilderProps) {
   const existing = editingQuote?.quote;
   const editSnapshot = useRef(editingQuote);
@@ -163,38 +146,6 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   const [depositValue, setDepositValue] = useState(String(existing?.deposit_value ?? 50));
   const [publicNotes, setPublicNotes] = useState(existing?.public_notes ?? "");
   const [internalNotes, setInternalNotes] = useState(existing?.internal_notes ?? "");
-  const disposalActive = lineItems.some(l => l.kind === "alternative" && l.group === DISPOSAL_GROUP);
-  const [roadsidePrice, setRoadsidePrice] = useState(arboristSource?.disposal?.road === null || arboristSource?.disposal?.road === undefined ? "" : (arboristSource.disposal.road / 100).toFixed(2));
-  const toggleDisposal = () => {
-    if (disposalActive) {
-      if (lineItems.some(l => l.kind === "alternative" && l.group !== DISPOSAL_GROUP)) {
-        toast.error("Resolve other choice groups before turning disposal alternatives off: remove those choices or change them to required work or optional add-ons.");
-        return;
-      }
-      const required = lineItems.filter(l => l.kind === "required");
-      const haul = lineItems.find(l => l.group === DISPOSAL_GROUP && l.description === "Haul-away");
-      if (!haul) return;
-      const road = lineItems.find(l => l.group === DISPOSAL_GROUP && l.description.startsWith("Roadside placement"));
-      if (road) setRoadsidePrice((required.reduce((s, l) => s + lineAmount(l), 0) + lineAmount(road)).toFixed(2));
-      const amount = required.reduce((s, l) => s + lineAmount(l), 0) + lineAmount(haul);
-      setScopeOfWork(scope => disposalWorkScope(scope, required));
-      setLineItems([{ id: newLineId(), description: "Tree work with haul-away — complete job", qty: "1", price: amount.toFixed(2), kind: "required", group: "", proposed: true }, ...lineItems.filter(l => l.kind === "optional")]);
-      return;
-    }
-    const road = priceCents(roadsidePrice);
-    const haul = Math.round(lineItems.filter(l => l.kind === "required").reduce((s, l) => s + lineAmount(l), 0) * 100);
-    if (road === null || road <= 0 || haul <= 0 || lineItems.some(l => l.kind === "required" && l.price.trim() === "")) { toast.error("Enter valid complete haul-away and roadside prices first."); return; }
-    if (lineItems.some(l => l.kind === "alternative")) { toast.error("Review existing choice groups before offering disposal alternatives."); return; }
-    const amounts = disposalAmounts(haul, road);
-    setScopeOfWork(scope => disposalWorkScope(scope, lineItems.filter(l => l.kind === "required")));
-    setLineItems([
-      { id: newLineId(), description: "Tree work — required base", qty: "1", price: (amounts.base / 100).toFixed(2), kind: "required", group: "", proposed: true },
-      { id: newLineId(), description: "Haul-away", qty: "1", price: (amounts.haulDelta / 100).toFixed(2), kind: "alternative", group: DISPOSAL_GROUP, proposed: true },
-      { id: newLineId(), description: `Roadside placement${arboristSource?.disposal?.conditions ? ` — ${arboristSource.disposal.conditions}` : ""}`, qty: "1", price: (amounts.roadDelta / 100).toFixed(2), kind: "alternative", group: DISPOSAL_GROUP, proposed: false },
-      ...lineItems.filter(l => l.kind === "optional"),
-    ]);
-  };
-
   // UI state
   const [customerSearch, setCustomerSearch] = useState("");
   const [newCustomerOpen, setNewCustomerOpen] = useState(false);
@@ -322,7 +273,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   const deposit = editorDeposit(total, depositEnabled, depositType, depositValue);
   const depositAmount = deposit.amount;
 
-  const addLine = () => setLineItems([...lineItems, { id: newLineId(), description: "", qty: "1", price: "", kind: "required", group: "", proposed: true }]);
+  const addLine = (optional = false) => setLineItems([...lineItems, { id: newLineId(), description: "", qty: "1", price: "", kind: optional ? "optional" : "required", group: "", proposed: !optional }]);
   const removeLine = (id: string) => setLineItems(lineItems.filter(l => l.id !== id));
   const updateLine = (id: string, field: "description" | "qty" | "price" | "unit", val: string) =>
     setLineItems(lineItems.map(l => l.id === id ? { ...l, [field]: val, ...(field === "price" ? { priceConfirmed: true } : {}),
@@ -391,7 +342,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
       description: l.description, quantity: Number(l.qty) || 1, unit: l.unit ?? "each",
       unit_price: Number(l.price) || 0, line_total: lineAmount(l),
       optionLabel: optionsEnabled && l.kind !== "required"
-        ? `${l.kind === "alternative" ? `${l.group.trim() || "Choice"} — pick one` : "Optional add-on"}${l.proposed ? " · proposed" : " · not in total"}` : undefined,
+        ? `${l.kind === "alternative" ? `${l.group.trim() || "Choice"} — pick one` : "Optional add-on"}${l.proposed ? " · pre-selected" : " · available, not in total"}` : undefined,
       excluded: !inProposedTotal(l),
     })),
     subtotal, taxRate: taxEnabled ? Number(taxRate) : 0, taxAmount, discountAmount, total,
@@ -888,15 +839,10 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
             </section>
 
             {/* Line Items */}
-            {optionsEnabled && (arboristSource || existing?.source_arborist_quote_id) && <section className="space-y-3 border border-border rounded-lg p-4">
-              {!disposalActive && <label className="block space-y-2 text-sm">Complete roadside job price ($)<Input aria-label="Complete roadside job price" inputMode="decimal" value={roadsidePrice} onChange={e => setRoadsidePrice(e.target.value)} /></label>}
-              {arboristSource?.disposal?.reference && <p className="text-sm text-muted-foreground">Staff only · {arboristSource.disposal.reference}</p>}
-              <Button variant="outline" disabled={saving || !!existing?.accepted_snapshot} onClick={toggleDisposal}>{disposalActive ? "Turn alternatives off — keep haul-away" : "Offer haul-away / roadside options"}</Button>
-            </section>}
             <section className="space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <SectionHeader title="Line Items" icon={Package} />
-                <div className="flex gap-1.5">
+                <div className="flex flex-wrap gap-1.5">
                   {savedItems.length > 0 && (
                     <div className="relative">
                       <Button size="sm" variant="ghost" className="font-body text-[10px] text-primary h-6 px-2" onClick={() => setShowSavedItems(!showSavedItems)}>
@@ -914,7 +860,8 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                       )}
                     </div>
                   )}
-                  <Button size="sm" variant="ghost" className="font-body text-[10px] text-primary h-6 px-2" onClick={addLine}>
+                  {optionsEnabled && <Button size="sm" variant="outline" className="min-h-11 font-body" onClick={() => addLine(true)}><Plus className="w-4 h-4 mr-1" />Add optional item</Button>}
+                  <Button size="sm" variant="ghost" className="font-body min-h-11 text-primary px-2" onClick={() => addLine()}>
                     <Plus className="w-3 h-3 mr-1" /> Add Line
                   </Button>
                 </div>
@@ -968,20 +915,31 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                       )}
                       {optionsEnabled && (
                         <div className="md:col-span-6 flex flex-wrap items-center gap-2" data-testid="line-option-controls">
-                          <select aria-label="Line type" value={line.kind}
-                            onChange={e => updateOption(line.id, { kind: e.target.value as OptionKind, proposed: e.target.value === "required" ? true : line.kind === "required" ? false : line.proposed })}
-                            className="h-8 rounded-md border border-border bg-secondary/50 px-2 font-body text-xs text-foreground">
-                            {(Object.keys(OPTION_KIND_LABELS) as OptionKind[]).map(k => <option key={k} value={k}>{OPTION_KIND_LABELS[k]}</option>)}
-                          </select>
-                          {line.kind === "alternative" && (
-                            <Input aria-label="Choice group name" placeholder="Group, e.g. Debris handling" maxLength={120} value={line.group}
-                              onChange={e => updateOption(line.id, { group: e.target.value })} className="h-8 w-48 bg-secondary/50 border-border font-body text-xs" />
-                          )}
+                          {line.kind === "alternative" ? <>
+                            <select aria-label="Legacy line type" value={line.kind}
+                              onChange={e => {
+                                const kind = e.target.value as OptionKind;
+                                if (kind !== "alternative" && (Number(line.price) < 0 || lineTotal < 0)) {
+                                  reportSaveError("This legacy choice has a negative whole-job adjustment. Enter an independent non-negative price before changing its type."); return;
+                                }
+                                updateOption(line.id, { kind, group: "", proposed: kind === "required" });
+                              }} className="min-h-11 rounded-md border border-border bg-secondary/50 px-2 font-body text-sm text-foreground">
+                              <option value="alternative">Legacy pick-one choice — {line.group}</option>
+                              <option value="required">Required work</option>
+                              <option value="optional">Optional — customer can choose</option>
+                            </select>
+                            <span className="text-sm text-muted-foreground">Saved choice group: {line.group}</span>
+                          </> : <label className="flex min-h-12 cursor-pointer items-center gap-3 font-body text-sm text-foreground">
+                            <Checkbox aria-label="Optional — customer can choose" checked={line.kind === "optional"}
+                              onCheckedChange={checked => updateOption(line.id, { kind: checked === true ? "optional" : "required", group: "", proposed: checked !== true })}
+                              className="h-6 w-6" />
+                            Optional — customer can choose
+                          </label>}
                           {line.kind !== "required" && (
-                            <label className="flex items-center gap-1.5 font-body text-xs text-muted-foreground">
-                              <input type={line.kind === "alternative" ? "radio" : "checkbox"} aria-label="Proposed choice" checked={line.proposed}
-                                onChange={e => updateOption(line.id, { proposed: line.kind === "alternative" ? true : e.target.checked })} className="accent-primary" />
-                              {line.kind === "alternative" ? "Proposed choice" : "Pre-selected for customer"}
+                            <label className="flex min-h-12 cursor-pointer items-center gap-3 font-body text-sm text-muted-foreground">
+                              <Checkbox aria-label={line.kind === "alternative" ? "Legacy proposed choice" : "Pre-selected for customer"} checked={line.proposed}
+                                onCheckedChange={checked => updateOption(line.id, { proposed: checked === true })} className="h-6 w-6" />
+                              {line.kind === "alternative" ? "Legacy proposed choice" : "Pre-selected for customer"}
                             </label>
                           )}
                         </div>
