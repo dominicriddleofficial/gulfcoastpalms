@@ -29,78 +29,58 @@ function legacyDraft(fullScope = false) {
   return { data, source };
 }
 const scopeInput = () => screen.getByPlaceholderText("Describe the full job scope shown to the customer…") as HTMLTextAreaElement;
-function enableDisposal() {
-  fireEvent.change(screen.getByLabelText("Complete roadside job price"), { target: { value: "6500" } });
-  fireEvent.click(screen.getByRole("button", { name: "Offer haul-away / roadside options" }));
-}
-describe("office-opted disposal choices", () => {
-  it("keeps every legacy tree description in saved customer scope across enable, reopen and disable", async () => {
-    const { data, source } = legacyDraft();
+describe("independent GCP add-on authoring", () => {
+  it("adds optional work off by default and saves/reopens an unassigned draft without groups", async () => {
+    const data = fixture();
+    data.quote.customer_id = null; data.customer = null;
+    data.items[0].description = "Removing branches and leaving base of trunk";
+    data.items[0].unit_price = 1300; data.items[0].line_total = 1300;
     const view = show(data);
-    expect(scopeInput().value).toBe("Tree work at 12 Test Lane.");
-    enableDisposal();
-    const expected = [source.scope, ...source.lines.map(l => l.description)].join("\n");
-    expect(scopeInput().value).toBe(expected);
-    expect(scopeInput().value).not.toMatch(/STAFF PRIVATE|midpoint|500|750/);
+    for (const [description, price] of [["Haul-away", "200"], ["Stump Grinding", "100"], ["Cut remaining trunk down to ground level", "250"]]) {
+      fireEvent.click(screen.getByRole("button", { name: "Add optional item" }));
+      const inputs = screen.getAllByLabelText("Line description");
+      fireEvent.change(inputs[inputs.length - 1], { target: { value: description } });
+      const prices = screen.getAllByLabelText("Unit price");
+      fireEvent.change(prices[prices.length - 1], { target: { value: price } });
+    }
     rpc.mockImplementation(async (_name, args) => ({ data: { quote: { ...data.quote, ...args._changes }, items: args._lines }, error: null }));
     fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
     await waitFor(() => expect(rpc).toHaveBeenCalledOnce());
     const args = rpc.mock.calls[0][1];
-    expect(args._changes.scope_of_work).toBe(expected);
-    view.unmount();
-    show({ ...data, quote: { ...data.quote, ...args._changes }, items: args._lines });
-    expect(scopeInput().value).toBe(expected);
-    fireEvent.click(screen.getByRole("button", { name: "Turn alternatives off — keep haul-away" }));
-    expect(scopeInput().value).toBe(expected);
+    expect(args._changes).toMatchObject({ subtotal: 1300, total: 1300 });
+    expect(args._lines.map((l: QuoteEditData["items"][number]) => [l.option_kind, l.option_group, l.default_selected, l.unit_price])).toEqual([
+      ["required", null, true, 1300], ["optional", null, false, 200], ["optional", null, false, 100], ["optional", null, false, 250],
+    ]);
+    view.unmount(); show({ ...data, quote: { ...data.quote, ...args._changes }, items: args._lines });
+    expect(screen.getAllByRole("checkbox", { name: "Pre-selected for customer" }).every(e => !(e as HTMLInputElement).checked)).toBe(true);
+    fireEvent.click(screen.getAllByRole("checkbox", { name: "Pre-selected for customer" })[0]);
     fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
     await waitFor(() => expect(rpc).toHaveBeenCalledTimes(2));
-    expect(rpc.mock.calls[1][1]._changes.scope_of_work).toBe(expected);
+    expect(rpc.mock.calls[1][1]._changes.total).toBe(1500);
+    expect(rpc.mock.calls[1][1]._lines[1].default_selected).toBe(true);
   });
-  it("does not duplicate descriptions already present in full structured scope", () => {
-    const { data } = legacyDraft(true);
-    show(data); enableDisposal();
-    expect(scopeInput().value).toBe(data.quote.scope_of_work);
-    fireEvent.click(screen.getByRole("button", { name: "Turn alternatives off — keep haul-away" }));
-    enableDisposal();
-    expect(scopeInput().value).toBe(data.quote.scope_of_work);
-  });
-  it("blocks disabling until unrelated alternatives added after enabling are resolved, without deleting work", () => {
-    show(legacyDraft().data); enableDisposal();
-    for (const description of ["Stump grinding", "Keep stump"]) {
-      fireEvent.click(screen.getByRole("button", { name: /add line/i }));
-      const descriptions = screen.getAllByLabelText("Line description");
-      fireEvent.change(descriptions[descriptions.length - 1], { target: { value: description } });
-      const kinds = screen.getAllByLabelText("Line type");
-      fireEvent.change(kinds[kinds.length - 1], { target: { value: "alternative" } });
-      const groups = screen.getAllByLabelText("Choice group name");
-      fireEvent.change(groups[groups.length - 1], { target: { value: "Stump treatment" } });
-    }
-    const before = screen.getAllByLabelText("Line description").map(e => (e as HTMLInputElement).value);
-    const scope = scopeInput().value;
-    fireEvent.click(screen.getByRole("button", { name: "Turn alternatives off — keep haul-away" }));
-    expect(screen.getAllByLabelText("Line description").map(e => (e as HTMLInputElement).value)).toEqual(before);
-    expect(scopeInput().value).toBe(scope);
-    expect(toast.error).toHaveBeenCalledWith("Resolve other choice groups before turning disposal alternatives off: remove those choices or change them to required work or optional add-ons.");
-    expect(rpc).not.toHaveBeenCalled();
-  });
-  it("saves two complete totals only after enabling, reopens and turns off keeping haul-away", async () => {
-    const view = show();
-    expect(screen.getAllByLabelText("Unit price")).toHaveLength(1);
-    fireEvent.change(screen.getByLabelText("Complete roadside job price"), { target: { value: "6500" } });
-    fireEvent.click(screen.getByRole("button", { name: "Offer haul-away / roadside options" }));
-    expect(screen.getAllByLabelText("Unit price").map(e => (e as HTMLInputElement).value)).toEqual(["6500.00", "1000.00", "0.00"]);
-    rpc.mockImplementation(async (_name, args) => ({ data: { quote: fixture().quote, items: args._lines }, error: null }));
+  it("retains twelve detailed tree lines and scope without offering disposal auto-grouping", async () => {
+    const { data, source } = legacyDraft(); show(data);
+    expect(screen.queryByRole("button", { name: /haul-away \/ roadside/i })).toBeNull();
+    fireEvent.click(screen.getAllByRole("checkbox", { name: "Optional — customer can choose" })[1]);
+    rpc.mockImplementation(async (_name, args) => ({ data: { quote: { ...data.quote, ...args._changes }, items: args._lines }, error: null }));
     fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
     await waitFor(() => expect(rpc).toHaveBeenCalledOnce());
-    const saved = rpc.mock.calls[0][1]._lines as QuoteEditData["items"];
-    expect(saved.map(l => [l.option_kind, l.unit_price, l.default_selected])).toEqual([["required",6500,true],["alternative",1000,true],["alternative",0,false]]);
-    view.unmount(); show(fixture(saved));
-    fireEvent.click(screen.getByRole("button", { name: "Turn alternatives off — keep haul-away" }));
-    expect(screen.getAllByLabelText("Unit price").map(e => (e as HTMLInputElement).value)).toEqual(["7500.00"]);
-    expect((screen.getByLabelText("Complete roadside job price") as HTMLInputElement).value).toBe("6500.00");
+    const args = rpc.mock.calls[0][1];
+    expect(args._changes.scope_of_work).toBe(source.scope);
+    expect(args._lines.map((l: QuoteEditData["items"][number]) => l.description)).toEqual(source.lines.map(l => l.description));
+    expect(args._lines[1]).toMatchObject({ option_kind: "optional", default_selected: false });
   });
-  it("never invents an unpriced roadside alternative", () => {
-    show(); fireEvent.click(screen.getByRole("button", { name: "Offer haul-away / roadside options" }));
-    expect(screen.getAllByLabelText("Unit price")).toHaveLength(1); expect(rpc).not.toHaveBeenCalled();
+  it("preserves saved legacy groups until explicit conversion and blocks a negative delta as an extra", async () => {
+    const data = fixture();
+    data.items.push(...["Haul-away", "Roadside placement"].map((description, i) => ({ ...data.items[0], id: `alt-${i}`, description,
+      unit_price: i ? -1000 : 0, line_total: i ? -1000 : 0, option_kind: "alternative", option_group: "Disposal", default_selected: !i })));
+    show(data);
+    expect(screen.getAllByLabelText("Legacy line type")).toHaveLength(2);
+    fireEvent.change(screen.getAllByLabelText("Legacy line type")[1], { target: { value: "optional" } });
+    expect(toast.error).toHaveBeenCalledWith(expect.stringContaining("negative"));
+    expect((screen.getAllByLabelText("Legacy line type")[1] as HTMLSelectElement).value).toBe("alternative");
+    expect(screen.getAllByLabelText("Line description").map(e => (e as HTMLInputElement).value)).toEqual(data.items.map(l => l.description));
+    expect(rpc).not.toHaveBeenCalled();
   });
 });
