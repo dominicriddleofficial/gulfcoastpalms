@@ -11,7 +11,7 @@ const db = vi.hoisted(() => ({
   quote: {} as Record<string, any>, lines: [] as Array<Record<string, any>>,
   customers: [] as Array<Record<string, any>>, inserted: [] as Array<{ table: string; value: any }>,
   writes: [] as Array<{ table: string; op: string; value: any; filters: Array<[string, any]> }>,
-  failAssignOnce: false, rpc: vi.fn(), invoke: vi.fn(),
+  failAssignOnce: false, lookupError: false, rpc: vi.fn(), invoke: vi.fn(),
   applyDraft: { scope: "", lines: [] as Array<{ description: string; qty: string; unit: string; price: string; issue: string | null }> },
 }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() } }));
@@ -34,6 +34,10 @@ vi.mock("@/integrations/supabase/client", () => ({ supabase: {
     const matches = (row: any) => filters.every(([k, v]) => (row[k] ?? null) === v);
     const execute = () => {
       if (op !== "read") db.writes.push({ table, op, value: structuredClone(value), filters: [...filters] });
+      if (table === "platform_customers" && db.lookupError && filters.some(([key]) => key === "source_system")) {
+        return { data: null, error: { message: "Customer lookup unavailable" } };
+      }
+      if (table === "jobber_clients") return { data: [{ id: "jobber-1", display_name: "Jobber Guest", business_id: PPS, email: null, phone: null }], error: null };
       if (table === "platform_customers") return { data: db.customers.filter(matches), error: null };
       if (table === "platform_quotes") {
         if (op === "insert") { const row = { id: "new-quote", ...value }; db.inserted.push({ table, value: row }); return { data: row, error: null }; }
@@ -102,7 +106,7 @@ beforeEach(() => {
   const f = fixture(); db.quote = structuredClone(f.quote); db.lines = structuredClone(f.items);
   db.customers = [{ id: "cust-pps", business_id: PPS, display_name: "Pat Prestige", email: null, phone: null, company_name: null },
     { id: "cust-gcp", business_id: "gcp-biz", display_name: "Gail Gulf", email: null, phone: null, company_name: null }];
-  db.writes = []; db.inserted = []; db.failAssignOnce = false;
+  db.writes = []; db.inserted = []; db.failAssignOnce = false; db.lookupError = false;
   db.rpc.mockResolvedValue({ data: "PPS-Q-000100", error: null });
 });
 
@@ -161,7 +165,7 @@ describe("Unassigned draft customer selection", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save Changes" }));
     await waitFor(() => expect(db.quote.customer_id).toBe("cust-pps"));
     const [w] = assignWrites();
-    expect(w.filters).toEqual(expect.arrayContaining([["id", "quote-7"], ["business_id", PPS], ["customer_id", null], ["status", "draft"]]));
+    expect(w.filters).toEqual(expect.arrayContaining([["id", "quote-7"], ["business_id", PPS], ["updated_at", "2026-11-06T16:00:00Z"], ["customer_id", null], ["status", "draft"]]));
     expect(db.quote.status).toBe("draft");
     expect(db.invoke).not.toHaveBeenCalled();
   });
@@ -187,6 +191,18 @@ describe("Unassigned draft customer selection", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save Changes" }));
     await waitFor(() => expect(db.quote.customer_id).toBe("cust-pps"));
     expect(assignWrites()).toHaveLength(2);
+  });
+  it("shows customer resolution failures persistently without creating a replacement customer or losing scope", async () => {
+    setup(fixture());
+    await pickCustomer("Jobber Guest");
+    fireEvent.change(screen.getByLabelText("Scope of Work"), { target: { value: "Keep this scope" } });
+    db.lookupError = true;
+    fireEvent.click(screen.getByRole("button", { name: "Save Changes" }));
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Customer lookup unavailable"));
+    expect(screen.getByLabelText("Scope of Work")).toHaveValue("Keep this scope");
+    expect(db.quote.customer_id).toBeNull();
+    expect(db.writes.some(w => w.table === "platform_customers" && w.op === "insert")).toBe(false);
+    expect(assignWrites()).toHaveLength(0);
   });
 
   it.each([

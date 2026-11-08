@@ -164,6 +164,18 @@ describe("option quote editing", () => {
     await expect(saveEditedQuote(data(), { total: 1 }, data().items, "user-1")).rejects.toThrow(/changed while you were editing/);
     expect(fromCalls).toEqual([]);
   });
+  it("keeps an unassigned optional draft's blank expiry and off defaults in the atomic save", async () => {
+    const d = data();
+    d.quote = { ...d.quote, customer_id: null, status: "draft", total: 1300, valid_until: null };
+    d.items = d.items.map((line, i) => ({ ...line, option_kind: i === 0 ? "required" : "optional", option_group: null,
+      default_selected: i === 0, quantity: 1, unit_price: [1300, 200, 100, 250][i], line_total: [1300, 200, 100, 250][i] }));
+    rpc.mockResolvedValue({ data: { quote: { ...d.quote, version_number: 4 }, items: d.items }, error: null });
+    const saved = await saveEditedQuote(d, { total: 1300, valid_until: null, scope_of_work: "Removal of oak tree due to being highly at risk of damaging property" }, d.items, "user-1");
+    expect(rpc.mock.calls[0][1]._changes).toMatchObject({ total: 1300, valid_until: null });
+    expect(saved.quote.customer_id).toBeNull();
+    expect(saved.items.map(line => line.default_selected)).toEqual([true, false, false, false]);
+    expect(saved.items.map(line => line.unit_price)).toEqual([1300, 200, 100, 250]);
+  });
 });
 
 describe("cents rounding", () => {
