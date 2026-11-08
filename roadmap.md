@@ -1,4 +1,5 @@
 # Arborist + quote workflow (GCP)
+- [ ] Replace new disposal pairing with independent customer add-ons; verify authoring/reopen, public choices, approval and downstream integrity using isolated fixtures, mobile/desktop; leave unpublished.
 - [x] Fix mobile deposit/save controls and readable scope; 28 focused tests pass; owner-authenticated PPS-Q-000007 update and version 2 readback verified without sending or publishing.
 - [x] Final narrow fix: preserve required tree descriptions in disposal scope and block disabling with unrelated choice groups; 22 affected tests pass, preview build OK, public/PDF scope plumbing reviewed; no publication or real records/messages
 - [x] 1. Private arborist quote link (guest form, staff send/disable/replace)
