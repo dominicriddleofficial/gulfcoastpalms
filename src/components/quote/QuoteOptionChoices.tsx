@@ -15,7 +15,7 @@ export function QuoteOptionChoices({ lines, selected, onChange, accent, muted, t
   const tokens = {
     "--choice-accent": accent ?? "hsl(var(--primary))",
     "--choice-muted": muted ?? "hsl(var(--muted-foreground))",
-    "--choice-text": text ?? "hsl(var(--foreground))",
+    "--choice-text": text ?? "hsl(var(--quote-document-foreground))",
     "--choice-border": border ?? "hsl(var(--border))",
   } as CSSProperties;
   const heading = (label: string) => <h3 className="mb-2 mt-5 text-sm font-semibold text-[color:var(--choice-muted)]">{label}</h3>;
@@ -52,7 +52,7 @@ export function QuoteOptionChoices({ lines, selected, onChange, accent, muted, t
           onClick={() => onChange(on ? selected.filter(id => id !== line.id) : [...selected, line.id])}
           className="min-h-12 w-full justify-between border-[color:var(--choice-border)] bg-transparent text-[color:var(--choice-text)] hover:bg-transparent hover:text-[color:var(--choice-accent)]">
           <span className="flex items-center gap-2">{on && <Check className="h-4 w-4 text-[color:var(--choice-accent)]" />}{on ? "ON · Added" : "OFF · Add to quote"}</span>
-          {on ? <ToggleRight className="h-8 w-8 text-[color:var(--choice-accent)]" /> : <ToggleLeft className="h-8 w-8 text-[color:var(--choice-muted)]" />}
+          {on ? <ToggleRight className="!h-8 !w-8 text-[color:var(--choice-accent)]" /> : <ToggleLeft className="!h-8 !w-8 text-[color:var(--choice-muted)]" />}
         </Button> : undefined, true);
     })}</>}
   </div>;

@@ -10,6 +10,8 @@
 
 @layer base {
   :root {
+    /* Dark customer document surfaces remain legible outside the platform shell. */
+    --quote-document-foreground: 0 0% 100%;
     --background: 140 20% 97%;
     --foreground: 150 30% 10%;
 
