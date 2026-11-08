@@ -112,8 +112,12 @@ describe("customer quote page", () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
     expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body))).toMatchObject({ selected_option_ids: [ID.haul, ID.road], pricing_fingerprint: "fp-1" });
     await waitFor(() => expect(screen.queryByRole("switch")).toBeNull());
-    expect(screen.getAllByText(/1,750\.00/).length).toBeGreaterThan(0);
     expect(fetchMock.mock.calls[1][0]).toContain("approve-quote");
+    cleanup();
+    renderPublic({ ...body, status: "approved", accepted_snapshot: accepted });
+    await screen.findAllByText(/1,750\.00/);
+    expect(screen.queryByRole("switch")).toBeNull();
+    expect(screen.getByText("Not selected — not included")).toBeTruthy();
   });
   it("reloads an accepted quote that became a job with the customer's choices, agreed totals and no approve button", async () => {
     renderPublic(publicResponse(pricing({ accepted_snapshot: snapshot }), "converted"));
