@@ -158,6 +158,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
   const [showSavedItems, setShowSavedItems] = useState(false);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
+  const previewTriggerRef = useRef<HTMLButtonElement | null>(null);
   const mobilePreviewRef = useRef<HTMLDivElement>(null);
   const [showSendModal, setShowSendModal] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -382,14 +383,15 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   const resolveCustomer = async (): Promise<string | null> => {
     if (!customerId) return null;
     if (customerSource !== "jobber") return customerId;
-    const { data: found } = await supabase.from("platform_customers").select("id")
+    const { data: found, error: lookupError } = await supabase.from("platform_customers").select("id")
       .eq("business_id", bizId).eq("source_system", "jobber").eq("source_record_id", customerId).maybeSingle();
+    if (lookupError) { reportSaveError(`Could not check the selected customer: ${lookupError.message}. Your work is still here; retry saving.`); return null; }
     if (found) return found.id;
     const { data: newCust, error: custErr } = await supabase.from("platform_customers").insert({
       business_id: bizId, display_name: customerName, email: customerEmail || null,
       phone: customerPhone || null, source_system: "jobber", source_record_id: customerId,
     }).select("id").single();
-    if (custErr || !newCust) { toast.error("Failed to create customer record"); return null; }
+    if (custErr || !newCust) { reportSaveError(`Could not attach the selected customer: ${custErr?.message ?? "customer not confirmed"}. Your work is still here; retry saving.`); return null; }
     return newCust.id;
   };
 
@@ -435,7 +437,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
           const resolved = await resolveCustomer();
           if (!resolved) return null;
           const { data: assigned, error: assignErr } = await supabase.from("platform_quotes").update({ customer_id: resolved, last_modified_by_user_id: userId })
-            .eq("id", result.quote.id).eq("business_id", bizId).is("customer_id", null).eq("status", "draft").select("*").single();
+            .eq("id", result.quote.id).eq("business_id", bizId).eq("updated_at", result.quote.updated_at).is("customer_id", null).eq("status", "draft").select("*").single();
           if (assignErr || !assigned) { reportSaveError(`Changes saved, but the customer couldn't be attached: ${assignErr?.message ?? "not confirmed"}`); return null; }
           editSnapshot.current = { ...result, quote: assigned };
         }
@@ -443,7 +445,10 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
         setSavedQuote(saved);
         return saved;
       } catch (error) {
-        reportSaveError(error instanceof Error ? error.message : "Could not save quote changes. Check your connection and retry; your work is still here.");
+        const message = error instanceof Error ? error.message
+          : typeof error === "object" && error !== null && "message" in error && typeof error.message === "string" ? error.message
+          : "Could not save quote changes. Check your connection and retry; your work is still here.";
+        reportSaveError(message);
         return null;
       } finally {
         editSavingRef.current = false;
@@ -693,10 +698,10 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
                 <Sparkles className="w-3.5 h-3.5 sm:mr-1" /><span className="hidden sm:inline">Describe your quote</span>
               </Button>
             )}
-            <Button aria-label="Quote Preview" variant="outline" size="sm" className="font-body text-xs md:hidden" onClick={() => setShowMobilePreview(true)}>
+            <Button aria-label="Quote Preview" variant="outline" size="sm" className="font-body text-xs md:hidden" onClick={event => { previewTriggerRef.current = event.currentTarget; setShowMobilePreview(true); }}>
               <Eye className="w-3.5 h-3.5" />
             </Button>
-            <Button variant="outline" size="sm" className="font-body text-xs hidden md:flex" onClick={() => setShowMobilePreview(true)}>
+            <Button variant="outline" size="sm" className="font-body text-xs hidden md:flex" onClick={event => { previewTriggerRef.current = event.currentTarget; setShowMobilePreview(true); }}>
               <Eye className="w-3.5 h-3.5 mr-1" /> Full Preview
             </Button>
           </div>
@@ -1053,7 +1058,9 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
 
       {/* Mobile Preview */}
       <Sheet open={showMobilePreview} onOpenChange={setShowMobilePreview}>
-        <SheetContent side="bottom" className="h-[95dvh] p-0 bg-background border-t border-border overflow-hidden flex flex-col">
+        <SheetContent side="bottom" overlayClassName="z-[60]" className="ops-theme z-[70] h-[95dvh] p-0 bg-background border-t border-border overflow-hidden flex flex-col"
+          style={workspaceThemeVars(workspaceTheme)}
+          onCloseAutoFocus={event => { event.preventDefault(); previewTriggerRef.current?.focus(); }}>
           <SheetHeader className="px-4 pt-4 pb-2 shrink-0">
             <SheetTitle className="text-foreground font-display text-base">Quote Preview</SheetTitle>
           </SheetHeader>
