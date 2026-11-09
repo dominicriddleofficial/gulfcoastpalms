@@ -66,6 +66,24 @@ export function quoteDepositAmount(quote: { deposit_required_flag?: boolean | nu
   return cents / 100;
 }
 
+/**
+ * PPS option quotes: the deposit is paid against the ONE full invoice built from the accepted snapshot,
+ * charging only the still-owed snapshot deposit (cents). Returns null for quotes without a snapshot.
+ */
+async function snapshotDepositTarget(supabaseAdmin: any, quoteId: string): Promise<{ invoiceId: string; chargeCents: number } | null> {
+  const { data: q } = await supabaseAdmin.from("platform_quotes").select("accepted_snapshot").eq("id", quoteId).maybeSingle();
+  if (!q?.accepted_snapshot) return null;
+  const { data, error } = await supabaseAdmin.rpc("quote_deposit_checkout_target", { _quote_id: quoteId });
+  if (error) {
+    if (/deposit_already_paid/.test(error.message)) throw new CheckoutRefusal("The deposit for this quote has already been paid.");
+    if (/quote_not_payable/.test(error.message)) throw new CheckoutRefusal("This quote is not available for payment.");
+    throw new Error(`Could not prepare deposit: ${error.message}`);
+  }
+  const chargeCents = Number(data?.charge_cents);
+  if (!data?.invoice_id || !Number.isInteger(chargeCents) || chargeCents <= 0) throw new CheckoutRefusal("This quote is not available for payment.");
+  return { invoiceId: String(data.invoice_id), chargeCents };
+}
+
 async function createInvoiceFromQuote(supabaseAdmin: any, quoteId: string): Promise<string> {
   // Pull quote with line items + customer + business
   const { data: quote, error: qErr } = await supabaseAdmin
@@ -180,6 +198,9 @@ serve(async (req) => {
       ? Math.min(Math.round(rawTip * 100) / 100, 10000)
       : 0;
 
+    // Set only for PPS option-quote deposits: the exact still-owed deposit on the full invoice.
+    let depositChargeCents: number | null = null;
+
     // ── Quote-based checkout: create deposit invoice on the fly ──
     if (!invoice_id && quote_id) {
       if (typeof quote_id !== "string" || !UUID_RE.test(quote_id)) {
@@ -194,7 +215,13 @@ serve(async (req) => {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      invoice_id = await createInvoiceFromQuote(supabaseAdmin, quote_id);
+      const target = await snapshotDepositTarget(supabaseAdmin, quote_id);
+      if (target) {
+        invoice_id = target.invoiceId;
+        depositChargeCents = target.chargeCents;
+      } else {
+        invoice_id = await createInvoiceFromQuote(supabaseAdmin, quote_id);
+      }
     }
 
     // Server-side validation
@@ -225,8 +252,10 @@ serve(async (req) => {
     if (["paid", "void"].includes(invoice.status)) throw new Error(`Invoice is ${invoice.status}`);
 
     // Always use server-fetched amount, never client-supplied
-    const balanceDue = Number(invoice.balance_due) || Number(invoice.total) || 0;
+    const invoiceBalance = Number(invoice.balance_due) || Number(invoice.total) || 0;
+    const balanceDue = depositChargeCents !== null ? depositChargeCents / 100 : invoiceBalance;
     if (balanceDue <= 0) throw new Error("No balance due on this invoice");
+    const paymentType = depositChargeCents !== null ? "deposit" : (invoice.deposit_required && !invoice.deposit_paid ? "deposit" : "balance");
 
     const businessName = invoice.businesses?.public_brand_name || "Payment";
     const shortcode = invoice.businesses?.shortcode || "PAY";
@@ -256,7 +285,7 @@ serve(async (req) => {
             name: `${businessName} - Invoice ${invoice.invoice_number}`,
             description: `Payment for ${customerName}`,
           },
-          unit_amount: Math.round(balanceDue * 100),
+          unit_amount: depositChargeCents ?? Math.round(balanceDue * 100),
         },
         quantity: 1,
       },
@@ -281,6 +310,28 @@ serve(async (req) => {
       }
     }
 
+    // Reuse a still-open deposit session for the same amount instead of opening a second one.
+    if (depositChargeCents !== null && effectiveTip === 0) {
+      const since = new Date(Date.now() - 23 * 60 * 60 * 1000).toISOString();
+      const { data: pending } = await supabaseAdmin.from("payment_intents")
+        .select("provider_session_id, amount, metadata_json")
+        .eq("invoice_id", invoice.id).eq("status", "pending").gte("created_at", since)
+        .order("created_at", { ascending: false }).limit(5);
+      for (const p of pending ?? []) {
+        if (p.metadata_json?.payment_type !== "deposit" || Math.round(Number(p.amount) * 100) !== depositChargeCents) continue;
+        if (Number(p.metadata_json?.tip_amount || 0) !== 0 || !p.provider_session_id) continue;
+        try {
+          const existing = await stripe.checkout.sessions.retrieve(p.provider_session_id);
+          if (existing.status === "open" && existing.url) {
+            log("Reusing open deposit session", { sessionId: existing.id });
+            return new Response(JSON.stringify({ url: existing.url, session_id: existing.id, invoice_id: invoice.id }), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
+            });
+          }
+        } catch (_e) { /* fall through to a new session */ }
+      }
+    }
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
@@ -292,7 +343,7 @@ serve(async (req) => {
         customer_id: invoice.customer_id || "",
         invoice_number: invoice.invoice_number,
         shortcode: shortcode,
-        payment_type: invoice.deposit_required && !invoice.deposit_paid ? "deposit" : "balance",
+        payment_type: paymentType,
         quote_id: invoice.quote_id || quote_id || "",
         invoice_amount: String(balanceDue),
         tip_amount: String(effectiveTip),
