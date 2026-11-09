@@ -155,9 +155,11 @@ serve(async (req) => {
           .single();
 
         if (invoice) {
-          const newAmountPaid = (Number(invoice.amount_paid) || 0) + amountPaid;
-          const total = Number(invoice.total) || 0;
-          const newBalance = Math.max(0, total - newAmountPaid);
+          // Integer cents so a deposit leaves an exact balance (e.g. 4537.50 - 1134.38 = 3403.12).
+          const paidCents = Math.round((Number(invoice.amount_paid) || 0) * 100) + Math.round(amountPaid * 100);
+          const totalCents = Math.round((Number(invoice.total) || 0) * 100);
+          const newAmountPaid = paidCents / 100;
+          const newBalance = Math.max(0, totalCents - paidCents) / 100;
           const isPaidInFull = newBalance <= 0.01;
 
           const updateData: any = {

@@ -120,6 +120,13 @@
       "when": 1794250254986,
       "tag": "0016_pps_quote_options",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1794251206929,
+      "tag": "0017_pps_option_deposit_same_invoice",
+      "breakpoints": true
     }
   ]
 }

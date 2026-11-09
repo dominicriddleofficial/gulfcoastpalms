@@ -7228,6 +7228,10 @@ export type Database = {
           skipped_count: number
         }[]
       }
+      quote_deposit_checkout_target: {
+        Args: { _quote_id: string }
+        Returns: Json
+      }
       quote_pricing_fingerprint: {
         Args: { _quote_id: string }
         Returns: string
