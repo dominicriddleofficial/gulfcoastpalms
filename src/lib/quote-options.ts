@@ -71,11 +71,12 @@ export function selectionErrors(lines: OptionLine[], selected: string[]): string
     const n = group.lines.filter(l => selected.includes(l.id)).length;
     if (n !== 1) errors.push(`Choose one option for ${group.name || "each choice"}.`);
   }
+  if (!lines.some(l => isIncluded(l, selected))) errors.push("Turn on at least one line item to approve this quote.");
   return errors;
 }
 
 /** Builder checks before saving: groups need a name, at least two choices, and exactly one proposed default. */
-export function builderOptionErrors(lines: OptionLine[]): string[] {
+export function builderOptionErrors(lines: OptionLine[], opts: { allowAllOptional?: boolean } = {}): string[] {
   const errors: string[] = [];
   const { groups } = groupOptions(lines);
   if (lines.some(l => kindOf(l) === "alternative" && !(l.option_group || "").trim())) errors.push("Name each pick-one group (for example \"Debris handling\").");
@@ -84,7 +85,11 @@ export function builderOptionErrors(lines: OptionLine[]): string[] {
     if (group.lines.length < 2) errors.push(`"${group.name}" needs at least two choices.`);
     if (group.lines.filter(l => l.default_selected).length !== 1) errors.push(`Mark exactly one proposed choice for "${group.name}".`);
   }
-  if (!lines.some(l => kindOf(l) === "required")) errors.push("Add at least one required line of work.");
+  if (!lines.some(l => kindOf(l) === "required")) {
+    // PPS may make every line optional, but at least one line must start selected so the quote is never empty.
+    if (!opts.allowAllOptional) errors.push("Add at least one required line of work.");
+    else if (!lines.some(l => kindOf(l) !== "required" && l.default_selected)) errors.push("Pre-select at least one optional line so the quote isn't empty.");
+  }
   return errors;
 }
 
