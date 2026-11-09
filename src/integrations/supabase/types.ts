@@ -7206,6 +7206,10 @@ export type Database = {
         Returns: boolean
       }
       invoice_accepted_quote: { Args: { _quote_id: string }; Returns: Json }
+      invoice_accepted_quote_on_approval: {
+        Args: { _quote_id: string }
+        Returns: Json
+      }
       is_restricted_climber: { Args: { _user_id: string }; Returns: boolean }
       is_workspace_owner: { Args: { _user_id: string }; Returns: boolean }
       move_to_dlq: {
