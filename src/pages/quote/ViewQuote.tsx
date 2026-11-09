@@ -5,7 +5,7 @@ import { toast } from "@/hooks/use-toast";
 import DocumentBrandMark from "@/components/platform/billing/DocumentBrandMark";
 import { downloadElementAsPdf } from "@/lib/download-pdf";
 import PrintQuoteDocument from "@/components/documents/PrintQuoteDocument";
-import { publicDepositPlan } from "@/lib/quote-deposit";
+import { depositCentsForTotal, publicDepositPlan } from "@/lib/quote-deposit";
 import { formatQuantity, unitPriceSuffix } from "@/lib/quote-units";
 import { QuoteOptionChoices } from "@/components/quote/QuoteOptionChoices";
 import { computeOptionTotals, defaultSelection, hasOptions, isIncluded, lineCents, selectionErrors, snapshotOptionLines, type AcceptedQuoteSnapshot, type OptionLine } from "@/lib/quote-options";
@@ -55,6 +55,8 @@ type QuoteData = {
   discount_amount?: number;
   deposit_required?: boolean;
   deposit_amount?: number;
+  deposit_type?: string | null;
+  deposit_value?: number | null;
   logo_url?: string;
   business_phone?: string;
   business_email?: string;
@@ -160,10 +162,6 @@ export default function ViewQuote() {
   const brand = BRAND[brandKey] || BRAND.gcp;
   const accent = brand.accent;
   const accentRgb = brand.accentRgb;
-  // A deposit flow exists only when THIS quote requires one with a saved amount — never by brand.
-  // GCP stays approval-only (payment later by invoice); only PPS collects a deposit, and only the one the office saved.
-  const depositPlan = quote && String(quote.shortcode ?? "").toLowerCase() === "pps" ? publicDepositPlan(quote) : null;
-  const showDepositFlow = depositPlan !== null;
 
   const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
   const baseUrl = `https://${projectId}.supabase.co/functions/v1`;
@@ -203,11 +201,13 @@ export default function ViewQuote() {
       setApproved(true);
       if (usesOptions && data.snapshot) {
         // Show the server-recorded choices and totals, never the client's own numbers.
-        setQuote(current => current ? { ...current, status: "approved", accepted_snapshot: data.snapshot, total: data.snapshot.total, subtotal: data.snapshot.subtotal, tax_total: data.snapshot.tax_total, discount_total: data.snapshot.discount_total } : current);
+        setQuote(current => current ? { ...current, status: "approved", accepted_snapshot: data.snapshot, total: data.snapshot.total, subtotal: data.snapshot.subtotal, tax_total: data.snapshot.tax_total, discount_total: data.snapshot.discount_total, deposit_amount: data.snapshot.deposit_amount } : current);
       }
+      // Checkout follows the server-recorded deposit, never the pre-click preview.
+      const recordedDeposit = usesOptions && data.snapshot ? Number(data.snapshot.deposit_amount) > 0 : showDepositFlow;
 
       // Only quotes that require a saved deposit continue to checkout; all others are approval-only.
-      if (showDepositFlow) {
+      if (showDepositFlow && recordedDeposit) {
         try {
           const checkoutResp = await fetch(`${baseUrl}/create-checkout`, {
             method: "POST",
@@ -359,6 +359,16 @@ export default function ViewQuote() {
     : null;
   const optionProblems = usesOptions && !isApproved ? selectionErrors(optionLines, chosenOptions) : [];
   const grandTotal = optionTotals ? Number(optionTotals.total) : (quote.total || 0);
+  // A deposit flow exists only when THIS quote requires one with a saved amount — never by brand.
+  // GCP stays approval-only (payment later by invoice); only PPS collects a deposit, and only the one the office saved.
+  // With customer choices the deposit follows the live selection (accepted quotes use the recorded snapshot).
+  const grandCents = Math.round(grandTotal * 100);
+  const liveDepositAmount = quote.accepted_snapshot ? Number(quote.accepted_snapshot.deposit_amount ?? quote.deposit_amount)
+    : usesOptions ? (depositCentsForTotal(quote, grandCents) ?? 0) / 100 : quote.deposit_amount;
+  const depositPlan = String(quote.shortcode ?? "").toLowerCase() === "pps"
+    ? publicDepositPlan({ deposit_required: quote.deposit_required, deposit_amount: liveDepositAmount, total: grandTotal }) : null;
+  const showDepositFlow = depositPlan !== null;
+  const depositBalance = depositPlan ? (grandCents - depositPlan.amountCents) / 100 : null;
 
 
   /* ── Card shared styles ── */
