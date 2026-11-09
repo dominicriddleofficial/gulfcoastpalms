@@ -133,6 +133,9 @@ Deno.serve(async (req) => {
       business_email: biz?.support_email,
       deposit_required: quote.deposit_required_flag || false,
       deposit_amount: priced.deposit_amount,
+      // Saved deposit plan, so the page can preview the deposit for the customer's live selection.
+      deposit_type: quote.deposit_type ?? null,
+      deposit_value: quote.deposit_value ?? null,
       line_items: priced.line_items,
       pricing_fingerprint: priced.pricing_fingerprint,
       accepted_snapshot: priced.accepted_snapshot,

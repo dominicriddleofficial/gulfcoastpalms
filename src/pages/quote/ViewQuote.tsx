@@ -187,7 +187,7 @@ export default function ViewQuote() {
   }, [quoteId, baseUrl]);
 
   const handleApprove = async () => {
-    if (!quote || !approverName.trim()) return;
+    if (!quote || !approverName.trim() || optionProblems.length > 0) return;
     setApproving(true);
     try {
       const resp = await fetch(`${baseUrl}/approve-quote`, {
