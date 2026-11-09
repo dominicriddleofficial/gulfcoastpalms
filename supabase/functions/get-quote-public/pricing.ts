@@ -13,7 +13,7 @@ export interface PublicPricing {
 export interface PublicQuoteHeader {
   id: string; quote_number: string; status: string | null; business_id: string; created_at: string;
   valid_until: string | null; public_notes: string | null; scope_of_work: string | null; billing_name: string | null;
-  deposit_required_flag: boolean | null; approved_at: string | null; approved_by: string | null; accepted_at: string | null;
+  deposit_required_flag: boolean | null; deposit_type?: string | null; deposit_value?: number | null; approved_at: string | null; approved_by: string | null; accepted_at: string | null;
 }
 
 /** Live identity built only from the same single read as the prices and fingerprint. */

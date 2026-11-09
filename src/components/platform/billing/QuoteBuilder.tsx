@@ -108,7 +108,9 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
   const editSavingRef = useRef(false);
   const [bizId] = useState(existing?.business_id || businessId || businesses[0]?.id || "");
   const activeBiz = businesses.find(b => b.id === bizId);
-  const optionsEnabled = activeBiz?.shortcode?.toUpperCase() === "GCP";
+  const bizCode = activeBiz?.shortcode?.toUpperCase();
+  /** Customer choices: GCP (required work + add-ons) and PPS (which may make every line optional). */
+  const optionsEnabled = bizCode === "GCP" || bizCode === "PPS";
   /** Lines counted in the proposed total: required work plus proposed options. */
   /** Customer can be chosen on a new quote, or once on an unassigned unsent draft (server enforces this too). */
   const canAssignCustomer = !existing || (!existing.customer_id && existing.status === "draft" && !existing.sent_at && !existing.accepted_snapshot);
@@ -371,7 +373,7 @@ export default function QuoteBuilder({ businessId, businesses, userId, onClose, 
       reportSaveError("Quotes with customer choices use a fixed-dollar discount. Switch the discount to $ before saving."); return false;
     }
     const problems = builderOptionErrors(validLines.map(l => ({ id: l.id, description: l.description, quantity: Number(l.qty), unit_price: Number(l.price),
-      option_kind: l.kind, option_group: l.kind === "alternative" ? l.group.trim() : null, default_selected: l.kind === "required" ? true : l.proposed })));
+      option_kind: l.kind, option_group: l.kind === "alternative" ? l.group.trim() : null, default_selected: l.kind === "required" ? true : l.proposed })), { allowAllOptional: bizCode === "PPS" });
     if (problems.length) { reportSaveError(problems[0]); return false; }
     return true;
   };

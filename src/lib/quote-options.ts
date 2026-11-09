@@ -8,6 +8,7 @@ export interface OptionLine {
   id: string;
   description: string;
   quantity: number;
+  unit?: string | null;
   unit_price: number;
   discount_amount?: number | null;
   taxable_flag?: boolean | null;
@@ -71,11 +72,12 @@ export function selectionErrors(lines: OptionLine[], selected: string[]): string
     const n = group.lines.filter(l => selected.includes(l.id)).length;
     if (n !== 1) errors.push(`Choose one option for ${group.name || "each choice"}.`);
   }
+  if (!lines.some(l => isIncluded(l, selected))) errors.push("Turn on at least one line item to approve this quote.");
   return errors;
 }
 
 /** Builder checks before saving: groups need a name, at least two choices, and exactly one proposed default. */
-export function builderOptionErrors(lines: OptionLine[]): string[] {
+export function builderOptionErrors(lines: OptionLine[], opts: { allowAllOptional?: boolean } = {}): string[] {
   const errors: string[] = [];
   const { groups } = groupOptions(lines);
   if (lines.some(l => kindOf(l) === "alternative" && !(l.option_group || "").trim())) errors.push("Name each pick-one group (for example \"Debris handling\").");
@@ -84,7 +86,11 @@ export function builderOptionErrors(lines: OptionLine[]): string[] {
     if (group.lines.length < 2) errors.push(`"${group.name}" needs at least two choices.`);
     if (group.lines.filter(l => l.default_selected).length !== 1) errors.push(`Mark exactly one proposed choice for "${group.name}".`);
   }
-  if (!lines.some(l => kindOf(l) === "required")) errors.push("Add at least one required line of work.");
+  if (!lines.some(l => kindOf(l) === "required")) {
+    // PPS may make every line optional, but at least one line must start selected so the quote is never empty.
+    if (!opts.allowAllOptional) errors.push("Add at least one required line of work.");
+    else if (!lines.some(l => kindOf(l) !== "required" && l.default_selected)) errors.push("Pre-select at least one optional line so the quote isn't empty.");
+  }
   return errors;
 }
 
@@ -103,12 +109,12 @@ export interface AcceptedQuoteSnapshot {
   approved_by?: string; approved_at?: string; version_number?: number;
   scope_of_work?: string | null; public_notes?: string | null; valid_until?: string | null;
   customer_name?: string | null; customer_address?: string | null; billing_name?: string | null;
-  lines?: Array<{ id: string; description: string; option_kind: string; option_group: string | null; quantity: number; unit_price: number;
+  lines?: Array<{ id: string; description: string; option_kind: string; option_group: string | null; quantity: number; unit?: string | null; unit_price: number;
     taxable_flag?: boolean; line_total: number; selected: boolean }>;
 }
 export function snapshotOptionLines(snapshot: AcceptedQuoteSnapshot): OptionLine[] {
   return (snapshot.lines ?? []).map(line => ({
-    id: line.id, description: line.description, quantity: Number(line.quantity), unit_price: Number(line.unit_price),
+    id: line.id, description: line.description, quantity: Number(line.quantity), unit: line.unit ?? null, unit_price: Number(line.unit_price),
     taxable_flag: line.taxable_flag ?? true, option_kind: line.option_kind, option_group: line.option_group,
     default_selected: line.selected, customer_selected: line.selected,
   }));

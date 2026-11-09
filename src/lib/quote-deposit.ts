@@ -25,3 +25,15 @@ export function publicDepositPlan(q: PublicDepositInput): PublicDepositPlan | nu
   if (Number.isFinite(total) && total > 0 && amountCents > Math.round(total * 100)) return null;
   return { amountCents, amount: amountCents / 100 };
 }
+
+/**
+ * Deposit for a customer's live option selection, from the quote's saved deposit plan.
+ * Mirrors approve_quote_options exactly (integer cents, half-cents round up), so the preview
+ * matches what the server records. Returns null when the saved plan is missing.
+ */
+export function depositCentsForTotal(plan: { deposit_type?: string | null; deposit_value?: number | null }, totalCents: number): number | null {
+  const value = Number(plan.deposit_value);
+  if (plan.deposit_value == null || !Number.isFinite(value) || value <= 0 || totalCents <= 0) return null;
+  if (plan.deposit_type === "fixed") return Math.min(Math.round(value * 100), totalCents);
+  return Math.round(Number((totalCents * value / 100).toFixed(6)));
+}
