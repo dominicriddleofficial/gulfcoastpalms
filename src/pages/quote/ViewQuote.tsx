@@ -547,7 +547,8 @@ export default function ViewQuote() {
               <div style={{ borderRadius: 12, background: "#0f0f0f", border: `1px solid ${cardBorder}`, padding: 16, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
                 <div style={{ flex: "1 1 160px", minWidth: 0 }}>
                   <p style={{ color: "#fff", fontSize: 14, fontWeight: 600 }}>Deposit to schedule</p>
-                  <p style={{ fontSize: 16, fontWeight: 700, marginTop: 4, color: "#fff" }}>${fmt(depositPlan.amount)}</p>
+                  <p data-testid="quote-deposit-amount" style={{ fontSize: 16, fontWeight: 700, marginTop: 4, color: "#fff" }}>${fmt(depositPlan.amount)}</p>
+                  {depositBalance !== null && <p data-testid="quote-deposit-balance" style={{ fontSize: 13, color: labelColor, marginTop: 2 }}>Remaining balance ${fmt(depositBalance)}</p>}
                   <p style={{ fontSize: 12, color: labelColor, marginTop: 4 }}>
                     {isApproved ? "Pay your deposit securely online." : "Due after you approve this quote."}
                   </p>
@@ -582,10 +583,10 @@ export default function ViewQuote() {
                         disabled={!agreedToTerms || !hasSignature || optionProblems.length > 0}
                         style={{
                           width: "100%", padding: 16, borderRadius: 10, border: "none",
-                          cursor: (!agreedToTerms || !hasSignature) ? "not-allowed" : "pointer",
+                          cursor: (!agreedToTerms || !hasSignature || optionProblems.length > 0) ? "not-allowed" : "pointer",
                           fontSize: 16, fontWeight: 700, fontFamily: "'Inter', sans-serif",
                           color: "#000", background: accent,
-                          opacity: (!agreedToTerms || !hasSignature) ? 0.4 : 1,
+                          opacity: (!agreedToTerms || !hasSignature || optionProblems.length > 0) ? 0.4 : 1,
                           display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                           transition: "box-shadow 0.2s, opacity 0.2s",
                           boxShadow: (agreedToTerms && hasSignature) ? `0 0 20px rgba(${accentRgb}, 0.3)` : "none",
