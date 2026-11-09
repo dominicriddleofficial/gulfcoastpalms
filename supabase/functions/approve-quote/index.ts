@@ -155,6 +155,7 @@ Deno.serve(async (req) => {
         const map: Record<string, [number, string]> = {
           quote_stale: [409, "This quote was updated. Please reload the page to see the latest prices before approving."],
           quote_choose_one: [400, "Choose exactly one option in each choice group."],
+          quote_nothing_selected: [400, "Turn on at least one line item to approve this quote."],
           quote_invalid_option: [400, "One of the chosen options isn't part of this quote. Reload the page and try again."],
           quote_already_approved: [409, "This quote was already approved with different choices."],
           quote_closed: [409, "This quote is no longer open for approval."],
@@ -177,10 +178,23 @@ Deno.serve(async (req) => {
           if (smsResp.ok) await supabase.from("platform_quotes").update({ approval_sms_sent: true, approval_sms_sent_at: new Date().toISOString() }).eq("id", quote_id);
         } catch { /* owner alert is best-effort */ }
       }
-      // Customer options are Gulf Coast Palms only, and GCP approvals never auto-create an invoice
-      // (same rule as the legacy path below, which auto-invoices PPS only). The office invoices an
-      // accepted option quote with invoice_accepted_quote: one invoice, chosen lines, agreed totals.
-      return new Response(JSON.stringify({ success: true, status: optionResult.status, snapshot: optionResult.snapshot, invoice_number: null }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      // GCP approvals never auto-create an invoice (approval-only; the office invoices later with
+      // invoice_accepted_quote). PPS keeps its auto-invoice workflow, built only from the immutable
+      // accepted snapshot (chosen lines + agreed totals) and idempotent, so retries never duplicate it.
+      let optionInvoiceNumber: string | null = null;
+      if (isPPS) {
+        const { data: inv, error: invError } = await supabase.rpc("invoice_accepted_quote_on_approval", { _quote_id: quote_id });
+        if (invError) {
+          console.error(`[approve-quote] PPS option auto-invoice failed for ${quote?.quote_number}:`, invError.message);
+          await supabase.from("error_logs").insert({
+            error_message: `approve-quote PPS option auto-invoice failed for ${quote?.quote_number}: ${String(invError.message).substring(0, 300)}`,
+            page_url: "/edge/approve-quote",
+          }).then(() => null, () => null);
+        } else {
+          optionInvoiceNumber = (inv as { invoice_number?: string } | null)?.invoice_number ?? null;
+        }
+      }
+      return new Response(JSON.stringify({ success: true, status: optionResult.status, snapshot: optionResult.snapshot, invoice_number: optionInvoiceNumber }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const alreadyApproved =
