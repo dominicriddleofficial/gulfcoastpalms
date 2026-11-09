@@ -24,7 +24,8 @@ export function QuoteOptionChoices({ lines, selected, onChange, accent, muted, t
     <div key={line.id} data-testid={`quote-option-${line.id}`} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-2 border-b border-[color:var(--choice-border)] py-4">
       <div className="min-w-0">
         <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-[color:var(--choice-text)]">{line.description}</p>
-        {Number(line.quantity) !== 1 && <p className="text-xs text-[color:var(--choice-muted)]">Qty {line.quantity}</p>}
+        {Number(line.quantity) !== 1 && <p className="text-xs text-[color:var(--choice-muted)]">
+          {line.unit && line.unit !== "each" ? `${Number(line.quantity).toLocaleString("en-US")} ${line.unit} × $${fmt(Number(line.unit_price))}` : `Qty ${line.quantity}`}</p>}
         <p className={`mt-1 text-xs ${included ? "text-[color:var(--choice-accent)]" : "text-[color:var(--choice-muted)]"}`}>{state}</p>
       </div>
       <span className="whitespace-nowrap text-sm font-semibold text-[color:var(--choice-text)]">{price(line, addition)}</span>
@@ -45,15 +46,15 @@ export function QuoteOptionChoices({ lines, selected, onChange, accent, muted, t
           </label> : undefined);
       })}
     </div>)}
-    {optional.length > 0 && <>{heading("Optional add-ons")}{optional.map(line => {
+    {optional.length > 0 && <>{heading(required.length ? "Optional add-ons" : "Line items — each is optional")}{optional.map(line => {
       const on = isIncluded(line, set);
       return row(line, on, on ? "Selected — included in total" : onChange ? "Optional — available to add" : "Not selected — not included", onChange ?
         <Button type="button" variant="outline" role="switch" aria-label={`Add ${line.description}`} aria-checked={on} disabled={disabled}
           onClick={() => onChange(on ? selected.filter(id => id !== line.id) : [...selected, line.id])}
           className="min-h-12 w-full justify-between border-[color:var(--choice-border)] bg-transparent text-[color:var(--choice-text)] hover:bg-transparent hover:text-[color:var(--choice-accent)]">
-          <span className="flex items-center gap-2">{on && <Check className="h-4 w-4 text-[color:var(--choice-accent)]" />}{on ? "ON · Added" : "OFF · Add to quote"}</span>
+          <span className="flex items-center gap-2">{on && <Check className="h-4 w-4 text-[color:var(--choice-accent)]" />}{on ? (required.length ? "ON · Added" : "ON · Included") : (required.length ? "OFF · Add to quote" : "OFF · Not included")}</span>
           {on ? <ToggleRight className="!h-8 !w-8 text-[color:var(--choice-accent)]" /> : <ToggleLeft className="!h-8 !w-8 text-[color:var(--choice-muted)]" />}
-        </Button> : undefined, true);
+        </Button> : undefined, required.length > 0);
     })}</>}
   </div>;
 }

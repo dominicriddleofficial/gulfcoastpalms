@@ -8,6 +8,7 @@ export interface OptionLine {
   id: string;
   description: string;
   quantity: number;
+  unit?: string | null;
   unit_price: number;
   discount_amount?: number | null;
   taxable_flag?: boolean | null;
@@ -108,12 +109,12 @@ export interface AcceptedQuoteSnapshot {
   approved_by?: string; approved_at?: string; version_number?: number;
   scope_of_work?: string | null; public_notes?: string | null; valid_until?: string | null;
   customer_name?: string | null; customer_address?: string | null; billing_name?: string | null;
-  lines?: Array<{ id: string; description: string; option_kind: string; option_group: string | null; quantity: number; unit_price: number;
+  lines?: Array<{ id: string; description: string; option_kind: string; option_group: string | null; quantity: number; unit?: string | null; unit_price: number;
     taxable_flag?: boolean; line_total: number; selected: boolean }>;
 }
 export function snapshotOptionLines(snapshot: AcceptedQuoteSnapshot): OptionLine[] {
   return (snapshot.lines ?? []).map(line => ({
-    id: line.id, description: line.description, quantity: Number(line.quantity), unit_price: Number(line.unit_price),
+    id: line.id, description: line.description, quantity: Number(line.quantity), unit: line.unit ?? null, unit_price: Number(line.unit_price),
     taxable_flag: line.taxable_flag ?? true, option_kind: line.option_kind, option_group: line.option_group,
     default_selected: line.selected, customer_selected: line.selected,
   }));
