@@ -48,7 +48,7 @@ export function QuoteOptionChoices({ lines, selected, onChange, accent, muted, t
     </div>)}
     {optional.length > 0 && <>{heading(required.length ? "Optional add-ons" : "Line items — each is optional")}{optional.map(line => {
       const on = isIncluded(line, set);
-      return row(line, on, on ? "Selected — included in total" : onChange ? "Optional — available to add" : "Not selected — not included", onChange ?
+      return row(line, on, on ? "Selected — included in total" : onChange ? (required.length ? "Optional — available to add" : "Not included — turn on to add it back") : "Not selected — not included", onChange ?
         <Button type="button" variant="outline" role="switch" aria-label={`Add ${line.description}`} aria-checked={on} disabled={disabled}
           onClick={() => onChange(on ? selected.filter(id => id !== line.id) : [...selected, line.id])}
           className="min-h-12 w-full justify-between border-[color:var(--choice-border)] bg-transparent text-[color:var(--choice-text)] hover:bg-transparent hover:text-[color:var(--choice-accent)]">
