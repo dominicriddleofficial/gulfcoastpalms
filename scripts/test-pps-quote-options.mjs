@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 const db = new PGlite();
 await db.exec(`
 CREATE TABLE public.businesses (id uuid PRIMARY KEY, shortcode text);
-CREATE TABLE public.platform_customers (id uuid PRIMARY KEY, business_id uuid, display_name text);
+CREATE TABLE public.platform_customers (id uuid PRIMARY KEY, business_id uuid, display_name text, email text, phone text);
 CREATE TABLE public.platform_properties (id uuid PRIMARY KEY, address_1 text, city text, state text, zip text);
 CREATE TABLE public.platform_quotes (id uuid PRIMARY KEY, business_id uuid, customer_id uuid, property_id uuid, quote_number text, status text,
   subtotal numeric, tax_rate numeric DEFAULT 0, tax_total numeric DEFAULT 0, discount_total numeric DEFAULT 0, total numeric,
@@ -37,7 +37,7 @@ const C = 'c0000000-0000-0000-0000-000000000001', Q = 'a0000000-0000-0000-0000-0
 const PATIO = 'e0000000-0000-0000-0000-000000000001', GARAGE = 'e0000000-0000-0000-0000-000000000002', OTHER = 'e0000000-0000-0000-0000-000000000099';
 await db.exec(`
 INSERT INTO businesses VALUES ('${G}','GCP'),('${P}','PPS'),('${X}','OTHER');
-INSERT INTO platform_customers VALUES ('${C}','${P}','Fixture');
+INSERT INTO platform_customers (id,business_id,display_name) VALUES ('${C}','${P}','Fixture');
 INSERT INTO platform_quotes (id,business_id,customer_id,quote_number,status,subtotal,total,deposit_required_flag,deposit_type,deposit_value,deposit_amount_calculated)
  VALUES ('${Q}','${P}','${C}','PPS-T','sent',10875,10875,true,'percentage',25,2718.75),
         ('${QG}','${G}','${C}','GCP-T','sent',1300,1300,false,null,null,0);
