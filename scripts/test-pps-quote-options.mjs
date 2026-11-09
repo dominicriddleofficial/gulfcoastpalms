@@ -25,7 +25,7 @@ CREATE TABLE public.platform_invoices (id uuid PRIMARY KEY DEFAULT gen_random_uu
 CREATE TABLE public.platform_invoice_line_items (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), business_id uuid, invoice_id uuid, description text,
   quantity numeric, unit text, unit_price numeric, taxable_flag boolean, line_total numeric, sort_order int);
 CREATE SEQUENCE inv_seq;
-CREATE FUNCTION public.generate_next_number(_business_id uuid, _record_type text) RETURNS text LANGUAGE sql AS $$ SELECT 'INV-' || nextval('inv_seq') $$;
+CREATE FUNCTION public.generate_next_number(_business_id uuid, _record_type text) RETURNS text LANGUAGE sql AS $$ SELECT 'INV-' || nextval('public.inv_seq') $$;
 CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role;
 `);
 const sql = await fs.readFile(new URL('../drizzle/migrations/0016_pps_quote_options.sql', import.meta.url), 'utf8');
