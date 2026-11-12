@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { buildRouteMeta, rawRoutes } from "@/seo/routes.data.mjs";
 import { isTrackablePath } from "@/lib/analytics";
@@ -74,5 +74,23 @@ describe("cinematic homepage preview", () => {
     render(<MemoryRouter><CinematicHero /></MemoryRouter>);
     expect(screen.getByRole("button", { name: /play film/i })).toBeTruthy();
     expect(screen.getAllByRole("link", { name: /free quote/i }).length).toBeGreaterThan(0);
+  });
+
+  it("does not mount the film until the poster has been decoded", async () => {
+    let release = () => {};
+    const decode = vi.fn(() => new Promise<void>((r) => { release = r; }));
+    const orig = HTMLImageElement.prototype.decode;
+    HTMLImageElement.prototype.decode = decode;
+    try {
+      const { container } = render(<MemoryRouter><CinematicHero media={{ mobile: { mp4: "/m.mp4" }, desktop: { mp4: "/d.mp4" } }} /></MemoryRouter>);
+      const img = container.querySelector("img.cine-frame") as HTMLImageElement;
+      fireEvent.load(img);
+      expect(decode).toHaveBeenCalled();
+      expect(screen.queryByTestId("cinematic-video")).toBeNull();
+      await act(async () => { release(); await Promise.resolve(); await Promise.resolve(); });
+      expect(screen.getByTestId("cinematic-video")).toBeTruthy();
+    } finally {
+      HTMLImageElement.prototype.decode = orig;
+    }
   });
 });
