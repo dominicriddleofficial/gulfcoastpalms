@@ -54,6 +54,9 @@ export const GCP_BUSINESS = {
   aggregateRating: { ratingValue: "5.0", reviewCount: "168", checkedAt: "2026-10-15", source: "owner-confirmed" },
 } as const;
 
+/** Google Business Profile (reviews) link. */
+export const GOOGLE_BUSINESS_URL = "https://g.page/r/CVI5xmZYC-NAEBM";
+
 /** Convenient href helpers */
 export const TEL_HREF = `tel:${GCP_BUSINESS.phoneDigits}`;
 /**

@@ -16,6 +16,24 @@ import m720j from "@/assets/cinematic/canopy-first-frame-portrait-720.jpg.asset.
 import filmDesktop from "@/assets/cinematic/canopy-film-desktop-1600.mp4.asset.json";
 import filmPortrait from "@/assets/cinematic/canopy-film-portrait-720.mp4.asset.json";
 
+/** Hero copy shared by the React hero, the prerendered first view and SEO static content. */
+export const cinematicCopy = {
+  eyebrow: "Care for the canopy. Room for what's next.",
+  title: "Tree Removal & Palm Tree Trimming",
+  subheading: "Experienced tree crews and established palm expertise across Florida's Emerald Coast, from Perdido Key to 30A.",
+  quoteLabel: "Get a Free Quote",
+  label: "Service visualization",
+};
+
+/** Preview header links (existing routes only). */
+export const cinematicHeaderLinks = [
+  { label: "Tree Services", to: "/services/tree-trimming-removal" },
+  { label: "Palm Care", to: "/services/palm-tree-trimming" },
+  { label: "Our work", to: "/jobs" },
+  { label: "Service Areas", to: "/service-areas" },
+  { label: "About", to: "/about" },
+] as const;
+
 /** Route of the hidden, noindex cinematic homepage preview. */
 export const CINEMATIC_PREVIEW_PATH = "/preview/cinematic-home";
 

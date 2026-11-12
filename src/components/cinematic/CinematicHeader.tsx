@@ -4,15 +4,10 @@ import { Menu, Phone } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { serviceGroups } from "@/data/services";
 import { GCP_BUSINESS, TEL_HREF } from "@/lib/business-info";
+import { cinematicHeaderLinks } from "@/data/cinematicHero";
 import QuoteRequestButton from "@/components/cta/QuoteRequestButton";
 
-const primary = [
-  { label: "Tree Services", to: "/services/tree-trimming-removal" },
-  { label: "Palm Care", to: "/services/palm-tree-trimming" },
-  { label: "Our work", to: "/jobs" },
-  { label: "Service Areas", to: "/service-areas" },
-  { label: "About", to: "/about" },
-];
+const primary = cinematicHeaderLinks;
 
 /** Same destinations as the shared Navbar's mobile menu (no new pages). */
 const menuTop = [

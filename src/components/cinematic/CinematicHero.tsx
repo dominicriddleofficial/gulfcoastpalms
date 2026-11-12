@@ -5,7 +5,7 @@ import QuoteRequestButton from "@/components/cta/QuoteRequestButton";
 import HeroReviewBadge from "@/components/home/HeroReviewBadge";
 import { GCP_BUSINESS, TEL_HREF } from "@/lib/business-info";
 import {
-  cinematicChapters, cinematicMedia, cinematicPortraitPoster, cinematicPoster, cinematicServices,
+  cinematicChapters, cinematicCopy, cinematicMedia, cinematicPortraitPoster, cinematicPoster, cinematicServices,
   type CinematicSource,
 } from "@/data/cinematicHero";
 import { useCinematicPlayer } from "./useCinematicPlayer";
@@ -91,16 +91,16 @@ const CinematicHero = ({ media = cinematicMedia }: Props) => {
 
       <div className="cine-content container mx-auto px-5 md:px-10">
         <div className="cine-copy max-w-2xl">
-          <p className="cine-eyebrow font-body uppercase text-palm-gold">Care for the canopy. Room for what's next.</p>
+          <p className="cine-eyebrow font-body uppercase text-palm-gold">{cinematicCopy.eyebrow}</p>
           <h1 id="cinematic-hero-title" className="cine-title font-display font-bold text-primary-foreground">
-            Tree Removal &amp; Palm Tree Trimming
+            {cinematicCopy.title}
           </h1>
           <p className="cine-sub font-body text-palm-sand/85">
-            Experienced tree crews and established palm expertise across Florida's Emerald Coast, from Perdido Key to 30A.
+            {cinematicCopy.subheading}
           </p>
           <div className="cine-actions">
             <QuoteRequestButton source="hero_cinematic_main" className="cine-quote">
-              {ended ? "Get your free quote" : "Get a Free Quote"}
+              {ended ? "Get your free quote" : cinematicCopy.quoteLabel}
             </QuoteRequestButton>
             <a href={TEL_HREF} data-track-placement="hero_cinematic" className="cine-call font-body text-palm-sand/85 hover:text-primary-foreground underline-offset-4 hover:underline">
               or call <span className="font-semibold text-primary-foreground">{GCP_BUSINESS.phoneDisplay}</span>
@@ -139,7 +139,7 @@ const CinematicHero = ({ media = cinematicMedia }: Props) => {
       <div className="cine-player">
         <div className="cine-player-row">
           <p className="cine-label">
-            Service visualization
+            {cinematicCopy.label}
             {p.showVideo && chapterLabel && <span className="cine-chapter"> · {chapterLabel}</span>}
           </p>
           {p.hasMedia && (ended ? (
