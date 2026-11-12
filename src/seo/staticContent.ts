@@ -1,3 +1,4 @@
+import { cinematicCopy } from "@/data/cinematicHero";
 /**
  * Build-time static body copy for the public marketing routes.
  *
@@ -250,9 +251,8 @@ const literalContent: Record<string, StaticPageContent> = {
     blocks: [],
   },
   "/preview/cinematic-home": {
-    h1: "Tree Removal & Palm Tree Trimming",
-    subheading:
-      "Experienced tree crews and established palm expertise across Florida's Emerald Coast, from Perdido Key to 30A.",
+    h1: cinematicCopy.title,
+    subheading: cinematicCopy.subheading,
     blocks: [],
   },
   "/thank-you": {

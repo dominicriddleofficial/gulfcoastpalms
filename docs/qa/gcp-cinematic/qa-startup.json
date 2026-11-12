@@ -1,0 +1,595 @@
+{
+ "environment": "npm run build output served by local static server 127.0.0.1 (asset paths passed through to project asset CDN path); headless Chromium 147, default autoplay policy, no play patch; mobile = 390x844 is_mobile DPR2; throttle = CDP 1.6 Mbps down / 0.75 up / 150 ms, fresh context (cold cache); desktop 1440x900 unthrottled. Not production hosting, not Safari, not a device.",
+ "before": [
+  {
+   "path": "/",
+   "vp": "390x844",
+   "throttle": true,
+   "marks": {
+    "anyQuoteLink": 4.0,
+    "staticCopy": 4.0,
+    "reactMounted": 10.45
+   },
+   "nav": {
+    "htmlEnd": 0.35,
+    "dcl": 6.28,
+    "fcp": 4.076
+   },
+   "totalKB": 1728,
+   "largest": [
+    {
+     "u": "/assets/vendor-supabase-CaA_PTs4.js",
+     "start": 0.23,
+     "end": 6.24,
+     "kb": 190,
+     "type": "script"
+    },
+    {
+     "u": "/assets/index-Bwy0IC0g.js",
+     "start": 0.23,
+     "end": 4.75,
+     "kb": 162,
+     "type": "script"
+    },
+    {
+     "u": "/assets/vendor-react-rvUZo2Jj.js",
+     "start": 0.23,
+     "end": 4.7,
+     "kb": 161,
+     "type": "script"
+    },
+    {
+     "u": "/assets/StickyContactBar-BU0YjBDr.js",
+     "start": 6.32,
+     "end": 9.72,
+     "kb": 139,
+     "type": "script"
+    },
+    {
+     "u": "/assets/palm-trimming-nWDSjSeD.jpg",
+     "start": 10.48,
+     "end": 12.02,
+     "kb": 137,
+     "type": "img"
+    },
+    {
+     "u": "/assets/index-DU0nbjDB.css",
+     "start": 0.23,
+     "end": 3.99,
+     "kb": 134,
+     "type": "link"
+    },
+    {
+     "u": "/assets/vendor-motion-PT2iLJ6c.js",
+     "start": 6.32,
+     "end": 9.74,
+     "kb": 121,
+     "type": "script"
+    },
+    {
+     "u": "https://connect.facebook.net/en_US/fbevents.js",
+     "start": 3.23,
+     "end": 6.46,
+     "kb": 112,
+     "type": "script"
+    }
+   ]
+  },
+  {
+   "path": "/preview/cinematic-home",
+   "vp": "390x844",
+   "throttle": true,
+   "marks": {
+    "anyQuoteLink": 0.23,
+    "staticCopy": 0.23,
+    "reactHeroCta": 10.41,
+    "reactMounted": 10.41,
+    "poster": 10.83,
+    "posterSrc": "canopy-first-frame-portrait-720.avif",
+    "firstFrame": 12.14
+   },
+   "nav": {
+    "htmlEnd": 0.21,
+    "dcl": 6.58,
+    "fcp": 4.352
+   },
+   "totalKB": 1702,
+   "largest": [
+    {
+     "u": "/assets/vendor-supabase-CaA_PTs4.js",
+     "start": 0.21,
+     "end": 6.53,
+     "kb": 190,
+     "type": "script"
+    },
+    {
+     "u": "/assets/index-Bwy0IC0g.js",
+     "start": 0.2,
+     "end": 5.11,
+     "kb": 162,
+     "type": "script"
+    },
+    {
+     "u": "/assets/vendor-react-rvUZo2Jj.js",
+     "start": 0.2,
+     "end": 5.1,
+     "kb": 161,
+     "type": "script"
+    },
+    {
+     "u": "/assets/StickyContactBar-BU0YjBDr.js",
+     "start": 6.63,
+     "end": 9.94,
+     "kb": 139,
+     "type": "script"
+    },
+    {
+     "u": "/assets/palm-trimming-nWDSjSeD.jpg",
+     "start": 10.43,
+     "end": 11.84,
+     "kb": 137,
+     "type": "img"
+    },
+    {
+     "u": "/assets/index-DU0nbjDB.css",
+     "start": 0.21,
+     "end": 4.26,
+     "kb": 134,
+     "type": "link"
+    },
+    {
+     "u": "/assets/vendor-motion-PT2iLJ6c.js",
+     "start": 6.64,
+     "end": 9.91,
+     "kb": 121,
+     "type": "script"
+    },
+    {
+     "u": "https://connect.facebook.net/en_US/fbevents.js",
+     "start": 3.2,
+     "end": 6.34,
+     "kb": 112,
+     "type": "script"
+    }
+   ]
+  }
+ ],
+ "after": [
+  {
+   "path": "/",
+   "vp": "390x844",
+   "throttle": true,
+   "marks": {
+    "anyQuoteLink": 4.1,
+    "staticCopy": 4.1,
+    "reactMounted": 11.04
+   },
+   "nav": {
+    "htmlEnd": 0.35,
+    "dcl": 6.28,
+    "fcp": 4.14
+   },
+   "totalKB": 1728,
+   "reqEvents": [],
+   "largest": [
+    {
+     "u": "/assets/vendor-supabase-CaA_PTs4.js",
+     "start": 0.21,
+     "end": 6.22,
+     "kb": 190,
+     "type": "script"
+    },
+    {
+     "u": "/assets/index-j-Wa4PS3.js",
+     "start": 0.21,
+     "end": 4.7,
+     "kb": 162,
+     "type": "script"
+    },
+    {
+     "u": "/assets/vendor-react-rvUZo2Jj.js",
+     "start": 0.21,
+     "end": 4.65,
+     "kb": 161,
+     "type": "script"
+    },
+    {
+     "u": "/assets/StickyContactBar-06hoQ3mD.js",
+     "start": 6.32,
+     "end": 9.7,
+     "kb": 139,
+     "type": "script"
+    },
+    {
+     "u": "/assets/palm-trimming-nWDSjSeD.jpg",
+     "start": 11.08,
+     "end": 12.87,
+     "kb": 137,
+     "type": "img"
+    },
+    {
+     "u": "/assets/index-BXmEc9fy.css",
+     "start": 0.21,
+     "end": 4.01,
+     "kb": 134,
+     "type": "link"
+    },
+    {
+     "u": "/assets/vendor-motion-PT2iLJ6c.js",
+     "start": 6.33,
+     "end": 9.72,
+     "kb": 121,
+     "type": "script"
+    },
+    {
+     "u": "https://connect.facebook.net/en_US/fbevents.js",
+     "start": 3.21,
+     "end": 6.47,
+     "kb": 112,
+     "type": "script"
+    }
+   ],
+   "layoutTrace": [
+    {
+     "k": "mut",
+     "t": 4.02,
+     "shell": false,
+     "h1count": 1,
+     "h1": [
+      101,
+      126
+     ],
+     "quote": null,
+     "cards": null,
+     "bg": "rgb(246, 249, 247)"
+    },
+    {
+     "k": "tick",
+     "t": 5.44,
+     "shell": false,
+     "h1count": 1,
+     "h1": [
+      75,
+      101
+     ],
+     "quote": null,
+     "cards": null,
+     "bg": "rgb(246, 249, 247)"
+    },
+    {
+     "k": "mut",
+     "t": 11.04,
+     "shell": false,
+     "h1count": 1,
+     "h1": [
+      203,
+      328
+     ],
+     "quote": null,
+     "cards": null,
+     "bg": "rgb(246, 249, 247)"
+    },
+    {
+     "k": "tick",
+     "t": 11.37,
+     "shell": false,
+     "h1count": 1,
+     "h1": [
+      193,
+      318
+     ],
+     "quote": null,
+     "cards": null,
+     "bg": "rgb(246, 249, 247)"
+    },
+    {
+     "k": "tick",
+     "t": 11.46,
+     "shell": false,
+     "h1count": 1,
+     "h1": [
+      190,
+      315
+     ],
+     "quote": null,
+     "cards": null,
+     "bg": "rgb(246, 249, 247)"
+    },
+    {
+     "k": "mut",
+     "t": 11.5,
+     "shell": false,
+     "h1count": 1,
+     "h1": [
+      189,
+      314
+     ],
+     "quote": null,
+     "cards": null,
+     "bg": "rgb(246, 249, 247)"
+    },
+    {
+     "k": "tick",
+     "t": 11.69,
+     "shell": false,
+     "h1count": 1,
+     "h1": [
+      184,
+      309
+     ],
+     "quote": null,
+     "cards": null,
+     "bg": "rgb(246, 249, 247)"
+    },
+    {
+     "k": "tick",
+     "t": 11.94,
+     "shell": false,
+     "h1count": 1,
+     "h1": [
+      183,
+      308
+     ],
+     "quote": null,
+     "cards": null,
+     "bg": "rgb(246, 249, 247)"
+    }
+   ]
+  },
+  {
+   "path": "/preview/cinematic-home",
+   "vp": "390x844",
+   "throttle": true,
+   "marks": {
+    "staticCopy": 0.22,
+    "anyQuoteLink": 0.28,
+    "shellQuote": 0.28,
+    "reactMounted": 0.28,
+    "poster": 4.73,
+    "posterSrc": "canopy-first-frame-portrait-720.avif",
+    "reactHeroCta": 11.22,
+    "firstFrame": 12.78
+   },
+   "nav": {
+    "htmlEnd": 0.3,
+    "dcl": 8.15,
+    "fcp": 0.34
+   },
+   "totalKB": 1749,
+   "reqEvents": [
+    "canopy-first-frame-portrait-720.avif",
+    "canopy-film-portrait-720.mp4"
+   ],
+   "largest": [
+    {
+     "u": "/assets/vendor-supabase-CaA_PTs4.js",
+     "start": 0.22,
+     "end": 8.09,
+     "kb": 190,
+     "type": "script"
+    },
+    {
+     "u": "/assets/index-j-Wa4PS3.js",
+     "start": 0.22,
+     "end": 6.8,
+     "kb": 162,
+     "type": "script"
+    },
+    {
+     "u": "/assets/vendor-react-rvUZo2Jj.js",
+     "start": 0.22,
+     "end": 6.77,
+     "kb": 161,
+     "type": "script"
+    },
+    {
+     "u": "/assets/StickyContactBar-06hoQ3mD.js",
+     "start": 8.19,
+     "end": 10.75,
+     "kb": 139,
+     "type": "script"
+    },
+    {
+     "u": "/assets/palm-trimming-nWDSjSeD.jpg",
+     "start": 11.25,
+     "end": 12.77,
+     "kb": 137,
+     "type": "img"
+    },
+    {
+     "u": "/assets/index-BXmEc9fy.css",
+     "start": 0.39,
+     "end": 7.15,
+     "kb": 134,
+     "type": "link"
+    },
+    {
+     "u": "/assets/vendor-motion-PT2iLJ6c.js",
+     "start": 8.19,
+     "end": 10.75,
+     "kb": 121,
+     "type": "script"
+    },
+    {
+     "u": "https://connect.facebook.net/en_US/fbevents.js",
+     "start": 0.24,
+     "end": 5.38,
+     "kb": 112,
+     "type": "script"
+    }
+   ],
+   "layoutTrace": [
+    {
+     "k": "mut",
+     "t": 0.34,
+     "shell": true,
+     "h1count": 1,
+     "h1": [
+      525,
+      597
+     ],
+     "quote": [
+      605,
+      657
+     ],
+     "cards": [
+      702,
+      779
+     ],
+     "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+     "k": "mut",
+     "t": 11.22,
+     "shell": false,
+     "h1count": 1,
+     "h1": [
+      525,
+      596
+     ],
+     "quote": [
+      604,
+      656
+     ],
+     "cards": [
+      702,
+      779
+     ],
+     "bg": "rgb(246, 249, 247)"
+    }
+   ]
+  },
+  {
+   "path": "/preview/cinematic-home",
+   "vp": "1440x900",
+   "throttle": false,
+   "marks": {
+    "anyQuoteLink": 0.06,
+    "staticCopy": 0.06,
+    "shellQuote": 0.06,
+    "reactMounted": 0.06,
+    "poster": 0.44,
+    "posterSrc": "canopy-first-frame-1600.avif",
+    "reactHeroCta": 1.6,
+    "firstFrame": 2.85
+   },
+   "nav": {
+    "htmlEnd": 0.01,
+    "dcl": 0.77,
+    "fcp": 0.372
+   },
+   "totalKB": 7731,
+   "reqEvents": [
+    "canopy-first-frame-1600.avif",
+    "canopy-film-desktop-1600.mp4"
+   ],
+   "largest": [
+    {
+     "u": "s-v1/2bc4ff1b-7a5d-475c-8dbd-9cbb6ccce0bd/canopy-film-desktop-1600.mp4",
+     "start": 1.69,
+     "end": 2.17,
+     "kb": 5915,
+     "type": "video"
+    },
+    {
+     "u": "/assets/vendor-supabase-CaA_PTs4.js",
+     "start": 0.04,
+     "end": 0.2,
+     "kb": 190,
+     "type": "other"
+    },
+    {
+     "u": "s-v1/993b3400-e60d-4998-a149-cc07cb4985e3/canopy-first-frame-1600.avif",
+     "start": 0.03,
+     "end": 0.22,
+     "kb": 174,
+     "type": "link"
+    },
+    {
+     "u": "/assets/index-j-Wa4PS3.js",
+     "start": 0.04,
+     "end": 0.15,
+     "kb": 162,
+     "type": "script"
+    },
+    {
+     "u": "/assets/vendor-react-rvUZo2Jj.js",
+     "start": 0.04,
+     "end": 0.13,
+     "kb": 161,
+     "type": "other"
+    },
+    {
+     "u": "/assets/StickyContactBar-06hoQ3mD.js",
+     "start": 0.87,
+     "end": 0.93,
+     "kb": 139,
+     "type": "script"
+    },
+    {
+     "u": "/assets/palm-trimming-nWDSjSeD.jpg",
+     "start": 1.62,
+     "end": 1.64,
+     "kb": 137,
+     "type": "img"
+    },
+    {
+     "u": "/assets/index-BXmEc9fy.css",
+     "start": 0.04,
+     "end": 0.22,
+     "kb": 134,
+     "type": "link"
+    }
+   ],
+   "layoutTrace": [
+    {
+     "k": "mut",
+     "t": 0.37,
+     "shell": true,
+     "h1count": 1,
+     "h1": [
+      547,
+      681
+     ],
+     "quote": [
+      777,
+      829
+     ],
+     "cards": [
+      663,
+      829
+     ],
+     "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+     "k": "mut",
+     "t": 1.6,
+     "shell": false,
+     "h1count": 1,
+     "h1": [
+      547,
+      681
+     ],
+     "quote": [
+      777,
+      829
+     ],
+     "cards": [
+      657,
+      829
+     ],
+     "bg": "rgb(246, 249, 247)"
+    }
+   ]
+  }
+ ],
+ "shell_checks": {
+  "gaps": {
+   "noH1": 0,
+   "two": 0,
+   "samples": 684,
+   "spinner": 0
+  },
+  "click_before_app": "/quote?service=Palm+Tree+Trimming&source=hero_cinematic_palm"
+ }
+}

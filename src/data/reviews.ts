@@ -1,7 +1,8 @@
-import { GCP_BUSINESS } from "@/lib/business-info";
+import { GCP_BUSINESS, GOOGLE_BUSINESS_URL } from "@/lib/business-info";
+
+export { GOOGLE_BUSINESS_URL };
 
 /** Public profile for reading reviews; separate from the write-review flow. */
-export const GOOGLE_BUSINESS_URL = "https://g.page/r/CVI5xmZYC-NAEBM";
 export const GOOGLE_REVIEW_URL =
   import.meta.env.VITE_GOOGLE_REVIEW_URL || `${GOOGLE_BUSINESS_URL}/review`;
 
