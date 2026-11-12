@@ -9,8 +9,29 @@ import QuoteRequestButton from "@/components/cta/QuoteRequestButton";
 const primary = [
   { label: "Tree Services", to: "/services/tree-trimming-removal" },
   { label: "Palm Care", to: "/services/palm-tree-trimming" },
+  { label: "Our work", to: "/jobs" },
   { label: "Service Areas", to: "/service-areas" },
   { label: "About", to: "/about" },
+];
+
+/** Same destinations as the shared Navbar's mobile menu (no new pages). */
+const menuTop = [
+  { label: "Home", to: "/" },
+  { label: "Our work", to: "/jobs" },
+  { label: "About", to: "/about" },
+  { label: "Buy Palm Trees", to: "/palm-trees/buy" },
+];
+const menuMore = [
+  { label: "View all services", to: "/services" },
+  { label: "Maintenance Plans", to: "/palm-tree-maintenance-plans" },
+  { label: "Service Areas", to: "/service-areas" },
+  { label: "Palm Care Guides", to: "/learn" },
+  { label: "Palm Tree Types", to: "/palm-trees/types" },
+  { label: "More Palm Care Guides", to: "/palm-trees/guides" },
+  { label: "Palm Tree Cost Guide", to: "/palm-tree-cost" },
+  { label: "Hurricane Prep Guide", to: "/hurricane-palm-preparation" },
+  { label: "Emergency Service", to: "/emergency-palm-service" },
+  { label: "Referral Program", to: "/referral" },
 ];
 
 /** Compact header scoped to the cinematic preview; the shared Navbar is untouched. */
@@ -40,6 +61,11 @@ const CinematicHeader = () => {
             <SheetContent side="right" className="overflow-y-auto">
               <SheetTitle className="font-display">Menu</SheetTitle>
               <nav aria-label="Mobile" className="mt-4 space-y-5">
+                <ul className="space-y-1 border-b pb-4">
+                  {menuTop.map((l) => (
+                    <li key={l.to}><Link to={l.to} onClick={() => setOpen(false)} className="block py-1.5 font-body text-base font-semibold">{l.label}</Link></li>
+                  ))}
+                </ul>
                 {serviceGroups.map((g) => (
                   <div key={g.label}>
                     <p className="font-body text-xs uppercase tracking-wider text-muted-foreground mb-2">{g.label}</p>
@@ -51,7 +77,7 @@ const CinematicHeader = () => {
                   </div>
                 ))}
                 <ul className="space-y-2 border-t pt-4">
-                  {primary.slice(2).map((l) => (
+                  {menuMore.map((l) => (
                     <li key={l.to}><Link to={l.to} onClick={() => setOpen(false)} className="font-body text-sm">{l.label}</Link></li>
                   ))}
                 </ul>
