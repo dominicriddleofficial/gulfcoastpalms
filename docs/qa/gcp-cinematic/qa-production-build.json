@@ -1,0 +1,353 @@
+{
+ "browser": "147.0.7727.15",
+ "m390": {
+  "viewport": "390x844",
+  "poster_painted_s": 0.92,
+  "first_frame_s": 1.84,
+  "autoplay_state_after_first_frame": {
+   "t": 0.6,
+   "paused": false,
+   "ended": false,
+   "shown": "true",
+   "src": "canopy-film-portrait-720.mp4",
+   "dropped": 1,
+   "total": 18,
+   "opacity": "1",
+   "btn": "Pause film",
+   "poster": "canopy-first-frame-portrait-720.avif"
+  },
+  "resources": [
+   {
+    "f": "canopy-first-frame-portrait-720.avif",
+    "kb": 92
+   }
+  ],
+  "palm": {
+   "t": 4.61,
+   "paused": false,
+   "ended": false,
+   "shown": "true",
+   "src": "canopy-film-portrait-720.mp4",
+   "dropped": 1,
+   "total": 114,
+   "opacity": "1",
+   "btn": "Pause film",
+   "poster": "canopy-first-frame-portrait-720.avif"
+  },
+  "removal": {
+   "t": 10.63,
+   "paused": false,
+   "ended": false,
+   "shown": "true",
+   "src": "canopy-film-portrait-720.mp4",
+   "dropped": 1,
+   "total": 259,
+   "opacity": "1",
+   "btn": "Pause film",
+   "poster": "canopy-first-frame-portrait-720.avif"
+  },
+  "finale": {
+   "t": 15.5,
+   "paused": true,
+   "ended": true,
+   "shown": "true",
+   "src": "canopy-film-portrait-720.mp4",
+   "dropped": 1,
+   "total": 372,
+   "opacity": "1",
+   "btn": "Replay film",
+   "poster": "canopy-first-frame-portrait-720.avif"
+  },
+  "start_frame_match": {
+   "video": [
+    720,
+    1276
+   ],
+   "poster": "canopy-first-frame-portrait-720.avif",
+   "posterNatural": [
+    720,
+    1276
+   ],
+   "meanAbsDiffPerChannel": 2.83
+  },
+  "mp4": [
+   "canopy-film-portrait-720.mp4"
+  ],
+  "errors": []
+ },
+ "d1440": {
+  "viewport": "1440x900",
+  "poster_painted_s": 0.53,
+  "first_frame_s": 1.49,
+  "autoplay_state_after_first_frame": {
+   "t": 0.48,
+   "paused": false,
+   "ended": false,
+   "shown": "true",
+   "src": "canopy-film-desktop-1600.mp4",
+   "dropped": 0,
+   "total": 16,
+   "opacity": "1",
+   "btn": "Pause film",
+   "poster": "canopy-first-frame-1600.avif"
+  },
+  "resources": [
+   {
+    "f": "canopy-first-frame-1600.avif",
+    "kb": 174
+   },
+   {
+    "f": "canopy-film-desktop-1600.mp4",
+    "kb": 5915
+   }
+  ],
+  "palm": {
+   "t": 4.63,
+   "paused": false,
+   "ended": false,
+   "shown": "true",
+   "src": "canopy-film-desktop-1600.mp4",
+   "dropped": 0,
+   "total": 115,
+   "opacity": "1",
+   "btn": "Pause film",
+   "poster": "canopy-first-frame-1600.avif"
+  },
+  "removal": {
+   "t": 10.63,
+   "paused": false,
+   "ended": false,
+   "shown": "true",
+   "src": "canopy-film-desktop-1600.mp4",
+   "dropped": 0,
+   "total": 259,
+   "opacity": "1",
+   "btn": "Pause film",
+   "poster": "canopy-first-frame-1600.avif"
+  },
+  "finale": {
+   "t": 15.5,
+   "paused": true,
+   "ended": true,
+   "shown": "true",
+   "src": "canopy-film-desktop-1600.mp4",
+   "dropped": 1,
+   "total": 372,
+   "opacity": "1",
+   "btn": "Replay film",
+   "poster": "canopy-first-frame-1600.avif"
+  },
+  "start_frame_match": {
+   "video": [
+    1600,
+    904
+   ],
+   "poster": "canopy-first-frame-1600.avif",
+   "posterNatural": [
+    1600,
+    904
+   ],
+   "meanAbsDiffPerChannel": 2.87
+  },
+  "mp4": [
+   "canopy-film-desktop-1600.mp4"
+  ],
+  "errors": []
+ },
+ "m375": {
+  "viewport": "375x667",
+  "poster_painted_s": 0.63,
+  "first_frame_s": 1.84,
+  "autoplay_state_after_first_frame": {
+   "t": 0.7,
+   "paused": false,
+   "ended": false,
+   "shown": "true",
+   "src": "canopy-film-portrait-720.mp4",
+   "dropped": 9,
+   "total": 21,
+   "opacity": "1",
+   "btn": "Pause film",
+   "poster": "canopy-first-frame-portrait-720.avif"
+  },
+  "resources": [
+   {
+    "f": "canopy-first-frame-portrait-720.avif",
+    "kb": 92
+   }
+  ],
+  "palm": {
+   "t": 4.6,
+   "paused": false,
+   "ended": false,
+   "shown": "true",
+   "src": "canopy-film-portrait-720.mp4",
+   "dropped": 9,
+   "total": 114,
+   "opacity": "1",
+   "btn": "Pause film",
+   "poster": "canopy-first-frame-portrait-720.avif"
+  },
+  "removal": {
+   "t": 10.6,
+   "paused": false,
+   "ended": false,
+   "shown": "true",
+   "src": "canopy-film-portrait-720.mp4",
+   "dropped": 9,
+   "total": 258,
+   "opacity": "1",
+   "btn": "Pause film",
+   "poster": "canopy-first-frame-portrait-720.avif"
+  },
+  "finale": {
+   "t": 15.5,
+   "paused": true,
+   "ended": true,
+   "shown": "true",
+   "src": "canopy-film-portrait-720.mp4",
+   "dropped": 9,
+   "total": 372,
+   "opacity": "1",
+   "btn": "Replay film",
+   "poster": "canopy-first-frame-portrait-720.avif"
+  },
+  "start_frame_match": {
+   "video": [
+    720,
+    1276
+   ],
+   "poster": "canopy-first-frame-portrait-720.avif",
+   "posterNatural": [
+    720,
+    1276
+   ],
+   "meanAbsDiffPerChannel": 2.83
+  },
+  "layout": {
+   "hero": [
+    65,
+    616
+   ],
+   "h1": [
+    441,
+    496
+   ],
+   "quote": [
+    501,
+    545
+   ],
+   "cards": [
+    553,
+    606
+   ],
+   "player": [
+    75,
+    118
+   ],
+   "cardText": [
+    "Tree removal",
+    "Palm trimming"
+   ],
+   "h1px": "26px"
+  },
+  "mp4": [
+   "canopy-film-portrait-720.mp4"
+  ],
+  "errors": []
+ },
+ "swap_paused": {
+  "before": {
+   "t": 6.14,
+   "paused": true,
+   "ended": false,
+   "shown": "true",
+   "src": "canopy-film-portrait-720.mp4",
+   "dropped": 0,
+   "total": 151,
+   "opacity": "1",
+   "btn": "Play film",
+   "poster": "canopy-first-frame-portrait-480.avif"
+  },
+  "after": {
+   "t": 6.14,
+   "paused": true,
+   "ended": false,
+   "shown": "true",
+   "src": "canopy-film-desktop-1600.mp4",
+   "dropped": 0,
+   "total": 151,
+   "opacity": "1",
+   "btn": "Play film",
+   "poster": "canopy-first-frame-1280.avif"
+  },
+  "mp4_requests": [
+   "canopy-film-portrait-720.mp4",
+   "canopy-film-desktop-1600.mp4"
+  ],
+  "imageCoveredEverySample": true,
+  "snapshotSamples": 19,
+  "hiddenVideoSamples": 19,
+  "errors": []
+ },
+ "swap_playing": {
+  "before": {
+   "t": 6.05,
+   "paused": false,
+   "ended": false,
+   "shown": "true",
+   "src": "canopy-film-portrait-720.mp4",
+   "dropped": 1,
+   "total": 149,
+   "opacity": "1",
+   "btn": "Pause film",
+   "poster": "canopy-first-frame-portrait-480.avif"
+  },
+  "after": {
+   "t": 8.61,
+   "paused": false,
+   "ended": false,
+   "shown": "true",
+   "src": "canopy-film-desktop-1600.mp4",
+   "dropped": 0,
+   "total": 211,
+   "opacity": "1",
+   "btn": "Pause film",
+   "poster": "canopy-first-frame-1280.avif"
+  },
+  "mp4_requests": [
+   "canopy-film-portrait-720.mp4",
+   "canopy-film-desktop-1600.mp4"
+  ],
+  "imageCoveredEverySample": true,
+  "snapshotSamples": 17,
+  "hiddenVideoSamples": 17,
+  "errors": []
+ },
+ "forced_block_mock": {
+  "btn": "Play film",
+  "quote": true,
+  "cards": 2,
+  "videoOpacity": "1"
+ },
+ "slow_1.6mbps_150ms_m390": {
+  "quote_button_s": 10.5,
+  "poster_s": 11.1,
+  "first_frame_s": 12.5,
+  "state": {
+   "t": 0.3,
+   "paused": false,
+   "ended": false,
+   "shown": "true",
+   "src": "canopy-film-portrait-720.mp4",
+   "dropped": 0,
+   "total": 11,
+   "opacity": "1",
+   "btn": "Pause film",
+   "poster": "canopy-first-frame-portrait-720.avif"
+  },
+  "mp4": [
+   "canopy-film-portrait-720.mp4"
+  ]
+ }
+}
