@@ -81,9 +81,10 @@ export function useCinematicPlayer({ mobile, desktop, chapters }: Options) {
     if (!v || !armed) return;
     let id = 0;
     const update = (t: number) => setChapter((c) => { const n = chapterAt(t, chapters); return n === c ? c : n; });
-    if (v.requestVideoFrameCallback) {
-      const tick = (_n: number, meta: { mediaTime: number }) => { update(meta.mediaTime); id = v.requestVideoFrameCallback!(tick); };
-      id = v.requestVideoFrameCallback(tick);
+    const rvfc = v.requestVideoFrameCallback?.bind(v);
+    if (rvfc) {
+      const tick = (_n: number, meta: { mediaTime: number }) => { update(meta.mediaTime); id = rvfc(tick); };
+      id = rvfc(tick);
       return () => v.cancelVideoFrameCallback?.(id);
     }
     const onTime = () => update(v.currentTime);
