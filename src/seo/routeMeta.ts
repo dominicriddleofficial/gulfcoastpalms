@@ -17,6 +17,8 @@ export interface RouteMeta {
   canonical: string;
   ogType: string;
   noindex: boolean;
+  /** Noindex page that still points its canonical at another route. */
+  keepCanonical?: boolean;
 }
 
 export { SITE_ORIGIN, DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGE_ALT };

@@ -249,6 +249,12 @@ const literalContent: Record<string, StaticPageContent> = {
       "Opt in to receive text messages from Gulf Coast Palms regarding your service requests, quotes, and updates.",
     blocks: [],
   },
+  "/preview/cinematic-home": {
+    h1: "Tree Removal & Palm Tree Trimming",
+    subheading:
+      "Experienced tree crews and established palm expertise across Florida's Emerald Coast, from Perdido Key to 30A.",
+    blocks: [],
+  },
   "/thank-you": {
     h1: "Thank You!",
     subheading:

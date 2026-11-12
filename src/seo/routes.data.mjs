@@ -81,6 +81,7 @@ export const rawRoutes = [
   { path: "/privacy-policy", title: "Privacy Policy | Gulf Coast Palms", description: "Read the Gulf Coast Palms privacy policy to understand how we collect, use & protect your personal information when you request service or a quote." },
   { path: "/text-consent", title: "SMS Text Consent | Gulf Coast Palms", description: "Opt in to receive text message updates from Gulf Coast Palms about your palm tree service appointments, estimates & scheduling in NW Florida." },
   { path: "/quote", title: "Get a Free Tree Service & Palm Care Quote | Gulf Coast Palms", description: "Request a free quote for tree removal, tree trimming, storm cleanup or palm care across the Emerald Coast. Call or text (850) 910-1290." },
+  { path: "/preview/cinematic-home", title: "Cinematic homepage preview | Gulf Coast Palms", description: "Internal homepage preview. Not for search results.", noindex: true, canonicalTo: "/" },
   { path: "/thank-you", title: "Thank You | Gulf Coast Palms", description: "Thanks for reaching out to Gulf Coast Palms. We typically respond within 15 minutes during business hours — (850) 910-1290.", noindex: true },
 ];
 
@@ -96,8 +97,9 @@ export function buildRouteMeta() {
     ogImage: DEFAULT_OG_IMAGE,
     ogImageAlt: DEFAULT_OG_IMAGE_ALT,
     ogType: "website",
-    canonical: `${SITE_ORIGIN}${r.canonicalPath || r.path}`,
+    canonical: `${SITE_ORIGIN}${r.canonicalTo || r.canonicalPath || r.path}`,
     noindex: r.noindex === true,
+    keepCanonical: Boolean(r.canonicalTo),
     };
   });
 }

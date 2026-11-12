@@ -315,7 +315,7 @@ function rewriteHead(html, meta) {
     `<meta name="twitter:image:alt" content="${ogImageAlt}">`,
   );
 
-  if (meta.noindex) {
+  if (meta.noindex && !meta.keepCanonical) {
     out = out.replace(/\s*<link\s+rel=["']canonical["'][^>]*>/gi, "");
     out = out.replace(/\s*<meta\s+property=["']og:url["'][^>]*>/gi, "");
   }

@@ -29,7 +29,10 @@ for (const route of routes) {
   assert.ok(one("h1").textContent.trim(), `${route.path}: empty heading`);
   assert.ok(doc.querySelector('#seo-static-content a[href="/quote"]'), `${route.path}: missing crawlable quote link`);
   assert.ok(!doc.body.textContent.includes("[PRICE]"), `${route.path}: placeholder price`);
-  if (route.noindex) {
+  if (route.noindex && route.keepCanonical) {
+    assert.equal(one('link[rel="canonical"]').getAttribute("href"), route.canonical);
+    assert.equal(doc.querySelectorAll('script[type="application/ld+json"]').length, 0);
+  } else if (route.noindex) {
     assert.equal(doc.querySelectorAll('link[rel="canonical"]').length, 0);
     assert.equal(doc.querySelectorAll('script[type="application/ld+json"]').length, 0);
   } else {
