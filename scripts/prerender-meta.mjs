@@ -45,13 +45,13 @@ const NOT_FOUND_DESCRIPTION =
  * temporary ESM file we can import from this Node script. Image imports are
  * stubbed — only text copy is needed here.
  */
-async function loadStaticContent() {
+async function loadStaticContent(entry = path.join("src", "seo", "staticContent.ts")) {
   const outFile = path.join(
     await fs.mkdtemp(path.join(os.tmpdir(), "gcp-seo-")),
     "static-content.mjs",
   );
   await esbuild({
-    entryPoints: [path.join(projectRoot, "src", "seo", "staticContent.ts")],
+    entryPoints: [path.join(projectRoot, entry)],
     bundle: true,
     format: "esm",
     platform: "node",
@@ -61,6 +61,15 @@ async function loadStaticContent() {
       {
         name: "stub-assets",
         setup(b) {
+          // `?raw` CSS (the cinematic preview's first view) is inlined as text.
+          b.onResolve({ filter: /\.css\?raw$/ }, (args) => ({
+            path: path.resolve(args.resolveDir, args.path.replace(/\?raw$/, "")),
+            namespace: "raw-css",
+          }));
+          b.onLoad({ filter: /.*/, namespace: "raw-css" }, async (args) => ({
+            contents: await fs.readFile(args.path, "utf8"),
+            loader: "text",
+          }));
           // Any non-code asset import (images, fonts, css) resolves to a stub.
           b.onResolve({ filter: /\.(png|jpe?g|webp|avif|svg|gif|css)(\?.*)?$/ }, (args) => ({
             path: args.path,
@@ -376,6 +385,8 @@ async function main() {
     throw new Error("index.html no longer has an empty <div id=\"root\"></div> to inject into");
   }
   const seo = await loadStaticContent();
+  const cineShell = await loadStaticContent(path.join("src", "components", "cinematic", "cinematicShell.ts"));
+  const CINE_PATH = "/preview/cinematic-home";
   const staticContent = seo.buildStaticContent();
   const meta = buildRouteMeta();
   for (const route of Object.keys(staticContent)) {
@@ -409,7 +420,11 @@ async function main() {
     const payloads = m.noindex ? [] : [seo.localBusinessSchema(), ...(routeJsonLd[m.path] || [])];
     rewritten = injectJsonLd(rewritten, renderJsonLd(payloads));
     jsonLdBlocks += payloads.length;
-    const markup = renderStaticContent(staticContent[m.path]);
+    // The hidden cinematic preview ships its real styled first view (same data as the
+    // React hero) instead of plain copy; its main stylesheet moves after the markup so
+    // the first view paints without waiting for it (module scripts still wait for it).
+    const isCine = m.path === CINE_PATH;
+    const markup = isCine ? cineShell.renderCinematicShell() : renderStaticContent(staticContent[m.path]);
     if (!markup) throw new Error(`Missing static content for ${m.path}`);
     withContent += 1;
     rewritten = injectBody(rewritten, markup);
@@ -431,6 +446,14 @@ async function main() {
       rewritten = rewritten.replace("</head>", `${preloadScript}</head>`);
     }
     if (m.path !== "/") rewritten = rewritten.replace(/<link[^>]+rel="preload"[^>]+as="image"[^>]*>/g, "");
+    if (isCine) {
+      rewritten = rewritten.replace("</head>", `${cineShell.cinematicPosterPreloads()}</head>`);
+      const sheets = [];
+      rewritten = rewritten.replace(/<link rel="stylesheet"[^>]*href="\/assets\/[^"]+\.css"[^>]*>/g, (tag) => { sheets.push(tag); return ""; });
+      if (!sheets.length) throw new Error("cinematic preview: main stylesheet link not found");
+      rewritten = rewritten.replace(/(<div id="root">[\s\S]*?<\/script><\/div><\/div>)/, `$1${sheets.join("")}`);
+      if (!rewritten.includes(`</div></div>${sheets[0]}`)) throw new Error("cinematic preview: stylesheet not placed after first view");
+    }
     await fs.writeFile(target, adoptHead(rewritten), "utf8");
     written += 1;
   }
