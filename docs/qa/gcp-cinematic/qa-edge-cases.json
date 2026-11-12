@@ -1,0 +1,127 @@
+{
+ "blocked_autoplay": {
+  "before_click": {
+   "video": true,
+   "videoOpacity": "1",
+   "posterOk": true,
+   "btn": "Play film",
+   "quoteVisible": true,
+   "cards": 4
+  },
+  "after_play_click": {
+   "t": 2.008228,
+   "paused": false,
+   "shown": "true"
+  },
+  "mp4": [
+   "canopy-film-portrait-720.mp4"
+  ],
+  "errors": []
+ },
+ "reduced_motion": {
+  "before_click": {
+   "video": false,
+   "videoOpacity": null,
+   "posterOk": true,
+   "btn": "Play film",
+   "quoteVisible": true,
+   "cards": 4
+  },
+  "mp4_before_click": [],
+  "mp4_after_click": [
+   "canopy-film-portrait-720.mp4"
+  ],
+  "after_explicit_play": {
+   "t": 2.348245,
+   "paused": false,
+   "shown": "true"
+  },
+  "errors": []
+ },
+ "failed_media_390": {
+  "state": {
+   "video": false,
+   "videoOpacity": null,
+   "posterOk": true,
+   "btn": "",
+   "quoteVisible": true,
+   "cards": 4
+  },
+  "errors": [
+   "Failed to load resource: net::ERR_FAILED"
+  ]
+ },
+ "failed_media_1440": {
+  "state": {
+   "video": false,
+   "videoOpacity": null,
+   "posterOk": true,
+   "btn": "",
+   "quoteVisible": true,
+   "cards": 4
+  },
+  "errors": [
+   "Failed to load resource: net::ERR_FAILED"
+  ]
+ },
+ "slow_1.6mbps_150ms": {
+  "poster_s": 31.9,
+  "state_at_poster": {
+   "video": false,
+   "videoOpacity": null,
+   "posterOk": true,
+   "btn": "Play film",
+   "quoteVisible": true,
+   "cards": 4
+  },
+  "first_frame_s": 33.7,
+  "note": "dev server (unminified) over throttled CDP; not a production measurement"
+ },
+ "links": {
+  "tree": {
+   "url": "/quote?service=Tree+Removal&source=hero_cinematic_tree",
+   "selected": [
+    "Tree Removal",
+    ""
+   ]
+  },
+  "palm": {
+   "url": "/quote?service=Palm+Tree+Trimming&source=hero_cinematic_palm",
+   "selected": [
+    "Palm Tree Trimming",
+    ""
+   ]
+  },
+  "main": {
+   "url": "/quote"
+  },
+  "menu_links": [
+   "/",
+   "/jobs",
+   "/about",
+   "/palm-trees/buy",
+   "/services/tree-trimming-removal",
+   "/services/tree-removal",
+   "/services/tree-trimming",
+   "/services/storm-damage-cleanup",
+   "/services/palm-tree-trimming",
+   "/services/palm-tree-installation",
+   "/services/palm-tree-removal",
+   "/services/palm-diamond-cutting",
+   "/services/palm-tree-trunk-skinning",
+   "/hoa-commercial-palm-maintenance",
+   "/hurricane-palm-preparation",
+   "/services/landscaping-services",
+   "/services",
+   "/palm-tree-maintenance-plans",
+   "/service-areas",
+   "/learn",
+   "/palm-trees/types",
+   "/palm-trees/guides",
+   "/palm-tree-cost",
+   "/emergency-palm-service",
+   "/referral"
+  ]
+ },
+ "links_errors": []
+}
