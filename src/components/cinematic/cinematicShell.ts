@@ -28,7 +28,7 @@ const STAR = '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 1
 
 /** Tailwind-equivalent rules for the few utilities the shell needs before the main CSS loads. */
 const SHELL_CSS = `
-#${CINEMATIC_SHELL_ID}[data-cine-shell]{--palm-dark:150 40% 8%;--palm-light:145 45% 52%;--palm-gold:38 90% 55%;--palm-sand:35 30% 92%;--primary:145 63% 32%;--primary-foreground:0 0% 100%;margin:0;font-family:Outfit,sans-serif;color:hsl(var(--palm-sand));background:hsl(var(--palm-dark))}
+#${CINEMATIC_SHELL_ID}[data-cine-shell]{--palm-dark:150 40% 8%;--palm-light:145 45% 52%;--palm-gold:38 90% 55%;--palm-sand:35 30% 92%;--primary:145 63% 32%;--primary-foreground:0 0% 100%;margin:0;line-height:1.5;-webkit-text-size-adjust:100%;font-family:Outfit,sans-serif;color:hsl(var(--palm-sand));background:hsl(var(--palm-dark))}
 body{margin:0}
 [data-cine-shell] *{box-sizing:border-box}
 :where([data-cine-shell] *){margin:0}
@@ -55,21 +55,22 @@ body{margin:0}
 [data-cine-shell] .cine-title{font-family:Fraunces,Outfit,serif;font-weight:700;color:hsl(var(--primary-foreground))}
 [data-cine-shell] .cine-eyebrow{text-transform:uppercase;color:hsl(var(--palm-gold))}
 [data-cine-shell] .cine-sub,[data-cine-shell] .cine-call{color:hsl(var(--palm-sand)/.85)}
+[data-cine-shell] .cine-call{line-height:1.25rem}
 [data-cine-shell] .cine-call b{color:hsl(var(--primary-foreground))}
 [data-cine-shell] .cine-copy{max-width:42rem}
-[data-cine-shell] .cs-badge{display:inline-flex;align-items:center;gap:.375rem;border-radius:999px;background:hsl(var(--primary-foreground)/.1);border:1px solid hsl(var(--primary-foreground)/.25);padding:.25rem .75rem;font-size:.75rem;font-weight:600;color:hsl(var(--primary-foreground))}
+[data-cine-shell] .cs-badge{display:inline-flex;align-items:center;gap:.375rem;border-radius:999px;background:hsl(var(--primary-foreground)/.1);border:1px solid hsl(var(--primary-foreground)/.25);padding:.25rem .75rem;font-size:.75rem;line-height:1rem;font-weight:600;color:hsl(var(--primary-foreground))}
 [data-cine-shell] .cs-badge svg{color:hsl(var(--palm-gold))}
-[data-cine-shell] .cs-badge small{font-size:11px;font-weight:400;color:hsl(var(--palm-sand)/.7)}
+[data-cine-shell] .cs-badge small{font-size:11px;line-height:1rem;font-weight:400;color:hsl(var(--palm-sand)/.7)}
 [data-cine-shell] .cs-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem;list-style:none;padding:0}
 @media(min-width:768px){[data-cine-shell] .cs-cards{gap:.75rem}}
 [data-cine-shell] .cs-card{display:block;border-radius:.75rem;padding:.625rem .75rem}
 @media(min-width:768px){[data-cine-shell] .cs-card{padding:1rem 1rem .5rem}}
 [data-cine-shell] .cs-ct{display:flex;align-items:center;justify-content:space-between;gap:.5rem;font-family:Fraunces,Outfit,serif;font-size:15px;line-height:1.25;font-weight:600;color:hsl(var(--primary-foreground))}
 @media(min-width:768px){[data-cine-shell] .cs-ct{font-size:1.25rem}}
-[data-cine-shell] .cs-cd{display:none;font-size:.875rem;color:hsl(var(--palm-sand)/.8);margin-top:.25rem}
+[data-cine-shell] .cs-cd{display:none;font-size:.875rem;line-height:1.25rem;color:hsl(var(--palm-sand)/.8);margin-top:.25rem}
 @media(min-width:768px){[data-cine-shell] .cs-cd{display:block}}
-[data-cine-shell] .cs-fq{display:block;font-size:.75rem;color:hsl(var(--palm-gold));margin-top:.125rem}
-[data-cine-shell] .cs-about{display:none;padding:0 1rem .75rem;font-size:.75rem;color:hsl(var(--palm-sand)/.75)}
+[data-cine-shell] .cs-fq{display:block;font-size:.75rem;line-height:1rem;color:hsl(var(--palm-gold));margin-top:.125rem}
+[data-cine-shell] .cs-about{display:none;padding:0 1rem .75rem;font-size:.75rem;line-height:1rem;color:hsl(var(--palm-sand)/.75)}
 @media(min-width:768px){[data-cine-shell] .cs-about{display:block}}
 [data-cine-shell] .cs-contact{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;background:hsl(var(--primary));padding-bottom:env(safe-area-inset-bottom,0px)}
 @media(min-width:768px){[data-cine-shell] .cs-contact{display:none}}
