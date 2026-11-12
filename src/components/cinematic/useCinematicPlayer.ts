@@ -30,6 +30,8 @@ function saveData() {
 export function useCinematicPlayer({ mobile, desktop, chapters }: Options) {
   const videoRef = useRef<FrameVideo | null>(null);
   const containerRef = useRef<HTMLElement | null>(null);
+  /** Slim progress bar driven directly from media time (transform only, no re-render/layout). */
+  const progressRef = useRef<HTMLElement | null>(null);
   const [source, setSource] = useState<CinematicSource | undefined>();
   const [state, setState] = useState<PlayerState>("poster");
   const [chapter, setChapter] = useState(chapters[0]?.id ?? "");
@@ -122,6 +124,10 @@ export function useCinematicPlayer({ mobile, desktop, chapters }: Options) {
     if (!v || !mounted) return;
     const update = (t: number) => {
       if (t > 0) setFrameShown(true);
+      const d = v.duration;
+      if (progressRef.current && Number.isFinite(d) && d > 0) {
+        progressRef.current.style.transform = `scaleX(${Math.min(1, Math.max(0, t / d))})`;
+      }
       setChapter((c) => { const n = chapterAt(t, chapters); return n === c ? c : n; });
     };
     const rvfc = v.requestVideoFrameCallback?.bind(v);
@@ -149,7 +155,12 @@ export function useCinematicPlayer({ mobile, desktop, chapters }: Options) {
   const handlers = {
     onPlaying: () => setState("playing"),
     onPause: () => { if (!ended.current) setState((s) => (s === "error" ? s : "paused")); },
-    onEnded: () => { ended.current = true; setState("ended"); },
+    onEnded: () => {
+      ended.current = true;
+      setState("ended");
+      setChapter(chapters[chapters.length - 1]?.id ?? "");
+      if (progressRef.current) progressRef.current.style.transform = "scaleX(1)";
+    },
     onError: () => { setState("error"); setFrameShown(false); },
     onWaiting: () => setState((s) => (s === "playing" ? "loading" : s)),
   };
@@ -174,6 +185,7 @@ export function useCinematicPlayer({ mobile, desktop, chapters }: Options) {
     manualPause.current = false;
     ended.current = false;
     v.currentTime = 0;
+    if (progressRef.current) progressRef.current.style.transform = "scaleX(0)";
     setChapter(chapters[0]?.id ?? "");
     attemptPlay(true);
   }, [chapters, attemptPlay]);
@@ -181,7 +193,7 @@ export function useCinematicPlayer({ mobile, desktop, chapters }: Options) {
   const onPosterSettled = useCallback(() => setPosterSettled(true), []);
 
   return {
-    videoRef, containerRef, source, state, chapter, handlers, play, pause, replay, onPosterSettled,
+    videoRef, containerRef, progressRef, source, state, chapter, handlers, play, pause, replay, onPosterSettled,
     /** Real media exists and has not failed (never render a fake play button otherwise). */
     hasMedia: Boolean(source) && state !== "error",
     videoMounted: mounted && state !== "error",
