@@ -1,6 +1,6 @@
 # GCP cinematic homepage preview – QA (unpublished)
 
-Route `/preview/cinematic-home`: noindex,nofollow, canonical `/`, not in sitemap, not tracked. Root `/` source and metadata unchanged. Full build + SEO check (72 pages, 67 sitemap URLs), typecheck and 26 focused player/preview/first-view/public-service tests pass (pass 4).
+Route `/preview/cinematic-home`: noindex,nofollow, canonical `/`, not in sitemap, not tracked (no Google Analytics/Ads or Meta configuration or requests; verified pass 5). Root `/` source and metadata unchanged. Full build + SEO check (72 pages, 67 sitemap URLs), typecheck and 26 focused player/preview/first-view/public-service tests pass (pass 4).
 
 ## Pass 4 (current) – startup / first view
 **Environment:** same compiled build + local static server; headless Chromium 147, default autoplay policy, no play patch; phone 390x844 (is_mobile, DPR 2) on CDP 1.6 Mbps / 150 ms, fresh cold context; desktop 1440x900 unthrottled. Raw data: qa-startup.json.
@@ -55,3 +55,25 @@ Reduced motion (no film fetched until Play), failed film request (poster stays, 
 - Not run: real iPhone Safari (incl. Low Power Mode autoplay), real Android, real cellular, production CDN timings.
 - During a breakpoint swap the held frame is the previous film's composition shown with cover framing for up to ~1s on this machine before the new film's frame appears.
 - Desktop film is 5.9 MB; on slow links the poster carries the hero until it buffers.
+
+
+## Pass 5: preview tracking leak fixed
+
+**Defect:** the pass-4 waterfall showed the site-wide Meta pixel/config and Google tag still loading on the preview; only React events were guarded.
+
+**Fix:** the first inline head script now sets the existing no-tracking flag for `/preview/*` before any tracker code runs, so Google `js`/`config` calls and both idle loaders are skipped (loaders also re-check the path). The compiled preview HTML no longer contains the no-JS Meta pixel (build fails if it remains). `/`, CRM and arborist-link behavior are unchanged.
+
+**Verified (compiled build, local static server, headless Chromium default policies, no request blocking, 390x844, 10.5s incl. scroll):** preview made 0 Google/Meta requests, `dataLayer` empty, `fbq` undefined, no pixel in HTML. Root still configures `G-8FNKZVRWGY` and `AW-11356668550` and requests gtag, fbevents and Meta config (and its pixel stays in HTML). Root run sent real tracker hits tagged with host 127.0.0.1. Data: `qa-startup.json` → `tracking_fix_pass`.
+
+**Same cold 390x844 1.6 Mbps/150 ms case, one run each:**
+
+| Preview | Pass 4 | Pass 5 |
+|---|---|---|
+| First paint | 0.34s | 0.34s |
+| Styled quote/service links | 0.28s | 0.29s |
+| Poster | 4.73s | 3.47s |
+| React hero quote button | 11.22s | 8.68s |
+| First film frame | 12.78s | 10.25s |
+| Transfer | 1749 KB | 1528 KB |
+
+Root in the same run: quote link 4.04s, React 10.37s (unchanged within noise). Single runs on a shared machine; differences of a few hundred ms are noise. Limits unchanged: not real Safari/devices or production hosting; the poster still competes with ~1 MB of shared app JavaScript.
