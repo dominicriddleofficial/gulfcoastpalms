@@ -29,7 +29,7 @@ const menuMore = [
   { label: "Palm Tree Types", to: "/palm-trees/types" },
   { label: "More Palm Care Guides", to: "/palm-trees/guides" },
   { label: "Palm Tree Cost Guide", to: "/palm-tree-cost" },
-  { label: "Hurricane Prep Guide", to: "/hurricane-palm-preparation" },
+  // Hurricane Prep Guide already appears in the service groups above.
   { label: "Emergency Service", to: "/emergency-palm-service" },
   { label: "Referral Program", to: "/referral" },
 ];
