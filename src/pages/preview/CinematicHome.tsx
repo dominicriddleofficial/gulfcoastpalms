@@ -18,10 +18,10 @@ import { CINEMATIC_PREVIEW_PATH } from "@/data/cinematicHero";
 
 /** Hidden, noindex preview of a cinematic homepage. The live "/" is unchanged. */
 const CinematicHome = () => (
-  <div className="min-h-screen flex flex-col overflow-x-clip">
+  <div className="cine-page min-h-screen flex flex-col overflow-x-clip">
     <SEOHead title="Cinematic homepage preview | Gulf Coast Palms" description="Internal preview." canonicalUrl={CINEMATIC_PREVIEW_PATH} noIndex />
     <CinematicHeader />
-    <main className="flex-1 pb-[calc(env(safe-area-inset-bottom,0px)+4.5rem)] md:pb-0 overflow-x-clip">
+    <main className="cine-main flex-1 overflow-x-clip">
       <CinematicHero />
       <ServicesPreview />
       <TrustBadges />
@@ -35,7 +35,8 @@ const CinematicHome = () => (
       <CTASection />
     </main>
     <Footer />
-    <StickyContactBar />
+    {/* Scoped wrapper adds safe-area padding for this preview only; the shared bar is unchanged. */}
+    <div className="cine-contact"><StickyContactBar /></div>
   </div>
 );
 
