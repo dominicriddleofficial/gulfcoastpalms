@@ -20,6 +20,10 @@ interface Props {
 const CinematicHero = ({ media = cinematicMedia }: Props) => {
   const p = useCinematicPlayer({ ...media, chapters: cinematicChapters });
   const ended = p.state === "ended";
+  const running = p.state === "playing" || p.state === "loading" || p.state === "paused";
+  /** Service card to highlight: only while the film is genuinely on that chapter. */
+  const active = p.showVideo && running ? p.chapter : "";
+  const chapterLabel = cinematicChapters.find((c) => c.id === p.chapter)?.label;
   const { onPosterSettled } = p;
 
   // Cached images may finish before React attaches onLoad.
@@ -71,7 +75,6 @@ const CinematicHero = ({ media = cinematicMedia }: Props) => {
           />
         )}
         <div className="cine-scrim" aria-hidden="true" />
-        <p className="cine-label">Service visualization</p>
       </div>
 
       <div className="cine-content container mx-auto px-5 md:px-10">
@@ -97,7 +100,7 @@ const CinematicHero = ({ media = cinematicMedia }: Props) => {
         <nav aria-label="Choose a service" className="cine-journey">
           <ul className="grid grid-cols-2 gap-2 md:gap-3">
             {cinematicServices.map((s) => (
-              <li key={s.id} className="cine-card">
+              <li key={s.id} className="cine-card" data-active={active === s.chapter ? "true" : undefined} data-settled={ended ? "true" : undefined}>
                 <Link
                   to={s.quoteHref}
                   data-track-cta="quote_request"
@@ -118,32 +121,33 @@ const CinematicHero = ({ media = cinematicMedia }: Props) => {
             ))}
           </ul>
 
-          {p.hasMedia && (
-            <div className="mt-2 flex items-center gap-3">
-              {ended ? (
-                <button type="button" onClick={p.replay} className="cine-ctrl" aria-label="Replay film">
-                  <RotateCcw className="w-4 h-4" aria-hidden="true" /> Replay
-                </button>
-              ) : p.state === "playing" || p.state === "loading" ? (
-                <button type="button" onClick={p.pause} className="cine-ctrl" aria-label="Pause film">
-                  <Pause className="w-4 h-4" aria-hidden="true" /> Pause
-                </button>
-              ) : (
-                <button type="button" onClick={p.play} className="cine-ctrl" aria-label="Play film">
-                  <Play className="w-4 h-4" aria-hidden="true" /> Play
-                </button>
-              )}
-              <ol className="flex gap-1.5" aria-label="Film chapters">
-                {cinematicChapters.map((c) => (
-                  <li key={c.id} aria-current={p.chapter === c.id ? "step" : undefined}
-                    className={`h-1 w-6 rounded-full ${p.chapter === c.id ? "bg-palm-gold" : "bg-palm-sand/25"}`}>
-                    <span className="sr-only">{c.label}</span>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          )}
         </nav>
+      </div>
+      <div className="cine-player">
+        <div className="cine-player-row">
+          <p className="cine-label">
+            Service visualization
+            {p.showVideo && chapterLabel && <span className="cine-chapter"> · {chapterLabel}</span>}
+          </p>
+          {p.hasMedia && (ended ? (
+            <button type="button" onClick={p.replay} className="cine-ctrl" aria-label="Replay film">
+              <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" /><span className="cine-ctrl-text">Replay</span>
+            </button>
+          ) : p.state === "playing" || p.state === "loading" ? (
+            <button type="button" onClick={p.pause} className="cine-ctrl" aria-label="Pause film">
+              <Pause className="w-3.5 h-3.5" aria-hidden="true" /><span className="cine-ctrl-text">Pause</span>
+            </button>
+          ) : (
+            <button type="button" onClick={p.play} className="cine-ctrl" aria-label="Play film">
+              <Play className="w-3.5 h-3.5" aria-hidden="true" /><span className="cine-ctrl-text">Play</span>
+            </button>
+          ))}
+        </div>
+        {p.hasMedia && (
+          <div className="cine-progress" aria-hidden="true">
+            <span ref={(el) => { p.progressRef.current = el; }} className="cine-progress-fill" />
+          </div>
+        )}
       </div>
     </section>
   );
