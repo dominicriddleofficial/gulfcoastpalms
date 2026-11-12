@@ -1,9 +1,9 @@
-import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { buildRouteMeta, rawRoutes } from "@/seo/routes.data.mjs";
 import { isTrackablePath } from "@/lib/analytics";
-import { chapterAt, cinematicServices } from "@/data/cinematicHero";
+import { chapterAt, cinematicChapters, cinematicMedia, cinematicServices } from "@/data/cinematicHero";
 import CinematicHero from "@/components/cinematic/CinematicHero";
 
 describe("cinematic homepage preview", () => {
@@ -42,9 +42,55 @@ describe("cinematic homepage preview", () => {
   });
 
   it("shows the real heading and no play control while there is no film", () => {
-    render(<MemoryRouter><CinematicHero /></MemoryRouter>);
+    render(<MemoryRouter><CinematicHero media={{}} /></MemoryRouter>);
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Tree Removal & Palm Tree Trimming");
     expect(screen.queryByRole("button", { name: /play film/i })).toBeNull();
     expect(screen.getByText(/service visualization/i)).toBeTruthy();
+  });
+
+  it("uses the reviewed chapter starts on one shared timeline", () => {
+    expect(cinematicChapters.map((c) => [c.id, c.start])).toEqual([
+      ["property", 0], ["palm", 2.5], ["removal", 8.5], ["reveal", 14],
+    ]);
+    expect(chapterAt(2.4)).toBe("property");
+    expect(chapterAt(2.5)).toBe("palm");
+    expect(chapterAt(8.49)).toBe("palm");
+    expect(chapterAt(8.5)).toBe("removal");
+    expect(chapterAt(14)).toBe("reveal");
+  });
+
+  it("has exactly one film per device and the corrected service wording", () => {
+    expect(cinematicMedia.mobile?.mp4).toMatch(/canopy-film-portrait-720\.mp4$/);
+    expect(cinematicMedia.desktop?.mp4).toMatch(/canopy-film-desktop-1600\.mp4$/);
+    const copy = cinematicServices.map((s) => s.detail).join(" ");
+    expect(copy).not.toMatch(/storm/i);
+    expect(cinematicServices.map((s) => s.detail)).toEqual([
+      "Tree removal planned around your property.",
+      "Careful trimming for a clean, natural canopy.",
+    ]);
+  });
+
+  it("offers a real Play control when a film exists but autoplay has not started", () => {
+    render(<MemoryRouter><CinematicHero /></MemoryRouter>);
+    expect(screen.getByRole("button", { name: /play film/i })).toBeTruthy();
+    expect(screen.getAllByRole("link", { name: /free quote/i }).length).toBeGreaterThan(0);
+  });
+
+  it("does not mount the film until the poster has been decoded", async () => {
+    let release = () => {};
+    const decode = vi.fn(() => new Promise<void>((r) => { release = r; }));
+    const orig = HTMLImageElement.prototype.decode;
+    HTMLImageElement.prototype.decode = decode;
+    try {
+      const { container } = render(<MemoryRouter><CinematicHero media={{ mobile: { mp4: "/m.mp4" }, desktop: { mp4: "/d.mp4" } }} /></MemoryRouter>);
+      const img = container.querySelector("img.cine-frame") as HTMLImageElement;
+      fireEvent.load(img);
+      expect(decode).toHaveBeenCalled();
+      expect(screen.queryByTestId("cinematic-video")).toBeNull();
+      await act(async () => { release(); await Promise.resolve(); await Promise.resolve(); });
+      expect(screen.getByTestId("cinematic-video")).toBeTruthy();
+    } finally {
+      HTMLImageElement.prototype.decode = orig;
+    }
   });
 });

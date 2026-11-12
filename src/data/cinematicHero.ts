@@ -16,6 +16,8 @@ import q828j from "@/assets/cinematic/canopy-portrait-828.jpg.asset.json";
 import q1170a from "@/assets/cinematic/canopy-portrait-1170.avif.asset.json";
 import q1170w from "@/assets/cinematic/canopy-portrait-1170.webp.asset.json";
 import q1170j from "@/assets/cinematic/canopy-portrait-1170.jpg.asset.json";
+import filmDesktop from "@/assets/cinematic/canopy-film-desktop-1600.mp4.asset.json";
+import filmPortrait from "@/assets/cinematic/canopy-film-portrait-720.mp4.asset.json";
 
 /** Route of the hidden, noindex cinematic homepage preview. */
 export const CINEMATIC_PREVIEW_PATH = "/preview/cinematic-home";
@@ -51,15 +53,21 @@ export interface CinematicSource {
   poster?: string;
 }
 
-/** One film per device. Empty until the reviewed motion files are supplied. */
-export const cinematicMedia: { mobile?: CinematicSource; desktop?: CinematicSource } = {};
+/** One reviewed film per device (silent H.264, 24fps, 15.5s, faststart, played once at 1x). */
+export const cinematicMedia: { mobile?: CinematicSource; desktop?: CinematicSource } = {
+  mobile: { mp4: filmPortrait.url },
+  desktop: { mp4: filmDesktop.url },
+};
+
+/** Total film length in seconds (both edits share one timeline). */
+export const CINEMATIC_FILM_SECONDS = 15.5;
 
 /** Story chapters cued from the film's own media time (seconds). */
 export const cinematicChapters = [
   { id: "property", start: 0, label: "The property" },
-  { id: "palm", start: 0, label: "Precision palm care" },
-  { id: "removal", start: 0, label: "Sectional tree removal" },
-  { id: "reveal", start: 0, label: "Room for what's next" },
+  { id: "palm", start: 2.5, label: "Palm trimming" },
+  { id: "removal", start: 8.5, label: "Tree removal" },
+  { id: "reveal", start: 14.0, label: "Room for what's next" },
 ] as const;
 
 export type CinematicChapterId = (typeof cinematicChapters)[number]["id"];
@@ -77,8 +85,9 @@ const quoteHref = (service: string, source: string) => `/quote?${new URLSearchPa
 export const cinematicServices = [
   {
     id: "tree",
+    chapter: "removal",
     title: "Tree Removal",
-    detail: "Controlled, sectional removal of oaks and pines.",
+    detail: "Tree removal planned around your property.",
     quoteService: "Tree Removal",
     placement: "hero_cinematic_tree",
     quoteHref: quoteHref("Tree Removal", "hero_cinematic_tree"),
@@ -86,8 +95,9 @@ export const cinematicServices = [
   },
   {
     id: "palm",
+    chapter: "palm",
     title: "Palm Tree Trimming",
-    detail: "Clean, healthy cuts that keep palms storm-ready.",
+    detail: "Careful trimming for a clean, natural canopy.",
     quoteService: "Palm Tree Trimming",
     placement: "hero_cinematic_palm",
     quoteHref: quoteHref("Palm Tree Trimming", "hero_cinematic_palm"),

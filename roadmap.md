@@ -14,4 +14,5 @@
 
 # Cinematic homepage preview (GCP)
 - [x] Hidden noindex /preview/cinematic-home with poster-only hero, two service quote paths, player ready for films
-- [ ] Add reviewed mobile/desktop films and chapter times: waiting on owner-supplied media
+- [x] Reviewed films + chapter times wired; real-film QA at 4 sizes, proofs in docs/qa/gcp-cinematic (still unpublished)
+- [ ] Owner review of preview and explicit decision to swap into /: waiting on owner
