@@ -447,6 +447,9 @@ async function main() {
     }
     if (m.path !== "/") rewritten = rewritten.replace(/<link[^>]+rel="preload"[^>]+as="image"[^>]*>/g, "");
     if (isCine) {
+      // Preview pages are untracked: drop the no-JS Meta pixel from the compiled HTML.
+      rewritten = rewritten.replace(/\s*<noscript><img[^>]*facebook\.com\/tr[^>]*><\/noscript>/g, "");
+      if (/facebook\.com\/tr/.test(rewritten)) throw new Error("cinematic preview: tracking pixel not removed");
       // Poster preload right after the viewport meta (media queries need the real
       // viewport) and ahead of the app bundles.
       rewritten = rewritten.replace(/<meta name="viewport"[^>]*>/i, (tag) => `${tag}${cineShell.cinematicPosterPreloads()}`);
