@@ -447,8 +447,9 @@ async function main() {
     }
     if (m.path !== "/") rewritten = rewritten.replace(/<link[^>]+rel="preload"[^>]+as="image"[^>]*>/g, "");
     if (isCine) {
-      // Poster preload first in <head> so it is requested ahead of the app bundles.
-      rewritten = rewritten.replace(/<meta charset="UTF-8"\s*\/?>/i, (tag) => `${tag}${cineShell.cinematicPosterPreloads()}`);
+      // Poster preload right after the viewport meta (media queries need the real
+      // viewport) and ahead of the app bundles.
+      rewritten = rewritten.replace(/<meta name="viewport"[^>]*>/i, (tag) => `${tag}${cineShell.cinematicPosterPreloads()}`);
       if (!rewritten.includes('rel="preload" as="image" fetchpriority="high" media=')) throw new Error("cinematic preview: poster preload not placed");
       const sheets = [];
       rewritten = rewritten.replace(/<link rel="stylesheet"[^>]*href="\/assets\/[^"]+\.css"[^>]*>/g, (tag) => { sheets.push(tag); return ""; });
