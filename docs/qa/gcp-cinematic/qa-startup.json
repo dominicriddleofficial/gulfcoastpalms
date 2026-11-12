@@ -591,5 +591,287 @@
    "spinner": 0
   },
   "click_before_app": "/quote?service=Palm+Tree+Trimming&source=hero_cinematic_palm"
+ },
+ "tracking_fix_pass": {
+  "environment": "npm run build output served by local static server 127.0.0.1 (asset paths passed through to project asset CDN path); headless Chromium 147, default autoplay policy, no play patch; mobile = 390x844 is_mobile DPR2; throttle = CDP 1.6 Mbps down / 0.75 up / 150 ms, fresh context (cold cache); desktop 1440x900 unthrottled. Not production hosting, not Safari, not a device. Single run each, same profile; preview no longer requests Google/Meta.",
+  "runs": [
+   {
+    "path": "/",
+    "vp": "390x844",
+    "throttle": true,
+    "marks": {
+     "anyQuoteLink": 4.04,
+     "staticCopy": 4.04,
+     "reactMounted": 10.37
+    },
+    "nav": {
+     "htmlEnd": 0.35,
+     "dcl": 6.24,
+     "fcp": 4.06
+    },
+    "mp4": [],
+    "posters": [],
+    "requests": 43,
+    "totalKB": 1728,
+    "largest": [
+     {
+      "u": "/assets/vendor-supabase-CaA_PTs4.js",
+      "start": 0.23,
+      "end": 6.21,
+      "kb": 190,
+      "type": "script"
+     },
+     {
+      "u": "/assets/index-B50KJQ-A.js",
+      "start": 0.2,
+      "end": 4.69,
+      "kb": 162,
+      "type": "script"
+     },
+     {
+      "u": "/assets/vendor-react-rvUZo2Jj.js",
+      "start": 0.2,
+      "end": 4.68,
+      "kb": 161,
+      "type": "script"
+     },
+     {
+      "u": "/assets/StickyContactBar-06hoQ3mD.js",
+      "start": 6.27,
+      "end": 9.68,
+      "kb": 139,
+      "type": "script"
+     },
+     {
+      "u": "/assets/palm-trimming-nWDSjSeD.jpg",
+      "start": 10.4,
+      "end": 12.35,
+      "kb": 137,
+      "type": "img"
+     },
+     {
+      "u": "/assets/index-BXmEc9fy.css",
+      "start": 0.23,
+      "end": 4,
+      "kb": 134,
+      "type": "link"
+     },
+     {
+      "u": "/assets/vendor-motion-PT2iLJ6c.js",
+      "start": 6.27,
+      "end": 9.71,
+      "kb": 121,
+      "type": "script"
+     },
+     {
+      "u": "https://connect.facebook.net/en_US/fbevents.js",
+      "start": 3.2,
+      "end": 6.5,
+      "kb": 112,
+      "type": "script"
+     }
+    ],
+    "latest_before_react": [
+     {
+      "u": "/assets/vendor-motion-PT2iLJ6c.js",
+      "start": 6.27,
+      "end": 9.71,
+      "kb": 121,
+      "type": "script"
+     },
+     {
+      "u": "/assets/StickyContactBar-06hoQ3mD.js",
+      "start": 6.27,
+      "end": 9.68,
+      "kb": 139,
+      "type": "script"
+     },
+     {
+      "u": "https://connect.facebook.net/signals/config/1227495902430847",
+      "start": 6.57,
+      "end": 9.37,
+      "kb": 106,
+      "type": "script"
+     },
+     {
+      "u": "https://www.google-analytics.com/g/collect",
+      "start": 8.52,
+      "end": 8.72,
+      "kb": 0,
+      "type": "fetch"
+     },
+     {
+      "u": "/assets/CTASection-DET7hmGe.js",
+      "start": 6.27,
+      "end": 8.46,
+      "kb": 47,
+      "type": "script"
+     },
+     {
+      "u": "https://www.googletagmanager.com/gtag/js",
+      "start": 3.2,
+      "end": 8.36,
+      "kb": 0,
+      "type": "script"
+     },
+     {
+      "u": "/assets/ServiceAreaMap-CV9vf4x8.js",
+      "start": 6.28,
+      "end": 7.95,
+      "kb": 20,
+      "type": "script"
+     },
+     {
+      "u": "/assets/SEOHead-qO1E1NMl.js",
+      "start": 6.27,
+      "end": 7.3,
+      "kb": 21,
+      "type": "script"
+     }
+    ],
+    "errors": [],
+    "reqEvents": []
+   },
+   {
+    "path": "/preview/cinematic-home",
+    "vp": "390x844",
+    "throttle": true,
+    "marks": {
+     "staticCopy": 0.22,
+     "anyQuoteLink": 0.29,
+     "shellQuote": 0.29,
+     "reactMounted": 0.29,
+     "poster": 3.47,
+     "posterSrc": "canopy-first-frame-portrait-720.avif",
+     "reactHeroCta": 8.68,
+     "firstFrame": 10.25
+    },
+    "nav": {
+     "htmlEnd": 0.31,
+     "dcl": 5.81,
+     "fcp": 0.34
+    },
+    "mp4": [],
+    "posters": [
+     "canopy-first-frame-portrait-720.avif"
+    ],
+    "requests": 27,
+    "totalKB": 1528,
+    "largest": [
+     {
+      "u": "/assets/vendor-supabase-CaA_PTs4.js",
+      "start": 0.22,
+      "end": 5.76,
+      "kb": 190,
+      "type": "script"
+     },
+     {
+      "u": "/assets/index-B50KJQ-A.js",
+      "start": 0.21,
+      "end": 5.13,
+      "kb": 162,
+      "type": "script"
+     },
+     {
+      "u": "/assets/vendor-react-rvUZo2Jj.js",
+      "start": 0.21,
+      "end": 5.12,
+      "kb": 161,
+      "type": "script"
+     },
+     {
+      "u": "/assets/StickyContactBar-06hoQ3mD.js",
+      "start": 5.84,
+      "end": 8.25,
+      "kb": 139,
+      "type": "script"
+     },
+     {
+      "u": "/assets/palm-trimming-nWDSjSeD.jpg",
+      "start": 8.71,
+      "end": 10.23,
+      "kb": 137,
+      "type": "img"
+     },
+     {
+      "u": "/assets/index-BXmEc9fy.css",
+      "start": 0.4,
+      "end": 5.33,
+      "kb": 134,
+      "type": "link"
+     },
+     {
+      "u": "/assets/vendor-motion-PT2iLJ6c.js",
+      "start": 5.84,
+      "end": 8.28,
+      "kb": 121,
+      "type": "script"
+     },
+     {
+      "u": "/assets/vendor-ui-DFUJPWDg.js",
+      "start": 0.21,
+      "end": 4.07,
+      "kb": 109,
+      "type": "script"
+     }
+    ],
+    "latest_before_react": [],
+    "errors": [],
+    "reqEvents": [
+     "canopy-first-frame-portrait-720.avif",
+     "canopy-film-portrait-720.mp4"
+    ]
+   }
+  ],
+  "tracking_check": {
+   "environment": "npm run build output, local static server, headless Chromium default policies (no request blocking), 390x844 unthrottled, 10.5s observation incl. scroll",
+   "/": {
+    "noTracking": false,
+    "dataLayer": [
+     [
+      "js",
+      "[obj]"
+     ],
+     [
+      "config",
+      "G-8FNKZVRWGY"
+     ],
+     [
+      "config",
+      "AW-11356668550"
+     ],
+     [],
+     []
+    ],
+    "fbq": "function",
+    "gtagScripts": [
+     "https://www.googletagmanager.com/gtag/js?id=AW-11356668550&cx=c&gtm=4e6ba1",
+     "https://connect.facebook.net/signals/config/1227495902430847?v=2.9.439&r=stable&domain=127.0.0.1&hme=1f127d11ce7bba675ee077e129c6ec7e07038113ad3e920301e60f2f865dc776&ex_m=119%2C243%2C172%2C27%2C82%2C83%2C163%2C78%2C77%2C11%2C182%2C102%2C20%2C154%2C142%2C46%2C85%2C90%2C184%2C111%2C150%2C177%2C8%2C4%2C5%2C7%2C6%2C3%2C103%2C116%2C162%2C72%2C186%2C110%2C185%2C212%2C264%2C37%2C84%2C284%2C283%2C282%2C14%2C25%2C28%2C40%2C62%2C118%2C68%2C10%2C73%2C112%2C113%2C114%2C120%2C145%2C38%2C36%2C147%2C148%2C149%2C144%2C143%2C173%2C86%2C176%2C174%2C175%2C57%2C69%2C67%2C138%2C19%2C180%2C52%2C334%2C335%2C336%2C333%2C32%2C17%2C31%2C18%2C33%2C34%2C35%2C55%2C164%2C87%2C127%2C22%2C24%2C51%2C47%2C49%2C48%2C95%2C104%2C108%2C125%2C161%2C165%2C53%2C126%2C29%2C26%2C134%2C79%2C43%2C167%2C166%2C168%2C158%2C156%2C30%2C42%2C66%2C124%2C179%2C80%2C21%2C129%2C93%2C76%2C23%2C97%2C98%2C131%2C96%2C152%2C151%2C155%2C109%2C178%2C181%2C41%2C350%2C372%2C257%2C239%2C70%2C240%2C238%2C375%2C366%2C59%2C258%2C122%2C146%2C92%2C136%2C61%2C54%2C56%2C128%2C135%2C141%2C140%2C65%2C74%2C169%2C88%2C89%2C130%2C44%2C39%2C60%2C63%2C115%2C183%2C1%2C139%2C16%2C137%2C12%2C2%2C64%2C105%2C15%2C75%2C71%2C133%2C101%2C100%2C188%2C189%2C106%2C107%2C9%2C117%2C187%2C58%2C159%2C99%2C91%2C81%2C132%2C121%2C170%2C50%2C160%2C0%2C94%2C153%2C157%2C171%2C45%2C123%2C13%2C190",
+     "https://connect.facebook.net/en_US/fbevents.js",
+     "https://www.googletagmanager.com/gtag/js?id=G-8FNKZVRWGY"
+    ],
+    "noscriptPixel": true,
+    "compiledHtmlHasPixel": true,
+    "trackerRequests": [
+     "https://ad.doubleclick.net/ccm/s/collect",
+     "https://connect.facebook.net/en_US/fbevents.js",
+     "https://connect.facebook.net/signals/config/1227495902430847",
+     "https://googleads.g.doubleclick.net/pagead/viewthroughconversion/11356668550/",
+     "https://www.google.com/ccm/collect",
+     "https://www.google.com/pagead/1p-user-list/11356668550/",
+     "https://www.google.com/rmkt/collect/11356668550/",
+     "https://www.googletagmanager.com/gtag/js"
+    ]
+   },
+   "/preview/cinematic-home": {
+    "noTracking": true,
+    "dataLayer": [],
+    "fbq": "undefined",
+    "gtagScripts": [],
+    "noscriptPixel": false,
+    "compiledHtmlHasPixel": false,
+    "trackerRequests": []
+   }
+  }
  }
 }
