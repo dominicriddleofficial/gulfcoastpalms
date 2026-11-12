@@ -46,9 +46,9 @@ body{margin:0}
 @media(min-width:1024px){[data-cine-shell] .cs-nav{display:flex}}
 [data-cine-shell] .cs-right{display:flex;align-items:center;gap:.5rem}
 [data-cine-shell] .cs-phone{display:inline-flex;align-items:center;gap:.5rem;height:2.5rem;padding:0 .75rem;border-radius:.5rem;border:1px solid hsl(var(--palm-sand)/.25);font-size:.875rem;font-weight:600}
-[data-cine-shell] .cs-phone span,[data-cine-shell] .cs-hquote{display:none}
+[data-cine-shell] .cs-phone span,[data-cine-shell] .cs-btn.cs-hquote{display:none}
 @media(min-width:640px){[data-cine-shell] .cs-phone span{display:inline}}
-@media(min-width:768px){[data-cine-shell] .cs-hquote{display:inline-flex;padding-top:.625rem!important;padding-bottom:.625rem!important;font-size:.875rem!important}}
+@media(min-width:768px){[data-cine-shell] .cs-btn.cs-hquote{display:inline-flex;padding-top:.625rem!important;padding-bottom:.625rem!important;font-size:.875rem!important}}
 [data-cine-shell] .cs-menu-space{width:2.5rem;height:2.5rem}
 @media(min-width:1024px){[data-cine-shell] .cs-menu-space{display:none}}
 [data-cine-shell] .cs-btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.875rem 1.5rem;border-radius:.75rem;font-weight:700;font-size:1rem;line-height:1.5rem;white-space:nowrap;background:hsl(var(--primary));color:hsl(var(--primary-foreground));box-shadow:0 10px 15px -3px hsl(var(--primary)/.3)}
