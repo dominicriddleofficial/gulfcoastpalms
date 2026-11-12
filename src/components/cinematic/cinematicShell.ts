@@ -29,11 +29,13 @@ const STAR = '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 1
 /** Tailwind-equivalent rules for the few utilities the shell needs before the main CSS loads. */
 const SHELL_CSS = `
 #${CINEMATIC_SHELL_ID}[data-cine-shell]{--palm-dark:150 40% 8%;--palm-light:145 45% 52%;--palm-gold:38 90% 55%;--palm-sand:35 30% 92%;--primary:145 63% 32%;--primary-foreground:0 0% 100%;margin:0;font-family:Outfit,sans-serif;color:hsl(var(--palm-sand));background:hsl(var(--palm-dark))}
-[data-cine-shell] *{box-sizing:border-box;margin:0}
+body{margin:0}
+[data-cine-shell] *{box-sizing:border-box}
+:where([data-cine-shell] *){margin:0}
 [data-cine-shell] a{color:inherit;text-decoration:none}
 [data-cine-shell] .cs-head{position:sticky;top:0;z-index:40;background:hsl(var(--palm-dark)/.95);border-bottom:1px solid hsl(var(--palm-sand)/.1)}
-[data-cine-shell] .cs-wrap{width:100%;margin:0 auto;padding:0 1.25rem}
-@media(min-width:768px){[data-cine-shell] .cs-wrap{padding:0 2.5rem}}
+[data-cine-shell] .cs-wrap{width:100%;margin-left:auto;margin-right:auto;padding-left:1.25rem;padding-right:1.25rem}
+@media(min-width:768px){[data-cine-shell] .cs-wrap{padding-left:2.5rem;padding-right:2.5rem}}
 @media(min-width:1400px){[data-cine-shell] .cs-wrap{max-width:1400px}}
 [data-cine-shell] .cs-bar{height:4rem;display:flex;align-items:center;justify-content:space-between;gap:1rem}
 @media(min-width:768px){[data-cine-shell] .cs-bar{height:5rem}}
