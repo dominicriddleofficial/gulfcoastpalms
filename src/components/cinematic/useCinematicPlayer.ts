@@ -15,6 +15,8 @@ type FrameVideo = HTMLVideoElement & {
 };
 
 const REDUCE = "(prefers-reduced-motion: reduce)";
+/** Must match the <picture> media breakpoint in CinematicHero. */
+const DESKTOP = "(min-width: 768px)";
 
 function saveData() {
   const conn = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
@@ -47,23 +49,49 @@ export function useCinematicPlayer({ mobile, desktop, chapters }: Options) {
   const stillRef = useRef(true);
   stillRef.current = stillOnly && !userStarted;
 
-  // Pick exactly one source for this device (never both).
+  /** Position carried across a breakpoint source swap (seconds), plus whether it was playing. */
+  const pendingSwap = useRef<{ time: number; resume: boolean; ended: boolean } | null>(null);
+
+  // Pick exactly one source for this device (never both), reduced-motion aware.
   useEffect(() => {
-    const isDesktop = window.matchMedia?.("(min-width: 768px)").matches ?? true;
-    const chosen = isDesktop ? desktop ?? mobile : mobile ?? desktop;
-    setSource(chosen);
     const mq = window.matchMedia?.(REDUCE);
+    const pick = (isDesktop: boolean) => (isDesktop ? desktop ?? mobile : mobile ?? desktop);
+    const bp = window.matchMedia?.(DESKTOP);
+    const chosen = pick(bp?.matches ?? true);
+    setSource(chosen);
     setStillOnly(!chosen || (mq?.matches ?? false) || saveData());
-    if (!mq) return;
-    const onChange = () => {
-      if (mq.matches) {
+
+    // Only an actual breakpoint change swaps the source; the old film is dropped and the
+    // new one resumes at the same story position (or stays paused / ended as it was).
+    const onBreakpoint = () => {
+      const next = pick(bp?.matches ?? true);
+      setSource((cur) => {
+        if (!next || cur?.mp4 === next.mp4) return cur;
+        const v = videoRef.current;
+        if (v) {
+          pendingSwap.current = { time: v.currentTime || 0, resume: !v.paused && !v.ended, ended: ended.current };
+          v.pause();
+          v.removeAttribute("src");
+          v.load();
+        }
+        setFrameShown(false);
+        return next;
+      });
+    };
+    bp?.addEventListener?.("change", onBreakpoint);
+
+    const onReduce = () => {
+      if (mq?.matches) {
         setStillOnly(true);
         manualPause.current = true;
         videoRef.current?.pause();
       }
     };
-    mq.addEventListener?.("change", onChange);
-    return () => mq.removeEventListener?.("change", onChange);
+    mq?.addEventListener?.("change", onReduce);
+    return () => {
+      bp?.removeEventListener?.("change", onBreakpoint);
+      mq?.removeEventListener?.("change", onReduce);
+    };
   }, [mobile, desktop]);
 
   const canAutoplay = () =>
@@ -145,7 +173,7 @@ export function useCinematicPlayer({ mobile, desktop, chapters }: Options) {
     const onTime = () => update(v.currentTime);
     v.addEventListener("timeupdate", onTime);
     return () => v.removeEventListener("timeupdate", onTime);
-  }, [mounted, chapters]);
+  }, [mounted, chapters, source]);
 
   // First autoplay attempt once the video element exists.
   useEffect(() => {
@@ -153,6 +181,20 @@ export function useCinematicPlayer({ mobile, desktop, chapters }: Options) {
   }, [mounted, userStarted, attemptPlay]);
 
   const handlers = {
+    onLoadedMetadata: () => {
+      const v = videoRef.current;
+      const swap = pendingSwap.current;
+      if (!v || !swap) return;
+      pendingSwap.current = null;
+      const d = Number.isFinite(v.duration) ? v.duration : swap.time;
+      v.currentTime = swap.ended ? d : Math.min(swap.time, Math.max(0, d - 0.05));
+      if (swap.resume && !manualPause.current && visibleRef.current && !document.hidden) attemptPlay(true);
+    },
+    /** A paused/ended swap presents its frame on seek; only then reveal the new layer. */
+    onSeeked: () => {
+      const v = videoRef.current;
+      if (v && v.readyState >= 2) setFrameShown(true);
+    },
     onPlaying: () => setState("playing"),
     onPause: () => { if (!ended.current) setState((s) => (s === "error" ? s : "paused")); },
     onEnded: () => {
