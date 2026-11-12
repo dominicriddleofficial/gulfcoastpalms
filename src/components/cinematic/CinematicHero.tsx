@@ -65,6 +65,11 @@ const CinematicHero = ({ media = cinematicMedia }: Props) => {
             className="cine-frame"
           />
         </picture>
+        <canvas
+          ref={(el) => { p.snapshotRef.current = el; }}
+          aria-hidden="true"
+          className={`cine-frame cine-snapshot ${p.swapping ? "" : "hidden"}`}
+        />
         {p.videoMounted && p.source && (
           <video
             key={p.source.mp4}

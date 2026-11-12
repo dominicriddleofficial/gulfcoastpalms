@@ -51,6 +51,9 @@ export function useCinematicPlayer({ mobile, desktop, chapters }: Options) {
 
   /** Position carried across a breakpoint source swap (seconds), plus whether it was playing. */
   const sourceRef = useRef<CinematicSource | undefined>(undefined);
+  /** Holds the last presented frame during a source swap so the hero never goes dark. */
+  const snapshotRef = useRef<HTMLCanvasElement | null>(null);
+  const [swapping, setSwapping] = useState(false);
   const pendingSwap = useRef<{ time: number; resume: boolean; ended: boolean } | null>(null);
 
   // Pick exactly one source for this device (never both), reduced-motion aware.
@@ -73,6 +76,15 @@ export function useCinematicPlayer({ mobile, desktop, chapters }: Options) {
       if (v) {
         pendingSwap.current = { time: v.currentTime || 0, resume: !v.paused && !v.ended, ended: ended.current };
         v.pause();
+        const c = snapshotRef.current;
+        if (c && v.videoWidth > 0) {
+          try {
+            c.width = v.videoWidth;
+            c.height = v.videoHeight;
+            c.getContext("2d")?.drawImage(v, 0, 0);
+            setSwapping(true);
+          } catch { /* cross-origin frame: fall back to the poster */ }
+        }
       }
       sourceRef.current = next;
       setFrameShown(false);
@@ -232,10 +244,13 @@ export function useCinematicPlayer({ mobile, desktop, chapters }: Options) {
     attemptPlay(true);
   }, [chapters, attemptPlay]);
 
+  useEffect(() => { if (frameShown) setSwapping(false); }, [frameShown]);
+  useEffect(() => { if (state === "error") setSwapping(false); }, [state]);
+
   const onPosterSettled = useCallback(() => setPosterSettled(true), []);
 
   return {
-    videoRef, containerRef, progressRef, source, state, chapter, handlers, play, pause, replay, onPosterSettled,
+    videoRef, containerRef, progressRef, snapshotRef, swapping, source, state, chapter, handlers, play, pause, replay, onPosterSettled,
     /** Real media exists and has not failed (never render a fake play button otherwise). */
     hasMedia: Boolean(source) && state !== "error",
     videoMounted: mounted && state !== "error",
