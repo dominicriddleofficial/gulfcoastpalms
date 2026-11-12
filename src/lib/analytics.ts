@@ -225,7 +225,7 @@ function postEvent(payload: Record<string, unknown>) {
 
 /** Private guest-link pages (e.g. arborist quote links) are never tracked. */
 export function isUntrackedPath(pathname: string) {
-  return /^\/arborist-link(\/|$)/.test(pathname);
+  return /^\/(arborist-link|preview)(\/|$)/.test(pathname);
 }
 
 /** Only real public marketing pages are recorded; app, portal, payment and customer-link pages never are. */

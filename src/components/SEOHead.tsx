@@ -29,7 +29,7 @@ const SEOHead = ({
   title = meta?.title ?? title;
   description = meta?.description ?? description;
   noIndex = noIndex || meta?.noindex === true;
-  const fullCanonical = noIndex ? undefined : meta?.canonical ?? (canonicalUrl
+  const fullCanonical = noIndex && !meta?.keepCanonical ? undefined : meta?.canonical ?? (canonicalUrl
     ? canonicalUrl.startsWith("http") ? canonicalUrl : `${BASE_URL}${canonicalUrl}`
     : undefined);
 

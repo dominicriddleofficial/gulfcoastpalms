@@ -5,6 +5,7 @@ import { Route } from "react-router-dom";
 // FAQ, framer-motion, etc.) is code-split out of the entry chunk that every
 // /platform cold start has to parse.
 const Index = lazy(() => import("@/pages/Index"));
+const CinematicHomePreview = lazy(() => import("@/pages/preview/CinematicHome"));
 
 const Services = lazy(() => import("@/pages/Services"));
 const Pensacola = lazy(() => import("@/pages/locations/Pensacola"));
@@ -72,6 +73,7 @@ const SOPSalesOperations = lazy(() => import("@/pages/employee/SOPSalesOperation
 export const MarketingRoutes = () => (
   <>
     <Route path="/" element={<Index />} />
+    <Route path="/preview/cinematic-home" element={<CinematicHomePreview />} />
     <Route path="/services" element={<Services />} />
     <Route path="/services/palm-tree-trimming" element={<PalmTreeTrimming />} />
     <Route path="/services/palm-tree-installation" element={<PalmTreeInstallation />} />
