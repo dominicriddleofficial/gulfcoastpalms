@@ -65,12 +65,19 @@ const CinematicHero = ({ media = cinematicMedia }: Props) => {
             className="cine-frame"
           />
         </picture>
+        <canvas
+          ref={(el) => { p.snapshotRef.current = el; }}
+          aria-hidden="true"
+          className="cine-frame"
+          style={{ visibility: p.swapping ? "visible" : "hidden" }}
+        />
         {p.videoMounted && p.source && (
           <video
+            key={p.source.mp4}
             ref={(el) => { p.videoRef.current = el; }}
             data-testid="cinematic-video"
             data-frame-shown={p.showVideo ? "true" : "false"}
-            className={`cine-frame absolute inset-0 transition-opacity duration-500 ${p.showVideo ? "opacity-100" : "opacity-0"}`}
+            className={`cine-frame absolute inset-0 transition-opacity duration-150 ${p.showVideo ? "opacity-100" : "opacity-0"}`}
             src={p.source.mp4}
             muted
             playsInline
@@ -113,7 +120,8 @@ const CinematicHero = ({ media = cinematicMedia }: Props) => {
                   className="group block rounded-xl px-3 py-2.5 md:px-4 md:pt-4 md:pb-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-palm-gold"
                 >
                   <span className="flex items-center justify-between gap-2 font-display text-[15px] leading-tight md:text-xl font-semibold text-primary-foreground">
-                    {s.title}
+                    <span className="cine-card-full">{s.title}</span>
+                    <span className="cine-card-short">{s.shortTitle}</span>
                     <ArrowRight className="w-4 h-4 shrink-0 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
                   </span>
                   <span className="hidden md:block font-body text-sm text-palm-sand/80 mt-1">{s.detail}</span>

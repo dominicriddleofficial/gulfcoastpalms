@@ -1,49 +1,46 @@
-import p828a from "@/assets/cinematic/canopy-poster-828.avif.asset.json";
-import p828w from "@/assets/cinematic/canopy-poster-828.webp.asset.json";
-import p828j from "@/assets/cinematic/canopy-poster-828.jpg.asset.json";
-import p1280a from "@/assets/cinematic/canopy-poster-1280.avif.asset.json";
-import p1280w from "@/assets/cinematic/canopy-poster-1280.webp.asset.json";
-import p1280j from "@/assets/cinematic/canopy-poster-1280.jpg.asset.json";
-import p1920a from "@/assets/cinematic/canopy-poster-1920.avif.asset.json";
-import p1920w from "@/assets/cinematic/canopy-poster-1920.webp.asset.json";
-import p1920j from "@/assets/cinematic/canopy-poster-1920.jpg.asset.json";
-import q640a from "@/assets/cinematic/canopy-portrait-640.avif.asset.json";
-import q640w from "@/assets/cinematic/canopy-portrait-640.webp.asset.json";
-import q640j from "@/assets/cinematic/canopy-portrait-640.jpg.asset.json";
-import q828a from "@/assets/cinematic/canopy-portrait-828.avif.asset.json";
-import q828w from "@/assets/cinematic/canopy-portrait-828.webp.asset.json";
-import q828j from "@/assets/cinematic/canopy-portrait-828.jpg.asset.json";
-import q1170a from "@/assets/cinematic/canopy-portrait-1170.avif.asset.json";
-import q1170w from "@/assets/cinematic/canopy-portrait-1170.webp.asset.json";
-import q1170j from "@/assets/cinematic/canopy-portrait-1170.jpg.asset.json";
+import d960a from "@/assets/cinematic/canopy-first-frame-960.avif.asset.json";
+import d960w from "@/assets/cinematic/canopy-first-frame-960.webp.asset.json";
+import d960j from "@/assets/cinematic/canopy-first-frame-960.jpg.asset.json";
+import d1280a from "@/assets/cinematic/canopy-first-frame-1280.avif.asset.json";
+import d1280w from "@/assets/cinematic/canopy-first-frame-1280.webp.asset.json";
+import d1280j from "@/assets/cinematic/canopy-first-frame-1280.jpg.asset.json";
+import d1600a from "@/assets/cinematic/canopy-first-frame-1600.avif.asset.json";
+import d1600w from "@/assets/cinematic/canopy-first-frame-1600.webp.asset.json";
+import d1600j from "@/assets/cinematic/canopy-first-frame-1600.jpg.asset.json";
+import m480a from "@/assets/cinematic/canopy-first-frame-portrait-480.avif.asset.json";
+import m480w from "@/assets/cinematic/canopy-first-frame-portrait-480.webp.asset.json";
+import m480j from "@/assets/cinematic/canopy-first-frame-portrait-480.jpg.asset.json";
+import m720a from "@/assets/cinematic/canopy-first-frame-portrait-720.avif.asset.json";
+import m720w from "@/assets/cinematic/canopy-first-frame-portrait-720.webp.asset.json";
+import m720j from "@/assets/cinematic/canopy-first-frame-portrait-720.jpg.asset.json";
 import filmDesktop from "@/assets/cinematic/canopy-film-desktop-1600.mp4.asset.json";
 import filmPortrait from "@/assets/cinematic/canopy-film-portrait-720.mp4.asset.json";
 
 /** Route of the hidden, noindex cinematic homepage preview. */
 export const CINEMATIC_PREVIEW_PATH = "/preview/cinematic-home";
 
-const set = (a: string, b: string, c: string) => `${a} 828w, ${b} 1280w, ${c} 1920w`;
+const set = (a: string, b: string, c: string) => `${a} 960w, ${b} 1280w, ${c} 1600w`;
 
-/** Temporary approved still (2688x1520 source), encoded locally. */
+/** Exact first frame of the desktop film (1600x904), so poster and film never differ. */
 export const cinematicPoster = {
-  width: 2688,
-  height: 1520,
-  avif: set(p828a.url, p1280a.url, p1920a.url),
-  webp: set(p828w.url, p1280w.url, p1920w.url),
-  jpg: set(p828j.url, p1280j.url, p1920j.url),
-  fallback: p1280j.url,
+  width: 1600,
+  height: 904,
+  avif: set(d960a.url, d1280a.url, d1600a.url),
+  webp: set(d960w.url, d1280w.url, d1600w.url),
+  jpg: set(d960j.url, d1280j.url, d1600j.url),
+  fallback: d1280j.url,
   alt: "Service visualization: a Florida property with a tall palm and a large live oak",
 };
 
-const pset = (a: string, b: string, c: string) => `${a} 640w, ${b} 828w, ${c} 1170w`;
+const pset = (a: string, b: string) => `${a} 480w, ${b} 720w`;
 
-/** Native portrait still (1520x2688) for phones: same property, full trees and house. */
+/** Exact first frame of the portrait film (720x1276); never upscaled past the film. */
 export const cinematicPortraitPoster = {
-  width: 1520,
-  height: 2688,
-  avif: pset(q640a.url, q828a.url, q1170a.url),
-  webp: pset(q640w.url, q828w.url, q1170w.url),
-  jpg: pset(q640j.url, q828j.url, q1170j.url),
+  width: 720,
+  height: 1276,
+  avif: pset(m480a.url, m720a.url),
+  webp: pset(m480w.url, m720w.url),
+  jpg: pset(m480j.url, m720j.url),
 };
 
 export interface CinematicSource {
@@ -87,6 +84,7 @@ export const cinematicServices = [
     id: "tree",
     chapter: "removal",
     title: "Tree Removal",
+    shortTitle: "Tree removal",
     detail: "Tree removal planned around your property.",
     quoteService: "Tree Removal",
     placement: "hero_cinematic_tree",
@@ -97,6 +95,8 @@ export const cinematicServices = [
     id: "palm",
     chapter: "palm",
     title: "Palm Tree Trimming",
+    /** Compact label for short phones only; quote value is unchanged. */
+    shortTitle: "Palm trimming",
     detail: "Careful trimming for a clean, natural canopy.",
     quoteService: "Palm Tree Trimming",
     placement: "hero_cinematic_palm",
