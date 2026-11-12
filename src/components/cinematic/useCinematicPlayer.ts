@@ -50,6 +50,7 @@ export function useCinematicPlayer({ mobile, desktop, chapters }: Options) {
   stillRef.current = stillOnly && !userStarted;
 
   /** Position carried across a breakpoint source swap (seconds), plus whether it was playing. */
+  const sourceRef = useRef<CinematicSource | undefined>(undefined);
   const pendingSwap = useRef<{ time: number; resume: boolean; ended: boolean } | null>(null);
 
   // Pick exactly one source for this device (never both), reduced-motion aware.
@@ -58,6 +59,7 @@ export function useCinematicPlayer({ mobile, desktop, chapters }: Options) {
     const pick = (isDesktop: boolean) => (isDesktop ? desktop ?? mobile : mobile ?? desktop);
     const bp = window.matchMedia?.(DESKTOP);
     const chosen = pick(bp?.matches ?? true);
+    sourceRef.current = chosen;
     setSource(chosen);
     setStillOnly(!chosen || (mq?.matches ?? false) || saveData());
 
@@ -65,18 +67,16 @@ export function useCinematicPlayer({ mobile, desktop, chapters }: Options) {
     // new one resumes at the same story position (or stays paused / ended as it was).
     const onBreakpoint = () => {
       const next = pick(bp?.matches ?? true);
-      setSource((cur) => {
-        if (!next || cur?.mp4 === next.mp4) return cur;
-        const v = videoRef.current;
-        if (v) {
-          pendingSwap.current = { time: v.currentTime || 0, resume: !v.paused && !v.ended, ended: ended.current };
-          v.pause();
-          v.removeAttribute("src");
-          v.load();
-        }
-        setFrameShown(false);
-        return next;
-      });
+      const cur = sourceRef.current;
+      if (!next || cur?.mp4 === next.mp4) return;
+      const v = videoRef.current;
+      if (v) {
+        pendingSwap.current = { time: v.currentTime || 0, resume: !v.paused && !v.ended, ended: ended.current };
+        v.pause();
+      }
+      sourceRef.current = next;
+      setFrameShown(false);
+      setSource(next);
     };
     bp?.addEventListener?.("change", onBreakpoint);
 
