@@ -27,9 +27,14 @@ const CinematicHero = ({ media = cinematicMedia }: Props) => {
   const { onPosterSettled } = p;
 
   // Cached images may finish before React attaches onLoad.
-  const posterRef = useCallback((img: HTMLImageElement | null) => {
-    if (img?.complete) onPosterSettled();
+  // The film may start only after the poster is actually decoded (or has failed).
+  const settle = useCallback((img: HTMLImageElement) => {
+    if (typeof img.decode !== "function") { onPosterSettled(); return; }
+    img.decode().catch(() => undefined).finally(onPosterSettled);
   }, [onPosterSettled]);
+  const posterRef = useCallback((img: HTMLImageElement | null) => {
+    if (img?.complete && img.naturalWidth > 0) settle(img);
+  }, [settle]);
 
   return (
     <section
@@ -52,10 +57,10 @@ const CinematicHero = ({ media = cinematicMedia }: Props) => {
             alt={cinematicPoster.alt}
             width={cinematicPoster.width}
             height={cinematicPoster.height}
-            fetchPriority="high"
+            {...{ fetchpriority: "high" }}
             loading="eager"
             decoding="async"
-            onLoad={onPosterSettled}
+            onLoad={(e) => settle(e.currentTarget)}
             onError={onPosterSettled}
             className="cine-frame"
           />

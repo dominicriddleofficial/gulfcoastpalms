@@ -18,7 +18,7 @@
 /* Compact film status + control: top-right on phones, never in the copy stack. */
 .cine-player { position: absolute; z-index: 2; top: .6rem; right: .75rem; display: flex; flex-direction: column; align-items: flex-end; gap: .35rem; }
 .cine-player-row { display: flex; align-items: center; gap: .5rem; }
-.cine-label { font-family: Outfit, sans-serif; font-size: 10px; letter-spacing: .06em; color: hsl(var(--palm-sand) / .9); text-shadow: 0 1px 2px hsl(var(--palm-dark) / .8); white-space: nowrap; }
+.cine-label { font-family: Outfit, sans-serif; font-size: 10px; letter-spacing: .05em; color: hsl(var(--palm-sand) / .92); white-space: nowrap; padding: .3rem .6rem; border-radius: 999px; background: hsl(var(--palm-dark) / .55); }
 .cine-chapter { color: hsl(var(--palm-gold)); }
 .cine-progress { width: 100%; min-width: 96px; height: 2px; border-radius: 2px; background: hsl(var(--palm-sand) / .22); overflow: hidden; }
 .cine-progress-fill { display: block; height: 100%; background: hsl(var(--palm-gold) / .9); transform-origin: left; transform: scaleX(0); }
