@@ -191,6 +191,10 @@ function PlatformRouteFallback() {
 function RouteSuspenseFallback() {
   const { pathname } = useLocation();
   if (pathname.startsWith("/platform")) return <PlatformRouteFallback />;
+  // The hidden cinematic preview keeps its prerendered first view (captured before React
+  // replaced it) on screen while its route chunk loads, instead of a spinner.
+  const cineShell = pathname === "/preview/cinematic-home" ? (window as Window & { __gcpCineShell?: string }).__gcpCineShell : undefined;
+  if (cineShell) return <div style={{ display: "contents" }} dangerouslySetInnerHTML={{ __html: cineShell }} />;
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
