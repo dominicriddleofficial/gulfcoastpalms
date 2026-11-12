@@ -8,6 +8,10 @@
 }
 .cine-media { position: absolute; inset: 0; }
 .cine-frame { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 38%; display: block; }
+/* Phone: lift the property by trimming open sky at the top so the house clears the copy. */
+@media (max-width: 767px) {
+  .cine-frame { inset: auto; left: -5%; top: -13%; width: 110%; height: 113%; object-position: 50% 0%; }
+}
 .cine-scrim { position: absolute; inset: 0; background: linear-gradient(to top, hsl(var(--palm-dark) / .94) 0%, hsl(var(--palm-dark) / .72) 26%, hsl(var(--palm-dark) / 0) 50%); }
 .cine-label { position: absolute; top: .6rem; left: .75rem; font-family: Outfit, sans-serif; font-size: 10px; letter-spacing: .06em; color: hsl(var(--palm-sand) / .8); }
 .cine-content { position: absolute; inset: auto 0 0 0; z-index: 1; display: flex; flex-direction: column; gap: .75rem; padding-top: .5rem; padding-bottom: .9rem; }
@@ -25,11 +29,11 @@
 
 @media (max-width: 767px) and (min-height: 760px) {
   .cine-title { font-size: 34px; }
-  .cine-sub { display: block; font-size: .875rem; margin-bottom: .75rem; }
   .cine-badge { display: inline-flex; }
 }
 
 @media (min-width: 768px) {
+  .cine-frame { inset: 0; left: 0; top: 0; width: 100%; height: 100%; }
   .cine-hero { height: auto; min-height: max(540px, calc(100svh - 5rem)); max-height: none; display: flex; }
   .cine-frame { object-position: center 35%; }
   .cine-scrim { background:
