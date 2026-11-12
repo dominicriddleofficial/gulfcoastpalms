@@ -11,3 +11,7 @@
 - [x] Deterministic report conversion, whole-job override, hauling default and opt-in disposal alternatives; save/reopen mock verified
 - [x] 70 affected app tests, 196 isolated report/quote/climber checks, desktop/390px intercepted preview checks; migration and functions deployed, website unpublished
 - [ ] Actual climber-account sign-in, recovery, submission and office realtime readback: requires owner-provided identity and authorization to create/use real account/report (not performed under no-real-record constraint)
+
+# Cinematic homepage preview (GCP)
+- [x] Hidden noindex /preview/cinematic-home with poster-only hero, two service quote paths, player ready for films
+- [ ] Add reviewed mobile/desktop films and chapter times: waiting on owner-supplied media
