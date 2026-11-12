@@ -7,6 +7,15 @@ import p1280j from "@/assets/cinematic/canopy-poster-1280.jpg.asset.json";
 import p1920a from "@/assets/cinematic/canopy-poster-1920.avif.asset.json";
 import p1920w from "@/assets/cinematic/canopy-poster-1920.webp.asset.json";
 import p1920j from "@/assets/cinematic/canopy-poster-1920.jpg.asset.json";
+import q640a from "@/assets/cinematic/canopy-portrait-640.avif.asset.json";
+import q640w from "@/assets/cinematic/canopy-portrait-640.webp.asset.json";
+import q640j from "@/assets/cinematic/canopy-portrait-640.jpg.asset.json";
+import q828a from "@/assets/cinematic/canopy-portrait-828.avif.asset.json";
+import q828w from "@/assets/cinematic/canopy-portrait-828.webp.asset.json";
+import q828j from "@/assets/cinematic/canopy-portrait-828.jpg.asset.json";
+import q1170a from "@/assets/cinematic/canopy-portrait-1170.avif.asset.json";
+import q1170w from "@/assets/cinematic/canopy-portrait-1170.webp.asset.json";
+import q1170j from "@/assets/cinematic/canopy-portrait-1170.jpg.asset.json";
 
 /** Route of the hidden, noindex cinematic homepage preview. */
 export const CINEMATIC_PREVIEW_PATH = "/preview/cinematic-home";
@@ -22,6 +31,17 @@ export const cinematicPoster = {
   jpg: set(p828j.url, p1280j.url, p1920j.url),
   fallback: p1280j.url,
   alt: "Service visualization: a Florida property with a tall palm and a large live oak",
+};
+
+const pset = (a: string, b: string, c: string) => `${a} 640w, ${b} 828w, ${c} 1170w`;
+
+/** Native portrait still (1520x2688) for phones: same property, full trees and house. */
+export const cinematicPortraitPoster = {
+  width: 1520,
+  height: 2688,
+  avif: pset(q640a.url, q828a.url, q1170a.url),
+  webp: pset(q640w.url, q828w.url, q1170w.url),
+  jpg: pset(q640j.url, q828j.url, q1170j.url),
 };
 
 export interface CinematicSource {
