@@ -18,7 +18,7 @@ const ServicesPreview = () => (
               <Link
                 to="/services/tree-trimming-removal"
                 aria-label="Tree Services: open the tree trimming and removal service page"
-                className="block h-48 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+                className="group relative block h-48 focus-visible:outline-none"
               >
                 <img
                   src={treeRemovalWork}
@@ -28,6 +28,10 @@ const ServicesPreview = () => (
                   decoding="async"
                   width={512}
                   height={288}
+                />
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 hidden group-focus-visible:block ring-4 ring-inset ring-primary ring-offset-2 ring-offset-background"
                 />
               </Link>
             ) : <img src={palmTrimming} alt="Palm tree trimming by Gulf Coast Palms" className="h-48 w-full object-cover" loading="lazy" width={800} height={600} />}
