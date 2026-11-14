@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { serviceGroups } from "@/data/services";
 import { publicMarketing } from "@/data/publicMarketing";
 import palmTrimming from "@/assets/palm-trimming.jpg";
+import treeRemovalWork from "@/assets/tree-removal-work.jpg";
 import QuoteRequestButton from "@/components/cta/QuoteRequestButton";
 
 const ServicesPreview = () => (
