@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { serviceGroups } from "@/data/services";
 import { publicMarketing } from "@/data/publicMarketing";
 import palmTrimming from "@/assets/palm-trimming.jpg";
+import treeRemovalWork from "@/assets/tree-removal-work.jpg";
 import QuoteRequestButton from "@/components/cta/QuoteRequestButton";
 
 const ServicesPreview = () => (
@@ -14,11 +15,25 @@ const ServicesPreview = () => (
         {serviceGroups.slice(0, 2).map((group, i) => (
           <article key={group.label} className="border border-border rounded-lg overflow-hidden bg-card">
             {i === 0 ? (
-              <div className="h-48 bg-secondary flex items-center justify-center gap-6 text-primary" aria-hidden="true">
-                <TreeDeciduous className="w-20 h-20" strokeWidth={1.25} />
-                <div className="h-20 border-l border-primary/30" />
-                <span className="font-body text-sm text-foreground leading-relaxed">Oaks &amp; pines<br />Trimming &amp; removal<br />Storm cleanup</span>
-              </div>
+              <Link
+                to="/services/tree-trimming-removal"
+                aria-label="Tree Services: open the tree trimming and removal service page"
+                className="group relative block h-48 focus-visible:outline-none"
+              >
+                <img
+                  src={treeRemovalWork}
+                  alt="Tree removal in progress: a worker with a chainsaw cuts a leaning tree trunk beside a two-story building"
+                  className="h-48 w-full object-cover object-[center_bottom]"
+                  loading="lazy"
+                  decoding="async"
+                  width={512}
+                  height={288}
+                />
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 hidden group-focus-visible:block ring-4 ring-inset ring-primary ring-offset-2 ring-offset-background"
+                />
+              </Link>
             ) : <img src={palmTrimming} alt="Palm tree trimming by Gulf Coast Palms" className="h-48 w-full object-cover" loading="lazy" width={800} height={600} />}
             <div className="p-6">
               <h3 className="font-display text-2xl font-bold text-foreground mb-3 flex items-center gap-3">{i === 0 ? <TreeDeciduous className="w-6 h-6 text-primary" /> : <TreePalm className="w-6 h-6 text-palm-gold" />}{group.label}</h3>
