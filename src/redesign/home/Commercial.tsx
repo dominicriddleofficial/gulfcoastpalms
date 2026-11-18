@@ -21,7 +21,7 @@ export default function Commercial() {
   return (
     <section className="rd-commercial" aria-labelledby="rd-commercial-title">
       <figure className="rd-photo rd-commercial__photo" data-par="">
-        <Photo src={row} alt="A row of trimmed sabal palms along the edge of a commercial property" sizes="(min-width: 1000px) 52vw, 100vw" focus="30% 40%" />
+        <Photo src={row} alt="A row of trimmed sabal palms along the edge of a commercial property" sizes="(min-width: 1000px) 52vw, 67vw" focus="30% 40%" />
       </figure>
       <div className="rd-commercial__body rd-dark" data-rv="">
         <h2 id="rd-commercial-title" className="rd-h2 rd-rise">HOAs, condos and commercial properties</h2>

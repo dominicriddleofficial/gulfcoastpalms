@@ -89,7 +89,7 @@ export default function Service({ slug }: { slug: string }) {
           <div className={`rd-wrap rd-closeups rd-closeups--${media.details.length}`}>
             {media.details.map((shot) => (
               <figure key={shot.caption} className={shot.small ? "rd-print rd-closeups__print" : "rd-closeups__shot"}>
-                <Photo src={shot.photo} alt={shot.alt} focus={shot.focus} sizes={shot.small ? "(min-width: 900px) 32rem, 92vw" : "(min-width: 900px) 46vw, 100vw"} />
+                <Photo src={shot.photo} alt={shot.alt} focus={shot.focus} sizes={shot.small ? "(min-width: 900px) 32rem, 92vw" : "(min-width: 900px) 46vw, 67vw"} />
                 <figcaption>{shot.caption}</figcaption>
               </figure>
             ))}

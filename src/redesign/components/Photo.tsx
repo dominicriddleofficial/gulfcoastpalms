@@ -17,7 +17,12 @@ export type PhotoSource = Picture | string;
 interface PhotoProps {
   src: PhotoSource;
   alt: string;
-  /** How wide the photo is shown, in CSS terms, e.g. "(min-width: 1000px) 40vw, 100vw". */
+  /**
+   * How wide the photo is shown, in CSS terms, e.g. "(min-width: 1000px) 40vw, 67vw".
+   * For phones, large photos state about two thirds of their real width. A 3x phone
+   * then picks a file twice as wide as the picture on screen, not three times: still
+   * sharp, and roughly half the download on a cellular connection.
+   */
   sizes: string;
   className?: string;
   /** Which part of the photo to keep when the frame is a different shape, e.g. "30% 20%". */

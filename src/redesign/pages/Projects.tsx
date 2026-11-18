@@ -65,7 +65,7 @@ export default function Projects() {
             {list.map((p) => (
               <li key={p.id}>
                 <button type="button" className="rd-gallery__item" onClick={() => setOpenId(p.id)} aria-label={`Open ${p.title}${p.city ? `, ${p.city}` : ""}`}>
-                  <Photo src={p.photo} alt={p.alt} sizes="(min-width: 900px) 30vw, 46vw" />
+                  <Photo src={p.photo} alt={p.alt} sizes="(min-width: 900px) 30vw, 31vw" />
                   {p.before && <span className="rd-gallery__tag">Before &amp; after</span>}
                   <span className="rd-gallery__cap">
                     <b>{p.title}</b>

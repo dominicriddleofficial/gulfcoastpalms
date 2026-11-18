@@ -66,7 +66,7 @@ export default function PageHero({ crumbs, title, lead, photo, frames, service, 
       </div>
       {photo && layout === "photo" && (
         <div className="rd-phero__photo">
-          <Photo src={photo.src} alt={photo.alt} focus={photo.focus} sizes="(min-width: 1000px) 52vw, 100vw" eager />
+          <Photo src={photo.src} alt={photo.alt} focus={photo.focus} sizes="(min-width: 1000px) 52vw, 67vw" eager />
         </div>
       )}
       {frames && (

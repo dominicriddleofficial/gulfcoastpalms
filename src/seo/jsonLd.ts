@@ -22,6 +22,8 @@ import { locations } from "@/data/locations";
 import { homeFaqs } from "@/data/homeFaq";
 import { articles } from "@/data/learnArticles";
 import { palmGuides } from "@/data/palmGuides";
+import { REDESIGN_LIVE } from "@/redesign/live.mjs";
+import { applyRedesignSeo } from "@/redesign/seo.data.mjs";
 
 const SITE = GCP_BUSINESS.url;
 
@@ -89,6 +91,13 @@ function titleize(segment: string): string {
   );
 }
 
+/**
+ * A page's own name for the end of its breadcrumb trail: its <title> without the site
+ * name and area that follow a divider ("Tree Removal | Emerald Coast FL | Gulf Coast
+ * Palms" is "Tree Removal"). A trail should name the page, not repeat its whole title.
+ */
+export const breadcrumbLeaf = (title: string) => title.split(/\s+[|–—]\s+/)[0].trim() || title;
+
 /** Breadcrumbs for nested pages only (2+ path segments). */
 function breadcrumbSchema(routePath: string, title: string, knownPaths: Set<string>): Json | null {
   const segments = routePath.replace(/^\/|\/$/g, "").split("/").filter(Boolean);
@@ -104,7 +113,7 @@ function breadcrumbSchema(routePath: string, title: string, knownPaths: Set<stri
     items.push({
       "@type": "ListItem",
       position: items.length + 1,
-      name: last ? title : titleize(seg),
+      name: last ? breadcrumbLeaf(title) : titleize(seg),
       item: `${SITE}${acc}`,
     });
   });
@@ -142,7 +151,8 @@ export function buildRouteJsonLd(
       routePath,
       serviceSchema({
         name: s.title,
-        description: s.metaDescription,
+        // The same description the page's <head> carries (it changes with the redesign for two pages).
+        description: applyRedesignSeo({ path: routePath, title: s.metaTitle, description: s.metaDescription }, REDESIGN_LIVE).description,
         url: `${SITE}${routePath}`,
         areaServed: GCP_BUSINESS.areaServed.map((a) => ({
           "@type": "City",

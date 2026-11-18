@@ -435,6 +435,7 @@
 @media (prefers-reduced-motion: reduce) {
   .rd-menu { animation: none; }
   .rd-dock,
+  .rd-dock[data-shown="true"],
   .rd-rows a,
   .rd-rows a svg,
   .rd-faq summary svg { transition: none; }
@@ -1142,6 +1143,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .rd-ft__glow { animation: none; }
+  .rd-kind__more svg,
+  .rd-arealinks a { transition: none; }
   .rd-page--over > .rd-hd .rd-hd__bar::after { display: none; }
   [data-par] img { transform: none; }
   [data-spot] { transition: none; }

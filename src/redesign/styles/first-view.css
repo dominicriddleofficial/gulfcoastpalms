@@ -639,5 +639,5 @@
   .rd-btn--go::before { animation: none; }
   .rd-horizon__line::after { display: none; }
   .rd-hero__title span { animation: none; background: none; -webkit-text-fill-color: currentColor; }
-  .rd-btn, .rd-hd__bar { transition: none; }
+  .rd-btn, .rd-hd__bar, .rd-hero__proof, .rd-icon-btn { transition: none; }
 }

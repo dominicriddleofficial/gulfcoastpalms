@@ -30,7 +30,8 @@ export const heroPhoto = {
     fallback: `${BASE}/hero-climber-phone-780.jpg`,
     width: 1182,
     height: 1590,
-    sizes: "100vw",
+    // Stated at two thirds of the screen: a sharp picture on a 3x phone for about half the download.
+    sizes: "66vw",
   },
   wide: {
     avif: set("hero-climber", WIDE_WIDTHS, "avif"),

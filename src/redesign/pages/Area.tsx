@@ -162,7 +162,7 @@ function AreaPage({ location }: { location: LocationData }) {
               {work.map((p) => (
                 <li key={p.id}>
                   <figure>
-                    <div className="rd-shots__frame"><Photo src={p.photo} alt={p.alt} focus={p.focus} sizes="(min-width: 900px) 30vw, 92vw" /></div>
+                    <div className="rd-shots__frame"><Photo src={p.photo} alt={p.alt} focus={p.focus} sizes="(min-width: 900px) 30vw, 62vw" /></div>
                     {/* Each job names its own city (linked when it is another city's) and goes to the service it shows. */}
                     <figcaption>
                       <b>{p.title}</b>
