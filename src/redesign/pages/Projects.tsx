@@ -18,6 +18,7 @@ import QuoteBand from "../components/QuoteBand";
 import { projects, type Project, type ProjectKind } from "../data/projects";
 import { QuoteLink } from "../lib/actions";
 import { ArrowLeftIcon, ArrowRightIcon, CloseIcon } from "../lib/icons";
+import { useReturnFocus } from "../lib/useReturnFocus";
 
 const FILTERS: { id: "all" | ProjectKind; label: string }[] = [
   { id: "all", label: "All projects" },
@@ -87,6 +88,7 @@ const naturalWidth = (photo: Project["photo"]) => (typeof photo === "string" ? u
 
 function Lightbox({ project, position, total, onClose, onStep }: { project: Project | null; position: number; total: number; onClose: () => void; onStep: (delta: number) => void }) {
   const startX = useRef<number | null>(null);
+  const returnFocus = useReturnFocus(project !== null);
   const [showBefore, setShowBefore] = useState(false);
   const projectId = project?.id;
   // Each project opens on its finished photo.
@@ -107,7 +109,7 @@ function Lightbox({ project, position, total, onClose, onStep }: { project: Proj
       <Dialog.Portal>
         <Dialog.Overlay className="rd-lightbox__veil" />
         {project && (
-          <Dialog.Content className="rd rd-lightbox" aria-describedby={undefined}>
+          <Dialog.Content className="rd rd-lightbox" aria-describedby={undefined} onCloseAutoFocus={returnFocus}>
             <div
               className="rd-lightbox__photo"
               onTouchStart={(e) => { startX.current = e.touches[0].clientX; }}

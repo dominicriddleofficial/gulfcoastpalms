@@ -76,7 +76,8 @@ export const treeFrame = {
   avif: `${BASE}/tree-frame-360.avif 360w, ${BASE}/tree-frame-720.avif 720w`,
   jpg: `${BASE}/tree-frame-360.jpg 360w, ${BASE}/tree-frame-720.jpg 720w`,
   fallback: `${BASE}/tree-frame-360.jpg`,
-  sizes: "(min-width: 1000px) 14rem, 33vw",
+  // A small frame: phones take the 360-pixel file.
+  sizes: "(min-width: 1000px) 14rem, 28vw",
   alt: "Tree removal in progress: a worker in a helmet with a chainsaw at the base of a tree as it starts to fall, beside a multi-story building",
   to: "/services/tree-removal",
   label: "Tree removal",

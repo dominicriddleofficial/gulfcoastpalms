@@ -77,6 +77,8 @@
   animation: rd-menu-in 0.28s var(--rd-ease);
 }
 .rd-menu:focus { outline: none; }
+/* Sits behind the menu, outside the page frame, so the colour is written out (same as --rd-green-900). */
+.rd-menu__veil { position: fixed; inset: 0; z-index: 89; background: #0b2a20; }
 @keyframes rd-menu-in {
   from { opacity: 0; transform: translateY(0.75rem); }
   to { opacity: 1; transform: none; }

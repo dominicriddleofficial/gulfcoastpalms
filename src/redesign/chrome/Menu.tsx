@@ -13,6 +13,7 @@ import { GCP_BUSINESS } from "@/lib/business-info";
 import { coastAreas, moreLinks, palmServices, propertyServices, shortLabel, treeServices, type NavItem } from "../data/nav";
 import { CallLink, QuoteLink, TextLink } from "../lib/actions";
 import { CameraIcon, CloseIcon, PhoneIcon } from "../lib/icons";
+import { useReturnFocus } from "../lib/useReturnFocus";
 import { Brand } from "./Header";
 
 const TOP_LINKS: NavItem[] = [
@@ -24,6 +25,7 @@ const TOP_LINKS: NavItem[] = [
 
 export default function Menu({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const { pathname } = useLocation();
+  const returnFocus = useReturnFocus(open);
   const close = () => onOpenChange(false);
   const pick = (label: string) => {
     trackEvent("mobile_menu_link_clicked", { source: "mobile_menu", cta_text: label });
@@ -44,7 +46,9 @@ export default function Menu({ open, onOpenChange }: { open: boolean; onOpenChan
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Content className="rd rd-menu" aria-describedby={undefined}>
+        {/* The backdrop is what stops the page behind from scrolling while the menu is open. */}
+        <Dialog.Overlay className="rd-menu__veil" />
+        <Dialog.Content className="rd rd-menu" aria-describedby={undefined} onCloseAutoFocus={returnFocus}>
           <div className="rd-menu__top">
             <Brand onClick={close} />
             <Dialog.Close className="rd-icon-btn" aria-label="Close menu">

@@ -109,6 +109,9 @@ export default function Header() {
 
 function NavGroup({ group, open, setOpenId, pathname }: { group: Group; open: boolean; setOpenId: (id: string | null) => void; pathname: string }) {
   const here = group.items.some((i) => i.to === pathname) || group.all?.to === pathname;
+  // With a mouse the panel is already open from hovering, so a click must not shut it again.
+  // A finger tap or the keyboard has no hover, so there a press opens and closes it.
+  const mousePress = useRef(false);
   return (
     <div className="rd-nav-group" onPointerLeave={(e) => { if (e.pointerType === "mouse") setOpenId(null); }}>
       <button
@@ -118,7 +121,12 @@ function NavGroup({ group, open, setOpenId, pathname }: { group: Group; open: bo
         aria-controls={`rd-nav-${group.id}`}
         aria-current={here ? "page" : undefined}
         onPointerEnter={(e) => { if (e.pointerType === "mouse") setOpenId(group.id); }}
-        onClick={() => setOpenId(open ? null : group.id)}
+        onPointerDown={(e) => { mousePress.current = e.pointerType === "mouse"; }}
+        onClick={(e) => {
+          const byMouse = mousePress.current && e.detail > 0;
+          mousePress.current = false;
+          setOpenId(open && !byMouse ? null : group.id);
+        }}
       >
         {group.label}
         <ChevronIcon size={15} />
