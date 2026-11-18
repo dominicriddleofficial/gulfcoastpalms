@@ -379,7 +379,8 @@
 
 /* Completed projects */
 .rd-work__intro { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 0.75rem 2rem; margin-bottom: clamp(1.5rem, 4vw, 2.5rem); }
-.rd-viewer { display: grid; gap: 1.1rem; }
+/* One column that can never grow wider than the screen, however many thumbnails there are. */
+.rd-viewer { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.1rem; }
 .rd-viewer__stage { position: relative; aspect-ratio: 4 / 5; margin-inline: calc(var(--rd-gutter) * -1); background: #0c0f0e; overflow: hidden; touch-action: pan-y; }
 .rd-viewer__photo { position: absolute; inset: 0; margin: 0; opacity: 0; transition: opacity 0.55s ease; }
 .rd-viewer__photo[data-on="true"] { opacity: 1; }
@@ -390,7 +391,7 @@
 .rd-viewer__step button { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border: 0; border-radius: 4px; background: none; color: inherit; cursor: pointer; }
 .rd-viewer__step button:hover,
 .rd-viewer__step button:active { background: rgba(244, 240, 230, 0.16); }
-.rd-viewer__side { display: flex; flex-direction: column; gap: 1rem; }
+.rd-viewer__side { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
 .rd-ticket { padding: clamp(1.2rem, 3vw, 2rem); background: var(--rd-paper); color: var(--rd-ink); animation: rd-ticket-in 0.4s var(--rd-ease); }
 @keyframes rd-ticket-in {
   from { opacity: 0; transform: translateY(0.4rem); }
@@ -499,6 +500,10 @@
 .rd-closeups__shot figcaption { position: absolute; left: 0.75rem; bottom: 0.75rem; right: 0.75rem; width: fit-content; max-width: calc(100% - 1.5rem); padding: 0.45rem 0.65rem; border-radius: var(--rd-radius); background: rgba(7, 29, 22, 0.84); color: var(--rd-on-dark); font-size: 0.875rem; line-height: 1.35; font-weight: 500; }
 .rd-phero__print { margin: 0 var(--rd-gutter) clamp(2rem, 6vw, 3rem); max-width: 32rem; }
 .rd-phero--plain .rd-phero__text { max-width: var(--rd-max); width: 100%; margin-inline: auto; }
+/* Opens with one job in order: the frames sit straight under the buttons. */
+.rd-phero--frames .rd-phero__text { padding-bottom: 1.5rem; }
+.rd-phero__frames { min-width: 0; padding: 0 var(--rd-gutter) clamp(2rem, 6vw, 3rem); }
+.rd-phero__note { margin: 0.75rem 0 0; color: var(--rd-on-dark-2); }
 .rd-phero--plain .rd-phero__actions { max-width: 34rem; }
 @media (min-width: 600px) {
   /* Quote button on its own line, the two other ways to reach the office under it. */
@@ -510,6 +515,10 @@
 @media (min-width: 1000px) {
   .rd-phero--photo { grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr); min-height: min(calc(100svh - var(--rd-hd-h) - 3rem), 44rem); }
   .rd-phero--print { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: center; }
+  .rd-phero--frames { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); align-items: center; }
+  .rd-phero--frames .rd-phero__text { padding-bottom: clamp(2rem, 6vw, 4rem); }
+  .rd-phero__frames { padding: 3rem max(var(--rd-gutter), calc((100vw - var(--rd-max)) / 2 + var(--rd-gutter))) 3rem 0; }
+  .rd-phero__frames .rd-seq__frames { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-columns: auto; gap: 1rem; margin: 0; padding: 0; overflow: visible; }
   .rd-phero__text { display: flex; flex-direction: column; justify-content: center; padding-inline: max(var(--rd-gutter), calc((100vw - var(--rd-max)) / 2 + var(--rd-gutter))) clamp(2rem, 4vw, 4rem); }
   /* No photo: heading on the left, the sentence and the actions on the right. */
   .rd-phero--plain .rd-phero__text { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); column-gap: clamp(2rem, 5vw, 5rem); align-items: end; padding-inline: var(--rd-gutter); }
@@ -632,7 +641,7 @@
 .rd-filter button[aria-pressed="true"] { background: var(--rd-green-900); border-color: var(--rd-green-900); color: var(--rd-on-dark); }
 .rd-gallery { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 0.75rem; }
 .rd-gallery li { break-inside: avoid; margin-bottom: 1.1rem; }
-.rd-gallery__item { display: block; width: 100%; padding: 0; border: 0; background: none; color: inherit; text-align: left; cursor: zoom-in; font: inherit; }
+.rd-gallery__item { position: relative; display: block; width: 100%; padding: 0; border: 0; background: none; color: inherit; text-align: left; cursor: zoom-in; font: inherit; }
 .rd-gallery__item picture { display: block; overflow: hidden; background: var(--rd-paper-3); }
 .rd-gallery__item img { display: block; width: 100%; height: auto; transition: transform 0.5s var(--rd-ease); }
 .rd-gallery__item:hover img { transform: scale(1.03); }
@@ -647,8 +656,27 @@
 .rd-lightbox__veil { position: fixed; inset: 0; z-index: 94; background: rgba(7, 12, 10, 0.9); }
 .rd-lightbox { position: fixed; inset: 0; z-index: 95; display: grid; grid-template-rows: minmax(0, 1fr) auto; background: #0c0f0e; color: var(--rd-on-dark); overflow-y: auto; }
 .rd-lightbox:focus { outline: none; }
-.rd-lightbox__photo { min-height: 45vh; display: grid; place-items: center; touch-action: pan-y; }
+.rd-lightbox__photo { position: relative; min-height: 45vh; display: grid; place-items: center; touch-action: pan-y; }
 .rd-lightbox__photo picture { display: grid; place-items: center; width: 100%; height: 100%; }
+/* Before / After switch on a project that has both photos. */
+.rd-ba { position: absolute; left: 50%; bottom: 0.75rem; transform: translateX(-50%); display: flex; padding: 0.2rem; gap: 0.2rem; border-radius: 999px; background: rgba(7, 29, 22, 0.86); }
+.rd-ba button { min-width: 4.75rem; min-height: 2.5rem; padding: 0 0.9rem; border: 0; border-radius: 999px; background: none; color: var(--rd-on-dark); font: inherit; font-weight: 700; font-size: 0.9375rem; cursor: pointer; }
+.rd-ba button[aria-pressed="true"] { background: var(--rd-paper); color: var(--rd-green-950); }
+.rd-gallery__tag { position: absolute; left: 0.5rem; top: 0.5rem; padding: 0.2rem 0.5rem; border-radius: var(--rd-radius); background: var(--rd-go); color: var(--rd-go-ink); font-size: 0.8125rem; font-weight: 700; line-height: 1.3; }
+/* The same job in order: frames side by side, or a sideways-scrolling row on phones. */
+.rd-seq { display: grid; gap: clamp(1.25rem, 3vw, 2.25rem); }
+.rd-seq__head { display: grid; gap: 0.75rem; justify-items: start; max-width: 40rem; }
+.rd-seq__frames { display: grid; grid-auto-flow: column; grid-auto-columns: min(78vw, 22rem); gap: 0.75rem; margin: 0 calc(var(--rd-gutter) * -1); padding: 0 var(--rd-gutter) 0.5rem; list-style: none; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--rd-gutter); -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+.rd-seq__frames li { scroll-snap-align: start; }
+.rd-seq__frames figure { margin: 0; display: grid; gap: 0.6rem; }
+.rd-seq__frames picture { display: block; }
+.rd-seq__frames img { display: block; width: 100%; height: auto; aspect-ratio: 24 / 25; object-fit: cover; }
+.rd-seq__frames figcaption { display: grid; grid-template-columns: auto 1fr; gap: 0.65rem; align-items: start; font-size: 0.9375rem; line-height: 1.4; }
+.rd-seq__frames figcaption b { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: 50%; background: var(--rd-go); color: var(--rd-go-ink); font-family: var(--rd-display); font-weight: 800; font-size: 1rem; line-height: 1; }
+@media (min-width: 900px) {
+  .rd-seq { grid-template-columns: minmax(0, 1fr) minmax(0, 3fr); align-items: start; gap: clamp(2rem, 4vw, 4rem); }
+  .rd-seq__frames { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-columns: auto; gap: 1.25rem; margin: 0; padding: 0; overflow: visible; }
+}
 .rd-lightbox__photo img { display: block; width: 100%; height: 100%; max-height: 62vh; object-fit: contain; }
 .rd-lightbox__side { display: grid; gap: 0; align-content: start; }
 .rd-lightbox__bar { display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem var(--rd-gutter); }

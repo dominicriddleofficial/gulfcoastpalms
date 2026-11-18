@@ -17,7 +17,8 @@ import { REBUILT_SERVICES, hasRebuiltPage, page } from "./routes";
 import { quotePath } from "./lib/quote-path";
 import { featuredProjects, nearbyProjects, projects } from "./data/projects";
 import { serviceMedia } from "./data/serviceMedia";
-import { heroCopy, heroSpots } from "./data/hero";
+import { treeRemovalSequence } from "./data/treeRemoval";
+import { heroCopy, heroReveal, treeFrame } from "./data/hero";
 import { publicMarketing } from "@/data/publicMarketing";
 import Hero from "./home/Hero";
 import Header from "./chrome/Header";
@@ -89,13 +90,16 @@ describe("rebuilt pages", () => {
       expect(media.hero.alt.length).toBeGreaterThan(20);
       expect(media.hero.caption.length).toBeGreaterThan(10);
       expect(media.after, `${slug}: no after photo is on file, none may be shown`).toBeUndefined();
+      // Only the removal page shows the removal frames as a sequence, and they stay in order.
+      if (slug === "tree-removal") expect(media.sequence?.frames.map((f) => f.caption)).toEqual(treeRemovalSequence.map((f) => f.caption));
+      else expect(media.sequence, slug).toBeUndefined();
       for (const label of media.projects) expect(labels.has(label), label).toBe(true);
     }
   });
 
   it("keep the owner-approved homepage heading", () => {
     expect(heroCopy.lines.join(" ")).toBe(publicMarketing.heroHeading);
-    expect(heroSpots.filter((s) => !s.wideOnly).length).toBeGreaterThan(0);
+    expect(heroCopy.lines.join(" ")).toBe(publicMarketing.heroHeading);
   });
 });
 
@@ -109,6 +113,13 @@ describe("project notes", () => {
       // Nothing is on record about what customers asked for or how jobs turned out.
       expect(p.need).toBeUndefined();
       expect(p.result).toBeUndefined();
+    }
+    // Exactly one project has a true before photo of the same subject.
+    expect(projects.filter((p) => p.before).map((p) => p.id)).toEqual(["date-palm-clean-up"]);
+    // Tree work is in the gallery, and no Facebook photo is given a city it was never recorded with.
+    expect(projects.filter((p) => p.kind === "tree")).toHaveLength(1);
+    for (const id of ["tree-removal-under-way", "date-palm-clean-up", "climbing-a-tall-sabal", "pool-yard-sabals"]) {
+      expect(projects.find((p) => p.id === id)?.city, id).toBeUndefined();
     }
     expect(new Set(projects.map((p) => p.id)).size).toBe(projects.length);
     expect(featuredProjects).toHaveLength(5);
@@ -156,13 +167,29 @@ describe("tracking stays as it is today", () => {
     expect(placementsOf([...container.querySelectorAll('.rd-dock a[data-track-cta="quote_request"]')])).toEqual(["sticky_bar"]);
   });
 
-  it("lets a visitor look closer at the job photo and back out again", () => {
-    within(<Hero />);
-    const mark = screen.getByRole("button", { name: /look closer at the trunk/i });
-    fireEvent.click(mark);
-    expect(screen.getByText(/old boots cut away/i)).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: /back to the whole photo/i }));
-    expect(screen.queryByText(/old boots cut away/i)).toBeNull();
+  it("opens on a before and an after of the same palm, half of each, that a visitor can slide between", () => {
+    const { container } = within(<Hero />);
+    const frame = container.querySelector("[data-rd-reveal]") as HTMLElement;
+    const photos = [...frame.querySelectorAll(".rd-hero__stage img")].map((img) => img.getAttribute("alt"));
+    expect(photos).toEqual([heroReveal.after.alt, heroReveal.before.alt]);
+    expect(photos[0]).toMatch(/^After: the same date palm/);
+    expect(photos[1]).toMatch(/^Before: a date palm/);
+    // No position is set until someone moves it, so the stylesheet's half-and-half applies.
+    expect(frame.style.getPropertyValue("--cut")).toBe("");
+
+    const slider = screen.getByRole("slider", { name: heroReveal.control }) as HTMLInputElement;
+    expect(slider.value).toBe(String(heroReveal.start));
+    fireEvent.input(slider, { target: { value: "80" } });
+    expect(frame.style.getPropertyValue("--cut")).toBe("80%");
+    expect(slider.getAttribute("aria-valuetext")).toBe("80 percent before, 20 percent after");
+  });
+
+  it("keeps the tree-removal frame on the opening screen as a link to that service", () => {
+    const { container } = within(<Hero />);
+    const inset = container.querySelector("a.rd-hero__inset");
+    expect(inset?.getAttribute("href")).toBe(treeFrame.to);
+    expect(inset?.querySelector("img")?.getAttribute("alt")).toMatch(/^Tree removal in progress/);
+    expect(inset?.textContent).toBe(treeFrame.label);
   });
 });
 

@@ -2,17 +2,20 @@
  * Photos for each service page.
  *
  * Only real job photos on file are used, and each caption says what the photo
- * actually shows. Where a service has no photo of its own yet, the page leads with
- * type and shows the nearest honest photo, captioned for what it is:
- *   - Tree pages: one small frame of a removal under way is all there is.
+ * actually shows. Where a service has no photo of its own yet, the page shows the
+ * nearest honest photo, captioned for what it is:
+ *   - Tree pages: frames from the one removal on video. There is no tree-trimming or
+ *     storm-cleanup photo yet, so those pages show the removal, labelled as a removal.
  *   - Palm removal and installation: no job photos on file at all.
  * `after` is reserved for a photo of the property once the work is done; no page has
  * one yet, and nothing is shown in its place.
  */
 import type { Picture } from "../components/Photo";
-import treeFrame from "@/assets/tree-removal-work.jpg?w=512&format=avif;webp;jpg&as=picture";
-import sabals from "@/assets/redesign/palm-sabals-yard.jpg?w=480;800;1200;1400&format=avif;webp;jpg&as=picture";
-import coastalHome from "@/assets/redesign/home-coastal.jpg?w=480;800;1206&format=avif;webp;jpg&as=picture";
+import type { SequenceFrame } from "../components/Sequence";
+import { treeRemovalSequence, treeRemovalShots } from "./treeRemoval";
+import climber from "@/assets/facebook/climber-sabal.jpg?w=480;800;1152&format=avif;webp;jpg&as=picture";
+import palmBefore from "@/assets/facebook/date-palm-before.jpg?w=480;800;1200&format=avif;webp;jpg&as=picture";
+import palmAfter from "@/assets/facebook/date-palm-after.jpg?w=480;800;1200&format=avif;webp;jpg&as=picture";
 import estate from "@/assets/redesign/estate-aerial.jpg?w=480;800;1082&format=avif;webp;jpg&as=picture";
 import canaryTall from "@/assets/redesign/palm-canary-tall.jpg?w=480;800&format=avif;webp;jpg&as=picture";
 import diamond from "@/assets/diamond-cutting.jpg?w=515&format=avif;webp;jpg&as=picture";
@@ -36,17 +39,17 @@ export interface ServiceMedia {
   details: ServiceShot[];
   /** The property after the work. None on file yet. */
   after?: ServiceShot;
+  /** The same job in order, one moment after another. */
+  sequence?: { heading: string; frames: SequenceFrame[] };
   /** Quote-form labels of projects worth showing on this page. */
   projects: string[];
   route: "tree" | "palm";
 }
 
-const TREE_FRAME: ServiceShot = {
-  photo: treeFrame,
-  alt: "Tree removal in progress: a worker with a chainsaw cuts a leaning tree trunk beside a two-story building",
-  caption: "Tree removal under way. The trunk stands as tall as the two-story building beside it.",
-  small: true,
-};
+/** 720 pixels wide, so each is shown as a framed print at its own size. */
+const TREE_STANDING: ServiceShot = { ...treeRemovalShots.standing, caption: "Tree removal: the sawyer at the base of a leaning tree beside a building.", small: true };
+const TREE_GOING: ServiceShot = { ...treeRemovalShots.goingOver, caption: "Tree removal: the tree goes over, away from the building.", small: true };
+const TREE_DOWN: ServiceShot = { ...treeRemovalShots.down, caption: "Tree removal: down, with the trunk clear of the wall.", small: true };
 const TRAILER: ServiceShot = {
   photo: trailer,
   alt: "The Gulf Coast Palms truck and dump trailer loaded with cut palm fronds in a driveway",
@@ -55,15 +58,23 @@ const TRAILER: ServiceShot = {
 };
 
 export const serviceMedia: Record<string, ServiceMedia> = {
-  "tree-trimming-removal": { hero: TREE_FRAME, details: [], projects: [], route: "tree" },
-  "tree-removal": { hero: TREE_FRAME, details: [], projects: [], route: "tree" },
-  "tree-trimming": { hero: TREE_FRAME, details: [], projects: [], route: "tree" },
-  "storm-damage-cleanup": { hero: TREE_FRAME, details: [], projects: [], route: "tree" },
+  "tree-trimming-removal": { hero: TREE_STANDING, details: [], projects: [], route: "tree" },
+  "tree-removal": {
+    hero: TREE_GOING,
+    details: [],
+    // This page opens with the frames in order instead of a single photo.
+    sequence: { heading: "One tree removal in three frames", frames: treeRemovalSequence },
+    projects: [],
+    route: "tree",
+  },
+  "tree-trimming": { hero: TREE_STANDING, details: [], projects: [], route: "tree" },
+  "storm-damage-cleanup": { hero: TREE_DOWN, details: [], projects: [], route: "tree" },
   "palm-tree-trimming": {
-    hero: { photo: sabals, alt: "Two trimmed sabal palms and a pindo palm in the front yard of a brick home", caption: "Two sabals and a pindo after trimming, Crestview.", focus: "45% 30%" },
+    hero: { photo: climber, alt: "A climber in a yellow helmet at the top of a tall sabal palm, his saw hanging on a lanyard, a ladder against the next palm", caption: "Trimming a tall sabal from the top, saw on a lanyard.", focus: "50% 38%" },
+    // The same date palm, before and after.
     details: [
-      { photo: coastalHome, alt: "A coastal home with trimmed palms along the front and driveway", caption: "Palms trimmed across the front of a coastal home, Navarre.", focus: "50% 50%" },
-      { photo: estate, alt: "Aerial view of a waterfront estate with dozens of trimmed palms around a pool", caption: "A waterfront estate from the air, Gulf Breeze.", focus: "50% 55%" },
+      { photo: palmBefore, alt: "Before: a date palm in a back yard with old boots, dead growth and ferns covering the top of its trunk", caption: "Before: old boots, dead growth and ferns on the trunk.", focus: "50% 58%" },
+      { photo: palmAfter, alt: "After: the same date palm with the growth removed, a clean trimmed crown and a tidy trunk", caption: "After: the same palm, crown trimmed and trunk cleaned up.", focus: "50% 58%" },
     ],
     projects: ["Palm Tree Trimming"],
     route: "palm",

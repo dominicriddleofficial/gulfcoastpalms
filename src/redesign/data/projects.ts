@@ -26,7 +26,11 @@ import condoSunset from "@/assets/gallery/job-6.jpeg?w=240;480;800;1125&format=a
 import condoRoad from "@/assets/gallery/job-3.jpeg?w=240;480;800;1200&format=avif;webp;jpg&as=picture";
 import palmRow from "@/assets/gallery/job-4.jpeg?w=240;480;800;1286&format=avif;webp;jpg&as=picture";
 import diamond from "@/assets/diamond-cutting.jpg?w=515&format=avif;webp;jpg&as=picture";
-import treeFrame from "@/assets/tree-removal-work.jpg?w=512&format=avif;webp;jpg&as=picture";
+import treeFrame from "@/assets/facebook/tree-removal-2.jpg?w=240;480;720&format=avif;webp;jpg&as=picture";
+import climber from "@/assets/facebook/climber-sabal.jpg?w=240;480;800;1152&format=avif;webp;jpg&as=picture";
+import palmAfter from "@/assets/facebook/date-palm-after.jpg?w=240;480;800;1200&format=avif;webp;jpg&as=picture";
+import palmBefore from "@/assets/facebook/date-palm-before.jpg?w=240;480;800;1200&format=avif;webp;jpg&as=picture";
+import crewPool from "@/assets/redesign/crew-pool-yard.jpg?w=240;480;800;1152&format=avif;webp;jpg&as=picture";
 
 /** "tree" is tree work; the other two are palm work, split by the kind of property. */
 export type ProjectKind = "tree" | "home" | "commercial";
@@ -49,6 +53,8 @@ export interface Project {
   focus?: string;
   /** A small source file. Shown at its own size in the gallery, and left out of the large viewers. */
   small?: boolean;
+  /** The same subject before the work, where a true before photo exists. */
+  before?: { photo: Picture; alt: string };
   /** The quote action that belongs next to this proof: an existing quote-form label and its page. */
   service: { label: string; to: string; ask: string };
 }
@@ -85,14 +91,37 @@ export const projects: Project[] = [
   },
   {
     id: "tree-removal-under-way",
-    title: "Tree removal under way",
-    property: "Two-story building",
-    work: "A leaning tree being cut down beside a two-story building.",
+    title: "Tree removal beside a building",
+    property: "Multi-story building",
+    work: "A tall leaning tree taken down beside the building, falling away from the wall. Frame from our job video.",
     kind: "tree",
     photo: treeFrame,
-    alt: "Tree removal in progress: a worker with a chainsaw cuts a leaning tree trunk beside a two-story building",
+    alt: "Tree removal in progress: a tree starting to fall away from a multi-story building as the worker steps back from the cut",
     small: true,
     service: TREE,
+  },
+  {
+    id: "date-palm-clean-up",
+    title: "Date palm clean-up",
+    property: "Back yard",
+    work: "Old boots, dead growth and ferns taken off the trunk and the crown trimmed.",
+    kind: "home",
+    photo: palmAfter,
+    alt: "After: a date palm in a back yard with a clean trimmed crown and a tidy trunk",
+    focus: "50% 55%",
+    before: { photo: palmBefore, alt: "Before: the same date palm with old boots, dead growth and ferns covering the top of its trunk" },
+    service: TRIM,
+  },
+  {
+    id: "climbing-a-tall-sabal",
+    title: "Climbing a tall sabal",
+    property: "Coastal neighborhood",
+    work: "A tall sabal trimmed from the top by a climber, saw on a lanyard, with a ladder on the next palm.",
+    kind: "home",
+    photo: climber,
+    alt: "A climber in a yellow helmet at the top of a tall sabal palm, his saw hanging on a lanyard, a ladder against the next palm",
+    focus: "50% 40%",
+    service: TRIM,
   },
   {
     id: "waterfront-estate",
@@ -104,6 +133,17 @@ export const projects: Project[] = [
     photo: estate,
     alt: "Aerial view of a waterfront estate with dozens of trimmed palms around a pool",
     focus: "50% 55%",
+    service: TRIM,
+  },
+  {
+    id: "pool-yard-sabals",
+    title: "Sabals around a pool",
+    property: "Waterfront home",
+    work: "Sabal palms trimmed around the pool, with the crew clearing the cut fronds off the deck.",
+    kind: "home",
+    photo: crewPool,
+    alt: "Two crew members clearing cut palm fronds beside a pool, trimmed sabal palms along the fence and the water behind",
+    focus: "45% 50%",
     service: TRIM,
   },
   {
@@ -231,7 +271,7 @@ export const projectById = (id: string) => projects.find((p) => p.id === id);
 
 /** Shown on the homepage, in this order. */
 export const featuredProjects: Project[] = [
-  "date-palm-diamond-cut", "side-yard-trunk-skinning", "waterfront-estate", "sabals-and-pindo", "condo-at-night",
+  "climbing-a-tall-sabal", "date-palm-diamond-cut", "side-yard-trunk-skinning", "waterfront-estate", "condo-at-night",
 ].flatMap((id) => projectById(id) ?? []);
 
 /**

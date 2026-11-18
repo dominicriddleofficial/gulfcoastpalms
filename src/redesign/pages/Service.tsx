@@ -16,6 +16,7 @@ import PageHero from "../components/PageHero";
 import Photo from "../components/Photo";
 import ProjectViewer from "../components/ProjectViewer";
 import QuoteBand from "../components/QuoteBand";
+import { treeRemovalNote } from "../data/treeRemoval";
 import { projects } from "../data/projects";
 import { serviceMedia } from "../data/serviceMedia";
 import { ArrowRightIcon, CheckIcon } from "../lib/icons";
@@ -59,7 +60,8 @@ export default function Service({ slug }: { slug: string }) {
         crumbs={[{ label: "Services", to: "/services" }, ...(hub.to !== canonicalUrl && hub.to !== "/services" ? [hub] : []), { label: service.title }]}
         title={service.title}
         lead={service.heroSubheading}
-        photo={media ? { src: media.hero.photo, alt: media.hero.alt, caption: media.hero.caption, focus: media.hero.focus, small: media.hero.small } : undefined}
+        photo={media && !media.sequence ? { src: media.hero.photo, alt: media.hero.alt, caption: media.hero.caption, focus: media.hero.focus, small: media.hero.small } : undefined}
+        frames={media?.sequence ? { label: media.sequence.heading, note: treeRemovalNote, items: media.sequence.frames } : undefined}
         service={service.title}
         placement={`service_${service.slug}`}
         tone={media?.route === "tree" ? "coal" : "green"}

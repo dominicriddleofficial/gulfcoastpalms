@@ -24,6 +24,11 @@ interface PhotoProps {
   focus?: string;
   /** Set for a photo visible as soon as the page opens. Everything else loads when scrolled near. */
   eager?: boolean;
+  /**
+   * Load straight away at normal priority. For photos in a sideways-scrolling row, which
+   * browsers otherwise leave unloaded until they are swiped into view.
+   */
+  soon?: boolean;
   style?: CSSProperties;
   onLoad?: () => void;
 }
@@ -31,11 +36,11 @@ interface PhotoProps {
 const FALLBACK_FORMATS = ["jpeg", "jpg", "png"];
 const MIME: Record<string, string> = { avif: "image/avif", webp: "image/webp", jpeg: "image/jpeg", jpg: "image/jpeg", png: "image/png" };
 
-export default function Photo({ src, alt, sizes, className, focus, eager = false, style, onLoad }: PhotoProps) {
+export default function Photo({ src, alt, sizes, className, focus, eager = false, soon = false, style, onLoad }: PhotoProps) {
   if (!src) return null;
   const imgStyle: CSSProperties | undefined = focus ? { objectPosition: focus, ...style } : style;
   // Lower-case fetchpriority: React 18 passes it through as written and browsers read it.
-  const load: Record<string, string> = eager ? { loading: "eager", fetchpriority: "high" } : { loading: "lazy" };
+  const load: Record<string, string> = eager ? { loading: "eager", fetchpriority: "high" } : { loading: soon ? "eager" : "lazy" };
 
   if (typeof src === "string") {
     return <img src={src} alt={alt} className={className} style={imgStyle} decoding="async" onLoad={onLoad} {...load} />;

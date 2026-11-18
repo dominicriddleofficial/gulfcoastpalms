@@ -9,6 +9,7 @@ import Commercial from "../home/Commercial";
 import Hero from "../home/Hero";
 import Proof from "../home/Proof";
 import Routes from "../home/Routes";
+import TreeWork from "../home/TreeWork";
 import Work from "../home/Work";
 
 /**
@@ -28,6 +29,7 @@ export default function Home() {
       <SeasonStrip where="below" />
       <Routes />
       <Work />
+      <TreeWork />
       <Proof />
       <Commercial />
       <Areas />

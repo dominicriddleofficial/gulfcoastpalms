@@ -15,7 +15,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { StaticRouter } from "react-router-dom/server";
 import css from "./styles/first-view.css?raw";
 import Header from "./chrome/Header";
-import { heroPhoto } from "./data/hero";
+import { HERO_NARROW, HERO_WIDE, heroReveal } from "./data/hero";
 import Hero from "./home/Hero";
 import { REDESIGN_PREVIEW_BASE } from "./mount";
 
@@ -52,10 +52,33 @@ const EARLY_MENU_TAP = `document.addEventListener("click",function(e){if(window.
 
 const esc = (v: string) => v.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 
-/** Head tags that start the opening photo and the headline font before anything else. */
+/**
+ * Lets a visitor move the before/after divider before the app has loaded. The app takes
+ * over the same job when it arrives and keeps the position (home/Hero.tsx).
+ */
+const EARLY_REVEAL = `(function(){var f=document.querySelector("[data-rd-reveal]"),d=null;if(!f)return;`
+  + `function set(x){if(window.__gcpAppReady)return;var r=f.getBoundingClientRect(),c=Math.min(100,Math.max(0,(x-r.left)/r.width*100));`
+  + `f.style.setProperty("--cut",c+"%");window.__gcpCut=c}`
+  + `f.addEventListener("pointerdown",function(e){if(window.__gcpAppReady||e.target.closest("a"))return;`
+  + `d={id:e.pointerId,x:e.clientX,m:e.pointerType==="mouse"};if(d.m)set(e.clientX)});`
+  + `f.addEventListener("pointermove",function(e){if(!d||d.id!==e.pointerId)return;`
+  + `if(!d.m){if(Math.abs(e.clientX-d.x)<6)return;d.m=true}set(e.clientX)});`
+  + `f.addEventListener("pointerup",function(e){if(d&&d.id===e.pointerId&&!d.m&&!e.target.closest("a"))set(e.clientX);d=null});`
+  + `f.addEventListener("pointercancel",function(){d=null})})();`;
+
+/**
+ * Head tags that start both opening photos and the headline font before anything else.
+ * Each screen size asks only for its own crop.
+ */
 export function firstViewPreloads(): string {
+  const photo = (media: string, srcset: string, sizes: string) =>
+    `<link rel="preload" as="image" fetchpriority="high" type="image/avif" media="${esc(media)}" imagesrcset="${esc(srcset)}" imagesizes="${esc(sizes)}">`;
+  const { before, after } = heroReveal;
   return [
-    `<link rel="preload" as="image" fetchpriority="high" type="image/avif" imagesrcset="${esc(heroPhoto.avif)}" imagesizes="${esc(heroPhoto.sizes)}">`,
+    photo(HERO_NARROW, after.phone.avif, after.phone.sizes),
+    photo(HERO_NARROW, before.phone.avif, before.phone.sizes),
+    photo(HERO_WIDE, after.wide.avif, after.wide.sizes),
+    photo(HERO_WIDE, before.wide.avif, before.wide.sizes),
     `<link rel="preload" as="font" type="font/woff2" href="/fonts/gcp-archivo-condensed.woff2" crossorigin>`,
   ].join("");
 }
@@ -73,6 +96,6 @@ export function renderFirstView(base: string = REDESIGN_PREVIEW_BASE): string {
   );
   return (
     `<div id="${FIRST_VIEW_ID}" data-rd-first-view><style>${RESET}${css}</style>${body}`
-    + `<script>window.__gcpFirstView=document.getElementById("${FIRST_VIEW_ID}").outerHTML;${EARLY_MENU_TAP}</script></div>`
+    + `<script>window.__gcpFirstView=document.getElementById("${FIRST_VIEW_ID}").outerHTML;${EARLY_MENU_TAP}${EARLY_REVEAL}</script></div>`
   );
 }

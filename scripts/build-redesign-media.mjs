@@ -13,8 +13,9 @@
  *  - src/assets/redesign/*    Cropped sources. Pages import these through vite-imagetools,
  *    which makes the responsive sizes and formats at build time.
  *
- * Every source is a real Gulf Coast Palms job photo already in src/assets. Nothing is
- * generated, retouched or enlarged. Crop boxes are in source pixels.
+ * Every source is a real Gulf Coast Palms job photo in src/assets (the ones under
+ * facebook/ came from the business's own Facebook page). Nothing is generated,
+ * retouched or enlarged. Crop boxes are in source pixels.
  */
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -26,22 +27,28 @@ const SRC = path.join(root, "src", "assets");
 const PUBLIC_OUT = path.join(root, "public", "media", "redesign");
 const ASSET_OUT = path.join(root, "src", "assets", "redesign");
 
-/** Opening-screen files (fixed public addresses, AVIF with a JPEG fallback). */
+/**
+ * Opening-screen files (fixed public addresses, AVIF with a JPEG fallback).
+ *
+ * The opening is a before-and-after of the same date palm (see src/assets/facebook/README.md).
+ * Each pair uses one box for both photos, so the trunk sits in the same place in each and
+ * the reveal lines up. Phones get their own wider, shorter crop around the trunk, which is
+ * also a much smaller download; wide screens get the taller crop with the fronds.
+ */
+const PAIR = { before: "facebook/date-palm-before.jpg", after: "facebook/date-palm-after.jpg" };
+const PHONE_BOX = { left: 0, top: 640, width: 1440, height: 960 };
+const WIDE_BOX = { left: 0, top: 250, width: 1440, height: 1500 };
 const FIRST_VIEW = [
-  {
-    name: "hero-job",
-    source: "trunk-skinning.jpg",
-    // Whole working scene: lead palm crown to the ladder foot, the finished row and the loaded trailer.
-    // Trims empty sky above the crown and the lower fence rails.
-    box: { left: 0, top: 190, width: 1440, height: 1500 },
-    widths: [640, 960, 1440],
-  },
+  { name: "hero-before-phone", source: PAIR.before, box: PHONE_BOX, widths: [640, 800, 1200], quality: 44 },
+  { name: "hero-after-phone", source: PAIR.after, box: PHONE_BOX, widths: [640, 800, 1200], quality: 44 },
+  { name: "hero-before", source: PAIR.before, box: WIDE_BOX, widths: [960, 1440], quality: 44 },
+  { name: "hero-after", source: PAIR.after, box: WIDE_BOX, widths: [960, 1440], quality: 44 },
   {
     name: "tree-frame",
-    source: "tree-removal-work.jpg",
-    // The only tree-removal image on file is 512x288, so it is used at that size or smaller.
-    box: null,
-    widths: [512],
+    source: "facebook/tree-removal-2.jpg",
+    // The tree going over, the sawyer at its base and the building behind.
+    box: { left: 0, top: 210, width: 720, height: 540 },
+    widths: [360, 720],
   },
 ];
 
@@ -67,6 +74,10 @@ const CROPS = [
   { name: "trailer-loaded", source: "trunk-skinning.jpg", box: { left: 800, top: 1150, width: 640, height: 520 } },
   // Condo at night: lit palms across the front, dark sky and driveway trimmed.
   { name: "condo-night", source: "gallery/job-11.jpeg", box: { left: 0, top: 560, width: 1080, height: 1000 } },
+  // Climber and the crown he is working on, with the saw on its lanyard.
+  { name: "climber-close", source: "facebook/climber-sabal.jpg", box: { left: 270, top: 330, width: 640, height: 800 } },
+  // Crew clearing fronds by the pool, without the empty sky above.
+  { name: "crew-pool-yard", source: "facebook/crew-pool-yard.jpg", box: { left: 0, top: 560, width: 1152, height: 976 } },
 ];
 
 async function main() {
@@ -83,7 +94,7 @@ async function main() {
       const resized = sharp(data).resize({ width: Math.min(w, info.width), withoutEnlargement: true });
       const avif = path.join(PUBLIC_OUT, `${item.name}-${w}.avif`);
       const jpg = path.join(PUBLIC_OUT, `${item.name}-${w}.jpg`);
-      await resized.clone().avif({ quality: 52, effort: 6 }).toFile(avif);
+      await resized.clone().avif({ quality: item.quality ?? 52, effort: 6 }).toFile(avif);
       await resized.clone().jpeg({ quality: 76, mozjpeg: true, progressive: true }).toFile(jpg);
       const [a, j] = await Promise.all([fs.stat(avif), fs.stat(jpg)]);
       entry.files.push({ w, avif: a.size, jpg: j.size });

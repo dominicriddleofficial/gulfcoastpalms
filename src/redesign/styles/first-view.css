@@ -301,19 +301,29 @@
   color: var(--rd-on-dark);
 }
 .rd-hero__photo {
+  /* Where the before photo ends and the after photo starts, across the frame. */
+  --cut: 50%;
   position: relative;
   min-height: 13.5rem;
   overflow: hidden;
-  background: #5b88b4;
+  background: #4b6b3c;
   container-type: size;
+  /* Sideways drags move the divider; up and down still scrolls the page. */
+  touch-action: pan-y;
+  cursor: ew-resize;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
-/* The stage always has the photo's own shape and covers the frame around a chosen
-   focal point, so the look-closer marks stay on the palms at every screen size.
+.rd-hero__layer { position: absolute; inset: 0; overflow: hidden; }
+.rd-hero__layer--before { clip-path: inset(0 calc(100% - var(--cut)) 0 0); }
+/* Both photos get exactly the same box: the photo's own shape, covering the frame and
+   centred on the trunk. That keeps the two lined up at every screen size.
    Percentages do the work wherever they can; container units fill in the rest. */
 .rd-hero__stage {
-  --ar: 0.96;
-  --fx: 0.3;
-  --fy: 0.12;
+  --ar: 1.5;
+  --fx: 0.5;
+  --fy: 0.4;
   --w: max(100%, calc(100cqh * var(--ar)));
   --h: max(100%, calc(100cqw / var(--ar)));
   position: absolute;
@@ -321,85 +331,96 @@
   height: var(--h);
   left: calc((100% - var(--w)) * var(--fx));
   top: calc((100% - var(--h)) * var(--fy));
-  transform-origin: var(--zx, 50%) var(--zy, 50%);
-  transform: scale(var(--z, 1));
-  transition: transform 0.75s var(--rd-ease);
-  will-change: transform;
 }
-.rd-hero__stage img { display: block; width: 100%; height: 100%; max-width: none; }
+.rd-hero__stage img { display: block; width: 100%; height: 100%; max-width: none; pointer-events: none; }
 @supports not (width: 1cqw) {
   .rd-hero__stage { inset: 0; width: 100%; height: 100%; }
-  .rd-hero__stage img { object-fit: cover; object-position: 30% 12%; }
-  .rd-hero__spot { display: none !important; }
+  .rd-hero__stage img { object-fit: cover; object-position: 50% 40%; }
 }
-.rd-hero__spot {
+.rd-hero__divider {
   position: absolute;
-  left: var(--x);
-  top: var(--y);
+  z-index: 2;
+  top: 0;
+  bottom: 0;
+  left: var(--cut);
+  width: 2px;
+  margin-left: -1px;
+  background: var(--rd-paper);
+  box-shadow: 0 0 0 1px rgba(7, 29, 22, 0.22);
+  pointer-events: none;
+}
+.rd-hero__handle {
+  position: absolute;
+  left: 50%;
+  /* On the lower trunk, clear of the part of the palm that changed. */
+  top: 70%;
   width: 2.75rem;
   height: 2.75rem;
   margin: -1.375rem 0 0 -1.375rem;
   display: grid;
   place-items: center;
-  border: 0;
-  background: none;
-  color: var(--rd-green-950);
-  cursor: pointer;
-  transform: scale(calc(1 / var(--z, 1)));
-  transition: transform 0.75s var(--rd-ease);
-  -webkit-tap-highlight-color: transparent;
-}
-.rd-hero__spot span {
-  display: grid;
-  place-items: center;
-  width: 1.75rem;
-  height: 1.75rem;
   border-radius: 50%;
   background: var(--rd-paper);
-  box-shadow: 0 0 0 5px rgba(244, 240, 230, 0.3), 0 2px 10px rgba(7, 29, 22, 0.45);
-  transition: transform 0.3s var(--rd-ease), box-shadow 0.3s;
+  color: var(--rd-green-950);
+  box-shadow: 0 0 0 5px rgba(244, 240, 230, 0.3), 0 2px 12px rgba(7, 29, 22, 0.5);
 }
-.rd-hero__spot:hover span { box-shadow: 0 0 0 8px rgba(244, 240, 230, 0.34), 0 2px 10px rgba(7, 29, 22, 0.45); }
-.rd-hero__spot[aria-pressed="true"] span { transform: rotate(45deg); }
-.rd-hero__spot--desk { display: none; }
-.rd-hero__cap {
+/* The slider itself, for the keyboard and screen readers. Fingers and the mouse use the photo. */
+.rd-hero__range {
   position: absolute;
-  left: 0.75rem;
-  right: 0.75rem;
-  bottom: 2.9rem;
-  z-index: 2;
-  display: flex;
-  justify-content: flex-start;
+  z-index: 1;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
   pointer-events: none;
 }
-.rd-hero__cap p {
-  margin: 0;
-  max-width: 21rem;
-  padding: 0.5rem 0.7rem;
+.rd-hero__range:focus-visible ~ .rd-hero__divider .rd-hero__handle { outline: 3px solid var(--rd-go); outline-offset: 3px; }
+/* "Before" and "After" belong to their own photo, so each is wiped away with it. */
+.rd-hero__tag {
+  position: absolute;
+  z-index: 1;
+  bottom: 2.9rem;
+  padding: 0.2rem 0.55rem;
   border-radius: var(--rd-radius);
   background: rgba(7, 29, 22, 0.82);
   color: var(--rd-on-dark);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.35;
+  pointer-events: none;
+}
+.rd-hero__tag--before { left: 0.75rem; }
+.rd-hero__tag--after { right: 0.75rem; }
+/* A sentence about the photos needs room; wide screens only. */
+.rd-hero__cap { display: none; }
+.rd-hero__cap p {
+  margin: 0;
+  max-width: 24rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: var(--rd-radius);
+  background: rgba(7, 29, 22, 0.82);
+  color: var(--rd-on-dark);
+  font-size: 0.9375rem;
   line-height: 1.35;
   font-weight: 500;
 }
-.rd-hero__cap b { font-weight: 700; }
-/* The "select a + to look closer" hint needs room; phones show it only once a mark is chosen. */
-.rd-hero__cap--hint { display: none; }
-/* Second frame, set in the photo's open sky: the tree side of the business. */
+/* Second frame, set in the photo's upper corner: the tree side of the business. */
 .rd-hero__inset {
   position: absolute;
-  z-index: 2;
+  z-index: 3;
   top: 0.75rem;
   right: 0.75rem;
-  width: clamp(7.5rem, 33vw, 9.25rem);
+  width: clamp(6.75rem, 29vw, 8.5rem);
   padding: 0.25rem 0.25rem 0;
   background: var(--rd-paper);
   color: var(--rd-ink);
   text-decoration: none;
+  cursor: pointer;
   box-shadow: 0 6px 22px rgba(7, 29, 22, 0.35);
 }
-.rd-hero__inset img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; }
+.rd-hero__inset img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
 .rd-hero__inset span { display: block; padding: 0.3rem 0.15rem 0.35rem; font-size: 0.75rem; font-weight: 700; line-height: 1.15; }
 .rd-hero__panel {
   position: relative;
@@ -445,7 +466,7 @@
   .rd-hero__actions .rd-btn--go { grid-column: auto; }
   .rd-hero__actions .rd-btn--line { padding: 0 1.2rem; }
   .rd-hero__num { display: inline; }
-  .rd-hero__cap { bottom: 3.4rem; }
+  .rd-hero__tag { bottom: 3.4rem; }
 }
 
 @media (min-width: 1000px) {
@@ -456,20 +477,13 @@
     min-height: min(calc(100svh - var(--rd-hd-h)), 52rem);
   }
   .rd-hero__photo { min-height: 36rem; }
-  /* Shade the photo's edge where the first headline line crosses it. */
-  .rd-hero__photo::after {
-    content: "";
-    position: absolute;
-    inset: 0 0 0 auto;
-    width: 30%;
-    background: linear-gradient(to left, rgba(11, 42, 32, 0.72), rgba(11, 42, 32, 0));
-    pointer-events: none;
-  }
-  .rd-hero__stage { --fx: 0.2; --fy: 0.2; }
-  .rd-hero__spot--desk { display: grid; }
-  .rd-hero__cap { left: 1.5rem; right: auto; bottom: 1.5rem; }
-  .rd-hero__cap--hint { display: flex; }
-  .rd-hero__cap p { font-size: 0.9375rem; max-width: 24rem; padding: 0.6rem 0.85rem; }
+  /* The taller crop, with the fronds. */
+  .rd-hero__stage { --ar: 0.96; --fy: 0.35; }
+  .rd-hero__handle { top: 78%; width: 3rem; height: 3rem; margin: -1.5rem 0 0 -1.5rem; }
+  .rd-hero__tag { bottom: 1.5rem; font-size: 0.875rem; }
+  .rd-hero__tag--before { left: 1.5rem; }
+  .rd-hero__tag--after { right: 1.5rem; z-index: 2; }
+  .rd-hero__cap { display: block; position: absolute; z-index: 3; left: 1.5rem; top: 1.5rem; pointer-events: none; }
   .rd-hero__inset { top: 1.5rem; right: 1.5rem; width: clamp(11rem, 15vw, 14rem); padding: 0.35rem 0.35rem 0; }
   .rd-hero__inset span { font-size: 0.8125rem; padding: 0.4rem 0.2rem 0.45rem; }
   .rd-hero__panel {
@@ -482,8 +496,6 @@
   }
   .rd-hero__title { font-size: clamp(2.9rem, 4.5vw, 5rem); line-height: 0.93; }
   .rd-hero__title span { white-space: nowrap; }
-  /* First line reaches back over the photo's open sky. */
-  .rd-hero__title .rd-hero__reach { margin-left: clamp(-9.5rem, -9.5vw, -5rem); text-shadow: 0 2px 24px rgba(7, 29, 22, 0.35); }
   .rd-hero__title .rd-hero__place { font-size: 0.34em; margin-top: 0.9rem; }
   .rd-hero__facts { margin-top: 1.4rem; font-size: 1.0625rem; max-width: 30rem; }
   .rd-hero__actions { grid-template-columns: auto auto; justify-content: start; gap: 0.75rem; margin-top: 1.75rem; }
@@ -493,8 +505,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .rd-hero__stage,
-  .rd-hero__spot,
-  .rd-hero__spot span,
   .rd-btn { transition: none; }
 }

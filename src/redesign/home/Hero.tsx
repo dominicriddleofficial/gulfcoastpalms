@@ -1,95 +1,168 @@
 /**
- * Opening screen: a real job photo with the headline in the panel beside it.
+ * Opening screen: a before and an after of the same date palm, with the headline in
+ * the panel beside it.
  *
- * The photo is a trunk-skinning job photographed mid-work. Visitors can select a
- * mark to look closer at a part of it. There is no matched before-and-after pair on
- * file, so this stands in for the reveal; components/BeforeAfter.tsx is ready for a
- * real pair.
+ * The two photos are stacked. The "before" is cut off at a divider that starts on the
+ * trunk; a visitor drags across the photo (or uses the arrow keys) to move it. Before
+ * any script has loaded, the photo simply shows half of each, which is a finished
+ * picture in its own right.
  *
  * Styles live in styles/first-view.css. This file avoids browser-only code at render
  * time because the build also renders it into the page's first HTML.
  */
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+import { trackEvent } from "@/lib/analytics";
 import { GOOGLE_BUSINESS_URL, GCP_BUSINESS } from "@/lib/business-info";
-import { heroCopy, heroPhoto, heroSpots, treeFrame } from "../data/hero";
+import { HERO_WIDE, heroCopy, heroReveal, treeFrame, type HeroShot } from "../data/hero";
 import { CallLink, QuoteLink, TextLink } from "../lib/actions";
-import { CameraIcon, PhoneIcon, PlusIcon, StarIcon } from "../lib/icons";
+import { CameraIcon, PhoneIcon, StarIcon } from "../lib/icons";
 
 /** Lower-case attribute: React 18 passes it through as written and browsers read it. */
 const HIGH_PRIORITY = { fetchpriority: "high" } as Record<string, string>;
 
+const clamp = (n: number) => Math.min(100, Math.max(0, n));
+
+/** One photo of the pair: the wide crop on wide screens, the shorter crop on phones. */
+function Shot({ shot }: { shot: HeroShot }) {
+  return (
+    <picture>
+      <source media={HERO_WIDE} type="image/avif" srcSet={shot.wide.avif} sizes={shot.wide.sizes} width={shot.wide.width} height={shot.wide.height} />
+      <source media={HERO_WIDE} srcSet={shot.wide.jpg} sizes={shot.wide.sizes} width={shot.wide.width} height={shot.wide.height} />
+      <source type="image/avif" srcSet={shot.phone.avif} sizes={shot.phone.sizes} />
+      <img
+        src={shot.phone.fallback}
+        srcSet={shot.phone.jpg}
+        sizes={shot.phone.sizes}
+        width={shot.phone.width}
+        height={shot.phone.height}
+        alt={shot.alt}
+        loading="eager"
+        decoding="async"
+        draggable={false}
+        {...HIGH_PRIORITY}
+      />
+    </picture>
+  );
+}
+
 export default function Hero() {
-  const [active, setActive] = useState<string | null>(null);
-  const [zoomed, setZoomed] = useState(false);
-  const spot = heroSpots.find((s) => s.id === active) ?? null;
+  const frame = useRef<HTMLDivElement>(null);
+  const range = useRef<HTMLInputElement>(null);
+  const drag = useRef<{ id: number; x: number; moved: boolean } | null>(null);
+  const used = useRef(false);
 
+  /** Moves the divider. Written straight to the page so dragging stays smooth. */
+  const apply = useCallback((percent: number, byVisitor = true) => {
+    const cut = clamp(percent);
+    frame.current?.style.setProperty("--cut", `${cut}%`);
+    if (range.current) {
+      range.current.value = String(Math.round(cut));
+      range.current.setAttribute("aria-valuetext", `${Math.round(cut)} percent before, ${100 - Math.round(cut)} percent after`);
+    }
+    (window as Window & { __gcpCut?: number }).__gcpCut = cut;
+    if (byVisitor && !used.current) {
+      used.current = true;
+      trackEvent("before_after_used", { placement: "hero" });
+    }
+  }, []);
+
+  // Carries over a position chosen before the app had loaded (see firstView.tsx).
   useEffect(() => {
-    if (!active) return;
-    setZoomed(true);
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setActive(null); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [active]);
+    const early = (window as Window & { __gcpCut?: number }).__gcpCut;
+    if (typeof early === "number" && early !== heroReveal.start) apply(early, false);
+  }, [apply]);
 
-  const stageStyle = spot
-    ? ({ "--z": spot.zoom, "--zx": `${spot.x}%`, "--zy": `${spot.y}%` } as React.CSSProperties)
-    : undefined;
-  const sizes = zoomed ? heroPhoto.zoomSizes : heroPhoto.sizes;
+  const at = (clientX: number) => {
+    const box = frame.current?.getBoundingClientRect();
+    return box && box.width ? ((clientX - box.left) / box.width) * 100 : heroReveal.start;
+  };
 
   return (
     <section className="rd-hero" aria-labelledby="rd-hero-title">
-      <div className="rd-hero__photo">
-        <div className="rd-hero__stage" style={stageStyle}>
+      <div
+        className="rd-hero__photo"
+        ref={frame}
+        data-rd-reveal
+        onPointerDown={(e) => {
+          if (e.pointerType === "mouse" && e.button !== 0) return;
+          if ((e.target as Element).closest("a")) return;
+          drag.current = { id: e.pointerId, x: e.clientX, moved: false };
+          // A mouse press moves the divider at once. A finger waits to see whether this is a sideways drag or a scroll.
+          if (e.pointerType === "mouse") {
+            e.currentTarget.setPointerCapture(e.pointerId);
+            drag.current.moved = true;
+            apply(at(e.clientX));
+          }
+        }}
+        onPointerMove={(e) => {
+          const d = drag.current;
+          if (!d || d.id !== e.pointerId) return;
+          if (!d.moved) {
+            if (Math.abs(e.clientX - d.x) < 6) return;
+            d.moved = true;
+            e.currentTarget.setPointerCapture(e.pointerId);
+          }
+          apply(at(e.clientX));
+        }}
+        onPointerUp={(e) => {
+          const d = drag.current;
+          drag.current = null;
+          // A plain tap moves the divider to where it landed.
+          if (d && d.id === e.pointerId && !d.moved && !(e.target as Element).closest("a")) apply(at(e.clientX));
+        }}
+        onPointerCancel={() => { drag.current = null; }}
+      >
+        <div className="rd-hero__layer">
+          <div className="rd-hero__stage"><Shot shot={heroReveal.after} /></div>
+          <span className="rd-hero__tag rd-hero__tag--after" aria-hidden="true">{heroReveal.after.label}</span>
+        </div>
+        <div className="rd-hero__layer rd-hero__layer--before">
+          <div className="rd-hero__stage"><Shot shot={heroReveal.before} /></div>
+          <span className="rd-hero__tag rd-hero__tag--before" aria-hidden="true">{heroReveal.before.label}</span>
+        </div>
+        <input
+          ref={range}
+          className="rd-hero__range"
+          type="range"
+          min={0}
+          max={100}
+          step={5}
+          defaultValue={heroReveal.start}
+          aria-label={heroReveal.control}
+          onInput={(e) => apply(Number(e.currentTarget.value))}
+        />
+        <span className="rd-hero__divider" aria-hidden="true">
+          <span className="rd-hero__handle">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 6l-5 6 5 6M15 6l5 6-5 6" />
+            </svg>
+          </span>
+        </span>
+        <Link className="rd-hero__inset" to={treeFrame.to}>
           <picture>
-            <source type="image/avif" srcSet={heroPhoto.avif} sizes={sizes} />
+            <source type="image/avif" srcSet={treeFrame.avif} sizes={treeFrame.sizes} />
             <img
-              src={heroPhoto.fallback}
-              srcSet={heroPhoto.jpg}
-              sizes={sizes}
-              width={heroPhoto.width}
-              height={heroPhoto.height}
-              alt={heroPhoto.alt}
-              loading="eager"
+              src={treeFrame.fallback}
+              srcSet={treeFrame.jpg}
+              sizes={treeFrame.sizes}
+              width={treeFrame.width}
+              height={treeFrame.height}
+              alt={treeFrame.alt}
               decoding="async"
-              {...HIGH_PRIORITY}
+              draggable={false}
             />
           </picture>
-          {heroSpots.map((s) => {
-            const on = s.id === active;
-            if (spot && !on) return null;
-            return (
-              <button
-                key={s.id}
-                type="button"
-                className={`rd-hero__spot${s.wideOnly ? " rd-hero__spot--desk" : ""}`}
-                style={{ "--x": `${s.x}%`, "--y": `${s.y}%` } as React.CSSProperties}
-                aria-pressed={on}
-                aria-label={on ? "Back to the whole photo" : `Look closer at ${s.label}`}
-                onClick={() => setActive(on ? null : s.id)}
-              >
-                <span><PlusIcon size={16} /></span>
-              </button>
-            );
-          })}
-        </div>
-        {!spot && (
-          <Link className="rd-hero__inset" to={treeFrame.to}>
-            <picture>
-              <source type="image/avif" srcSet={treeFrame.avif} />
-              <img src={treeFrame.jpg} width={treeFrame.width} height={treeFrame.height} alt={treeFrame.alt} decoding="async" />
-            </picture>
-            <span>{treeFrame.label}</span>
-          </Link>
-        )}
-        <div className={`rd-hero__cap${spot ? "" : " rd-hero__cap--hint"}`} aria-live="polite">
-          <p>{spot ? spot.note : heroCopy.hint}</p>
+          <span>{treeFrame.label}</span>
+        </Link>
+        <div className="rd-hero__cap">
+          <p>{heroCopy.hint}</p>
         </div>
       </div>
 
       <div className="rd-hero__panel">
         <h1 id="rd-hero-title" className="rd-hero__title">
-          <span className="rd-hero__reach">{heroCopy.lines[0]}</span>{" "}
+          <span>{heroCopy.lines[0]}</span>{" "}
           <span>{heroCopy.lines[1]}</span>{" "}
           <span>{heroCopy.lines[2]}</span>{" "}
           <span className="rd-hero__place">{heroCopy.place}</span>

@@ -4,7 +4,8 @@
  *
  * The current gallery pairs unrelated photos and labels them before and after. This
  * page shows each photo once, for what it is, with the job notes on record and the
- * quote button for that kind of work.
+ * quote button for that kind of work. A project is marked "Before & after" only where
+ * a true before photo of the same subject exists.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -63,6 +64,7 @@ export default function Projects() {
               <li key={p.id}>
                 <button type="button" className="rd-gallery__item" onClick={() => setOpenId(p.id)} aria-label={`Open ${p.title}${p.city ? `, ${p.city}` : ""}`}>
                   <Photo src={p.photo} alt={p.alt} sizes="(min-width: 900px) 30vw, 46vw" />
+                  {p.before && <span className="rd-gallery__tag">Before &amp; after</span>}
                   <span className="rd-gallery__cap">
                     <b>{p.title}</b>
                     <span>{p.city ? `${p.city}, FL` : p.property}</span>
@@ -85,6 +87,11 @@ const naturalWidth = (photo: Project["photo"]) => (typeof photo === "string" ? u
 
 function Lightbox({ project, position, total, onClose, onStep }: { project: Project | null; position: number; total: number; onClose: () => void; onStep: (delta: number) => void }) {
   const startX = useRef<number | null>(null);
+  const [showBefore, setShowBefore] = useState(false);
+  const projectId = project?.id;
+  // Each project opens on its finished photo.
+  useEffect(() => setShowBefore(false), [projectId]);
+  const shown = project && showBefore && project.before ? project.before : project;
   useEffect(() => {
     if (!project) return;
     const onKey = (e: KeyboardEvent) => {
@@ -112,7 +119,15 @@ function Lightbox({ project, position, total, onClose, onStep }: { project: Proj
               }}
             >
               {/* Never shown larger than the file itself, so a small photo stays sharp. */}
-              <Photo key={project.id} src={project.photo} alt={project.alt} sizes="(min-width: 900px) 60vw, 100vw" eager style={{ maxWidth: naturalWidth(project.photo) }} />
+              {shown && (
+                <Photo key={`${project.id}-${showBefore}`} src={shown.photo} alt={shown.alt} sizes="(min-width: 900px) 60vw, 100vw" eager style={{ maxWidth: naturalWidth(shown.photo) }} />
+              )}
+              {project.before && (
+                <div className="rd-ba" role="group" aria-label="Photo">
+                  <button type="button" aria-pressed={showBefore} onClick={() => setShowBefore(true)}>Before</button>
+                  <button type="button" aria-pressed={!showBefore} onClick={() => setShowBefore(false)}>After</button>
+                </div>
+              )}
             </div>
             <div className="rd-lightbox__side">
               <div className="rd-lightbox__bar">

@@ -1,13 +1,13 @@
 /**
  * The two ways in: Tree Services and Palm Services, side by side and the same size.
  *
- * Both photos are shown at the size of the smaller one. The only tree photo on file
- * is a 512-pixel frame, and giving the palm side a bigger picture would quietly rank
- * palm work above tree work. The service rows go straight to each service page.
+ * Both photos are shown at the size of the smaller one. The tree photo is a 720-pixel
+ * frame from the job video, and giving the palm side a bigger picture would quietly
+ * rank palm work above tree work. The service rows go straight to each service page.
  */
 import { Link } from "react-router-dom";
 import { publicMarketing } from "@/data/publicMarketing";
-import treeFrame from "@/assets/tree-removal-work.jpg?w=512&format=avif;webp;jpg&as=picture";
+import treeFrame from "@/assets/facebook/tree-removal-1.jpg?w=360;540;720&format=avif;webp;jpg&as=picture";
 import palmFrame from "@/assets/redesign/palm-canary-home.jpg?w=512;768;1024&format=avif;webp;jpg&as=picture";
 import Photo from "../components/Photo";
 import { palmServices, shortLabel, treeServices, type NavItem } from "../data/nav";
@@ -24,8 +24,8 @@ const DOORS = [
     // Wording from the current homepage.
     blurb: "Experienced tree crews, including an experienced climber. Site assessment and a written scope for your property.",
     photo: treeFrame,
-    alt: "Tree removal in progress: a worker with a chainsaw cuts a leaning tree trunk beside a two-story building",
-    caption: "Tree removal under way beside a two-story building",
+    alt: "A worker in a helmet with a chainsaw at the base of a tall leaning tree, close beside a multi-story building",
+    caption: "Tree removal: the sawyer at the base of a tall leaning tree",
     items: pick(treeServices, ["/services/tree-removal", "/services/tree-trimming", "/services/storm-damage-cleanup"]),
     all: { label: "All tree services", to: "/services/tree-trimming-removal" },
     quote: { service: "Tree Trimming & Removal", label: "Get a tree quote", placement: "home_services_tree" },

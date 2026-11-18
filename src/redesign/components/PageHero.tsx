@@ -3,7 +3,8 @@
  * sentence, and the three actions, next to a photo of the work.
  *
  * A large photo gets a tall frame. A small source photo is shown as a framed print at
- * its own size and the heading leads instead, so nothing is ever stretched.
+ * its own size and the heading leads instead, so nothing is ever stretched. A page
+ * with one job photographed in order opens with those frames in a row.
  */
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
@@ -11,6 +12,7 @@ import { GCP_BUSINESS } from "@/lib/business-info";
 import { CallLink, QuoteLink, TextLink } from "../lib/actions";
 import { CameraIcon, PhoneIcon } from "../lib/icons";
 import Photo, { type PhotoSource } from "./Photo";
+import { SequenceFrames, type SequenceFrame } from "./Sequence";
 
 interface Crumb { label: string; to?: string }
 
@@ -19,6 +21,8 @@ interface PageHeroProps {
   title: string;
   lead?: string;
   photo?: { src: PhotoSource; alt: string; caption?: string; focus?: string; small?: boolean };
+  /** One job in order, shown in place of a single photo. */
+  frames?: { label: string; note: string; items: SequenceFrame[] };
   /** Existing quote-form label to preselect. */
   service?: string;
   placement: string;
@@ -29,8 +33,8 @@ interface PageHeroProps {
   children?: ReactNode;
 }
 
-export default function PageHero({ crumbs, title, lead, photo, service, area, placement, quoteLabel, tone = "green", children }: PageHeroProps) {
-  const layout = !photo ? "plain" : photo.small ? "print" : "photo";
+export default function PageHero({ crumbs, title, lead, photo, frames, service, area, placement, quoteLabel, tone = "green", children }: PageHeroProps) {
+  const layout = frames ? "frames" : !photo ? "plain" : photo.small ? "print" : "photo";
   return (
     <section className={`rd-phero rd-phero--${layout} ${tone === "coal" ? "rd-coal" : "rd-dark"}`}>
       <div className="rd-phero__text">
@@ -63,6 +67,12 @@ export default function PageHero({ crumbs, title, lead, photo, service, area, pl
           <Photo src={photo.src} alt={photo.alt} focus={photo.focus} sizes="(min-width: 1000px) 52vw, 100vw" eager />
           {photo.caption && <figcaption>{photo.caption}</figcaption>}
         </figure>
+      )}
+      {frames && (
+        <div className="rd-phero__frames">
+          <SequenceFrames frames={frames.items} label={frames.label} eager />
+          <p className="rd-small rd-phero__note">{frames.note}</p>
+        </div>
       )}
       {photo && layout === "print" && (
         <figure className="rd-print rd-phero__print">
