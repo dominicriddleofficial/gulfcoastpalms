@@ -14,6 +14,7 @@ import SEOHead from "@/components/SEOHead";
 import Layout from "../chrome/Layout";
 import PageHero from "../components/PageHero";
 import Photo from "../components/Photo";
+import { Where } from "../components/ProjectViewer";
 import QuoteBand from "../components/QuoteBand";
 import { projects, type Project, type ProjectKind } from "../data/projects";
 import { QuoteLink } from "../lib/actions";
@@ -141,7 +142,7 @@ function Lightbox({ project, position, total, onClose, onStep }: { project: Proj
               <div className="rd-ticket" key={project.id}>
                 <Dialog.Title className="rd-ticket__title">{project.title}</Dialog.Title>
                 <dl>
-                  {project.city && (<><dt>Where</dt><dd>{project.city}, FL</dd></>)}
+                  {project.city && (<><dt>Where</dt><dd><Where city={project.city} /></dd></>)}
                   <dt>Property</dt><dd>{project.property}</dd>
                   {project.need && (<><dt>Asked for</dt><dd>{project.need}</dd></>)}
                   <dt>Work</dt><dd>{project.work}</dd>

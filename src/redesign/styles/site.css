@@ -237,7 +237,7 @@
 .rd-section--tight { padding-block: clamp(2.5rem, 6vw, 4.5rem); }
 /* A band set off by light and not by a grey fill: lit from its own bottom edge, quietly. */
 .rd-paper-2 { position: relative; isolation: isolate; border-top: 1px solid var(--rd-edge); }
-.rd-paper-2::before { content: ""; position: absolute; z-index: -1; left: 0; right: 0; bottom: 0; height: 50%; pointer-events: none; opacity: 0.42; background: var(--rd-light); }
+.rd-paper-2::before { content: ""; position: absolute; z-index: -1; left: 0; right: 0; bottom: 0; height: 50%; pointer-events: none; opacity: 0.32; background: var(--rd-light); }
 .rd-paper-2::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; pointer-events: none; background: linear-gradient(90deg, rgba(var(--rd-accent-rgb), 0) 2%, rgba(11, 190, 128, 0.7) 26%, #f4fffb 50%, rgba(11, 190, 128, 0.7) 74%, rgba(var(--rd-accent-rgb), 0) 98%); }
 .rd-coal { background: var(--rd-bg); color: var(--rd-text); }
 .rd-coal .rd-muted { color: var(--rd-text-2); }
@@ -335,6 +335,8 @@
   --palm-light: 159 80% 56%;
   --palm-gold: 159 80% 56%;
   --palm-sand: 150 22% 96%;
+  /* A red dark enough for white words on it and for small red words on white. */
+  --destructive: 4 76% 40%;
   --shadow-brand: var(--rd-shadow);
   --font-display: var(--rd-display);
   --font-body: var(--rd-body);
@@ -371,6 +373,8 @@
 .rd-skin :is(.text-palm-gold, .text-palm-light, .text-accent) { color: var(--rd-deep); }
 /* ...and the bright emerald where they sit on something dark. */
 .rd-skin :is(.bg-palm-dark, .bg-foreground, .bg-primary, .bg-palm-green, [class*="bg-black"]) :is(.text-palm-gold, .text-palm-light, .text-accent, .text-primary) { color: var(--rd-accent); }
+/* The same over a band whose background is a photo under a dark wash. */
+.rd-skin section:has(> img[class*="absolute"], > [class*="absolute"] > img, > [class*="absolute"] > picture) :is(.text-palm-gold, .text-palm-light, .text-accent) { color: var(--rd-accent); }
 /* Buttons: the same bright emerald with a defined edge as the quote button. */
 .rd-skin :is(a, button):is(.bg-primary, .bg-palm-gold, .bg-accent, .bg-palm-green) {
   background: linear-gradient(180deg, #58f2bd 0%, var(--rd-accent) 52%, #20d795 100%);
@@ -407,7 +411,7 @@
 .rd-skin section:is(.bg-palm-dark, .bg-primary, .bg-palm-green, .bg-foreground):not(:has(img, picture, video)) :is(.text-white, .text-primary-foreground, .text-background, .text-palm-sand, .text-secondary, [class*="text-gray-1"], [class*="text-gray-2"], [class*="text-green-1"], [class*="text-green-2"], [class*="text-emerald-1"]) { color: var(--rd-text); }
 .rd-skin section:is(.bg-palm-dark, .bg-primary, .bg-palm-green, .bg-foreground):not(:has(img, picture, video)) :is([class*="text-white/"], [class*="text-primary-foreground/"], [class*="text-background/"], [class*="text-palm-sand/"], [class*="text-gray-3"], [class*="text-gray-4"], [class*="text-gray-5"]) { color: var(--rd-text-2); }
 .rd-skin section:is(.bg-palm-dark, .bg-primary, .bg-palm-green, .bg-foreground):not(:has(img, picture, video)) :is(.text-palm-gold, .text-palm-light, .text-accent, .text-primary) { color: var(--rd-deep); }
-.rd-skin section:is(.bg-palm-dark, .bg-primary, .bg-palm-green, .bg-foreground):not(:has(img, picture, video)) :is([class*="border-white"], [class*="border-primary-foreground"], [class*="border-background"], [class*="border-palm-sand"], [class*="border-palm-gold"]) { border-color: var(--rd-edge-2); }
+.rd-skin section:is(.bg-palm-dark, .bg-primary, .bg-palm-green, .bg-foreground):not(:has(img, picture, video)) :is([class*="border-white"], [class*="border-primary-foreground"], [class*="border-background"], [class*="border-palm-sand"], [class*="border-palm-gold"], [class*="border-palm-green"], [class*="border-primary/"]) { border-color: var(--rd-edge-2); }
 /* Translucent white panels inside the band become white cards. */
 .rd-skin section:is(.bg-palm-dark, .bg-primary, .bg-palm-green, .bg-foreground):not(:has(img, picture, video)) :is([class*="bg-white/"], [class*="bg-primary-foreground/"], [class*="bg-background/"], [class*="bg-palm-sand/"]):not(a, button) { background-color: #ffffff; }
 /* Decorative dark washes inside the band are dropped. */
@@ -420,9 +424,13 @@
   box-shadow: 0 1px 2px rgba(4, 19, 14, 0.05);
 }
 .rd-skin section:is(.bg-palm-dark, .bg-primary, .bg-palm-green, .bg-foreground):not(:has(img, picture, video)) :is(a, button):is([class*="bg-white"], [class*="bg-primary-foreground"], [class*="bg-background"], [class*="border-white"], [class*="border-primary-foreground"]) * { color: inherit; }
-/* A solid dark or green block nested in a light band keeps its own white words. */
-.rd-skin section:is(.bg-palm-dark, .bg-primary, .bg-palm-green, .bg-foreground):not(:has(img, picture, video)) :is(.bg-primary, .bg-palm-dark, .bg-palm-green, .bg-foreground):not(a, button),
-.rd-skin section:is(.bg-palm-dark, .bg-primary, .bg-palm-green, .bg-foreground):not(:has(img, picture, video)) :is(.bg-primary, .bg-palm-dark, .bg-palm-green, .bg-foreground):not(a, button) :is(.text-white, .text-primary-foreground, .text-background, .text-palm-sand) { color: #ffffff; }
+/* A dark panel nested in the band becomes a white card, like the translucent ones. */
+.rd-skin section:is(.bg-palm-dark, .bg-primary, .bg-palm-green, .bg-foreground):not(:has(img, picture, video)) :is(.bg-palm-dark, .bg-foreground, [class*="bg-palm-dark/"], [class*="bg-foreground/"], [class*="bg-black/"]):not(a, button) { background-color: #ffffff; box-shadow: var(--rd-shadow); }
+/* A solid green block nested in the band (a number, a badge) keeps its own white words. */
+.rd-skin section:is(.bg-palm-dark, .bg-primary, .bg-palm-green, .bg-foreground):not(:has(img, picture, video)) :is(.bg-primary, .bg-palm-green):not(a, button),
+.rd-skin section:is(.bg-palm-dark, .bg-primary, .bg-palm-green, .bg-foreground):not(:has(img, picture, video)) :is(.bg-destructive, [class*="bg-red-6"], [class*="bg-red-7"]),
+.rd-skin section:is(.bg-palm-dark, .bg-primary, .bg-palm-green, .bg-foreground):not(:has(img, picture, video)) :is(.bg-destructive, [class*="bg-red-6"], [class*="bg-red-7"]) *,
+.rd-skin section:is(.bg-palm-dark, .bg-primary, .bg-palm-green, .bg-foreground):not(:has(img, picture, video)) :is(.bg-primary, .bg-palm-green):not(a, button) :is(.text-white, .text-primary-foreground, .text-background, .text-palm-sand, [class*="text-white/"], [class*="text-primary-foreground/"], [class*="text-palm-sand/"]) { color: #ffffff; }
 
 @media (prefers-reduced-motion: reduce) {
   .rd-menu { animation: none; }
@@ -449,8 +457,7 @@
 .rd-door { position: relative; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--rd-edge-2); border-radius: var(--rd-radius-lg); background: var(--rd-card); box-shadow: var(--rd-shadow); --rd-row-line: var(--rd-edge); }
 .rd-door__media { position: relative; display: block; aspect-ratio: 1 / 1; overflow: hidden; color: inherit; text-decoration: none; }
 .rd-door__media picture { display: block; width: 100%; height: 100%; }
-.rd-door__media img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 0.7s var(--rd-ease); }
-.rd-door__media:hover img { transform: scale(1.03); }
+.rd-door__media img { display: block; width: 100%; height: 100%; object-fit: cover; }
 /* The photo dissolves into the card, the same move as the opening screen. */
 .rd-door__media::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 44%, rgba(255, 255, 255, 0.74) 76%, #ffffff 100%); }
 .rd-door__head { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; padding: 0 1.1rem 0.15rem; }
@@ -607,7 +614,10 @@
 .rd-phero .rd-h1 { max-width: 16ch; }
 .rd-phero__text { position: relative; padding: clamp(1.75rem, 6vw, 4rem) var(--rd-gutter) clamp(2rem, 6vw, 4rem); }
 /* With a photo above it, the text rides up into the part of the photo that has faded out. */
-.rd-phero--photo .rd-phero__text { margin-top: -4.5rem; padding-top: 0; }
+.rd-phero--photo .rd-phero__text { margin-top: -3.5rem; padding-top: 0; }
+/* Where the page path sits over the fading photo it is set darker. */
+.rd-phero--photo .rd-crumbs ol { color: var(--rd-text-2); }
+.rd-phero--photo .rd-crumbs a { color: var(--rd-text); }
 .rd-phero__cap { margin: 1.1rem 0 0; font-size: 0.875rem; color: var(--rd-text-3); }
 .rd-phero__lead { margin-top: 1rem; max-width: 36rem; color: var(--rd-copy-ink); }
 .rd-phero__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-top: 1.5rem; }
@@ -721,6 +731,10 @@
 .rd-shots figcaption { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.1rem 1rem; padding-top: 0.6rem; }
 .rd-shots figcaption b { font-family: var(--rd-display); letter-spacing: -0.035em; font-weight: 600; font-size: 1.2rem; line-height: 1.15; }
 .rd-shots figcaption span { font-size: 0.9375rem; color: var(--rd-muted); }
+.rd-shots figcaption span a { color: var(--rd-text); text-decoration: underline; text-decoration-color: rgba(var(--rd-deep-rgb), 0.55); text-underline-offset: 0.2em; }
+.rd-shots__more { flex-basis: 100%; display: inline-flex; align-items: center; gap: 0.3rem; min-height: 2.5rem; font-size: 0.9375rem; font-weight: 500; color: var(--rd-text); text-decoration: underline; text-decoration-color: rgba(var(--rd-deep-rgb), 0.55); text-underline-offset: 0.2em; }
+.rd-shots__more svg { color: var(--rd-deep); }
+.rd-scope .rd-kind__more { margin-top: 0.75rem; }
 @media (min-width: 700px) {
   .rd-shots { grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
   .rd-shots li:nth-child(2) { margin-top: 2.5rem; }
@@ -901,6 +915,67 @@
   .rd-gallery__item:hover img { transform: none; }
 }
 
+/* ---------- Tree removal and palm care pages ---------- */
+.rd-ticket--still { animation: none; }
+@media (max-width: 599.98px) {
+  /* On a phone each fact sits under its label, so the words get the full width. */
+  .rd-ticket--still dl { grid-template-columns: minmax(0, 1fr); }
+  .rd-ticket--still dt { padding: 0.75rem 0 0; border-bottom: 0; }
+  .rd-ticket--still dd { padding: 0.15rem 0 0.75rem; }
+}
+.rd-answers__title { margin-bottom: clamp(1.5rem, 4vw, 2.5rem); }
+.rd-answers { display: grid; gap: 1rem; }
+.rd-answer { position: relative; padding: clamp(1.25rem, 3vw, 1.9rem); background: var(--rd-card); border: 1px solid var(--rd-edge-2); border-radius: var(--rd-radius-lg); box-shadow: var(--rd-shadow); }
+.rd-answer .rd-h3 { margin-bottom: 0.8rem; text-wrap: balance; }
+.rd-answer p { margin: 0; color: var(--rd-copy-ink); }
+.rd-answer p + p { margin-top: 0.75rem; }
+@media (min-width: 900px) {
+  .rd-answers { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; }
+}
+
+/* One kind of palm work: its photos on one side, what it is on the other. */
+.rd-kinds__intro { display: grid; gap: 0.9rem; max-width: 46rem; margin-bottom: clamp(1.75rem, 4vw, 3rem); }
+.rd-kinds { display: grid; gap: clamp(1.25rem, 3vw, 2rem); }
+.rd-kind { --rd-kind-pad: clamp(0.85rem, 2.4vw, 1.75rem); position: relative; display: grid; gap: 1.25rem; padding: var(--rd-kind-pad); background: var(--rd-card); border: 1px solid var(--rd-edge-2); border-radius: var(--rd-radius-lg); box-shadow: var(--rd-shadow); }
+.rd-kind__media { min-width: 0; }
+.rd-kind__text { display: grid; align-content: center; gap: 0.7rem; padding: 0.25rem 0.3rem 0.6rem; }
+.rd-kind__text p { margin: 0; max-width: 34rem; color: var(--rd-copy-ink); }
+.rd-kind__next { margin-top: 0.9rem; padding-top: 1.15rem; border-top: 1px solid var(--rd-edge); }
+.rd-kind__more { justify-self: start; display: inline-flex; align-items: center; gap: 0.4rem; min-height: 2.75rem; font-weight: 600; color: var(--rd-text); text-decoration: underline; text-decoration-color: rgba(var(--rd-deep-rgb), 0.55); text-decoration-thickness: 1.5px; text-underline-offset: 0.22em; }
+.rd-kind__more svg { color: var(--rd-deep); transition: transform 0.18s var(--rd-ease); }
+.rd-kind__more:hover svg { transform: translateX(4px); }
+@media (min-width: 900px) {
+  .rd-kind { grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr); gap: clamp(1.5rem, 4vw, 3.5rem); align-items: center; }
+  .rd-kind--flip .rd-kind__media { order: 2; }
+  .rd-kind__text { padding-inline: clamp(0rem, 1.5vw, 1.5rem); }
+}
+
+/* A matched pair, side by side at every size. */
+.rd-compare { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.6rem; }
+.rd-compare__shot { margin: 0; display: grid; gap: 0.5rem; align-content: start; min-width: 0; }
+.rd-compare__frame { position: relative; aspect-ratio: 3 / 4; overflow: hidden; border-radius: 14px; border: 1px solid var(--rd-edge-2); background: var(--rd-well); }
+.rd-compare__frame picture { display: block; width: 100%; height: 100%; }
+.rd-compare__frame img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.rd-compare__tag { position: absolute; left: 0.5rem; top: 0.5rem; padding: 0.2rem 0.6rem; border: 1px solid rgba(4, 19, 14, 0.12); border-radius: 999px; background: rgba(255, 255, 255, 0.9); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: var(--rd-text); font-size: 0.8125rem; font-weight: 600; line-height: 1.3; }
+/* The finished one of the pair wears the lit tag: the second in a before and after, the first where the pair is two finishes. */
+.rd-compare:not(.rd-compare--swipe) .rd-compare__shot:last-child .rd-compare__tag,
+.rd-compare--swipe .rd-compare__shot:first-child .rd-compare__tag { background: var(--rd-accent); border-color: rgba(3, 92, 62, 0.6); color: var(--rd-accent-ink); box-shadow: 0 0 16px rgba(var(--rd-accent-rgb), 0.7); }
+.rd-compare figcaption { font-size: 0.875rem; line-height: 1.35; color: var(--rd-text-2); }
+@media (max-width: 899.98px) {
+  /* Close-ups: a row to swipe on phones, so each one is large enough to study. */
+  .rd-compare--swipe { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 80%; margin-inline: calc(var(--rd-kind-pad, 0px) * -1); padding-inline: var(--rd-kind-pad, 0px); overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--rd-kind-pad, 0px); -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .rd-compare--swipe::-webkit-scrollbar { display: none; }
+  .rd-compare--swipe .rd-compare__shot { scroll-snap-align: start; }
+}
+
+/* Paths to the communities served. */
+.rd-arealinks__head { margin-top: 1.25rem; font-size: 1.0625rem; }
+.rd-stack > .rd-arealinks,
+.rd-arealinks { list-style: none; margin: 0.9rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.45rem; }
+.rd-arealinks a { display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0 0.9rem; border: 1px solid var(--rd-edge-2); border-radius: 999px; background: #ffffff; color: var(--rd-text); text-decoration: none; font-size: 0.9375rem; font-weight: 500; transition: border-color 0.15s, color 0.15s; }
+.rd-arealinks a:hover { border-color: rgba(var(--rd-deep-rgb), 0.5); color: var(--rd-deep); }
+.rd-arealinks .rd-arealinks__all { font-weight: 600; }
+
 /* ---------- Light on surfaces ---------- */
 /* Panels are lit from their own bottom edge: the same fade as the opening screen,
    turned down (--rd-glow), with a hairline of light on the edge it comes from. The
@@ -909,6 +984,8 @@
 .rd-ticket,
 .rd-photosteps,
 .rd-scope,
+.rd-answer,
+.rd-kind,
 .rd-quoteband,
 .rd-quote-top,
 .rd-thanks,
@@ -917,6 +994,8 @@
 .rd-ticket::before,
 .rd-photosteps::before,
 .rd-scope::before,
+.rd-answer::before,
+.rd-kind::before,
 .rd-quoteband::before,
 .rd-quote-top::before,
 .rd-thanks::before,
@@ -939,6 +1018,8 @@
 .rd-ticket::after,
 .rd-photosteps::after,
 .rd-scope::after,
+.rd-answer::after,
+.rd-kind::after,
 .rd-quoteband::after,
 .rd-quote-top::after,
 .rd-thanks::after {
@@ -1030,7 +1111,7 @@
 [data-count] { display: inline-block; font-variant-numeric: tabular-nums; }
 
 /* The coast list: a light runs through the cities from west to east, once. */
-[data-rv="in"] .rd-coast a { animation: rd-wave 1.25s ease calc(var(--i, 0) * 75ms + 150ms) 1; }
+.rd-coast[data-rv="in"] a { animation: rd-wave 1.25s ease calc(var(--i, 0) * 75ms + 150ms) 1; }
 @keyframes rd-wave {
   35% { color: var(--rd-deep); text-shadow: 0 0 22px rgba(var(--rd-accent-rgb), 1); transform: translate3d(0.4rem, 0, 0); }
 }

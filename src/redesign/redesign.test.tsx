@@ -15,7 +15,12 @@ import { buildRouteMeta, rawRoutes } from "@/seo/routes.data.mjs";
 import { REDESIGN_ACTIVE, REDESIGN_LIVE, REDESIGN_PREVIEW_BASE, redesignBaseFor } from "./mount";
 import { REBUILT_SERVICES, hasRebuiltPage, page } from "./routes";
 import { quotePath } from "./lib/quote-path";
-import { featuredProjects, nearbyProjects, projects } from "./data/projects";
+import { cityPage, featuredProjects, nearbyProjects, projects } from "./data/projects";
+import { palmCareCopy, priorityAreas, treeRemovalCopy } from "./data/priorityCopy";
+import { applyRedesignSeo, redesignSeo } from "./seo.data.mjs";
+import { applyRedesignStatic } from "./staticCopy";
+import { buildStaticContent } from "@/seo/staticContent";
+import Service from "./pages/Service";
 import { serviceMedia } from "./data/serviceMedia";
 import { treeRemovalSequence } from "./data/treeRemoval";
 import { heroCopy, heroPhoto } from "./data/hero";
@@ -135,6 +140,127 @@ describe("project notes", () => {
       expect(picks).toHaveLength(3);
       for (const p of picks) expect(p.city, `${loc.city}: ${p.id}`).toBeTruthy();
     }
+  });
+});
+
+describe("the two priority pages: tree removal and palm care", () => {
+  const TREE = "/services/tree-removal";
+  const PALM = "/services/palm-tree-trimming";
+  const known = new Set(rawRoutes.map((r: { path: string }) => r.path));
+
+  it("gives each its own title, description and heading, and only once the redesign is live", () => {
+    const current = (path: string) => rawRoutes.find((r: { path: string }) => r.path === path) as { path: string; title: string; description: string };
+    for (const path of [TREE, PALM]) {
+      const now = current(path);
+      // Off: the route table hands back today's values untouched.
+      expect(applyRedesignSeo(now, false)).toBe(now);
+      const live = applyRedesignSeo(now, true) as { title: string; description: string };
+      expect(live.title).toBe(redesignSeo[path].title);
+      expect(live.description).toBe(redesignSeo[path].description);
+      expect(live.title.length).toBeLessThanOrEqual(65);
+      expect(live.description.length).toBeLessThanOrEqual(160);
+    }
+    expect(redesignSeo[TREE].title).not.toBe(redesignSeo[PALM].title);
+    expect(redesignSeo[TREE].title).toMatch(/^Tree Removal/);
+    expect(redesignSeo[PALM].title).toMatch(/^Palm Tree Trimming/);
+    // The published route table still carries today's titles.
+    const meta = buildRouteMeta().find((r: { path: string }) => r.path === TREE) as { title: string };
+    expect(meta.title).toBe(current(TREE).title);
+  });
+
+  it("shows the real removal, the three answers and a removal quote button beside the evidence", () => {
+    const { container } = within(<Service slug="tree-removal" />, TREE);
+    expect(container.querySelectorAll("h1")).toHaveLength(1);
+    expect(container.querySelector("h1")?.textContent).toBe(redesignSeo[TREE].h1);
+    // The frames, then what they show.
+    expect(container.querySelectorAll(".rd-phero__frames img")).toHaveLength(3);
+    const facts = [...container.querySelectorAll(".rd-ticket--still dt")].map((dt) => dt.textContent);
+    expect(facts).toEqual(treeRemovalCopy.job.facts.map((f) => f.label));
+    // Estimates, cleanup and haul-away, stump grinding.
+    const answers = [...container.querySelectorAll(".rd-answer h3")].map((h) => h.textContent);
+    expect(answers).toEqual(treeRemovalCopy.answers.map((a) => a.heading));
+    expect(answers.join(" ")).toMatch(/estimate/i);
+    expect(answers.join(" ")).toMatch(/haul-away/i);
+    expect(answers.join(" ")).toMatch(/stump grinding/i);
+    // The quote button named for this job, next to the frames and next to the notes, still preselecting "Tree Removal".
+    const asks = [...container.querySelectorAll('a[data-track-cta="quote_request"]')].filter((a) => a.textContent === treeRemovalCopy.quoteLabel);
+    expect(placementsOf(asks)).toEqual(["service_tree-removal", "service_tree-removal_job"]);
+    for (const a of asks) expect(a.getAttribute("href")).toContain("service=Tree+Removal");
+    // Storm cleanup, finished jobs and the six communities.
+    const hrefs = new Set([...container.querySelectorAll("main a, section a")].map((a) => a.getAttribute("href")));
+    for (const to of ["/services/storm-damage-cleanup", "/services/tree-trimming", "/jobs", "/service-areas", ...priorityAreas.map((a) => a.to)]) {
+      expect(hrefs.has(to), to).toBe(true);
+      expect(known.has(to), to).toBe(true);
+    }
+  });
+
+  it("shows the four kinds of palm work with matched photos and paths to each palm service", () => {
+    const { container } = within(<Service slug="palm-tree-trimming" />, PALM);
+    expect(container.querySelectorAll("h1")).toHaveLength(1);
+    expect(container.querySelector("h1")?.textContent).toBe(redesignSeo[PALM].h1);
+    const kinds = [...container.querySelectorAll(".rd-kinds h3")].map((h) => h.textContent);
+    expect(kinds).toEqual([palmCareCopy.canopy.heading, palmCareCopy.pods.heading, palmCareCopy.boots.heading, palmCareCopy.diamond.heading]);
+    // Three pairs in the comparison and one in the first-visit block, each photo described.
+    const pairs = [...container.querySelectorAll(".rd-compare")];
+    expect(pairs).toHaveLength(4);
+    for (const pair of pairs) {
+      const photos = [...pair.querySelectorAll("img")];
+      expect(photos).toHaveLength(2);
+      for (const img of photos) expect((img.getAttribute("alt") ?? "").length).toBeGreaterThan(20);
+      expect(pair.querySelectorAll("figcaption")).toHaveLength(2);
+    }
+    // First visit against the visits after it.
+    const visits = [...container.querySelectorAll(".rd-kind--plain h3")].map((h) => h.textContent);
+    expect(visits).toEqual([palmCareCopy.first.heading, palmCareCopy.after.heading]);
+    const hrefs = new Set([...container.querySelectorAll("section a")].map((a) => a.getAttribute("href")));
+    for (const to of ["/services/palm-diamond-cutting", "/services/palm-tree-trunk-skinning", "/palm-tree-maintenance-plans", "/service-areas", ...priorityAreas.map((a) => a.to)]) {
+      expect(hrefs.has(to), to).toBe(true);
+      expect(known.has(to), to).toBe(true);
+    }
+    // Area links say what they lead to.
+    expect(screen.getByRole("link", { name: "Palm tree trimming in Navarre" }).getAttribute("href")).toBe("/palm-tree-trimming-navarre-fl");
+  });
+
+  it("keeps every other service page on its current title and heading", () => {
+    const { container } = within(<Service slug="palm-diamond-cutting" />, "/services/palm-diamond-cutting");
+    const service = servicesData.find((s) => s.slug === "palm-diamond-cutting")!;
+    expect(container.querySelector("h1")?.textContent).toBe(service.title);
+    expect(container.querySelector(".rd-kinds, .rd-answers")).toBeNull();
+    expect(Object.keys(redesignSeo).sort()).toEqual(["/", PALM, TREE].sort());
+  });
+
+  it("puts the same words into the search-engine copy, for the changed pages only", () => {
+    const today = buildStaticContent();
+    const live = buildStaticContent();
+    applyRedesignStatic(live);
+    expect(live["/"].h1).toBe(redesignSeo["/"].h1);
+    expect(live[TREE].h1).toBe(redesignSeo[TREE].h1);
+    expect(live[PALM].h1).toBe(redesignSeo[PALM].h1);
+    const headings = (page: { blocks: { heading?: string }[] }) => page.blocks.map((b) => b.heading).filter(Boolean);
+    for (const a of treeRemovalCopy.answers) expect(headings(live[TREE])).toContain(a.heading);
+    for (const h of [palmCareCopy.canopy.heading, palmCareCopy.pods.heading, palmCareCopy.boots.heading, palmCareCopy.diamond.heading, palmCareCopy.first.heading, palmCareCopy.after.heading]) {
+      expect(headings(live[PALM])).toContain(h);
+    }
+    // Existing copy is kept, not replaced.
+    for (const h of headings(today[TREE]).filter((h) => h !== "Related Services")) expect(headings(live[TREE])).toContain(h);
+    // Every link in the new copy goes to a real page.
+    for (const path of ["/", TREE, PALM]) {
+      for (const block of live[path].blocks) for (const link of block.links ?? []) {
+        if (link.href.startsWith("/")) expect(known.has(link.href.split("?")[0]), link.href).toBe(true);
+      }
+    }
+    // Pages the redesign does not retitle are word for word what they are today.
+    expect(live["/services/palm-diamond-cutting"]).toEqual(today["/services/palm-diamond-cutting"]);
+    expect(live["/palm-tree-trimming-navarre-fl"]).toEqual(today["/palm-tree-trimming-navarre-fl"]);
+  });
+
+  it("links a job's recorded city to that city's page", () => {
+    expect(cityPage("Navarre")).toBe("/palm-tree-trimming-navarre-fl");
+    expect(cityPage("Navarre Beach")).toBe("/palm-tree-trimming-navarre-fl");
+    expect(cityPage("Fort Walton Beach")).toBe("/palm-tree-trimming-fort-walton-beach-fl");
+    expect(cityPage(undefined)).toBeUndefined();
+    expect(cityPage("Atlantis")).toBeUndefined();
+    for (const p of projects) if (p.city) expect(known.has(cityPage(p.city) ?? ""), p.city).toBe(true);
   });
 });
 

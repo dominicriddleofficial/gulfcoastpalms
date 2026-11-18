@@ -12,6 +12,7 @@
  * The city-page photo captions on the current site are not used as a source: they
  * label the same eleven photos as fourteen different cities.
  */
+import { locations } from "@/data/locations";
 import type { Picture } from "../components/Photo";
 import canary from "@/assets/gallery/job-8.jpeg?w=240;480;800;1200&format=avif;webp;jpg&as=picture";
 import skinning from "@/assets/redesign/skinning-tall.jpg?w=240;480;800;1000&format=avif;webp;jpg&as=picture";
@@ -268,6 +269,16 @@ export const projects: Project[] = [
 ];
 
 export const projectById = (id: string) => projects.find((p) => p.id === id);
+
+/**
+ * The service-area page for the city a project was recorded in, where there is one.
+ * A beach community with no page of its own (Navarre Beach) goes to its town's page.
+ */
+export function cityPage(city?: string): string | undefined {
+  if (!city) return undefined;
+  const match = locations.find((l) => l.city === city) ?? locations.find((l) => l.city === city.replace(/ Beach$/, ""));
+  return match ? `/${match.slug}` : undefined;
+}
 
 /** Shown on the homepage, in this order. */
 export const featuredProjects: Project[] = [

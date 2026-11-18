@@ -63,7 +63,7 @@ export default function Routes() {
         <div className="rd-routes__grid">
           {DOORS.map((door) => (
             <article key={door.id} className={`rd-door rd-door--${door.id} rd-rise`} aria-labelledby={`rd-door-${door.id}`} data-rv="" data-spot="">
-              <Link to={door.to} className="rd-door__media rd-wipe" aria-labelledby={`rd-door-${door.id}`}>
+              <Link to={door.to} className="rd-door__media rd-wipe" aria-labelledby={`rd-door-${door.id}`} data-par="">
                 <Photo src={door.photo} alt={door.alt} sizes="(min-width: 900px) 38rem, 92vw" focus={door.focus} />
                 <div className="rd-door__head">
                   <h3 id={`rd-door-${door.id}`} className="rd-door__title">{door.title}</h3>

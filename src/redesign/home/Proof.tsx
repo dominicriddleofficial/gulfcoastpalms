@@ -14,11 +14,11 @@ export default function Proof() {
     <section className="rd-proof rd-section rd-paper-2" aria-labelledby="rd-proof-title">
       <div className="rd-wrap rd-proof__grid">
         <div className="rd-proof__lead" data-rv="">
-          {/* The two figures run up to their real values as the block is reached; the label always holds the real sentence. */}
+          {/* The review count runs up to its real value as the block is reached. The rating itself never moves, and the label always holds the real sentence. */}
           <h2 id="rd-proof-title" className="rd-proof__say" aria-label={say}>
             Over a thousand properties served, and{" "}
             <span data-count={aggregateRating.count}>{aggregateRating.count}</span> Google reviews averaging{" "}
-            <span data-count={score} data-decimals="1" data-from="4">{score}</span>.
+            {score}.
           </h2>
           <p className="rd-proof__stars" aria-hidden>
             {Array.from({ length: 5 }).map((_, i) => <StarIcon key={i} size={22} />)}

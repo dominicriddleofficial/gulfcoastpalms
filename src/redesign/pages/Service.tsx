@@ -1,8 +1,11 @@
 /**
- * Rebuilt service page. All wording, FAQs and search markup come from the same
- * service data the current page uses (src/data/services.ts), so titles, descriptions,
- * headings and structured data are unchanged. What is new is the layout and the
- * photos of the actual work.
+ * Rebuilt service page. Wording, FAQs and search markup come from the same service
+ * data the current page uses (src/data/services.ts). What is new is the layout and
+ * the photos of the actual work.
+ *
+ * Two pages go further, because they are the two the business most wants found in
+ * search: tree removal and palm trimming/care. Each gets its own page title, heading
+ * and description (seo.data.mjs) and its own sections (pages/priority).
  */
 import { Link } from "react-router-dom";
 import SEOHead from "@/components/SEOHead";
@@ -20,6 +23,10 @@ import { treeRemovalNote } from "../data/treeRemoval";
 import { projects } from "../data/projects";
 import { serviceMedia } from "../data/serviceMedia";
 import { ArrowRightIcon, CheckIcon } from "../lib/icons";
+import { redesignSeo } from "../seo.data.mjs";
+import { treeRemovalCopy } from "../data/priorityCopy";
+import { PalmKinds, PalmLinks, PalmVisits } from "./priority/PalmCare";
+import { TreeAnswers, TreeJob, TreeLinks } from "./priority/TreeRemoval";
 
 const BASE_URL = GCP_BUSINESS.url;
 
@@ -28,6 +35,12 @@ export default function Service({ slug }: { slug: string }) {
   if (!service) return <Missing />;
   const media = serviceMedia[slug];
   const canonicalUrl = `/services/${service.slug}`;
+  // The two priority pages. Everything else about them (quote-form label, FAQ, breadcrumb) stays as it is.
+  const isTreeRemoval = slug === "tree-removal";
+  const isPalmCare = slug === "palm-tree-trimming";
+  const seo: { title?: string; description?: string; h1?: string; lead?: string } | undefined = (redesignSeo as Record<string, { title?: string; description?: string; h1?: string; lead?: string }>)[canonicalUrl];
+  const pageTitle = seo?.title ?? service.metaTitle;
+  const pageDescription = seo?.description ?? service.metaDescription;
   // The viewer is for browsing several jobs. One job would only repeat the photo this page opens with.
   const matching = media ? projects.filter((p) => !p.small && media.projects.includes(p.service.label)) : [];
   const related = matching.length > 1 ? matching : [];
@@ -37,11 +50,11 @@ export default function Service({ slug }: { slug: string }) {
 
   return (
     <Layout>
-      <SEOHead title={service.metaTitle} description={service.metaDescription} canonicalUrl={canonicalUrl} />
+      <SEOHead title={pageTitle} description={pageDescription} canonicalUrl={canonicalUrl} />
       <ServiceJsonLd
         service={{
           name: service.title,
-          description: service.metaDescription,
+          description: pageDescription,
           serviceType: service.title,
           areaServed: "NW Florida",
           url: `${BASE_URL}${canonicalUrl}`,
@@ -58,8 +71,9 @@ export default function Service({ slug }: { slug: string }) {
 
       <PageHero
         crumbs={[{ label: "Services", to: "/services" }, ...(hub.to !== canonicalUrl && hub.to !== "/services" ? [hub] : []), { label: service.title }]}
-        title={service.title}
-        lead={service.heroSubheading}
+        title={seo?.h1 ?? service.title}
+        lead={seo?.lead ?? service.heroSubheading}
+        quoteLabel={isTreeRemoval ? treeRemovalCopy.quoteLabel : undefined}
         photo={media && !media.sequence ? { src: media.hero.photo, alt: media.hero.alt, caption: media.hero.caption, focus: media.hero.focus, small: media.hero.small } : undefined}
         frames={media?.sequence ? { label: media.sequence.heading, note: treeRemovalNote, items: media.sequence.frames } : undefined}
         service={service.title}
@@ -67,7 +81,10 @@ export default function Service({ slug }: { slug: string }) {
         tone={media?.route === "tree" ? "coal" : "green"}
       />
 
-      {media && media.details.length > 0 && (
+      {isTreeRemoval && <><TreeJob /><TreeAnswers /></>}
+      {isPalmCare && <PalmKinds />}
+
+      {media && media.details.length > 0 && !isPalmCare && (
         <section className="rd-section rd-section--tight rd-coal" aria-label={`${service.title} up close`}>
           <div className={`rd-wrap rd-closeups rd-closeups--${media.details.length}`}>
             {media.details.map((shot) => (
@@ -123,7 +140,9 @@ export default function Service({ slug }: { slug: string }) {
         </section>
       )}
 
-      <section className={`rd-section ${service.procesSteps ? "" : "rd-paper-2"}`}>
+      {isPalmCare && <PalmVisits />}
+
+      <section className={`rd-section ${service.procesSteps || isPalmCare ? "" : "rd-paper-2"}`}>
         <div className="rd-wrap rd-split">
           <h2 className="rd-h2">{service.secondaryHeading}</h2>
           <div className="rd-prose">
@@ -153,7 +172,10 @@ export default function Service({ slug }: { slug: string }) {
         </section>
       )}
 
-      {service.relatedLinks.length > 0 && (
+      {isTreeRemoval && <TreeLinks />}
+      {isPalmCare && <PalmLinks />}
+
+      {service.relatedLinks.length > 0 && !isTreeRemoval && !isPalmCare && (
         <section className="rd-section rd-section--tight rd-paper-2" aria-labelledby="rd-related-title">
           <div className="rd-wrap rd-split">
             <h2 id="rd-related-title" className="rd-h3 rd-h3--big">Related Services</h2>

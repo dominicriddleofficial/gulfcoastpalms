@@ -21,6 +21,7 @@ import Missing from "./Missing";
 import Faq from "../components/Faq";
 import PageHero from "../components/PageHero";
 import Photo from "../components/Photo";
+import { Where } from "../components/ProjectViewer";
 import QuoteBand from "../components/QuoteBand";
 import { nearbyProjects } from "../data/projects";
 import { QuoteLink } from "../lib/actions";
@@ -60,6 +61,9 @@ function withLinks(text: string): ReactNode {
   return out;
 }
 
+/** Navarre and Navarre Beach count as the same town, as do the other beach communities. */
+const sameTown = (a: string, b: string) => a.replace(" Beach", "") === b.replace(" Beach", "");
+
 export default function Area({ slug }: { slug: string }) {
   const location = locations.find((l) => l.slug === slug);
   if (!location) return <Missing />;
@@ -72,7 +76,7 @@ function AreaPage({ location }: { location: LocationData }) {
   const nearby = location.nearbyLinks.flatMap((s) => locations.find((l) => l.slug === s) ?? []);
   const work = nearbyProjects(location.city);
   const lead = work[0];
-  const allLocal = work.every((p) => p.city?.replace(" Beach", "") === location.city.replace(" Beach", ""));
+  const allLocal = work.every((p) => p.city !== undefined && sameTown(p.city, location.city));
   const placement = `location_${location.slug.replace("palm-tree-trimming-", "").replace(/-fl$/, "")}`;
 
   return (
@@ -128,6 +132,7 @@ function AreaPage({ location }: { location: LocationData }) {
             <ul className="rd-checks">
               {location.services.map((s) => <li key={s}><CheckIcon size={18} />{s}</li>)}
             </ul>
+            <Link to="/services/palm-tree-trimming" className="rd-kind__more">Palm tree trimming and care<ArrowRightIcon size={18} /></Link>
           </aside>
         </div>
       </section>
@@ -158,7 +163,12 @@ function AreaPage({ location }: { location: LocationData }) {
                 <li key={p.id}>
                   <figure>
                     <div className="rd-shots__frame"><Photo src={p.photo} alt={p.alt} focus={p.focus} sizes="(min-width: 900px) 30vw, 92vw" /></div>
-                    <figcaption><b>{p.title}</b><span>{p.city}, FL</span></figcaption>
+                    {/* Each job names its own city (linked when it is another city's) and goes to the service it shows. */}
+                    <figcaption>
+                      <b>{p.title}</b>
+                      <span>{p.city && sameTown(p.city, location.city) ? `${p.city}, FL` : p.city ? <Where city={p.city} /> : null}</span>
+                      <Link to={p.service.to} className="rd-shots__more">{p.service.label}<ArrowRightIcon size={16} /></Link>
+                    </figcaption>
                   </figure>
                 </li>
               ))}

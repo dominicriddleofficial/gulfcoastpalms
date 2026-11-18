@@ -10,10 +10,16 @@
  */
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
-import type { Project } from "../data/projects";
+import { cityPage, type Project } from "../data/projects";
 import { QuoteLink } from "../lib/actions";
 import { ArrowLeftIcon, ArrowRightIcon } from "../lib/icons";
 import Photo from "./Photo";
+
+/** The city a project was recorded in, linked to that city's page where there is one. */
+export function Where({ city }: { city: string }) {
+  const page = cityPage(city);
+  return page ? <Link to={page}>{city}, FL</Link> : <>{city}, FL</>;
+}
 
 export default function ProjectViewer({ projects, placement, id = "rd-work" }: { projects: Project[]; placement: string; id?: string }) {
   const [index, setIndex] = useState(0);
@@ -79,7 +85,7 @@ export default function ProjectViewer({ projects, placement, id = "rd-work" }: {
         <div className="rd-ticket" id={`${id}-notes`} aria-live="polite" key={current.id} data-spot="">
           <h3 className="rd-ticket__title">{current.title}</h3>
           <dl>
-            {current.city && (<><dt>Where</dt><dd>{current.city}, FL</dd></>)}
+            {current.city && (<><dt>Where</dt><dd><Where city={current.city} /></dd></>)}
             <dt>Property</dt><dd>{current.property}</dd>
             {current.need && (<><dt>Asked for</dt><dd>{current.need}</dd></>)}
             <dt>Work</dt><dd>{current.work}</dd>

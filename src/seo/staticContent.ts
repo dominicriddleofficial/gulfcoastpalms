@@ -25,6 +25,9 @@ import { palmGuides } from "@/data/palmGuides";
 import { articles } from "@/data/learnArticles";
 import { homeFaqs } from "@/data/homeFaq";
 import { trustFactsText } from "@/seo/jsonLd";
+import { REDESIGN_LIVE } from "@/redesign/live.mjs";
+import { applyRedesignStatic } from "@/redesign/staticCopy";
+import { redesignSeo } from "@/redesign/seo.data.mjs";
 
 export { buildRouteJsonLd, localBusinessSchema, trustFactsText } from "@/seo/jsonLd";
 
@@ -258,8 +261,8 @@ const literalContent: Record<string, StaticPageContent> = {
   // Hidden redesign preview. Its first HTML is the prebuilt opening screen
   // (src/redesign/firstView.tsx); this entry only keeps the route table complete.
   "/preview/redesign": {
-    h1: publicMarketing.heroHeading,
-    subheading: publicMarketing.heroText,
+    h1: redesignSeo["/"].h1,
+    subheading: redesignSeo["/"].lead,
     blocks: [],
   },
   "/thank-you": {
@@ -892,6 +895,9 @@ export function buildStaticContent(): Record<string, StaticPageContent> {
       ] }],
     };
   }
+
+  // Once the redesign is live, the pages it changes carry their new headings and sections.
+  if (REDESIGN_LIVE) applyRedesignStatic(out);
 
   // Trust facts (phone, real Google rating + review count, service area,
   // licensed/insured status) appended to every public page as real text so

@@ -2,6 +2,7 @@ import { Helmet } from "react-helmet-async";
 import { GCP_BUSINESS } from "@/lib/business-info";
 import { getRouteMeta } from "@/seo/routeMeta";
 import { REDESIGN_IS_PREVIEW } from "@/redesign/mount";
+import { redesignSeo } from "@/redesign/seo.data.mjs";
 
 const BASE_URL = GCP_BUSINESS.url;
 const DEFAULT_OG_IMAGE = GCP_BUSINESS.ogImage;
@@ -27,8 +28,13 @@ const SEOHead = ({
     ? new URL(canonicalUrl, BASE_URL).pathname.replace(/\/+$/, "") || "/"
     : undefined;
   const meta = routePath ? getRouteMeta(routePath) : undefined;
-  title = meta?.title ?? title;
-  description = meta?.description ?? description;
+  // Inside the hidden preview, the pages the redesign retitles show their proposed title
+  // and description, so the preview matches what would go live. Outside it this is inert:
+  // the live values come from the route table (which switches with the redesign).
+  const proposed: { title?: string; description?: string } | undefined =
+    REDESIGN_IS_PREVIEW && routePath ? (redesignSeo as Record<string, { title?: string; description?: string }>)[routePath] : undefined;
+  title = proposed?.title ?? meta?.title ?? title;
+  description = proposed?.description ?? meta?.description ?? description;
   noIndex = noIndex || meta?.noindex === true;
   // The hidden redesign preview is never indexed. A page that is normally public keeps
   // its canonical pointed at the real address, so a preview copy can never compete with it.
