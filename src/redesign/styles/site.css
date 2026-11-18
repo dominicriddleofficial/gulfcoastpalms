@@ -484,6 +484,11 @@
 .rd-viewer__photo[data-on="true"] { opacity: 1; }
 .rd-viewer__photo picture { display: block; width: 100%; height: 100%; }
 .rd-viewer__photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+@media (min-width: 560px) {
+  /* A small photo on a screen wider than the photo: framed at its own size (its width is set on the photo itself). */
+  .rd-viewer__photo[data-small] picture { display: grid; place-items: center; background: var(--rd-well); }
+  .rd-viewer__photo[data-small] img { width: auto; height: auto; max-height: calc(100% - 2rem); object-fit: contain; border-radius: 14px; box-shadow: var(--rd-shadow); }
+}
 .rd-viewer__step { position: absolute; right: 0.75rem; bottom: 0.75rem; z-index: 3; display: flex; align-items: center; gap: 0.35rem; padding: 0.25rem; border: 1px solid rgba(4, 19, 14, 0.1); border-radius: 12px; background: rgba(255, 255, 255, 0.86); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); color: var(--rd-text); font-size: 0.875rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 .rd-viewer__step span { min-width: 2.6rem; text-align: center; }
 .rd-viewer__step button { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border: 0; border-radius: 4px; background: none; color: inherit; cursor: pointer; }

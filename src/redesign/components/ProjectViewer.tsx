@@ -80,8 +80,16 @@ export default function ProjectViewer({ projects, placement, id = "rd-work" }: {
         {layers.map((i) => {
           const p = projects[i];
           return (
-            <figure key={p.id} className="rd-viewer__photo" data-on={i === shown || i === under} aria-hidden={i !== index}>
-              <Photo src={p.photo} alt={p.alt} focus={p.focus} sizes="(min-width: 1000px) 46vw, 67vw" onLoad={i === index ? () => reveal(i) : undefined} />
+            // A small source photo fills a phone screen as it is, and on wider screens is shown at its own size, never stretched.
+            <figure key={p.id} className="rd-viewer__photo" data-on={i === shown || i === under} data-small={p.small || undefined} aria-hidden={i !== index}>
+              <Photo
+                src={p.photo}
+                alt={p.alt}
+                focus={p.focus}
+                sizes="(min-width: 1000px) 46vw, 67vw"
+                style={p.small && typeof p.photo !== "string" ? { maxWidth: p.photo.img.w } : undefined}
+                onLoad={i === index ? () => reveal(i) : undefined}
+              />
             </figure>
           );
         })}

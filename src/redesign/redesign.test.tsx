@@ -129,7 +129,9 @@ describe("project notes", () => {
       expect(projects.find((p) => p.id === id)?.city, id).toBeUndefined();
     }
     expect(new Set(projects.map((p) => p.id)).size).toBe(projects.length);
-    expect(featuredProjects).toHaveLength(5);
+    // The homepage set includes the diamond-cut close-up, so the finish can be studied on a phone.
+    expect(featuredProjects).toHaveLength(6);
+    expect(featuredProjects.map((p) => p.id)).toContain("diamond-cut-detail");
   });
 
   it("show a city page its own city first, and never without a recorded city", () => {

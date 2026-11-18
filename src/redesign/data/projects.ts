@@ -282,7 +282,7 @@ export function cityPage(city?: string): string | undefined {
 
 /** Shown on the homepage, in this order. */
 export const featuredProjects: Project[] = [
-  "climbing-a-tall-sabal", "date-palm-diamond-cut", "side-yard-trunk-skinning", "waterfront-estate", "condo-at-night",
+  "climbing-a-tall-sabal", "date-palm-diamond-cut", "diamond-cut-detail", "side-yard-trunk-skinning", "waterfront-estate", "condo-at-night",
 ].flatMap((id) => projectById(id) ?? []);
 
 /**
