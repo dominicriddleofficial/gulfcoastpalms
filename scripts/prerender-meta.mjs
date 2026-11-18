@@ -57,6 +57,9 @@ async function loadStaticContent(entry = path.join("src", "seo", "staticContent.
     platform: "node",
     outfile: outFile,
     logLevel: "silent",
+    // The redesign's first view renders real React components.
+    jsx: "automatic",
+    banner: { js: 'import { createRequire as __gcpCreateRequire } from "node:module"; const require = __gcpCreateRequire(import.meta.url);' },
     plugins: [
       {
         name: "stub-assets",
@@ -387,6 +390,13 @@ async function main() {
   const seo = await loadStaticContent();
   const cineShell = await loadStaticContent(path.join("src", "components", "cinematic", "cinematicShell.ts"));
   const CINE_PATH = "/preview/cinematic-home";
+  const redesign = await loadStaticContent(path.join("src", "redesign", "firstView.tsx"));
+  const REDESIGN_PATH = "/preview/redesign";
+  // Hidden preview pages that ship a styled first view instead of plain copy.
+  const FIRST_VIEWS = {
+    [CINE_PATH]: { label: "cinematic preview", render: () => cineShell.renderCinematicShell(), preloads: () => cineShell.cinematicPosterPreloads() },
+    [REDESIGN_PATH]: { label: "redesign preview", render: () => redesign.renderFirstView(REDESIGN_PATH), preloads: () => redesign.firstViewPreloads() },
+  };
   const staticContent = seo.buildStaticContent();
   const meta = buildRouteMeta();
   for (const route of Object.keys(staticContent)) {
@@ -423,8 +433,8 @@ async function main() {
     // The hidden cinematic preview ships its real styled first view (same data as the
     // React hero) instead of plain copy; its main stylesheet moves after the markup so
     // the first view paints without waiting for it (module scripts still wait for it).
-    const isCine = m.path === CINE_PATH;
-    const markup = isCine ? cineShell.renderCinematicShell() : renderStaticContent(staticContent[m.path]);
+    const firstView = FIRST_VIEWS[m.path];
+    const markup = firstView ? firstView.render() : renderStaticContent(staticContent[m.path]);
     if (!markup) throw new Error(`Missing static content for ${m.path}`);
     withContent += 1;
     rewritten = injectBody(rewritten, markup);
@@ -446,19 +456,20 @@ async function main() {
       rewritten = rewritten.replace("</head>", `${preloadScript}</head>`);
     }
     if (m.path !== "/") rewritten = rewritten.replace(/<link[^>]+rel="preload"[^>]+as="image"[^>]*>/g, "");
-    if (isCine) {
+    if (firstView) {
+      const label = firstView.label;
       // Preview pages are untracked: drop the no-JS Meta pixel from the compiled HTML.
       rewritten = rewritten.replace(/\s*<noscript><img[^>]*facebook\.com\/tr[^>]*><\/noscript>/g, "");
-      if (/facebook\.com\/tr/.test(rewritten)) throw new Error("cinematic preview: tracking pixel not removed");
-      // Poster preload right after the viewport meta (media queries need the real
+      if (/facebook\.com\/tr/.test(rewritten)) throw new Error(`${label}: tracking pixel not removed`);
+      // Opening-photo preload right after the viewport meta (media queries need the real
       // viewport) and ahead of the app bundles.
-      rewritten = rewritten.replace(/<meta name="viewport"[^>]*>/i, (tag) => `${tag}${cineShell.cinematicPosterPreloads()}`);
-      if (!rewritten.includes('rel="preload" as="image" fetchpriority="high" media=')) throw new Error("cinematic preview: poster preload not placed");
+      rewritten = rewritten.replace(/<meta name="viewport"[^>]*>/i, (tag) => `${tag}${firstView.preloads()}`);
+      if (!rewritten.includes('rel="preload" as="image" fetchpriority="high"')) throw new Error(`${label}: photo preload not placed`);
       const sheets = [];
       rewritten = rewritten.replace(/<link rel="stylesheet"[^>]*href="\/assets\/[^"]+\.css"[^>]*>/g, (tag) => { sheets.push(tag); return ""; });
-      if (!sheets.length) throw new Error("cinematic preview: main stylesheet link not found");
+      if (!sheets.length) throw new Error(`${label}: main stylesheet link not found`);
       rewritten = rewritten.replace(/(<div id="root">[\s\S]*?<\/script><\/div><\/div>)/, `$1${sheets.join("")}`);
-      if (!rewritten.includes(`</div></div>${sheets[0]}`)) throw new Error("cinematic preview: stylesheet not placed after first view");
+      if (!rewritten.includes(`</div></div>${sheets[0]}`)) throw new Error(`${label}: stylesheet not placed after first view`);
     }
     await fs.writeFile(target, adoptHead(rewritten), "utf8");
     written += 1;

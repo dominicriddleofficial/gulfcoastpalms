@@ -82,6 +82,7 @@ export const rawRoutes = [
   { path: "/text-consent", title: "SMS Text Consent | Gulf Coast Palms", description: "Opt in to receive text message updates from Gulf Coast Palms about your palm tree service appointments, estimates & scheduling in NW Florida." },
   { path: "/quote", title: "Get a Free Tree Service & Palm Care Quote | Gulf Coast Palms", description: "Request a free quote for tree removal, tree trimming, storm cleanup or palm care across the Emerald Coast. Call or text (850) 910-1290." },
   { path: "/preview/cinematic-home", title: "Cinematic homepage preview | Gulf Coast Palms", description: "Internal homepage preview. Not for search results.", noindex: true, canonicalTo: "/" },
+  { path: "/preview/redesign", title: "Site redesign preview | Gulf Coast Palms", description: "Internal preview of the redesigned Gulf Coast Palms website. Not for search results.", noindex: true, canonicalTo: "/" },
   { path: "/thank-you", title: "Thank You | Gulf Coast Palms", description: "Thanks for reaching out to Gulf Coast Palms. We typically respond within 15 minutes during business hours — (850) 910-1290.", noindex: true },
 ];
 

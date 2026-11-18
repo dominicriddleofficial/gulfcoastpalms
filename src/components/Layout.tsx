@@ -4,11 +4,14 @@ import Footer from "./Footer";
 import StickyContactBar from "./StickyContactBar";
 import SeasonalBanner from "./home/SeasonalBanner";
 import { LocalBusinessJsonLd } from "./JsonLd";
+import { REDESIGN_ACTIVE } from "@/redesign/mount";
 
 // ChatWidget is loaded lazily, AFTER the main thread is idle or after the
 // user shows intent (scroll / pointer / touch). This keeps it off the
 // initial critical path and out of the LCP measurement.
 const ChatWidget = lazy(() => import("./ChatWidget"));
+// Redesigned header, footer and phone bar. Loaded only when the redesign is showing.
+const RedesignLayout = lazy(() => import("@/redesign/chrome/Layout"));
 
 interface LayoutProps {
   children: ReactNode;
@@ -47,7 +50,7 @@ function useDeferredMount() {
   return mounted;
 }
 
-const Layout = ({ children }: LayoutProps) => {
+const LiveLayout = ({ children }: LayoutProps) => {
   const showChat = useDeferredMount();
   return (
     <div className="min-h-screen flex flex-col overflow-x-clip">
@@ -67,5 +70,12 @@ const Layout = ({ children }: LayoutProps) => {
     </div>
   );
 };
+
+/**
+ * Every public page renders through this. When the redesign is showing, pages that
+ * have not been rebuilt yet get the new frame around their existing content.
+ */
+const Layout = ({ children }: LayoutProps) =>
+  REDESIGN_ACTIVE ? <RedesignLayout legacy>{children}</RedesignLayout> : <LiveLayout>{children}</LiveLayout>;
 
 export default Layout;

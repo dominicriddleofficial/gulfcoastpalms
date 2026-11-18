@@ -1,5 +1,6 @@
 import { lazy } from "react";
 import { Route } from "react-router-dom";
+import { page } from "@/redesign/routes";
 
 const ThankYou = lazy(() => import("@/pages/ThankYou"));
 const Referral = lazy(() => import("@/pages/Referral"));
@@ -18,7 +19,7 @@ const ClimberAccount = lazy(() => import("@/pages/platform/ClimberAccount"));
  */
 export const PublicRoutes = () => (
   <>
-    <Route path="/thank-you" element={<ThankYou />} />
+    <Route path="/thank-you" element={page("/thank-you", <ThankYou />)} />
     <Route path="/referral" element={<Referral />} />
     <Route path="/payments" element={<Payments />} />
     <Route path="/text-consent" element={<TextConsent />} />
@@ -27,6 +28,6 @@ export const PublicRoutes = () => (
     <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
     <Route path="/arborist-link" element={<ArboristLink />} />
     <Route path="/reset-password" element={<ClimberAccount />} />
-    <Route path="*" element={<NotFound />} />
+    <Route path="*" element={page("*", <NotFound />)} />
   </>
 );

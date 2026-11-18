@@ -255,6 +255,13 @@ const literalContent: Record<string, StaticPageContent> = {
     subheading: cinematicCopy.subheading,
     blocks: [],
   },
+  // Hidden redesign preview. Its first HTML is the prebuilt opening screen
+  // (src/redesign/firstView.tsx); this entry only keeps the route table complete.
+  "/preview/redesign": {
+    h1: publicMarketing.heroHeading,
+    subheading: publicMarketing.heroText,
+    blocks: [],
+  },
   "/thank-you": {
     h1: "Thank You!",
     subheading:

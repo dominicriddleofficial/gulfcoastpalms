@@ -11,6 +11,8 @@ export default defineConfig({
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
   },
   resolve: {
-    alias: { "@": path.resolve(__dirname, "./src") },
+    // Same two shortcuts as vite.config.ts, so tests can load the real page data
+    // (photos come through as plain file paths here, which is all a test needs).
+    alias: { "@": path.resolve(__dirname, "./src"), "@img": path.resolve(__dirname, "./src/assets") },
   },
 });

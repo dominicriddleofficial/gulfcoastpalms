@@ -1,6 +1,7 @@
 import { Helmet } from "react-helmet-async";
 import { GCP_BUSINESS } from "@/lib/business-info";
 import { getRouteMeta } from "@/seo/routeMeta";
+import { REDESIGN_IS_PREVIEW } from "@/redesign/mount";
 
 const BASE_URL = GCP_BUSINESS.url;
 const DEFAULT_OG_IMAGE = GCP_BUSINESS.ogImage;
@@ -29,7 +30,11 @@ const SEOHead = ({
   title = meta?.title ?? title;
   description = meta?.description ?? description;
   noIndex = noIndex || meta?.noindex === true;
-  const fullCanonical = noIndex && !meta?.keepCanonical ? undefined : meta?.canonical ?? (canonicalUrl
+  // The hidden redesign preview is never indexed. A page that is normally public keeps
+  // its canonical pointed at the real address, so a preview copy can never compete with it.
+  const previewCopy = REDESIGN_IS_PREVIEW && !noIndex;
+  if (previewCopy) noIndex = true;
+  const fullCanonical = noIndex && !meta?.keepCanonical && !previewCopy ? undefined : meta?.canonical ?? (canonicalUrl
     ? canonicalUrl.startsWith("http") ? canonicalUrl : `${BASE_URL}${canonicalUrl}`
     : undefined);
 

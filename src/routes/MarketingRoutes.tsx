@@ -1,5 +1,6 @@
 import { lazy } from "react";
 import { Route } from "react-router-dom";
+import { page } from "@/redesign/routes";
 
 // Lazy so the homepage subtree (HeroSection, GoogleReviews, VideoTestimonials,
 // FAQ, framer-motion, etc.) is code-split out of the entry chunk that every
@@ -69,41 +70,44 @@ const SOPSalesOperations = lazy(() => import("@/pages/employee/SOPSalesOperation
  * careers, employee SOPs). These pages currently each render their own
  * `<Layout>` wrapper; a future pass can move them under a shared
  * `<MarketingLayout>` route.
+ *
+ * Routes wrapped in `page()` have a rebuilt version in src/redesign. It is used only
+ * while the redesign is showing (today: the hidden /preview/redesign address).
  */
 export const MarketingRoutes = () => (
   <>
-    <Route path="/" element={<Index />} />
+    <Route path="/" element={page("/", <Index />)} />
     <Route path="/preview/cinematic-home" element={<CinematicHomePreview />} />
-    <Route path="/services" element={<Services />} />
-    <Route path="/services/palm-tree-trimming" element={<PalmTreeTrimming />} />
-    <Route path="/services/palm-tree-installation" element={<PalmTreeInstallation />} />
-    <Route path="/services/palm-tree-removal" element={<PalmTreeRemoval />} />
-    <Route path="/services/palm-diamond-cutting" element={<PalmDiamondCutting />} />
-    <Route path="/services/palm-tree-trunk-skinning" element={<PalmTreeTrunkSkinning />} />
-    <Route path="/services/tree-removal" element={<TreeService slug="tree-removal" />} />
-    <Route path="/services/tree-trimming" element={<TreeService slug="tree-trimming" />} />
-    <Route path="/services/storm-damage-cleanup" element={<TreeService slug="storm-damage-cleanup" />} />
-    <Route path="/services/tree-trimming-removal" element={<TreeTrimmingRemoval />} />
+    <Route path="/services" element={page("/services", <Services />)} />
+    <Route path="/services/palm-tree-trimming" element={page("/services/palm-tree-trimming", <PalmTreeTrimming />)} />
+    <Route path="/services/palm-tree-installation" element={page("/services/palm-tree-installation", <PalmTreeInstallation />)} />
+    <Route path="/services/palm-tree-removal" element={page("/services/palm-tree-removal", <PalmTreeRemoval />)} />
+    <Route path="/services/palm-diamond-cutting" element={page("/services/palm-diamond-cutting", <PalmDiamondCutting />)} />
+    <Route path="/services/palm-tree-trunk-skinning" element={page("/services/palm-tree-trunk-skinning", <PalmTreeTrunkSkinning />)} />
+    <Route path="/services/tree-removal" element={page("/services/tree-removal", <TreeService slug="tree-removal" />)} />
+    <Route path="/services/tree-trimming" element={page("/services/tree-trimming", <TreeService slug="tree-trimming" />)} />
+    <Route path="/services/storm-damage-cleanup" element={page("/services/storm-damage-cleanup", <TreeService slug="storm-damage-cleanup" />)} />
+    <Route path="/services/tree-trimming-removal" element={page("/services/tree-trimming-removal", <TreeTrimmingRemoval />)} />
     <Route path="/services/landscaping-services" element={<LandscapingServices />} />
 
-    <Route path="/palm-tree-trimming-pensacola-fl" element={<Pensacola />} />
-    <Route path="/palm-tree-trimming-gulf-breeze-fl" element={<GulfBreeze />} />
-    <Route path="/palm-tree-trimming-navarre-fl" element={<Navarre />} />
-    <Route path="/palm-tree-trimming-fort-walton-beach-fl" element={<FortWaltonBeach />} />
-    <Route path="/palm-tree-trimming-destin-fl" element={<Destin />} />
-    <Route path="/palm-tree-trimming-30a-fl" element={<ThirtyA />} />
-    <Route path="/palm-tree-trimming-perdido-key-fl" element={<PerdidoKey />} />
-    <Route path="/palm-tree-trimming-perdido-fl" element={<Perdido />} />
-    <Route path="/palm-tree-trimming-niceville-fl" element={<Niceville />} />
-    <Route path="/palm-tree-trimming-mary-esther-fl" element={<MaryEsther />} />
-    <Route path="/palm-tree-trimming-santa-rosa-beach-fl" element={<SantaRosaBeach />} />
-    <Route path="/palm-tree-trimming-pace-fl" element={<Pace />} />
-    <Route path="/palm-tree-trimming-milton-fl" element={<Milton />} />
-    <Route path="/palm-tree-trimming-crestview-fl" element={<Crestview />} />
+    <Route path="/palm-tree-trimming-pensacola-fl" element={page("/palm-tree-trimming-pensacola-fl", <Pensacola />)} />
+    <Route path="/palm-tree-trimming-gulf-breeze-fl" element={page("/palm-tree-trimming-gulf-breeze-fl", <GulfBreeze />)} />
+    <Route path="/palm-tree-trimming-navarre-fl" element={page("/palm-tree-trimming-navarre-fl", <Navarre />)} />
+    <Route path="/palm-tree-trimming-fort-walton-beach-fl" element={page("/palm-tree-trimming-fort-walton-beach-fl", <FortWaltonBeach />)} />
+    <Route path="/palm-tree-trimming-destin-fl" element={page("/palm-tree-trimming-destin-fl", <Destin />)} />
+    <Route path="/palm-tree-trimming-30a-fl" element={page("/palm-tree-trimming-30a-fl", <ThirtyA />)} />
+    <Route path="/palm-tree-trimming-perdido-key-fl" element={page("/palm-tree-trimming-perdido-key-fl", <PerdidoKey />)} />
+    <Route path="/palm-tree-trimming-perdido-fl" element={page("/palm-tree-trimming-perdido-fl", <Perdido />)} />
+    <Route path="/palm-tree-trimming-niceville-fl" element={page("/palm-tree-trimming-niceville-fl", <Niceville />)} />
+    <Route path="/palm-tree-trimming-mary-esther-fl" element={page("/palm-tree-trimming-mary-esther-fl", <MaryEsther />)} />
+    <Route path="/palm-tree-trimming-santa-rosa-beach-fl" element={page("/palm-tree-trimming-santa-rosa-beach-fl", <SantaRosaBeach />)} />
+    <Route path="/palm-tree-trimming-pace-fl" element={page("/palm-tree-trimming-pace-fl", <Pace />)} />
+    <Route path="/palm-tree-trimming-milton-fl" element={page("/palm-tree-trimming-milton-fl", <Milton />)} />
+    <Route path="/palm-tree-trimming-crestview-fl" element={page("/palm-tree-trimming-crestview-fl", <Crestview />)} />
 
     <Route path="/about" element={<About />} />
-    <Route path="/jobs" element={<Jobs />} />
-    <Route path="/service-areas" element={<ServiceAreas />} />
+    <Route path="/jobs" element={page("/jobs", <Jobs />)} />
+    <Route path="/service-areas" element={page("/service-areas", <ServiceAreas />)} />
     <Route path="/palm-tree-cost" element={<PalmTreeCost />} />
     <Route path="/hoa-commercial-palm-maintenance" element={<HoaCommercialMaintenance />} />
     <Route path="/commercial" element={<Commercial />} />
@@ -111,7 +115,7 @@ export const MarketingRoutes = () => (
     <Route path="/hurricane-palm-preparation" element={<HurricanePalmPreparation />} />
     <Route path="/emergency-palm-service" element={<EmergencyPalmService />} />
     <Route path="/holiday-lighting" element={<HolidayLighting />} />
-    <Route path="/gallery" element={<GalleryPage />} />
+    <Route path="/gallery" element={page("/gallery", <GalleryPage />)} />
     <Route path="/palm-trees/types" element={<PalmTreeTypes />} />
     <Route path="/palm-trees/buy" element={<BuyPalmTrees />} />
     <Route path="/palm-trees/guides" element={<PalmCareGuides />} />
@@ -120,7 +124,7 @@ export const MarketingRoutes = () => (
     <Route path="/learn" element={<LearnHub />} />
     <Route path="/learn/:slug" element={<LearnArticle />} />
     <Route path="/palm-tree-maintenance-plans" element={<PalmTreeMaintenancePlans />} />
-    <Route path="/quote" element={<Quote />} />
+    <Route path="/quote" element={page("/quote", <Quote />)} />
 
     <Route path="/careers/gulf-coast-palms" element={<GulfCoastPalmsCareers />} />
     <Route path="/careers/gulf-coast-palms/team-leader" element={<TeamLeaderCareers />} />

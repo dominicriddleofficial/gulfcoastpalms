@@ -9,3 +9,10 @@ declare module "@img/*" {
 
 // Build-time identifier injected by Vite `define` in vite.config.ts.
 declare const __BUILD_ID__: string;
+
+// vite-imagetools picture output (several sizes and formats from one source file).
+// Usage: import photo from "@/assets/redesign/x.jpg?w=480;960&format=avif;webp;jpg&as=picture";
+declare module "*&as=picture" {
+  const picture: import("@/redesign/components/Photo").Picture;
+  export default picture;
+}

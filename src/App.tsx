@@ -17,6 +17,8 @@ import { PlatformRoutes } from "@/routes/PlatformRoutes";
 import { PortalRoutes } from "@/routes/PortalRoutes";
 import { PublicRoutes } from "@/routes/PublicRoutes";
 import RouteIndexing from "@/seo/RouteIndexing";
+import { isPrivateRoute } from "@/seo/indexing-policy.mjs";
+import { REDESIGN_ACTIVE, REDESIGN_BASE } from "@/redesign/mount";
 
 const RouteTracker = () => {
   const location = useLocation();
@@ -32,7 +34,8 @@ const RouteTracker = () => {
     const path = location.pathname;
     let manifestHref = "/manifest.json";
     let appleTitle = "Gulf Coast Palms";
-    let themeColor = "#1a5c38";
+    // The redesigned site has a deeper green header; the browser bar matches it.
+    let themeColor = REDESIGN_ACTIVE && !isPrivateRoute(path) ? "#0b2a20" : "#1a5c38";
     if (path.startsWith("/platform")) {
       manifestHref = "/platform-manifest.json";
       appleTitle = "Field Ops";
@@ -195,6 +198,18 @@ function RouteSuspenseFallback() {
   // replaced it) on screen while its route chunk loads, instead of a spinner.
   const cineShell = pathname === "/preview/cinematic-home" ? (window as Window & { __gcpCineShell?: string }).__gcpCineShell : undefined;
   if (cineShell) return <div style={{ display: "contents" }} dangerouslySetInnerHTML={{ __html: cineShell }} />;
+  // Redesigned site: keep the prebuilt first view on screen where there is one, otherwise
+  // hold the header's place on the page colour instead of flashing a spinner. Account,
+  // customer-link and staff pages are not part of the redesign and keep the spinner.
+  if (REDESIGN_ACTIVE && !isPrivateRoute(pathname)) {
+    const firstView = pathname === "/" ? (window as Window & { __gcpFirstView?: string }).__gcpFirstView : undefined;
+    if (firstView) return <div style={{ display: "contents" }} dangerouslySetInnerHTML={{ __html: firstView }} />;
+    return (
+      <div style={{ minHeight: "100vh", background: "#f4f0e6" }} aria-hidden>
+        <div style={{ height: 56, background: "#0b2a20" }} />
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -210,7 +225,8 @@ const App = () => (
           <ErrorBoundary>
             <Toaster />
             <Sonner />
-            <BrowserRouter>
+            {/* Inside the hidden redesign preview the whole app runs under that address (see redesign/mount.ts). */}
+            <BrowserRouter basename={REDESIGN_BASE || undefined}>
               <CreateSheetsProvider>
                 <RouteTracker />
                 <Suspense fallback={<RouteSuspenseFallback />}>

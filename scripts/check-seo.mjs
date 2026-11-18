@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 import { JSDOM } from "jsdom";
 import { rawRoutes, buildRouteMeta, SITE_ORIGIN } from "../src/seo/routes.data.mjs";
 
+const REDESIGN_PREVIEW = "/preview/redesign";
 const routes = buildRouteMeta();
 const knownPaths = new Set(routes.map((route) => route.path));
 const sitemap = new JSDOM(await fs.readFile("dist/sitemap.xml", "utf8"), { contentType: "text/xml" });
@@ -27,7 +28,9 @@ for (const route of routes) {
   assert.equal(one('meta[name="twitter:title"]').content, route.title);
   assert.equal(one('meta[name="robots"]').content.includes("noindex"), route.noindex);
   assert.ok(one("h1").textContent.trim(), `${route.path}: empty heading`);
-  assert.ok(doc.querySelector('#seo-static-content a[href="/quote"]'), `${route.path}: missing crawlable quote link`);
+  // The hidden redesign preview keeps its links inside the preview, so its quote link carries that prefix.
+  const previewBase = route.path === REDESIGN_PREVIEW ? REDESIGN_PREVIEW : "";
+  assert.ok(doc.querySelector(`#seo-static-content a[href^="${previewBase}/quote"]`), `${route.path}: missing crawlable quote link`);
   assert.ok(!doc.body.textContent.includes("[PRICE]"), `${route.path}: placeholder price`);
   if (route.noindex && route.keepCanonical) {
     assert.equal(one('link[rel="canonical"]').getAttribute("href"), route.canonical);
@@ -40,7 +43,9 @@ for (const route of routes) {
     assert.equal(one('meta[property="og:url"]').content, route.canonical);
   }
   for (const link of doc.querySelectorAll('#seo-static-content a[href^="/"]')) {
-    const path = new URL(link.getAttribute("href"), SITE_ORIGIN).pathname;
+    let path = new URL(link.getAttribute("href"), SITE_ORIGIN).pathname;
+    // A link inside the preview stands for the same public page without the prefix.
+    if (previewBase && path.startsWith(`${previewBase}/`)) path = path.slice(previewBase.length);
     assert.ok(knownPaths.has(path), `${route.path}: broken internal link ${path}`);
   }
   for (const script of doc.querySelectorAll('script[type="application/ld+json"]')) {
