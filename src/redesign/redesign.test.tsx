@@ -18,7 +18,7 @@ import { quotePath } from "./lib/quote-path";
 import { featuredProjects, nearbyProjects, projects } from "./data/projects";
 import { serviceMedia } from "./data/serviceMedia";
 import { treeRemovalSequence } from "./data/treeRemoval";
-import { heroCopy, heroReveal, treeFrame } from "./data/hero";
+import { heroCopy, heroPhoto } from "./data/hero";
 import { publicMarketing } from "@/data/publicMarketing";
 import Hero from "./home/Hero";
 import Header from "./chrome/Header";
@@ -97,9 +97,11 @@ describe("rebuilt pages", () => {
     }
   });
 
-  it("keep the owner-approved homepage heading", () => {
-    expect(heroCopy.lines.join(" ")).toBe(publicMarketing.heroHeading);
-    expect(heroCopy.lines.join(" ")).toBe(publicMarketing.heroHeading);
+  it("open the homepage with the owner's headline and a plain-text line naming the services and area", () => {
+    expect(heroCopy.lines).toEqual(["Expert tree work.", "Precision palm care."]);
+    for (const phrase of ["Tree removal", "tree trimming", "palm care", "Perdido Key", "30A"]) {
+      expect(heroCopy.lead, phrase).toContain(phrase);
+    }
   });
 });
 
@@ -154,7 +156,8 @@ describe("tracking stays as it is today", () => {
     expect(placementsOf(linksTo(container, ".rd-hero__actions", TEL_HREF))).toEqual(["hero"]);
     expect(placementsOf(linksTo(container, ".rd-hero__actions", SMS_HREF))).toEqual(["hero"]);
     expect(container.querySelectorAll("h1")).toHaveLength(1);
-    expect(container.querySelector("h1")?.textContent).toContain("Tree Removal, Tree Trimming & Palm Care");
+    expect(container.querySelector("h1")?.textContent).toBe("Expert tree work. Precision palm care.");
+    expect(container.querySelector(".rd-hero__lead")?.textContent).toBe(heroCopy.lead);
   });
 
   it("keeps the header and phone bar placement names", () => {
@@ -167,29 +170,18 @@ describe("tracking stays as it is today", () => {
     expect(placementsOf([...container.querySelectorAll('.rd-dock a[data-track-cta="quote_request"]')])).toEqual(["sticky_bar"]);
   });
 
-  it("opens on a before and an after of the same palm, half of each, that a visitor can slide between", () => {
+  it("opens on one photo of the crew at work, with nothing floating over it", () => {
     const { container } = within(<Hero />);
-    const frame = container.querySelector("[data-rd-reveal]") as HTMLElement;
-    const photos = [...frame.querySelectorAll(".rd-hero__stage img")].map((img) => img.getAttribute("alt"));
-    expect(photos).toEqual([heroReveal.after.alt, heroReveal.before.alt]);
-    expect(photos[0]).toMatch(/^After: the same date palm/);
-    expect(photos[1]).toMatch(/^Before: a date palm/);
-    // No position is set until someone moves it, so the stylesheet's half-and-half applies.
-    expect(frame.style.getPropertyValue("--cut")).toBe("");
-
-    const slider = screen.getByRole("slider", { name: heroReveal.control }) as HTMLInputElement;
-    expect(slider.value).toBe(String(heroReveal.start));
-    fireEvent.input(slider, { target: { value: "80" } });
-    expect(frame.style.getPropertyValue("--cut")).toBe("80%");
-    expect(slider.getAttribute("aria-valuetext")).toBe("80 percent before, 20 percent after");
-  });
-
-  it("keeps the tree-removal frame on the opening screen as a link to that service", () => {
-    const { container } = within(<Hero />);
-    const inset = container.querySelector("a.rd-hero__inset");
-    expect(inset?.getAttribute("href")).toBe(treeFrame.to);
-    expect(inset?.querySelector("img")?.getAttribute("alt")).toMatch(/^Tree removal in progress/);
-    expect(inset?.textContent).toBe(treeFrame.label);
+    const photos = [...container.querySelectorAll(".rd-hero img")];
+    expect(photos).toHaveLength(1);
+    expect(photos[0].getAttribute("alt")).toBe(heroPhoto.alt);
+    expect(photos[0].getAttribute("alt")).toMatch(/climber/);
+    // The thumbnail, the look-closer marks and the slider are gone from the opening.
+    expect(container.querySelector(".rd-hero__inset, .rd-hero__spot, [data-rd-reveal], input")).toBeNull();
+    // The glow is the shared CRM fade layer.
+    expect(container.querySelector(".rd-hero .rd-fade")).not.toBeNull();
+    const proof = container.querySelector("a.rd-hero__proof");
+    expect(proof?.textContent).toBe(heroCopy.rating);
   });
 });
 

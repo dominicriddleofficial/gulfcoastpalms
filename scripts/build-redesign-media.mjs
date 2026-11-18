@@ -30,26 +30,17 @@ const ASSET_OUT = path.join(root, "src", "assets", "redesign");
 /**
  * Opening-screen files (fixed public addresses, AVIF with a JPEG fallback).
  *
- * The opening is a before-and-after of the same date palm (see src/assets/facebook/README.md).
- * Each pair uses one box for both photos, so the trunk sits in the same place in each and
- * the reveal lines up. Phones get their own wider, shorter crop around the trunk, which is
- * also a much smaller download; wide screens get the taller crop with the fronds.
+ * The opening is one photo: the climber at the top of a tall sabal
+ * (src/assets/facebook/climber-sabal.jpg). Phones and wide screens each get their own
+ * crop, cut so the climber stays in the upper part of the screen and the headline has
+ * open sky. Neither crop is enlarged beyond the photo's own size.
  */
-const PAIR = { before: "facebook/date-palm-before.jpg", after: "facebook/date-palm-after.jpg" };
-const PHONE_BOX = { left: 0, top: 640, width: 1440, height: 960 };
-const WIDE_BOX = { left: 0, top: 250, width: 1440, height: 1500 };
+const CLIMBER = "facebook/climber-sabal.jpg";
 const FIRST_VIEW = [
-  { name: "hero-before-phone", source: PAIR.before, box: PHONE_BOX, widths: [640, 800, 1200], quality: 44 },
-  { name: "hero-after-phone", source: PAIR.after, box: PHONE_BOX, widths: [640, 800, 1200], quality: 44 },
-  { name: "hero-before", source: PAIR.before, box: WIDE_BOX, widths: [960, 1440], quality: 44 },
-  { name: "hero-after", source: PAIR.after, box: WIDE_BOX, widths: [960, 1440], quality: 44 },
-  {
-    name: "tree-frame",
-    source: "facebook/tree-removal-2.jpg",
-    // The tree going over, the sawyer at its base and the building behind.
-    box: { left: 0, top: 210, width: 720, height: 540 },
-    widths: [360, 720],
-  },
+  // Phone: upright crop, climber right of centre, the ladder palm on the left.
+  { name: "hero-climber-phone", source: CLIMBER, box: { left: 221, top: 240, width: 1182, height: 1590 }, widths: [780, 1182], quality: 46 },
+  // Wide screens: the full width of the photo, from above the crowns to the lower trunks.
+  { name: "hero-climber", source: CLIMBER, box: { left: 0, top: 470, width: 1536, height: 1140 }, widths: [1024, 1536], quality: 48 },
 ];
 
 /** Cropped sources for imagetools (high-quality JPEG; the build makes the web sizes). */
@@ -75,7 +66,7 @@ const CROPS = [
   // Condo at night: lit palms across the front, dark sky and driveway trimmed.
   { name: "condo-night", source: "gallery/job-11.jpeg", box: { left: 0, top: 560, width: 1080, height: 1000 } },
   // Climber and the crown he is working on, with the saw on its lanyard.
-  { name: "climber-close", source: "facebook/climber-sabal.jpg", box: { left: 270, top: 330, width: 640, height: 800 } },
+  { name: "climber-close", source: "facebook/climber-sabal.jpg", box: { left: 360, top: 440, width: 853, height: 1066 } },
   // Crew clearing fronds by the pool, without the empty sky above.
   { name: "crew-pool-yard", source: "facebook/crew-pool-yard.jpg", box: { left: 0, top: 560, width: 1152, height: 976 } },
 ];

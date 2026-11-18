@@ -1,6 +1,13 @@
 /*
- * Gulf Coast Palms redesign, part 1 of 2: colours, type, buttons, header and the
+ * Gulf Coast Palms public site, part 1 of 2: colours, type, buttons, header and the
  * opening screen.
+ *
+ * The look is taken from the CRM the owner already approved: the same near-black
+ * surfaces, the same emerald accent, the same fine edges, and the same glow that rises
+ * from the bottom edge of a surface and is gone halfway up. The values are copied
+ * from the CRM's own theme, not approximated:
+ *   colours   src/contexts/WorkspaceThemeContext.tsx   (GCP_THEME)
+ *   the fade  src/styles/platform.css                  (.platform-fade)
  *
  * Everything the first screen needs is in this file on purpose. The prebuilt first
  * view (src/redesign/firstView.tsx) inlines it into the page's HTML, so the opening
@@ -11,84 +18,98 @@
  */
 
 @font-face {
-  font-family: "GCP Archivo Condensed";
-  src: url("/fonts/gcp-archivo-condensed.woff2") format("woff2");
-  font-weight: 500 900;
+  font-family: "GCP Geist";
+  src: url("/fonts/gcp-geist.woff2") format("woff2");
+  font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
+/* Stand-in face sized to the real one, so text keeps its place when the font arrives. */
 @font-face {
-  font-family: "GCP Archivo Text";
-  src: url("/fonts/gcp-archivo-text.woff2") format("woff2");
-  font-weight: 400 700;
-  font-style: normal;
-  font-display: swap;
-}
-/* Stand-in faces sized to the real ones, so text keeps its place when the fonts arrive. */
-@font-face {
-  font-family: "GCP Display Fallback";
-  src: local("Arial Bold"), local("Arial-BoldMT"), local("Helvetica Neue Bold"), local("Roboto Bold"), local("Arial");
-  font-weight: 500 900;
-  size-adjust: 89.5%;
-  ascent-override: 98%;
-  descent-override: 23.5%;
-  line-gap-override: 0%;
-}
-@font-face {
-  font-family: "GCP Text Fallback";
+  font-family: "GCP Geist Fallback";
   src: local("Arial"), local("ArialMT"), local("Helvetica Neue"), local("Roboto");
-  size-adjust: 98.9%;
-  ascent-override: 88.8%;
-  descent-override: 21.2%;
+  size-adjust: 104.2%;
+  ascent-override: 96.4%;
+  descent-override: 28.3%;
   line-gap-override: 0%;
 }
 
 .rd {
-  /* Deep palm green, charcoal, warm off-white, and one bright green kept for actions. */
-  --rd-green-950: #071d16;
-  --rd-green-900: #0b2a20;
-  --rd-green-800: #103a2c;
-  --rd-green-700: #17503d;
-  --rd-green-600: #1f6a51;
-  --rd-charcoal: #161a18;
-  --rd-ink: #1c211e;
-  --rd-muted: #59615b;
-  --rd-paper: #f4f0e6;
-  --rd-paper-2: #eae4d6;
-  --rd-paper-3: #d9d1bf;
-  --rd-white: #fbf9f4;
-  --rd-go: #a6f03c;
-  --rd-go-press: #92dc27;
-  --rd-go-ink: #0c1f0e;
-  --rd-on-dark: #f4f0e6;
-  --rd-on-dark-2: rgba(244, 240, 230, 0.76);
-  --rd-line-dark: rgba(244, 240, 230, 0.18);
-  --rd-line: rgba(28, 33, 30, 0.16);
-  --rd-error: #a3211a;
+  /* CRM surfaces */
+  --rd-bg: #050809;
+  --rd-well: #080c0e;
+  --rd-card: #0c1214;
+  --rd-raise: #101719;
+  /* CRM accent */
+  --rd-accent: #34e8a8;
+  --rd-accent-rgb: 52, 232, 168;
+  --rd-accent-press: #5cf0bb;
+  --rd-accent-ink: #04130e;
+  /* The CRM fade's two colours: the accent mixed 72% and 48% into the background. */
+  --rd-fade-72: #27a97c;
+  --rd-fade-48: #1c7355;
+  /* Text, brightest to quietest. All pass contrast on the surfaces above. */
+  --rd-text: #f0f6f4;
+  --rd-copy-ink: #d2dedb;
+  --rd-text-2: #a3b2b4;
+  --rd-text-3: #93a3a5;
+  /* Fine edges */
+  --rd-edge: rgba(255, 255, 255, 0.07);
+  --rd-edge-2: rgba(255, 255, 255, 0.14);
+  --rd-edge-accent: rgba(var(--rd-accent-rgb), 0.23);
+  --rd-error: #f87171;
 
-  --rd-display: "GCP Archivo Condensed", "GCP Display Fallback", "Arial Narrow", Arial, sans-serif;
-  --rd-body: "GCP Archivo Text", "GCP Text Fallback", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  /* Names the rest of the stylesheet already uses, pointed at the values above. */
+  --rd-green-950: #030506;
+  --rd-green-900: var(--rd-bg);
+  --rd-green-800: var(--rd-card);
+  --rd-green-700: var(--rd-accent);
+  --rd-green-600: var(--rd-accent);
+  --rd-charcoal: var(--rd-bg);
+  --rd-ink: var(--rd-text);
+  --rd-muted: var(--rd-text-3);
+  --rd-paper: var(--rd-bg);
+  --rd-paper-2: var(--rd-well);
+  --rd-paper-3: var(--rd-card);
+  --rd-white: var(--rd-card);
+  --rd-go: var(--rd-accent);
+  --rd-go-press: var(--rd-accent-press);
+  --rd-go-ink: var(--rd-accent-ink);
+  --rd-on-dark: var(--rd-text);
+  --rd-on-dark-2: var(--rd-text-2);
+  --rd-line-dark: var(--rd-edge-2);
+  --rd-line: var(--rd-edge);
+
+  --rd-display: "GCP Geist", "GCP Geist Fallback", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --rd-body: var(--rd-display);
+  /* The site's base heading and body rules read these two names; point them at the same face. */
+  --font-display: var(--rd-display);
+  --font-body: var(--rd-display);
 
   --rd-gutter: clamp(1rem, 4.2vw, 2.5rem);
   --rd-max: 77.5rem;
-  --rd-section: clamp(3.5rem, 9vw, 7rem);
-  --rd-radius: 6px;
+  --rd-section: clamp(4rem, 10vw, 8rem);
+  --rd-radius: 10px;
+  --rd-radius-lg: 18px;
   --rd-hd-h: 3.5rem;
   --rd-dock-h: 0px;
   --rd-ease: cubic-bezier(0.2, 0.7, 0.1, 1);
+  /* A lit surface: where a card or band needs the CRM's top-left sheen. */
+  --rd-sheen: linear-gradient(140deg, rgba(255, 255, 255, 0.025), transparent 50%);
 
   font-family: var(--rd-body);
   font-size: 1.0625rem;
   line-height: 1.55;
-  color: var(--rd-ink);
-  background: var(--rd-paper);
+  color: var(--rd-text);
+  background: var(--rd-bg);
+  color-scheme: dark;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
 @media (min-width: 1000px) {
-  .rd { --rd-hd-h: 4.5rem; }
+  .rd { --rd-hd-h: 3.75rem; }
 }
 
 .rd-wrap {
@@ -98,35 +119,37 @@
   padding-inline: var(--rd-gutter);
 }
 
-/* Type. Headlines are heavy, slightly condensed capitals; everything else is sentence case. */
+/* Type. One family throughout. Headlines are sentence case, semi-bold and set tight, as in the CRM. */
 .rd-h1,
 .rd-h2 {
   font-family: var(--rd-display);
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: -0.008em;
-  line-height: 0.96;
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 1.04;
   text-wrap: balance;
   margin: 0;
 }
-.rd-h1 { font-size: clamp(2.25rem, 8.8vw, 4.75rem); }
-.rd-h2 { font-size: clamp(1.9rem, 6.6vw, 3.25rem); line-height: 1; }
+.rd-h1 { font-size: clamp(2.35rem, 9vw, 4.25rem); }
+.rd-h2 { font-size: clamp(1.9rem, 6.4vw, 3rem); letter-spacing: -0.04em; line-height: 1.06; }
 .rd-h3 {
   font-family: var(--rd-display);
-  font-weight: 700;
-  font-size: clamp(1.3rem, 3.6vw, 1.6rem);
-  line-height: 1.12;
-  letter-spacing: 0;
+  font-weight: 600;
+  font-size: clamp(1.2rem, 3.4vw, 1.4rem);
+  line-height: 1.18;
+  letter-spacing: -0.025em;
   margin: 0;
 }
-.rd-lead { font-size: clamp(1.125rem, 2.6vw, 1.3rem); line-height: 1.5; margin: 0; }
-.rd-copy { margin: 0; max-width: 66ch; }
+.rd-lead { font-size: clamp(1.0625rem, 2.5vw, 1.25rem); line-height: 1.5; letter-spacing: -0.008em; margin: 0; }
+.rd-copy { margin: 0; max-width: 66ch; color: var(--rd-copy-ink); }
 .rd-small { font-size: 0.9375rem; line-height: 1.5; }
-.rd-muted { color: var(--rd-muted); }
-.rd-dark { background: var(--rd-green-900); color: var(--rd-on-dark); }
-.rd-dark .rd-muted { color: var(--rd-on-dark-2); }
-.rd-link { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.2em; }
-.rd-link:hover { text-decoration-thickness: 2.5px; }
+.rd-muted { color: var(--rd-text-3); }
+.rd-dark { background: var(--rd-bg); color: var(--rd-text); }
+.rd-dark .rd-muted { color: var(--rd-text-2); }
+.rd-link { color: var(--rd-text); text-decoration: underline; text-decoration-color: rgba(var(--rd-accent-rgb), 0.6); text-decoration-thickness: 1.5px; text-underline-offset: 0.22em; }
+.rd-link:hover { text-decoration-color: var(--rd-accent); }
+/* The CRM's small label: accent, spaced capitals, led by a short lit line. Used sparingly. */
+.rd-eyebrow { display: flex; align-items: center; gap: 0.55rem; margin: 0 0 0.9rem; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--rd-accent); }
+.rd-eyebrow::before { content: ""; width: 1.1rem; height: 1px; background: var(--rd-accent); box-shadow: 0 0 8px rgba(var(--rd-accent-rgb), 0.4); }
 
 .rd-sr {
   position: absolute;
@@ -140,37 +163,69 @@
   border: 0;
 }
 
-/* Buttons. The bright green is reserved for the quote action. */
+/*
+ * The CRM fade, as a reusable layer. It covers the bottom half of whatever it sits in:
+ * brightest on the bottom edge, gone at the halfway line. --rd-glow scales it down for
+ * quieter surfaces; the opening screen uses it at full strength.
+ */
+.rd-fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 50%;
+  pointer-events: none;
+  opacity: var(--rd-glow, 1);
+  background:
+    radial-gradient(120% 95% at 50% 108%, rgba(var(--rd-accent-rgb), 0.3), transparent 72%),
+    linear-gradient(to top, var(--rd-fade-72) 0%, var(--rd-fade-48) 38%, transparent 100%);
+}
+
+/* Buttons. The emerald is reserved for the quote action. */
 .rd-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.6rem;
+  gap: 0.55rem;
   min-height: 3.25rem;
-  padding: 0 1.4rem;
-  border: 1.5px solid transparent;
-  border-radius: var(--rd-radius);
+  padding: 0 1.35rem;
+  border: 1px solid transparent;
+  border-radius: 12px;
   font-family: var(--rd-body);
   font-size: 1.0625rem;
-  font-weight: 700;
+  font-weight: 600;
+  letter-spacing: -0.012em;
   line-height: 1.1;
   text-align: center;
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 0.12s var(--rd-ease), background-color 0.15s, border-color 0.15s, color 0.15s;
+  transition: transform 0.12s var(--rd-ease), background-color 0.15s, border-color 0.15s, box-shadow 0.2s, color 0.15s;
 }
 .rd-btn:active { transform: translateY(1px) scale(0.985); }
 .rd-btn svg { flex: none; }
-.rd-btn--go { background: var(--rd-go); color: var(--rd-go-ink); }
-.rd-btn--go:hover { background: var(--rd-go-press); }
-.rd-btn--line { border-color: currentColor; background: transparent; color: inherit; }
-.rd-btn--line:hover { background: rgba(127, 127, 127, 0.14); }
-.rd-btn--ink { background: var(--rd-green-900); color: var(--rd-on-dark); }
-.rd-btn--ink:hover { background: var(--rd-green-800); }
-.rd-btn--paper { background: var(--rd-paper); color: var(--rd-ink); }
-.rd-btn--paper:hover { background: var(--rd-white); }
+/* Brightest thing on the page: a light edge, a dark keyline so it holds on the glow, and a contained halo. */
+.rd-btn--go {
+  background: var(--rd-accent);
+  color: var(--rd-accent-ink);
+  border-color: rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 0 0 1px rgba(4, 19, 14, 0.55), 0 10px 28px -8px rgba(var(--rd-accent-rgb), 0.55), 0 0 40px rgba(var(--rd-accent-rgb), 0.18);
+}
+.rd-btn--go:hover { background: var(--rd-accent-press); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 0 0 1px rgba(4, 19, 14, 0.55), 0 12px 32px -8px rgba(var(--rd-accent-rgb), 0.7), 0 0 52px rgba(var(--rd-accent-rgb), 0.26); }
+/* Smoked glass, as on the CRM's bars. */
+.rd-btn--line,
+.rd-btn--ink,
+.rd-btn--paper {
+  background: rgba(5, 8, 9, 0.58);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--rd-text);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: blur(14px) saturate(1.4);
+}
+.rd-btn--line:hover,
+.rd-btn--ink:hover,
+.rd-btn--paper:hover { border-color: rgba(var(--rd-accent-rgb), 0.5); background: rgba(12, 18, 20, 0.78); }
 .rd-btn--wide { width: 100%; }
 .rd-btn--big { min-height: 3.6rem; font-size: 1.125rem; }
 
@@ -180,23 +235,25 @@
 .rd input:focus-visible,
 .rd select:focus-visible,
 .rd textarea:focus-visible {
-  outline: 3px solid var(--rd-green-600);
-  outline-offset: 2px;
-}
-.rd-dark a:focus-visible,
-.rd-dark button:focus-visible,
-.rd-hd a:focus-visible,
-.rd-hd button:focus-visible {
-  outline-color: var(--rd-go);
+  outline: 2px solid var(--rd-accent);
+  outline-offset: 3px;
 }
 
-/* Header */
+/* Header: a slim bar of smoked glass with a fine edge. It turns more solid once the page scrolls. */
 .rd-hd {
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 40;
-  background: var(--rd-green-900);
-  color: var(--rd-on-dark);
+  color: var(--rd-text);
+  background: rgba(5, 8, 9, 0.44);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  backdrop-filter: blur(18px) saturate(1.5);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  transition: background-color 0.3s, border-color 0.3s;
 }
+.rd-hd[data-scrolled="true"] { background: rgba(5, 8, 9, 0.88); border-bottom-color: rgba(255, 255, 255, 0.12); }
+/* On pages that open with a full-width photo the bar floats over it. */
+.rd-page--over > .rd-hd { margin-bottom: calc((var(--rd-hd-h) + 1px) * -1); }
 .rd-hd__bar {
   display: flex;
   align-items: center;
@@ -207,25 +264,19 @@
   max-width: 96rem;
   margin-inline: auto;
 }
-.rd-brand { display: inline-flex; align-items: center; gap: 0.6rem; color: inherit; text-decoration: none; min-height: 2.75rem; }
+.rd-brand { display: inline-flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; min-height: 2.75rem; }
 .rd-brand__mark {
   flex: none;
-  width: 2.35rem;
-  height: 2.35rem;
-  background: currentColor;
+  width: 2rem;
+  height: 2rem;
+  background: var(--rd-accent);
   -webkit-mask: url("/media/redesign/gcp-mark.png") center / contain no-repeat;
   mask: url("/media/redesign/gcp-mark.png") center / contain no-repeat;
+  filter: drop-shadow(0 0 10px rgba(var(--rd-accent-rgb), 0.35));
 }
 .rd-brand__text { display: flex; flex-direction: column; line-height: 1; }
-.rd-brand__name {
-  font-family: var(--rd-display);
-  font-weight: 800;
-  font-size: 1.28rem;
-  letter-spacing: 0.012em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-.rd-brand__sub { margin-top: 0.22rem; font-size: 0.72rem; font-weight: 600; color: var(--rd-on-dark-2); white-space: nowrap; }
+.rd-brand__name { font-weight: 600; font-size: 1.0625rem; letter-spacing: -0.03em; white-space: nowrap; }
+.rd-brand__sub { display: none; margin-top: 0.25rem; font-size: 0.6875rem; font-weight: 500; color: var(--rd-text-2); white-space: nowrap; }
 .rd-hd__tools { display: flex; align-items: center; gap: 0.5rem; }
 .rd-icon-btn {
   display: inline-flex;
@@ -235,50 +286,52 @@
   min-width: 2.75rem;
   height: 2.75rem;
   padding: 0 0.6rem;
-  border: 1.5px solid var(--rd-line-dark);
+  border: 1px solid var(--rd-edge-2);
   border-radius: var(--rd-radius);
-  background: transparent;
+  background: rgba(255, 255, 255, 0.03);
   color: inherit;
-  font: 700 0.9375rem/1 var(--rd-body);
+  font: 600 0.9375rem/1 var(--rd-body);
   text-decoration: none;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.15s, background-color 0.15s;
 }
-.rd-icon-btn:hover { background: rgba(244, 240, 230, 0.1); }
+.rd-icon-btn:hover { border-color: rgba(var(--rd-accent-rgb), 0.45); background: rgba(var(--rd-accent-rgb), 0.07); }
 /* Menu tapped before the app finished loading: acknowledge it straight away. */
-.rd-menu-wanted [data-rd-menu] { background: var(--rd-go); border-color: var(--rd-go); color: var(--rd-go-ink); }
+.rd-menu-wanted [data-rd-menu] { background: var(--rd-accent); border-color: var(--rd-accent); color: var(--rd-accent-ink); }
 .rd-hd__nav,
 .rd-hd__desk { display: none; }
 
 @media (min-width: 1000px) {
-  .rd-hd { position: sticky; top: 0; }
-  .rd-hd__nav { display: flex; align-items: center; gap: clamp(0rem, 0.5vw, 0.5rem); margin-right: auto; margin-left: clamp(0.5rem, 1.5vw, 2rem); }
+  .rd-hd__nav { display: flex; align-items: center; gap: clamp(0rem, 0.4vw, 0.4rem); margin-right: auto; margin-left: clamp(0.75rem, 2vw, 2.5rem); }
   .rd-hd__desk { display: inline-flex; }
   .rd-hd__mob { display: none; }
-  .rd-brand__mark { width: 2.75rem; height: 2.75rem; }
-  .rd-brand__name { font-size: 1.5rem; }
+  .rd-brand__sub { display: block; }
   .rd-nav-link {
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
-    height: 2.75rem;
-    padding: 0 0.6rem;
+    height: 2.4rem;
+    padding: 0 0.65rem;
     border: 0;
-    border-radius: var(--rd-radius);
+    border-radius: 8px;
     background: none;
-    color: inherit;
-    font: 600 0.9375rem/1 var(--rd-body);
+    color: var(--rd-text-2);
+    font: 500 0.9375rem/1 var(--rd-body);
+    letter-spacing: -0.01em;
     text-decoration: none;
     white-space: nowrap;
     cursor: pointer;
+    transition: color 0.15s, background-color 0.15s;
   }
   .rd-nav-link:hover,
   .rd-nav-link[aria-expanded="true"],
-  .rd-nav-link[aria-current="page"] { background: rgba(244, 240, 230, 0.1); }
-  .rd-nav-link svg { transition: transform 0.2s var(--rd-ease); }
+  .rd-nav-link[aria-current="page"] { color: var(--rd-text); background: rgba(255, 255, 255, 0.06); }
+  .rd-nav-link svg { transition: transform 0.2s var(--rd-ease); opacity: 0.7; }
   .rd-nav-link[aria-expanded="true"] svg { transform: rotate(180deg); }
-  .rd-hd__phone { font: 700 1rem/1 var(--rd-body); font-variant-numeric: tabular-nums; padding: 0 0.5rem; white-space: nowrap; color: inherit; text-decoration: none; min-height: 2.75rem; display: none; align-items: center; gap: 0.45rem; }
-  .rd-hd__quote { min-height: 2.75rem; padding: 0 1.1rem; font-size: 0.9375rem; }
+  .rd-hd__phone { font: 600 0.9375rem/1 var(--rd-body); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; padding: 0 0.5rem; white-space: nowrap; color: inherit; text-decoration: none; min-height: 2.75rem; display: none; align-items: center; gap: 0.45rem; }
+  .rd-hd__quote { min-height: 2.4rem; padding: 0 1rem; font-size: 0.9375rem; border-radius: 10px; }
+  .rd-hd .rd-icon-btn { min-width: 2.4rem; height: 2.4rem; }
 }
 @media (min-width: 1180px) {
   .rd-hd__phone { display: inline-flex; }
@@ -288,222 +341,101 @@
   .rd-hd__label { display: inline; }
 }
 
-/* Opening screen */
+/*
+ * Opening screen: one photograph across the full width, dissolving into the CRM's
+ * dark surface and the emerald glow. No seam between photo and text.
+ *
+ * Layers, back to front: surface colour, photo (masked so its lower part fades out),
+ * the fade, a light shade for the header and headline, then the text.
+ */
 .rd-hero {
+  /* How far the visitor has scrolled past the opening, 0 to 1. Set by home/Hero.tsx. */
+  --p: 0;
   position: relative;
+  isolation: isolate;
   display: grid;
-  /* The photo takes whatever height is left once the headline and buttons are placed,
-     so the quote button is on the first screen of any phone. */
-  grid-template-rows: minmax(13.5rem, 1fr) auto;
-  min-height: calc(100vh - var(--rd-hd-h) - 5.5rem);
-  min-height: calc(100svh - var(--rd-hd-h));
-  background: var(--rd-green-900);
-  color: var(--rd-on-dark);
-}
-.rd-hero__photo {
-  /* Where the before photo ends and the after photo starts, across the frame. */
-  --cut: 50%;
-  position: relative;
-  min-height: 13.5rem;
+  grid-template-rows: minmax(11rem, 1fr) auto;
+  min-height: 100vh;
+  min-height: 100svh;
+  background: var(--rd-bg);
+  color: var(--rd-text);
   overflow: hidden;
-  background: #4b6b3c;
-  container-type: size;
-  /* Sideways drags move the divider; up and down still scrolls the page. */
-  touch-action: pan-y;
-  cursor: ew-resize;
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
+  overflow: clip;
 }
-.rd-hero__layer { position: absolute; inset: 0; overflow: hidden; }
-.rd-hero__layer--before { clip-path: inset(0 calc(100% - var(--cut)) 0 0); }
-/* Both photos get exactly the same box: the photo's own shape, covering the frame and
-   centred on the trunk. That keeps the two lined up at every screen size.
-   Percentages do the work wherever they can; container units fill in the rest. */
-.rd-hero__stage {
-  --ar: 1.5;
-  --fx: 0.5;
-  --fy: 0.4;
-  --w: max(100%, calc(100cqh * var(--ar)));
-  --h: max(100%, calc(100cqw / var(--ar)));
+.rd-hero__media {
   position: absolute;
-  width: var(--w);
-  height: var(--h);
-  left: calc((100% - var(--w)) * var(--fx));
-  top: calc((100% - var(--h)) * var(--fy));
+  inset: 0 0 auto 0;
+  height: 66%;
+  z-index: -3;
+  /* Rests slightly enlarged and settles back as the page scrolls. */
+  transform: scale(calc(1.07 - 0.07 * var(--p)));
+  transform-origin: 56% 38%;
+  opacity: calc(1 - 0.45 * var(--p));
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 46%, rgba(0, 0, 0, 0.55) 70%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 46%, rgba(0, 0, 0, 0.55) 70%, transparent 100%);
+  will-change: transform, opacity;
 }
-.rd-hero__stage img { display: block; width: 100%; height: 100%; max-width: none; pointer-events: none; }
-@supports not (width: 1cqw) {
-  .rd-hero__stage { inset: 0; width: 100%; height: 100%; }
-  .rd-hero__stage img { object-fit: cover; object-position: 50% 40%; }
-}
-.rd-hero__divider {
-  position: absolute;
-  z-index: 2;
-  top: 0;
-  bottom: 0;
-  left: var(--cut);
-  width: 2px;
-  margin-left: -1px;
-  background: var(--rd-paper);
-  box-shadow: 0 0 0 1px rgba(7, 29, 22, 0.22);
-  pointer-events: none;
-}
-.rd-hero__handle {
-  position: absolute;
-  left: 50%;
-  /* On the lower trunk, clear of the part of the palm that changed. */
-  top: 70%;
-  width: 2.75rem;
-  height: 2.75rem;
-  margin: -1.375rem 0 0 -1.375rem;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--rd-paper);
-  color: var(--rd-green-950);
-  box-shadow: 0 0 0 5px rgba(244, 240, 230, 0.3), 0 2px 12px rgba(7, 29, 22, 0.5);
-}
-/* The slider itself, for the keyboard and screen readers. Fingers and the mouse use the photo. */
-.rd-hero__range {
-  position: absolute;
-  z-index: 1;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  height: 1px;
-  margin: 0;
-  opacity: 0;
-  pointer-events: none;
-}
-.rd-hero__range:focus-visible ~ .rd-hero__divider .rd-hero__handle { outline: 3px solid var(--rd-go); outline-offset: 3px; }
-/* "Before" and "After" belong to their own photo, so each is wiped away with it. */
-.rd-hero__tag {
-  position: absolute;
-  z-index: 1;
-  bottom: 2.9rem;
-  padding: 0.2rem 0.55rem;
-  border-radius: var(--rd-radius);
-  background: rgba(7, 29, 22, 0.82);
-  color: var(--rd-on-dark);
-  font-size: 0.8125rem;
-  font-weight: 700;
-  line-height: 1.35;
-  pointer-events: none;
-}
-.rd-hero__tag--before { left: 0.75rem; }
-.rd-hero__tag--after { right: 0.75rem; }
-/* A sentence about the photos needs room; wide screens only. */
-.rd-hero__cap { display: none; }
-.rd-hero__cap p {
-  margin: 0;
-  max-width: 24rem;
-  padding: 0.6rem 0.85rem;
-  border-radius: var(--rd-radius);
-  background: rgba(7, 29, 22, 0.82);
-  color: var(--rd-on-dark);
-  font-size: 0.9375rem;
-  line-height: 1.35;
-  font-weight: 500;
-}
-/* Second frame, set in the photo's upper corner: the tree side of the business. */
-.rd-hero__inset {
-  position: absolute;
-  z-index: 3;
-  top: 0.75rem;
-  right: 0.75rem;
-  width: clamp(6.75rem, 29vw, 8.5rem);
-  padding: 0.25rem 0.25rem 0;
-  background: var(--rd-paper);
-  color: var(--rd-ink);
-  text-decoration: none;
-  cursor: pointer;
-  box-shadow: 0 6px 22px rgba(7, 29, 22, 0.35);
-}
-.rd-hero__inset img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
-.rd-hero__inset span { display: block; padding: 0.3rem 0.15rem 0.35rem; font-size: 0.75rem; font-weight: 700; line-height: 1.15; }
-.rd-hero__panel {
-  position: relative;
-  z-index: 1;
-  margin-top: -2.1rem;
-  padding: 2.5rem var(--rd-gutter) 1.15rem;
-  background: var(--rd-green-900);
-  /* A single angled cut where the photo meets the panel. */
-  clip-path: polygon(0 1.6rem, 100% 0, 100% 100%, 0 100%);
-}
+.rd-hero__media picture { display: block; width: 100%; height: 100%; }
+.rd-hero__media img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; }
+.rd-hero__glow { z-index: -2; }
+.rd-hero__shade { position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(to bottom, rgba(5, 8, 9, 0.4) 0, transparent 16%); }
+.rd-hero__inner { grid-row: 2; padding: 0 var(--rd-gutter) 1.15rem; transform: translateY(calc(var(--p) * -1.25rem)); }
 .rd-hero__title {
-  font-family: var(--rd-display);
-  font-weight: 800;
-  font-size: clamp(2.2rem, 10.2vw, 3.1rem);
-  line-height: 0.95;
-  letter-spacing: -0.008em;
-  text-transform: uppercase;
   margin: 0;
+  font-family: var(--rd-display);
+  font-weight: 600;
+  font-size: clamp(2.1rem, 10.1vw, 2.9rem);
+  line-height: 1.02;
+  letter-spacing: -0.047em;
 }
 .rd-hero__title span { display: block; }
-.rd-hero__title .rd-hero__place {
-  margin-top: 0.5rem;
-  font-size: 0.46em;
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: 0.01em;
-  color: var(--rd-on-dark-2);
-}
-.rd-hero__facts { margin: 0.7rem 0 0; font-size: 0.9375rem; line-height: 1.4; color: var(--rd-on-dark-2); }
-.rd-hero__facts a { color: var(--rd-on-dark); font-weight: 600; }
-.rd-hero__facts span { display: block; }
-.rd-hero__stars { display: inline-flex; align-items: center; gap: 0.35rem; margin-top: 0.2rem; }
-.rd-hero__stars svg { color: var(--rd-on-dark); }
-.rd-hero__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-top: 0.95rem; }
+.rd-hero__lead { margin: 0.8rem 0 0; max-width: 34rem; font-size: 1.0625rem; line-height: 1.45; letter-spacing: -0.008em; color: #e3ece9; }
+.rd-hero__proof { display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.65rem; min-height: 1.75rem; font-size: 0.9375rem; font-weight: 500; color: var(--rd-text); text-decoration: none; }
+.rd-hero__proof svg { color: var(--rd-accent); }
+.rd-hero__proof span { text-decoration: underline; text-decoration-color: rgba(255, 255, 255, 0.35); text-underline-offset: 0.22em; }
+.rd-hero__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem; margin-top: 0.85rem; }
 .rd-hero__actions .rd-btn--go { grid-column: 1 / -1; min-height: 3.4rem; font-size: 1.125rem; }
-.rd-hero__actions .rd-btn--line { min-height: 3rem; border-color: rgba(244, 240, 230, 0.45); padding: 0 0.6rem; }
+.rd-hero__actions .rd-btn--line { min-height: 3rem; padding: 0 0.6rem; }
 .rd-hero__num { display: none; }
 
 @media (min-width: 600px) and (max-width: 999.98px) {
-  .rd-hero__photo { min-height: 20rem; }
-  .rd-hero__title { font-size: clamp(3rem, 7.4vw, 4.2rem); }
+  .rd-hero__media { height: 72%; }
+  .rd-hero__inner { padding-bottom: 2.25rem; }
+  .rd-hero__title { font-size: clamp(3rem, 7.4vw, 4rem); }
   .rd-hero__actions { grid-template-columns: auto auto auto; justify-content: start; }
   .rd-hero__actions .rd-btn--go { grid-column: auto; }
   .rd-hero__actions .rd-btn--line { padding: 0 1.2rem; }
   .rd-hero__num { display: inline; }
-  .rd-hero__tag { bottom: 3.4rem; }
 }
 
 @media (min-width: 1000px) {
-  .rd-hero {
-    display: grid;
-    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
-    grid-template-rows: auto;
-    min-height: min(calc(100svh - var(--rd-hd-h)), 52rem);
+  .rd-hero { grid-template-rows: 1fr; min-height: min(100svh, 60rem); }
+  /* The photo fills the screen, a touch oversize and nudged left so the climber and his saw clear the headline. */
+  .rd-hero__media {
+    inset: 0 auto 0 -12%;
+    width: 112%;
+    height: 100%;
+    transform-origin: 52% 40%;
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 40%, rgba(0, 0, 0, 0.6) 62%, rgba(0, 0, 0, 0.16) 84%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 40%, rgba(0, 0, 0, 0.6) 62%, rgba(0, 0, 0, 0.16) 84%, transparent 100%);
   }
-  .rd-hero__photo { min-height: 36rem; }
-  /* The taller crop, with the fronds. */
-  .rd-hero__stage { --ar: 0.96; --fy: 0.35; }
-  .rd-hero__handle { top: 78%; width: 3rem; height: 3rem; margin: -1.5rem 0 0 -1.5rem; }
-  .rd-hero__tag { bottom: 1.5rem; font-size: 0.875rem; }
-  .rd-hero__tag--before { left: 1.5rem; }
-  .rd-hero__tag--after { right: 1.5rem; z-index: 2; }
-  .rd-hero__cap { display: block; position: absolute; z-index: 3; left: 1.5rem; top: 1.5rem; pointer-events: none; }
-  .rd-hero__inset { top: 1.5rem; right: 1.5rem; width: clamp(11rem, 15vw, 14rem); padding: 0.35rem 0.35rem 0; }
-  .rd-hero__inset span { font-size: 0.8125rem; padding: 0.4rem 0.2rem 0.45rem; }
-  .rd-hero__panel {
-    margin: 0;
-    clip-path: none;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    padding: 3rem clamp(1.5rem, 3.4vw, 3.5rem) clamp(2.5rem, 5vh, 4rem) clamp(1.75rem, 3.6vw, 3.75rem);
-  }
-  .rd-hero__title { font-size: clamp(2.9rem, 4.5vw, 5rem); line-height: 0.93; }
+  .rd-hero__media img { object-position: 50% 50%; }
+  .rd-hero__shade { background: linear-gradient(to bottom, rgba(5, 8, 9, 0.42) 0, transparent 14%), linear-gradient(to left, rgba(5, 8, 9, 0.5) 0%, rgba(5, 8, 9, 0.26) 34%, transparent 56%); }
+  /* Headline in the open sky on the right; palms and climber keep the left. */
+  .rd-hero__inner { grid-row: 1; align-self: end; justify-self: end; padding: 0 clamp(1.5rem, 5vw, 5rem) clamp(5rem, 12.5vh, 7.5rem) 0; }
+  .rd-hero__title { font-size: clamp(3rem, 4.4vw, 4.4rem); }
   .rd-hero__title span { white-space: nowrap; }
-  .rd-hero__title .rd-hero__place { font-size: 0.34em; margin-top: 0.9rem; }
-  .rd-hero__facts { margin-top: 1.4rem; font-size: 1.0625rem; max-width: 30rem; }
-  .rd-hero__actions { grid-template-columns: auto auto; justify-content: start; gap: 0.75rem; margin-top: 1.75rem; }
-  .rd-hero__actions .rd-btn--go { grid-column: 1 / -1; justify-self: start; min-height: 3.75rem; padding: 0 2rem; font-size: 1.1875rem; }
-  .rd-hero__actions .rd-btn--line { min-height: 3.1rem; padding: 0 1.15rem; }
+  .rd-hero__lead { margin-top: 1.15rem; max-width: 30rem; font-size: 1.1875rem; }
+  .rd-hero__proof { margin-top: 0.8rem; }
+  .rd-hero__actions { grid-template-columns: auto auto auto; justify-content: start; gap: 0.65rem; margin-top: 1.5rem; }
+  .rd-hero__actions .rd-btn--go { grid-column: auto; min-height: 3.5rem; padding: 0 1.6rem; }
+  .rd-hero__actions .rd-btn--line { min-height: 3.5rem; padding: 0 1.2rem; }
   .rd-hero__num { display: inline; }
 }
 
+/* Less motion asked for: the opening holds still, at its settled size. */
 @media (prefers-reduced-motion: reduce) {
-  .rd-btn { transition: none; }
+  .rd-hero__media { transform: none; opacity: 1; }
+  .rd-hero__inner { transform: none; }
+  .rd-btn, .rd-hd { transition: none; }
 }

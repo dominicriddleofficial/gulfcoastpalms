@@ -49,6 +49,15 @@ export default function Header() {
   const menu = useMenu();
 
   useEffect(() => setOpenId(null), [pathname]);
+  // The glass bar turns more solid once the page has moved. Written straight to the
+  // element so scrolling never re-renders the header.
+  const bar = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const update = () => { bar.current?.setAttribute("data-scrolled", String(window.scrollY > 8)); };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, [pathname]);
   useEffect(() => {
     if (!openId) return;
     const onDown = (e: PointerEvent) => { if (!navRef.current?.contains(e.target as Node)) setOpenId(null); };
@@ -61,7 +70,7 @@ export default function Header() {
   const current = (to: string) => (pathname === to ? ("page" as const) : undefined);
 
   return (
-    <header className="rd-hd">
+    <header className="rd-hd" ref={bar}>
       <div className="rd-hd__bar">
         <Brand />
 

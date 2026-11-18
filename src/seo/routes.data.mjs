@@ -5,6 +5,9 @@
  * see `src/seo/routeMeta.ts` for the typed public API.
  */
 
+import { REDESIGN_LIVE } from "../redesign/live.mjs";
+import { applyRedesignSeo } from "../redesign/seo.data.mjs";
+
 export const SITE_ORIGIN = "https://gulfcoastpalmservices.com";
 export const DEFAULT_OG_IMAGE = `${SITE_ORIGIN}/og-image.jpg`;
 export const DEFAULT_OG_IMAGE_ALT =
@@ -88,7 +91,8 @@ export const rawRoutes = [
 
 export function buildRouteMeta() {
   return rawRoutes.map((r) => {
-    const source = rawRoutes.find((target) => target.path === r.canonicalPath) || r;
+    // The redesign's titles and descriptions apply to the real pages only once it is live.
+    const source = applyRedesignSeo(rawRoutes.find((target) => target.path === r.canonicalPath) || r, REDESIGN_LIVE);
     return {
     path: r.path,
     title: source.title,

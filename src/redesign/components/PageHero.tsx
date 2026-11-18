@@ -61,12 +61,13 @@ export default function PageHero({ crumbs, title, lead, photo, frames, service, 
             Text a photo
           </TextLink>
         </div>
+        {/* What the photo shows, in words, under the buttons where it never covers the picture. */}
+        {photo && layout === "photo" && photo.caption && <p className="rd-phero__cap">Photo: {photo.caption}</p>}
       </div>
       {photo && layout === "photo" && (
-        <figure className="rd-phero__photo">
+        <div className="rd-phero__photo">
           <Photo src={photo.src} alt={photo.alt} focus={photo.focus} sizes="(min-width: 1000px) 52vw, 100vw" eager />
-          {photo.caption && <figcaption>{photo.caption}</figcaption>}
-        </figure>
+        </div>
       )}
       {frames && (
         <div className="rd-phero__frames">

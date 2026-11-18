@@ -18,7 +18,7 @@ import Work from "../home/Work";
  */
 export default function Home() {
   return (
-    <Layout season={false}>
+    <Layout season={false} over>
       <SEOHead
         title="Gulf Coast Palms | Tree Services & Palm Care on the Emerald Coast"
         description="Tree trimming, tree removal, storm cleanup and palm care across Navarre, Pensacola, Destin and the Emerald Coast. Free quotes — (850) 910-1290."
@@ -26,8 +26,9 @@ export default function Home() {
       />
       <FAQPageJsonLd questions={homeFaqs} />
       <Hero />
-      <SeasonStrip where="below" />
+      {/* Nothing sits between the opening and the next section: its glow runs straight on. */}
       <Routes />
+      <SeasonStrip where="below" />
       <Work />
       <TreeWork />
       <Proof />

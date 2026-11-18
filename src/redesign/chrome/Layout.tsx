@@ -33,6 +33,8 @@ interface LayoutProps {
   chat?: boolean;
   /** The homepage places the season notice itself, under its opening screen. */
   season?: boolean;
+  /** The page opens with a full-width photo, so the header floats over it. */
+  over?: boolean;
 }
 
 const SEASON_KEY = "gcpalms_banner_dismissed";
@@ -82,7 +84,7 @@ function useIdleMount() {
   return ready;
 }
 
-export default function RedesignLayout({ children, legacy = false, dock = true, chat = true, season = true }: LayoutProps) {
+export default function RedesignLayout({ children, legacy = false, dock = true, chat = true, season = true, over = false }: LayoutProps) {
   const { pathname, hash } = useLocation();
   const navType = useNavigationType();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -128,9 +130,9 @@ export default function RedesignLayout({ children, legacy = false, dock = true, 
 
   return (
     <MenuContext.Provider value={menu}>
-      <div className={`rd rd-page${legacy ? " rd-legacy" : ""}${dock ? " rd-page--dock" : ""}`}>
+      <div className={`rd rd-page${legacy ? " rd-legacy" : ""}${dock ? " rd-page--dock" : ""}${over ? " rd-page--over" : ""}`}>
         <Helmet>
-          <link rel="preload" as="font" type="font/woff2" href="/fonts/gcp-archivo-condensed.woff2" crossOrigin="anonymous" />
+          <link rel="preload" as="font" type="font/woff2" href="/fonts/gcp-geist.woff2" crossOrigin="anonymous" />
         </Helmet>
         <LocalBusinessJsonLd />
         <a className="rd-skip" href="#rd-main">Skip to content</a>

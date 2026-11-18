@@ -1,14 +1,15 @@
 /**
- * The two ways in: Tree Services and Palm Services, side by side and the same size.
+ * The two ways in: Tree Services and Palm Services, as two large photographs.
  *
- * Both photos are shown at the size of the smaller one. The tree photo is a 720-pixel
- * frame from the job video, and giving the palm side a bigger picture would quietly
- * rank palm work above tree work. The service rows go straight to each service page.
+ * Each photo dissolves into its panel the same way the opening screen dissolves into
+ * the page. Under it are direct links to the individual service pages and the quote
+ * button for that kind of work. The sentence above the two panels links straight to
+ * the two pages most people are looking for, in plain descriptive words.
  */
 import { Link } from "react-router-dom";
 import { publicMarketing } from "@/data/publicMarketing";
-import treeFrame from "@/assets/facebook/tree-removal-1.jpg?w=360;540;720&format=avif;webp;jpg&as=picture";
-import palmFrame from "@/assets/redesign/palm-canary-home.jpg?w=512;768;1024&format=avif;webp;jpg&as=picture";
+import treePhoto from "@/assets/facebook/tree-removal-1.jpg?w=480;720&format=avif;webp;jpg&as=picture";
+import palmPhoto from "@/assets/redesign/palm-canary-home.jpg?w=512;768;1024;1400&format=avif;webp;jpg&as=picture";
 import Photo from "../components/Photo";
 import { palmServices, shortLabel, treeServices, type NavItem } from "../data/nav";
 import { QuoteLink } from "../lib/actions";
@@ -19,25 +20,25 @@ const pick = (items: NavItem[], paths: string[]) => paths.flatMap((to) => items.
 const DOORS = [
   {
     id: "tree",
-    title: "Tree Services",
+    title: "Tree services",
     to: "/services/tree-trimming-removal",
     // Wording from the current homepage.
     blurb: "Experienced tree crews, including an experienced climber. Site assessment and a written scope for your property.",
-    photo: treeFrame,
+    photo: treePhoto,
     alt: "A worker in a helmet with a chainsaw at the base of a tall leaning tree, close beside a multi-story building",
-    caption: "Tree removal: the sawyer at the base of a tall leaning tree",
+    focus: "50% 62%",
     items: pick(treeServices, ["/services/tree-removal", "/services/tree-trimming", "/services/storm-damage-cleanup"]),
     all: { label: "All tree services", to: "/services/tree-trimming-removal" },
     quote: { service: "Tree Trimming & Removal", label: "Get a tree quote", placement: "home_services_tree" },
   },
   {
     id: "palm",
-    title: "Palm Services",
+    title: "Palm services",
     to: "/services/palm-tree-trimming",
     blurb: "Established palm expertise: trimming, diamond cutting, trunk skinning, installations and removals.",
-    photo: palmFrame,
+    photo: palmPhoto,
     alt: "A trimmed date palm and a row of sabal palms in front of a home at dusk",
-    caption: "Date palm and sabals after trimming",
+    focus: "40% 40%",
     items: pick(palmServices, ["/services/palm-tree-trimming", "/services/palm-diamond-cutting", "/services/palm-tree-trunk-skinning"]),
     all: { label: "All palm services", to: "/services" },
     quote: { service: "Palm Tree Trimming", label: "Get a palm quote", placement: "home_services_palm" },
@@ -47,44 +48,50 @@ const DOORS = [
 export default function Routes() {
   return (
     <section className="rd-routes rd-section" aria-labelledby="rd-routes-title">
+      <div className="rd-carry" aria-hidden="true" />
       <div className="rd-wrap">
         <div className="rd-routes__intro">
           <h2 id="rd-routes-title" className="rd-h2">{publicMarketing.servicesHeading}</h2>
-          <p className="rd-copy rd-muted">{publicMarketing.servicesText}</p>
+          <div className="rd-stack">
+            <p className="rd-copy">{publicMarketing.servicesText}</p>
+            <p className="rd-copy">
+              Go straight to <Link className="rd-link" to="/services/tree-removal">tree removal on the Emerald Coast</Link> or{" "}
+              <Link className="rd-link" to="/services/palm-tree-trimming">palm tree trimming and care</Link>.
+            </p>
+          </div>
         </div>
         <div className="rd-routes__grid">
           {DOORS.map((door) => (
             <article key={door.id} className={`rd-door rd-door--${door.id}`} aria-labelledby={`rd-door-${door.id}`}>
-              <div className="rd-door__head">
-                <h3 id={`rd-door-${door.id}`} className="rd-door__title">
-                  <Link to={door.to}>{door.title}</Link>
-                </h3>
-                <figure className="rd-print rd-door__print">
-                  <Photo src={door.photo} alt={door.alt} sizes="(min-width: 900px) 22rem, 56vw" focus={door.id === "palm" ? "40% 35%" : undefined} />
-                  <figcaption>{door.caption}</figcaption>
-                </figure>
+              <Link to={door.to} className="rd-door__media" aria-labelledby={`rd-door-${door.id}`}>
+                <Photo src={door.photo} alt={door.alt} sizes="(min-width: 900px) 38rem, 92vw" focus={door.focus} />
+                <div className="rd-door__head">
+                  <h3 id={`rd-door-${door.id}`} className="rd-door__title">{door.title}</h3>
+                </div>
+              </Link>
+              <div className="rd-door__body">
                 <p className="rd-door__blurb">{door.blurb}</p>
-              </div>
-              <ul className="rd-rows">
-                {door.items.map((item) => (
-                  <li key={item.to}>
-                    <Link to={item.to}>
-                      <b>{shortLabel(item)}</b>
-                      {item.note && <span>{item.note}</span>}
+                <ul className="rd-rows">
+                  {door.items.map((item) => (
+                    <li key={item.to}>
+                      <Link to={item.to}>
+                        <b>{shortLabel(item)}</b>
+                        {item.note && <span>{item.note}</span>}
+                        <ArrowRightIcon size={20} />
+                      </Link>
+                    </li>
+                  ))}
+                  <li>
+                    <Link to={door.all.to}>
+                      <b>{door.all.label}</b>
                       <ArrowRightIcon size={20} />
                     </Link>
                   </li>
-                ))}
-                <li>
-                  <Link to={door.all.to}>
-                    <b>{door.all.label}</b>
-                    <ArrowRightIcon size={20} />
-                  </Link>
-                </li>
-              </ul>
-              <QuoteLink placement={door.quote.placement} service={door.quote.service} className="rd-btn rd-btn--go rd-door__quote">
-                {door.quote.label}
-              </QuoteLink>
+                </ul>
+                <QuoteLink placement={door.quote.placement} service={door.quote.service} className="rd-btn rd-btn--go rd-door__quote">
+                  {door.quote.label}
+                </QuoteLink>
+              </div>
             </article>
           ))}
         </div>
