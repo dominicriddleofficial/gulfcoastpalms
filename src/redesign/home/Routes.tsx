@@ -6,6 +6,7 @@
  * button for that kind of work. The sentence above the two panels links straight to
  * the two pages most people are looking for, in plain descriptive words.
  */
+import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { publicMarketing } from "@/data/publicMarketing";
 import treePhoto from "@/assets/facebook/tree-removal-1.jpg?w=480;720&format=avif;webp;jpg&as=picture";
@@ -48,11 +49,10 @@ const DOORS = [
 export default function Routes() {
   return (
     <section className="rd-routes rd-section" aria-labelledby="rd-routes-title">
-      <div className="rd-carry" aria-hidden="true" />
       <div className="rd-wrap">
-        <div className="rd-routes__intro">
-          <h2 id="rd-routes-title" className="rd-h2">{publicMarketing.servicesHeading}</h2>
-          <div className="rd-stack">
+        <div className="rd-routes__intro" data-rv="">
+          <h2 id="rd-routes-title" className="rd-h2 rd-rise">{publicMarketing.servicesHeading}</h2>
+          <div className="rd-stack rd-rise" style={{ "--i": 1 } as CSSProperties}>
             <p className="rd-copy">{publicMarketing.servicesText}</p>
             <p className="rd-copy">
               Go straight to <Link className="rd-link" to="/services/tree-removal">tree removal on the Emerald Coast</Link> or{" "}
@@ -62,8 +62,8 @@ export default function Routes() {
         </div>
         <div className="rd-routes__grid">
           {DOORS.map((door) => (
-            <article key={door.id} className={`rd-door rd-door--${door.id}`} aria-labelledby={`rd-door-${door.id}`}>
-              <Link to={door.to} className="rd-door__media" aria-labelledby={`rd-door-${door.id}`}>
+            <article key={door.id} className={`rd-door rd-door--${door.id} rd-rise`} aria-labelledby={`rd-door-${door.id}`} data-rv="" data-spot="">
+              <Link to={door.to} className="rd-door__media rd-wipe" aria-labelledby={`rd-door-${door.id}`}>
                 <Photo src={door.photo} alt={door.alt} sizes="(min-width: 900px) 38rem, 92vw" focus={door.focus} />
                 <div className="rd-door__head">
                   <h3 id={`rd-door-${door.id}`} className="rd-door__title">{door.title}</h3>

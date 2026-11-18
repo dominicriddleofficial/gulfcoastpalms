@@ -53,8 +53,8 @@ export function SequenceFrames({ frames, label, labelledBy, eager = false }: { f
 
 export default function Sequence({ id, heading, note, frames, action }: SequenceProps) {
   return (
-    <div className="rd-seq">
-      <div className="rd-seq__head">
+    <div className="rd-seq" data-rv="">
+      <div className="rd-seq__head rd-rise">
         <h2 id={id} className="rd-h2">{heading}</h2>
         <p className="rd-copy">{note}</p>
         {action}

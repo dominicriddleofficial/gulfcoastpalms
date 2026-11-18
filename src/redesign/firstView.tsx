@@ -79,6 +79,6 @@ export function renderFirstView(base: string = REDESIGN_PREVIEW_BASE): string {
   );
   return (
     `<div id="${FIRST_VIEW_ID}" data-rd-first-view><style>${RESET}${css}</style>${body}`
-    + `<script>window.__gcpFirstView=document.getElementById("${FIRST_VIEW_ID}").outerHTML;${EARLY_MENU_TAP}</script></div>`
+    + `<script>window.__gcpT0=performance.now();window.__gcpFirstView=document.getElementById("${FIRST_VIEW_ID}").outerHTML;${EARLY_MENU_TAP}</script></div>`
   );
 }

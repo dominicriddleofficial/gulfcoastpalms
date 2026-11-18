@@ -31,9 +31,9 @@ export default function QuoteBand({
   quoteLabel = "Get a Free Quote",
 }: QuoteBandProps) {
   return (
-    <section className="rd-quoteband rd-dark" aria-labelledby="rd-quoteband-title">
+    <section className="rd-quoteband rd-dark" aria-labelledby="rd-quoteband-title" data-rv="">
       <div className="rd-wrap rd-quoteband__grid">
-        <div className="rd-stack">
+        <div className="rd-stack rd-rise">
           <h2 id="rd-quoteband-title" className="rd-h2">{heading}</h2>
           <p className="rd-lead">{text}</p>
           <div className="rd-quoteband__main">
@@ -44,16 +44,16 @@ export default function QuoteBand({
             </CallLink>
           </div>
         </div>
-        <PhotoSteps placement={placement} textLabel={textLabel} />
+        <PhotoSteps placement={placement} textLabel={textLabel} className="rd-rise" />
       </div>
     </section>
   );
 }
 
 /** The three text-a-photo steps. Also shown beside the quote form on wide screens. */
-export function PhotoSteps({ placement, textLabel = "Text a photo" }: { placement: string; textLabel?: string }) {
+export function PhotoSteps({ placement, textLabel = "Text a photo", className }: { placement: string; textLabel?: string; className?: string }) {
   return (
-    <div className="rd-photosteps">
+    <div className={className ? `rd-photosteps ${className}` : "rd-photosteps"}>
       <h3 className="rd-h3">Quickest: text us a photo</h3>
       <ol>
         <li>Stand back at a safe distance and take a photo of the tree or palm.</li>

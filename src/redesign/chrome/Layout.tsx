@@ -6,11 +6,12 @@
  * rendered inside this same frame with `legacy` set, which re-colours and re-sets
  * their existing markup to match (see the "Older pages" block in styles/site.css).
  */
-import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from "react";
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useLocation, useNavigationType } from "react-router-dom";
 import { LocalBusinessJsonLd } from "@/components/JsonLd";
 import { trackEvent } from "@/lib/analytics";
+import { motionShift } from "../lib/motion";
 import Dock from "./Dock";
 import Footer from "./Footer";
 import Header from "./Header";
@@ -91,6 +92,8 @@ export default function RedesignLayout({ children, legacy = false, dock = true, 
   const [menuWanted, setMenuWanted] = useState(false);
   const [dockShown, setDockShown] = useState(false);
   const idle = useIdleMount();
+  // Lets animations that began in the prebuilt first screen carry on, not restart. Read once.
+  const [shift] = useState(motionShift);
 
   // A new page starts at the top; the back button keeps the browser's own position.
   useLayoutEffect(() => {
@@ -130,7 +133,10 @@ export default function RedesignLayout({ children, legacy = false, dock = true, 
 
   return (
     <MenuContext.Provider value={menu}>
-      <div className={`rd rd-page${legacy ? " rd-legacy" : ""}${dock ? " rd-page--dock" : ""}${over ? " rd-page--over" : ""}`}>
+      <div
+        className={`rd rd-page${legacy ? " rd-legacy" : ""}${dock ? " rd-page--dock" : ""}${over ? " rd-page--over" : ""}`}
+        style={shift ? ({ "--rd-shift": shift } as CSSProperties) : undefined}
+      >
         <Helmet>
           <link rel="preload" as="font" type="font/woff2" href="/fonts/gcp-geist.woff2" crossOrigin="anonymous" />
         </Helmet>

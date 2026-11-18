@@ -2,12 +2,14 @@
  * Gulf Coast Palms public site, part 1 of 2: colours, type, buttons, header and the
  * opening screen.
  *
- * The look is taken from the CRM the owner already approved: the same near-black
- * surfaces, the same emerald accent, the same fine edges, and the same glow that rises
- * from the bottom edge of a surface and is gone halfway up. The values are copied
- * from the CRM's own theme, not approximated:
- *   colours   src/contexts/WorkspaceThemeContext.tsx   (GCP_THEME)
- *   the fade  src/styles/platform.css                  (.platform-fade)
+ * White surfaces, lit from below. The light is the one the owner approved in the CRM:
+ * the same emerald, and the same glow that rises from the bottom edge of a surface and
+ * is gone halfway up. Here it shines onto white instead of near-black. The values
+ * come from the CRM's own theme, not from guesswork:
+ *   the emerald   src/contexts/WorkspaceThemeContext.tsx   (GCP_THEME, #34E8A8)
+ *   the fade      src/styles/platform.css                  (.platform-fade: bottom half
+ *                 of the surface, accent mixed 72% then 48% into the background, plus
+ *                 a 0.3 bloom)
  *
  * Everything the first screen needs is in this file on purpose. The prebuilt first
  * view (src/redesign/firstView.tsx) inlines it into the page's HTML, so the opening
@@ -35,42 +37,60 @@
 }
 
 .rd {
-  /* CRM surfaces */
-  --rd-bg: #050809;
-  --rd-well: #080c0e;
-  --rd-card: #0c1214;
-  --rd-raise: #101719;
-  /* CRM accent */
+  /* White surfaces */
+  --rd-bg: #ffffff;
+  --rd-well: #f4f8f6;
+  --rd-card: #ffffff;
+  --rd-raise: #fbfdfc;
+  /* The CRM's emerald: bright for fills and light, deep for words and icons on white. */
   --rd-accent: #34e8a8;
   --rd-accent-rgb: 52, 232, 168;
-  --rd-accent-press: #5cf0bb;
+  --rd-accent-press: #22dc98;
   --rd-accent-ink: #04130e;
-  /* The CRM fade's two colours: the accent mixed 72% and 48% into the background. */
-  --rd-fade-72: #27a97c;
-  --rd-fade-48: #1c7355;
-  /* Text, brightest to quietest. All pass contrast on the surfaces above. */
-  --rd-text: #f0f6f4;
-  --rd-copy-ink: #d2dedb;
-  --rd-text-2: #a3b2b4;
-  --rd-text-3: #93a3a5;
-  /* Fine edges */
-  --rd-edge: rgba(255, 255, 255, 0.07);
-  --rd-edge-2: rgba(255, 255, 255, 0.14);
-  --rd-edge-accent: rgba(var(--rd-accent-rgb), 0.23);
-  --rd-error: #f87171;
+  --rd-deep: #05724c;
+  --rd-deep-rgb: 5, 114, 76;
+  /* Anything small that is "in the accent colour" (links, icons, labels) uses this. */
+  --rd-signal: var(--rd-deep);
+  /* The CRM fade's two colours, mixed into white: 72% and 48% emerald. */
+  --rd-fade-72: #6deec0;
+  --rd-fade-48: #9ef4d5;
+  /*
+   * The light, as one background any surface can use on its bottom half. From the top
+   * of the list down: a low white lens on the edge (light is white where it is hottest),
+   * then the CRM's two layers unchanged: the 0.3 bloom and the fade through the 72%
+   * and 48% mixes that is gone at the top of the half.
+   */
+  --rd-light:
+    radial-gradient(58% 26% at 50% 100%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.5) 46%, rgba(255, 255, 255, 0) 100%),
+    radial-gradient(120% 95% at 50% 108%, rgba(var(--rd-accent-rgb), 0.3), transparent 72%),
+    linear-gradient(to top, var(--rd-fade-72) 0%, var(--rd-fade-48) 38%, transparent 100%);
+  /* Text, darkest to quietest. All pass contrast on white and on the glow. */
+  --rd-text: #04130e;
+  --rd-copy-ink: #22332d;
+  --rd-text-2: #45554f;
+  --rd-text-3: #5f6e68;
+  /* Fine edges and glass */
+  --rd-edge: rgba(4, 19, 14, 0.08);
+  --rd-edge-2: rgba(4, 19, 14, 0.14);
+  --rd-edge-accent: rgba(var(--rd-deep-rgb), 0.3);
+  --rd-glass: rgba(255, 255, 255, 0.66);
+  --rd-glass-strong: rgba(255, 255, 255, 0.9);
+  --rd-wash: rgba(4, 19, 14, 0.045);
+  --rd-shadow: 0 1px 2px rgba(4, 19, 14, 0.04), 0 14px 34px -14px rgba(4, 19, 14, 0.16);
+  --rd-error: #b42318;
 
   /* Names the rest of the stylesheet already uses, pointed at the values above. */
-  --rd-green-950: #030506;
+  --rd-green-950: var(--rd-text);
   --rd-green-900: var(--rd-bg);
   --rd-green-800: var(--rd-card);
-  --rd-green-700: var(--rd-accent);
-  --rd-green-600: var(--rd-accent);
+  --rd-green-700: var(--rd-deep);
+  --rd-green-600: var(--rd-deep);
   --rd-charcoal: var(--rd-bg);
   --rd-ink: var(--rd-text);
   --rd-muted: var(--rd-text-3);
   --rd-paper: var(--rd-bg);
   --rd-paper-2: var(--rd-well);
-  --rd-paper-3: var(--rd-card);
+  --rd-paper-3: #e7efeb;
   --rd-white: var(--rd-card);
   --rd-go: var(--rd-accent);
   --rd-go-press: var(--rd-accent-press);
@@ -90,26 +110,27 @@
   --rd-max: 77.5rem;
   --rd-section: clamp(4rem, 10vw, 8rem);
   --rd-radius: 10px;
-  --rd-radius-lg: 18px;
+  --rd-radius-lg: 20px;
   --rd-hd-h: 3.5rem;
+  /* The gap between the floating header and the screen edge. */
+  --rd-hd-pad: 0.5rem;
   --rd-dock-h: 0px;
   --rd-ease: cubic-bezier(0.2, 0.7, 0.1, 1);
-  /* A lit surface: where a card or band needs the CRM's top-left sheen. */
-  --rd-sheen: linear-gradient(140deg, rgba(255, 255, 255, 0.025), transparent 50%);
+  --rd-sheen: linear-gradient(140deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 50%);
 
   font-family: var(--rd-body);
   font-size: 1.0625rem;
   line-height: 1.55;
   color: var(--rd-text);
   background: var(--rd-bg);
-  color-scheme: dark;
+  color-scheme: light;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
 @media (min-width: 1000px) {
-  .rd { --rd-hd-h: 3.75rem; }
+  .rd { --rd-hd-h: 3.75rem; --rd-hd-pad: 0.75rem; }
 }
 
 .rd-wrap {
@@ -119,7 +140,7 @@
   padding-inline: var(--rd-gutter);
 }
 
-/* Type. One family throughout. Headlines are sentence case, semi-bold and set tight, as in the CRM. */
+/* Type. One family throughout. Headlines are sentence case, semi-bold and set tight. */
 .rd-h1,
 .rd-h2 {
   font-family: var(--rd-display);
@@ -145,11 +166,11 @@
 .rd-muted { color: var(--rd-text-3); }
 .rd-dark { background: var(--rd-bg); color: var(--rd-text); }
 .rd-dark .rd-muted { color: var(--rd-text-2); }
-.rd-link { color: var(--rd-text); text-decoration: underline; text-decoration-color: rgba(var(--rd-accent-rgb), 0.6); text-decoration-thickness: 1.5px; text-underline-offset: 0.22em; }
-.rd-link:hover { text-decoration-color: var(--rd-accent); }
+.rd-link { color: var(--rd-text); text-decoration: underline; text-decoration-color: rgba(var(--rd-deep-rgb), 0.55); text-decoration-thickness: 1.5px; text-underline-offset: 0.22em; }
+.rd-link:hover { color: var(--rd-deep); text-decoration-color: var(--rd-deep); }
 /* The CRM's small label: accent, spaced capitals, led by a short lit line. Used sparingly. */
-.rd-eyebrow { display: flex; align-items: center; gap: 0.55rem; margin: 0 0 0.9rem; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--rd-accent); }
-.rd-eyebrow::before { content: ""; width: 1.1rem; height: 1px; background: var(--rd-accent); box-shadow: 0 0 8px rgba(var(--rd-accent-rgb), 0.4); }
+.rd-eyebrow { display: flex; align-items: center; gap: 0.55rem; margin: 0 0 0.9rem; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--rd-signal); }
+.rd-eyebrow::before { content: ""; width: 1.1rem; height: 1px; background: var(--rd-signal); box-shadow: 0 0 8px rgba(var(--rd-accent-rgb), 0.8); }
 
 .rd-sr {
   position: absolute;
@@ -165,8 +186,9 @@
 
 /*
  * The CRM fade, as a reusable layer. It covers the bottom half of whatever it sits in:
- * brightest on the bottom edge, gone at the halfway line. --rd-glow scales it down for
- * quieter surfaces; the opening screen uses it at full strength.
+ * brightest on the bottom edge, gone at the halfway line. Same recipe as the CRM's
+ * .platform-fade (a 0.3 bloom over a straight fade that passes through the 72% and 48%
+ * mixes), here mixed into white. --rd-glow turns it down for quieter surfaces.
  */
 .rd-fade {
   position: absolute;
@@ -176,9 +198,39 @@
   height: 50%;
   pointer-events: none;
   opacity: var(--rd-glow, 1);
-  background:
-    radial-gradient(120% 95% at 50% 108%, rgba(var(--rd-accent-rgb), 0.3), transparent 72%),
-    linear-gradient(to top, var(--rd-fade-72) 0%, var(--rd-fade-48) 38%, transparent 100%);
+  background: var(--rd-light);
+}
+/*
+ * A surface lit from its own bottom edge. Two parts: the fade above (::before), and a
+ * fine line of light on the edge itself that the fade appears to come from (::after).
+ * Put the class on any panel; --rd-glow sets how strong it is there.
+ */
+.rd-lit { position: relative; isolation: isolate; }
+.rd-lit::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 50%;
+  border-bottom-left-radius: inherit;
+  border-bottom-right-radius: inherit;
+  pointer-events: none;
+  opacity: var(--rd-glow, 0.4);
+  background: var(--rd-light);
+  transform-origin: 50% 100%;
+}
+.rd-lit::after {
+  content: "";
+  position: absolute;
+  left: 9%;
+  right: 9%;
+  bottom: 0;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(var(--rd-accent-rgb), 0), rgba(11, 190, 128, 0.9) 28%, #f2fffa 50%, rgba(11, 190, 128, 0.9) 72%, rgba(var(--rd-accent-rgb), 0));
+  box-shadow: 0 0 14px 1px rgba(var(--rd-accent-rgb), 0.75);
 }
 
 /* Buttons. The emerald is reserved for the quote action. */
@@ -205,27 +257,49 @@
 }
 .rd-btn:active { transform: translateY(1px) scale(0.985); }
 .rd-btn svg { flex: none; }
-/* Brightest thing on the page: a light edge, a dark keyline so it holds on the glow, and a contained halo. */
-.rd-btn--go {
-  background: var(--rd-accent);
-  color: var(--rd-accent-ink);
-  border-color: rgba(255, 255, 255, 0.55);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 0 0 1px rgba(4, 19, 14, 0.55), 0 10px 28px -8px rgba(var(--rd-accent-rgb), 0.55), 0 0 40px rgba(var(--rd-accent-rgb), 0.18);
+/* Brightest thing on the page: the CRM emerald with a defined dark-green edge and a contained halo. */
+@property --rd-turn {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
 }
-.rd-btn--go:hover { background: var(--rd-accent-press); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 0 0 1px rgba(4, 19, 14, 0.55), 0 12px 32px -8px rgba(var(--rd-accent-rgb), 0.7), 0 0 52px rgba(var(--rd-accent-rgb), 0.26); }
-/* Smoked glass, as on the CRM's bars. */
+.rd-btn--go {
+  position: relative;
+  background: linear-gradient(180deg, #4df0b8 0%, var(--rd-accent) 48%, #17cf8d 100%);
+  color: var(--rd-accent-ink);
+  border-color: rgba(3, 92, 62, 0.72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75), 0 0 0 3px rgba(255, 255, 255, 0.72), 0 0 30px 9px rgba(255, 255, 255, 0.6), 0 14px 26px -10px rgba(3, 120, 80, 0.6);
+}
+.rd-btn--go:hover { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 0 0 3px rgba(255, 255, 255, 0.85), 0 0 40px 12px rgba(255, 255, 255, 0.75), 0 18px 32px -10px rgba(3, 120, 80, 0.7); }
+/* A point of light that travels round the quote button's edge. */
+.rd-btn--go::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  padding: 1.5px;
+  border-radius: inherit;
+  background: conic-gradient(from var(--rd-turn), transparent 0deg 250deg, rgba(3, 92, 62, 0.9) 300deg, #ffffff 330deg, transparent 352deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: rd-turn 4.2s linear var(--rd-shift, 0ms) infinite;
+  pointer-events: none;
+}
+@keyframes rd-turn { to { --rd-turn: 360deg; } }
+/* White glass for the quieter actions. */
 .rd-btn--line,
 .rd-btn--ink,
 .rd-btn--paper {
-  background: rgba(5, 8, 9, 0.58);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.74);
+  border-color: rgba(4, 19, 14, 0.16);
   color: var(--rd-text);
+  box-shadow: 0 1px 2px rgba(4, 19, 14, 0.05);
   -webkit-backdrop-filter: blur(14px) saturate(1.4);
   backdrop-filter: blur(14px) saturate(1.4);
 }
 .rd-btn--line:hover,
 .rd-btn--ink:hover,
-.rd-btn--paper:hover { border-color: rgba(var(--rd-accent-rgb), 0.5); background: rgba(12, 18, 20, 0.78); }
+.rd-btn--paper:hover { border-color: rgba(var(--rd-deep-rgb), 0.55); background: #ffffff; }
 .rd-btn--wide { width: 100%; }
 .rd-btn--big { min-height: 3.6rem; font-size: 1.125rem; }
 
@@ -235,44 +309,50 @@
 .rd input:focus-visible,
 .rd select:focus-visible,
 .rd textarea:focus-visible {
-  outline: 2px solid var(--rd-accent);
+  outline: 2px solid var(--rd-deep);
   outline-offset: 3px;
 }
 
-/* Header: a slim bar of smoked glass with a fine edge. It turns more solid once the page scrolls. */
+/* Header: a slim floating bar of white glass with a fine edge. It turns more solid
+   once the page scrolls. The strip around it is see-through and lets taps through. */
 .rd-hd {
   position: sticky;
   top: 0;
   z-index: 40;
+  padding: var(--rd-hd-pad) var(--rd-hd-pad) 0;
   color: var(--rd-text);
-  background: rgba(5, 8, 9, 0.44);
-  -webkit-backdrop-filter: blur(18px) saturate(1.5);
-  backdrop-filter: blur(18px) saturate(1.5);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
-  transition: background-color 0.3s, border-color 0.3s;
+  pointer-events: none;
 }
-.rd-hd[data-scrolled="true"] { background: rgba(5, 8, 9, 0.88); border-bottom-color: rgba(255, 255, 255, 0.12); }
-/* On pages that open with a full-width photo the bar floats over it. */
-.rd-page--over > .rd-hd { margin-bottom: calc((var(--rd-hd-h) + 1px) * -1); }
 .rd-hd__bar {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
   height: var(--rd-hd-h);
-  padding-inline: var(--rd-gutter);
-  max-width: 96rem;
+  padding-inline: 0.75rem 0.5rem;
+  max-width: 94rem;
   margin-inline: auto;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.62);
+  -webkit-backdrop-filter: blur(20px) saturate(1.7);
+  backdrop-filter: blur(20px) saturate(1.7);
+  box-shadow: 0 0 0 1px rgba(4, 19, 14, 0.06), 0 10px 30px -14px rgba(4, 19, 14, 0.3);
+  pointer-events: auto;
+  transition: background-color 0.3s, box-shadow 0.3s;
 }
+.rd-hd[data-scrolled="true"] .rd-hd__bar { background: rgba(255, 255, 255, 0.9); box-shadow: 0 0 0 1px rgba(4, 19, 14, 0.08), 0 14px 34px -14px rgba(4, 19, 14, 0.38); }
+/* On pages that open with a full-width photo the bar floats over it. */
+.rd-page--over > .rd-hd { margin-bottom: calc((var(--rd-hd-h) + var(--rd-hd-pad)) * -1); }
 .rd-brand { display: inline-flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; min-height: 2.75rem; }
 .rd-brand__mark {
   flex: none;
   width: 2rem;
   height: 2rem;
-  background: var(--rd-accent);
+  background: var(--rd-deep);
   -webkit-mask: url("/media/redesign/gcp-mark.png") center / contain no-repeat;
   mask: url("/media/redesign/gcp-mark.png") center / contain no-repeat;
-  filter: drop-shadow(0 0 10px rgba(var(--rd-accent-rgb), 0.35));
 }
 .rd-brand__text { display: flex; flex-direction: column; line-height: 1; }
 .rd-brand__name { font-weight: 600; font-size: 1.0625rem; letter-spacing: -0.03em; white-space: nowrap; }
@@ -287,8 +367,8 @@
   height: 2.75rem;
   padding: 0 0.6rem;
   border: 1px solid var(--rd-edge-2);
-  border-radius: var(--rd-radius);
-  background: rgba(255, 255, 255, 0.03);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.7);
   color: inherit;
   font: 600 0.9375rem/1 var(--rd-body);
   text-decoration: none;
@@ -296,13 +376,14 @@
   -webkit-tap-highlight-color: transparent;
   transition: border-color 0.15s, background-color 0.15s;
 }
-.rd-icon-btn:hover { border-color: rgba(var(--rd-accent-rgb), 0.45); background: rgba(var(--rd-accent-rgb), 0.07); }
+.rd-icon-btn:hover { border-color: rgba(var(--rd-deep-rgb), 0.5); background: #ffffff; }
 /* Menu tapped before the app finished loading: acknowledge it straight away. */
-.rd-menu-wanted [data-rd-menu] { background: var(--rd-accent); border-color: var(--rd-accent); color: var(--rd-accent-ink); }
+.rd-menu-wanted [data-rd-menu] { background: var(--rd-accent); border-color: rgba(3, 92, 62, 0.6); color: var(--rd-accent-ink); }
 .rd-hd__nav,
 .rd-hd__desk { display: none; }
 
 @media (min-width: 1000px) {
+  .rd-hd__bar { padding-inline: 1.1rem 0.7rem; }
   .rd-hd__nav { display: flex; align-items: center; gap: clamp(0rem, 0.4vw, 0.4rem); margin-right: auto; margin-left: clamp(0.75rem, 2vw, 2.5rem); }
   .rd-hd__desk { display: inline-flex; }
   .rd-hd__mob { display: none; }
@@ -316,7 +397,7 @@
     border: 0;
     border-radius: 8px;
     background: none;
-    color: var(--rd-text-2);
+    color: var(--rd-copy-ink);
     font: 500 0.9375rem/1 var(--rd-body);
     letter-spacing: -0.01em;
     text-decoration: none;
@@ -326,7 +407,7 @@
   }
   .rd-nav-link:hover,
   .rd-nav-link[aria-expanded="true"],
-  .rd-nav-link[aria-current="page"] { color: var(--rd-text); background: rgba(255, 255, 255, 0.06); }
+  .rd-nav-link[aria-current="page"] { color: var(--rd-text); background: rgba(4, 19, 14, 0.06); }
   .rd-nav-link svg { transition: transform 0.2s var(--rd-ease); opacity: 0.7; }
   .rd-nav-link[aria-expanded="true"] svg { transform: rotate(180deg); }
   .rd-hd__phone { font: 600 0.9375rem/1 var(--rd-body); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; padding: 0 0.5rem; white-space: nowrap; color: inherit; text-decoration: none; min-height: 2.75rem; display: none; align-items: center; gap: 0.45rem; }
@@ -342,17 +423,27 @@
 }
 
 /*
- * Opening screen: one photograph across the full width, dissolving into the CRM's
- * dark surface and the emerald glow. No seam between photo and text.
+ * Opening screen: one photograph across the full width, dissolving into white, with
+ * the emerald light rising from the bottom edge. No seam between photo and text.
  *
- * Layers, back to front: surface colour, photo (masked so its lower part fades out),
- * the fade, a light shade for the header and headline, then the text.
+ * .rd-open holds two things: the hero itself (photo and words, clipped to the screen)
+ * and the light on its lower edge (.rd-horizon). The light is one piece that straddles
+ * the bottom edge: the CRM fade above it, a shorter tail below it running on into the
+ * next section. Because it is one piece, anything it does (breathing, drifting) happens
+ * on both sides of the edge at once and no line can open up between them.
+ *
+ * Order, back to front: white, the photo, the light, a wash for the words, the words.
  */
-.rd-hero {
+.rd-open {
   /* How far the visitor has scrolled past the opening, 0 to 1. Set by home/Hero.tsx. */
   --p: 0;
+  /* How far the light runs on below the opening. */
+  --rd-carry: clamp(9rem, 24vw, 15rem);
   position: relative;
   isolation: isolate;
+}
+.rd-hero {
+  position: relative;
   display: grid;
   grid-template-rows: minmax(11rem, 1fr) auto;
   min-height: 100vh;
@@ -364,22 +455,112 @@
 }
 .rd-hero__media {
   position: absolute;
+  z-index: 1;
   inset: 0 0 auto 0;
-  height: 66%;
-  z-index: -3;
+  height: 64%;
   /* Rests slightly enlarged and settles back as the page scrolls. */
   transform: scale(calc(1.07 - 0.07 * var(--p)));
   transform-origin: 56% 38%;
-  opacity: calc(1 - 0.45 * var(--p));
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 46%, rgba(0, 0, 0, 0.55) 70%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 0%, #000 46%, rgba(0, 0, 0, 0.55) 70%, transparent 100%);
+  opacity: calc(1 - 0.5 * var(--p));
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 46%, rgba(0, 0, 0, 0.55) 70%, rgba(0, 0, 0, 0.14) 88%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 46%, rgba(0, 0, 0, 0.55) 70%, rgba(0, 0, 0, 0.14) 88%, transparent 100%);
   will-change: transform, opacity;
 }
 .rd-hero__media picture { display: block; width: 100%; height: 100%; }
 .rd-hero__media img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; }
-.rd-hero__glow { z-index: -2; }
-.rd-hero__shade { position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(to bottom, rgba(5, 8, 9, 0.4) 0, transparent 16%); }
-.rd-hero__inner { grid-row: 2; padding: 0 var(--rd-gutter) 1.15rem; transform: translateY(calc(var(--p) * -1.25rem)); }
+
+/* The light. Its top is the hero's halfway line; its bottom is past the hero's edge. */
+.rd-horizon {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  right: 0;
+  top: 50%;
+  bottom: calc(var(--rd-carry) * -1);
+  pointer-events: none;
+  animation: rd-breathe 7s ease-in-out var(--rd-shift, 0ms) infinite;
+}
+/* Above the edge: the CRM fade, exactly. */
+.rd-horizon__up {
+  position: absolute;
+  inset: 0 0 var(--rd-carry) 0;
+  background:
+    radial-gradient(120% 95% at 50% 108%, rgba(var(--rd-accent-rgb), 0.3), transparent 72%),
+    linear-gradient(to top, var(--rd-fade-72) 0%, var(--rd-fade-48) 38%, transparent 100%);
+}
+/* Below the edge: the same light mirrored and falling away faster. It starts on exactly
+   the colour the fade above ends on. */
+.rd-horizon__down {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--rd-carry);
+  background:
+    radial-gradient(120% 95% at 50% -8%, rgba(var(--rd-accent-rgb), 0.3), transparent 72%),
+    linear-gradient(to bottom, var(--rd-fade-72) 0%, rgba(109, 238, 192, 0.46) 30%, rgba(158, 244, 213, 0.14) 64%, rgba(158, 244, 213, 0) 100%);
+}
+/* A fine grid that shows only where the light is, like a light table. */
+.rd-horizon__up::after,
+.rd-horizon__down::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(var(--rd-deep-rgb), 0.09) 1px, transparent 1px), linear-gradient(90deg, rgba(var(--rd-deep-rgb), 0.09) 1px, transparent 1px);
+  background-size: 3.5rem 3.5rem;
+}
+.rd-horizon__up::after { background-position: 50% calc(100% + 1px); -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, transparent 78%); mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, transparent 78%); }
+.rd-horizon__down::after { background-position: 50% 0; -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9) 0%, transparent 70%); mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9) 0%, transparent 70%); }
+/* The heart of the light. Real light is white where it is hottest and coloured where
+   it falls off, so the edge itself gets a long, low lens of white. It spans the edge,
+   half above and half below. */
+.rd-horizon__core {
+  position: absolute;
+  left: -12%;
+  right: -12%;
+  bottom: calc(var(--rd-carry) - 4.25rem);
+  height: 8.5rem;
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.55) 42%, rgba(255, 255, 255, 0) 100%);
+}
+/* A softer light that drifts slowly along the edge. */
+.rd-horizon__drift {
+  position: absolute;
+  left: -30%;
+  bottom: calc(var(--rd-carry) - 9rem);
+  width: 60%;
+  height: 18rem;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(var(--rd-accent-rgb), 0.55), rgba(var(--rd-accent-rgb), 0));
+  animation: rd-drift 18s ease-in-out var(--rd-shift, 0ms) infinite alternate;
+  will-change: transform;
+}
+/* The edge itself: a hairline of light, white-hot in the middle, with a spark that runs along it. */
+.rd-horizon__line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: var(--rd-carry);
+  height: 1px;
+  overflow: hidden;
+  background: linear-gradient(90deg, rgba(var(--rd-accent-rgb), 0) 2%, rgba(11, 190, 128, 0.85) 26%, #f4fffb 50%, rgba(11, 190, 128, 0.85) 74%, rgba(var(--rd-accent-rgb), 0) 98%);
+}
+.rd-horizon__line::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 22%;
+  background: linear-gradient(90deg, transparent, #ffffff, transparent);
+  transform: translateX(-110%);
+  animation: rd-spark 9s cubic-bezier(0.6, 0, 0.3, 1) calc(2s + var(--rd-shift, 0ms)) infinite;
+}
+@keyframes rd-breathe { 0%, 100% { opacity: 1; } 50% { opacity: 0.84; } }
+@keyframes rd-drift { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(165%, 0, 0); } }
+@keyframes rd-spark { 0% { transform: translateX(-110%); } 34%, 100% { transform: translateX(560%); } }
+
+.rd-hero__shade { position: absolute; z-index: 3; inset: 0; pointer-events: none; }
+.rd-hero__inner { position: relative; z-index: 4; grid-row: 2; padding: 0 var(--rd-gutter) 1.15rem; transform: translateY(calc(var(--p) * -1.25rem)); }
 .rd-hero__title {
   margin: 0;
   font-family: var(--rd-display);
@@ -389,11 +570,25 @@
   letter-spacing: -0.047em;
 }
 .rd-hero__title span { display: block; }
-.rd-hero__lead { margin: 0.8rem 0 0; max-width: 34rem; font-size: 1.0625rem; line-height: 1.45; letter-spacing: -0.008em; color: #e3ece9; }
-.rd-hero__proof { display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.65rem; min-height: 1.75rem; font-size: 0.9375rem; font-weight: 500; color: var(--rd-text); text-decoration: none; }
-.rd-hero__proof svg { color: var(--rd-accent); }
-.rd-hero__proof span { text-decoration: underline; text-decoration-color: rgba(255, 255, 255, 0.35); text-underline-offset: 0.22em; }
-.rd-hero__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem; margin-top: 0.85rem; }
+/* Once, as the page opens, a band of emerald light crosses the headline. The words are
+   never hidden: they start and end as plain dark type. --rd-shift (see lib/motion.ts)
+   lets it carry on from the same point when the app takes the page over. */
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .rd-hero__title span {
+    background: linear-gradient(100deg, var(--rd-text) 0%, var(--rd-text) 40%, #06b97c 50%, var(--rd-text) 60%, var(--rd-text) 100%) 100% 0 / 280% 100% no-repeat;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: rd-sheen 1.8s cubic-bezier(0.4, 0, 0.2, 1) calc(0.3s + var(--rd-shift, 0ms)) both;
+  }
+  .rd-hero__title span + span { animation-delay: calc(0.55s + var(--rd-shift, 0ms)); }
+}
+@keyframes rd-sheen { from { background-position: 100% 0; } to { background-position: 0% 0; } }
+.rd-hero__lead { margin: 0.8rem 0 0; max-width: 34rem; font-size: 1.0625rem; line-height: 1.45; letter-spacing: -0.008em; color: var(--rd-copy-ink); }
+.rd-hero__proof { display: inline-flex; align-items: center; gap: 0.45rem; margin-top: 0.75rem; min-height: 2.1rem; padding: 0 0.8rem 0 0.65rem; border: 1px solid rgba(255, 255, 255, 0.8); border-radius: 999px; background: rgba(255, 255, 255, 0.6); box-shadow: 0 0 0 1px rgba(4, 19, 14, 0.07), 0 6px 16px -10px rgba(4, 19, 14, 0.3); -webkit-backdrop-filter: blur(12px) saturate(1.5); backdrop-filter: blur(12px) saturate(1.5); font-size: 0.9063rem; font-weight: 500; letter-spacing: -0.005em; color: var(--rd-text); text-decoration: none; transition: background-color 0.2s; }
+.rd-hero__proof:hover { background: rgba(255, 255, 255, 0.9); }
+.rd-hero__proof svg { color: var(--rd-deep); }
+.rd-hero__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-top: 0.85rem; }
 .rd-hero__actions .rd-btn--go { grid-column: 1 / -1; min-height: 3.4rem; font-size: 1.125rem; }
 .rd-hero__actions .rd-btn--line { min-height: 3rem; padding: 0 0.6rem; }
 .rd-hero__num { display: none; }
@@ -416,26 +611,33 @@
     width: 112%;
     height: 100%;
     transform-origin: 52% 40%;
-    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 40%, rgba(0, 0, 0, 0.6) 62%, rgba(0, 0, 0, 0.16) 84%, transparent 100%);
-    mask-image: linear-gradient(to bottom, #000 0%, #000 40%, rgba(0, 0, 0, 0.6) 62%, rgba(0, 0, 0, 0.16) 84%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 40%, rgba(0, 0, 0, 0.55) 57%, rgba(0, 0, 0, 0.14) 70%, transparent 82%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 40%, rgba(0, 0, 0, 0.55) 57%, rgba(0, 0, 0, 0.14) 70%, transparent 82%);
   }
   .rd-hero__media img { object-position: 50% 50%; }
-  .rd-hero__shade { background: linear-gradient(to bottom, rgba(5, 8, 9, 0.42) 0, transparent 14%), linear-gradient(to left, rgba(5, 8, 9, 0.5) 0%, rgba(5, 8, 9, 0.26) 34%, transparent 56%); }
+  .rd-horizon__drift { left: -20%; width: 40%; height: 26rem; bottom: calc(var(--rd-carry) - 13rem); }
+  .rd-horizon__core { left: 4%; right: 4%; height: 11rem; bottom: calc(var(--rd-carry) - 5.5rem); }
   /* Headline in the open sky on the right; palms and climber keep the left. */
   .rd-hero__inner { grid-row: 1; align-self: end; justify-self: end; padding: 0 clamp(1.5rem, 5vw, 5rem) clamp(5rem, 12.5vh, 7.5rem) 0; }
   .rd-hero__title { font-size: clamp(3rem, 4.4vw, 4.4rem); }
   .rd-hero__title span { white-space: nowrap; }
   .rd-hero__lead { margin-top: 1.15rem; max-width: 30rem; font-size: 1.1875rem; }
-  .rd-hero__proof { margin-top: 0.8rem; }
-  .rd-hero__actions { grid-template-columns: auto auto auto; justify-content: start; gap: 0.65rem; margin-top: 1.5rem; }
+  .rd-hero__proof { margin-top: 1rem; }
+  .rd-hero__actions { grid-template-columns: auto auto auto; justify-content: start; gap: 0.7rem; margin-top: 1.5rem; }
   .rd-hero__actions .rd-btn--go { grid-column: auto; min-height: 3.5rem; padding: 0 1.6rem; }
   .rd-hero__actions .rd-btn--line { min-height: 3.5rem; padding: 0 1.2rem; }
   .rd-hero__num { display: inline; }
 }
 
-/* Less motion asked for: the opening holds still, at its settled size. */
+/* Less motion asked for: the opening holds still, at its settled size, fully lit. */
 @media (prefers-reduced-motion: reduce) {
   .rd-hero__media { transform: none; opacity: 1; }
   .rd-hero__inner { transform: none; }
-  .rd-btn, .rd-hd { transition: none; }
+  .rd-horizon,
+  .rd-horizon__drift,
+  .rd-horizon__line::after,
+  .rd-btn--go::before { animation: none; }
+  .rd-horizon__line::after { display: none; }
+  .rd-hero__title span { animation: none; background: none; -webkit-text-fill-color: currentColor; }
+  .rd-btn, .rd-hd__bar { transition: none; }
 }

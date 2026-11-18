@@ -11,12 +11,14 @@ import Proof from "../home/Proof";
 import Routes from "../home/Routes";
 import TreeWork from "../home/TreeWork";
 import Work from "../home/Work";
+import { useHomeMotion } from "../lib/motion";
 
 /**
  * Redesigned homepage. The page title, description and the FAQ search markup are the
  * ones the current homepage publishes; only the layout around them is new.
  */
 export default function Home() {
+  useHomeMotion();
   return (
     <Layout season={false} over>
       <SEOHead
@@ -35,8 +37,8 @@ export default function Home() {
       <Commercial />
       <Areas />
       <section className="rd-section rd-paper-2" aria-labelledby="rd-faq-title">
-        <div className="rd-wrap rd-split">
-          <div className="rd-stack">
+        <div className="rd-wrap rd-split" data-rv="">
+          <div className="rd-stack rd-rise">
             <h2 id="rd-faq-title" className="rd-h2">Common questions</h2>
             <p className="rd-copy rd-muted">Questions about tree services and palm care across the Gulf Coast.</p>
           </div>

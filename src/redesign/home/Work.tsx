@@ -7,7 +7,7 @@ export default function Work() {
   return (
     <section className="rd-work rd-section rd-coal" aria-labelledby="rd-work-title">
       <div className="rd-wrap">
-        <div className="rd-work__intro">
+        <div className="rd-work__intro rd-rise" data-rv="">
           <h2 id="rd-work-title" className="rd-h2">Completed projects</h2>
           <Link to="/jobs" className="rd-link">See all {projects.length} projects</Link>
         </div>

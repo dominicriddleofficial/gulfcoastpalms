@@ -178,8 +178,12 @@ describe("tracking stays as it is today", () => {
     expect(photos[0].getAttribute("alt")).toMatch(/climber/);
     // The thumbnail, the look-closer marks and the slider are gone from the opening.
     expect(container.querySelector(".rd-hero__inset, .rd-hero__spot, [data-rd-reveal], input")).toBeNull();
-    // The glow is the shared CRM fade layer.
-    expect(container.querySelector(".rd-hero .rd-fade")).not.toBeNull();
+    // The light sits beside the hero, not inside it, so it can cross the hero's bottom edge:
+    // the fade above the edge and its tail below are two halves of one piece.
+    expect(container.querySelector(".rd-open > .rd-hero")).not.toBeNull();
+    expect(container.querySelector(".rd-open > .rd-horizon .rd-horizon__up")).not.toBeNull();
+    expect(container.querySelector(".rd-open > .rd-horizon .rd-horizon__down")).not.toBeNull();
+    expect(container.querySelector(".rd-hero .rd-horizon")).toBeNull();
     const proof = container.querySelector("a.rd-hero__proof");
     expect(proof?.textContent).toBe(heroCopy.rating);
   });

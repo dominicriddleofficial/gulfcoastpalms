@@ -8,7 +8,7 @@
  * Only the photo on screen is downloaded; the next one loads when it is chosen and
  * fades in over the last once it has arrived.
  */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import type { Project } from "../data/projects";
 import { QuoteLink } from "../lib/actions";
@@ -49,9 +49,9 @@ export default function ProjectViewer({ projects, placement, id = "rd-work" }: {
   const layers = [under, shown, index].filter((i, pos, all): i is number => i !== null && all.indexOf(i) === pos);
 
   return (
-    <div className="rd-viewer">
+    <div className="rd-viewer" data-rv="">
       <div
-        className="rd-viewer__stage"
+        className="rd-viewer__stage rd-wipe"
         onTouchStart={(e) => { startX.current = e.touches[0].clientX; }}
         onTouchEnd={(e) => {
           if (startX.current === null) return;
@@ -75,8 +75,8 @@ export default function ProjectViewer({ projects, placement, id = "rd-work" }: {
         </div>
       </div>
 
-      <div className="rd-viewer__side">
-        <div className="rd-ticket" id={`${id}-notes`} aria-live="polite" key={current.id}>
+      <div className="rd-viewer__side rd-rise" style={{ "--i": 2 } as CSSProperties}>
+        <div className="rd-ticket" id={`${id}-notes`} aria-live="polite" key={current.id} data-spot="">
           <h3 className="rd-ticket__title">{current.title}</h3>
           <dl>
             {current.city && (<><dt>Where</dt><dd>{current.city}, FL</dd></>)}

@@ -1,4 +1,4 @@
-import { useEffect, Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,6 +19,7 @@ import { PublicRoutes } from "@/routes/PublicRoutes";
 import RouteIndexing from "@/seo/RouteIndexing";
 import { isPrivateRoute } from "@/seo/indexing-policy.mjs";
 import { REDESIGN_ACTIVE, REDESIGN_BASE } from "@/redesign/mount";
+import { motionShift } from "@/redesign/lib/motion";
 
 const RouteTracker = () => {
   const location = useLocation();
@@ -35,7 +36,7 @@ const RouteTracker = () => {
     let manifestHref = "/manifest.json";
     let appleTitle = "Gulf Coast Palms";
     // The redesigned site has a deeper green header; the browser bar matches it.
-    let themeColor = REDESIGN_ACTIVE && !isPrivateRoute(path) ? "#0b2a20" : "#1a5c38";
+    let themeColor = REDESIGN_ACTIVE && !isPrivateRoute(path) ? "#ffffff" : "#1a5c38";
     if (path.startsWith("/platform")) {
       manifestHref = "/platform-manifest.json";
       appleTitle = "Field Ops";
@@ -191,6 +192,18 @@ function PlatformRouteFallback() {
   );
 }
 
+/**
+ * The prebuilt first view, held on screen while the page's code loads. Its animations
+ * are told how long ago the original was drawn so they carry on instead of restarting.
+ */
+function FirstViewHold({ html }: { html: string }) {
+  const [held] = useState(() => {
+    const shift = motionShift();
+    return shift ? html.replace("data-rd-first-view>", `data-rd-first-view style="--rd-shift:${shift}">`) : html;
+  });
+  return <div style={{ display: "contents" }} dangerouslySetInnerHTML={{ __html: held }} />;
+}
+
 function RouteSuspenseFallback() {
   const { pathname } = useLocation();
   if (pathname.startsWith("/platform")) return <PlatformRouteFallback />;
@@ -203,10 +216,10 @@ function RouteSuspenseFallback() {
   // customer-link and staff pages are not part of the redesign and keep the spinner.
   if (REDESIGN_ACTIVE && !isPrivateRoute(pathname)) {
     const firstView = pathname === "/" ? (window as Window & { __gcpFirstView?: string }).__gcpFirstView : undefined;
-    if (firstView) return <div style={{ display: "contents" }} dangerouslySetInnerHTML={{ __html: firstView }} />;
+    if (firstView) return <FirstViewHold html={firstView} />;
     return (
-      <div style={{ minHeight: "100vh", background: "#f4f0e6" }} aria-hidden>
-        <div style={{ height: 56, background: "#0b2a20" }} />
+      <div style={{ minHeight: "100vh", background: "#ffffff" }} aria-hidden>
+        <div style={{ height: 56, borderBottom: "1px solid rgba(4, 19, 14, 0.07)" }} />
       </div>
     );
   }
