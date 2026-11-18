@@ -6,7 +6,7 @@
  * rendered inside this same frame with `legacy` set, which re-colours and re-sets
  * their existing markup to match (see the "Older pages" block in styles/site.css).
  */
-import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { Component, lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useLocation, useNavigationType } from "react-router-dom";
 import { LocalBusinessJsonLd } from "@/components/JsonLd";
@@ -23,6 +23,14 @@ const loadMenu = () => import("./Menu");
 const Menu = lazy(loadMenu);
 // Same chat assistant as the current site, still loaded only after the page is idle.
 const ChatWidget = lazy(() => import("@/components/ChatWidget"));
+
+/** An extra on the page (the chat bubble) that fails is left out. It never takes the page down with it. */
+class Optional extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch(error: unknown) { console.error("Optional part of the page left out:", error); }
+  render() { return this.state.failed ? null : this.props.children; }
+}
 
 interface LayoutProps {
   children: ReactNode;
@@ -154,7 +162,7 @@ export default function RedesignLayout({ children, legacy = false, dock = true, 
         )}
         {chat && idle && (
           <div className="rd-chat rd-skin" data-hidden={dock && !dockShown}>
-            <Suspense fallback={null}><ChatWidget /></Suspense>
+            <Optional><Suspense fallback={null}><ChatWidget /></Suspense></Optional>
           </div>
         )}
       </div>

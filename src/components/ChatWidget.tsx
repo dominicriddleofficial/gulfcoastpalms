@@ -7,6 +7,21 @@ type Msg = { role: "user" | "assistant"; content: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-assistant`;
 
+/**
+ * A visitor id in the usual UUID shape. `crypto.randomUUID` is missing on older phones
+ * (iOS before 15.4) and on pages not served over HTTPS, so it is not relied on.
+ */
+function newVisitorId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  const bytes = new Uint8Array(16);
+  if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") crypto.getRandomValues(bytes);
+  else for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0"));
+  return `${hex.slice(0, 4).join("")}-${hex.slice(4, 6).join("")}-${hex.slice(6, 8).join("")}-${hex.slice(8, 10).join("")}-${hex.slice(10).join("")}`;
+}
+
 const ChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -14,11 +29,17 @@ const ChatWidget = () => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [visitorId] = useState(() => {
-    const stored = localStorage.getItem("gcp_visitor_id");
-    if (stored) return stored;
-    const id = crypto.randomUUID();
-    localStorage.setItem("gcp_visitor_id", id);
-    return id;
+    // Storage can be blocked (private browsing, cookie settings). The chat then uses an id
+    // for this visit only. Before this guard, either case broke the whole page.
+    try {
+      const stored = localStorage.getItem("gcp_visitor_id");
+      if (stored) return stored;
+      const id = newVisitorId();
+      localStorage.setItem("gcp_visitor_id", id);
+      return id;
+    } catch {
+      return newVisitorId();
+    }
   });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
