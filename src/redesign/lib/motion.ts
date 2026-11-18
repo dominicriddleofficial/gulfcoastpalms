@@ -72,7 +72,7 @@ export function useHomeMotion(): void {
         countUp(el);
         timers.push(window.setTimeout(() => el.setAttribute("data-rv", "done"), 2800));
       }
-    }, { rootMargin: "0px 0px -12% 0px", threshold: 0.06 });
+    }, { rootMargin: "0px 0px -7% 0px", threshold: 0.01 });
     const screen = window.innerHeight;
     root.querySelectorAll<HTMLElement>("[data-rv]").forEach((el) => {
       if (el.getAttribute("data-rv")) return;

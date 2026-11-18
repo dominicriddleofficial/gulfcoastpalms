@@ -28,6 +28,17 @@ export default function ProjectViewer({ projects, placement, id = "rd-work" }: {
   /** The photo underneath during a fade. */
   const [under, setUnder] = useState<number | null>(null);
   const startX = useRef<number | null>(null);
+  // The row of small photos scrolls sideways. Once the viewer is close to the screen they all
+  // load, so swiping the row never lands on a blank square.
+  const root = useRef<HTMLDivElement>(null);
+  const [near, setNear] = useState(false);
+  useEffect(() => {
+    if (near || !root.current) return;
+    if (typeof IntersectionObserver === "undefined") { setNear(true); return; }
+    const io = new IntersectionObserver((entries) => { if (entries.some((e) => e.isIntersecting)) setNear(true); }, { rootMargin: "500px 0px" });
+    io.observe(root.current);
+    return () => io.disconnect();
+  }, [near]);
   const current = projects[index];
   const go = (delta: number) => setIndex((i) => (i + delta + projects.length) % projects.length);
 
@@ -55,7 +66,7 @@ export default function ProjectViewer({ projects, placement, id = "rd-work" }: {
   const layers = [under, shown, index].filter((i, pos, all): i is number => i !== null && all.indexOf(i) === pos);
 
   return (
-    <div className="rd-viewer" data-rv="">
+    <div className="rd-viewer" data-rv="" ref={root}>
       <div
         className="rd-viewer__stage rd-wipe"
         onTouchStart={(e) => { startX.current = e.touches[0].clientX; }}
@@ -102,7 +113,7 @@ export default function ProjectViewer({ projects, placement, id = "rd-work" }: {
           {projects.map((p, i) => (
             <li key={p.id}>
               <button type="button" aria-pressed={i === index} aria-label={`Show ${p.title}`} onClick={() => setIndex(i)}>
-                <Photo src={p.photo} alt="" focus={p.focus} sizes="5rem" />
+                <Photo src={p.photo} alt="" focus={p.focus} sizes="5rem" soon={near} />
               </button>
             </li>
           ))}
