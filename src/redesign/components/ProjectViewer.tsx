@@ -7,6 +7,9 @@
  *
  * Only the photo on screen is downloaded; the next one loads when it is chosen and
  * fades in over the last once it has arrived.
+ *
+ * Where a true before photo of the same subject exists, a Before / After switch sits
+ * on the photo. The before photo is fetched the first time it is asked for.
  */
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
@@ -41,6 +44,15 @@ export default function ProjectViewer({ projects, placement, id = "rd-work" }: {
   }, [near]);
   const current = projects[index];
   const go = (delta: number) => setIndex((i) => (i + delta + projects.length) % projects.length);
+  /** Before / After, for a project with a true before photo. Each project opens on its finished photo. */
+  const [before, setBefore] = useState<{ asked: boolean; ready: boolean; on: boolean }>({ asked: false, ready: false, on: false });
+  useEffect(() => setBefore({ asked: false, ready: false, on: false }), [index]);
+  // As with the main photo, never leave the visitor waiting on a slow file.
+  useEffect(() => {
+    if (!before.asked || before.ready) return;
+    const timer = window.setTimeout(() => setBefore((b) => ({ ...b, ready: true })), 1500);
+    return () => window.clearTimeout(timer);
+  }, [before.asked, before.ready]);
 
   const reveal = (i: number) => {
     setShown((was) => {
@@ -93,6 +105,24 @@ export default function ProjectViewer({ projects, placement, id = "rd-work" }: {
             </figure>
           );
         })}
+        {current.before && before.asked && (
+          <figure className="rd-viewer__photo" data-on={before.on && before.ready} aria-hidden={!before.on}>
+            <Photo
+              src={current.before.photo}
+              alt={current.before.alt}
+              focus={current.focus}
+              sizes="(min-width: 1000px) 46vw, 67vw"
+              soon
+              onLoad={() => setBefore((b) => ({ ...b, ready: true }))}
+            />
+          </figure>
+        )}
+        {current.before && (
+          <div className="rd-ba rd-viewer__ba" role="group" aria-label="Photo">
+            <button type="button" aria-pressed={before.on} onClick={() => setBefore((b) => ({ ...b, asked: true, on: true }))}>Before</button>
+            <button type="button" aria-pressed={!before.on} onClick={() => setBefore((b) => ({ ...b, on: false }))}>After</button>
+          </div>
+        )}
         <div className="rd-viewer__step">
           <button type="button" onClick={() => go(-1)} aria-label="Previous project" aria-controls={`${id}-notes`}><ArrowLeftIcon size={20} /></button>
           <span aria-hidden>{index + 1} / {projects.length}</span>

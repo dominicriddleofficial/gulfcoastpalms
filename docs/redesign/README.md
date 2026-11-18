@@ -33,7 +33,8 @@ page headers, panels, alternate bands, the closing quote band and the footer.
 | Pages | `src/redesign/pages/` |
 | Tree removal and palm care sections | `src/redesign/pages/priority/` and their words in `src/redesign/data/priorityCopy.ts` |
 | Header, phone menu, footer, phone action bar | `src/redesign/chrome/` |
-| Photos and project notes | `src/redesign/data/` (what each photo is and where it came from: `src/assets/facebook/README.md`) |
+| Photos and project notes | `src/redesign/data/` (what each photo is and where it came from: `src/assets/owner/README.md` and `src/assets/facebook/README.md`) |
+| The opening photo, its crops and the soft copy shown before it arrives | `scripts/build-redesign-media.mjs` (writes `public/media/redesign/hero-*` and `src/redesign/styles/hero-preview.css`) |
 | Homepage motion | `src/redesign/lib/motion.ts` and the "Motion" part of `site.css` |
 | Which addresses have a rebuilt page | `src/redesign/routes.tsx` |
 | The go-live switch | `src/redesign/live.mjs` |
@@ -49,6 +50,21 @@ Shared files touched, all inert while the switch is off: `src/App.tsx`,
 One change in the shared SEO code is not behind the switch: breadcrumb data now names
 the page itself ("Tree Removal") where it used to repeat the page's whole title. It
 applies to the current pages as soon as this branch is merged.
+
+## The opening screen on a weak signal
+
+The first HTML of the homepage carries the header, the opening screen and their styles,
+so they are on screen before the app has loaded. Three things keep that first frame whole:
+
+- A few-dozen-pixel copy of the opening photo sits in the page itself and is drawn soft
+  where the photo will be, so the top of the screen is never blank while the photo
+  downloads. Every phone gets the 780-pixel photo file (about 90 KB).
+- The header's palm mark is asked for at the same time as the photo.
+- The typeface is registered with the page once, so the words do not drop to the
+  stand-in face and back when the app takes over.
+
+To change the photo, change the source and crop in `scripts/build-redesign-media.mjs`,
+run it, and update the description in `src/redesign/data/hero.ts`.
 
 ## What stays exactly as it is
 
@@ -117,7 +133,9 @@ Things only the office can supply:
 
 - Search Console access, to confirm the two priority pages against real search terms.
 - The city for the tree removal, the two sabals, the trunk clean-up and the date palm
-  (none is recorded, so none is shown).
+  from the Facebook page, and for the two jobs the owner sent on 18 November (the date
+  palm by the paver drive, which is the opening photo, and the five sabals). None is
+  recorded, so none is shown and none links to a service-area page yet.
 - The original camera files or the job video for the tree removal (the frames are
   720 pixels wide, taken from the video on the business's Facebook page).
 - A photo of seed pods or flower stalks being removed, and an after-cleanup photo of the

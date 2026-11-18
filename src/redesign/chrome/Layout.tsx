@@ -7,7 +7,6 @@
  * their existing markup to match (see the "Older pages" block in styles/site.css).
  */
 import { Component, lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import { Helmet } from "react-helmet-async";
 import { Link, useLocation, useNavigationType } from "react-router-dom";
 import { LocalBusinessJsonLd } from "@/components/JsonLd";
 import { trackEvent } from "@/lib/analytics";
@@ -17,6 +16,7 @@ import Footer from "./Footer";
 import Header from "./Header";
 import { MenuContext } from "./menu-context";
 import "../styles/first-view.css";
+import "../styles/hero-preview.css";
 import "../styles/site.css";
 
 const loadMenu = () => import("./Menu");
@@ -145,9 +145,6 @@ export default function RedesignLayout({ children, legacy = false, dock = true, 
         className={`rd rd-page${legacy ? " rd-legacy" : ""}${dock ? " rd-page--dock" : ""}${over ? " rd-page--over" : ""}`}
         style={shift ? ({ "--rd-shift": shift } as CSSProperties) : undefined}
       >
-        <Helmet>
-          <link rel="preload" as="font" type="font/woff2" href="/fonts/gcp-geist.woff2" crossOrigin="anonymous" />
-        </Helmet>
         <LocalBusinessJsonLd />
         <a className="rd-skip" href="#rd-main">Skip to content</a>
         <Header />

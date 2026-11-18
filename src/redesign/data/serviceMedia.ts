@@ -13,7 +13,7 @@
 import type { Picture } from "../components/Photo";
 import type { SequenceFrame } from "../components/Sequence";
 import { treeRemovalSequence, treeRemovalShots } from "./treeRemoval";
-import climber from "@/assets/facebook/climber-sabal.jpg?w=480;800;1152&format=avif;webp;jpg&as=picture";
+import fiveSabals from "@/assets/owner/five-sabals-dusk.jpg?w=480;800;1315&format=avif;webp;jpg&as=picture";
 import palmBefore from "@/assets/facebook/date-palm-before.jpg?w=480;800;1200&format=avif;webp;jpg&as=picture";
 import palmAfter from "@/assets/facebook/date-palm-after.jpg?w=480;800;1200&format=avif;webp;jpg&as=picture";
 import estate from "@/assets/redesign/estate-aerial.jpg?w=480;800;1082&format=avif;webp;jpg&as=picture";
@@ -70,7 +70,7 @@ export const serviceMedia: Record<string, ServiceMedia> = {
   "tree-trimming": { hero: TREE_STANDING, details: [], projects: [], route: "tree" },
   "storm-damage-cleanup": { hero: TREE_DOWN, details: [], projects: [], route: "tree" },
   "palm-tree-trimming": {
-    hero: { photo: climber, alt: "A climber in a yellow helmet at the top of a tall sabal palm, his saw hanging on a lanyard, a ladder against the next palm", caption: "Trimming a tall sabal from the top, saw on a lanyard.", focus: "50% 38%" },
+    hero: { photo: fiveSabals, alt: "Five trimmed sabal palms in a mulch bed in front of a single-story home at dusk", caption: "Five sabals after trimming.", focus: "50% 42%" },
     // The same date palm, before and after.
     details: [
       { photo: palmBefore, alt: "Before: a date palm in a back yard with old boots, dead growth and ferns covering the top of its trunk", caption: "Before: old boots, dead growth and ferns on the trunk.", focus: "50% 58%" },

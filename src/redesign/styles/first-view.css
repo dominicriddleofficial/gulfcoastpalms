@@ -458,16 +458,29 @@
   z-index: 1;
   inset: 0 0 auto 0;
   height: 64%;
-  /* Rests slightly enlarged and settles back as the page scrolls. */
+  /* Rests slightly enlarged and settles back as the page scrolls, about the diamond cut. */
   transform: scale(calc(1.07 - 0.07 * var(--p)));
-  transform-origin: 56% 38%;
+  transform-origin: 50% 46%;
   opacity: calc(1 - 0.5 * var(--p));
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 46%, rgba(0, 0, 0, 0.55) 70%, rgba(0, 0, 0, 0.14) 88%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 0%, #000 46%, rgba(0, 0, 0, 0.55) 70%, rgba(0, 0, 0, 0.14) 88%, transparent 100%);
+  /* Fully clear down past the diamond cut, then dissolving into the page. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 52%, rgba(0, 0, 0, 0.55) 73%, rgba(0, 0, 0, 0.14) 89%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 52%, rgba(0, 0, 0, 0.55) 73%, rgba(0, 0, 0, 0.14) 89%, transparent 100%);
   will-change: transform, opacity;
 }
+/* Before the photo has arrived: a few-dozen-pixel copy of the same photo, carried in the
+   page itself (styles/hero-preview.css), drawn soft in exactly the place the photo will
+   take. The first frame is never a blank top half. Its position must match the photo's. */
+.rd-hero__media { background: var(--rd-hero-pre, none) 50% 30% / cover no-repeat; }
 .rd-hero__media picture { display: block; width: 100%; height: 100%; }
-.rd-hero__media img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; }
+/* The description of the photo is for screen readers and search engines. It is never drawn
+   on the page, even when the photo itself fails to arrive. */
+.rd-hero__media img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; color: transparent; font-size: 0; }
+/* Short screens (a small phone with the browser bars showing): slide the photo up so the
+   diamond cut stays above the headline. */
+@media (max-height: 600px) and (max-width: 599.98px) {
+  .rd-hero__media { background-position: 50% 56%; }
+  .rd-hero__media img { object-position: 50% 56%; }
+}
 
 /* The light. Its top is the hero's halfway line; its bottom is past the hero's edge. */
 .rd-horizon {
@@ -605,19 +618,22 @@
 
 @media (min-width: 1000px) {
   .rd-hero { grid-template-rows: 1fr; min-height: min(100svh, 60rem); }
-  /* The photo fills the screen, a touch oversize and nudged left so the climber and his saw clear the headline. */
+  /* The photo fills the screen, a touch oversize and nudged left so the palm and its diamond cut clear the headline. */
   .rd-hero__media {
     inset: 0 auto 0 -12%;
     width: 112%;
     height: 100%;
-    transform-origin: 52% 40%;
-    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 40%, rgba(0, 0, 0, 0.55) 57%, rgba(0, 0, 0, 0.14) 70%, transparent 82%);
-    mask-image: linear-gradient(to bottom, #000 0%, #000 40%, rgba(0, 0, 0, 0.55) 57%, rgba(0, 0, 0, 0.14) 70%, transparent 82%);
+    transform-origin: 48% 32%;
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 46%, rgba(0, 0, 0, 0.55) 60%, rgba(0, 0, 0, 0.14) 72%, transparent 84%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 46%, rgba(0, 0, 0, 0.55) 60%, rgba(0, 0, 0, 0.14) 72%, transparent 84%);
   }
+  /* A soft white seat behind the headline, so the photo can stay clear beside it. */
+  .rd-hero__shade { background: radial-gradient(52% 38% at 76% 60%, rgba(255, 255, 255, 0.66) 0%, rgba(255, 255, 255, 0.34) 48%, rgba(255, 255, 255, 0) 100%); }
+  .rd-hero__media { background-position: 50% 50%; }
   .rd-hero__media img { object-position: 50% 50%; }
   .rd-horizon__drift { left: -20%; width: 40%; height: 26rem; bottom: calc(var(--rd-carry) - 13rem); }
   .rd-horizon__core { left: 4%; right: 4%; height: 11rem; bottom: calc(var(--rd-carry) - 5.5rem); }
-  /* Headline in the open sky on the right; palms and climber keep the left. */
+  /* Headline on the right; the palm and its diamond cut keep the left and centre. */
   .rd-hero__inner { grid-row: 1; align-self: end; justify-self: end; padding: 0 clamp(1.5rem, 5vw, 5rem) clamp(5rem, 12.5vh, 7.5rem) 0; }
   .rd-hero__title { font-size: clamp(3rem, 4.4vw, 4.4rem); }
   .rd-hero__title span { white-space: nowrap; }

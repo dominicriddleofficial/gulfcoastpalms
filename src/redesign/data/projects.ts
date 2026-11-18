@@ -1,6 +1,7 @@
 /**
  * Completed projects shown as case studies. One is tree work; that is the only
- * tree-work photo on file.
+ * tree-work photo on file. The first two are the owner's own camera files
+ * (src/assets/owner/README.md).
  *
  * What is recorded here is only what the photo shows or what the current Completed
  * Jobs page already says about it. Three things are deliberately left out until the
@@ -32,6 +33,9 @@ import climber from "@/assets/facebook/climber-sabal.jpg?w=240;480;800;1152&form
 import palmAfter from "@/assets/facebook/date-palm-after.jpg?w=240;480;800;1200&format=avif;webp;jpg&as=picture";
 import palmBefore from "@/assets/facebook/date-palm-before.jpg?w=240;480;800;1200&format=avif;webp;jpg&as=picture";
 import crewPool from "@/assets/redesign/crew-pool-yard.jpg?w=240;480;800;1152&format=avif;webp;jpg&as=picture";
+import driveAfter from "@/assets/owner/date-palm-drive-after.jpg?w=240;480;800;1200;1600&format=avif;webp;jpg&as=picture";
+import driveBefore from "@/assets/redesign/date-palm-drive-before.jpg?w=240;480;800;1210&format=avif;webp;jpg&as=picture";
+import fiveSabals from "@/assets/owner/five-sabals-dusk.jpg?w=240;480;800;1315&format=avif;webp;jpg&as=picture";
 
 /** "tree" is tree work; the other two are palm work, split by the kind of property. */
 export type ProjectKind = "tree" | "home" | "commercial";
@@ -67,6 +71,29 @@ const HOA = { label: "HOA & Commercial Maintenance", to: "/hoa-commercial-palm-m
 const TREE = { label: "Tree Removal", to: "/services/tree-removal", ask: "Get a tree removal quote" };
 
 export const projects: Project[] = [
+  {
+    id: "date-palm-by-the-drive",
+    title: "Date palm, trimmed and diamond cut",
+    property: "Home",
+    work: "Ferns and old growth cleared off the head, the crown trimmed, the head finished with a diamond cut and the trunk cleaned up.",
+    kind: "home",
+    photo: driveAfter,
+    alt: "After: a date palm beside a paver driveway with an even trimmed crown, a diamond-cut head and a clean trunk",
+    focus: "48% 42%",
+    before: { photo: driveBefore, alt: "Before: the same date palm with a heavy drooping crown and ferns growing out of the top of its trunk, a ladder leaning against it" },
+    service: DIAMOND,
+  },
+  {
+    id: "five-sabals-at-dusk",
+    title: "Five sabals, trimmed",
+    property: "Home",
+    work: "Five sabal palms trimmed across the front of a home.",
+    kind: "home",
+    photo: fiveSabals,
+    alt: "Five trimmed sabal palms in a mulch bed in front of a single-story home at dusk",
+    focus: "50% 50%",
+    service: TRIM,
+  },
   {
     id: "date-palm-diamond-cut",
     title: "Date palm, diamond cut",
@@ -282,7 +309,7 @@ export function cityPage(city?: string): string | undefined {
 
 /** Shown on the homepage, in this order. */
 export const featuredProjects: Project[] = [
-  "climbing-a-tall-sabal", "date-palm-diamond-cut", "diamond-cut-detail", "side-yard-trunk-skinning", "waterfront-estate", "condo-at-night",
+  "date-palm-by-the-drive", "diamond-cut-detail", "five-sabals-at-dusk", "side-yard-trunk-skinning", "waterfront-estate", "condo-at-night",
 ].flatMap((id) => projectById(id) ?? []);
 
 /**

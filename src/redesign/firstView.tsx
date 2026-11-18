@@ -14,6 +14,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { StaticRouter } from "react-router-dom/server";
 import css from "./styles/first-view.css?raw";
+import previewCss from "./styles/hero-preview.css?raw";
 import Header from "./chrome/Header";
 import { HERO_NARROW, HERO_WIDE, heroPhoto } from "./data/hero";
 import Hero from "./home/Hero";
@@ -53,8 +54,17 @@ const EARLY_MENU_TAP = `document.addEventListener("click",function(e){if(window.
 const esc = (v: string) => v.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 
 /**
- * Head tags that start the opening photo and the font before anything else.
- * Each screen size asks only for its own crop.
+ * The typeface is declared twice: here in the first view's own styles, and again in the
+ * app's stylesheet. When the app takes over, the first declaration goes and the second
+ * starts from nothing, so on a slow connection every word dropped to the stand-in face
+ * for a moment and then changed back. Registering the same file with the page directly
+ * keeps one loaded copy in place the whole time. Without scripts the styles alone do the job.
+ */
+const KEEP_FONT = `try{if(window.FontFace&&document.fonts){var f=new FontFace("GCP Geist",'url("/fonts/gcp-geist.woff2") format("woff2")',{weight:"100 900",style:"normal",display:"swap"});document.fonts.add(f);f.load().catch(function(){})}}catch(e){}`;
+
+/**
+ * Head tags that start the opening photo, the font and the header mark before anything
+ * else. Each screen size asks only for its own crop of the photo.
  */
 export function firstViewPreloads(): string {
   const photo = (media: string, srcset: string, sizes: string) =>
@@ -63,6 +73,8 @@ export function firstViewPreloads(): string {
     photo(HERO_NARROW, heroPhoto.phone.avif, heroPhoto.phone.sizes),
     photo(HERO_WIDE, heroPhoto.wide.avif, heroPhoto.wide.sizes),
     `<link rel="preload" as="font" type="font/woff2" href="/fonts/gcp-geist.woff2" crossorigin>`,
+    // The palm mark in the header is small but was fetched last; asked for early, it is there with the first frames.
+    `<link rel="preload" as="image" type="image/png" href="/media/redesign/gcp-mark.png" fetchpriority="high" crossorigin>`,
   ].join("");
 }
 
@@ -78,7 +90,7 @@ export function renderFirstView(base: string = REDESIGN_PREVIEW_BASE): string {
     </StaticRouter>,
   );
   return (
-    `<div id="${FIRST_VIEW_ID}" data-rd-first-view><style>${RESET}${css}</style>${body}`
-    + `<script>window.__gcpT0=performance.now();window.__gcpFirstView=document.getElementById("${FIRST_VIEW_ID}").outerHTML;${EARLY_MENU_TAP}</script></div>`
+    `<div id="${FIRST_VIEW_ID}" data-rd-first-view><style>${RESET}${css}${previewCss}</style>${body}`
+    + `<script>window.__gcpT0=performance.now();window.__gcpFirstView=document.getElementById("${FIRST_VIEW_ID}").outerHTML;${KEEP_FONT};${EARLY_MENU_TAP}</script></div>`
   );
 }

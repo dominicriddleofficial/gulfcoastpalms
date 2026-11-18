@@ -10,7 +10,7 @@ import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { publicMarketing } from "@/data/publicMarketing";
 import treePhoto from "@/assets/facebook/tree-removal-1.jpg?w=480;720&format=avif;webp;jpg&as=picture";
-import palmPhoto from "@/assets/redesign/palm-canary-home.jpg?w=512;768;1024;1400&format=avif;webp;jpg&as=picture";
+import palmPhoto from "@/assets/owner/five-sabals-dusk.jpg?w=512;768;1024;1315&format=avif;webp;jpg&as=picture";
 import Photo from "../components/Photo";
 import { palmServices, shortLabel, treeServices, type NavItem } from "../data/nav";
 import { QuoteLink } from "../lib/actions";
@@ -38,8 +38,8 @@ const DOORS = [
     to: "/services/palm-tree-trimming",
     blurb: "Established palm expertise: trimming, diamond cutting, trunk skinning, installations and removals.",
     photo: palmPhoto,
-    alt: "A trimmed date palm and a row of sabal palms in front of a home at dusk",
-    focus: "40% 40%",
+    alt: "Five trimmed sabal palms in a mulch bed in front of a single-story home at dusk",
+    focus: "50% 45%",
     items: pick(palmServices, ["/services/palm-tree-trimming", "/services/palm-diamond-cutting", "/services/palm-tree-trunk-skinning"]),
     all: { label: "All palm services", to: "/services" },
     quote: { service: "Palm Tree Trimming", label: "Get a palm quote", placement: "home_services_palm" },

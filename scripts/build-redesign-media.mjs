@@ -26,21 +26,39 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SRC = path.join(root, "src", "assets");
 const PUBLIC_OUT = path.join(root, "public", "media", "redesign");
 const ASSET_OUT = path.join(root, "src", "assets", "redesign");
+const PREVIEW_OUT = path.join(root, "src", "redesign", "styles", "hero-preview.css");
+
+/**
+ * The opening photo's stand-in: each crop shrunk to a few dozen pixels and written into a
+ * small stylesheet as text. The page's first HTML carries that stylesheet, so the very
+ * first frame already has the sky and the palms in their places, drawn soft; the real
+ * photo then arrives on top of it. Without this the top of the opening screen is blank
+ * until the photo has downloaded, which on a weak signal is a couple of seconds.
+ *
+ * It is the same photo and the same crop, only tiny. `media` must match HERO_WIDE in
+ * src/redesign/data/hero.ts.
+ */
+const PREVIEW = { width: 32, soften: 0.6, quality: 48 };
+const PREVIEW_WIDE_MEDIA = "(min-width: 1000px)";
 
 /**
  * Opening-screen files (fixed public addresses, AVIF with a JPEG fallback).
  *
- * The opening is one photo: the climber at the top of a tall sabal
- * (src/assets/facebook/climber-sabal.jpg). Phones and wide screens each get their own
- * crop, cut so the climber stays in the upper part of the screen and the headline has
- * open sky. Neither crop is enlarged beyond the photo's own size.
+ * The opening is one photo: a date palm by a paver drive after the crown was trimmed and
+ * the head diamond cut (src/assets/owner/date-palm-drive-after.jpg, the owner's own camera
+ * file). Phones get the whole photo; wide screens get its full width from the lower fronds
+ * down past the fence, so the diamond cut is large and sits in the clear upper part of the
+ * screen. Neither is enlarged beyond the photo's own size.
+ *
+ * A palm crown is all fine detail, which makes a heavy file. Quality 34 keeps the phone
+ * file near 90 KB with the diamond cut still sharp (checked side by side against 46).
  */
-const CLIMBER = "facebook/climber-sabal.jpg";
+const DATE_PALM = "owner/date-palm-drive-after.jpg";
 const FIRST_VIEW = [
-  // Phone: upright crop, climber right of centre, the ladder palm on the left.
-  { name: "hero-climber-phone", source: CLIMBER, box: { left: 221, top: 240, width: 1182, height: 1590 }, widths: [780, 1182], quality: 46 },
-  // Wide screens: the full width of the photo, from above the crowns to the lower trunks.
-  { name: "hero-climber", source: CLIMBER, box: { left: 0, top: 470, width: 1536, height: 1140 }, widths: [1024, 1536], quality: 48 },
+  // Phone: the whole frame. Crown across the top, the diamond-cut head just above the headline.
+  { name: "hero-date-palm-phone", preview: "phone", source: DATE_PALM, widths: [780, 1182], quality: 34 },
+  // Wide screens: full width, lower fronds to below the fence.
+  { name: "hero-date-palm", preview: "wide", source: DATE_PALM, box: { left: 0, top: 680, width: 1932, height: 1434 }, widths: [1024, 1536, 1932], quality: 34 },
 ];
 
 /** Cropped sources for imagetools (high-quality JPEG; the build makes the web sizes). */
@@ -69,12 +87,16 @@ const CROPS = [
   { name: "climber-close", source: "facebook/climber-sabal.jpg", box: { left: 360, top: 440, width: 853, height: 1066 } },
   // Crew clearing fronds by the pool, without the empty sky above.
   { name: "crew-pool-yard", source: "facebook/crew-pool-yard.jpg", box: { left: 0, top: 560, width: 1152, height: 976 } },
+  // The date palm by the paver drive, before the work: cut so the trunk is the same size and
+  // in the same place as in the finished photo (owner/date-palm-drive-after.jpg, used whole).
+  { name: "date-palm-drive-before", source: "owner/date-palm-drive-before.jpg", box: { left: 209, top: 138, width: 1210, height: 1614 } },
 ];
 
 async function main() {
   await fs.mkdir(PUBLIC_OUT, { recursive: true });
   await fs.mkdir(ASSET_OUT, { recursive: true });
   const report = {};
+  const previews = {};
 
   for (const item of FIRST_VIEW) {
     let base = sharp(path.join(SRC, item.source)).rotate();
@@ -90,8 +112,24 @@ async function main() {
       const [a, j] = await Promise.all([fs.stat(avif), fs.stat(jpg)]);
       entry.files.push({ w, avif: a.size, jpg: j.size });
     }
+    if (item.preview) {
+      const tiny = await sharp(data).resize({ width: PREVIEW.width }).blur(PREVIEW.soften).webp({ quality: PREVIEW.quality, effort: 6 }).toBuffer();
+      previews[item.preview] = `data:image/webp;base64,${tiny.toString("base64")}`;
+      entry.preview = { bytes: tiny.length };
+    }
     report[item.name] = entry;
   }
+
+  await fs.writeFile(
+    PREVIEW_OUT,
+    [
+      "/* Made by scripts/build-redesign-media.mjs from the opening photo. Do not edit by hand:",
+      "   change the crop there and run the script. See the note on PREVIEW in that file. */",
+      `.rd-hero__media { --rd-hero-pre: url("${previews.phone}"); }`,
+      `@media ${PREVIEW_WIDE_MEDIA} { .rd-hero__media { --rd-hero-pre: url("${previews.wide}"); } }`,
+      "",
+    ].join("\n"),
+  );
 
   for (const item of CROPS) {
     let img = sharp(path.join(SRC, item.source)).rotate();

@@ -121,17 +121,26 @@ describe("project notes", () => {
       expect(p.need).toBeUndefined();
       expect(p.result).toBeUndefined();
     }
-    // Exactly one project has a true before photo of the same subject.
-    expect(projects.filter((p) => p.before).map((p) => p.id)).toEqual(["date-palm-clean-up"]);
+    // Two projects have a true before photo of the same subject.
+    expect(projects.filter((p) => p.before).map((p) => p.id)).toEqual(["date-palm-by-the-drive", "date-palm-clean-up"]);
     // Tree work is in the gallery, and no Facebook photo is given a city it was never recorded with.
     expect(projects.filter((p) => p.kind === "tree")).toHaveLength(1);
     for (const id of ["tree-removal-under-way", "date-palm-clean-up", "climbing-a-tall-sabal", "pool-yard-sabals"]) {
+      expect(projects.find((p) => p.id === id)?.city, id).toBeUndefined();
+    }
+    // The owner's own photos came with no town, so none is shown until the office gives one.
+    for (const id of ["date-palm-by-the-drive", "five-sabals-at-dusk"]) {
       expect(projects.find((p) => p.id === id)?.city, id).toBeUndefined();
     }
     expect(new Set(projects.map((p) => p.id)).size).toBe(projects.length);
     // The homepage set includes the diamond-cut close-up, so the finish can be studied on a phone.
     expect(featuredProjects).toHaveLength(6);
     expect(featuredProjects.map((p) => p.id)).toContain("diamond-cut-detail");
+    // It leads with the palm from the opening screen, which has its before photo, and the
+    // climber photo the owner took off the opening is not on the homepage at all.
+    expect(featuredProjects[0].id).toBe("date-palm-by-the-drive");
+    expect(featuredProjects[0].before).toBeDefined();
+    expect(featuredProjects.map((p) => p.id)).not.toContain("climbing-a-tall-sabal");
   });
 
   it("show a city page its own city first, and never without a recorded city", () => {
@@ -298,12 +307,15 @@ describe("tracking stays as it is today", () => {
     expect(placementsOf([...container.querySelectorAll('.rd-dock a[data-track-cta="quote_request"]')])).toEqual(["sticky_bar"]);
   });
 
-  it("opens on one photo of the crew at work, with nothing floating over it", () => {
+  it("opens on one photo of finished work, with nothing floating over it", () => {
     const { container } = within(<Hero />);
     const photos = [...container.querySelectorAll(".rd-hero img")];
     expect(photos).toHaveLength(1);
     expect(photos[0].getAttribute("alt")).toBe(heroPhoto.alt);
-    expect(photos[0].getAttribute("alt")).toMatch(/climber/);
+    expect(photos[0].getAttribute("alt")).toMatch(/date palm/);
+    expect(photos[0].getAttribute("alt")).toMatch(/diamond-cut/);
+    // Every phone is offered the 780-pixel file first.
+    expect(heroPhoto.phone.fallback).toMatch(/hero-date-palm-phone-780\.jpg$/);
     // The thumbnail, the look-closer marks and the slider are gone from the opening.
     expect(container.querySelector(".rd-hero__inset, .rd-hero__spot, [data-rd-reveal], input")).toBeNull();
     // The light sits beside the hero, not inside it, so it can cross the hero's bottom edge:
