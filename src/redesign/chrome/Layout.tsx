@@ -11,6 +11,7 @@ import { Link, useLocation, useNavigationType } from "react-router-dom";
 import { LocalBusinessJsonLd } from "@/components/JsonLd";
 import { trackEvent } from "@/lib/analytics";
 import { motionShift } from "../lib/motion";
+import Atmosphere from "./Atmosphere";
 import Dock from "./Dock";
 import Footer from "./Footer";
 import Header from "./Header";
@@ -42,7 +43,7 @@ interface LayoutProps {
   chat?: boolean;
   /** The homepage places the season notice itself, under its opening screen. */
   season?: boolean;
-  /** The page opens with a full-width photo, so the header floats over it. */
+  /** The homepage: the top bar shows how far the page has been read. */
   over?: boolean;
 }
 
@@ -145,6 +146,7 @@ export default function RedesignLayout({ children, legacy = false, dock = true, 
         className={`rd rd-page${legacy ? " rd-legacy" : ""}${dock ? " rd-page--dock" : ""}${over ? " rd-page--over" : ""}`}
         style={shift ? ({ "--rd-shift": shift } as CSSProperties) : undefined}
       >
+        <Atmosphere />
         <LocalBusinessJsonLd />
         <a className="rd-skip" href="#rd-main">Skip to content</a>
         <Header />

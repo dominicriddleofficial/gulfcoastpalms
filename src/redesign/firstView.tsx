@@ -15,8 +15,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { StaticRouter } from "react-router-dom/server";
 import css from "./styles/first-view.css?raw";
 import previewCss from "./styles/hero-preview.css?raw";
+import Atmosphere from "./chrome/Atmosphere";
 import Header from "./chrome/Header";
-import { HERO_NARROW, HERO_WIDE, heroPhoto } from "./data/hero";
+import { heroScenes } from "./data/hero";
 import Hero from "./home/Hero";
 import { REDESIGN_PREVIEW_BASE } from "./mount";
 
@@ -48,8 +49,15 @@ ${SCOPE} [hidden]{display:none!important}
  * lights up at once, and the page frame opens the menu the moment it is ready.
  */
 const EARLY_MENU_TAP = `document.addEventListener("click",function(e){if(window.__gcpAppReady)return;`
-  + `var b=e.target&&e.target.closest&&e.target.closest("[data-rd-menu]");`
-  + `if(b){window.__gcpMenuWanted=true;document.documentElement.classList.add("rd-menu-wanted")}},true);`;
+  + `var t=e.target&&e.target.closest?e.target:null;if(!t)return;`
+  + `var b=t.closest("[data-rd-menu]");`
+  + `if(b){window.__gcpMenuWanted=true;document.documentElement.classList.add("rd-menu-wanted");return}`
+  // The same for the switch on the work panel: the chosen word is marked at once, and the
+  // panel changes scene when the app arrives.
+  + `var s=t.closest("[data-rd-scene]");`
+  + `if(s){window.__gcpSceneWanted=s.getAttribute("data-rd-scene");`
+  + `var all=s.parentNode.querySelectorAll("[data-rd-scene]");for(var i=0;i<all.length;i++)all[i].setAttribute("aria-pressed",all[i]===s?"true":"false")}`
+  + `},true);`;
 
 const esc = (v: string) => v.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 
@@ -64,14 +72,12 @@ const KEEP_FONT = `try{if(window.FontFace&&document.fonts){var f=new FontFace("G
 
 /**
  * Head tags that start the opening photo, the font and the header mark before anything
- * else. Each screen size asks only for its own crop of the photo.
+ * else. Only the first scene's photo: the second is fetched once the page has loaded.
  */
 export function firstViewPreloads(): string {
-  const photo = (media: string, srcset: string, sizes: string) =>
-    `<link rel="preload" as="image" fetchpriority="high" type="image/avif" media="${esc(media)}" imagesrcset="${esc(srcset)}" imagesizes="${esc(sizes)}">`;
+  const photo = heroScenes[0].photo;
   return [
-    photo(HERO_NARROW, heroPhoto.phone.avif, heroPhoto.phone.sizes),
-    photo(HERO_WIDE, heroPhoto.wide.avif, heroPhoto.wide.sizes),
+    `<link rel="preload" as="image" fetchpriority="high" type="image/avif" imagesrcset="${esc(photo.avif)}" imagesizes="${esc(photo.sizes)}">`,
     `<link rel="preload" as="font" type="font/woff2" href="/fonts/gcp-geist.woff2" crossorigin>`,
     // The palm mark in the header is small but was fetched last; asked for early, it is there with the first frames.
     `<link rel="preload" as="image" type="image/png" href="/media/redesign/gcp-mark.png" fetchpriority="high" crossorigin>`,
@@ -82,6 +88,7 @@ export function renderFirstView(base: string = REDESIGN_PREVIEW_BASE): string {
   const body = renderToStaticMarkup(
     <StaticRouter location={base || "/"} basename={base || undefined}>
       <div className="rd rd-page rd-page--over">
+        <Atmosphere />
         <Header />
         <main className="rd-main">
           <Hero />

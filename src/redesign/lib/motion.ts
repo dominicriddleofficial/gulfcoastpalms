@@ -31,21 +31,24 @@ export function motionShift(): string | undefined {
   return `${-Math.max(0, Math.round(performance.now() - t0))}ms`;
 }
 
-const format = (value: number, decimals: number) => value.toFixed(decimals);
+/** A figure as the page writes it: fixed decimals, and a comma in the thousands where the figure is marked data-group. */
+const show = (el: HTMLElement, value: number) => {
+  const fixed = value.toFixed(Number(el.dataset.decimals ?? 0));
+  el.textContent = el.dataset.group ? fixed.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : fixed;
+};
 
 /** Runs a figure up to its real value. The real value is what the page holds without this. */
-function countUp(scope: HTMLElement): void {
+export function countUp(scope: HTMLElement): void {
   scope.querySelectorAll<HTMLElement>("[data-count]").forEach((el) => {
     const end = Number(el.dataset.count);
     if (!Number.isFinite(end)) return;
-    const decimals = Number(el.dataset.decimals ?? 0);
     const from = Number(el.dataset.from ?? 0);
     const started = performance.now();
     const duration = 1500;
     const tick = (now: number) => {
       const t = Math.min(1, (now - started) / duration);
       const eased = 1 - Math.pow(1 - t, 4);
-      el.textContent = format(t < 1 ? from + (end - from) * eased : end, decimals);
+      show(el, t < 1 ? from + (end - from) * eased : end);
       if (t < 1) window.requestAnimationFrame(tick);
     };
     window.requestAnimationFrame(tick);
@@ -79,9 +82,7 @@ export function useHomeMotion(): void {
       const box = el.getBoundingClientRect();
       if (box.height === 0 || box.top < screen * 0.94) return;
       el.setAttribute("data-rv", "wait");
-      el.querySelectorAll<HTMLElement>("[data-count]").forEach((n) => {
-        n.textContent = format(Number(n.dataset.from ?? 0), Number(n.dataset.decimals ?? 0));
-      });
+      el.querySelectorAll<HTMLElement>("[data-count]").forEach((n) => show(n, Number(n.dataset.from ?? 0)));
       held.push(el);
       arrivals.observe(el);
     });
@@ -133,9 +134,7 @@ export function useHomeMotion(): void {
       held.forEach((el) => {
         if (el.getAttribute("data-rv") !== "wait") return;
         el.setAttribute("data-rv", "");
-        el.querySelectorAll<HTMLElement>("[data-count]").forEach((n) => {
-          n.textContent = format(Number(n.dataset.count), Number(n.dataset.decimals ?? 0));
-        });
+        el.querySelectorAll<HTMLElement>("[data-count]").forEach((n) => show(n, Number(n.dataset.count)));
       });
     };
   }, []);

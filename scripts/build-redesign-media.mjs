@@ -29,36 +29,39 @@ const ASSET_OUT = path.join(root, "src", "assets", "redesign");
 const PREVIEW_OUT = path.join(root, "src", "redesign", "styles", "hero-preview.css");
 
 /**
- * The opening photo's stand-in: each crop shrunk to a few dozen pixels and written into a
+ * The opening photo's stand-in: the night photo shrunk to a few dozen pixels and written into a
  * small stylesheet as text. The page's first HTML carries that stylesheet, so the very
  * first frame already has the sky and the palms in their places, drawn soft; the real
  * photo then arrives on top of it. Without this the top of the opening screen is blank
  * until the photo has downloaded, which on a weak signal is a couple of seconds.
  *
- * It is the same photo and the same crop, only tiny. `media` must match HERO_WIDE in
- * src/redesign/data/hero.ts.
+ * It is the same photo and the same crop, only tiny.
  */
 const PREVIEW = { width: 32, soften: 0.6, quality: 48 };
-const PREVIEW_WIDE_MEDIA = "(min-width: 1000px)";
 
 /**
  * Opening-screen files (fixed public addresses, AVIF with a JPEG fallback).
  *
- * The opening is one photo: a date palm by a paver drive after the crown was trimmed and
- * the head diamond cut (src/assets/owner/date-palm-drive-after.jpg, the owner's own camera
- * file). Phones get the whole photo; wide screens get its full width from the lower fronds
- * down past the fence, so the diamond cut is large and sits in the clear upper part of the
- * screen. Neither is enlarged beyond the photo's own size.
+ * The opening shows the work in one framed panel with two scenes, both the owner's own:
+ *   - hero-night: the white condo building after dark, its palms lit from below
+ *     (src/assets/owner/condo-night.jpg, the camera file).
+ *   - hero-air:   the waterfront estate from the air. This is the first frame of the drone
+ *     clip that then plays in the panel (src/assets/owner/estate-from-the-air.jpg), so the
+ *     still and the moving picture join without a jump.
+ * Both are cut four wide by five tall and never enlarged. Phones show the middle of each
+ * as a square (see .rd-reel__stage in first-view.css).
  *
- * A palm crown is all fine detail, which makes a heavy file. Quality 34 keeps the phone
- * file near 90 KB with the diamond cut still sharp (checked side by side against 46).
+ * The clip itself is made once by hand, from the owner's drone video, with ffmpeg:
+ *   ffmpeg -ss 7 -t 7 -i drone.mov -an -vf "crop=1080:1352:0:300,scale=540:676,fps=24,format=yuv420p" \
+ *     -c:v libx264 -preset veryslow -crf 31 -g 48 -movflags +faststart public/media/redesign/hero-air-540.mp4
+ *   ffmpeg -ss 7 -t 7 -i drone.mov -an -vf "crop=1080:1350:0:300,scale=720:900,fps=24,format=yuv420p" \
+ *     -c:v libx264 -preset veryslow -crf 32 -g 48 -movflags +faststart public/media/redesign/hero-air-720.mp4
+ * Seven seconds, no sound, about 0.9 MB for phones and 1.4 MB for wide screens. It is
+ * fetched only after the page has finished loading, and never on a data-saving connection.
  */
-const DATE_PALM = "owner/date-palm-drive-after.jpg";
 const FIRST_VIEW = [
-  // Phone: the whole frame. Crown across the top, the diamond-cut head just above the headline.
-  { name: "hero-date-palm-phone", preview: "phone", source: DATE_PALM, widths: [780, 1182], quality: 34 },
-  // Wide screens: full width, lower fronds to below the fence.
-  { name: "hero-date-palm", preview: "wide", source: DATE_PALM, box: { left: 0, top: 680, width: 1932, height: 1434 }, widths: [1024, 1536, 1932], quality: 34 },
+  { name: "hero-night", preview: true, source: "owner/condo-night.jpg", box: { left: 0, top: 410, width: 1242, height: 1552 }, widths: [660, 990, 1242], quality: 42 },
+  { name: "hero-air", source: "owner/estate-from-the-air.jpg", box: { left: 0, top: 300, width: 1080, height: 1350 }, widths: [540, 720, 1080], quality: 38 },
 ];
 
 /** Cropped sources for imagetools (high-quality JPEG; the build makes the web sizes). */
@@ -96,7 +99,7 @@ async function main() {
   await fs.mkdir(PUBLIC_OUT, { recursive: true });
   await fs.mkdir(ASSET_OUT, { recursive: true });
   const report = {};
-  const previews = {};
+  let preview = "";
 
   for (const item of FIRST_VIEW) {
     let base = sharp(path.join(SRC, item.source)).rotate();
@@ -114,7 +117,7 @@ async function main() {
     }
     if (item.preview) {
       const tiny = await sharp(data).resize({ width: PREVIEW.width }).blur(PREVIEW.soften).webp({ quality: PREVIEW.quality, effort: 6 }).toBuffer();
-      previews[item.preview] = `data:image/webp;base64,${tiny.toString("base64")}`;
+      preview = `data:image/webp;base64,${tiny.toString("base64")}`;
       entry.preview = { bytes: tiny.length };
     }
     report[item.name] = entry;
@@ -125,8 +128,7 @@ async function main() {
     [
       "/* Made by scripts/build-redesign-media.mjs from the opening photo. Do not edit by hand:",
       "   change the crop there and run the script. See the note on PREVIEW in that file. */",
-      `.rd-hero__media { --rd-hero-pre: url("${previews.phone}"); }`,
-      `@media ${PREVIEW_WIDE_MEDIA} { .rd-hero__media { --rd-hero-pre: url("${previews.wide}"); } }`,
+      `.rd-reel__stage { --rd-hero-pre: url("${preview}"); }`,
       "",
     ].join("\n"),
   );

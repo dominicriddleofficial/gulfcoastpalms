@@ -4,7 +4,7 @@
  */
 import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
-import row from "@/assets/redesign/commercial-row.jpg?w=480;800;1200;1350&format=avif;webp;jpg&as=picture";
+import row from "@/assets/owner/condo-palm-row.jpg?w=360;540;720&format=avif;webp;jpg&as=picture";
 import Photo from "../components/Photo";
 import { QuoteLink } from "../lib/actions";
 import { CheckIcon } from "../lib/icons";
@@ -21,7 +21,8 @@ export default function Commercial() {
   return (
     <section className="rd-commercial" aria-labelledby="rd-commercial-title">
       <figure className="rd-photo rd-commercial__photo" data-par="">
-        <Photo src={row} alt="A row of trimmed sabal palms along the edge of a commercial property" sizes="(min-width: 1000px) 52vw, 67vw" focus="30% 40%" />
+        {/* A frame from the owner's night walk-through of the Destin condo property. It is 720 pixels wide, so the photo column is kept narrow. */}
+        <Photo src={row} alt="A row of trimmed sabal palms lit from below at night along the wall of a condo property" sizes="(min-width: 1000px) 30rem, 67vw" focus="50% 38%" />
       </figure>
       <div className="rd-commercial__body rd-dark" data-rv="">
         <h2 id="rd-commercial-title" className="rd-h2 rd-rise">HOAs, condos and commercial properties</h2>

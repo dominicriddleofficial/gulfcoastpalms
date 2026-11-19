@@ -1,22 +1,23 @@
 /*
- * Gulf Coast Palms public site, part 1 of 2: colours, type, buttons, header and the
- * opening screen.
+ * Gulf Coast Palms public site, part 1 of 2: colours, type, buttons, the top bar, the
+ * atmosphere behind every page and the homepage's opening screen. The build places this
+ * file inside the page's first HTML (see firstView.tsx), so the opening is drawn
+ * before any JavaScript has loaded. Everything else is in site.css.
  *
- * White surfaces, lit from below. The light is the one the owner approved in the CRM:
- * the same emerald, and the same glow that rises from the bottom edge of a surface and
- * is gone halfway up. Here it shines onto white instead of near-black. The values
- * come from the CRM's own theme, not from guesswork:
- *   the emerald   src/contexts/WorkspaceThemeContext.tsx   (GCP_THEME, #34E8A8)
- *   the fade      src/styles/platform.css                  (.platform-fade: bottom half
- *                 of the surface, accent mixed 72% then 48% into the background, plus
- *                 a 0.3 bloom)
+ * The look is the business's own backend, flipped to white. Same parts, same
+ * measurements (src/styles/platform.css): a fine grid at the top of the screen, the
+ * fade that fills the bottom half of the screen, cards with hairline edges, the small
+ * spaced label led by a short line, the two-way switch, the icon squares.
  *
- * Everything the first screen needs is in this file on purpose. The prebuilt first
- * view (src/redesign/firstView.tsx) inlines it into the page's HTML, so the opening
- * looks finished before the app's JavaScript or main stylesheet arrive.
+ *   backend                              here
+ *   near-black page  #09090B             white page       #FAFAFA
+ *   charcoal cards   #131316             white cards      #FFFFFF
+ *   white type                           black type       #09090B
+ *   white hairlines at 7%                black hairlines at 7%
+ *   silver fade, bottom half of screen   the same silver, the same half
+ *   white accent                         a regular green, on buttons and highlights only
  *
- * Rules are single classes (.rd-*) so they never fight the Tailwind utilities the
- * older pages still use.
+ * The only colour on a page is the green of an action and the photographs themselves.
  */
 
 @font-face {
@@ -37,49 +38,48 @@
 }
 
 .rd {
-  /* White surfaces */
-  --rd-bg: #ffffff;
-  --rd-well: #f4f8f6;
+  /* Surfaces */
+  --rd-bg: #fafafa;
   --rd-card: #ffffff;
-  --rd-raise: #fbfdfc;
-  /* The CRM's emerald: bright for fills and light, deep for words and icons on white. */
-  --rd-accent: #34e8a8;
-  --rd-accent-rgb: 52, 232, 168;
-  --rd-accent-press: #22dc98;
-  --rd-accent-ink: #04130e;
-  --rd-deep: #05724c;
-  --rd-deep-rgb: 5, 114, 76;
-  /* Anything small that is "in the accent colour" (links, icons, labels) uses this. */
+  --rd-well: #f4f4f5;
+  --rd-raise: #ffffff;
+  /* Type, darkest to quietest. The first four pass contrast on white and on the darkest
+     part of the silver fade, so they are safe anywhere on a page. --rd-label is for
+     small labels inside white cards only. */
+  --rd-text: #09090b;
+  --rd-copy-ink: #18181b;
+  --rd-text-2: #33333a;
+  --rd-text-3: #44444b;
+  --rd-label: #63636b;
+  /* The one accent, a regular green. Deep carries white words and is used for words and
+     icons on white; the brighter one is for lines, dots and glows. */
+  --rd-accent: #16a34a;
+  --rd-accent-rgb: 22, 163, 74;
+  --rd-accent-hi: #22c55e;
+  --rd-deep: #15803d;
+  --rd-deep-rgb: 21, 128, 61;
+  --rd-accent-press: #166534;
+  --rd-accent-ink: #ffffff;
   --rd-signal: var(--rd-deep);
-  /* The CRM fade's two colours, mixed into white: 72% and 48% emerald. */
-  --rd-fade-72: #6deec0;
-  --rd-fade-48: #9ef4d5;
-  /*
-   * The light, as one background any surface can use on its bottom half. From the top
-   * of the list down: a low white lens on the edge (light is white where it is hottest),
-   * then the CRM's two layers unchanged: the 0.3 bloom and the fade through the 72%
-   * and 48% mixes that is gone at the top of the half.
-   */
-  --rd-light:
-    radial-gradient(58% 26% at 50% 100%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.5) 46%, rgba(255, 255, 255, 0) 100%),
-    radial-gradient(120% 95% at 50% 108%, rgba(var(--rd-accent-rgb), 0.3), transparent 72%),
-    linear-gradient(to top, var(--rd-fade-72) 0%, var(--rd-fade-48) 38%, transparent 100%);
-  /* Text, darkest to quietest. All pass contrast on white and on the glow. */
-  --rd-text: #04130e;
-  --rd-copy-ink: #22332d;
-  --rd-text-2: #45554f;
-  --rd-text-3: #5f6e68;
-  /* Fine edges and glass */
-  --rd-edge: rgba(4, 19, 14, 0.08);
-  --rd-edge-2: rgba(4, 19, 14, 0.14);
-  --rd-edge-accent: rgba(var(--rd-deep-rgb), 0.3);
-  --rd-glass: rgba(255, 255, 255, 0.66);
-  --rd-glass-strong: rgba(255, 255, 255, 0.9);
-  --rd-wash: rgba(4, 19, 14, 0.045);
-  --rd-shadow: 0 1px 2px rgba(4, 19, 14, 0.04), 0 14px 34px -14px rgba(4, 19, 14, 0.16);
+  /* The fade's silver, and the two mixes of it into the page that the backend's recipe
+     uses (72% on the bottom edge, 48% a little over a third of the way up). */
+  --rd-fade-rgb: 161, 161, 170;
+  --rd-fade-72: #babac0;
+  --rd-fade-48: #cfcfd4;
+  /* Fine edges, washes and shadows: the backend's, in black where it uses white. */
+  --rd-edge: rgba(9, 9, 11, 0.07);
+  --rd-edge-2: rgba(9, 9, 11, 0.11);
+  --rd-edge-3: rgba(9, 9, 11, 0.2);
+  --rd-edge-accent: rgba(var(--rd-deep-rgb), 0.35);
+  --rd-glass: rgba(250, 250, 250, 0.72);
+  --rd-glass-strong: rgba(250, 250, 250, 0.92);
+  --rd-wash: rgba(9, 9, 11, 0.045);
+  --rd-shadow: 0 1px 2px rgba(9, 9, 11, 0.04), 0 4px 20px rgba(9, 9, 11, 0.06);
+  --rd-shadow-lg: 0 1px 2px rgba(9, 9, 11, 0.05), 0 8px 32px rgba(9, 9, 11, 0.09);
   --rd-error: #b42318;
 
   /* Names the rest of the stylesheet already uses, pointed at the values above. */
+  --rd-light: none;
   --rd-green-950: var(--rd-text);
   --rd-green-900: var(--rd-bg);
   --rd-green-800: var(--rd-card);
@@ -90,9 +90,9 @@
   --rd-muted: var(--rd-text-3);
   --rd-paper: var(--rd-bg);
   --rd-paper-2: var(--rd-well);
-  --rd-paper-3: #e7efeb;
+  --rd-paper-3: #e4e4e7;
   --rd-white: var(--rd-card);
-  --rd-go: var(--rd-accent);
+  --rd-go: var(--rd-deep);
   --rd-go-press: var(--rd-accent-press);
   --rd-go-ink: var(--rd-accent-ink);
   --rd-on-dark: var(--rd-text);
@@ -110,10 +110,11 @@
   --rd-max: 77.5rem;
   --rd-section: clamp(4rem, 10vw, 8rem);
   --rd-radius: 10px;
-  --rd-radius-lg: 20px;
-  --rd-hd-h: 3.5rem;
-  /* The gap between the floating header and the screen edge. */
-  --rd-hd-pad: 0.5rem;
+  --rd-radius-md: 14px;
+  --rd-radius-lg: 16px;
+  /* The top bar's height. */
+  --rd-hd-h: 3.75rem;
+  --rd-hd-pad: 0px;
   --rd-dock-h: 0px;
   --rd-ease: cubic-bezier(0.2, 0.7, 0.1, 1);
   --rd-sheen: linear-gradient(140deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 50%);
@@ -130,7 +131,7 @@
   text-size-adjust: 100%;
 }
 @media (min-width: 1000px) {
-  .rd { --rd-hd-h: 3.75rem; --rd-hd-pad: 0.75rem; }
+  .rd { --rd-hd-h: 4.25rem; }
 }
 
 .rd-wrap {
@@ -164,13 +165,14 @@
 .rd-copy { margin: 0; max-width: 66ch; color: var(--rd-copy-ink); }
 .rd-small { font-size: 0.9375rem; line-height: 1.5; }
 .rd-muted { color: var(--rd-text-3); }
-.rd-dark { background: var(--rd-bg); color: var(--rd-text); }
+.rd-dark { color: var(--rd-text); }
 .rd-dark .rd-muted { color: var(--rd-text-2); }
-.rd-link { color: var(--rd-text); text-decoration: underline; text-decoration-color: rgba(var(--rd-deep-rgb), 0.55); text-decoration-thickness: 1.5px; text-underline-offset: 0.22em; }
-.rd-link:hover { color: var(--rd-deep); text-decoration-color: var(--rd-deep); }
-/* The CRM's small label: accent, spaced capitals, led by a short lit line. Used sparingly. */
-.rd-eyebrow { display: flex; align-items: center; gap: 0.55rem; margin: 0 0 0.9rem; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--rd-signal); }
-.rd-eyebrow::before { content: ""; width: 1.1rem; height: 1px; background: var(--rd-signal); box-shadow: 0 0 8px rgba(var(--rd-accent-rgb), 0.8); }
+.rd-link { color: var(--rd-text); text-decoration: underline; text-decoration-color: rgba(var(--rd-deep-rgb), 0.7); text-decoration-thickness: 1.5px; text-underline-offset: 0.22em; }
+.rd-link:hover { text-decoration-color: var(--rd-text); }
+/* The backend's small label: spaced capitals led by a short line. The words are in the
+   page's black; the line is the green. */
+.rd-eyebrow { display: flex; align-items: center; gap: 0.55rem; margin: 0 0 0.9rem; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--rd-text); }
+.rd-eyebrow::before { content: ""; flex: none; width: 1.1rem; height: 1px; background: var(--rd-accent); box-shadow: 0 0 8px rgba(var(--rd-accent-rgb), 0.55); }
 
 .rd-sr {
   position: absolute;
@@ -185,55 +187,72 @@
 }
 
 /*
- * The CRM fade, as a reusable layer. It covers the bottom half of whatever it sits in:
- * brightest on the bottom edge, gone at the halfway line. Same recipe as the CRM's
- * .platform-fade (a 0.3 bloom over a straight fade that passes through the 72% and 48%
- * mixes), here mixed into white. --rd-glow turns it down for quieter surfaces.
+ * The atmosphere, fixed to the screen behind every page: the backend's .platform-grid
+ * and .platform-fade. The fade fills the bottom half of the screen, strongest on the
+ * bottom edge and gone at the halfway line. Same recipe: a 0.3 bloom over a straight
+ * fade that passes through the 72% and 48% mixes. Pages scroll over it; cards are solid
+ * and float above it.
  */
-.rd-fade {
+.rd-page { isolation: isolate; }
+.rd-atmos { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.rd-atmos__grid {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 50%;
-  pointer-events: none;
-  opacity: var(--rd-glow, 1);
-  background: var(--rd-light);
+  inset: 0;
+  background-image: linear-gradient(rgba(9, 9, 11, 0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(9, 9, 11, 0.045) 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: linear-gradient(to bottom, #000, transparent 540px);
+  mask-image: linear-gradient(to bottom, #000, transparent 540px);
 }
-/*
- * A surface lit from its own bottom edge. Two parts: the fade above (::before), and a
- * fine line of light on the edge itself that the fade appears to come from (::after).
- * Put the class on any panel; --rd-glow sets how strong it is there.
- */
-.rd-lit { position: relative; isolation: isolate; }
-.rd-lit::before {
+/* On a mouse, the lines near the pointer show a little stronger. */
+.rd-atmos__grid::after {
   content: "";
   position: absolute;
-  z-index: -1;
+  inset: 0;
+  opacity: var(--rd-near, 0);
+  background-image: linear-gradient(rgba(9, 9, 11, 0.13) 1px, transparent 1px), linear-gradient(90deg, rgba(9, 9, 11, 0.13) 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: radial-gradient(15rem circle at var(--gx, 50%) var(--gy, 0%), #000, transparent 72%);
+  mask-image: radial-gradient(15rem circle at var(--gx, 50%) var(--gy, 0%), #000, transparent 72%);
+  transition: opacity 0.4s;
+}
+.rd-atmos__fade {
+  position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
   height: 50%;
-  border-bottom-left-radius: inherit;
-  border-bottom-right-radius: inherit;
-  pointer-events: none;
-  opacity: var(--rd-glow, 0.4);
-  background: var(--rd-light);
   transform-origin: 50% 100%;
+  background:
+    radial-gradient(120% 95% at 50% 108%, rgba(var(--rd-fade-rgb), 0.3), rgba(var(--rd-fade-rgb), 0) 72%),
+    linear-gradient(to top, var(--rd-fade-72) 0%, var(--rd-fade-48) 38%, rgba(207, 207, 212, 0) 100%);
+  animation: rd-dawn 1.1s var(--rd-ease) var(--rd-shift, 0ms) backwards;
 }
-.rd-lit::after {
+@keyframes rd-dawn { from { opacity: 0; transform: scaleY(0.55); } }
+/* A band of light crosses the silver now and then, the way light moves over brushed metal. */
+.rd-atmos__fade::after {
   content: "";
   position: absolute;
-  left: 9%;
-  right: 9%;
-  bottom: 0;
-  height: 1px;
-  pointer-events: none;
-  background: linear-gradient(90deg, rgba(var(--rd-accent-rgb), 0), rgba(11, 190, 128, 0.9) 28%, #f2fffa 50%, rgba(11, 190, 128, 0.9) 72%, rgba(var(--rd-accent-rgb), 0));
-  box-shadow: 0 0 14px 1px rgba(var(--rd-accent-rgb), 0.75);
+  inset: 0;
+  background: linear-gradient(104deg, rgba(255, 255, 255, 0) 38%, rgba(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0) 62%);
+  -webkit-mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.6) 45%, transparent 90%);
+  mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.6) 45%, transparent 90%);
+  transform: translate3d(-100%, 0, 0);
+  animation: rd-sheen 12s cubic-bezier(0.45, 0, 0.25, 1) calc(1.4s + var(--rd-shift, 0ms)) infinite;
+}
+@keyframes rd-sheen { 0% { transform: translate3d(-100%, 0, 0); } 38%, 100% { transform: translate3d(100%, 0, 0); } }
+@media print { .rd-atmos { display: none; } }
+
+/* A card: white, a hairline edge, a soft shadow. The backend's .command-panel. */
+.rd-panel {
+  position: relative;
+  min-width: 0;
+  background: linear-gradient(140deg, rgba(9, 9, 11, 0.014), rgba(9, 9, 11, 0) 50%), var(--rd-card);
+  border: 1px solid var(--rd-edge-2);
+  border-radius: var(--rd-radius-lg);
+  box-shadow: var(--rd-shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
-/* Buttons. The emerald is reserved for the quote action. */
+/* Buttons. Green is reserved for the quote action. */
 .rd-btn {
   display: inline-flex;
   align-items: center;
@@ -253,11 +272,12 @@
   white-space: nowrap;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 0.12s var(--rd-ease), background-color 0.15s, border-color 0.15s, box-shadow 0.2s, color 0.15s;
+  transition: transform 0.12s var(--rd-ease), background-color 0.15s, border-color 0.15s, box-shadow 0.2s, color 0.15s, filter 0.2s;
 }
 .rd-btn:active { transform: translateY(1px) scale(0.985); }
 .rd-btn svg { flex: none; }
-/* Brightest thing on the page: the CRM emerald with a defined dark-green edge and a contained halo. */
+/* The one coloured thing on the page: green, with a defined edge, a white rim that keeps
+   it clear of the silver behind it, and a contained glow underneath. */
 @property --rd-turn {
   syntax: "<angle>";
   inherits: false;
@@ -265,12 +285,12 @@
 }
 .rd-btn--go {
   position: relative;
-  background: linear-gradient(180deg, #4df0b8 0%, var(--rd-accent) 48%, #17cf8d 100%);
+  background: linear-gradient(180deg, #17873f 0%, var(--rd-deep) 100%);
   color: var(--rd-accent-ink);
-  border-color: rgba(3, 92, 62, 0.72);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75), 0 0 0 3px rgba(255, 255, 255, 0.72), 0 0 30px 9px rgba(255, 255, 255, 0.6), 0 14px 26px -10px rgba(3, 120, 80, 0.6);
+  border-color: #136c34;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 0 0 3px rgba(255, 255, 255, 0.9), 0 9px 18px -9px rgba(var(--rd-accent-rgb), 0.75), 0 2px 5px rgba(9, 9, 11, 0.14);
 }
-.rd-btn--go:hover { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 0 0 3px rgba(255, 255, 255, 0.85), 0 0 40px 12px rgba(255, 255, 255, 0.75), 0 18px 32px -10px rgba(3, 120, 80, 0.7); }
+.rd-btn--go:hover { filter: brightness(1.07); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.34), 0 0 0 3px #ffffff, 0 12px 26px -9px rgba(var(--rd-accent-rgb), 0.9), 0 2px 6px rgba(9, 9, 11, 0.16); }
 /* A glint of white light that travels round the quote button's edge. */
 .rd-btn--go::before {
   content: "";
@@ -286,20 +306,18 @@
   pointer-events: none;
 }
 @keyframes rd-turn { to { --rd-turn: 360deg; } }
-/* White glass for the quieter actions. */
+/* The quieter actions: white cards with a hairline edge. */
 .rd-btn--line,
 .rd-btn--ink,
 .rd-btn--paper {
-  background: rgba(255, 255, 255, 0.74);
-  border-color: rgba(4, 19, 14, 0.16);
+  background: var(--rd-card);
+  border-color: var(--rd-edge-2);
   color: var(--rd-text);
-  box-shadow: 0 1px 2px rgba(4, 19, 14, 0.05);
-  -webkit-backdrop-filter: blur(14px) saturate(1.4);
-  backdrop-filter: blur(14px) saturate(1.4);
+  box-shadow: 0 1px 2px rgba(9, 9, 11, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 .rd-btn--line:hover,
 .rd-btn--ink:hover,
-.rd-btn--paper:hover { border-color: rgba(var(--rd-deep-rgb), 0.55); background: #ffffff; }
+.rd-btn--paper:hover { border-color: var(--rd-edge-3); }
 .rd-btn--wide { width: 100%; }
 .rd-btn--big { min-height: 3.6rem; font-size: 1.125rem; }
 
@@ -313,16 +331,20 @@
   outline-offset: 3px;
 }
 
-/* Header: a slim floating bar of white glass with a fine edge. It turns more solid
-   once the page scrolls. The strip around it is see-through and lets taps through. */
+/* Top bar: the backend's. Full width, see-through with a fine edge under it, and more
+   solid once the page has scrolled. */
 .rd-hd {
   position: sticky;
   top: 0;
   z-index: 40;
-  padding: var(--rd-hd-pad) var(--rd-hd-pad) 0;
   color: var(--rd-text);
-  pointer-events: none;
+  background: var(--rd-glass);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  backdrop-filter: blur(20px) saturate(1.6);
+  border-bottom: 1px solid var(--rd-edge);
+  transition: background-color 0.3s, box-shadow 0.3s;
 }
+.rd-hd[data-scrolled="true"] { background: var(--rd-glass-strong); box-shadow: 0 10px 30px -16px rgba(9, 9, 11, 0.28); }
 .rd-hd__bar {
   position: relative;
   display: flex;
@@ -330,33 +352,33 @@
   justify-content: space-between;
   gap: 0.75rem;
   height: var(--rd-hd-h);
-  padding-inline: 0.75rem 0.5rem;
+  padding-inline: var(--rd-gutter);
   max-width: 94rem;
   margin-inline: auto;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.75);
-  background: rgba(255, 255, 255, 0.62);
-  -webkit-backdrop-filter: blur(20px) saturate(1.7);
-  backdrop-filter: blur(20px) saturate(1.7);
-  box-shadow: 0 0 0 1px rgba(4, 19, 14, 0.06), 0 10px 30px -14px rgba(4, 19, 14, 0.3);
-  pointer-events: auto;
-  transition: background-color 0.3s, box-shadow 0.3s;
 }
-.rd-hd[data-scrolled="true"] .rd-hd__bar { background: rgba(255, 255, 255, 0.9); box-shadow: 0 0 0 1px rgba(4, 19, 14, 0.08), 0 14px 34px -14px rgba(4, 19, 14, 0.38); }
-/* On pages that open with a full-width photo the bar floats over it. */
-.rd-page--over > .rd-hd { margin-bottom: calc((var(--rd-hd-h) + var(--rd-hd-pad)) * -1); }
-.rd-brand { display: inline-flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; min-height: 2.75rem; }
+.rd-brand { display: inline-flex; align-items: center; gap: 0.65rem; color: inherit; text-decoration: none; min-height: 2.75rem; }
+/* The mark sits in a small square, like the business badge in the backend's top bar. */
 .rd-brand__mark {
+  position: relative;
   flex: none;
-  width: 2rem;
-  height: 2rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--rd-edge-2);
+  border-radius: 12px;
+  background: var(--rd-card);
+  box-shadow: 0 1px 2px rgba(9, 9, 11, 0.05);
+}
+.rd-brand__mark::before {
+  content: "";
+  position: absolute;
+  inset: 0.34rem;
   background: var(--rd-deep);
   -webkit-mask: url("/media/redesign/gcp-mark.png") center / contain no-repeat;
   mask: url("/media/redesign/gcp-mark.png") center / contain no-repeat;
 }
 .rd-brand__text { display: flex; flex-direction: column; line-height: 1; }
 .rd-brand__name { font-weight: 600; font-size: 1.0625rem; letter-spacing: -0.03em; white-space: nowrap; }
-.rd-brand__sub { display: none; margin-top: 0.25rem; font-size: 0.6875rem; font-weight: 500; color: var(--rd-text-2); white-space: nowrap; }
+.rd-brand__sub { display: none; margin-top: 0.25rem; font-size: 0.6875rem; font-weight: 500; color: var(--rd-text-3); white-space: nowrap; }
 .rd-hd__tools { display: flex; align-items: center; gap: 0.5rem; }
 .rd-icon-btn {
   display: inline-flex;
@@ -367,8 +389,9 @@
   height: 2.75rem;
   padding: 0 0.6rem;
   border: 1px solid var(--rd-edge-2);
-  border-radius: 11px;
-  background: rgba(255, 255, 255, 0.7);
+  border-radius: 12px;
+  background: var(--rd-card);
+  box-shadow: 0 1px 2px rgba(9, 9, 11, 0.04);
   color: inherit;
   font: 600 0.9375rem/1 var(--rd-body);
   text-decoration: none;
@@ -376,14 +399,13 @@
   -webkit-tap-highlight-color: transparent;
   transition: border-color 0.15s, background-color 0.15s;
 }
-.rd-icon-btn:hover { border-color: rgba(var(--rd-deep-rgb), 0.5); background: #ffffff; }
+.rd-icon-btn:hover { border-color: var(--rd-edge-3); }
 /* Menu tapped before the app finished loading: acknowledge it straight away. */
-.rd-menu-wanted [data-rd-menu] { background: var(--rd-accent); border-color: rgba(3, 92, 62, 0.6); color: var(--rd-accent-ink); }
+.rd-menu-wanted [data-rd-menu] { background: var(--rd-text); border-color: var(--rd-text); color: #ffffff; }
 .rd-hd__nav,
 .rd-hd__desk { display: none; }
 
 @media (min-width: 1000px) {
-  .rd-hd__bar { padding-inline: 1.1rem 0.7rem; }
   .rd-hd__nav { display: flex; align-items: center; gap: clamp(0rem, 0.4vw, 0.4rem); margin-right: auto; margin-left: clamp(0.75rem, 2vw, 2.5rem); }
   .rd-hd__desk { display: inline-flex; }
   .rd-hd__mob { display: none; }
@@ -397,7 +419,7 @@
     border: 0;
     border-radius: 8px;
     background: none;
-    color: var(--rd-copy-ink);
+    color: var(--rd-text-2);
     font: 500 0.9375rem/1 var(--rd-body);
     letter-spacing: -0.01em;
     text-decoration: none;
@@ -407,12 +429,12 @@
   }
   .rd-nav-link:hover,
   .rd-nav-link[aria-expanded="true"],
-  .rd-nav-link[aria-current="page"] { color: var(--rd-text); background: rgba(4, 19, 14, 0.06); }
+  .rd-nav-link[aria-current="page"] { color: var(--rd-text); background: var(--rd-wash); }
   .rd-nav-link svg { transition: transform 0.2s var(--rd-ease); opacity: 0.7; }
   .rd-nav-link[aria-expanded="true"] svg { transform: rotate(180deg); }
   .rd-hd__phone { font: 600 0.9375rem/1 var(--rd-body); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; padding: 0 0.5rem; white-space: nowrap; color: inherit; text-decoration: none; min-height: 2.75rem; display: none; align-items: center; gap: 0.45rem; }
-  .rd-hd__quote { min-height: 2.4rem; padding: 0 1rem; font-size: 0.9375rem; border-radius: 10px; }
-  .rd-hd .rd-icon-btn { min-width: 2.4rem; height: 2.4rem; }
+  .rd-hd__quote { min-height: 2.5rem; padding: 0 1rem; font-size: 0.9375rem; border-radius: 10px; }
+  .rd-hd .rd-icon-btn { min-width: 2.5rem; height: 2.5rem; border-radius: 10px; }
 }
 @media (min-width: 1180px) {
   .rd-hd__phone { display: inline-flex; }
@@ -423,237 +445,289 @@
 }
 
 /*
- * Opening screen: one photograph across the full width, dissolving into white, with
- * the emerald light rising from the bottom edge. No seam between photo and text.
- *
- * .rd-open holds two things: the hero itself (photo and words, clipped to the screen)
- * and the light on its lower edge (.rd-horizon). The light is one piece that straddles
- * the bottom edge: the CRM fade above it, a shorter tail below it running on into the
- * next section. Because it is one piece, anything it does (breathing, drifting) happens
- * on both sides of the edge at once and no line can open up between them.
- *
- * Order, back to front: white, the photo, the light, a wash for the words, the words.
+ * Opening screen. Laid out like the backend's dashboard: a headline block, the actions,
+ * a panel that shows the work, and four cards of figures. One column on a phone; on a
+ * wide screen the panel stands on the right and the cards sit under the headline.
  */
 .rd-open {
   /* How far the visitor has scrolled past the opening, 0 to 1. Set by home/Hero.tsx. */
   --p: 0;
-  /* How far the light runs on below the opening. */
-  --rd-carry: clamp(9rem, 24vw, 15rem);
   position: relative;
-  isolation: isolate;
 }
-.rd-hero {
-  position: relative;
-  display: grid;
-  grid-template-rows: minmax(11rem, 1fr) auto;
-  min-height: 100vh;
-  min-height: 100svh;
-  background: var(--rd-bg);
-  color: var(--rd-text);
-  overflow: hidden;
-  overflow: clip;
-}
-.rd-hero__media {
-  position: absolute;
-  z-index: 1;
-  inset: 0 0 auto 0;
-  height: 64%;
-  /* Rests slightly enlarged and settles back as the page scrolls, about the diamond cut. */
-  transform: scale(calc(1.07 - 0.07 * var(--p)));
-  transform-origin: 50% 46%;
-  opacity: calc(1 - 0.5 * var(--p));
-  /* Fully clear down past the diamond cut, then dissolving into the page. */
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 52%, rgba(0, 0, 0, 0.55) 73%, rgba(0, 0, 0, 0.14) 89%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 0%, #000 52%, rgba(0, 0, 0, 0.55) 73%, rgba(0, 0, 0, 0.14) 89%, transparent 100%);
-  will-change: transform, opacity;
-}
-/* Before the photo has arrived: a few-dozen-pixel copy of the same photo, carried in the
-   page itself (styles/hero-preview.css), drawn soft in exactly the place the photo will
-   take. The first frame is never a blank top half. Its position must match the photo's. */
-.rd-hero__media { background: var(--rd-hero-pre, none) 50% 30% / cover no-repeat; }
-.rd-hero__media picture { display: block; width: 100%; height: 100%; }
-/* The description of the photo is for screen readers and search engines. It is never drawn
-   on the page, even when the photo itself fails to arrive. */
-.rd-hero__media img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; color: transparent; font-size: 0; }
-/* Short screens (a small phone with the browser bars showing): slide the photo up so the
-   diamond cut stays above the headline. */
-@media (max-height: 600px) and (max-width: 599.98px) {
-  .rd-hero__media { background-position: 50% 56%; }
-  .rd-hero__media img { object-position: 50% 56%; }
-}
+.rd-hero { position: relative; padding: 0.35rem 0 clamp(2.75rem, 8vw, 5rem); color: var(--rd-text); }
+.rd-hero__grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.1rem; }
+.rd-hero__head { min-width: 0; }
 
-/* The light. Its top is the hero's halfway line; its bottom is past the hero's edge. */
-.rd-horizon {
-  position: absolute;
-  z-index: 2;
-  left: 0;
-  right: 0;
-  top: 50%;
-  bottom: calc(var(--rd-carry) * -1);
-  pointer-events: none;
-  animation: rd-breathe 7s ease-in-out var(--rd-shift, 0ms) infinite;
-}
-/* Above the edge: the CRM fade, exactly. */
-.rd-horizon__up {
-  position: absolute;
-  inset: 0 0 var(--rd-carry) 0;
-  background:
-    radial-gradient(120% 95% at 50% 108%, rgba(var(--rd-accent-rgb), 0.3), transparent 72%),
-    linear-gradient(to top, var(--rd-fade-72) 0%, var(--rd-fade-48) 38%, transparent 100%);
-}
-/* Below the edge: the same light mirrored and falling away faster. It starts on exactly
-   the colour the fade above ends on. */
-.rd-horizon__down {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: var(--rd-carry);
-  background:
-    radial-gradient(120% 95% at 50% -8%, rgba(var(--rd-accent-rgb), 0.3), transparent 72%),
-    linear-gradient(to bottom, var(--rd-fade-72) 0%, rgba(109, 238, 192, 0.46) 30%, rgba(158, 244, 213, 0.14) 64%, rgba(158, 244, 213, 0) 100%);
-}
-/* A fine grid that shows only where the light is, like a light table. */
-.rd-horizon__up::after,
-.rd-horizon__down::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: linear-gradient(rgba(var(--rd-deep-rgb), 0.09) 1px, transparent 1px), linear-gradient(90deg, rgba(var(--rd-deep-rgb), 0.09) 1px, transparent 1px);
-  background-size: 3.5rem 3.5rem;
-}
-.rd-horizon__up::after { background-position: 50% calc(100% + 1px); -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, transparent 78%); mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, transparent 78%); }
-.rd-horizon__down::after { background-position: 50% 0; -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9) 0%, transparent 70%); mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9) 0%, transparent 70%); }
-/* The heart of the light. Real light is white where it is hottest and coloured where
-   it falls off, so the edge itself gets a long, low lens of white. It spans the edge,
-   half above and half below. */
-.rd-horizon__core {
-  position: absolute;
-  left: -12%;
-  right: -12%;
-  bottom: calc(var(--rd-carry) - 4.25rem);
-  height: 8.5rem;
-  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.55) 42%, rgba(255, 255, 255, 0) 100%);
-}
-/* A softer light that drifts slowly along the edge. */
-.rd-horizon__drift {
-  position: absolute;
-  left: -30%;
-  bottom: calc(var(--rd-carry) - 9rem);
-  width: 60%;
-  height: 18rem;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(var(--rd-accent-rgb), 0.55), rgba(var(--rd-accent-rgb), 0));
-  animation: rd-drift 18s ease-in-out var(--rd-shift, 0ms) infinite alternate;
-  will-change: transform;
-}
-/* The edge itself: a hairline of light, white-hot in the middle, with a spark that runs along it. */
-.rd-horizon__line {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: var(--rd-carry);
-  height: 1px;
-  overflow: hidden;
-  background: linear-gradient(90deg, rgba(var(--rd-accent-rgb), 0) 2%, rgba(11, 190, 128, 0.85) 26%, #f4fffb 50%, rgba(11, 190, 128, 0.85) 74%, rgba(var(--rd-accent-rgb), 0) 98%);
-}
-.rd-horizon__line::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 22%;
-  background: linear-gradient(90deg, transparent, #ffffff, transparent);
-  transform: translateX(-110%);
-  animation: rd-spark 9s cubic-bezier(0.6, 0, 0.3, 1) calc(2s + var(--rd-shift, 0ms)) infinite;
-}
-@keyframes rd-breathe { 0%, 100% { opacity: 1; } 50% { opacity: 0.84; } }
-@keyframes rd-drift { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(165%, 0, 0); } }
-@keyframes rd-spark { 0% { transform: translateX(-110%); } 34%, 100% { transform: translateX(560%); } }
+/* The line above the headline is the Google rating, and a link to the reviews. */
+.rd-hero__proof { display: inline-flex; margin: 0; min-height: 2.75rem; text-decoration: none; animation: rd-up 0.7s var(--rd-ease) var(--rd-shift, 0ms) backwards; }
+.rd-hero__proof svg { flex: none; color: var(--rd-deep); margin-right: -0.15rem; }
+.rd-hero__proof-n { color: var(--rd-text-3); }
+.rd-hero__proof-n::before { content: "\00b7"; margin-right: 0.55rem; }
+.rd-hero__proof:hover span { text-decoration: underline; text-underline-offset: 0.3em; }
 
-.rd-hero__shade { position: absolute; z-index: 3; inset: 0; pointer-events: none; }
-.rd-hero__inner { position: relative; z-index: 4; grid-row: 2; padding: 0 var(--rd-gutter) 1.15rem; transform: translateY(calc(var(--p) * -1.25rem)); }
 .rd-hero__title {
   margin: 0;
   font-family: var(--rd-display);
   font-weight: 600;
   font-size: clamp(2.1rem, 10.1vw, 2.9rem);
   line-height: 1.02;
-  letter-spacing: -0.047em;
+  letter-spacing: -0.045em;
 }
-.rd-hero__title span { display: block; }
-/* Once, as the page opens, a band of emerald light crosses the headline. The words are
-   never hidden: they start and end as plain dark type. --rd-shift (see lib/motion.ts)
-   lets it carry on from the same point when the app takes the page over. */
-@supports ((-webkit-background-clip: text) or (background-clip: text)) {
-  .rd-hero__title span {
-    background: linear-gradient(100deg, var(--rd-text) 0%, var(--rd-text) 40%, #06b97c 50%, var(--rd-text) 60%, var(--rd-text) 100%) 100% 0 / 280% 100% no-repeat;
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: rd-sheen 1.8s cubic-bezier(0.4, 0, 0.2, 1) calc(0.3s + var(--rd-shift, 0ms)) both;
-  }
-  .rd-hero__title span + span { animation-delay: calc(0.55s + var(--rd-shift, 0ms)); }
-}
-@keyframes rd-sheen { from { background-position: 100% 0; } to { background-position: 0% 0; } }
-.rd-hero__lead { margin: 0.8rem 0 0; max-width: 34rem; font-size: 1.0625rem; line-height: 1.45; letter-spacing: -0.008em; color: var(--rd-copy-ink); }
-.rd-hero__proof { display: inline-flex; align-items: center; gap: 0.45rem; margin-top: 0.75rem; min-height: 2.1rem; padding: 0 0.8rem 0 0.65rem; border: 1px solid rgba(255, 255, 255, 0.8); border-radius: 999px; background: rgba(255, 255, 255, 0.6); box-shadow: 0 0 0 1px rgba(4, 19, 14, 0.07), 0 6px 16px -10px rgba(4, 19, 14, 0.3); -webkit-backdrop-filter: blur(12px) saturate(1.5); backdrop-filter: blur(12px) saturate(1.5); font-size: 0.9063rem; font-weight: 500; letter-spacing: -0.005em; color: var(--rd-text); text-decoration: none; transition: background-color 0.2s; }
-.rd-hero__proof:hover { background: rgba(255, 255, 255, 0.9); }
-.rd-hero__proof svg { color: var(--rd-deep); }
-.rd-hero__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-top: 0.85rem; }
+.rd-hero__line { display: block; }
+/* The headline arrives a word at a time. */
+.rd-word { display: inline-block; animation: rd-word 0.85s var(--rd-ease) calc(50ms + var(--w, 0) * 55ms + var(--rd-shift, 0ms)) backwards; }
+@keyframes rd-word { from { opacity: 0; transform: translate3d(0, 0.45em, 0); filter: blur(7px); } }
+@keyframes rd-up { from { opacity: 0; transform: translate3d(0, 0.9rem, 0); } }
+/* For things that must be usable from the first frame: they move, but are never hidden. */
+@keyframes rd-settle { from { transform: translate3d(0, 0.8rem, 0); } }
+
+.rd-hero__lead { margin: 0.8rem 0 0; max-width: 34rem; font-size: 1.0625rem; line-height: 1.45; letter-spacing: -0.008em; color: var(--rd-text-2); animation: rd-up 0.8s var(--rd-ease) calc(300ms + var(--rd-shift, 0ms)) backwards; }
+.rd-hero__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-top: 1.05rem; animation: rd-settle 0.8s var(--rd-ease) var(--rd-shift, 0ms) backwards; }
 .rd-hero__actions .rd-btn--go { grid-column: 1 / -1; min-height: 3.4rem; font-size: 1.125rem; }
 .rd-hero__actions .rd-btn--line { min-height: 3rem; padding: 0 0.6rem; }
 .rd-hero__num { display: none; }
+/* Three short assurances beside the buttons. Wide screens only: on a phone that room
+   belongs to the work panel. */
+.rd-hero__assure { display: none; }
+
+/*
+ * The work panel: the backend's chart panel, showing the work. A title and a
+ * two-way switch on top, the picture, then three facts about the job.
+ */
+.rd-reel { padding: 0.7rem; isolation: isolate; animation: rd-land 1s var(--rd-ease) calc(120ms + var(--rd-shift, 0ms)) backwards; }
+/* It stays visible from the first frame (the picture is the largest thing on the screen)
+   and settles into place from slightly larger, never from smaller or from lower. The
+   browser times the page by when its largest picture is drawn, and it restarts that
+   clock if the same picture is later drawn bigger. The app redraws the panel when it
+   takes over, seconds later on a weak signal; had the first drawing been the smaller
+   one, the page would be timed from that moment instead of from the first second. */
+@keyframes rd-land { from { transform: scale(1.03); } }
+/* The backend's hairline of light on the top edge of its main panel. */
+.rd-reel::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 20%;
+  right: 20%;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(var(--rd-accent-rgb), 0), rgba(var(--rd-accent-rgb), 0.85), rgba(var(--rd-accent-rgb), 0));
+}
+/* One lap of light round the panel's edge each time the scene changes. */
+.rd-reel__beam {
+  position: absolute;
+  inset: -1px;
+  z-index: 3;
+  padding: 1.5px;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: conic-gradient(from var(--rd-turn), rgba(34, 197, 94, 0) 0deg 285deg, rgba(34, 197, 94, 0.9) 325deg, #ffffff 345deg, rgba(34, 197, 94, 0) 360deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: rd-turn 2.2s cubic-bezier(0.45, 0, 0.2, 1) 1 both, rd-beam 2.2s ease 1 both;
+}
+.rd-reel[data-first] .rd-reel__beam { animation-delay: calc(0.45s + var(--rd-shift, 0ms)), calc(0.45s + var(--rd-shift, 0ms)); }
+@keyframes rd-beam { 12%, 78% { opacity: 1; } }
+
+.rd-reel__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; padding: 0.3rem 0.3rem 0.75rem; }
+.rd-reel__name { min-width: 0; }
+.rd-reel__title { margin: 0; font-family: var(--rd-display); font-size: 1rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1.25; color: var(--rd-text); animation: rd-swap 0.45s var(--rd-ease) backwards; }
+.rd-reel__sub { margin: 0.2rem 0 0; font-size: 0.8125rem; line-height: 1.35; color: var(--rd-label); animation: rd-swap 0.45s var(--rd-ease) 50ms backwards; }
+@keyframes rd-swap { from { opacity: 0; transform: translate3d(0, 0.35rem, 0); } }
+/* As the page opens there is nothing to swap from. */
+.rd-reel[data-first] :is(.rd-reel__title, .rd-reel__sub, .rd-reel__tag, .rd-reel__stats) { animation: none; }
+
+/* The backend's two-way switch. */
+.rd-seg { flex: none; display: inline-flex; padding: 3px; gap: 2px; border: 1px solid var(--rd-edge-2); border-radius: 10px; background: var(--rd-wash); }
+.rd-seg button {
+  position: relative;
+  overflow: hidden;
+  min-height: 2.5rem;
+  padding: 0 0.85rem;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: none;
+  color: var(--rd-text-3);
+  font: 500 0.875rem/1 var(--rd-body);
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s, background-color 0.15s, border-color 0.15s;
+}
+.rd-seg button[aria-pressed="true"] { color: var(--rd-text); background: var(--rd-card); border-color: var(--rd-edge-2); box-shadow: 0 1px 2px rgba(9, 9, 11, 0.07); }
+/* The line under the chosen word runs for as long as its scene stays up. */
+.rd-seg__run { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--rd-accent); transform-origin: 0 50%; transform: scaleX(0); animation: rd-run var(--dur, 6s) linear forwards; }
+@keyframes rd-run { to { transform: scaleX(1); } }
+.rd-reel[data-live="false"] .rd-seg__run,
+.rd-reel[data-live="false"] .rd-reel__scene img { animation-play-state: paused; }
+
+/* The picture. Before it has arrived: a few-dozen-pixel copy of the same photo, carried
+   in the page itself (styles/hero-preview.css), drawn soft in the same place. */
+.rd-reel__stage {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 1 / 1;
+  border-radius: 10px;
+  background: #0a0c12 var(--rd-hero-pre, none) 50% 50% / cover no-repeat;
+  isolation: isolate;
+}
+/* It rests slightly enlarged and settles back as the page scrolls. */
+.rd-reel__scenes { position: absolute; inset: 0; transform: scale(calc(1.06 - 0.06 * var(--p))); will-change: transform; }
+.rd-reel__scene { position: absolute; inset: 0; margin: 0; opacity: 0; transition: opacity 0.8s ease; }
+.rd-reel__scene[data-under="true"] { opacity: 1; transition: none; }
+.rd-reel__scene[data-on="true"] { z-index: 1; opacity: 1; }
+.rd-reel__scene picture { display: block; width: 100%; height: 100%; }
+/* The description of a picture is for screen readers and search engines. It is never
+   drawn on the page, even when the picture itself fails to arrive. */
+.rd-reel__scene img,
+.rd-reel__scene video { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; color: transparent; font-size: 0; }
+/* A still drifts slowly closer while it is up. */
+.rd-reel__scene[data-on="true"] img { animation: rd-drift var(--dur, 8s) linear both; }
+.rd-reel[data-first] .rd-reel__scene[data-on="true"] img { animation-delay: var(--rd-shift, 0ms); }
+@keyframes rd-drift { from { transform: scale(1); } to { transform: scale(1.07) translate3d(0, -1%, 0); } }
+/* The clip lies over its own first frame and fades in once it is actually playing. */
+.rd-reel__scene video { position: absolute; inset: 0; opacity: 0; transition: opacity 0.6s ease; }
+.rd-reel__scene[data-playing="true"] video { opacity: 1; }
+.rd-reel__tag {
+  position: absolute;
+  left: 0.6rem;
+  top: 0.6rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0.32rem 0.65rem 0.32rem 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(9, 9, 11, 0.6);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.2;
+  animation: rd-swap 0.45s var(--rd-ease) 120ms backwards;
+}
+.rd-reel__tag i { width: 0.4rem; height: 0.4rem; border-radius: 50%; background: var(--rd-accent-hi); box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.28); }
+
+.rd-reel__stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.65rem; margin: 0; padding: 0.85rem 0.3rem 0.75rem; animation: rd-swap 0.45s var(--rd-ease) 90ms backwards; }
+.rd-reel__stats > div + div { border-left: 1px solid var(--rd-edge); padding-left: 0.65rem; }
+.rd-reel__stats dt { margin-bottom: 0.3rem; font-size: 0.75rem; line-height: 1.3; color: var(--rd-label); }
+.rd-reel__stats dd { margin: 0; font-size: 0.875rem; font-weight: 500; line-height: 1.3; color: var(--rd-text); }
+.rd-reel__stats a { color: inherit; text-decoration: underline; text-decoration-color: rgba(var(--rd-deep-rgb), 0.7); text-underline-offset: 0.2em; }
+.rd-reel__more { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; min-height: 2.75rem; padding: 0 0.3rem; border-top: 1px solid var(--rd-edge); font-size: 0.875rem; font-weight: 500; color: var(--rd-text); text-decoration: none; }
+.rd-reel__more svg { color: var(--rd-deep); transition: transform 0.2s var(--rd-ease); }
+.rd-reel__more:hover svg { transform: translate(2px, -2px); }
+
+/* Four cards of figures: the backend's .command-kpi. The first is the featured one. */
+.rd-kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.625rem; }
+.rd-kpi {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 0.9rem 0.95rem 0.8rem;
+  border: 1px solid var(--rd-edge-2);
+  border-radius: var(--rd-radius-md);
+  background: linear-gradient(130deg, rgba(9, 9, 11, 0.018), rgba(9, 9, 11, 0) 75%), var(--rd-card);
+  box-shadow: var(--rd-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  color: var(--rd-text);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.2s, transform 0.2s var(--rd-ease), box-shadow 0.2s;
+  animation: rd-up 0.8s var(--rd-ease) calc(520ms + var(--rd-shift, 0ms)) backwards;
+}
+.rd-kpi:nth-child(2) { animation-delay: calc(590ms + var(--rd-shift, 0ms)); }
+.rd-kpi:nth-child(3) { animation-delay: calc(660ms + var(--rd-shift, 0ms)); }
+.rd-kpi:nth-child(4) { animation-delay: calc(730ms + var(--rd-shift, 0ms)); }
+.rd-kpi:hover { border-color: rgba(var(--rd-deep-rgb), 0.5); transform: translateY(-2px); box-shadow: var(--rd-shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.9); }
+.rd-kpi[data-featured="true"] { border-color: rgba(var(--rd-deep-rgb), 0.32); background: linear-gradient(120deg, rgba(var(--rd-accent-rgb), 0.075), rgba(var(--rd-accent-rgb), 0) 80%), var(--rd-card); }
+.rd-kpi[data-featured="true"]::before { content: ""; position: absolute; top: 0; left: 20px; right: 35%; height: 1px; background: linear-gradient(90deg, var(--rd-accent), rgba(var(--rd-accent-rgb), 0)); }
+.rd-kpi__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.5rem; }
+.rd-kpi__label { font-size: 0.8125rem; line-height: 1.4; color: var(--rd-label); }
+.rd-kpi__icon { flex: none; display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border: 1px solid var(--rd-edge); border-radius: 8px; background: rgba(9, 9, 11, 0.025); color: var(--rd-text-3); }
+.rd-kpi[data-featured="true"] .rd-kpi__icon { color: var(--rd-deep); background: rgba(var(--rd-accent-rgb), 0.09); border-color: rgba(var(--rd-deep-rgb), 0.2); }
+.rd-kpi__value { margin-top: 0.65rem; font-family: var(--rd-display); font-size: clamp(1.6rem, 7.4vw, 2rem); font-weight: 600; letter-spacing: -0.045em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.rd-kpi__foot { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 0.65rem; font-size: 0.8125rem; line-height: 1.3; color: var(--rd-text-3); }
+.rd-kpi__foot svg { flex: none; opacity: 0.7; transition: transform 0.2s var(--rd-ease), color 0.2s, opacity 0.2s; }
+.rd-kpi:hover .rd-kpi__foot svg { transform: translate(2px, -2px); color: var(--rd-deep); opacity: 1; }
 
 @media (min-width: 600px) and (max-width: 999.98px) {
-  .rd-hero__media { height: 72%; }
-  .rd-hero__inner { padding-bottom: 2.25rem; }
+  .rd-hero { padding-top: 1.25rem; }
   .rd-hero__title { font-size: clamp(3rem, 7.4vw, 4rem); }
   .rd-hero__actions { grid-template-columns: auto auto auto; justify-content: start; }
   .rd-hero__actions .rd-btn--go { grid-column: auto; }
   .rd-hero__actions .rd-btn--line { padding: 0 1.2rem; }
   .rd-hero__num { display: inline; }
+  .rd-reel__stage { aspect-ratio: 16 / 10; }
+  .rd-reel__scene img, .rd-reel__scene video { object-position: 50% 58%; }
+  .rd-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 
 @media (min-width: 1000px) {
-  .rd-hero { grid-template-rows: 1fr; min-height: min(100svh, 60rem); }
-  /* The photo fills the screen, a touch oversize and nudged left so the palm and its diamond cut clear the headline. */
-  .rd-hero__media {
-    inset: 0 auto 0 -12%;
-    width: 112%;
-    height: 100%;
-    transform-origin: 48% 32%;
-    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 46%, rgba(0, 0, 0, 0.55) 60%, rgba(0, 0, 0, 0.14) 72%, transparent 84%);
-    mask-image: linear-gradient(to bottom, #000 0%, #000 46%, rgba(0, 0, 0, 0.55) 60%, rgba(0, 0, 0, 0.14) 72%, transparent 84%);
-  }
-  /* A soft white seat behind the headline, so the photo can stay clear beside it. */
-  .rd-hero__shade { background: radial-gradient(52% 38% at 76% 60%, rgba(255, 255, 255, 0.66) 0%, rgba(255, 255, 255, 0.34) 48%, rgba(255, 255, 255, 0) 100%); }
-  .rd-hero__media { background-position: 50% 50%; }
-  .rd-hero__media img { object-position: 50% 50%; }
-  .rd-horizon__drift { left: -20%; width: 40%; height: 26rem; bottom: calc(var(--rd-carry) - 13rem); }
-  .rd-horizon__core { left: 4%; right: 4%; height: 11rem; bottom: calc(var(--rd-carry) - 5.5rem); }
-  /* Headline on the right; the palm and its diamond cut keep the left and centre. */
-  .rd-hero__inner { grid-row: 1; align-self: end; justify-self: end; padding: 0 clamp(1.5rem, 5vw, 5rem) clamp(5rem, 12.5vh, 7.5rem) 0; }
-  .rd-hero__title { font-size: clamp(3rem, 4.4vw, 4.4rem); }
-  .rd-hero__title span { white-space: nowrap; }
-  .rd-hero__lead { margin-top: 1.15rem; max-width: 30rem; font-size: 1.1875rem; }
-  .rd-hero__proof { margin-top: 1rem; }
-  .rd-hero__actions { grid-template-columns: auto auto auto; justify-content: start; gap: 0.7rem; margin-top: 1.5rem; }
+  .rd-hero { padding: clamp(1.5rem, 4.5vh, 3.25rem) 0 clamp(3.5rem, 7vw, 6rem); }
+  .rd-hero__grid { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); grid-template-rows: auto 1fr; column-gap: clamp(2.5rem, 4.5vw, 4.5rem); row-gap: 1.75rem; align-items: start; }
+  .rd-hero__head { grid-column: 1; grid-row: 1; padding-top: clamp(0rem, 3vh, 2rem); }
+  .rd-kpis { grid-column: 1; grid-row: 2; align-self: end; gap: 0.75rem; }
+  .rd-reel { grid-column: 2; grid-row: 1 / span 2; padding: 0.85rem; }
+  .rd-hero__title { font-size: min(4.45rem, 4.9vw); }
+  .rd-hero__assure { display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem; list-style: none; margin: 1.35rem 0 0; padding: 0; font-size: 0.9375rem; font-weight: 500; color: var(--rd-text-2); animation: rd-up 0.8s var(--rd-ease) calc(420ms + var(--rd-shift, 0ms)) backwards; }
+  .rd-hero__assure li { display: inline-flex; align-items: center; gap: 0.45rem; }
+  .rd-hero__assure svg { flex: none; color: var(--rd-deep); }
+  .rd-hero__line { white-space: nowrap; }
+  .rd-hero__lead { margin-top: 1.25rem; max-width: 31rem; font-size: 1.1875rem; }
+  .rd-hero__actions { grid-template-columns: auto auto auto; justify-content: start; gap: 0.7rem; margin-top: 1.75rem; }
   .rd-hero__actions .rd-btn--go { grid-column: auto; min-height: 3.5rem; padding: 0 1.6rem; }
   .rd-hero__actions .rd-btn--line { min-height: 3.5rem; padding: 0 1.2rem; }
+  /* The whole picture, four wide by five tall, kept inside the first screen on a short window. */
+  .rd-reel__stage { aspect-ratio: 4 / 5; max-height: min(37.5rem, calc(100svh - 19.5rem)); width: 100%; }
+  .rd-reel__head { padding: 0.25rem 0.3rem 0.85rem; }
+  .rd-reel__title { font-size: 1.0625rem; }
+  .rd-kpi { padding: 1.15rem 1.25rem 1.05rem; }
+  .rd-kpi__value { margin-top: 0.8rem; font-size: clamp(1.85rem, 2.7vw, 2.375rem); }
+  .rd-kpi__foot { margin-top: 0.8rem; }
+  /* On a mouse the panel leans a degree or two toward the pointer. */
+  .rd-reel { transform: perspective(1400px) rotateX(calc(var(--ty, 0) * -2.2deg)) rotateY(calc(var(--tx, 0) * 2.6deg)); transition: transform 0.4s ease-out; }
+}
+@media (min-width: 1180px) {
   .rd-hero__num { display: inline; }
 }
 
-/* Less motion asked for: the opening holds still, at its settled size, fully lit. */
+/* Less motion asked for: everything is in place and holds still. */
 @media (prefers-reduced-motion: reduce) {
-  .rd-hero__media { transform: none; opacity: 1; }
-  .rd-hero__inner { transform: none; }
-  .rd-horizon,
-  .rd-horizon__drift,
-  .rd-horizon__line::after,
-  .rd-btn--go::before { animation: none; }
-  .rd-horizon__line::after { display: none; }
-  .rd-hero__title span { animation: none; background: none; -webkit-text-fill-color: currentColor; }
-  .rd-btn, .rd-hd__bar, .rd-hero__proof, .rd-icon-btn { transition: none; }
+  .rd-atmos__fade,
+  .rd-hero__proof,
+  .rd-word,
+  .rd-hero__lead,
+  .rd-hero__actions,
+  .rd-hero__assure,
+  .rd-atmos__fade::after,
+  .rd-reel,
+  .rd-reel__title,
+  .rd-reel__sub,
+  .rd-reel__tag,
+  .rd-reel__stats,
+  .rd-kpi,
+  .rd-btn--go::before,
+  .rd-reel__beam,
+  .rd-seg__run,
+  .rd-reel__scene[data-on="true"] img { animation: none; }
+  .rd-reel__beam,
+  .rd-seg__run { display: none; }
+  .rd-reel__scenes { transform: none; }
+  .rd-reel { transform: none; transition: none; }
+  .rd-reel__scene,
+  .rd-reel__scene video,
+  .rd-btn,
+  .rd-hd,
+  .rd-icon-btn,
+  .rd-kpi,
+  .rd-kpi__foot svg,
+  .rd-reel__more svg,
+  .rd-seg button { transition: none; }
+  .rd-kpi:hover { transform: none; }
 }

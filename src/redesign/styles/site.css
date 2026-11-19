@@ -1,11 +1,11 @@
 /*
  * Gulf Coast Palms public site, part 2 of 2: everything below the opening screen.
- * Part 1 (first-view.css) holds the colours, type, buttons, header and hero, and
- * explains where the look comes from (the CRM's own theme values).
+ * Part 1 (first-view.css) holds the colours, type, buttons, the top bar, the atmosphere
+ * and the hero, and explains where the look comes from (the backend, flipped to white).
  *
- * Surfaces here are white with fine ink edges. Panels and page headers are lit from
- * their own bottom edge by the same fade as the opening screen, turned down. Full
- * strength is kept for the opening, the closing quote band and the quote buttons.
+ * Pages are see-through over the atmosphere: the grid at the top of the screen and the
+ * silver fade across its bottom half. Content sits in white cards with hairline edges.
+ * Green appears on actions and on the fine line that marks a card worth acting on.
  */
 
 /* ---------- Page frame ---------- */
@@ -31,7 +31,7 @@
   justify-content: center;
   gap: 0.75rem;
   padding: 0.45rem var(--rd-gutter);
-  background: var(--rd-well);
+  background: var(--rd-glass-strong);
   border-bottom: 1px solid var(--rd-edge);
   color: var(--rd-text-2);
   font-size: 0.9375rem;
@@ -46,7 +46,7 @@
   .rd-season--top { display: flex; }
 }
 
-/* Desktop menus: a lifted panel of white glass. */
+/* Desktop menus: a lifted white card. */
 .rd-nav-group { position: relative; }
 .rd-nav-panel {
   position: absolute;
@@ -55,13 +55,13 @@
   z-index: 50;
   width: 21rem;
   padding: 0.5rem;
-  background: rgba(255, 255, 255, 0.94);
+  background: rgba(255, 255, 255, 0.97);
   -webkit-backdrop-filter: blur(20px) saturate(1.5);
   backdrop-filter: blur(20px) saturate(1.5);
   color: var(--rd-text);
   border: 1px solid var(--rd-edge-2);
   border-radius: 14px;
-  box-shadow: 0 1px 2px rgba(4, 19, 14, 0.05), 0 26px 60px -20px rgba(4, 19, 14, 0.3);
+  box-shadow: 0 1px 2px rgba(9, 9, 11, 0.05), 0 24px 56px -20px rgba(9, 9, 11, 0.28);
 }
 /* Keeps the panel open while the pointer crosses the small gap under the bar. */
 .rd-nav-panel::before { content: ""; position: absolute; inset: -0.5rem 0 auto 0; height: 0.5rem; }
@@ -90,18 +90,18 @@
 }
 .rd-menu:focus { outline: none; }
 /* Sits behind the menu, outside the page frame, so the colour is written out (same as --rd-bg). */
-.rd-menu__veil { position: fixed; inset: 0; z-index: 89; background: #ffffff; }
+.rd-menu__veil { position: fixed; inset: 0; z-index: 89; background: #fafafa; }
 @keyframes rd-menu-in {
   from { opacity: 0; transform: translateY(0.75rem); }
   to { opacity: 1; transform: none; }
 }
-/* The top row sits exactly where the floating header's contents sit, so nothing jumps. */
-.rd-menu__top { flex: none; display: flex; align-items: center; justify-content: space-between; height: var(--rd-hd-h); margin-top: var(--rd-hd-pad); padding-inline: calc(var(--rd-hd-pad) + 0.75rem + 1px) calc(var(--rd-hd-pad) + 0.5rem + 1px); }
+/* The top row sits exactly where the top bar's contents sit, so nothing jumps. */
+.rd-menu__top { flex: none; display: flex; align-items: center; justify-content: space-between; height: var(--rd-hd-h); padding-inline: var(--rd-gutter); border-bottom: 1px solid var(--rd-edge); }
 .rd-menu__scroll { flex: 1; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 0.5rem var(--rd-gutter) 1.5rem; }
 .rd-menu__scroll section + section { margin-top: 1.4rem; padding-top: 1.2rem; border-top: 1px solid var(--rd-line-dark); }
-/* Group labels: small and quiet, led by a short lit line. */
-.rd-menu__head { display: flex; align-items: center; gap: 0.55rem; margin: 0 0 0.45rem; font-size: 0.8125rem; font-weight: 600; letter-spacing: -0.005em; line-height: 1.2; color: var(--rd-signal); }
-.rd-menu__head::before { content: ""; width: 1.1rem; height: 1px; background: var(--rd-signal); box-shadow: 0 0 8px rgba(var(--rd-accent-rgb), 0.9); }
+/* Group labels: small and quiet, led by the short green line. */
+.rd-menu__head { display: flex; align-items: center; gap: 0.55rem; margin: 0 0 0.45rem; font-size: 0.8125rem; font-weight: 600; letter-spacing: -0.005em; line-height: 1.2; color: var(--rd-text-3); }
+.rd-menu__head::before { content: ""; width: 1.1rem; height: 1px; background: var(--rd-accent); }
 .rd-menu__list { list-style: none; margin: 0; padding: 0; }
 .rd-menu__list li a { display: block; padding: 0.7rem 0; color: inherit; text-decoration: none; line-height: 1.25; }
 .rd-menu__list li a:active { opacity: 0.7; }
@@ -113,14 +113,15 @@
 .rd-menu__list--plain li a { padding: 0.55rem 0; }
 .rd-menu__chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.45rem; }
 .rd-menu__chips a { display: inline-flex; align-items: center; min-height: 2.6rem; padding: 0 0.85rem; border: 1px solid var(--rd-line-dark); border-radius: 999px; color: inherit; text-decoration: none; font-size: 0.9375rem; font-weight: 600; }
-.rd-menu__chips a[aria-current="page"] { background: rgba(var(--rd-accent-rgb), 0.2); border-color: rgba(var(--rd-deep-rgb), 0.35); color: var(--rd-deep); }
+.rd-menu__chips a { background: var(--rd-card); }
+.rd-menu__chips a[aria-current="page"] { background: var(--rd-text); border-color: var(--rd-text); color: #ffffff; }
 .rd-menu__actions {
   flex: none;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.6rem;
   padding: 0.8rem var(--rd-gutter) calc(0.8rem + env(safe-area-inset-bottom, 0px));
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--rd-glass-strong);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   border-top: 1px solid var(--rd-edge);
@@ -128,7 +129,8 @@
 .rd-menu__actions .rd-btn--go { grid-column: 1 / -1; }
 .rd-menu__actions .rd-btn--line { min-height: 3rem; }
 
-/* Phone action bar */
+/* Phone action bar: the backend's bottom bar. Full width, see-through, a fine edge on
+   top, and the quote button where the backend keeps its one bright button. */
 .rd-dock {
   position: fixed;
   left: 0;
@@ -136,20 +138,17 @@
   bottom: 0;
   z-index: 60;
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1.7fr;
+  grid-template-columns: 1fr 1fr 1fr 1.75fr;
   align-items: stretch;
   gap: 0;
-  margin: 0 0.5rem calc(0.5rem + env(safe-area-inset-bottom, 0px));
-  padding: 0.4rem;
-  /* The CRM's bottom bar as a floating island of white glass. */
-  background: rgba(255, 255, 255, 0.84);
-  -webkit-backdrop-filter: blur(24px) saturate(1.7);
-  backdrop-filter: blur(24px) saturate(1.7);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  border-radius: 18px;
+  padding: 0.4rem 0.6rem calc(0.4rem + env(safe-area-inset-bottom, 0px));
+  background: var(--rd-glass-strong);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  backdrop-filter: blur(24px) saturate(1.6);
+  border-top: 1px solid var(--rd-edge-2);
   color: var(--rd-text);
-  box-shadow: 0 0 0 1px rgba(4, 19, 14, 0.07), 0 16px 40px -12px rgba(4, 19, 14, 0.4);
-  transform: translateY(150%);
+  box-shadow: 0 -8px 32px rgba(9, 9, 11, 0.1);
+  transform: translateY(110%);
   visibility: hidden;
   transition: transform 0.32s var(--rd-ease), visibility 0s linear 0.32s;
 }
@@ -159,13 +158,13 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.2rem;
+  gap: 0.25rem;
   min-height: 3.1rem;
   border: 0;
   border-radius: var(--rd-radius);
   background: none;
   color: var(--rd-text-2);
-  font: 600 0.75rem/1 var(--rd-body);
+  font: 500 0.75rem/1 var(--rd-body);
   text-decoration: none;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -175,12 +174,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-left: 0.35rem;
-  border: 1px solid rgba(3, 92, 62, 0.6);
+  margin-left: 0.4rem;
+  border: 1px solid #136c34;
   border-radius: 12px;
-  background: linear-gradient(180deg, #58f2bd 0%, var(--rd-accent) 52%, #20d795 100%);
+  background: linear-gradient(180deg, #17873f 0%, var(--rd-deep) 100%);
   color: var(--rd-accent-ink);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 8px 18px -8px rgba(8, 170, 115, 0.7);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 8px 18px -8px rgba(var(--rd-accent-rgb), 0.75);
   font: 600 1rem/1 var(--rd-body);
   letter-spacing: -0.012em;
   text-decoration: none;
@@ -189,14 +188,18 @@
 .rd-dock__quote:active { background: var(--rd-go-press); transform: scale(0.98); }
 .rd-page--dock .rd-ft { padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px)); }
 .rd-chat[data-hidden="true"] > button { visibility: hidden; }
+/* The chat button is the backend's floating square, flipped: black with a white icon.
+   Green stays with the quote buttons alone. */
+.rd-chat.rd-skin > button.bg-primary,
+.rd-chat.rd-skin > button.bg-primary:hover { border-radius: 16px; background: var(--rd-text); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.16); box-shadow: 0 4px 20px rgba(9, 9, 11, 0.3); }
+.rd-chat.rd-skin > button.bg-primary:hover { background: #27272a; }
 @media (min-width: 1000px) {
   .rd-dock { display: none; }
   .rd-page--dock .rd-ft { padding-bottom: 0; }
 }
 
-/* Footer. The page ends the way the opening begins: light rising from the bottom edge. */
-.rd-ft { position: relative; isolation: isolate; overflow: hidden; overflow: clip; padding-top: clamp(3rem, 7vw, 5rem); border-top: 1px solid var(--rd-edge); }
-.rd-ft__glow { z-index: -1; height: min(50%, 22rem); --rd-glow: 0.92; animation: rd-breathe 8s ease-in-out infinite; }
+/* Footer. Set straight on the page, so it ends in the fade at the bottom of the screen. */
+.rd-ft { position: relative; padding-top: clamp(3rem, 7vw, 5rem); border-top: 1px solid var(--rd-edge-2); }
 .rd-ft a:not(.rd-btn) { color: inherit; text-decoration: none; }
 .rd-ft a:not(.rd-btn):hover { text-decoration: underline; text-underline-offset: 0.2em; }
 .rd-ft__top { display: grid; gap: 2rem; padding-bottom: 2.5rem; border-bottom: 1px solid var(--rd-edge); }
@@ -207,7 +210,6 @@
   background: var(--rd-deep);
   -webkit-mask: url("/media/redesign/gcp-mark.png") center / contain no-repeat;
   mask: url("/media/redesign/gcp-mark.png") center / contain no-repeat;
-  filter: drop-shadow(0 0 14px rgba(var(--rd-accent-rgb), 0.7));
 }
 .rd-ft__name { margin: 0.9rem 0 0; font-weight: 600; font-size: clamp(2rem, 7vw, 3rem); line-height: 1.02; letter-spacing: -0.045em; }
 .rd-ft__line { margin: 0.9rem 0 0; max-width: 34rem; color: var(--rd-text-2); }
@@ -222,7 +224,7 @@
 .rd-ft__cols li a:hover { color: var(--rd-text); }
 .rd-ft__head { margin: 0 0 0.6rem; font-weight: 600; font-size: 1rem; letter-spacing: -0.015em; line-height: 1.2; color: var(--rd-text); }
 .rd-ft__head--gap { margin-top: 1.75rem; }
-/* The last line sits in the light, so it is set in the darkest text colour. */
+/* The last line sits in the strongest part of the fade, so it is set in the darkest text colour. */
 .rd-ft__base { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1.5rem; padding-block: 1.5rem; border-top: 1px solid var(--rd-edge-2); font-size: 0.875rem; color: var(--rd-text); }
 .rd-ft__base p { margin: 0; }
 .rd-ft__base ul { list-style: none; display: flex; gap: 1.25rem; margin: 0; padding: 0; }
@@ -235,13 +237,12 @@
 /* ---------- Shared section pieces ---------- */
 .rd-section { padding-block: var(--rd-section); }
 .rd-section--tight { padding-block: clamp(2.5rem, 6vw, 4.5rem); }
-/* A band set off by light and not by a grey fill: lit from its own bottom edge, quietly. */
-.rd-paper-2 { position: relative; isolation: isolate; border-top: 1px solid var(--rd-edge); }
-.rd-paper-2::before { content: ""; position: absolute; z-index: -1; left: 0; right: 0; bottom: 0; height: 50%; pointer-events: none; opacity: 0.32; background: var(--rd-light); }
-.rd-paper-2::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; pointer-events: none; background: linear-gradient(90deg, rgba(var(--rd-accent-rgb), 0) 2%, rgba(11, 190, 128, 0.7) 26%, #f4fffb 50%, rgba(11, 190, 128, 0.7) 74%, rgba(var(--rd-accent-rgb), 0) 98%); }
-.rd-coal { background: var(--rd-bg); color: var(--rd-text); }
+/* A second kind of band is set off by a hairline only. Nothing has a fill of its own:
+   every section is see-through over the atmosphere. */
+.rd-paper-2 { position: relative; border-top: 1px solid var(--rd-edge); }
+.rd-coal { color: var(--rd-text); }
 .rd-coal .rd-muted { color: var(--rd-text-2); }
-/* A panel: white, a fine edge and a soft shadow. */
+/* A card: white, a hairline edge and a soft shadow. */
 .rd-card { background: var(--rd-card); border: 1px solid var(--rd-edge-2); border-radius: var(--rd-radius-lg); box-shadow: var(--rd-shadow); }
 .rd-stack > * + * { margin-top: 1.1rem; }
 .rd-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
@@ -305,42 +306,52 @@
 /* ---------- Older pages inside the new frame ---------- */
 /* Pages and widgets not rebuilt yet keep their markup. Wrapped in .rd-skin they take
    the new colours, type and corners through the theme values their classes already
-   read, so the whole site reads as one white design. The second half deals with the
-   places where the old markup assumed dark green bands and gold labels. */
+   read, so the whole site reads as one white design with one green. The second half
+   deals with the places where the old markup assumed dark green bands and gold labels. */
 .rd-skin {
   font-family: var(--rd-body);
   color: var(--rd-text);
-  --background: 0 0% 100%;
-  --foreground: 160 65% 5%;
+  --background: 0 0% 98%;
+  --foreground: 240 10% 4%;
   --card: 0 0% 100%;
-  --card-foreground: 160 65% 5%;
+  --card-foreground: 240 10% 4%;
   --popover: 0 0% 100%;
-  --popover-foreground: 160 65% 5%;
-  /* Deep emerald: readable as text and as a fill under white text. */
-  --primary: 159 92% 23%;
+  --popover-foreground: 240 10% 4%;
+  /* The deep green: readable as text and as a fill under white text. */
+  --primary: 142 72% 29%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 150 22% 96%;
-  --secondary-foreground: 160 30% 14%;
-  --muted: 150 22% 96%;
-  --muted-foreground: 158 10% 30%;
-  /* The bright CRM emerald, for fills that carry dark text. */
-  --accent: 159 80% 56%;
-  --accent-foreground: 158 65% 5%;
-  --border: 160 12% 88%;
-  --input: 160 12% 80%;
-  --ring: 159 92% 23%;
+  --secondary: 240 5% 96%;
+  --secondary-foreground: 240 6% 10%;
+  --muted: 240 5% 96%;
+  /* Dark enough to read over the strongest part of the silver fade. */
+  --muted-foreground: 240 5% 26%;
+  /* A light green, for the old pages' fills that carry dark text. */
+  --accent: 142 69% 58%;
+  --accent-foreground: 240 10% 4%;
+  --border: 240 6% 90%;
+  --input: 240 5% 82%;
+  --ring: 142 72% 29%;
   --radius: 12px;
-  --palm-dark: 163 78% 9%;
-  --palm-green: 159 92% 23%;
-  --palm-light: 159 80% 56%;
-  --palm-gold: 159 80% 56%;
-  --palm-sand: 150 22% 96%;
-  /* A red dark enough for white words on it and for small red words on white. */
-  --destructive: 4 76% 40%;
+  --palm-dark: 240 10% 4%;
+  --palm-green: 142 72% 29%;
+  --palm-light: 142 69% 58%;
+  --palm-gold: 142 69% 58%;
+  --palm-sand: 240 5% 96%;
+  /* A red dark enough for white words on it and for small red words on a red tint. */
+  --destructive: 4 78% 36%;
+  /* What the older pages' green words are printed in. Straight on the page they are
+     ink, because the silver fade passes behind them; a white card switches them back
+     to green (see "Green words" below). */
+  --rd-skin-green: var(--rd-text);
   --shadow-brand: var(--rd-shadow);
   --font-display: var(--rd-display);
   --font-body: var(--rd-body);
 }
+/* The older pages' plain page backgrounds are let go, so the grid and the silver fade
+   show behind them too and their white cards float over it, as on the rebuilt pages.
+   Only the backgrounds: words that use the same theme value keep it. */
+.rd-skin [class~="bg-background"]:not(a, button),
+.rd-skin :is(section, main, div.min-h-screen)[class~="bg-white"] { background-color: transparent; }
 .rd-skin .font-body { font-family: var(--rd-body); }
 .rd-skin .font-display,
 .rd-skin h1,
@@ -351,7 +362,7 @@
 .rd-skin h2 { line-height: 1.06; letter-spacing: -0.042em; text-wrap: balance; }
 .rd-skin .rounded-xl,
 .rd-skin .rounded-2xl,
-.rd-skin .rounded-3xl { border-radius: 18px; }
+.rd-skin .rounded-3xl { border-radius: 16px; }
 .rd-skin .rounded-lg { border-radius: 12px; }
 .rd-skin .tracking-\[0\.2em\],
 .rd-skin .tracking-\[0\.15em\],
@@ -369,48 +380,49 @@
 .rd-skin [class*=" bg-green-6"],
 .rd-skin [class*=" bg-green-7"],
 .rd-skin [class*=" bg-emerald-6"] { background-color: var(--rd-deep); }
-/* Labels that were gold, or light green, are deep emerald on white... */
-.rd-skin :is(.text-palm-gold, .text-palm-light, .text-accent) { color: var(--rd-deep); }
-/* ...and the bright emerald where they sit on something dark. */
-.rd-skin :is(.bg-palm-dark, .bg-foreground, .bg-primary, .bg-palm-green, [class*="bg-black"]) :is(.text-palm-gold, .text-palm-light, .text-accent, .text-primary) { color: var(--rd-accent); }
+/* Labels that were gold, or light green, are the darker green: many are small words
+   on a pale green pill, where the regular green falls just short of readable... */
+.rd-skin :is(.text-palm-gold, .text-palm-light, .text-accent) { color: var(--rd-accent-press); }
+/* ...and a brighter green where they sit on something dark. */
+.rd-skin :is(.bg-palm-dark, .bg-foreground, .bg-primary, .bg-palm-green, [class*="bg-black"]) :is(.text-palm-gold, .text-palm-light, .text-accent, .text-primary) { color: #4ade80; }
 /* The same over a band whose background is a photo under a dark wash. */
-.rd-skin section:has(> img[class*="absolute"], > [class*="absolute"] > img, > [class*="absolute"] > picture) :is(.text-palm-gold, .text-palm-light, .text-accent) { color: var(--rd-accent); }
-/* Buttons: the same bright emerald with a defined edge as the quote button. */
+.rd-skin section:has(> img[class*="absolute"], > [class*="absolute"] > img, > [class*="absolute"] > picture) :is(.text-palm-gold, .text-palm-light, .text-accent) { color: #4ade80; }
+/* Buttons: the same green with a defined edge as the quote button. */
 .rd-skin :is(a, button):is(.bg-primary, .bg-palm-gold, .bg-accent, .bg-palm-green) {
-  background: linear-gradient(180deg, #58f2bd 0%, var(--rd-accent) 52%, #20d795 100%);
+  background: linear-gradient(180deg, #17873f 0%, var(--rd-deep) 100%);
   color: var(--rd-accent-ink);
-  border: 1px solid rgba(3, 92, 62, 0.6);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 10px 22px -10px rgba(8, 170, 115, 0.7);
+  border: 1px solid #136c34;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 10px 22px -10px rgba(var(--rd-accent-rgb), 0.7);
 }
 .rd-skin :is(a, button):is(.bg-primary, .bg-palm-gold, .bg-accent, .bg-palm-green) * { color: inherit; }
 .rd-skin :is(a, button):is(.bg-primary, .bg-palm-gold, .bg-accent, .bg-palm-green):hover { background: var(--rd-accent-press); }
+/* Green words. Green only stays readable on white, and the older pages also print it
+   straight on the page, where the silver fade slides behind it as the page scrolls. So
+   the colour follows what is behind the words: ink on the page, green on a solid white
+   or pale card. Nearest container wins. The green is the darker of the two, because
+   the older pages also set small green labels on pale green pills and grey bands. */
+.rd-skin :is(.bg-card, .bg-popover, .bg-muted, .bg-secondary, .bg-palm-sand, .bg-white:not(section, main, .min-h-screen)) { --rd-skin-green: var(--rd-accent-press); }
+.rd-skin .text-primary { color: var(--rd-skin-green); }
+/* A link that was green keeps its green as the line under it. */
+.rd-skin a.text-primary:is(.underline, [class*="hover:underline"]),
+.rd-skin .text-primary a.underline { text-decoration-line: underline; text-decoration-color: var(--rd-accent); text-decoration-thickness: 0.09em; text-underline-offset: 0.22em; }
+/* The outlined green button becomes the white second button used everywhere else. */
+.rd-skin :is(a, button)[class~="border-primary"][class~="text-primary"] { background: var(--rd-card); color: var(--rd-text); border-color: var(--rd-edge-3); box-shadow: 0 1px 2px rgba(9, 9, 11, 0.05); }
+.rd-skin :is(a, button)[class~="border-primary"][class~="text-primary"]:hover { background: var(--rd-well); color: var(--rd-text); }
 
-/* Flat dark bands (no photo inside) become light bands, lit from their bottom edge.
+/* Flat dark bands (no photo inside) become light bands with hairline edges.
    A band with a photo keeps its photo, its dark overlay and its white words. Browsers
    too old for :has() keep every band deep green with white words, which also reads. */
 .rd-skin section:is(.bg-palm-dark, .bg-primary, .bg-palm-green, .bg-foreground):not(:has(img, picture, video)) {
   position: relative;
-  isolation: isolate;
   background: var(--rd-well);
   color: var(--rd-text);
   border-block: 1px solid var(--rd-edge);
 }
-.rd-skin section:is(.bg-palm-dark, .bg-primary, .bg-palm-green, .bg-foreground):not(:has(img, picture, video))::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 50%;
-  opacity: 0.55;
-  pointer-events: none;
-  background: var(--rd-light);
-}
 /* Words that were white or sand on the dark band. */
 .rd-skin section:is(.bg-palm-dark, .bg-primary, .bg-palm-green, .bg-foreground):not(:has(img, picture, video)) :is(.text-white, .text-primary-foreground, .text-background, .text-palm-sand, .text-secondary, [class*="text-gray-1"], [class*="text-gray-2"], [class*="text-green-1"], [class*="text-green-2"], [class*="text-emerald-1"]) { color: var(--rd-text); }
 .rd-skin section:is(.bg-palm-dark, .bg-primary, .bg-palm-green, .bg-foreground):not(:has(img, picture, video)) :is([class*="text-white/"], [class*="text-primary-foreground/"], [class*="text-background/"], [class*="text-palm-sand/"], [class*="text-gray-3"], [class*="text-gray-4"], [class*="text-gray-5"]) { color: var(--rd-text-2); }
-.rd-skin section:is(.bg-palm-dark, .bg-primary, .bg-palm-green, .bg-foreground):not(:has(img, picture, video)) :is(.text-palm-gold, .text-palm-light, .text-accent, .text-primary) { color: var(--rd-deep); }
+.rd-skin section:is(.bg-palm-dark, .bg-primary, .bg-palm-green, .bg-foreground):not(:has(img, picture, video)) :is(.text-palm-gold, .text-palm-light, .text-accent, .text-primary) { color: var(--rd-accent-press); }
 .rd-skin section:is(.bg-palm-dark, .bg-primary, .bg-palm-green, .bg-foreground):not(:has(img, picture, video)) :is([class*="border-white"], [class*="border-primary-foreground"], [class*="border-background"], [class*="border-palm-sand"], [class*="border-palm-gold"], [class*="border-palm-green"], [class*="border-primary/"]) { border-color: var(--rd-edge-2); }
 /* Translucent white panels inside the band become white cards. */
 .rd-skin section:is(.bg-palm-dark, .bg-primary, .bg-palm-green, .bg-foreground):not(:has(img, picture, video)) :is([class*="bg-white/"], [class*="bg-primary-foreground/"], [class*="bg-background/"], [class*="bg-palm-sand/"]):not(a, button) { background-color: #ffffff; }
@@ -420,10 +432,14 @@
 .rd-skin section:is(.bg-palm-dark, .bg-primary, .bg-palm-green, .bg-foreground):not(:has(img, picture, video)) :is(a, button):is([class*="bg-white"], [class*="bg-primary-foreground"], [class*="bg-background"], [class*="border-white"], [class*="border-primary-foreground"]) {
   background: #ffffff;
   color: var(--rd-text);
-  border: 1px solid rgba(4, 19, 14, 0.16);
-  box-shadow: 0 1px 2px rgba(4, 19, 14, 0.05);
+  border: 1px solid rgba(9, 9, 11, 0.16);
+  box-shadow: 0 1px 2px rgba(9, 9, 11, 0.05);
 }
 .rd-skin section:is(.bg-palm-dark, .bg-primary, .bg-palm-green, .bg-foreground):not(:has(img, picture, video)) :is(a, button):is([class*="bg-white"], [class*="bg-primary-foreground"], [class*="bg-background"], [class*="border-white"], [class*="border-primary-foreground"]) * { color: inherit; }
+/* Green buttons inside the band keep their white words (the rule above for "words that
+   were white" would otherwise turn them black on green). */
+.rd-skin section:is(.bg-palm-dark, .bg-primary, .bg-palm-green, .bg-foreground):not(:has(img, picture, video)) :is(a, button):is(.bg-primary, .bg-palm-gold, .bg-accent, .bg-palm-green),
+.rd-skin section:is(.bg-palm-dark, .bg-primary, .bg-palm-green, .bg-foreground):not(:has(img, picture, video)) :is(a, button):is(.bg-primary, .bg-palm-gold, .bg-accent, .bg-palm-green) * { color: var(--rd-accent-ink); }
 /* A dark panel nested in the band becomes a white card, like the translucent ones. */
 .rd-skin section:is(.bg-palm-dark, .bg-primary, .bg-palm-green, .bg-foreground):not(:has(img, picture, video)) :is(.bg-palm-dark, .bg-foreground, [class*="bg-palm-dark/"], [class*="bg-foreground/"], [class*="bg-black/"]):not(a, button) { background-color: #ffffff; box-shadow: var(--rd-shadow); }
 /* A solid green block nested in the band (a number, a badge) keeps its own white words. */
@@ -448,14 +464,13 @@
 }
 
 /* Two entrances: tree work and palm work, each a large photograph you walk into. */
-/* Extra room at the top: the light from the opening screen runs on into this section. */
-.rd-routes { position: relative; padding-top: clamp(5.5rem, 13vw, 9rem); }
+.rd-routes { position: relative; padding-top: clamp(3rem, 8vw, 6rem); }
 .rd-routes > .rd-wrap { position: relative; }
 .rd-routes__intro { display: grid; gap: 1rem; margin-bottom: clamp(1.75rem, 4vw, 3rem); }
 .rd-routes__intro .rd-copy { color: var(--rd-copy-ink); }
 .rd-routes__grid { display: grid; gap: 1rem; }
 .rd-routes__also { margin: 1.5rem 0 0; color: var(--rd-text-3); }
-.rd-door { position: relative; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--rd-edge-2); border-radius: var(--rd-radius-lg); background: var(--rd-card); box-shadow: var(--rd-shadow); --rd-row-line: var(--rd-edge); }
+.rd-door { position: relative; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--rd-edge-2); border-radius: var(--rd-radius-lg); background: var(--rd-card); box-shadow: var(--rd-shadow-lg); --rd-row-line: var(--rd-edge); transition: border-color 0.25s, box-shadow 0.25s; }
 .rd-door__media { position: relative; display: block; aspect-ratio: 1 / 1; overflow: hidden; color: inherit; text-decoration: none; }
 .rd-door__media picture { display: block; width: 100%; height: 100%; }
 .rd-door__media img { display: block; width: 100%; height: 100%; object-fit: cover; }
@@ -479,7 +494,7 @@
 .rd-work__intro { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 0.75rem 2rem; margin-bottom: clamp(1.5rem, 4vw, 2.5rem); }
 /* One column that can never grow wider than the screen, however many thumbnails there are. */
 .rd-viewer { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.1rem; }
-.rd-viewer__stage { position: relative; aspect-ratio: 4 / 5; margin-inline: calc(var(--rd-gutter) * -1); background: var(--rd-card); border-block: 1px solid var(--rd-edge); overflow: hidden; touch-action: pan-y; }
+.rd-viewer__stage { position: relative; aspect-ratio: 4 / 5; background: var(--rd-card); border: 1px solid var(--rd-edge-2); border-radius: var(--rd-radius-lg); box-shadow: var(--rd-shadow-lg); overflow: hidden; touch-action: pan-y; }
 .rd-viewer__photo { position: absolute; inset: 0; margin: 0; opacity: 0; transition: opacity 0.55s ease; }
 .rd-viewer__photo[data-on="true"] { opacity: 1; }
 .rd-viewer__photo picture { display: block; width: 100%; height: 100%; }
@@ -494,20 +509,20 @@
 .rd-viewer__stage .rd-viewer__ba button { min-height: 2.75rem; }
 /* On the narrowest phones the two controls would touch, so the switch moves to the top. */
 @media (max-width: 359.98px) { .rd-viewer__stage .rd-viewer__ba { bottom: auto; top: 0.75rem; } }
-.rd-viewer__step { position: absolute; right: 0.75rem; bottom: 0.75rem; z-index: 3; display: flex; align-items: center; gap: 0.35rem; padding: 0.25rem; border: 1px solid rgba(4, 19, 14, 0.1); border-radius: 12px; background: rgba(255, 255, 255, 0.86); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); color: var(--rd-text); font-size: 0.875rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.rd-viewer__step { position: absolute; right: 0.75rem; bottom: 0.75rem; z-index: 3; display: flex; align-items: center; gap: 0.35rem; padding: 0.25rem; border: 1px solid rgba(9, 9, 11, 0.1); border-radius: 12px; background: rgba(255, 255, 255, 0.86); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); color: var(--rd-text); font-size: 0.875rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 .rd-viewer__step span { min-width: 2.6rem; text-align: center; }
 .rd-viewer__step button { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border: 0; border-radius: 4px; background: none; color: inherit; cursor: pointer; }
 .rd-viewer__step button:hover,
 .rd-viewer__step button:active { background: var(--rd-wash); }
 .rd-viewer__side { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
-.rd-ticket { position: relative; padding: clamp(1.2rem, 3vw, 2rem); background: var(--rd-card); color: var(--rd-text); border: 1px solid var(--rd-edge-2); border-radius: var(--rd-radius-lg); box-shadow: var(--rd-shadow); animation: rd-ticket-in 0.4s var(--rd-ease); }
+.rd-ticket { position: relative; padding: clamp(1.2rem, 3vw, 2rem); background: var(--rd-card); color: var(--rd-text); border: 1px solid var(--rd-edge-2); border-radius: var(--rd-radius-lg); box-shadow: var(--rd-shadow-lg); animation: rd-ticket-in 0.4s var(--rd-ease); }
 @keyframes rd-ticket-in {
   from { opacity: 0; transform: translateY(0.4rem); }
   to { opacity: 1; transform: none; }
 }
 .rd-ticket__title { margin: 0 0 1rem; font-family: var(--rd-display); letter-spacing: -0.035em; font-weight: 600; font-size: clamp(1.65rem, 5.6vw, 2.5rem); line-height: 1.04; text-wrap: balance; }
 .rd-ticket dl { display: grid; grid-template-columns: auto 1fr; margin: 0; border-top: 1px solid var(--rd-line); }
-.rd-ticket dt { padding: 0.7rem 1.25rem 0.7rem 0; border-bottom: 1px solid var(--rd-line); font-size: 0.875rem; font-weight: 500; color: var(--rd-text-3); }
+.rd-ticket dt { padding: 0.7rem 1.25rem 0.7rem 0; border-bottom: 1px solid var(--rd-line); font-size: 0.875rem; font-weight: 500; color: var(--rd-label); }
 .rd-ticket dd { margin: 0; padding: 0.7rem 0; border-bottom: 1px solid var(--rd-line); color: var(--rd-copy-ink); }
 .rd-ticket dd a { color: var(--rd-text); text-decoration: underline; text-decoration-color: rgba(var(--rd-deep-rgb), 0.55); text-underline-offset: 0.2em; }
 .rd-ticket__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.9rem 1.25rem; margin-top: 1.25rem; }
@@ -516,12 +531,11 @@
 .rd-viewer__thumbs::-webkit-scrollbar { display: none; }
 .rd-viewer__thumbs button { display: block; width: 4.25rem; height: 4.25rem; padding: 0; border: 0; border-radius: 10px; overflow: hidden; background: var(--rd-card); cursor: pointer; opacity: 0.55; transition: opacity 0.2s; }
 .rd-viewer__thumbs button:hover { opacity: 0.9; }
-.rd-viewer__thumbs button[aria-pressed="true"] { opacity: 1; outline: 2px solid var(--rd-deep); outline-offset: 2px; }
+.rd-viewer__thumbs button[aria-pressed="true"] { opacity: 1; outline: 2px solid var(--rd-text); outline-offset: 2px; }
 .rd-viewer__thumbs picture { display: block; width: 100%; height: 100%; }
 .rd-viewer__thumbs img { display: block; width: 100%; height: 100%; object-fit: cover; }
 @media (min-width: 900px) {
   .rd-viewer { grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr); gap: clamp(1.5rem, 4vw, 3.5rem); align-items: stretch; }
-  .rd-viewer__stage { margin-inline: 0; border: 1px solid var(--rd-edge-2); border-radius: var(--rd-radius-lg); }
   /* Notes at the top, the other projects along the bottom edge of the photo. */
   .rd-viewer__side { gap: 1.5rem; justify-content: space-between; }
   .rd-viewer__thumbs button { width: 5rem; height: 5rem; }
@@ -530,33 +544,30 @@
 /* Reviews and figures */
 .rd-proof__grid { display: grid; gap: 2.5rem; }
 .rd-proof__say { margin: 0; font-family: var(--rd-display); letter-spacing: -0.042em; font-weight: 600; font-size: clamp(1.75rem, 5.8vw, 2.75rem); line-height: 1.08; text-wrap: balance; }
-.rd-proof__stars { display: flex; gap: 0.2rem; margin: 1.1rem 0 1.4rem; color: var(--rd-green-700); }
+.rd-proof__stars { display: flex; gap: 0.2rem; margin: 1.1rem 0 1.4rem; color: var(--rd-deep); }
 .rd-proof__note { margin: 1.2rem 0 0; max-width: 31rem; }
-.rd-proof__quotes { list-style: none; margin: 0; padding: 0; }
-.rd-proof__quotes li { padding: 1.4rem 0; border-top: 1px solid var(--rd-line); }
-.rd-proof__quotes li:last-child { border-bottom: 1px solid var(--rd-line); }
+.rd-proof__quotes { list-style: none; margin: 0; padding: 0 clamp(1.1rem, 3vw, 1.75rem); background: var(--rd-card); border: 1px solid var(--rd-edge-2); border-radius: var(--rd-radius-lg); box-shadow: var(--rd-shadow-lg); }
+.rd-proof__quotes li { padding: 1.4rem 0; }
+.rd-proof__quotes li + li { border-top: 1px solid var(--rd-line); }
 .rd-proof__quotes blockquote { margin: 0; }
 .rd-proof__quotes p { margin: 0; font-family: var(--rd-display); letter-spacing: -0.03em; font-weight: 500; font-size: clamp(1.3rem, 4.2vw, 1.75rem); line-height: 1.2; }
-.rd-proof__quotes footer { margin-top: 0.55rem; font-size: 0.9375rem; color: var(--rd-muted); }
-.rd-proof__quotes footer { color: var(--rd-text-3); }
+.rd-proof__quotes footer { margin-top: 0.55rem; font-size: 0.9375rem; color: var(--rd-label); }
 @media (min-width: 900px) {
   .rd-proof__grid { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: clamp(2.5rem, 6vw, 6rem); align-items: start; }
-  .rd-proof__quotes li:nth-child(2) { padding-left: 14%; }
 }
 
 /* Commercial */
-.rd-commercial { display: grid; background: var(--rd-well); border-block: 1px solid var(--rd-edge); }
+.rd-commercial { display: grid; width: min(100% - 2 * var(--rd-gutter), var(--rd-max) - 2 * var(--rd-gutter)); margin-inline: auto; overflow: hidden; background: var(--rd-card); border: 1px solid var(--rd-edge-2); border-radius: var(--rd-radius-lg); box-shadow: var(--rd-shadow-lg); }
 .rd-commercial__photo { aspect-ratio: 4 / 3; }
-.rd-commercial__body { display: grid; gap: 1.2rem; align-content: center; padding: clamp(2rem, 7vw, 4.5rem) var(--rd-gutter); }
+.rd-commercial__body { display: grid; gap: 1.2rem; align-content: center; padding: clamp(1.5rem, 5vw, 3.5rem) clamp(1.1rem, 4vw, 3rem); }
 .rd-commercial__body .rd-h2 { max-width: 14ch; }
 .rd-checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
 .rd-checks li { display: grid; grid-template-columns: auto 1fr; gap: 0.7rem; align-items: start; line-height: 1.4; }
 .rd-checks svg { margin-top: 0.22rem; color: var(--rd-deep); }
 .rd-checks li { color: var(--rd-copy-ink); }
 @media (min-width: 1000px) {
-  .rd-commercial { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
-  .rd-commercial__photo { aspect-ratio: auto; min-height: 36rem; }
-  .rd-commercial__body { padding-inline: clamp(2rem, 5vw, 5rem); }
+  .rd-commercial { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); }
+  .rd-commercial__photo { aspect-ratio: auto; min-height: 34rem; }
 }
 
 /* Service areas along the coast */
@@ -565,7 +576,7 @@
 .rd-coast li { break-inside: avoid; }
 .rd-coast a { display: block; padding: 0.42rem 0; font-family: var(--rd-display); letter-spacing: -0.035em; font-weight: 500; font-size: clamp(1.2rem, 4.4vw, 1.75rem); line-height: 1.15; color: var(--rd-text); text-decoration: none; transition: color 0.15s; }
 .rd-coast a:hover,
-.rd-coast a[aria-current="page"] { color: var(--rd-deep); }
+.rd-coast a[aria-current="page"] { text-decoration: underline; text-decoration-color: var(--rd-accent); text-decoration-thickness: 2px; text-underline-offset: 0.18em; }
 @media (min-width: 900px) {
   .rd-areas__grid { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: clamp(2rem, 6vw, 6rem); align-items: start; }
 }
@@ -576,12 +587,12 @@
 .rd-quoteband__main { display: flex; flex-wrap: wrap; align-items: center; gap: 1.1rem 1.75rem; margin-top: 1.6rem; }
 .rd-quoteband__phone { display: inline-flex; align-items: center; gap: 0.6rem; font-family: var(--rd-display); letter-spacing: -0.045em; font-weight: 600; font-size: clamp(1.9rem, 7vw, 2.75rem); line-height: 1; font-variant-numeric: tabular-nums; color: inherit; text-decoration: none; }
 .rd-quoteband__phone svg { color: var(--rd-deep); }
-.rd-quoteband__phone:hover { color: var(--rd-deep); }
-.rd-photosteps { position: relative; display: grid; gap: 1rem; justify-items: start; padding: clamp(1.25rem, 3vw, 2rem); background: var(--rd-card); border: 1px solid var(--rd-edge-2); border-radius: var(--rd-radius-lg); box-shadow: var(--rd-shadow); }
+.rd-quoteband__phone:hover { text-decoration: underline; text-decoration-color: var(--rd-accent); text-decoration-thickness: 2px; text-underline-offset: 0.16em; }
+.rd-photosteps { position: relative; display: grid; gap: 1rem; justify-items: start; padding: clamp(1.25rem, 3vw, 2rem); background: var(--rd-card); border: 1px solid var(--rd-edge-2); border-radius: var(--rd-radius-lg); box-shadow: var(--rd-shadow-lg); }
 .rd-photosteps li { color: var(--rd-copy-ink); }
 .rd-photosteps ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.75rem; counter-reset: rd-step; }
 .rd-photosteps li { counter-increment: rd-step; display: grid; grid-template-columns: 1.7rem 1fr; gap: 0.6rem; line-height: 1.45; }
-.rd-photosteps li::before { content: counter(rd-step); display: grid; place-items: center; width: 1.6rem; height: 1.6rem; margin-top: 0.05rem; border-radius: 50%; border: 1px solid rgba(var(--rd-deep-rgb), 0.3); background: rgba(var(--rd-accent-rgb), 0.2); color: var(--rd-deep); font-weight: 600; font-size: 0.875rem; line-height: 1; }
+.rd-photosteps li::before { content: counter(rd-step); display: grid; place-items: center; width: 1.6rem; height: 1.6rem; margin-top: 0.05rem; border-radius: 50%; border: 1px solid rgba(var(--rd-deep-rgb), 0.3); background: rgba(var(--rd-accent-rgb), 0.1); color: var(--rd-deep); font-weight: 600; font-size: 0.875rem; line-height: 1; }
 .rd-photosteps p { margin: 0; }
 @media (min-width: 900px) {
   .rd-quoteband__grid { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: clamp(2.5rem, 6vw, 6rem); align-items: start; }
@@ -598,30 +609,8 @@
 .rd-crumbs a { color: var(--rd-text-2); text-decoration: none; }
 .rd-crumbs a:hover { color: var(--rd-text); text-decoration: underline; text-underline-offset: 0.2em; }
 
-/* Page header: white above, lit from its bottom edge like the opening screen, a little quieter. */
-.rd-phero { position: relative; isolation: isolate; display: grid; overflow: hidden; overflow: clip; background: var(--rd-bg); }
-.rd-phero::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 50%;
-  opacity: 0.74;
-  pointer-events: none;
-  background: var(--rd-light);
-}
-.rd-phero::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 1px;
-  pointer-events: none;
-  background: linear-gradient(90deg, rgba(var(--rd-accent-rgb), 0) 2%, rgba(11, 190, 128, 0.85) 26%, #f4fffb 50%, rgba(11, 190, 128, 0.85) 74%, rgba(var(--rd-accent-rgb), 0) 98%);
-}
+/* Page header: set straight on the page, with a hairline under it. */
+.rd-phero { position: relative; isolation: isolate; display: grid; overflow: hidden; overflow: clip; border-bottom: 1px solid var(--rd-edge); }
 .rd-phero .rd-h1 { max-width: 16ch; }
 .rd-phero__text { position: relative; padding: clamp(1.75rem, 6vw, 4rem) var(--rd-gutter) clamp(2rem, 6vw, 4rem); }
 /* With a photo above it, the text rides up into the part of the photo that has faded out. */
@@ -639,7 +628,7 @@
 .rd-phero__photo picture { display: block; width: 100%; height: 100%; }
 .rd-phero__photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .rd-phero__photo figcaption { display: none; }
-.rd-closeups__shot figcaption { position: absolute; left: 0.75rem; bottom: 0.75rem; right: 0.75rem; width: fit-content; max-width: calc(100% - 1.5rem); padding: 0.45rem 0.7rem; border: 1px solid rgba(4, 19, 14, 0.1); border-radius: 10px; background: rgba(255, 255, 255, 0.86); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); color: var(--rd-text); font-size: 0.875rem; line-height: 1.35; font-weight: 500; }
+.rd-closeups__shot figcaption { position: absolute; left: 0.75rem; bottom: 0.75rem; right: 0.75rem; width: fit-content; max-width: calc(100% - 1.5rem); padding: 0.45rem 0.7rem; border: 1px solid rgba(9, 9, 11, 0.1); border-radius: 10px; background: rgba(255, 255, 255, 0.86); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); color: var(--rd-text); font-size: 0.875rem; line-height: 1.35; font-weight: 500; }
 .rd-phero__print { margin: 0 var(--rd-gutter) clamp(2rem, 6vw, 3rem); max-width: 32rem; }
 .rd-phero--plain .rd-phero__text { max-width: var(--rd-max); width: 100%; margin-inline: auto; }
 /* Opens with one job in order: the frames sit straight under the buttons. */
@@ -775,8 +764,8 @@
 .rd-svc--line li { position: relative; }
 .rd-svc--line li:first-child { border-top: 1px solid var(--rd-line); }
 .rd-svc--line li::before { content: ""; position: absolute; left: -1.9rem; top: 1.35rem; width: 0.7rem; height: 0.7rem; margin-left: 0.19rem; border-radius: 50%; background: var(--rd-bg); border: 1px solid rgba(var(--rd-deep-rgb), 0.55); }
-.rd-svc--line li[data-base]::before { top: 1.25rem; width: 0.9rem; height: 0.9rem; margin-left: 0.09rem; background: var(--rd-accent); border-color: rgba(3, 92, 62, 0.7); box-shadow: 0 0 14px rgba(var(--rd-accent-rgb), 0.9); }
-.rd-svc__base { justify-self: start; padding: 0.15rem 0.5rem; background: rgba(var(--rd-accent-rgb), 0.2); border: 1px solid rgba(var(--rd-deep-rgb), 0.3); color: var(--rd-deep); font-style: normal; font-weight: 600; font-size: 0.8125rem; line-height: 1.3; border-radius: 999px; }
+.rd-svc--line li[data-base]::before { top: 1.25rem; width: 0.9rem; height: 0.9rem; margin-left: 0.09rem; background: var(--rd-accent); border-color: #136c34; box-shadow: 0 0 14px rgba(var(--rd-accent-rgb), 0.9); }
+.rd-svc__base { justify-self: start; padding: 0.15rem 0.5rem; background: #f0fdf4; border: 1px solid rgba(var(--rd-deep-rgb), 0.3); color: var(--rd-accent-press); font-style: normal; font-weight: 600; font-size: 0.8125rem; line-height: 1.3; border-radius: 999px; }
 @media (min-width: 700px) {
   .rd-svc--line li::before { top: 1.6rem; }
   .rd-svc--line li[data-base]::before { top: 1.5rem; }
@@ -785,7 +774,7 @@
 /* Completed projects page */
 .rd-filter { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; }
 .rd-filter button { min-height: 2.75rem; padding: 0 1rem; border: 1px solid var(--rd-edge-2); border-radius: 999px; background: #ffffff; color: var(--rd-text-2); font: 500 0.9375rem/1 var(--rd-body); letter-spacing: -0.01em; cursor: pointer; transition: color 0.15s, border-color 0.15s, background-color 0.15s; }
-.rd-filter button[aria-pressed="true"] { background: rgba(var(--rd-accent-rgb), 0.22); border-color: rgba(var(--rd-deep-rgb), 0.4); color: var(--rd-deep); }
+.rd-filter button[aria-pressed="true"] { background: var(--rd-text); border-color: var(--rd-text); color: #ffffff; }
 .rd-gallery { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 0.75rem; }
 .rd-gallery li { break-inside: avoid; margin-bottom: 1.1rem; }
 .rd-gallery__item { position: relative; display: block; width: 100%; padding: 0; border: 0; background: none; color: inherit; text-align: left; cursor: zoom-in; font: inherit; }
@@ -809,10 +798,10 @@
 .rd-lightbox__photo { position: relative; display: grid; place-items: center; touch-action: pan-y; background: var(--rd-well); }
 .rd-lightbox__photo picture { display: grid; place-items: center; width: 100%; }
 /* Before / After switch on a project that has both photos. */
-.rd-ba { position: absolute; left: 50%; bottom: 0.75rem; transform: translateX(-50%); display: flex; padding: 0.2rem; gap: 0.2rem; border: 1px solid rgba(4, 19, 14, 0.12); border-radius: 999px; background: rgba(255, 255, 255, 0.88); box-shadow: 0 8px 22px -10px rgba(4, 19, 14, 0.3); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.rd-ba { position: absolute; left: 50%; bottom: 0.75rem; transform: translateX(-50%); display: flex; padding: 0.2rem; gap: 0.2rem; border: 1px solid rgba(9, 9, 11, 0.12); border-radius: 999px; background: rgba(255, 255, 255, 0.88); box-shadow: 0 8px 22px -10px rgba(9, 9, 11, 0.3); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
 .rd-ba button { min-width: 4.75rem; min-height: 2.5rem; padding: 0 0.9rem; border: 0; border-radius: 999px; background: none; color: var(--rd-on-dark); font: inherit; font-weight: 600; font-size: 0.9375rem; cursor: pointer; }
 .rd-ba button[aria-pressed="true"] { background: var(--rd-text); color: var(--rd-bg); }
-.rd-gallery__tag { position: absolute; left: 0.6rem; top: 0.6rem; padding: 0.22rem 0.6rem; border-radius: 999px; background: rgba(255, 255, 255, 0.9); border: 1px solid rgba(var(--rd-deep-rgb), 0.3); color: var(--rd-deep); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); font-size: 0.8125rem; font-weight: 600; line-height: 1.3; }
+.rd-gallery__tag { position: absolute; left: 0.6rem; top: 0.6rem; padding: 0.22rem 0.6rem; border-radius: 999px; background: rgba(255, 255, 255, 0.94); border: 1px solid var(--rd-edge-2); color: var(--rd-text); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); font-size: 0.8125rem; font-weight: 600; line-height: 1.3; }
 /* The same job in order: frames side by side, or a sideways-scrolling row on phones. */
 .rd-seq { display: grid; gap: clamp(1.25rem, 3vw, 2.25rem); }
 .rd-seq__head { display: grid; gap: 0.75rem; justify-items: start; max-width: 40rem; }
@@ -895,13 +884,13 @@
 .rd-field textarea::placeholder { color: var(--rd-text-3); }
 .rd-field input:hover,
 .rd-field select:hover,
-.rd-field textarea:hover { border-color: rgba(4, 19, 14, 0.32); }
+.rd-field textarea:hover { border-color: rgba(9, 9, 11, 0.32); }
 .rd-field input:focus,
 .rd-field select:focus,
 .rd-field textarea:focus { border-color: var(--rd-deep); box-shadow: 0 0 0 4px rgba(var(--rd-accent-rgb), 0.32); outline: none; }
 .rd-field__hint { margin: 0; font-size: 0.9375rem; color: var(--rd-muted); }
 .rd-field__hint .rd-link { font-weight: 500; }
-.rd-form__send { position: sticky; bottom: 0; z-index: 5; display: grid; gap: 0.6rem; margin-inline: calc(var(--rd-gutter) * -1); padding: 0.75rem var(--rd-gutter) calc(0.75rem + env(safe-area-inset-bottom, 0px)); background: rgba(255, 255, 255, 0.9); -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px); border-top: 1px solid rgba(4, 19, 14, 0.09); }
+.rd-form__send { position: sticky; bottom: 0; z-index: 5; display: grid; gap: 0.6rem; margin-inline: calc(var(--rd-gutter) * -1); padding: 0.75rem var(--rd-gutter) calc(0.75rem + env(safe-area-inset-bottom, 0px)); background: rgba(255, 255, 255, 0.9); -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px); border-top: 1px solid rgba(9, 9, 11, 0.09); }
 .rd-form__send p { margin: 0; }
 .rd-form__consent { margin: -1.25rem 0 0; text-align: center; }
 .rd-form__send button[disabled] { opacity: 0.65; cursor: progress; }
@@ -972,10 +961,10 @@
 .rd-compare__frame { position: relative; aspect-ratio: 3 / 4; overflow: hidden; border-radius: 14px; border: 1px solid var(--rd-edge-2); background: var(--rd-well); }
 .rd-compare__frame picture { display: block; width: 100%; height: 100%; }
 .rd-compare__frame img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.rd-compare__tag { position: absolute; left: 0.5rem; top: 0.5rem; padding: 0.2rem 0.6rem; border: 1px solid rgba(4, 19, 14, 0.12); border-radius: 999px; background: rgba(255, 255, 255, 0.9); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: var(--rd-text); font-size: 0.8125rem; font-weight: 600; line-height: 1.3; }
+.rd-compare__tag { position: absolute; left: 0.5rem; top: 0.5rem; padding: 0.2rem 0.6rem; border: 1px solid rgba(9, 9, 11, 0.12); border-radius: 999px; background: rgba(255, 255, 255, 0.9); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: var(--rd-text); font-size: 0.8125rem; font-weight: 600; line-height: 1.3; }
 /* The finished one of the pair wears the lit tag: the second in a before and after, the first where the pair is two finishes. */
 .rd-compare:not(.rd-compare--swipe) .rd-compare__shot:last-child .rd-compare__tag,
-.rd-compare--swipe .rd-compare__shot:first-child .rd-compare__tag { background: var(--rd-accent); border-color: rgba(3, 92, 62, 0.6); color: var(--rd-accent-ink); box-shadow: 0 0 16px rgba(var(--rd-accent-rgb), 0.7); }
+.rd-compare--swipe .rd-compare__shot:first-child .rd-compare__tag { background: var(--rd-accent); border-color: #136c34; color: var(--rd-accent-ink); box-shadow: 0 0 16px rgba(var(--rd-accent-rgb), 0.7); }
 .rd-compare figcaption { font-size: 0.875rem; line-height: 1.35; color: var(--rd-text-2); }
 @media (max-width: 899.98px) {
   /* Close-ups: a row to swipe on phones, so each one is large enough to study. */
@@ -992,90 +981,82 @@
 .rd-arealinks a:hover { border-color: rgba(var(--rd-deep-rgb), 0.5); color: var(--rd-deep); }
 .rd-arealinks .rd-arealinks__all { font-weight: 600; }
 
-/* ---------- Light on surfaces ---------- */
-/* Panels are lit from their own bottom edge: the same fade as the opening screen,
-   turned down (--rd-glow), with a hairline of light on the edge it comes from. The
-   closing quote band is the one place below the opening that gets it at full strength. */
+/* ---------- Highlights ---------- */
+/* The backend marks its main panel with a hairline of light on the top edge. Here the
+   same line marks the cards a visitor acts on: the two service entrances, a project's
+   notes with its quote button, and the three steps for texting a photo. */
 .rd-door,
 .rd-ticket,
 .rd-photosteps,
-.rd-scope,
-.rd-answer,
-.rd-kind,
-.rd-quoteband,
 .rd-quote-top,
-.rd-thanks,
-.rd-menu { isolation: isolate; }
-.rd-door::before,
-.rd-ticket::before,
-.rd-photosteps::before,
-.rd-scope::before,
-.rd-answer::before,
-.rd-kind::before,
-.rd-quoteband::before,
-.rd-quote-top::before,
-.rd-thanks::before,
-.rd-menu::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 50%;
-  border-bottom-left-radius: inherit;
-  border-bottom-right-radius: inherit;
-  pointer-events: none;
-  opacity: var(--rd-glow, 0.36);
-  background: var(--rd-light);
-  transform-origin: 50% 100%;
-}
+.rd-thanks { isolation: isolate; }
 .rd-door::after,
 .rd-ticket::after,
-.rd-photosteps::after,
-.rd-scope::after,
-.rd-answer::after,
-.rd-kind::after,
-.rd-quoteband::after,
-.rd-quote-top::after,
-.rd-thanks::after {
+.rd-photosteps::after {
   content: "";
   position: absolute;
-  left: 8%;
-  right: 8%;
-  bottom: 0;
+  z-index: 2;
+  top: -1px;
+  left: 20%;
+  right: 20%;
   height: 1px;
   pointer-events: none;
-  background: linear-gradient(90deg, rgba(var(--rd-accent-rgb), 0), rgba(11, 190, 128, 0.9) 28%, #f2fffa 50%, rgba(11, 190, 128, 0.9) 72%, rgba(var(--rd-accent-rgb), 0));
-  box-shadow: 0 0 14px 1px rgba(var(--rd-accent-rgb), 0.8);
+  background: linear-gradient(90deg, rgba(var(--rd-accent-rgb), 0), rgba(var(--rd-accent-rgb), 0.85), rgba(var(--rd-accent-rgb), 0));
 }
-.rd-quoteband { --rd-glow: 1; overflow: hidden; overflow: clip; }
-.rd-quoteband::after { left: 0; right: 0; }
-.rd-quote-top { --rd-glow: 0.7; }
-.rd-quote-top::after { left: 0; right: 0; }
-.rd-thanks { --rd-glow: 0.8; }
-.rd-thanks::after { left: 0; right: 0; }
-.rd-menu { --rd-glow: 0.6; }
-/* In the closing band the photo-steps panel sits in the light, so it is white glass. */
-.rd-quoteband .rd-photosteps { background: rgba(255, 255, 255, 0.78); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); --rd-glow: 0; }
-.rd-quoteband .rd-photosteps::after { display: none; }
+.rd-quoteband { overflow: hidden; overflow: clip; }
 .rd-quoteband .rd-photosteps { --i: 2; }
 
+/* One-tap quote starts, under the opening screen: pick the work, land on the form with it filled in. */
+.rd-quick { padding-block: 0 clamp(0.5rem, 2vw, 1.5rem); }
+.rd-quick__card { display: grid; gap: 0.9rem; padding: clamp(1rem, 2.6vw, 1.5rem); }
+.rd-quick__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 1.5rem; }
+.rd-quick__title { margin: 0; font-family: var(--rd-display); font-size: 1.0625rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1.25; }
+.rd-quick__note { margin: 0; font-size: 0.875rem; color: var(--rd-label); }
+.rd-quick__list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+.rd-quick__list a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 3rem;
+  padding: 0 0.8rem 0 0.9rem;
+  border: 1px solid var(--rd-edge-2);
+  border-radius: 12px;
+  background: var(--rd-card);
+  box-shadow: 0 1px 2px rgba(9, 9, 11, 0.04);
+  color: var(--rd-text);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  line-height: 1.2;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.2s, transform 0.2s var(--rd-ease), box-shadow 0.2s;
+}
+.rd-quick__list a svg { flex: none; color: var(--rd-deep); transition: transform 0.2s var(--rd-ease); }
+.rd-quick__list a:hover { border-color: rgba(var(--rd-deep-rgb), 0.5); transform: translateY(-1px); box-shadow: var(--rd-shadow); }
+.rd-quick__list a:hover svg { transform: translate(2px, -2px); }
+.rd-quick__list a:active { background: var(--rd-well); }
+@media (min-width: 760px) {
+  .rd-quick__list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 1100px) {
+  .rd-quick__list { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+
 /* ---------- Motion ---------- */
-/* How far the page has been read: a line of light under the header on the homepage.
-   Drawn by the browser itself where it can (no script); otherwise it is simply absent. */
+/* How far the page has been read: a green line along the bottom of the top bar on the
+   homepage. Drawn by the browser itself where it can (no script); otherwise it is simply absent. */
 @supports (animation-timeline: scroll()) {
-  .rd-page--over > .rd-hd .rd-hd__bar::after {
+  .rd-page--over > .rd-hd::after {
     content: "";
     position: absolute;
-    left: 1rem;
-    right: 1rem;
+    left: 0;
+    right: 0;
     bottom: -1px;
     height: 2px;
-    border-radius: 2px;
     pointer-events: none;
-    background: linear-gradient(90deg, rgba(var(--rd-accent-rgb), 0.15), #0bbe80 70%, var(--rd-accent));
-    box-shadow: 0 0 10px rgba(var(--rd-accent-rgb), 0.9);
+    background: linear-gradient(90deg, rgba(var(--rd-accent-rgb), 0.25), var(--rd-accent) 70%, var(--rd-accent-hi));
     transform-origin: 0 50%;
     transform: scaleX(0);
     animation: rd-progress linear both;
@@ -1094,7 +1075,13 @@
 [data-rv="wait"].rd-rise { opacity: 0; transform: translate3d(0, 1.75rem, 0); }
 [data-rv="in"] .rd-rise,
 [data-rv="in"].rd-rise { transition: opacity 0.8s var(--rd-ease) calc(var(--i, 0) * 90ms), transform 1.05s var(--rd-ease) calc(var(--i, 0) * 90ms); }
-/* A photo uncovered from its bottom edge upward, as if the light rose over it. */
+/* The four figure cards arrive one after another when they are scrolled to. */
+[data-rv="wait"].rd-kpis .rd-kpi { opacity: 0; transform: translate3d(0, 1.5rem, 0) scale(0.97); }
+[data-rv="in"].rd-kpis .rd-kpi { transition: opacity 0.7s var(--rd-ease), transform 0.9s var(--rd-ease), border-color 0.2s, box-shadow 0.2s; }
+[data-rv="in"].rd-kpis .rd-kpi:nth-child(2) { transition-delay: 80ms, 80ms, 0s, 0s; }
+[data-rv="in"].rd-kpis .rd-kpi:nth-child(3) { transition-delay: 160ms, 160ms, 0s, 0s; }
+[data-rv="in"].rd-kpis .rd-kpi:nth-child(4) { transition-delay: 240ms, 240ms, 0s, 0s; }
+/* A photo uncovered from its bottom edge upward. */
 [data-rv="wait"] .rd-wipe,
 [data-rv="wait"].rd-wipe { clip-path: inset(100% 0 0 0); }
 [data-rv="wait"] .rd-wipe img { transform: scale(1.16); }
@@ -1104,6 +1091,14 @@
 @media (min-width: 900px) {
   .rd-routes__grid > :nth-child(2) { --i: 1; }
 }
+/* The one-tap quote starts come on in a quick run. */
+.rd-quick__list li:nth-child(2) { --i: 1; }
+.rd-quick__list li:nth-child(3) { --i: 2; }
+.rd-quick__list li:nth-child(4) { --i: 3; }
+.rd-quick__list li:nth-child(5) { --i: 4; }
+.rd-quick__list li:nth-child(6) { --i: 5; }
+[data-rv="wait"] .rd-quick__list li { opacity: 0; transform: translate3d(0, 0.9rem, 0); }
+[data-rv="in"] .rd-quick__list li { transition: opacity 0.55s var(--rd-ease) calc(var(--i, 0) * 55ms + 120ms), transform 0.7s var(--rd-ease) calc(var(--i, 0) * 55ms + 120ms); }
 
 /* The three tree-removal frames come on in order, each number flashing as its turn comes. */
 .rd-seq__frames li:nth-child(2) { --i: 1; }
@@ -1112,7 +1107,7 @@
 [data-rv="in"] .rd-seq__frames li { transition: opacity 0.7s ease calc(var(--i, 0) * 420ms), filter 1s ease calc(var(--i, 0) * 420ms), transform 0.9s var(--rd-ease) calc(var(--i, 0) * 420ms); }
 [data-rv="in"] .rd-seq__frames figcaption b { animation: rd-ping 1.1s ease-out calc(var(--i, 0) * 420ms + 250ms) 1; }
 @keyframes rd-ping {
-  0% { box-shadow: 0 0 0 0 rgba(var(--rd-accent-rgb), 0.95); background: var(--rd-accent); }
+  0% { box-shadow: 0 0 0 0 rgba(var(--rd-accent-rgb), 0.9); background: var(--rd-accent); color: #ffffff; }
   100% { box-shadow: 0 0 0 1.1rem rgba(var(--rd-accent-rgb), 0); }
 }
 
@@ -1126,22 +1121,17 @@
 /* Figures that count up keep their width while they run. */
 [data-count] { display: inline-block; font-variant-numeric: tabular-nums; }
 
-/* The coast list: a light runs through the cities from west to east, once. */
+/* The coast list: a green line runs under the cities from west to east, once. */
 .rd-coast[data-rv="in"] a { animation: rd-wave 1.25s ease calc(var(--i, 0) * 75ms + 150ms) 1; }
 @keyframes rd-wave {
-  35% { color: var(--rd-deep); text-shadow: 0 0 22px rgba(var(--rd-accent-rgb), 1); transform: translate3d(0.4rem, 0, 0); }
+  35% { text-shadow: 0 0 1px currentColor; transform: translate3d(0.4rem, 0, 0); box-shadow: inset 0 -2px 0 var(--rd-accent); }
 }
-
-/* The closing band: its edge draws out from the middle, then the light comes up. */
-[data-rv="wait"].rd-quoteband::before { opacity: 0; transform: scaleY(0.3); }
-[data-rv="wait"].rd-quoteband::after { transform: scaleX(0); }
-[data-rv="in"].rd-quoteband::before { transition: opacity 1.3s ease 0.35s, transform 1.5s var(--rd-ease) 0.35s; }
-[data-rv="in"].rd-quoteband::after { transition: transform 0.9s cubic-bezier(0.7, 0, 0.15, 1); }
 
 /* Depth: a photo drifts slowly inside its frame as it travels up the screen. */
 [data-par] img { transform: translate3d(0, calc((var(--v, 0.5) - 0.5) * -9%), 0) scale(1.12); will-change: transform; }
 
-/* Pointer light: on a mouse, a soft emerald light follows the pointer across a panel. */
+/* Pointer light: on a mouse, a card lifts its edge toward the green and a soft light
+   follows the pointer across it. The backend's card hover. */
 @property --rd-spot {
   syntax: "<number>";
   inherits: true;
@@ -1150,17 +1140,19 @@
 @media (hover: hover) and (pointer: fine) {
   [data-spot] {
     --rd-spot: 0;
-    background-image: radial-gradient(26rem circle at var(--mx, 50%) var(--my, 130%), rgba(var(--rd-accent-rgb), calc(0.26 * var(--rd-spot))), rgba(var(--rd-accent-rgb), 0) 62%);
+    background-image: radial-gradient(24rem circle at var(--mx, 50%) var(--my, 130%), rgba(9, 9, 11, calc(0.04 * var(--rd-spot))), rgba(9, 9, 11, 0) 62%);
     transition: --rd-spot 0.45s ease, border-color 0.3s, box-shadow 0.4s;
   }
-  [data-spot]:hover { --rd-spot: 1; border-color: rgba(var(--rd-deep-rgb), 0.34); box-shadow: 0 1px 2px rgba(4, 19, 14, 0.04), 0 26px 50px -22px rgba(4, 80, 56, 0.34); }
+  [data-spot]:hover { --rd-spot: 1; border-color: rgba(var(--rd-deep-rgb), 0.45); box-shadow: 0 1px 2px rgba(9, 9, 11, 0.05), 0 22px 48px -20px rgba(9, 9, 11, 0.24); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .rd-ft__glow { animation: none; }
   .rd-kind__more svg,
-  .rd-arealinks a { transition: none; }
-  .rd-page--over > .rd-hd .rd-hd__bar::after { display: none; }
+  .rd-arealinks a,
+  .rd-quick__list a,
+  .rd-quick__list a svg,
+  .rd-door { transition: none; }
+  .rd-page--over > .rd-hd::after { display: none; }
   [data-par] img { transform: none; }
   [data-spot] { transition: none; }
 }
@@ -1169,6 +1161,8 @@
   [data-rv].rd-rise,
   [data-rv] .rd-wipe,
   [data-rv].rd-wipe,
+  [data-rv] .rd-kpi,
+  [data-rv] .rd-quick__list li,
   [data-rv] .rd-seq__frames li,
   [data-rv] .rd-proof__stars svg { opacity: 1 !important; transform: none !important; clip-path: none !important; filter: none !important; }
 }

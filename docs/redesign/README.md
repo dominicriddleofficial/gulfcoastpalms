@@ -17,11 +17,30 @@ all fourteen city pages, service areas, completed projects, the quote form, than
 and not-found. Every other public page (About, guides, careers, commercial and so on)
 keeps its current content inside the new header and footer, re-coloured to match.
 
-The look: white surfaces with the CRM's emerald. The light is the CRM's own recipe
-(`.platform-fade`: it rises from the bottom edge of a surface and is gone halfway up),
-mixed into white, with a white-hot edge so it reads as light. It is defined once, as
-`--rd-light` in `src/redesign/styles/first-view.css`, and used by the opening screen,
-page headers, panels, alternate bands, the closing quote band and the footer.
+The look is the business's own backend, flipped to white (the owner's direction, with
+a screenshot of the Prestige dashboard as the reference):
+
+| Backend (`src/styles/platform.css`) | Public site (`src/redesign/styles/first-view.css`) |
+| --- | --- |
+| near-black page, charcoal cards | white page `#FAFAFA`, white cards |
+| white type, white hairlines at 7% | black type `#09090B`, black hairlines at 7% |
+| `.platform-grid`, 64 px, top of the screen | `.rd-atmos__grid`, the same |
+| `.platform-fade`: silver, fixed to the bottom half of the screen | `.rd-atmos__fade`: the same silver, the same half, the same recipe (0.3 bloom, 72% and 48% mixes) |
+| `.command-kpi`, `.command-panel`, `.command-period`, `.command-eyebrow` | `.rd-kpi`, `.rd-panel`, `.rd-seg`, `.rd-eyebrow` |
+| top bar and bottom bar | `.rd-hd` and `.rd-dock`, the same shapes |
+| white accent | a regular green (`#15803D` under white words, `#16A34A` for lines and glows), on actions and highlights only |
+
+The atmosphere (grid and fade) is one fixed layer behind every page
+(`src/redesign/chrome/Atmosphere.tsx`). Sections have no fill of their own; content
+sits in white cards that float over it. The only colour on a page is the green of an
+action and the photographs.
+
+Because the fade is fixed to the screen, words printed straight on the page pass over
+every shade of it as the page scrolls, and the darkest shade is at the bottom. So text
+on the page itself is always ink, and green words appear only on white cards. The
+older pages follow the same rule through one value in `site.css` ("Green words"):
+their green words turn to ink when nothing solid is behind them, a link keeps its green
+as the line under it, and a white or pale card switches them back to green.
 
 ## Where things are
 
@@ -51,20 +70,39 @@ One change in the shared SEO code is not behind the switch: breadcrumb data now 
 the page itself ("Tree Removal") where it used to repeat the page's whole title. It
 applies to the current pages as soon as this branch is merged.
 
-## The opening screen on a weak signal
+## The opening screen
 
-The first HTML of the homepage carries the header, the opening screen and their styles,
-so they are on screen before the app has loaded. Three things keep that first frame whole:
+Built like the backend's dashboard, facing the customer: a headline block (the Google
+rating as the small line above it), quote / call / text, a work panel, and four cards
+of figures (`src/redesign/home/Hero.tsx`, words and facts in `src/redesign/data/hero.ts`).
 
-- A few-dozen-pixel copy of the opening photo sits in the page itself and is drawn soft
-  where the photo will be, so the top of the screen is never blank while the photo
-  downloads. Every phone gets the 780-pixel photo file (about 90 KB).
-- The header's palm mark is asked for at the same time as the photo.
-- The typeface is registered with the page once, so the words do not drop to the
-  stand-in face and back when the app takes over.
+The work panel has two scenes and a switch between them, like the backend's
+Week / Month: the white condo building after dark (the owner's photo), then the
+waterfront estate from the air (seven seconds of the owner's drone video, silent). It
+moves on by itself until the visitor picks a scene. Both are jobs already on the
+Completed Jobs page, so the town, property and work shown are the ones recorded there.
 
-To change the photo, change the source and crop in `scripts/build-redesign-media.mjs`,
-run it, and update the description in `src/redesign/data/hero.ts`.
+On a weak signal:
+
+- The first HTML of the homepage carries the top bar, the opening screen and their
+  styles, so they are on screen before the app has loaded. The buttons are plain links
+  and work from that first frame.
+- A few-dozen-pixel copy of the night photo sits in the page itself and is drawn soft
+  where the photo will be. Every phone gets the 660-pixel photo file (about 22 KB).
+- The second scene's still and the clip (0.9 MB on a phone) are fetched only after the
+  page has finished loading. The clip is never fetched on a data-saving connection or
+  for visitors who ask for less motion; they get the two stills and the switch.
+- The header's palm mark is asked for with the photo, and the typeface is registered
+  with the page once, so the words do not change face when the app takes over.
+
+Straight under the opening screen is a panel of six one-tap quote starts (tree removal,
+tree trimming, storm cleanup, palm trimming, diamond cutting, trunk skinning). Each
+opens the quote form with that work already chosen, using the form's own service names
+(`src/redesign/home/QuickQuote.tsx`).
+
+To change a scene, change the source and crop in `scripts/build-redesign-media.mjs`,
+run it, and update the facts in `src/redesign/data/hero.ts`. The ffmpeg commands for
+the clip are in that script's notes.
 
 ## What stays exactly as it is
 
@@ -72,7 +110,8 @@ run it, and update the description in `src/redesign/data/hero.ts`.
 - The quote form's service and area choices and the lead it sends (`submit-lead`).
 - Click reporting: the same `data-track-cta` and `data-track-placement` names, handled by
   the one site-wide click handler. Buttons that have no equivalent on the current site
-  report under new placement names, for example `home_services_tree`,
+  report under new placement names: `hero_card` (the "Written quote" card),
+  `home_quick` (the six one-tap quote starts), `home_services_tree`,
   `home_services_palm`, `home_tree_frames`, `home_projects`, `home_commercial`,
   `projects_lightbox` and `service_tree-removal_job`. They will appear as new rows in
   the website report.
@@ -94,15 +133,26 @@ addresses only when the switch is on. The preview shows them now.
 
 Everything is optional on top of a page that is complete without it.
 
-- Opening screen: the light breathes and drifts, a glint runs along the edge, a band of
-  light crosses the headline once, a glint circles the quote button. As the page scrolls,
-  the photo settles back and dims and the light runs on into the next section.
-- Below: blocks arrive as they are reached (`data-rv`), photos are uncovered from the
-  bottom up, the three tree-removal frames come on in order, the review count runs up,
-  a light runs through the coast list, the closing band lights up.
+- Opening screen: the fade rises, the headline arrives a word at a time, the work panel
+  settles into place and a light runs once round its edge, the figures run up. The quote,
+  call and text buttons are never hidden, even for a frame. After that: the picture
+  drifts slowly closer, a line under the switch counts down to the next scene, the drone
+  clip plays, a glint circles the quote button, and now and then a band of light crosses
+  the silver. On a mouse the work panel leans a degree or two toward the pointer and the
+  grid lines near it show stronger. As the page scrolls, the picture settles back.
+- Below: blocks arrive as they are reached (`data-rv`), the figure cards and the one-tap
+  quote buttons come on in a run, photos are uncovered from the bottom up, the three
+  tree-removal frames come on in order, the review count runs up, a line runs under the
+  coast list. On the homepage a green line along the top bar shows how far the page has
+  been read.
 - A block is only held back if it is still below the screen, so nothing visible ever
   disappears. With scripts off, or when the visitor asks for less motion, nothing moves
   and nothing is hidden.
+- One rule for the work panel's entrance: it may start larger than its resting size,
+  never smaller or lower. Browsers time a page by when its largest picture is drawn and
+  restart that clock if the same picture is later drawn bigger. The app redraws the
+  panel when it takes over, which is seconds later on a weak signal, so an entrance
+  that starts small moves the measured time from about one second to the takeover.
 
 ## Going live (the owner's decision)
 
@@ -134,8 +184,8 @@ Things only the office can supply:
 - Search Console access, to confirm the two priority pages against real search terms.
 - The city for the tree removal, the two sabals, the trunk clean-up and the date palm
   from the Facebook page, and for the two jobs the owner sent on 18 November (the date
-  palm by the paver drive, which is the opening photo, and the five sabals). None is
-  recorded, so none is shown and none links to a service-area page yet.
+  palm by the paver drive and the five sabals). None is recorded, so none is shown and
+  none links to a service-area page yet.
 - The original camera files or the job video for the tree removal (the frames are
   720 pixels wide, taken from the video on the business's Facebook page).
 - A photo of seed pods or flower stalks being removed, and an after-cleanup photo of the

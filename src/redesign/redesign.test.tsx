@@ -23,7 +23,7 @@ import { buildStaticContent } from "@/seo/staticContent";
 import Service from "./pages/Service";
 import { serviceMedia } from "./data/serviceMedia";
 import { treeRemovalSequence } from "./data/treeRemoval";
-import { heroCopy, heroPhoto } from "./data/hero";
+import { heroCopy, heroScenes } from "./data/hero";
 import { publicMarketing } from "@/data/publicMarketing";
 import Hero from "./home/Hero";
 import Header from "./chrome/Header";
@@ -307,25 +307,53 @@ describe("tracking stays as it is today", () => {
     expect(placementsOf([...container.querySelectorAll('.rd-dock a[data-track-cta="quote_request"]')])).toEqual(["sticky_bar"]);
   });
 
-  it("opens on one photo of finished work, with nothing floating over it", () => {
+  it("opens like the backend's dashboard: headline, actions, a work panel and four cards of proof", () => {
     const { container } = within(<Hero />);
-    const photos = [...container.querySelectorAll(".rd-hero img")];
+    // The work panel opens on the owner's night photo of the condo. The second scene's
+    // picture is not asked for until the page has loaded or the visitor chooses it.
+    const photos = [...container.querySelectorAll(".rd-reel__stage img")];
     expect(photos).toHaveLength(1);
-    expect(photos[0].getAttribute("alt")).toBe(heroPhoto.alt);
-    expect(photos[0].getAttribute("alt")).toMatch(/date palm/);
-    expect(photos[0].getAttribute("alt")).toMatch(/diamond-cut/);
-    // Every phone is offered the 780-pixel file first.
-    expect(heroPhoto.phone.fallback).toMatch(/hero-date-palm-phone-780\.jpg$/);
-    // The thumbnail, the look-closer marks and the slider are gone from the opening.
-    expect(container.querySelector(".rd-hero__inset, .rd-hero__spot, [data-rd-reveal], input")).toBeNull();
-    // The light sits beside the hero, not inside it, so it can cross the hero's bottom edge:
-    // the fade above the edge and its tail below are two halves of one piece.
-    expect(container.querySelector(".rd-open > .rd-hero")).not.toBeNull();
-    expect(container.querySelector(".rd-open > .rd-horizon .rd-horizon__up")).not.toBeNull();
-    expect(container.querySelector(".rd-open > .rd-horizon .rd-horizon__down")).not.toBeNull();
-    expect(container.querySelector(".rd-hero .rd-horizon")).toBeNull();
+    expect(photos[0].getAttribute("alt")).toBe(heroScenes[0].photo.alt);
+    expect(photos[0].getAttribute("alt")).toMatch(/condo building at night/);
+    expect(container.querySelector(".rd-reel video")).toBeNull();
+    // Every phone is offered the smallest file first.
+    expect(heroScenes[0].photo.fallback).toMatch(/hero-night-660\.jpg$/);
+    // A two-way switch, like the backend's Week / Month, opening on the night scene.
+    const tabs = [...container.querySelectorAll(".rd-seg button")];
+    expect(tabs.map((t) => t.textContent)).toEqual(["Night", "Aerial"]);
+    expect(tabs.map((t) => t.getAttribute("aria-pressed"))).toEqual(["true", "false"]);
+    // The line above the headline is the Google rating, linked to the reviews.
     const proof = container.querySelector("a.rd-hero__proof");
-    expect(proof?.textContent).toBe(heroCopy.rating);
+    expect(proof?.textContent).toBe(`${heroCopy.proof}${heroCopy.proofCount}`);
+    expect(proof?.getAttribute("aria-label")).toMatch(/Rated 5\.0 from 168 Google reviews/);
+    // Four cards, each one link, the last one a quote start that reports under its own name.
+    const cards = [...container.querySelectorAll(".rd-kpis > a.rd-kpi")];
+    expect(cards).toHaveLength(4);
+    expect(cards.map((c) => c.querySelector(".rd-kpi__label")?.textContent)).toEqual(["Google rating", "Properties served", "Cities covered", "Written quote"]);
+    expect(cards[2].querySelector(".rd-kpi__value")?.textContent).toBe(String(locations.length));
+    expect(cards[3].getAttribute("data-track-cta")).toBe("quote_request");
+    expect(cards[3].getAttribute("data-track-placement")).toBe("hero_card");
+    // The opening still sits in the one wrapper the scroll movement is measured on.
+    expect(container.querySelector(".rd-open > .rd-hero")).not.toBeNull();
+  });
+
+  it("changes the work panel's scene when the visitor picks one, and stops moving on by itself", () => {
+    const { container } = within(<Hero />);
+    expect(container.querySelector(".rd-reel")?.getAttribute("data-auto")).toBe("true");
+    expect(container.querySelector(".rd-reel__title")?.textContent).toBe(heroScenes[0].title);
+    fireEvent.click(screen.getByRole("button", { name: "Aerial" }));
+    expect(container.querySelector(".rd-reel")?.getAttribute("data-auto")).toBe("false");
+    expect(container.querySelector(".rd-reel__title")?.textContent).toBe(heroScenes[1].title);
+    expect(screen.getByRole("button", { name: "Aerial" }).getAttribute("aria-pressed")).toBe("true");
+    // Both scenes are the jobs recorded on the Completed Jobs page, each linked to its town's page.
+    const where = container.querySelector(".rd-reel__stats a");
+    expect(where?.textContent).toBe("Gulf Breeze, FL");
+    expect(where?.getAttribute("href")).toBe("/palm-tree-trimming-gulf-breeze-fl");
+    for (const scene of heroScenes) {
+      expect(locations.some((l) => `/${l.slug}` === scene.wherePath), scene.wherePath).toBe(true);
+      const town = scene.facts.where.replace(/, FL$/, "");
+      expect(projects.some((p) => p.city === town && p.property === scene.facts.property), scene.title).toBe(true);
+    }
   });
 });
 

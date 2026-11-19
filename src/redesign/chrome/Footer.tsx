@@ -14,7 +14,6 @@ const list = (items: NavItem[]) => items.map((i) => <li key={i.to}><Link to={i.t
 export default function Footer() {
   return (
     <footer className="rd-ft rd-dark">
-      <div className="rd-fade rd-ft__glow" aria-hidden="true" />
       <div className="rd-wrap">
         <div className="rd-ft__top">
           <div className="rd-ft__brand">

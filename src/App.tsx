@@ -35,8 +35,8 @@ const RouteTracker = () => {
     const path = location.pathname;
     let manifestHref = "/manifest.json";
     let appleTitle = "Gulf Coast Palms";
-    // The redesigned site has a deeper green header; the browser bar matches it.
-    let themeColor = REDESIGN_ACTIVE && !isPrivateRoute(path) ? "#ffffff" : "#1a5c38";
+    // The redesigned site has a near-white header; the browser bar matches it.
+    let themeColor = REDESIGN_ACTIVE && !isPrivateRoute(path) ? "#fafafa" : "#1a5c38";
     if (path.startsWith("/platform")) {
       manifestHref = "/platform-manifest.json";
       appleTitle = "Field Ops";
@@ -218,7 +218,7 @@ function RouteSuspenseFallback() {
     const firstView = pathname === "/" ? (window as Window & { __gcpFirstView?: string }).__gcpFirstView : undefined;
     if (firstView) return <FirstViewHold html={firstView} />;
     return (
-      <div style={{ minHeight: "100vh", background: "#ffffff" }} aria-hidden>
+      <div style={{ minHeight: "100vh", background: "#fafafa" }} aria-hidden>
         <div style={{ height: 56, borderBottom: "1px solid rgba(4, 19, 14, 0.07)" }} />
       </div>
     );

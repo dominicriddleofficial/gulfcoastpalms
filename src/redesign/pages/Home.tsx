@@ -8,6 +8,7 @@ import Areas from "../home/Areas";
 import Commercial from "../home/Commercial";
 import Hero from "../home/Hero";
 import Proof from "../home/Proof";
+import QuickQuote from "../home/QuickQuote";
 import Routes from "../home/Routes";
 import TreeWork from "../home/TreeWork";
 import Work from "../home/Work";
@@ -28,7 +29,7 @@ export default function Home() {
       />
       <FAQPageJsonLd questions={homeFaqs} />
       <Hero />
-      {/* Nothing sits between the opening and the next section: its glow runs straight on. */}
+      <QuickQuote />
       <Routes />
       <SeasonStrip where="below" />
       <Work />
